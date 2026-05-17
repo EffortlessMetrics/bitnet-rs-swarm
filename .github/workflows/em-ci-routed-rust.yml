@@ -1,0 +1,346 @@
+name: EM CI Routed Rust
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+
+concurrency:
+  group: em-ci-routed-rust-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  route-rust-small:
+    name: Route BitNet Rust Small
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'merge_group'
+      || (github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository)
+    outputs:
+      target: ${{ steps.route.outputs.target }}
+      reason: ${{ steps.route.outputs.reason }}
+      error: ${{ steps.route.outputs.error }}
+    steps:
+      - name: Decide target runner
+        id: route
+        env:
+          EM_RUNNER_READ_TOKEN: ${{ secrets.EM_RUNNER_READ_TOKEN }}
+          ORG: EffortlessMetrics
+          REQUIRED_LABELS: em-ci,cx53,rust-small,trusted-pr
+        run: |
+          set -euo pipefail
+
+          target="github"
+          reason="no_idle_runner"
+          error="false"
+
+          if [ -z "${EM_RUNNER_READ_TOKEN:-}" ]; then
+            reason="token_missing"
+            target="github"
+            error="true"
+            echo "router_target=$target"
+            echo "router_reason=$reason"
+            echo "router_error=$error"
+            {
+              echo "target=$target"
+              echo "reason=$reason"
+              echo "error=$error"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          IFS=',' read -r -a required <<< "$REQUIRED_LABELS"
+
+          page=1
+          per_page=100
+          idle_cx53=0
+          api_ok=true
+
+          while :; do
+            http_body=$(mktemp)
+            http_code=$(curl -sS -o "$http_body" -w "%{http_code}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${EM_RUNNER_READ_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/orgs/${ORG}/actions/runners?per_page=${per_page}&page=${page}" \
+              || echo "000")
+
+            if [ "$http_code" != "200" ]; then
+              api_ok=false
+              echo "runner API request failed: http=$http_code" >&2
+              cat "$http_body" >&2 || true
+              rm -f "$http_body"
+              break
+            fi
+
+            count=$(jq '.runners | length' < "$http_body")
+            if [ "$count" -eq 0 ]; then
+              rm -f "$http_body"
+              break
+            fi
+
+            # Count idle runners that carry ALL required labels.
+            req_json=$(printf '%s\n' "${required[@]}" | jq -R . | jq -s .)
+            page_idle=$(jq --argjson req "$req_json" '
+              [ .runners[]
+                | select(.status == "online")
+                | select(.busy == false)
+                | select(
+                    ([.labels[].name] as $have
+                     | ($req | all(. as $r | $have | index($r) != null)))
+                  )
+              ] | length
+            ' < "$http_body")
+
+            idle_cx53=$(( idle_cx53 + page_idle ))
+
+            if [ "$count" -lt "$per_page" ]; then
+              rm -f "$http_body"
+              break
+            fi
+            rm -f "$http_body"
+            page=$(( page + 1 ))
+            if [ "$page" -gt 20 ]; then
+              break
+            fi
+          done
+
+          if [ "$api_ok" != "true" ]; then
+            target="github"
+            reason="runner_api_failed"
+            error="true"
+          elif [ "$idle_cx53" -gt 0 ]; then
+            target="cx53"
+            reason="cx53_idle"
+          else
+            target="github"
+            reason="no_idle_runner"
+          fi
+
+          echo "router_target=$target"
+          echo "router_reason=$reason"
+          echo "router_error=$error"
+          {
+            echo "target=$target"
+            echo "reason=$reason"
+            echo "error=$error"
+          } >> "$GITHUB_OUTPUT"
+
+  rust-small-cx53:
+    name: BitNet Rust Small on CX53
+    needs: route-rust-small
+    if: needs.route-rust-small.outputs.target == 'cx53'
+    runs-on:
+      group: em-ci-small
+      labels: [self-hosted, linux, x64, em-ci, cx53, rust-small, trusted-pr]
+    timeout-minutes: 90
+    env:
+      JOB_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      CARGO_HOME: /mnt/ci-cache/cargo-home
+      SCCACHE_DIR: /mnt/ci-cache/sccache
+      SCCACHE_CACHE_SIZE: 60G
+      RUSTC_WRAPPER: /usr/local/cargo/bin/sccache
+      CARGO_INCREMENTAL: "0"
+      CARGO_BUILD_JOBS: "12"
+      TMPDIR: /mnt/ci-scratch/tmp/${{ github.run_id }}-${{ github.run_attempt }}
+      CARGO_TARGET_DIR: /mnt/ci-scratch/target/${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Disk guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          ci-disk-guard /mnt/ci-scratch 100
+          ci-disk-guard /mnt/docker 20
+          ci-disk-guard /mnt/ci-cache 20
+
+      - name: Prepare scratch dirs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$TMPDIR" "$CARGO_TARGET_DIR" "$CARGO_HOME" "$SCCACHE_DIR"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Build and test BitNet rust-small (cx53)
+        shell: bash
+        env:
+          IMAGE: em-ci-rust:1.95
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --cpus="14" \
+            --memory="28g" \
+            -e CARGO_HOME=/cargo-home \
+            -e SCCACHE_DIR=/sccache \
+            -e SCCACHE_CACHE_SIZE="${SCCACHE_CACHE_SIZE}" \
+            -e RUSTC_WRAPPER=/usr/local/cargo/bin/sccache \
+            -e CARGO_INCREMENTAL="${CARGO_INCREMENTAL}" \
+            -e CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS}" \
+            -e CARGO_TARGET_DIR=/target \
+            -e TMPDIR=/tmp/jobtmp \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -v "${CARGO_HOME}:/cargo-home" \
+            -v "${SCCACHE_DIR}:/sccache" \
+            -v "${CARGO_TARGET_DIR}:/target" \
+            -v "${TMPDIR}:/tmp/jobtmp" \
+            -w /workspace \
+            "${IMAGE}" \
+            bash -eu -o pipefail -c '
+              rustc --version
+              cargo --version
+              just --version || true
+              sccache --version
+              cargo fetch --locked
+              cargo build --locked \
+                -p bitnet-common \
+                -p bitnet-models \
+                -p bitnet-tokenizers \
+                -p bitnet-quantization \
+                -p bitnet-kernels \
+                --no-default-features --features cpu
+              cargo test --locked \
+                -p bitnet-common \
+                -p bitnet-models \
+                -p bitnet-tokenizers \
+                -p bitnet-quantization \
+                -p bitnet-kernels \
+                --lib \
+                --no-default-features --features cpu \
+                -- --nocapture
+              sccache --show-stats || true
+            '
+
+      - name: Cleanup scratch dirs
+        if: always()
+        shell: bash
+        env:
+          IMAGE: em-ci-rust:1.95
+        run: |
+          set -eu
+          docker run --rm \
+            -v "${TMPDIR}:/tmp/jobtmp" \
+            -v "${CARGO_TARGET_DIR}:/target" \
+            "${IMAGE}" \
+            bash -c '
+              rm -rf /tmp/jobtmp/* /tmp/jobtmp/.[!.]* /tmp/jobtmp/..?* 2>/dev/null || true
+              rm -rf /target/*    /target/.[!.]*    /target/..?*    2>/dev/null || true
+            ' || true
+          rmdir "$TMPDIR" 2>/dev/null || true
+          rmdir "$CARGO_TARGET_DIR" 2>/dev/null || true
+
+      - name: Disk report
+        if: always()
+        shell: bash
+        run: |
+          df -h / /mnt/docker /mnt/actions /mnt/ci-scratch /mnt/ci-cache /mnt/ci-artifacts 2>/dev/null || true
+
+  rust-small-github:
+    name: BitNet Rust Small on GitHub Hosted
+    needs: route-rust-small
+    if: needs.route-rust-small.outputs.target == 'github'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cargo fetch
+        run: cargo fetch --locked
+
+      - name: Cargo build
+        run: |
+          cargo build --locked \
+            -p bitnet-common \
+            -p bitnet-models \
+            -p bitnet-tokenizers \
+            -p bitnet-quantization \
+            -p bitnet-kernels \
+            --no-default-features --features cpu
+
+      - name: Cargo test
+        run: |
+          cargo test --locked \
+            -p bitnet-common \
+            -p bitnet-models \
+            -p bitnet-tokenizers \
+            -p bitnet-quantization \
+            -p bitnet-kernels \
+            --lib \
+            --no-default-features --features cpu \
+            -- --nocapture
+
+  rust-small-result:
+    name: BitNet Rust Small Result
+    needs:
+      - route-rust-small
+      - rust-small-cx53
+      - rust-small-github
+    if: >-
+      always()
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate router and selected target
+        shell: bash
+        env:
+          TARGET: ${{ needs.route-rust-small.outputs.target }}
+          ROUTER_RESULT: ${{ needs.route-rust-small.result }}
+          CX53_RESULT: ${{ needs.rust-small-cx53.result }}
+          GITHUB_RESULT: ${{ needs.rust-small-github.result }}
+        run: |
+          set -eu
+          echo "router_target=${TARGET:-<empty>}"
+          echo "router_result=${ROUTER_RESULT:-<empty>}"
+          echo "cx53_result=${CX53_RESULT:-<empty>}"
+          echo "github_result=${GITHUB_RESULT:-<empty>}"
+
+          if [ "${ROUTER_RESULT}" != "success" ]; then
+            echo "router job did not succeed; failing normalized result" >&2
+            exit 1
+          fi
+
+          case "${TARGET}" in
+            cx53)
+              if [ "${CX53_RESULT}" != "success" ]; then
+                echo "selected target cx53 but rust-small-cx53 result was ${CX53_RESULT}" >&2
+                exit 1
+              fi
+              ;;
+            github)
+              if [ "${GITHUB_RESULT}" != "success" ]; then
+                echo "selected target github but rust-small-github result was ${GITHUB_RESULT}" >&2
+                exit 1
+              fi
+              ;;
+            *)
+              echo "router produced unknown target: ${TARGET}" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "BitNet Rust Small Result: success"
