@@ -32,6 +32,17 @@
 > answer quality is still under validation, so generated BitNet text should be
 > treated as diagnostic output until a strict proof lane accepts it.
 
+## Active Development Repository
+
+This repository is the active development and proof repository for BitNet-rs.
+Feature, hardware, diagnostic, performance, refactor, campaign, and
+agent-swarm PRs land here first.
+
+Public release and publish work is promoted to
+[`EffortlessMetrics/BitNet-rs`](https://github.com/EffortlessMetrics/BitNet-rs)
+through release-promotion PRs. Tags, crates.io publication, release notes, and
+stable release branches belong to `BitNet-rs`, not this swarm repository.
+
 ## What This Repo Is For
 
 BitNet-rs is moving toward a Rust-native local model runner with strict proof

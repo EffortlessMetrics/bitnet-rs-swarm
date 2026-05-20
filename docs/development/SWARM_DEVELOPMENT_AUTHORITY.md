@@ -1,0 +1,91 @@
+# Swarm Development Authority
+
+Status: active
+Owner: swarm maintainers
+Created: 2026-05-20
+Linked proposal: n/a
+Linked specs: n/a
+Linked ADRs: n/a
+Linked plan: `docs/release/PROMOTE_TO_BITNET_RS.md`
+Linked issues: n/a
+Linked PRs: n/a
+Support-tier impact: development authority only
+Policy impact: routes normal development to `bitnet-rs-swarm`
+
+## Purpose
+
+`EffortlessMetrics/bitnet-rs-swarm` is the active development and proof
+repository for BitNet-rs.
+
+Use this repository for:
+
+- feature PRs;
+- hardware lanes;
+- A770, CUDA, Apple, Lunar Lake, CPU AVX2, server, and model-family proof work;
+- campaign manifests and generated dashboards;
+- diagnostic and receipt evolution;
+- CI economics and self-hosted-runner routing;
+- agent-swarm branches and high-throughput PR processing.
+
+`EffortlessMetrics/BitNet-rs` is the release and publish repository. It owns
+tags, crates.io publication, release notes, stable release branches, package
+metadata, signed artifacts when present, and emergency release-blocking fixes.
+
+## Development Rule
+
+All normal work lands here first. Do not open normal feature, hardware,
+performance, diagnostic, refactor, or campaign PRs in `BitNet-rs`.
+
+When work is ready for public release, promote it through a release-promotion PR
+against `BitNet-rs` using the contract in:
+
+```text
+docs/release/PROMOTE_TO_BITNET_RS.md
+```
+
+## Proof And Claim Discipline
+
+Swarm can carry diagnostic and proof-building work that is not release-ready.
+That does not make the evidence public-release claim-grade.
+
+Every promoted claim must still name:
+
+- source PRs;
+- source commit;
+- receipt or proof manifest;
+- model, tokenizer, backend, and route identity where relevant;
+- fallback status;
+- explicit not-claims;
+- excluded swarm work.
+
+Hardware and model-support claims remain bounded by their campaign manifests and
+receipt ledgers. A diagnostic receipt in swarm does not become a release claim
+until the release-promotion PR includes and validates it.
+
+## PR Queue Rules
+
+Do not reduce queue count by discarding useful work.
+
+Closing a PR is valid only after content review proves one of:
+
+- exact useful content already landed;
+- exact useful content was clean-ported and successor landed;
+- true duplicate of a named kept PR;
+- historical-only diagnostic evidence captured in a committed ledger or report;
+- explicit content rejection after review.
+
+Old, behind, branch-chain, diagnostic-only, and needs-restack are not close
+reasons.
+
+## Release Handoff
+
+A release handoff starts only after:
+
+- swarm main is green enough for the selected release target;
+- generated campaign dashboards are current;
+- the release candidate manifest names included and excluded work;
+- proof packs and claim boundaries are explicit;
+- a promotion branch is opened against `BitNet-rs`.
+
+The release repo then runs package and publish gates. It should not re-run every
+swarm hardware lane by default.
