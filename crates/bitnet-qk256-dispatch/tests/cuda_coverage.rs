@@ -4,9 +4,11 @@ use bitnet_qk256_dispatch::{
     reset_qk256_dispatch_coverage,
 };
 use candle_core::{DType, Device, Tensor};
+use std::error::Error;
 use std::sync::Mutex;
 
 static ENV_LOCK: Mutex<()> = Mutex::new(());
+type TestResult = Result<(), Box<dyn Error>>;
 
 fn clear_backend_env() {
     unsafe {
@@ -86,19 +88,18 @@ fn strict_unsupported_counter_records_receipt_boundary() {
 }
 
 #[test]
-fn a770_opencl_request_records_cpu_fallback_as_not_routed() {
-    let _guard = ENV_LOCK.lock().unwrap();
+fn a770_opencl_request_records_cpu_fallback_as_not_routed() -> TestResult {
+    let _guard = ENV_LOCK.lock().map_err(|_| std::io::Error::other("env lock poisoned"))?;
     clear_backend_env();
     reset_qk256_dispatch_coverage();
     unsafe {
         std::env::set_var("BITNET_SELECTED_BACKEND", "intel-a770-opencl");
     }
     let device = Device::Cpu;
-    let input = Tensor::ones(&[1, 1, 256], DType::F32, &device).unwrap();
+    let input = Tensor::ones(&[1, 1, 256], DType::F32, &device)?;
     let qk256 = qk256_tensor(2, 256, &device);
 
-    let output =
-        forward_qk256(&input, &qk256, "layers.0.attention.q_proj.weight.qk256_qs").unwrap();
+    let output = forward_qk256(&input, &qk256, "layers.0.attention.q_proj.weight.qk256_qs")?;
     let coverage = qk256_dispatch_coverage();
 
     assert_eq!(output.dims(), &[1, 1, 2]);
@@ -111,11 +112,12 @@ fn a770_opencl_request_records_cpu_fallback_as_not_routed() {
     );
     assert_eq!(coverage.execution_claim, "a770_opencl_not_routed");
     clear_backend_env();
+    Ok(())
 }
 
 #[test]
-fn strict_a770_opencl_request_rejects_cpu_qk256_fallback() {
-    let _guard = ENV_LOCK.lock().unwrap();
+fn strict_a770_opencl_request_rejects_cpu_qk256_fallback() -> TestResult {
+    let _guard = ENV_LOCK.lock().map_err(|_| std::io::Error::other("env lock poisoned"))?;
     clear_backend_env();
     reset_qk256_dispatch_coverage();
     unsafe {
@@ -123,12 +125,19 @@ fn strict_a770_opencl_request_rejects_cpu_qk256_fallback() {
         std::env::set_var("BITNET_STRICT_MODE", "1");
     }
     let device = Device::Cpu;
-    let input = Tensor::ones(&[1, 1, 256], DType::F32, &device).unwrap();
+    let input = Tensor::ones(&[1, 1, 256], DType::F32, &device)?;
     let qk256 = qk256_tensor(2, 256, &device);
 
     let result = forward_qk256(&input, &qk256, "layers.0.attention.q_proj.weight.qk256_qs");
 
-    let err = result.expect_err("strict A770 OpenCL QK256 request must fail closed");
+    let err = match result {
+        Ok(_) => {
+            return Err(
+                std::io::Error::other("strict A770 OpenCL QK256 request must fail closed").into()
+            );
+        }
+        Err(err) => err,
+    };
     assert!(
         err.to_string().contains("OpenCL QK256 runtime is not wired"),
         "unexpected strict A770 error: {err}"
@@ -140,6 +149,7 @@ fn strict_a770_opencl_request_rejects_cpu_qk256_fallback() {
     assert_eq!(coverage.unsupported_ops, vec!["qk256_a770_opencl_runtime_not_wired".to_string()]);
     assert_eq!(coverage.execution_claim, "a770_opencl_not_routed");
     clear_backend_env();
+    Ok(())
 }
 
 #[test]
