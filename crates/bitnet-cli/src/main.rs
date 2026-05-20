@@ -4379,7 +4379,10 @@ fn validate_cuda_bitnet_perf005_single_decode_shape(
 }
 
 /// Run text generation with sampling
-#[allow(clippy::too_many_arguments)]
+#[expect(
+    clippy::too_many_arguments,
+    reason = "policy:clippy-0001 existing CLI generation dispatcher carries explicit runtime/provenance knobs"
+)]
 async fn run_simple_generation(
     requested_backend_label: &str,
     model_path: std::path::PathBuf,
