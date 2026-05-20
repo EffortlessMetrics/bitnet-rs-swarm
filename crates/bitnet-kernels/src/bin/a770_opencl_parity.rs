@@ -926,12 +926,16 @@ mod tests {
     }
 
     #[test]
-    fn fixture_parser_selects_qk256_scaled_fixture() {
+    fn fixture_parser_selects_qk256_scaled_fixture() -> Result<(), Box<dyn Error>> {
         assert!(matches!(
-            parse_fixture_contract("qk256-i8s-scaled").expect("fixture parses"),
+            parse_fixture_contract("qk256-i8s-scaled")?,
             FixtureContract::Qk256I8sScaled
         ));
-        let err = parse_fixture_contract("qk256").expect_err("unknown fixture rejected");
+        let err = match parse_fixture_contract("qk256") {
+            Ok(_) => return Err(io_error("unknown fixture accepted")),
+            Err(err) => err,
+        };
         assert!(err.to_string().contains("unsupported --fixture"));
+        Ok(())
     }
 }
