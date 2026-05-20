@@ -28,7 +28,7 @@
 | apple-m3-macbook-air | M3MBA-010 | M3MBA-005A | merged |
 | apple-m3-macbook-air | M3MBA-019 | M3MBA-008 | merged |
 | apple-m3-macbook-air | M3MBA-022 | M3MBA-021 | merged |
-| apple-m3-macbook-air | M3MBA-023 | M3MBA-022 | pr_open |
+| apple-m3-macbook-air | M3MBA-023 | M3MBA-022 | merged |
 | apple-m3-macbook-air | M3MBA-024 | M3MBA-021 | proposed |
 | apple-m3-macbook-air | M3MBA-025 | M3MBA-021, M3MBA-024 | proposed |
 | apple-m3-macbook-air | M3MBA-026 | M3MBA-021 | merged |
@@ -467,6 +467,7 @@
 | intel-a770 | A770-007 | A770-006 | merged |
 | intel-a770 | A770-006R | A770-007 | merged |
 | intel-a770 | A770-008 | A770-006R | merged |
+| intel-a770 | A770-009 | A770-008 | ready |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
