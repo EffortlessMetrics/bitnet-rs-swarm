@@ -6,11 +6,10 @@ actor = "codex"
 previous_status = "in_progress"
 new_status = "pr_open"
 pr = 31
-head_sha = "ea23ccb51f4bfc00c82f94a5ca936dbcfcddeb12"
 branch = "codex/slm-cpu-062-swarm-artifact-export"
 notes = [
   "Opened #31 to export the first Qwen3 Q8_0 packed-sidecar candidate package from bitnet-rs-swarm for BitNet-rs release-surface artifact-intake review.",
   "The package includes candidate summary, before receipt, after receipt, equivalence report, source commit pointer, and explicit timing-not-claimed report.",
-  "Rebased #31 on current main after branch protection required the PR head to be up to date.",
+  "Rebased #31 on current main after branch protection required the PR branch to be up to date.",
   "The PR does not claim BitNet-rs release-surface acceptance, speedup, sustained throughput, broad answer quality, Q4/Q5 runtime support, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5 support, or BitNet QK256 changes.",
 ]
