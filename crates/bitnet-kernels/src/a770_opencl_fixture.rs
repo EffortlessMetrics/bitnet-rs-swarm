@@ -120,8 +120,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a770_fixture_packs_weights_in_kernel_k_by_n_order() {
-        let packed = pack_a770_matmul_i2s_weights().expect("fixture packs");
+    fn a770_fixture_packs_weights_in_kernel_k_by_n_order() -> Result<(), String> {
+        let packed = pack_a770_matmul_i2s_weights()?;
         assert_eq!(packed.len(), A770_MATMUL_I2S_K.div_ceil(4) * A770_MATMUL_I2S_N);
 
         for depth in 0..A770_MATMUL_I2S_K {
@@ -133,6 +133,7 @@ mod tests {
                 assert_eq!(decoded, A770_MATMUL_I2S_WEIGHTS[depth * A770_MATMUL_I2S_N + col]);
             }
         }
+        Ok(())
     }
 
     #[test]
