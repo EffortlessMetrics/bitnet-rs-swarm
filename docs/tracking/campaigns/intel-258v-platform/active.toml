@@ -11310,6 +11310,8 @@ must_not_claim = [
 [[work_item]]
 id = "SWARM-LNL258V-POWER-006-RUNBOOK-002"
 status = "in_progress"
+pr = 86
+head_sha = "ba558fd3d8307951de5588afa083268b513fbe6f"
 branch = "codex/swarm-lnl258v-power006-runbook-matrix-commands"
 stackable = false
 review_mode = "codex_premerge"
