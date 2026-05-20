@@ -11243,7 +11243,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SWARM-LNL258V-GOAL-AUDIT-003"
-status = "in_progress"
+status = "pr_open"
+pr = 76
+head_sha = "3eecb1b9e4cca182386b8f664df2ef577750a5d1"
 branch = "codex/swarm-lnl258v-goal-audit-003-post-a770009-perf005"
 stackable = false
 review_mode = "codex_premerge"
