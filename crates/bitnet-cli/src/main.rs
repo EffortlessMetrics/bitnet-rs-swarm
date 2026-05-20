@@ -13123,33 +13123,42 @@ mod tests {
 
     #[test]
     fn perf005_shape_accepts_prefill_512_profile_floor() {
-        validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 512, 32)
-            .expect("valid prefill_512 profile shape");
+        let result =
+            validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 512, 32);
+        assert!(result.is_ok(), "valid prefill_512 profile shape: {result:?}");
     }
 
     #[test]
     fn perf005_shape_rejects_short_prefill_512_profile() {
-        let err =
-            validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 511, 32)
-                .expect_err("short prefill should be rejected");
+        let result = validate_cuda_bitnet_perf005_single_decode_shape(
+            "prefill_512_decode_32",
+            511,
+            32,
+        );
+        assert!(result.is_err(), "short prefill should be rejected");
+        let err_text = result.err().map(|err| err.to_string()).unwrap_or_default();
 
-        assert!(err.to_string().contains("requires at least 512 prefill tokens"));
-        assert!(err.to_string().contains("speedup_claim=false"));
+        assert!(err_text.contains("requires at least 512 prefill tokens"));
+        assert!(err_text.contains("speedup_claim=false"));
     }
 
     #[test]
     fn perf005_shape_rejects_short_decode_profile() {
-        let err = validate_cuda_bitnet_perf005_single_decode_shape("short_decode_32", 4, 31)
-            .expect_err("short decode should be rejected");
+        let result = validate_cuda_bitnet_perf005_single_decode_shape("short_decode_32", 4, 31);
+        assert!(result.is_err(), "short decode should be rejected");
+        let err_text = result.err().map(|err| err.to_string()).unwrap_or_default();
 
-        assert!(err.to_string().contains("requires at least 32 generated tokens"));
-        assert!(err.to_string().contains("full_residency_claim=false"));
+        assert!(err_text.contains("requires at least 32 generated tokens"));
+        assert!(err_text.contains("full_residency_claim=false"));
     }
 
     #[test]
     fn perf005_shape_ignores_non_perf005_profile() {
-        validate_cuda_bitnet_perf005_single_decode_shape("ask_normal", 0, 0)
-            .expect("non PERF-005 profiles are not governed here");
+        let result = validate_cuda_bitnet_perf005_single_decode_shape("ask_normal", 0, 0);
+        assert!(
+            result.is_ok(),
+            "non PERF-005 profiles are not governed here: {result:?}"
+        );
     }
 
     #[test]
