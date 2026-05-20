@@ -1,0 +1,12 @@
+timestamp = "2026-05-20T15:14:22Z"
+campaign = "intel-a770"
+item = "A770-008"
+event = "branch_rebased"
+pr = 53
+head_sha = "d7e6f21cd05a1a2b15d95b02691e818413b5621d"
+branch = "codex/intel-a770/A770-008-benchmark-baseline"
+notes = [
+  "Rebased PR #53 onto origin/main after SWARM-LNL258V-BITNET-INTAKE-007 tracker updates landed.",
+  "Conflict resolution preserved the active Lunar Lake PR row and the A770-008 diagnostic benchmark baseline row.",
+  "Claim boundary remains diagnostic-only with benchmark_claim_allowed=false and speedup_claim=false.",
+]
