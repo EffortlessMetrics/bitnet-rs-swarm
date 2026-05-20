@@ -29,8 +29,8 @@
 | apple-m3-macbook-air | M3MBA-019 | M3MBA-008 | merged |
 | apple-m3-macbook-air | M3MBA-022 | M3MBA-021 | merged |
 | apple-m3-macbook-air | M3MBA-023 | M3MBA-022 | merged |
-| apple-m3-macbook-air | M3MBA-024 | M3MBA-021 | in_progress |
-| apple-m3-macbook-air | M3MBA-025 | M3MBA-021, M3MBA-024 | proposed |
+| apple-m3-macbook-air | M3MBA-024 | M3MBA-021 | merged |
+| apple-m3-macbook-air | M3MBA-025 | M3MBA-021 | proposed |
 | apple-m3-macbook-air | M3MBA-026 | M3MBA-021 | merged |
 | apple-m4 | M4-002 | M4-001 | merged |
 | apple-m4 | M4-003 | M4-002 | merged |
@@ -425,7 +425,7 @@
 | intel-258v-platform | LNL258V-REG-013 | LNL258V-GOAL-AUDIT-011 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-012 | LNL258V-REG-013 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-013 | LNL258V-GOAL-AUDIT-012 | merged |
-| intel-258v-platform | SWARM-LNL258V-GOAL-AUDIT-002 | SWARM-LNL258V-BITNET-INTAKE-009 | pr_open |
+| intel-258v-platform | SWARM-LNL258V-GOAL-AUDIT-002 | SWARM-LNL258V-BITNET-INTAKE-009 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
