@@ -13123,9 +13123,10 @@ mod tests {
 
     #[test]
     fn perf005_shape_accepts_prefill_512_profile_floor() {
-        let result =
-            validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 512, 32);
-        assert!(result.is_ok(), "valid prefill_512 profile shape: {result:?}");
+        assert!(
+            validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 512, 32)
+                .is_ok()
+        );
     }
 
     #[test]
@@ -13154,11 +13155,7 @@ mod tests {
 
     #[test]
     fn perf005_shape_ignores_non_perf005_profile() {
-        let result = validate_cuda_bitnet_perf005_single_decode_shape("ask_normal", 0, 0);
-        assert!(
-            result.is_ok(),
-            "non PERF-005 profiles are not governed here: {result:?}"
-        );
+        assert!(validate_cuda_bitnet_perf005_single_decode_shape("ask_normal", 0, 0).is_ok());
     }
 
     #[test]

@@ -1367,7 +1367,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_parity_accepts_cpu_rust_selected_backend() {
+    fn legacy_parity_accepts_cpu_rust_selected_backend() -> Result<()> {
         let mut scalar = receipt("i2_s-scalar-reference", &[4], "4", logits());
         let mut avx2 = receipt("i2_s-avx2-reference", &[4], "4", logits());
         scalar["backend"]["selected_backend"] = json!("cpu-rust");
@@ -1376,8 +1376,11 @@ mod tests {
         let report = build_legacy_report(&scalar, &avx2);
 
         assert_eq!(report["summary"]["failed"], 0);
-        let shared = report["shared_contract"]["failed_rules"].as_array().unwrap();
+        let shared = report["shared_contract"]["failed_rules"]
+            .as_array()
+            .context("shared contract failed_rules should be an array")?;
         assert!(!shared.iter().any(|rule| rule == "strict_cpu_backend"));
+        Ok(())
     }
 
     #[test]
@@ -1428,9 +1431,12 @@ mod tests {
         let report = build_legacy_report(&scalar, &cuda);
 
         assert_ne!(report["summary"]["failed"], 0);
-        let shared = report["shared_contract"]["failed_rules"].as_array().unwrap();
-        assert!(shared.iter().any(|rule| rule == "artifact_kind_contract"));
-        assert!(shared.iter().any(|rule| rule == "strict_cpu_backend"));
+        let shared = report["shared_contract"]["failed_rules"].as_array();
+        assert!(shared.is_some(), "shared contract failed rules should be present");
+        if let Some(shared) = shared {
+            assert!(shared.iter().any(|rule| rule == "artifact_kind_contract"));
+            assert!(shared.iter().any(|rule| rule == "strict_cpu_backend"));
+        }
     }
 
     #[test]
