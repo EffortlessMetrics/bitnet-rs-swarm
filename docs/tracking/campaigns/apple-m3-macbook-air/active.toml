@@ -202,6 +202,7 @@ blocked_by = ["M3MBA-012"]
 acceptance = "Encode the M3 Air CI completion policy in the campaign and shared CI docs, and add a staged manual M3 Air dense SLM workflow so selected long hardware/model jobs are routed, preflighted, artifact-retaining, and capped from healthy completed runtimes with cushion instead of being ended just before receipt emission."
 commands = [
   "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli m3_air_performance_profile_records_context_and_claim_boundary",
   "cargo run --locked -p xtask --no-default-features -- lint-workflows",
   "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
   "cargo run --locked -p xtask --no-default-features -- campaign doctor",
@@ -210,6 +211,7 @@ commands = [
 ]
 allowed_paths = [
   ".github/workflows/apple-m3-air-dense-slm.yml",
+  "crates/bitnet-cli/**",
   "docs/apple-silicon/**",
   "docs/ci/**",
   "docs/tracking/campaigns/apple-m3-macbook-air/**",
@@ -1135,7 +1137,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-023"
-status = "proposed"
+status = "in_progress"
 branch = "codex/apple-m3-macbook-air/M3MBA-023-bounded-performance-profile"
 stackable = false
 review_mode = "codex_premerge"
