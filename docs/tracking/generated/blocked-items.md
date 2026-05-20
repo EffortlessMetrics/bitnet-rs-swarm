@@ -381,6 +381,7 @@
 | intel-258v-platform | LNL258V-OPENVINO-QUAL-RERUN-002 | LNL258V-QUAL-008 | merged |
 | intel-258v-platform | LNL258V-OV-TOKEN-001 | LNL258V-NPU-CACHE-002 | merged |
 | intel-258v-platform | LNL258V-ROUTE-015 | LNL258V-OV-TOKEN-001 | merged |
+| intel-258v-platform | SWARM-LNL258V-BITNET-INTAKE-007 | SWARM-LNL258V-BITNET-INTAKE-006 | merged |
 | intel-258v-platform | SWARM-LNL258V-BITNET-INTAKE-006 | SWARM-LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | SWARM-LNL258V-BITNET-INTAKE-005 | SWARM-LNL258V-REG-001, LNL258V-BITNET-INTAKE-004 | merged |
 | intel-258v-platform | SWARM-LNL258V-MIGRATE-002 | SWARM-LNL258V-MIGRATE-001 | merged |
@@ -464,6 +465,7 @@
 | intel-a770 | A770-006 | A770-005 | merged |
 | intel-a770 | A770-007 | A770-006 | merged |
 | intel-a770 | A770-006R | A770-007 | merged |
+| intel-a770 | A770-008 | A770-006R | in_progress |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
