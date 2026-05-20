@@ -13131,11 +13131,8 @@ mod tests {
 
     #[test]
     fn perf005_shape_rejects_short_prefill_512_profile() {
-        let result = validate_cuda_bitnet_perf005_single_decode_shape(
-            "prefill_512_decode_32",
-            511,
-            32,
-        );
+        let result =
+            validate_cuda_bitnet_perf005_single_decode_shape("prefill_512_decode_32", 511, 32);
         assert!(result.is_err(), "short prefill should be rejected");
         let err_text = result.err().map(|err| err.to_string()).unwrap_or_default();
 
