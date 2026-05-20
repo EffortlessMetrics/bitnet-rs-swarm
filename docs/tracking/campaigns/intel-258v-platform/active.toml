@@ -8289,7 +8289,7 @@ stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
-blocked_by = ["SWARM-LNL258V-BITNET-INTAKE-007"]
+blocked_by = []
 acceptance = "Rerun the Lunar Lake BitNet CPU semantic-intake evidence after swarm A770 PR #43 merged to main, refresh scalar and AVX2 answer-corpus receipts, answer parity, first-token divergence classification, CPU phase warm-session receipts, the CPU reference bundle, semantic intake, strict regression-v2, and operator comparison so stale_after_merged_count returns to zero and strict surfaces are ready. Fix only the strict recovery bugs needed to make that refresh valid, record the after-A770-43 prompt-token-policy mismatch against the direct external BitNet.cpp reference as an open gap, and preserve no route promotion, speedup, power-advantage, measured-temperature, battery-mode evidence, native accelerator, acceleration, external first-token parity, broad quality, or BitNet QK256/I2_S behavior-change claims."
 commands = [
   "cargo test -p bitnet-cli --no-default-features --features cpu,full-cli commands::lunar_lake::tests::bitnet_semantic_intake_can_recover_before_operator_comparison_refresh -- --exact --nocapture",
@@ -8337,7 +8337,7 @@ forbidden_paths = [
 ]
 may_claim = [
   "Lunar Lake BitNet CPU evidence was rerun after swarm A770 PR #43 merged to main.",
-  "The refreshed scalar and AVX2 answer-corpus receipts pass the fixed tiny corpus with fallback_used=false.",
+  "The refreshed scalar and AVX2-requested answer-corpus receipts pass the fixed tiny corpus with fallback_used=false.",
   "The refreshed answer-parity receipt passes scalar/AVX2 parity with selected_backend=cpu-rust accepted as a strict CPU backend.",
   "The refreshed semantic-intake receipt reports no stale merged shared BitNet change requiring a Lunar Lake rerun, and strict regression-v2 and operator comparison are ready.",
   "The after-A770-43 first-token divergence classifier records a prompt-token-policy mismatch against the direct external BitNet.cpp reference.",
@@ -8353,6 +8353,7 @@ must_not_claim = [
   "Arc or NPU acceleration is proven.",
   "Full BitNet inference works on Arc or NPU.",
   "Packed QK256 decode works on Arc or NPU.",
+  "Scaled BitNet I2_S x I8_S AVX2 production-kernel execution is proven by this PR.",
   "External first-token parity with BitNet.cpp is proven.",
   "Broad BitNet quality is proven.",
   "BitNet QK256/I2_S behavior changed.",

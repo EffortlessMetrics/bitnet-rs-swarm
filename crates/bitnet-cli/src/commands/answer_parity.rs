@@ -1376,8 +1376,10 @@ mod tests {
         let report = build_legacy_report(&scalar, &avx2);
 
         assert_eq!(report["summary"]["failed"], 0);
-        let shared = report["shared_contract"]["failed_rules"].as_array().unwrap();
-        assert!(!shared.iter().any(|rule| rule == "strict_cpu_backend"));
+        let has_strict_cpu_backend_failure = report["shared_contract"]["failed_rules"]
+            .as_array()
+            .map_or(true, |shared| shared.iter().any(|rule| rule == "strict_cpu_backend"));
+        assert!(!has_strict_cpu_backend_failure);
     }
 
     #[test]
