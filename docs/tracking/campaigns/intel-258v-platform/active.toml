@@ -8281,7 +8281,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SWARM-LNL258V-BITNET-INTAKE-009"
-status = "in_progress"
+status = "pr_open"
+pr = 66
+head_sha = "67839b5eef0f7a88a2946fa8c8b668b5ec14a1fc"
 branch = "codex/swarm-lnl258v-bitnet-prompt-009-direct-ref-bos"
 stackable = false
 review_mode = "codex_premerge"
