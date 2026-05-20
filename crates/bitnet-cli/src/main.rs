@@ -4133,9 +4133,17 @@ async fn run_cuda_bitnet_perf005_benchmark_profile(
             .join(format!("{}.json", plan.profile_id))
     });
 
+    let dispatch_detail = match plan.kind {
+        CudaBitnetPerf005ProfileKind::SingleDecode { max_new_tokens } => {
+            format!("profile_kind=single_decode, max_new_tokens={max_new_tokens}")
+        }
+        CudaBitnetPerf005ProfileKind::WarmSession { turns, max_new_tokens } => {
+            format!("profile_kind=warm_session, turns={turns}, max_new_tokens={max_new_tokens}")
+        }
+    };
     eprintln!(
-        "PERF-005 profile `{}` dispatches through strict RTX 5070 Ti CUDA generation; speedup_claim=false, full_residency_claim=false, server_ready=false",
-        plan.profile_id
+        "PERF-005 profile `{}` dispatches through strict RTX 5070 Ti CUDA generation; {}; speedup_claim=false, full_residency_claim=false, server_ready=false",
+        plan.profile_id, dispatch_detail
     );
 
     match plan.kind {

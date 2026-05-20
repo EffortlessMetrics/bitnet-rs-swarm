@@ -7133,6 +7133,9 @@ fn bench_rtx5070ti_dispatches_warm_session_10_perf005_profile_without_cpu_fallba
         .stderr(predicate::str::contains(
             "PERF-005 profile `warm_session_10_turns` dispatches through strict RTX 5070 Ti CUDA generation",
         ))
+        .stderr(predicate::str::contains("profile_kind=warm_session"))
+        .stderr(predicate::str::contains("turns=10"))
+        .stderr(predicate::str::contains("max_new_tokens=16"))
         .stderr(predicate::str::contains("speedup_claim=false"))
         .stderr(predicate::str::contains("full_residency_claim=false"))
         .stderr(predicate::str::contains("legacy benchmark simulates benchmark work").not());
@@ -7149,23 +7152,25 @@ fn bench_rtx5070ti_blocks_defined_perf005_profile_without_dispatch()
     std::fs::write(&model, b"placeholder")?;
     let model_str = model.to_string_lossy().into_owned();
 
-    bitnet()
-        .args([
-            "bench",
-            "--model",
-            model_str.as_str(),
-            "--device",
-            "nvidia-rtx-5070-ti-cuda",
-            "--profile",
-            "prefill_512_decode_32",
-        ])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "PERF-005 profile `prefill_512_decode_32` is defined but does not yet have a live dispatcher",
-        ))
-        .stderr(predicate::str::contains("speedup_claim=false"))
-        .stderr(predicate::str::contains("full_residency_claim=false"));
+    for profile in ["prefill_512_decode_32", "decode_128_from_warm_context"] {
+        bitnet()
+            .args([
+                "bench",
+                "--model",
+                model_str.as_str(),
+                "--device",
+                "nvidia-rtx-5070-ti-cuda",
+                "--profile",
+                profile,
+            ])
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(format!(
+                "PERF-005 profile `{profile}` is defined but does not yet have a live dispatcher"
+            )))
+            .stderr(predicate::str::contains("speedup_claim=false"))
+            .stderr(predicate::str::contains("full_residency_claim=false"));
+    }
     Ok(())
 }
 
