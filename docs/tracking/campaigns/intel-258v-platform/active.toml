@@ -8281,7 +8281,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SWARM-LNL258V-BITNET-INTAKE-005"
-status = "in_progress"
+status = "pr_open"
+pr = 42
 branch = "codex/swarm-lnl258v-bitnet-intake-closed-watchpoints"
 stackable = false
 review_mode = "codex_premerge"
@@ -8316,6 +8317,7 @@ allowed_paths = [
   "ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json",
   "ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json",
   "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/campaigns/nvidia-5070ti/generated/status.md",
   "docs/tracking/generated/**",
 ]
 forbidden_paths = [
