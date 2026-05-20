@@ -2425,7 +2425,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-SERVE-EX-001"
-status = "in_progress"
+status = "pr_open"
+pr = 94
+head_sha = "88beaf88d7416e8ebcae07df358ac709be76d8dc"
 branch = "codex/apple-m4-inference-excellence/M4-SERVE-EX-001-dense-serve-conformance"
 stackable = false
 review_mode = "codex_premerge"
