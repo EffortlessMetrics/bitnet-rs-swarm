@@ -2760,7 +2760,7 @@ mod tests {
     }
 
     #[test]
-    fn explain_receipt_extracts_bitnet_perf005_profile_matrix() {
+    fn explain_receipt_extracts_bitnet_perf005_profile_matrix() -> Result<()> {
         let perf005_profiles = vec![
             "one_token",
             "short_decode_8",
@@ -2874,7 +2874,7 @@ mod tests {
             .profile_reviews
             .iter()
             .find(|profile| profile.profile == "short_decode_8")
-            .expect("short_decode_8 profile");
+            .ok_or_else(|| anyhow!("short_decode_8 profile missing"))?;
         assert_eq!(short_decode.decision.as_deref(), Some("not_accepted"));
         assert_eq!(short_decode.benchmark_qualified_speedup, Some(false));
         assert_eq!(short_decode.speedup_claim_allowed, Some(false));
@@ -2887,12 +2887,13 @@ mod tests {
             .profile_reviews
             .iter()
             .find(|profile| profile.profile == "decode_128_from_warm_context")
-            .expect("decode_128_from_warm_context profile");
+            .ok_or_else(|| anyhow!("decode_128_from_warm_context profile missing"))?;
         assert_eq!(warm_context.decision.as_deref(), Some("not_accepted"));
         assert_eq!(warm_context.benchmark_qualified_speedup, Some(false));
         assert_eq!(warm_context.fallback_free, Some(false));
         assert_eq!(warm_context.quality_passed, Some(false));
         assert_eq!(warm_context.blockers, vec!["profile receipt missing"]);
+        Ok(())
     }
 
     #[test]
