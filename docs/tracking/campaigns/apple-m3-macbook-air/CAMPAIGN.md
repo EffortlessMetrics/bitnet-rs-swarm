@@ -84,7 +84,7 @@ artifacts to separate strict proof items.
 | M3MBA-023 | proposed | Add a bounded M3 Air performance profile that uses completed-run timeout provenance and phase artifact retention. |
 | M3MBA-024 | proposed | Unblock secondary BitNet artifacts through authority/storage preflight evidence before any new large download. |
 | M3MBA-025 | proposed | Align M3 accepted-artifact metadata with the separate M4 strict-proof checklist without manufacturing M4 proof. |
-| M3MBA-026 | in_progress | Harden server shared-engine receipts so all three configured M3 Air labels survive CUDA-active model metadata without implying live M3 Metal, MPSGraph, M4 proof, or BitNet proof. |
+| M3MBA-026 | pr_open | #30 hardens server shared-engine receipts so all three configured M3 Air labels survive CUDA-active model metadata without implying live M3 Metal, MPSGraph, M4 proof, or BitNet proof. |
 
 Current focus: `M3MBA-026` builds on the merged `M3MBA-021` device/profile
 contract by hardening the server receipt path where configured M3 Air backend
