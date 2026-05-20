@@ -31,6 +31,7 @@
 | apple-m3-macbook-air | M3MBA-023 | M3MBA-022 | proposed |
 | apple-m3-macbook-air | M3MBA-024 | M3MBA-021 | proposed |
 | apple-m3-macbook-air | M3MBA-025 | M3MBA-021, M3MBA-024 | proposed |
+| apple-m3-macbook-air | M3MBA-026 | M3MBA-021 | merged |
 | apple-m4 | M4-002 | M4-001 | merged |
 | apple-m4 | M4-003 | M4-002 | merged |
 | apple-m4 | M4-004 | M4-003 | merged |
@@ -380,6 +381,10 @@
 | intel-258v-platform | LNL258V-OPENVINO-QUAL-RERUN-002 | LNL258V-QUAL-008 | merged |
 | intel-258v-platform | LNL258V-OV-TOKEN-001 | LNL258V-NPU-CACHE-002 | merged |
 | intel-258v-platform | LNL258V-ROUTE-015 | LNL258V-OV-TOKEN-001 | merged |
+| intel-258v-platform | SWARM-LNL258V-MIGRATE-002 | SWARM-LNL258V-MIGRATE-001 | merged |
+| intel-258v-platform | SWARM-LNL258V-MIGRATE-003 | SWARM-LNL258V-MIGRATE-002 | merged |
+| intel-258v-platform | SWARM-LNL258V-BITNET-RS-CUTOFF | LNL258V-GOAL-AUDIT-013, SWARM-LNL258V-MIGRATE-003 | merged |
+| intel-258v-platform | SWARM-LNL258V-REG-001 | SWARM-LNL258V-BITNET-RS-CUTOFF | merged |
 | intel-258v-platform | LNL258V-BITNET-INTAKE-002 | LNL258V-BITNET-INTAKE-001 | merged |
 | intel-258v-platform | LNL258V-OP-010 | LNL258V-OP-009, LNL258V-COMPARE-007 | merged |
 | intel-258v-platform | LNL258V-OP-011 | LNL258V-OP-010, LNL258V-POWER-005 | merged |
@@ -652,6 +657,7 @@
 | slm-cpu | SLM-CPU-059 | SLM-CPU-058 | merged |
 | slm-cpu | SLM-CPU-060 | SLM-CPU-059 | merged |
 | slm-cpu | SLM-CPU-061 | SLM-CPU-060 | merged |
+| slm-cpu | SLM-CPU-062 | SLM-CPU-061 | merged |
 | slm-cpu | SLM-CPU-033 | SLM-CPU-032 | merged |
 | slm-cpu | SLM-CPU-034 | SLM-CPU-033 | merged |
 | slm-cpu | SLM-CPU-035 | SLM-CPU-034 | merged |
