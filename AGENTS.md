@@ -80,6 +80,52 @@ Commit, push, PR creation, agent-owned PR branch refresh, CI/bot/reviewer
 repair, merge, and tracker closeout are agent responsibilities for those items.
 They are not human approval gates.
 
+## Lane Ownership and Collision Rules
+
+Every swarm PR must declare its lane, campaign, work item, orchestrator,
+branch, allowed paths, shared surfaces touched, and whether closeout is
+required. The durable contract lives in
+[`docs/tracking/LANE_OWNERSHIP.md`](docs/tracking/LANE_OWNERSHIP.md).
+
+The campaign manifest is the source of truth. GitHub labels are navigation
+metadata only.
+
+Required PR body fields:
+
+- Lane:
+- Campaign:
+- Work item:
+- Orchestrator:
+- Branch:
+- Base main SHA:
+- Allowed paths:
+- Shared surfaces touched:
+- Closeout required:
+
+Branch names must use:
+
+- `codex/<lane>/<work-item>-<slug>`
+- `claude/<lane>/<work-item>-<slug>`
+- `droid/<lane>/<work-item>-<slug>`
+- `dependabot/<ecosystem>/<dependency>`
+
+Hardware and runtime lanes are non-stackable by default. Do not combine A770,
+CUDA, Apple, Lunar Lake, NPU, server, model-family, and CI-routing work unless
+the campaign manifest explicitly allows the overlap.
+
+Generated dashboards are shared surfaces. Do not hand-edit them as the source
+of truth. Change the campaign-local source files, run the generator, and
+preserve other lanes' current rows when rebasing.
+
+If main moves under a PR and the only conflicts are generated dashboards, keep
+both campaign-source changes and regenerate. Do not overwrite another lane's
+state.
+
+Closing PRs is not backlog reduction. Do not close for age, stale branch,
+branch distance, old stack, or restack need. Close only when content landed,
+was clean-ported, is a true duplicate, is historical-only and ledgered, or was
+explicitly rejected after content review.
+
 ## Human Gates
 
 Human involvement is required only for true blockers:

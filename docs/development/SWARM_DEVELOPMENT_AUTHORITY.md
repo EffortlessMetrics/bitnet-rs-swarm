@@ -103,6 +103,36 @@ Closing a PR is valid only after content review proves one of:
 Old, behind, branch-chain, diagnostic-only, and needs-restack are not close
 reasons.
 
+## Lane Coordination
+
+Every active PR must name its lane, campaign, work item, orchestrator, branch,
+base main SHA, allowed paths, shared surfaces touched, and whether closeout is
+required. See:
+
+```text
+docs/tracking/LANE_OWNERSHIP.md
+```
+
+The campaign manifest and append-only campaign events are authoritative.
+GitHub labels mirror the manifest for queue visibility; they do not replace it.
+
+Use lane-qualified branch names such as:
+
+```text
+codex/<lane>/<work-item>-<slug>
+claude/<lane>/<work-item>-<slug>
+droid/<lane>/<work-item>-<slug>
+dependabot/<ecosystem>/<dependency>
+```
+
+Generated dashboards, `AGENTS.md`, `README.md`, `.github/**`, `xtask/**`, and
+hardware routing files are shared surfaces. If generated dashboards conflict,
+preserve both campaign-source changes and regenerate instead of overwriting
+another lane's state.
+
+Hardware and runtime lanes are non-stackable by default unless the campaign
+manifest explicitly allows the overlap.
+
 ## Release Handoff
 
 A release handoff starts only after:
