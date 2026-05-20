@@ -34,9 +34,13 @@
 
 ## Active Development Repository
 
-This repository is the active development and proof repository for BitNet-rs.
-Feature, hardware, diagnostic, performance, refactor, campaign, and
-agent-swarm PRs land here first.
+This repository is the high-throughput same-repo development and proof
+execution repository for BitNet-rs. Feature, hardware, diagnostic,
+performance, refactor, campaign, and agent-swarm PRs land here first.
+
+[`EffortlessMetrics/BitNet-rs`](https://github.com/EffortlessMetrics/BitNet-rs)
+remains the public source-of-truth until an explicit sync/cutover says
+otherwise.
 
 Public release and publish work is promoted to
 [`EffortlessMetrics/BitNet-rs`](https://github.com/EffortlessMetrics/BitNet-rs)

@@ -14,13 +14,19 @@ Policy impact: defines swarm-to-release handoff
 
 ## Purpose
 
-This document defines how work moves from
-`EffortlessMetrics/bitnet-rs-swarm` to the release repository,
-`EffortlessMetrics/BitNet-rs`.
+This document defines how selected work moves from
+`EffortlessMetrics/bitnet-rs-swarm` to the public source-of-truth and release
+repository, `EffortlessMetrics/BitNet-rs`.
 
-Swarm owns active development. `BitNet-rs` owns release history, tags,
-crates.io publication, release notes, stable release branches, package metadata,
-and release-blocking hotfixes.
+During migration, swarm owns high-throughput same-repo execution and proof
+work. `BitNet-rs` remains the public source-of-truth until an explicit
+sync/cutover says otherwise, and it owns release history, tags, crates.io
+publication, release notes, stable release branches, package metadata, and
+release-blocking hotfixes.
+
+Swarm-only commits do not become public-release authority until a promotion or
+sync PR names the included work, proof inputs, claim boundaries, and excluded
+work.
 
 ## Promotion Inputs
 

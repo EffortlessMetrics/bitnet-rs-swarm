@@ -9,14 +9,19 @@ for the durable agentic PR operations reference.
 
 ## Repository Role
 
-`EffortlessMetrics/bitnet-rs-swarm` is the active development and proof
-repository. Normal feature, hardware, diagnostic, performance, campaign,
-refactor, and agent-swarm work lands here first.
+`EffortlessMetrics/BitNet-rs` remains the public source-of-truth, release, and
+publish repository until an explicit sync/cutover says otherwise.
 
-`EffortlessMetrics/BitNet-rs` is the release and publish repository. Do not
-open normal development PRs there. Promote release-ready work from this repo to
-`BitNet-rs` through an explicit release-promotion PR with source swarm commits,
-included PRs, proof manifest, changelog, and excluded work.
+`EffortlessMetrics/bitnet-rs-swarm` is the high-throughput same-repo
+development and proof execution repository. Normal feature, hardware,
+diagnostic, performance, campaign, refactor, and agent-swarm work lands here
+first, then promotes back to `BitNet-rs` through an explicit
+release-promotion or sync PR with source swarm commits, included PRs, proof
+manifest, changelog, and excluded work.
+
+Do not open normal development PRs in `BitNet-rs` unless explicitly directed,
+or unless the PR is a source-repo promotion, sync, release, publish, or
+emergency hotfix.
 
 ## Repo Source-Of-Truth Stack
 

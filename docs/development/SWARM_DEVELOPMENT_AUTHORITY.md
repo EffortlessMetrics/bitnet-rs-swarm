@@ -10,12 +10,16 @@ Linked plan: `docs/release/PROMOTE_TO_BITNET_RS.md`
 Linked issues: n/a
 Linked PRs: n/a
 Support-tier impact: development authority only
-Policy impact: routes normal development to `bitnet-rs-swarm`
+Policy impact: routes new active development to `bitnet-rs-swarm` while
+  `BitNet-rs` remains source-of-truth until sync/cutover
 
 ## Purpose
 
-`EffortlessMetrics/bitnet-rs-swarm` is the active development and proof
-repository for BitNet-rs.
+`EffortlessMetrics/BitNet-rs` remains the public source-of-truth, release, and
+publish repository until an explicit sync/cutover says otherwise.
+
+`EffortlessMetrics/bitnet-rs-swarm` is the high-throughput same-repo
+development and proof execution repository for BitNet-rs.
 
 Use this repository for:
 
@@ -27,14 +31,27 @@ Use this repository for:
 - CI economics and self-hosted-runner routing;
 - agent-swarm branches and high-throughput PR processing.
 
-`EffortlessMetrics/BitNet-rs` is the release and publish repository. It owns
-tags, crates.io publication, release notes, stable release branches, package
-metadata, signed artifacts when present, and emergency release-blocking fixes.
+`BitNet-rs` owns tags, crates.io publication, release notes, stable release
+branches, package metadata, signed artifacts when present, emergency
+release-blocking fixes, and the public source-of-truth stack until cutover.
+
+## Migration Boundary
+
+Swarm is not a replacement source repo yet. Work that lands here is execution
+and proof input until a release-promotion or sync PR carries the selected
+content back to `BitNet-rs`.
+
+If swarm and source-repo state disagree before cutover, do not treat the
+swarm-only state as public-release truth. Resolve the difference through an
+explicit sync or promotion PR that names included commits, included PRs, proof
+inputs, claim boundaries, and excluded work.
 
 ## Development Rule
 
-All normal work lands here first. Do not open normal feature, hardware,
-performance, diagnostic, refactor, or campaign PRs in `BitNet-rs`.
+New active lane work lands here first. Do not open normal feature, hardware,
+performance, diagnostic, refactor, or campaign PRs in `BitNet-rs` unless
+explicitly directed, or unless the PR is a source-repo promotion, sync, release,
+publish, or emergency hotfix.
 
 When work is ready for public release, promote it through a release-promotion PR
 against `BitNet-rs` using the contract in:
@@ -42,6 +59,15 @@ against `BitNet-rs` using the contract in:
 ```text
 docs/release/PROMOTE_TO_BITNET_RS.md
 ```
+
+## CI And Runner Boundary
+
+Trusted same-repo PRs may use routed self-hosted CI. Public fork PRs must not
+run self-hosted runner jobs.
+
+Release, signing, publish, secrets-heavy workflows, full platform matrices,
+GPU/model-cache lanes, and public-fork self-hosted paths stay out of this swarm
+cutover unless a separate approved PR deliberately moves them.
 
 ## Proof And Claim Discipline
 
