@@ -1,0 +1,7 @@
+schema_version = "1.0"
+
+[[ledger]]
+id = "<ledger-id>"
+path = "policy/<file>.toml"
+owner = "<owner>"
+purpose = "Reference to live policy ledger used by Rails artifacts."
