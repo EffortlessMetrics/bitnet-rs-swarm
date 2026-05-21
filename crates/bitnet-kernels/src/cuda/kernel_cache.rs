@@ -1178,10 +1178,13 @@ mod tests {
 
     fn temp_dir() -> PathBuf {
         let seq = TEMP_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let nanos = std::time::SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_nanos());
         let dir = std::env::temp_dir().join(format!(
             "bitnet_kc_test_{}_{}_{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
+            nanos,
             seq
         ));
         std::fs::create_dir_all(&dir).unwrap();
