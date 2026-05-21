@@ -1027,7 +1027,7 @@ fn mac_status_writes_operator_readiness_receipt() -> Result<(), Box<dyn std::err
     let route_rows = receipt_json["route_state_matrix"]["rows"]
         .as_array()
         .ok_or("route_state_matrix.rows must be an array")?;
-    assert_route_matrix_live_states_have_receipts(route_rows);
+    assert_route_matrix_live_states_have_receipts(route_rows)?;
     assert!(route_rows.iter().any(|row| {
         row["route_id"] == "dense_slm_serve_loopback"
             && row["state"] == "enabled"
@@ -1133,7 +1133,7 @@ fn mac_evidence_writes_operator_summary() -> Result<(), Box<dyn std::error::Erro
     let route_rows = receipt_json["route_state_matrix"]["rows"]
         .as_array()
         .ok_or("route_state_matrix.rows must be an array")?;
-    assert_route_matrix_live_states_have_receipts(route_rows);
+    assert_route_matrix_live_states_have_receipts(route_rows)?;
     assert!(
         route_rows
             .iter()
@@ -1157,24 +1157,31 @@ fn mac_evidence_writes_operator_summary() -> Result<(), Box<dyn std::error::Erro
     Ok(())
 }
 
-fn assert_route_matrix_live_states_have_receipts(rows: &[serde_json::Value]) {
+fn assert_route_matrix_live_states_have_receipts(
+    rows: &[serde_json::Value],
+) -> Result<(), Box<dyn std::error::Error>> {
     for row in rows {
         if !matches!(row["state"].as_str(), Some("enabled" | "batch_only")) {
             continue;
         }
         let route_id = row["route_id"].as_str().unwrap_or("<unknown>");
         let evidence =
-            row["evidence"].as_array().unwrap_or_else(|| panic!("{route_id} must record evidence"));
-        assert!(!evidence.is_empty(), "{route_id} must record evidence");
+            row["evidence"].as_array().ok_or_else(|| format!("{route_id} must record evidence"))?;
+        if evidence.is_empty() {
+            return Err(format!("{route_id} must record evidence").into());
+        }
         for entry in evidence {
             let item = entry["item"].as_str().unwrap_or("<unknown>");
             let family = entry["receipt_family"].as_str().unwrap_or("<unknown>");
-            assert!(
-                entry["latest_receipt"].as_str().is_some_and(|receipt| !receipt.trim().is_empty()),
-                "{route_id} evidence {item}/{family} must resolve latest_receipt"
-            );
+            if !entry["latest_receipt"].as_str().is_some_and(|receipt| !receipt.trim().is_empty()) {
+                return Err(format!(
+                    "{route_id} evidence {item}/{family} must resolve latest_receipt"
+                )
+                .into());
+            }
         }
     }
+    Ok(())
 }
 
 #[test]
