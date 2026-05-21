@@ -1,0 +1,28 @@
+schema_version = "1.0"
+
+repo = "bitnet-rs"
+namespace = ".bitnet-rs-spec"
+
+[conventions]
+proposal_prefix = "BITNET-PROP"
+spec_prefix = "BITNET-SPEC"
+adr_prefix = "BITNET-ADR"
+lane_prefix = "BITNET-LANE"
+
+[external_namespaces]
+codex = ".codex"
+speckit = ".spec"
+claude = ".claude"
+jules = ".jules"
+
+[[ownership_rule]]
+id = "repo-native-spec-rails"
+description = "Durable proposal/spec/ADR/lane/closeout rails live under .bitnet-rs-spec."
+
+[[ownership_rule]]
+id = "external-state-awareness-only"
+description = "Artifacts in .codex, .spec, .claude, and .jules are external/tool-specific and are not owned by this namespace."
+
+[[ownership_rule]]
+id = "policy-reference-surface"
+description = "Live enforcement remains in policy/*.toml and may be referenced from this namespace."
