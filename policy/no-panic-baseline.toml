@@ -6457,6 +6457,210 @@ callee = "unwrap"
 receiver_fingerprint = "tmp.path().to_str().unwrap(),"
 
 [[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let model = supported_model("qwen2.5-0.5b-instruct-q8_0").unwrap();'
+count = 2
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let model = supported_model("qwen2.5-0.5b-instruct-q8_0").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let model = supported_model("microsoft-bitnet-b1.58-2B-4T-i2s").unwrap();'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let model = supported_model("microsoft-bitnet-b1.58-2B-4T-i2s").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let by_alias = supported_model("microsoft_bitnet_b158_2b_4t_gguf_i2s_current").unwrap();'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let by_alias = supported_model("microsoft_bitnet_b158_2b_4t_gguf_i2s_current").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let by_case = supported_model("MICROSOFT-BITNET-B1.58-2B-4T-I2S").unwrap();'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let by_case = supported_model("MICROSOFT-BITNET-B1.58-2B-4T-I2S").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = 'let contract = result.model_contract.expect("model contract summary");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = 'let contract = result.model_contract.expect("model contract summary");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("3B x86 I2_S contract");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("3B x86 I2_S contract");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("official TL2 contract");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("official TL2 contract");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let model = supported_model("qwen2.5-0.5b-instruct-q4_k_m").unwrap();'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let model = supported_model("qwen2.5-0.5b-instruct-q4_k_m").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let model = supported_model("qwen2.5-1.5b-instruct-q4_k_m").unwrap();'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let model = supported_model("qwen2.5-1.5b-instruct-q4_k_m").unwrap();'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = 'let capability = result.model_capability.expect("model capability summary");'
+count = 3
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = 'let capability = result.model_capability.expect("model capability summary");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = "let matrix = read_model_coverage_matrix(&workspace_model_coverage_matrix_path()).unwrap();"
+count = 4
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = "let matrix = read_model_coverage_matrix(&workspace_model_coverage_matrix_path()).unwrap();"
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("official BitNet coverage row");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("official BitNet coverage row");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("dense Qwen coverage row");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("dense Qwen coverage row");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("3B unsupported coverage row");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("3B unsupported coverage row");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("docs-only modern LLM coverage row");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("docs-only modern LLM coverage row");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "expect"
+snippet = '.expect("case-insensitive coverage lookup");'
+count = 1
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "expect"
+receiver_fingerprint = '.expect("case-insensitive coverage lookup");'
+
+[[baseline]]
+path = "crates/bitnet-cli/src/model_cache/mod.rs"
+family = "unwrap"
+snippet = 'let model = *supported_model("qwen2.5-0.5b-instruct-q8_0").unwrap();'
+count = 2
+
+[baseline.selector]
+kind = "method_call"
+container = ""
+callee = "unwrap"
+receiver_fingerprint = 'let model = *supported_model("qwen2.5-0.5b-instruct-q8_0").unwrap();'
+
+[[baseline]]
 path = "crates/bitnet-cli/tests/snapshot_wave10.rs"
 family = "unwrap"
 snippet = "let toml = toml::to_string_pretty(&cfg).unwrap();"
