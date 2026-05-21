@@ -407,17 +407,31 @@ mod tests {
 
     #[test]
     fn track_allocation_rejects_overflow_before_limit_check() {
-        let mut manager = MemoryManager::new(Some(usize::MAX)).expect("usize::MAX is a valid limit");
+        let manager = MemoryManager::new(Some(usize::MAX));
+        assert!(manager.is_ok(), "usize::MAX is a valid limit");
+        let mut manager = match manager {
+            Ok(manager) => manager,
+            Err(_) => return,
+        };
         manager.current_usage.store(usize::MAX, Ordering::Relaxed);
 
         let result = manager.track_allocation("overflow".to_string(), 1);
-        let err_text = result.expect_err("overflow allocation should be rejected").to_string();
+        assert!(result.is_err(), "overflow allocation should be rejected");
+        let err_text = match result {
+            Ok(()) => String::new(),
+            Err(error) => error.to_string(),
+        };
         assert!(err_text.contains("Allocation size overflow"));
     }
 
     #[test]
     fn stats_usage_percent_is_zero_when_limit_is_zero() {
-        let manager = MemoryManager::new(Some(0)).expect("zero limit is accepted");
+        let manager = MemoryManager::new(Some(0));
+        assert!(manager.is_ok(), "zero limit is accepted");
+        let manager = match manager {
+            Ok(manager) => manager,
+            Err(_) => return,
+        };
         let stats = manager.get_stats();
         assert_eq!(stats.usage_percent(), 0.0);
     }
