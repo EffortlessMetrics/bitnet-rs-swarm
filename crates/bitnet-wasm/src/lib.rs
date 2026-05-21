@@ -107,16 +107,17 @@ async fn generate_impl(_prompt: String) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wasm_bindgen_test::wasm_bindgen_test;
 
     #[cfg(feature = "inference")]
-    #[tokio::test]
+    #[wasm_bindgen_test]
     async fn generate_impl_returns_explicit_not_implemented_error() {
         let result = generate_impl("hello".to_owned()).await;
         assert_eq!(result.as_deref(), Err(INFERENCE_NOT_READY_MESSAGE));
     }
 
     #[cfg(not(feature = "inference"))]
-    #[tokio::test]
+    #[wasm_bindgen_test]
     async fn generate_impl_returns_explicit_feature_disabled_message() {
         let result = generate_impl("hello".to_owned()).await;
         assert_eq!(result.as_deref(), Ok(INFERENCE_FEATURE_DISABLED_MESSAGE));
