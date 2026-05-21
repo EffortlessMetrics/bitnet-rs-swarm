@@ -1,8 +1,11 @@
 timestamp = "2026-05-21T00:41:11Z"
-event = "in_progress"
 campaign = "intel-a770"
 item = "A770-011"
+event = "in_progress"
 branch = "codex/intel-a770/A770-011-qk256-opencl-dispatch-candidate"
 actor = "codex"
-created_utc = "2026-05-21T00:41:11Z"
-summary = "Started selected-device A770 OpenCL QK256 inline-scaled dispatch candidate while keeping CPU activation quantization and claim boundaries explicit."
+
+notes = [
+  "Started selected-device A770 OpenCL QK256 inline-scaled dispatch candidate while keeping CPU activation quantization and claim boundaries explicit.",
+  "This slice keeps activation quantization CPU-side and does not promote BitNet inference, transformer dispatch, speedup, residency, semantic quality, or completion.",
+]
