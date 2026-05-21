@@ -87,14 +87,46 @@ pub async fn generate(prompt: String) -> Result<String, JsValue> {
     generate_impl(prompt).await.map_err(|e| JsValue::from_str(&e))
 }
 
+const INFERENCE_NOT_READY_MESSAGE: &str = "Inference implementation not yet ready for WASM";
+const INFERENCE_FEATURE_DISABLED_MESSAGE: &str =
+    "bitnet-wasm built without `inference` feature. Enable it with --features inference";
+
 #[cfg(feature = "inference")]
 async fn generate_impl(prompt: String) -> Result<String, String> {
     // When inference is enabled, use the real implementation
     // This would use bitnet_inference components
-    Err("Inference implementation not yet ready for WASM".to_string())
+    let _ = prompt;
+    Err(INFERENCE_NOT_READY_MESSAGE.to_owned())
 }
 
 #[cfg(not(feature = "inference"))]
 async fn generate_impl(_prompt: String) -> Result<String, String> {
-    Ok("bitnet-wasm built without `inference` feature. Enable it with --features inference".into())
+    Ok(INFERENCE_FEATURE_DISABLED_MESSAGE.to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "inference")]
+    #[tokio::test]
+    async fn generate_impl_returns_explicit_not_implemented_error() {
+        let result = generate_impl("hello".to_owned()).await;
+        if let Err(error) = result {
+            assert_eq!(error, INFERENCE_NOT_READY_MESSAGE);
+        } else {
+            assert!(false, "expected error for inference path");
+        }
+    }
+
+    #[cfg(not(feature = "inference"))]
+    #[tokio::test]
+    async fn generate_impl_returns_explicit_feature_disabled_message() {
+        let result = generate_impl("hello".to_owned()).await;
+        if let Ok(message) = result {
+            assert_eq!(message, INFERENCE_FEATURE_DISABLED_MESSAGE);
+        } else {
+            assert!(false, "expected success for non-inference path");
+        }
+    }
 }
