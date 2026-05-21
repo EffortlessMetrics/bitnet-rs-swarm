@@ -1,7 +1,7 @@
 timestamp = "2026-05-21T19:36:00Z"
 campaign = "slm-cpu"
 item = "SLM-CPU-076"
-event = "ready"
+event = "in_progress"
 previous_status = "blocked"
 new_status = "ready"
 actor = "codex"
