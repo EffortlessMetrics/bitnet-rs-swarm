@@ -4481,7 +4481,7 @@ cases:
         );
         let proof_args: Vec<String> = answer_corpus_child_proof_args(INTEL_A770_OPENCL)
             .into_iter()
-            .map(|arg| arg.into_string().expect("utf8 proof arg"))
+            .map(|arg| arg.to_string_lossy().into_owned())
             .collect();
         assert_eq!(
             proof_args,
