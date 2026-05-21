@@ -2960,6 +2960,7 @@ commands = [
   "git diff --check",
 ]
 allowed_paths = [
+  "Cargo.lock",
   "crates/bitnet-cli/**",
   "crates/bitnet-transformer/**",
   "ci/slm-cpu/**",
