@@ -1124,6 +1124,9 @@ fn ensure_dir(dir: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     // ── Helper constructors ──────────────────────────────────────────
 
@@ -1174,9 +1177,12 @@ mod tests {
     }
 
     fn temp_dir() -> PathBuf {
+        let seq = TEMP_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
         let dir = std::env::temp_dir().join(format!(
-            "bitnet_kc_test_{}",
-            std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            "bitnet_kc_test_{}_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
+            seq
         ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
