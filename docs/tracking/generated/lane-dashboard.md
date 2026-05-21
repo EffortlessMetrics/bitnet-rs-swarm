@@ -41,11 +41,11 @@
 | intel-npu | Intel NPU validation | NPU-013 | Device-node detection is not inference. |
 | llama3-8b-158 | Llama3 8B 1.58 supported-model candidate | LLAMA3-158-000 | Do not commit model binaries. |
 | model-artifacts | Model artifact answer authority | MODEL-ARTIFACT-002 | Do not weaken CPU, CUDA, Apple, NPU, SLM, server, or quality gates. |
-| nvidia-5070ti | NVIDIA RTX 5070 Ti validation | CUDA-MODEL-017A | CUDA visibility is not kernel execution. |
+| nvidia-5070ti | NVIDIA RTX 5070 Ti validation | CUDA-MODEL-017 | CUDA visibility is not kernel execution. |
 | official-bitnet-2b | Official Microsoft BitNet 2B productization | OFFICIAL-2B-000 | Do not commit model binaries. |
 | qwen36 | Qwen3.6 governed model family | QWEN36-DOCS-000 | Qwen3.6 registration is not native BitNet-rs inference support. |
 | server-real-inference | Server real inference | SERVER-005 | Do not reintroduce simulated inference. |
-| slm-cpu | Small dense model CPU proof | SLM-CPU-076 | Do not edit BitNet QK256/I2_S kernels. |
+| slm-cpu | Small dense model CPU proof | SLM-CPU-021 | Do not edit BitNet QK256/I2_S kernels. |
 | tl1 | TL1 ARM table lookup route | TL1-PLAN-000 | TL1 registration is not native BitNet-rs inference support. |
 | tl2 | TL2 x86 table lookup route | TL2-DOCS-000 | TL2 registration is not native BitNet-rs inference support. |
 | tracker-infra | Tracker infrastructure | TRACKER-003 | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
