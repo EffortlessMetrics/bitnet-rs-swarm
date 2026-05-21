@@ -2834,9 +2834,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-074"
-status = "pr_open"
+status = "merged"
 pr = 219
-head_sha = "4a06eacbb73f01d73e0a83712cdef3336cf5c8f3"
+head_sha = "9f8b37c7e2bbd114ac32faa9089e9c3911222af1"
+merge_sha = "91634fb46366674f178fd51dde87af8feeb379cb"
 branch = "codex/slm-cpu-074-packed-q8-sidecar-instrumentation"
 stackable = false
 review_mode = "codex_premerge"
