@@ -1,0 +1,12 @@
+timestamp = "2026-05-21T21:17:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-076"
+event = "merged"
+actor = "codex"
+pr = 229
+merge_sha = "3436ba44928865157be1cd94f03858ebc3a01d12"
+notes = [
+  "Merged SLM-CPU-076 packed Q8_0 sidecar instrumentation receipt bridge.",
+  "Warm-session aggregate receipts now include bounded dense_q8_sidecar_instrumentation counters while preserving eager_f32_candle as the default runtime and packed sidecar execution as opt-in exact-tensor scope.",
+  "No speedup, sustained 8250U throughput, Q4/Q5 runtime support, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim is made.",
+]
