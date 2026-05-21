@@ -10498,7 +10498,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GOAL-AUDIT-014"
-status = "in_progress"
+status = "pr_open"
+pr = 107
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-014-swarm-main-sync"
 stackable = false
 review_mode = "codex_premerge"
