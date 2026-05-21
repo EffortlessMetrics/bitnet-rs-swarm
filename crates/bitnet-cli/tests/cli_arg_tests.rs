@@ -9298,10 +9298,12 @@ fn answer_corpus_dry_run_accepts_rtx5070ti_cuda_lane() {
 /// `answer-corpus` can target the A770 OpenCL diagnostic route without promoting answer claims.
 #[cfg(feature = "full-cli")]
 #[test]
-fn answer_corpus_dry_run_accepts_a770_opencl_lane() {
-    let dir = tempfile::tempdir().expect("tempdir");
+fn answer_corpus_dry_run_accepts_a770_opencl_lane() -> Result<(), Box<dyn std::error::Error>> {
+    let dir = tempfile::tempdir()?;
     let out = dir.path().join("a770-answer-corpus.json");
     let corpus = workspace_path("ci/quality/bitnet-answer-corpus.yaml");
+    let corpus_arg = corpus.to_string_lossy().into_owned();
+    let out_arg = out.to_string_lossy().into_owned();
 
     bitnet()
         .args([
@@ -9312,15 +9314,15 @@ fn answer_corpus_dry_run_accepts_a770_opencl_lane() {
             "--model",
             "missing.gguf",
             "--corpus",
-            corpus.to_str().unwrap(),
+            corpus_arg.as_str(),
             "--json-out",
-            out.to_str().unwrap(),
+            out_arg.as_str(),
         ])
         .assert()
         .success();
 
-    let receipt: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(out).expect("read receipt")).expect("json receipt");
+    let receipt_bytes = std::fs::read(out)?;
+    let receipt: serde_json::Value = serde_json::from_slice(&receipt_bytes)?;
     assert_eq!(receipt["artifact_kind"], "bitnet_a770_opencl_answer_diagnostic_corpus");
     assert_eq!(receipt["backend"]["requested_backend"], "intel-a770-opencl");
     assert_eq!(receipt["backend"]["selected_backend"], "intel-a770-opencl");
@@ -9339,6 +9341,7 @@ fn answer_corpus_dry_run_accepts_a770_opencl_lane() {
     assert_eq!(receipt["claim_boundary"]["a770_speedup_claimed"], false);
     assert_eq!(receipt["speedup_claim"], false);
     assert_eq!(receipt["quality_summary"]["not_run"], 5);
+    Ok(())
 }
 
 /// `answer-corpus` must not treat Apple Metal as the local-answer path.
