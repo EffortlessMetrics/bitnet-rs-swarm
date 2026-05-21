@@ -131,7 +131,7 @@
 | apple-m4-inference-excellence | M4-BENCH-007 | M4-BENCH-004, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-ROUTE-MATRIX-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-BITNET-EX-007, M4-SERVE-EX-002, M4-OPS-SLO-001 | merged |
 | apple-m4-inference-excellence | M4-WORKLOAD-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-SERVE-EX-002, M4-ROUTE-MATRIX-001, M4-REPRO-003 | pr_open |
-| apple-m4-inference-excellence | M4-EVIDENCE-REPLAY-001 | M4-RECEIPT-001, M4-CI-001, M4-REPRO-001 | pr_open |
+| apple-m4-inference-excellence | M4-EVIDENCE-REPLAY-001 | M4-RECEIPT-001, M4-CI-001, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-TREND-001 | M4-CI-001, M4-BENCH-003, M4-BITNET-REG-001, M4-ACCURACY-007, M4-BITNET-EX-012 | proposed |
 | apple-m4-inference-excellence | M4-MODEL-LIFECYCLE-001 | M4-REPRO-002, M4-OPS-SLO-001, M4-CI-001 | proposed |
 | apple-m4-inference-excellence | M4-COMPAT-001 | M4-SETUP-001, M4-MODEL-LIFECYCLE-001, M4-CI-001, M4-REPRO-001 | proposed |
@@ -472,6 +472,7 @@
 | intel-a770 | A770-009 | A770-008 | merged |
 | intel-a770 | A770-010 | A770-009 | merged |
 | intel-a770 | A770-011 | A770-010 | merged |
+| intel-a770 | A770-015 | A770-014 | in_progress |
 | intel-a770 | A770-012 | A770-011 | merged |
 | intel-a770 | A770-013 | A770-012 | merged |
 | intel-a770 | A770-014 | A770-013 | merged |
@@ -564,6 +565,7 @@
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
 | nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-016 | ready |
+| nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | blocked |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
 | nvidia-5070ti | CUDA-UX-010 | CUDA-UX-008, CUDA-UX-009 | merged |
