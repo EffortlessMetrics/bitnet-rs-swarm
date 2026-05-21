@@ -12,6 +12,11 @@ Linked PRs: n/a
 Support-tier impact: n/a
 Policy impact: CI routing and guardrail policy updates per repo
 
+Authority note: this is a rollout planning document. It does not supersede a
+repository's proposal, spec, ADR, active goal, campaign tracker, PR template, or
+cutover/sync policy. Each repository must land its own source-of-truth update
+before treating this plan as implementation authority.
+
 ## Reference implementation
 
 Use **HL7v2 PR #73** as the reference pattern:
@@ -30,8 +35,15 @@ Operational lessons to preserve:
 
 For each migrated repo:
 
-- Source repo `EffortlessMetrics/<repo>` remains canonical release mirror until cutover.
-- Swarm repo `EffortlessMetrics/<repo>-swarm` is public, trusted same-repo swarm CI/work.
+- Before a documented cutover, source repo `EffortlessMetrics/<repo>` remains
+  the source-of-truth repository and swarm changes are CI/workflow candidates
+  that still need an explicit promotion or sync path.
+- After a documented cutover, swarm repo `EffortlessMetrics/<repo>-swarm` is
+  the active development authority. The source repo is limited to release,
+  publish, emergency hotfix, final source-of-truth correction, or explicit
+  promotion/sync work as recorded by that repo's cutover docs.
+- Swarm repo `EffortlessMetrics/<repo>-swarm` is public, trusted same-repo
+  swarm CI/work.
 
 Self-hosted routing permissions:
 
@@ -232,7 +244,8 @@ Do not merge when any are true:
 - hosted fallback removed
 - branch protection changed in same PR
 - release/publish/signing workflows touched
-- source-affecting changes are only landed in swarm
+- source-affecting changes bypass the repo-specific cutover, promotion, or sync
+  policy
 
 ## Merge conditions
 
