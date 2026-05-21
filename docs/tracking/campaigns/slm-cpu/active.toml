@@ -2629,7 +2629,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-070"
-status = "ready"
+status = "pr_open"
+pr = 129
+head_sha = "ef3fa7a658315fb84ce25a0ab0a0c88cd31dd6ea"
 branch = "codex/slm-cpu-070-packed-q8-block-local-matvec"
 stackable = false
 review_mode = "codex_premerge"
