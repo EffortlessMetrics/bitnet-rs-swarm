@@ -130,7 +130,7 @@
 | apple-m4-inference-excellence | M4-SETUP-001 | M4-REPRO-002, M4-STABILITY-002, M4-OPS-UX-003 | merged |
 | apple-m4-inference-excellence | M4-BENCH-007 | M4-BENCH-004, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-ROUTE-MATRIX-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-BITNET-EX-007, M4-SERVE-EX-002, M4-OPS-SLO-001 | merged |
-| apple-m4-inference-excellence | M4-WORKLOAD-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-SERVE-EX-002, M4-ROUTE-MATRIX-001, M4-REPRO-003 | pr_open |
+| apple-m4-inference-excellence | M4-WORKLOAD-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-SERVE-EX-002, M4-ROUTE-MATRIX-001, M4-REPRO-003 | merged |
 | apple-m4-inference-excellence | M4-EVIDENCE-REPLAY-001 | M4-RECEIPT-001, M4-CI-001, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-TREND-001 | M4-CI-001, M4-BENCH-003, M4-BITNET-REG-001, M4-ACCURACY-007, M4-BITNET-EX-012 | proposed |
 | apple-m4-inference-excellence | M4-MODEL-LIFECYCLE-001 | M4-REPRO-002, M4-OPS-SLO-001, M4-CI-001 | proposed |
@@ -426,6 +426,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-018 | LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | SWARM-LNL258V-MIGRATE-001 | LNL258V-GOAL-AUDIT-018 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-019 | SWARM-LNL258V-MIGRATE-001 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-020 | LNL258V-GOAL-AUDIT-019 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
