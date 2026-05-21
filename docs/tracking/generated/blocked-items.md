@@ -125,8 +125,8 @@
 | apple-m4-inference-excellence | M4-SERVE-EX-001 | M4-REPRO-001, M4-BENCH-003 | merged |
 | apple-m4-inference-excellence | M4-SERVE-EX-002 | M4-SERVE-EX-001, M4-BITNET-EX-007 | merged |
 | apple-m4-inference-excellence | M4-SERVE-EX-003 | M4-SERVE-EX-001 | merged |
-| apple-m4-inference-excellence | M4-SERVE-EX-004 | M4-SERVE-EX-001, M4-SERVE-EX-003, M4-CONTEXT-001 | pr_open |
-| apple-m4-inference-excellence | M4-CI-001 | M4-GATE-HYGIENE-001, M4-RECEIPT-001, M4-STABILITY-003 | proposed |
+| apple-m4-inference-excellence | M4-SERVE-EX-004 | M4-SERVE-EX-001, M4-SERVE-EX-003, M4-CONTEXT-001 | merged |
+| apple-m4-inference-excellence | M4-CI-001 | M4-GATE-HYGIENE-001, M4-RECEIPT-001, M4-STABILITY-003 | pr_open |
 | apple-m4-inference-excellence | M4-SETUP-001 | M4-REPRO-002, M4-STABILITY-002, M4-OPS-UX-003 | merged |
 | apple-m4-inference-excellence | M4-BENCH-007 | M4-BENCH-004, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-ROUTE-MATRIX-001 | M4-DENSE-CHAT-001, M4-BITNET-EX-006, M4-BITNET-EX-007, M4-SERVE-EX-002, M4-OPS-SLO-001 | proposed |
@@ -423,7 +423,7 @@
 | intel-258v-platform | LNL258V-POWER-010 | LNL258V-GOAL-AUDIT-014, LNL258V-POWER-009 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-015 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-BITNET-INTAKE-005 | LNL258V-BITNET-INTAKE-004, LNL258V-GOAL-AUDIT-017 | merged |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-018 | LNL258V-BITNET-INTAKE-005 | pr_open |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-018 | LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
@@ -560,6 +560,7 @@
 | nvidia-5070ti | CUDA-MODEL-014B | CUDA-MODEL-013 | merged |
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
+| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-016 | ready |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
 | nvidia-5070ti | CUDA-UX-010 | CUDA-UX-008, CUDA-UX-009 | merged |
@@ -678,7 +679,7 @@
 | slm-cpu | SLM-CPU-069 | SLM-CPU-068 | merged |
 | slm-cpu | SLM-CPU-070 | SLM-CPU-069 | merged |
 | slm-cpu | SLM-CPU-071 | SLM-CPU-070 | merged |
-| slm-cpu | SLM-CPU-072 | SLM-CPU-071 | ready |
+| slm-cpu | SLM-CPU-072 | SLM-CPU-071 | pr_open |
 | slm-cpu | SLM-CPU-033 | SLM-CPU-032 | merged |
 | slm-cpu | SLM-CPU-034 | SLM-CPU-033 | merged |
 | slm-cpu | SLM-CPU-035 | SLM-CPU-034 | merged |
