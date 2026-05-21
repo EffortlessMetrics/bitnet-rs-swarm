@@ -25,6 +25,7 @@
 | A770-013 | merged | #176 | `codex/intel-a770/A770-013-cli-opencl-route-receipts` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Wire the CLI OpenCL feature into the real BitNet model/QK256 dispatch stack and add strict A770 OpenCL QK256 route receipt fields without promoting BitNet inference, quality, residency, speed, or trusted-partial acceleration. |
 | A770-014 | merged | #198 | `codex/intel-a770/A770-014-model-contract-route-alignment` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Align the official BitNet 2B I2_S model contract registry and model-artifact matrix with the committed diagnostic A770 OpenCL QK256 route, preserving diagnostic-only status and forbidding answer quality, residency, speed, full inference, or trusted-partial claims. |
 | A770-016 | merged | #220 | `codex/intel-a770/A770-016-answer-corpus-proof-route` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Bind A770 OpenCL answer-corpus child runs to the committed BitNet model contract and diagnostic QK256 route metadata without promoting live answer quality, residency, performance, or full-inference claims. |
+| A770-017 | in_progress | TBD | `codex/intel-a770/A770-017-opencl-runtime-detection` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Align startup OpenCL runtime detection with the in-process dynamic OpenCL probe so A770 answer-corpus child runs can reach the committed diagnostic route without depending on the external clinfo tool. |
 
 ## Hard Constraints
 
