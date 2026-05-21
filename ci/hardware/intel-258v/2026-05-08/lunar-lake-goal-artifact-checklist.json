@@ -4,7 +4,7 @@
   "proof_stage": "objective_artifact_mapping_no_inference",
   "created_utc": "2026-05-21T02:45:00Z",
   "machine_id": "intel-258v",
-  "source_revision": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4",
+  "source_revision": "99f5fc47d0aed614ca0fd15a93379ed0995e4610",
   "audited_objective": "Make Lunar Lake an excellent profile-aware local inference appliance with a reliable dense Qwen route, earned OpenVINO GPU/NPU route promotion, protected BitNet CPU reference behavior, strict regression, and explicit claim boundaries.",
   "completion_decision": "not_complete",
   "excellent_support_ready": false,
@@ -405,7 +405,13 @@
         "lunar-lake-low-power-battery-plan.json",
         "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/116",
         "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/117",
-        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/109"
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/109",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/118",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/120",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/112",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/122",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/123",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/121"
       ],
       "notes": [
         "The platform is well instrumented and profile-aware, but not yet excellent across all requested profiles.",
@@ -413,7 +419,13 @@
         "The post-A770-006-closeout command surface carries appliance ask receipts, low_power blocked-ask and power-profile runbook guidance through readiness/regression/comparison, route/model identity readiness, BitNet CPU reference surface gates, Arc/NPU bounded proof surface gates, semantic-intake watchpoints, adjacent A770 OpenCL smoke/matmul parity status, runbook discoverability, and the current power and thermal gaps.",
         "Remaining gaps are low_power promotion, battery-mode power evidence, thermal readings, and full BitNet accelerator proof.",
         "POWER-010 makes the blocked low_power physical-run plan machine-readable, but final boring support remains not complete until POWER-006 battery-mode evidence and benchmark-qualified power advantage exist.",
-        "SLM-CPU-067/#109 is recorded only as adjacent SLM CPU runtime-support work on current swarm main; it does not change Lunar Lake route evidence or completion status."
+        "SLM-CPU-067/#109 is recorded only as adjacent SLM CPU runtime-support work on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "CUDA-QWEN25-OPS-004/#118 is recorded only as adjacent CUDA tracker closeout work on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "SLM-CPU-068/#120 is recorded only as adjacent SLM CPU timing-classification work on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "M4-SERVE-EX-002/#112 is recorded only as adjacent Apple M4 local-server failure-semantics work on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "SLM-CPU-067/#122 is recorded only as adjacent SLM CPU tracker event cleanup on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "QWEN3 repeated-comparator plan #123 is recorded only as adjacent Qwen3 planning work on current swarm main; it does not change Lunar Lake route evidence or completion status.",
+        "SLM-CPU-069/#121 is recorded only as adjacent SLM CPU packed-Q8 locality follow-up planning on current swarm main; it does not change Lunar Lake route evidence or completion status."
       ]
     }
   ],
@@ -469,6 +481,48 @@
       "merge_sha": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4",
       "status": "adjacent_support_update_not_lunar_lake_route_evidence",
       "claim_boundary": "no Lunar Lake inference, route promotion, speedup, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "CUDA-QWEN25-OPS-004",
+      "pr": 118,
+      "merge_sha": "684a0cd01cb40e677e9d982104d9422f772a0f71",
+      "status": "adjacent_cuda_tracker_closeout_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-068",
+      "pr": 120,
+      "merge_sha": "287ef74a8e8345cb26429bddd191cb712467c45d",
+      "status": "adjacent_slm_cpu_timing_classification_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "M4-SERVE-EX-002",
+      "pr": 112,
+      "merge_sha": "a3aed519ef85522af9dcb7f67b4d30af9fc3198e",
+      "status": "adjacent_apple_m4_server_failure_semantics_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-067-event-trim",
+      "pr": 122,
+      "merge_sha": "6ace3cfe6fb05a8e5903b3d6010e25f35161788e",
+      "status": "adjacent_slm_cpu_tracker_cleanup_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "QWEN3-REPEATED-COMPARATOR-PLAN",
+      "pr": 123,
+      "merge_sha": "2dc3cfad7dd0a50d647f25146fe947170c4e5ddf",
+      "status": "adjacent_qwen3_planning_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-069",
+      "pr": 121,
+      "merge_sha": "99f5fc47d0aed614ca0fd15a93379ed0995e4610",
+      "status": "adjacent_slm_cpu_packed_q8_locality_plan_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, broad quality, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior claim"
     }
   ]
 }

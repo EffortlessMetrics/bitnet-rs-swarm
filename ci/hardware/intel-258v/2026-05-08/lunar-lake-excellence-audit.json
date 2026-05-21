@@ -4,7 +4,7 @@
   "proof_stage": "completion_audit_no_inference",
   "created_utc": "2026-05-21T02:45:00Z",
   "machine_id": "intel-258v",
-  "source_revision": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4",
+  "source_revision": "99f5fc47d0aed614ca0fd15a93379ed0995e4610",
   "audited_goal": "Profile-aware Lunar Lake local inference appliance with Qwen CPU control route, earned OpenVINO GPU/NPU routes, protected BitNet CPU reference, strict regression, and explicit claim boundaries.",
   "goal_status": "operator_ready_profile_aware_with_gpu_interactive_and_npu_warm_resident_promoted_low_power_blocked",
   "excellent_support_ready": false,
@@ -83,7 +83,19 @@
     "last_merged_low_power_battery_plan_closeout_pr": 117,
     "last_merged_low_power_battery_plan_closeout_merge_sha": "e6958473a5b8ef93ae9b3026a5fb9a2100e1a7aa",
     "last_swarm_slm_cpu_q8_hook_pr": 109,
-    "last_swarm_slm_cpu_q8_hook_merge_sha": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4"
+    "last_swarm_slm_cpu_q8_hook_merge_sha": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4",
+    "last_swarm_cuda_qwen25_ops_pr": 118,
+    "last_swarm_cuda_qwen25_ops_merge_sha": "684a0cd01cb40e677e9d982104d9422f772a0f71",
+    "last_swarm_slm_cpu_q8_timing_pr": 120,
+    "last_swarm_slm_cpu_q8_timing_merge_sha": "287ef74a8e8345cb26429bddd191cb712467c45d",
+    "last_swarm_apple_m4_serve_failure_pr": 112,
+    "last_swarm_apple_m4_serve_failure_merge_sha": "a3aed519ef85522af9dcb7f67b4d30af9fc3198e",
+    "last_swarm_slm_cpu_event_trim_pr": 122,
+    "last_swarm_slm_cpu_event_trim_merge_sha": "6ace3cfe6fb05a8e5903b3d6010e25f35161788e",
+    "last_swarm_qwen3_repeated_comparator_plan_pr": 123,
+    "last_swarm_qwen3_repeated_comparator_plan_merge_sha": "2dc3cfad7dd0a50d647f25146fe947170c4e5ddf",
+    "last_swarm_slm_cpu_q8_locality_plan_pr": 121,
+    "last_swarm_slm_cpu_q8_locality_plan_merge_sha": "99f5fc47d0aed614ca0fd15a93379ed0995e4610"
   },
   "command_surface": {
     "ask": {
@@ -514,7 +526,13 @@
     "power_010_merged_event": "docs/tracking/campaigns/intel-258v-platform/events/2026-05-21T022330Z-LNL258V-POWER-010-merged.toml",
     "power_010_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/116",
     "power_010_closeout_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/117",
-    "swarm_slm_cpu_q8_hook_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/109"
+    "swarm_slm_cpu_q8_hook_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/109",
+    "swarm_cuda_qwen25_ops_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/118",
+    "swarm_slm_cpu_q8_timing_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/120",
+    "swarm_apple_m4_serve_failure_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/112",
+    "swarm_slm_cpu_event_trim_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/122",
+    "swarm_qwen3_repeated_comparator_plan_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/123",
+    "swarm_slm_cpu_q8_locality_plan_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/121"
   },
   "claim_boundary": {
     "new_inference_run": false,
