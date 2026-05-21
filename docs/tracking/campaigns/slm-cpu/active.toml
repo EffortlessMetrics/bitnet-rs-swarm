@@ -2583,7 +2583,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-069"
-status = "in_progress"
+status = "pr_open"
+pr = 124
+head_sha = "9e62be6d0b7b0d4d968944dbc69badefa6317be7"
 branch = "codex/slm-cpu-069-packed-q8-locality-root-cause"
 stackable = false
 review_mode = "codex_premerge"
