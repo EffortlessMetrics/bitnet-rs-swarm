@@ -123,7 +123,7 @@
 | apple-m4-inference-excellence | M4-RELIABILITY-001 | M4-STABILITY-001, M4-STABILITY-002, M4-BITNET-EX-005 | merged |
 | apple-m4-inference-excellence | M4-OBS-001 | M4-RECEIPT-001, M4-RELIABILITY-001, M4-SERVE-EX-002 | proposed |
 | apple-m4-inference-excellence | M4-SERVE-EX-001 | M4-REPRO-001, M4-BENCH-003 | merged |
-| apple-m4-inference-excellence | M4-SERVE-EX-002 | M4-SERVE-EX-001, M4-BITNET-EX-007 | pr_open |
+| apple-m4-inference-excellence | M4-SERVE-EX-002 | M4-SERVE-EX-001, M4-BITNET-EX-007 | merged |
 | apple-m4-inference-excellence | M4-SERVE-EX-003 | M4-SERVE-EX-001 | proposed |
 | apple-m4-inference-excellence | M4-SERVE-EX-004 | M4-SERVE-EX-001, M4-SERVE-EX-003, M4-CONTEXT-001 | proposed |
 | apple-m4-inference-excellence | M4-CI-001 | M4-GATE-HYGIENE-001, M4-RECEIPT-001, M4-STABILITY-003 | proposed |
@@ -419,6 +419,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-013 | LNL258V-GOAL-AUDIT-012 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-014 | LNL258V-GOAL-AUDIT-013 | merged |
 | intel-258v-platform | LNL258V-POWER-010 | LNL258V-GOAL-AUDIT-014, LNL258V-POWER-009 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-015 | LNL258V-POWER-010 | pr_open |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
@@ -668,7 +669,8 @@
 | slm-cpu | SLM-CPU-066 | SLM-CPU-065 | superseded |
 | slm-cpu | SLM-CPU-067 | SLM-CPU-066 | merged |
 | slm-cpu | SLM-CPU-068 | SLM-CPU-067 | merged |
-| slm-cpu | SLM-CPU-069 | SLM-CPU-068 | ready |
+| slm-cpu | SLM-CPU-069 | SLM-CPU-068 | pr_open |
+| slm-cpu | SLM-CPU-070 | SLM-CPU-069 | ready |
 | slm-cpu | SLM-CPU-033 | SLM-CPU-032 | merged |
 | slm-cpu | SLM-CPU-034 | SLM-CPU-033 | merged |
 | slm-cpu | SLM-CPU-035 | SLM-CPU-034 | merged |
