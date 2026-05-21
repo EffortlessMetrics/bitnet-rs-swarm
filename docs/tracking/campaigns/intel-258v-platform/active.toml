@@ -11042,7 +11042,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GOAL-AUDIT-020"
-status = "in_progress"
+status = "pr_open"
+pr = 216
+head_sha = "6ed991c241a63b3e4476e23eb919883b27a965f9"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-020-openvino-env-overrides"
 stackable = false
 review_mode = "codex_premerge"
