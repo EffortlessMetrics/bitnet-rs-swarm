@@ -236,13 +236,13 @@ fn remove_nested_field(receipt: &mut Value, object_field: &str, field: &str) {
 }
 
 #[test]
-fn committed_cuda_smoke_receipt_validates() {
+fn committed_cuda_smoke_receipt_validates() -> Result<(), Box<dyn std::error::Error>> {
     let receipt: Value = serde_json::from_str(include_str!(
         "../../../ci/hardware/windows-9950x3d-rtx5070ti/2026-05-06/cuda-smoke.json"
-    ))
-    .unwrap();
+    ))?;
 
-    validate_cuda_smoke_receipt_json(&receipt).unwrap();
+    validate_cuda_smoke_receipt_json(&receipt)?;
+    Ok(())
 }
 
 #[test]
@@ -1955,9 +1955,8 @@ fn dense_gguf_qwen_short_decode_rejects_32_tokens_without_qwen3_capture_profile(
 }
 
 #[test]
-fn dense_gguf_qwen_warm_decode_128_receipt_validates()
--> Result<(), Box<dyn std::error::Error>> {
-    let receipt = valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt();
+fn dense_gguf_qwen_warm_decode_128_receipt_validates() -> Result<(), Box<dyn std::error::Error>> {
+    let receipt = valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt()?;
 
     validate_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt_json(&receipt)?;
     validate_dense_regular_llm_cuda_receipt_json(&receipt).unwrap_err();
@@ -1966,8 +1965,9 @@ fn dense_gguf_qwen_warm_decode_128_receipt_validates()
 }
 
 #[test]
-fn dense_gguf_qwen_warm_decode_128_requires_warm_context_reuse() {
-    let mut receipt = valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt();
+fn dense_gguf_qwen_warm_decode_128_requires_warm_context_reuse()
+-> Result<(), Box<dyn std::error::Error>> {
+    let mut receipt = valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt()?;
     receipt["warm_context_proof"]["warm_context_reused"] = json!(false);
 
     let err = validate_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt_json(&receipt)
@@ -1975,6 +1975,7 @@ fn dense_gguf_qwen_warm_decode_128_requires_warm_context_reuse() {
         .to_string();
 
     assert!(err.contains("warm_context_reused"), "unexpected error: {err}");
+    Ok(())
 }
 
 #[test]
@@ -4752,15 +4753,16 @@ fn update_single_decode_token_count(receipt: &mut Value, count: usize) {
     receipt["short_decode_proof"]["generated_tokens_count"] = json!(count_u64);
     receipt["short_decode_proof"]["cpu_generated_token_ids"] = json!(token_ids.clone());
     receipt["short_decode_proof"]["cuda_generated_token_ids"] = json!(token_ids);
-    receipt["short_decode_proof"]["cpu_generated_token_ids_sha256"] = json!(format!("{:064x}", 444));
-    receipt["short_decode_proof"]["cuda_generated_token_ids_sha256"] = json!(format!("{:064x}", 444));
+    receipt["short_decode_proof"]["cpu_generated_token_ids_sha256"] =
+        json!(format!("{:064x}", 444));
+    receipt["short_decode_proof"]["cuda_generated_token_ids_sha256"] =
+        json!(format!("{:064x}", 444));
     receipt["short_decode_proof"]["steps"] = json!(steps);
     receipt["logits_transfer_reduction"]["generated_tokens_count"] = json!(count_u64);
     receipt["logits_transfer_reduction"]["full_logits_download_bytes"] = json!(transfer_bytes);
     receipt["logits_transfer_reduction"]["actual_device_to_host_bytes"] = json!(transfer_bytes);
     receipt["logits_transfer_reduction"]["top_k_result_bytes_total_floor"] = json!(count_u64 * 24);
-    receipt["logits_transfer_reduction"]["selected_token_bytes_total_floor"] =
-        json!(count_u64 * 4);
+    receipt["logits_transfer_reduction"]["selected_token_bytes_total_floor"] = json!(count_u64 * 4);
     receipt["kernel_stats"][0]["invocations"] = json!(transformer_invocations);
     receipt["kernel_stats"][0]["kernel_launches"] = json!(transformer_invocations);
     receipt["kernel_stats"][0]["device_to_host_bytes"] = json!(transfer_bytes);
@@ -4795,7 +4797,8 @@ fn valid_dense_gguf_qwen_short_decode_32_capture_receipt() -> Value {
     receipt
 }
 
-fn valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt() -> Value {
+fn valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt()
+-> Result<Value, Box<dyn std::error::Error>> {
     let mut receipt = valid_dense_gguf_qwen_short_decode_32_capture_receipt();
     update_single_decode_token_count(&mut receipt, 128);
     receipt["artifact_kind"] = json!("dense_gguf_qwen_warm_decode_strict_cuda_proof");
@@ -4808,9 +4811,9 @@ fn valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt() -> Value {
         json!("dense_gguf_q8_0_f16_qwen_warm_decode_contract");
     let proof = receipt
         .as_object_mut()
-        .unwrap()
+        .ok_or("warm-decode fixture must be a JSON object")?
         .remove("short_decode_proof")
-        .unwrap();
+        .ok_or("warm-decode fixture must contain short_decode_proof")?;
     receipt["warm_decode_proof"] = proof;
     receipt["warm_decode_proof"]["proof_scope"] = json!("qwen3_strict_warm_decode_128_greedy");
     receipt["warm_decode_proof"]["profile_id"] = json!("qwen3_warm_decode_128");
@@ -4880,7 +4883,7 @@ fn valid_dense_gguf_qwen_warm_decode_strict_cuda_proof_receipt() -> Value {
     receipt["claim_boundary"]["persistent_session_residency_claimed"] = json!(false);
     receipt["claim_boundary"]["full_cuda_residency_claimed"] = json!(false);
     receipt["parity"]["fixture_id"] = json!("qwen3-0.6b-instruct-q8_0-warm-decode-128-greedy");
-    receipt
+    Ok(receipt)
 }
 
 fn valid_dense_gguf_qwen_warm_session_strict_cuda_proof_receipt() -> Value {
