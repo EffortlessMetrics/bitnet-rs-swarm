@@ -240,6 +240,13 @@ mod tests {
     }
 
     #[test]
+    fn test_matmul_batch_broadcast() {
+        let a = Shape::new(vec![2, 1, 3, 4]);
+        let b = Shape::new(vec![1, 7, 4, 5]);
+        assert_eq!(matmul_shape(&a, &b), Some(Shape::new(vec![2, 7, 3, 5])));
+    }
+
+    #[test]
     fn test_matmul_incompatible() {
         let a = Shape::new(vec![3, 4]);
         let b = Shape::new(vec![5, 6]);
