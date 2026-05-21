@@ -47,10 +47,7 @@ mod report_lines {
     use super::{ProfileContract, StartupContractReport};
 
     pub(super) fn info_lines(report: &StartupContractReport) -> [String; 2] {
-        [
-            report.contract.summary(),
-            format!("Profile summary: {}", report.profile_summary()),
-        ]
+        [report.contract.summary(), format!("Profile summary: {}", report.profile_summary())]
     }
 
     pub(super) fn warning_lines(contract: &ProfileContract) -> Vec<String> {
