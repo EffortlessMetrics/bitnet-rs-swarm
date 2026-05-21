@@ -1,6 +1,21 @@
 //! Workgroup size tuning grid for wgpu compute kernel dispatch.
 
-use bitnet_nvidia::NVIDIA_1D_WORKGROUP_CANDIDATES;
+mod nvidia_grid {
+    use super::WorkgroupConfig;
+    use bitnet_nvidia::NVIDIA_1D_WORKGROUP_CANDIDATES;
+
+    pub fn default_candidates() -> Vec<WorkgroupConfig> {
+        NVIDIA_1D_WORKGROUP_CANDIDATES.iter().map(config_from_size).collect()
+    }
+
+    fn config_from_size(size: &u32) -> WorkgroupConfig {
+        WorkgroupConfig::new([*size, 1, 1], label_for_size(*size))
+    }
+
+    fn label_for_size(size: u32) -> String {
+        format!("nvidia_{size}")
+    }
+}
 
 /// A candidate workgroup configuration for kernel dispatch.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -41,10 +56,7 @@ impl TuningGrid {
 
     /// NVIDIA-optimized defaults: warp-aligned sizes (multiples of 32).
     pub fn nvidia_defaults() -> Self {
-        let candidates = NVIDIA_1D_WORKGROUP_CANDIDATES
-            .iter()
-            .map(|&size| WorkgroupConfig::new([size, 1, 1], format!("nvidia_{size}")))
-            .collect();
+        let candidates = nvidia_grid::default_candidates();
         Self { candidates }
     }
 
