@@ -530,7 +530,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-017"
-status = "in_progress"
+status = "pr_open"
+pr = 235
+head_sha = "ee0b0fc9389b30d5cefdd1122c229f9715bb09b7"
 branch = "codex/intel-a770/A770-017-opencl-runtime-detection"
 stackable = false
 review_mode = "codex_premerge"
