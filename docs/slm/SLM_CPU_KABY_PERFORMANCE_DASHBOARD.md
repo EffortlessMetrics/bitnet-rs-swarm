@@ -930,6 +930,29 @@ real_qwen3_generated_id_receipts_regenerated = false
 speedup_claim = false
 ```
 
+SLM-CPU-071 is the next evidence gate for that prototype. It must regenerate or
+ingest the real i5-8250U Qwen3-0.6B Q8_0 before/after warm-session artifact pack
+after SLM-CPU-070 and classify the opt-in exact-tensor path against the eager
+F32 Candle oracle. The comparison must preserve:
+
+```text
+model SHA
+strict GGUF tokenizer authority
+prompt IDs
+generated IDs
+decoded text
+selected CPU backend/kernel identity
+dense hook-selection identity
+fallback_used=false
+```
+
+Only after those fields match may the artifact classify bounded timing as
+improved, regressed, or inconclusive. Eager F32 Candle remains the default
+runtime unless a later promotion gate accepts behavior-preserving timing
+evidence. SLM-CPU-071 must not claim sustained throughput, broad answer quality,
+Q4/Q5 runtime support, server execution, accelerator execution, Qwen3.5 support,
+or BitNet QK256 changes.
+
 ## Claim Boundary
 
 This dashboard may be used to claim:
