@@ -6,7 +6,7 @@ actor = "codex"
 previous_status = "in_progress"
 new_status = "in_progress"
 pr = 196
-head_sha = "ff1a0223bf035373e0ab1fefdc7172a53ce4e205"
+head_sha = "7d0f939ccc83a43968e8b3bc856f4aa3226a5571"
 branch = "codex/apple-m4-inference-excellence/M4-ROUTE-MATRIX-001-route-states"
 
 notes = [
