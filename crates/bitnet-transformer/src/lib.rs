@@ -2322,6 +2322,82 @@ mod tests {
     }
 
     #[test]
+    fn exact_q8_sidecar_runtime_hook_matches_reference_when_rows_split_q8_blocks() -> Result<()> {
+        let device = Device::Cpu;
+        let matrix_rows = 2;
+        let matrix_cols = 40;
+        let q8_block_size = 32;
+        let q8_block_count = 3;
+        let scales = [0.125f32, 0.25, 0.5];
+        let mut weight_values = Vec::new();
+        let mut packed = Vec::new();
+
+        for block_idx in 0..q8_block_count {
+            packed.extend_from_slice(&f32_to_fp16(scales[block_idx]).to_le_bytes());
+            for offset in 0..q8_block_size {
+                let flat_idx = block_idx * q8_block_size + offset;
+                let q = ((flat_idx % 17) as i8) - 8;
+                packed.push(q as u8);
+                if flat_idx < matrix_rows * matrix_cols {
+                    weight_values.push(scales[block_idx] * f32::from(q));
+                }
+            }
+        }
+
+        let weight = Tensor::from_vec(weight_values, (matrix_rows, matrix_cols), &device)?;
+        let linear = Linear::new(weight, None);
+        let input_values: Vec<f32> = (0..matrix_cols)
+            .map(|idx| match idx % 6 {
+                0 => -1.25,
+                1 => -0.75,
+                2 => -0.25,
+                3 => 0.25,
+                4 => 0.75,
+                _ => 1.25,
+            })
+            .collect();
+        let input = Tensor::from_vec(input_values, (1, 1, matrix_cols), &device)?;
+
+        let mut hooks = DenseLinearRuntimeHookRegistry::default();
+        hooks.insert(
+            SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR.to_string(),
+            DenseLinearRuntimeHookDescriptor {
+                tensor_name: "blk.0.attn_q.weight".to_string(),
+                role: "AttentionQ".to_string(),
+                sidecar_payload_sha256: Some("sha256:test".to_string()),
+                packed_q8_payload: Some(DenseLinearPackedQ8Payload {
+                    tensor_name: "blk.0.attn_q.weight".to_string(),
+                    packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+                    q8_block_size,
+                    q8_block_count,
+                    matrix_rows,
+                    matrix_cols,
+                }),
+                runtime_compute_enabled: true,
+            },
+        );
+
+        let Some(output) = maybe_forward_dense_q8_sidecar_linear(
+            &input,
+            &linear,
+            SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
+            &hooks,
+        )?
+        else {
+            return Err(BitNetError::Validation(
+                "expected exact Q8 sidecar runtime hook to run".to_string(),
+            ));
+        };
+
+        assert_eq!(output.dims(), &[1, 1, matrix_rows]);
+        assert_eq!(
+            output.flatten_all()?.to_vec1::<f32>()?,
+            linear.forward(&input)?.flatten_all()?.to_vec1::<f32>()?
+        );
+        Ok(())
+    }
+
+    #[test]
     fn attention_score_qk_inputs_match_reference_precision_contract() -> Result<()> {
         let device = Device::Cpu;
         let query =

@@ -49,6 +49,7 @@
   "behavior_gate": {
     "code_level_dense_linear_reference_test": "cargo test --locked -p bitnet-transformer --no-default-features --features cpu exact_q8_sidecar_runtime_hook_matches_dense_linear_reference",
     "code_level_multiblock_reference_test": "cargo test --locked -p bitnet-transformer --no-default-features --features cpu exact_q8_sidecar_runtime_hook_matches_reference_across_q8_blocks",
+    "code_level_row_split_reference_test": "cargo test --locked -p bitnet-transformer --no-default-features --features cpu exact_q8_sidecar_runtime_hook_matches_reference_when_rows_split_q8_blocks",
     "matches_eager_f32_dense_linear_reference": true,
     "real_qwen3_prompt_ids_compared": false,
     "real_qwen3_generated_ids_compared": false,

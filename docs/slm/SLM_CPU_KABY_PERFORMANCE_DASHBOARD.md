@@ -925,6 +925,7 @@ opt_in_candidate_path = packed_q8_sidecar
 exact_tensor = layers.0.attention.q_proj.weight
 scale_decode = once per contiguous Q8 block segment
 code_level_reference_tests = passed
+row_split_q8_block_reference_test = passed
 real_qwen3_generated_id_receipts_regenerated = false
 speedup_claim = false
 ```
