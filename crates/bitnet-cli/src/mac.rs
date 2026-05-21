@@ -3740,7 +3740,8 @@ fn apple_m4_evidence_replay_dry_run_receipt(
             mismatched_artifact_count
         );
     }
-    let run_identity = apple_m4_model_free_run_identity_json(
+    let run_identity = replay_run_identity_json(
+        manifest,
         "apple_m4_evidence_replay_dry_run",
         "mac evidence replay --dry-run",
         "evidence_replay_bundle_audit",
@@ -3863,6 +3864,24 @@ fn audit_replay_bundle_paths(
         }));
     }
     Ok(audited)
+}
+
+fn replay_run_identity_json(
+    manifest: &serde_json::Value,
+    artifact_kind: &str,
+    command_class: &str,
+    evidence_scope: &str,
+) -> serde_json::Value {
+    let mut run_identity =
+        apple_m4_model_free_run_identity_json(artifact_kind, command_class, evidence_scope);
+    if run_identity["git"]["commit"].as_str().is_none_or(|commit| commit == "unknown")
+        && let Some(commit) = manifest["git_identity"]["commit"].as_str()
+    {
+        run_identity["git"]["commit"] = serde_json::Value::String(commit.to_string());
+        run_identity["git"]["commit_source"] =
+            serde_json::Value::String("bundle_manifest".to_string());
+    }
+    run_identity
 }
 
 fn resolve_replay_bundle_path(bundle: &Path, path_text: &str) -> PathBuf {
@@ -7701,21 +7720,13 @@ fn apple_m4_host_os_version_source() -> &'static str {
 }
 
 fn command_output_trimmed(program: &str, args: &[&str]) -> Option<String> {
-    #[cfg(unix)]
-    {
-        let output = Command::new(program).args(args).output().ok()?;
-        if !output.status.success() {
-            return None;
-        }
-        let text = String::from_utf8(output.stdout).ok()?;
-        let trimmed = text.trim();
-        if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
+    let output = Command::new(program).args(args).output().ok()?;
+    if !output.status.success() {
+        return None;
     }
-    #[cfg(not(unix))]
-    {
-        let _ = (program, args);
-        None
-    }
+    let text = String::from_utf8(output.stdout).ok()?;
+    let trimmed = text.trim();
+    if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
 }
 
 fn mac_ask_operator_summary_line(model: &VerifiedCachedModel, json_out: &Path) -> String {
