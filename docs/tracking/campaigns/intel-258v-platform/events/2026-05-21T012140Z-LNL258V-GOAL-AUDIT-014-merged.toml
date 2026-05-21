@@ -1,0 +1,17 @@
+campaign = "intel-258v-platform"
+timestamp = "2026-05-21T01:21:40Z"
+event = "merged"
+item = "LNL258V-GOAL-AUDIT-014"
+pr = 107
+head_sha = "f0b3952600e08ab61e3bd86fa01f0a84c2fb2a14"
+merge_sha = "5a7d0cc43602568d936b5928316407e9b9ec71c1"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-014-swarm-main-sync"
+actor = "codex"
+summary = "Merged PR #107, refreshing the Lunar Lake goal audit after swarm main sync."
+
+notes = [
+  "The merged audit records current swarm main after history import #104, model-cache fix #100, and Qwen3 comparator support-bundle lock #99.",
+  "These updates remain repo/support-gate evidence and do not change Lunar Lake route evidence or model promotion state.",
+  "Excellent support remains not complete because LNL258V-POWER-006 is blocked on real battery-mode low_power telemetry, energy-proxy evidence, measured thermal readings, and benchmark-qualified power advantage.",
+  "The PR made no inference, model load, fallback behavior change, route promotion, speedup claim, power-advantage claim, battery-mode evidence claim, measured-temperature claim, native accelerator claim, acceleration claim, broad quality claim, stale BitNet claim, A770 semantic PR merged-to-main claim, Qwen3 Lunar Lake model promotion claim, or BitNet QK256/I2_S behavior-change claim.",
+]
