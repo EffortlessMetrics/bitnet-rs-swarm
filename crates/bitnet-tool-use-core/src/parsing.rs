@@ -56,9 +56,7 @@ mod json_parsing {
     pub(super) fn parse_call_json(s: &str) -> Option<ToolCall> {
         let v: serde_json::Value = serde_json::from_str(s.trim()).ok()?;
         let name = v.get("name")?.as_str()?.to_string();
-        let arguments = v
-            .get("arguments")
-            .map_or_else(|| "{}".to_string(), ToString::to_string);
+        let arguments = v.get("arguments").map_or_else(|| "{}".to_string(), ToString::to_string);
         Some(ToolCall { name, arguments })
     }
 }
