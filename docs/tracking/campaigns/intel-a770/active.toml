@@ -679,7 +679,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-016"
-status = "in_progress"
+status = "pr_open"
+pr = 220
+head_sha = "6365895afe6bccfe6205fb6d2701581de7fdcca0"
 branch = "codex/intel-a770/A770-016-answer-corpus-proof-route"
 stackable = false
 review_mode = "codex_premerge"
