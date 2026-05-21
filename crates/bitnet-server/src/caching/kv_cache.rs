@@ -788,6 +788,20 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "OOB f32 slice")]
+    fn test_f32_slice_panics_on_offset_overflow() {
+        let pool = MemoryPool::new(64);
+        let _ = pool.f32_slice(usize::MAX - 3, 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "OOB f32 slice")]
+    fn test_f32_slice_mut_panics_on_offset_overflow() {
+        let mut pool = MemoryPool::new(64);
+        let _ = pool.f32_slice_mut(usize::MAX - 3, 2);
+    }
+
+    #[test]
     fn test_allocate_basic() {
         let mut pool = MemoryPool::new(1024);
 
