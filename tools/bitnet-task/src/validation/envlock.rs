@@ -48,10 +48,42 @@ fn has_envlock_definition(root: &Path, path: &Path) -> Result<bool> {
 fn first_envlock_line(path: &Path) -> Result<usize> {
     let content = fs::read_to_string(path)?;
     for (line_no, line) in content.lines().enumerate() {
-        let compact = line.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+        let code = line.split("//").next().unwrap_or("").trim();
+        if code.is_empty() {
+            continue;
+        }
+        let compact = code.chars().filter(|c| !c.is_whitespace()).collect::<String>();
         if compact.contains("OnceLock<Mutex<()>>") {
             return Ok(line_no + 1);
         }
     }
     Ok(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn envlock_detection_ignores_comment_only_mentions() -> Result<()> {
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("sample.rs");
+        fs::write(&path, "// static ENV: OnceLock<Mutex<()>> = OnceLock::new();\n")?;
+
+        assert!(!has_envlock_definition(dir.path(), &path)?);
+        Ok(())
+    }
+
+    #[test]
+    fn envlock_line_reports_code_not_comment() -> Result<()> {
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("sample.rs");
+        fs::write(
+            &path,
+            "// static ENV: OnceLock<Mutex<()>> = OnceLock::new();\n\nstatic ENV: OnceLock<Mutex<()>> = OnceLock::new();\n",
+        )?;
+
+        assert_eq!(first_envlock_line(&path)?, 3);
+        Ok(())
+    }
 }
