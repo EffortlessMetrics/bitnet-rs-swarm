@@ -729,4 +729,28 @@ mod property_tests {
         assert!(in_place_logits[1] < in_place_logits[3]);
         Ok(())
     }
+
+    #[test]
+    fn sample_in_place_matches_seeded_stochastic_sample() -> Result<()> {
+        let config = SamplingConfig {
+            temperature: 0.8,
+            top_k: 4,
+            top_p: 0.75,
+            repetition_penalty: 1.15,
+            seed: Some(123),
+        };
+        let logits = [0.2, 1.4, -0.1, 0.9, 0.6, 1.1];
+        let context = [1, 3, 1];
+
+        let mut by_copy = SamplingStrategy::new(config.clone());
+        let expected = by_copy.sample(&logits, &context)?;
+
+        let mut in_place_logits = logits;
+        let mut in_place = SamplingStrategy::new(config);
+        let actual = in_place.sample_in_place(&mut in_place_logits, &context)?;
+
+        assert_eq!(actual, expected);
+        assert!((actual as usize) < logits.len());
+        Ok(())
+    }
 }
