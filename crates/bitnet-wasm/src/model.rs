@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 
-use bitnet_common::{BitNetConfig, BitNetError};
+use bitnet_common::{BitNetError, ModelError};
 use bitnet_inference::InferenceEngine;
 
 use crate::memory::MemoryManager;
@@ -200,23 +200,21 @@ impl WasmBitNetModel {
         if let Some(max_mem) = max_memory
             && model_data.len() > max_mem
         {
-            return Err(BitNetError::Model(
-                format!(
+            return Err(BitNetError::Model(ModelError::LoadingFailed {
+                reason: format!(
                     "Model size ({} bytes) exceeds memory limit ({} bytes)",
                     model_data.len(),
                     max_mem
-                )
-                .into(),
-            ));
+                ),
+            }));
         }
 
-        Err(BitNetError::NotImplemented(
-            format!(
+        Err(BitNetError::Model(ModelError::LoadingFailed {
+            reason: format!(
                 "WASM inference model loading is not implemented yet for format '{}' and tokenizer '{}'. This path intentionally returns an explicit not-implemented error instead of placeholder success.",
                 config.format_hint, config.tokenizer_type
-            )
-            .into(),
-        ))
+            ),
+        }))
     }
 }
 
