@@ -1024,7 +1024,9 @@ fn mac_status_writes_operator_readiness_receipt() -> Result<(), Box<dyn std::err
     assert_eq!(receipt_json["claim_boundary"]["dense_slm_and_bitnet_evidence_separated"], true);
     assert_eq!(receipt_json["claim_boundary"]["full_metal_inference_claimed"], false);
     assert_eq!(receipt_json["route_state_matrix"]["work_item"], "M4-ROUTE-MATRIX-001");
-    let route_rows = receipt_json["route_state_matrix"]["rows"].as_array().unwrap();
+    let route_rows = receipt_json["route_state_matrix"]["rows"]
+        .as_array()
+        .ok_or("route_state_matrix.rows must be an array")?;
     assert!(route_rows.iter().any(|row| {
         row["route_id"] == "dense_slm_serve_loopback"
             && row["state"] == "enabled"
