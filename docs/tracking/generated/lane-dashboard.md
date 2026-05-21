@@ -13,7 +13,7 @@
 | apple-m4-continuity | Apple M4 continuity | M4-CONT-005 | This is an M4 Mac mini local campaign; do not execute MacBook artifact sweeps or MacBook receipts here. |
 | apple-m4-dense-slm-regression | Apple M4 dense SLM regression guardrails | M4-SLM-REG-005 | Do not reopen the completed apple-m4, apple-m4-slm-answer, apple-m4-productization, or apple-m4-slm-performance campaigns. |
 | apple-m4-durable-inference-evidence | Apple M4 durable inference evidence | M4-DURABLE-005 | This is an M4 Mac mini evidence-refresh campaign. |
-| apple-m4-inference-excellence | Apple M4 inference excellence | M4-SERVE-EX-004 | This is an M4 Mac mini inference-excellence campaign. |
+| apple-m4-inference-excellence | Apple M4 inference excellence | M4-CI-001 | This is an M4 Mac mini inference-excellence campaign. |
 | apple-m4-inference-ops | Apple M4 inference ops | M4-INF-OPS-004 | This is an M4 Mac mini operations campaign. |
 | apple-m4-local-answer | Apple M4 local answer usability | M4-BITNET-WARM-002 | Do not reopen the completed apple-m4 or apple-m4-operational campaigns. |
 | apple-m4-local-server | Apple M4 local server | M4-SERVE-005 | This is an M4 Mac mini dense SLM service campaign. |
@@ -36,7 +36,7 @@
 | falcon-e-family | Falcon-E Family compact 1.58-bit lane | FE-000 | Do not commit model binaries. |
 | falcon3-family | Falcon3 multi-size BitNet-family onboarding | F3-000 | Do not commit model binaries. |
 | i2s | I2_S productization | I2S-DOCS-000 | Do not change runtime code in docs-only I2_S tracker slices. |
-| intel-258v-platform | Intel 258V platform validation | LNL258V-GOAL-AUDIT-018 | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
+| intel-258v-platform | Intel 258V platform validation | LNL258V-POWER-006 | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
 | intel-a770 | Intel Arc A770 validation | A770-013 | OpenCL-first for native A770 proof. |
 | intel-npu | Intel NPU validation | NPU-013 | Device-node detection is not inference. |
 | llama3-8b-158 | Llama3 8B 1.58 supported-model candidate | LLAMA3-158-000 | Do not commit model binaries. |
