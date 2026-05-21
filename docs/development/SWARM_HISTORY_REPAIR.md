@@ -37,7 +37,7 @@ kept active swarm PR branches related to the old swarm history.
 | Import PR head | `b375b5281df92b4750847bfb05a6eebaeca0e3c6` | Guarded source release workflows before the final merge. |
 | Import PR merge commit | `d6f57e922d15008568c6b742b13b9a4c6aed314d` | Real merge commit for `EffortlessMetrics/bitnet-rs-swarm#104`; not squash-merged. |
 | Current source main checked during this closeout | `3d2660b85b123fb8448b9561717a0147e4ff421a` | `EffortlessMetrics/BitNet-rs#6164`, currently reachable from swarm `origin/main`. |
-| Current swarm main checked during this closeout | `97e154e26bbc9c4b279800ad1078891fc97f50b5` | Current `EffortlessMetrics/bitnet-rs-swarm/main` at closeout branch creation. |
+| Current swarm main checked during this closeout | `60bbf7fe1c2f6d9946fa3638cdcd3cfb6b9fdbe9` | Current `EffortlessMetrics/bitnet-rs-swarm/main` after refreshing the closeout branch. |
 
 ## Required Ancestry Invariants
 
@@ -94,11 +94,10 @@ This snapshot is for coordination only. It is not a closure authority.
 | #168 | `wasm: harden memory arithmetic and zero-size progress handling` | behind |
 | #167 | `bitnet-models: make head/group ratios exact and tested` | behind |
 | #166 | `wasm-inference/WASM-002: centralize generate messages and add branch tests` | behind |
-| #165 | `M4-SERVE-EX-003: close local safety defaults tracker` | blocked |
-| #164 | `docs(a770): close A770-012` | blocked |
+| #165 | `M4-SERVE-EX-003: close local safety defaults tracker` | dirty |
 | #163 | `kernels: harden matmul size checks to prevent usize overflow` | behind |
-| #161 | `docs(slm-cpu): add SLM-CPU-071 timing gate` | behind |
-| #159 | `docs(lunar-lake): close stale BitNet watchpoints` | behind |
+| #161 | `docs(slm-cpu): add SLM-CPU-071 timing gate` | dirty |
+| #159 | `docs(lunar-lake): close stale BitNet watchpoints` | dirty |
 | #153 | `Refactor tool call parsing into SRP-focused submodules` | behind |
 | #152 | `Refactor SamplingStrategy::sample_in_place into SRP helper methods` | behind |
 | #149 | `Refactor partition_work into SRP helpers` | behind |
