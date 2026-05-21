@@ -1,0 +1,18 @@
+campaign = "slm-cpu"
+timestamp = "2026-05-21T05:40:18Z"
+event = "merged"
+item = "SLM-CPU-070"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 129
+head_sha = "05f89de29308ef205af5d723b65e401240d6ad18"
+merge_sha = "67e63d7b2b0f2b2c3cdc8697f71b43e41695cfd0"
+branch = "codex/slm-cpu-070-packed-q8-block-local-matvec"
+actor = "codex"
+summary = "Recorded PR #129 merge for the exact-tensor packed Q8_0 block-local matvec prototype."
+
+notes = [
+  "PR #129 prototypes block-local packed Q8_0 scale handling for the exact `layers.0.attention.q_proj.weight` sidecar.",
+  "The default eager F32 path remains unchanged; packed sidecar execution remains opt-in and exact-tensor scoped.",
+  "No speedup, broad dense runtime, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim was added.",
+]
