@@ -118,7 +118,11 @@ impl MinimalJson {
             return Err("expected JSON value".to_string());
         }
 
-        if value.starts_with('"') { json_string::parse_json_string(value) } else { Ok(value.to_string()) }
+        if value.starts_with('"') {
+            json_string::parse_json_string(value)
+        } else {
+            Ok(value.to_string())
+        }
     }
 
     fn quote_is_escaped_at(s: &str, quote_index: usize) -> bool {

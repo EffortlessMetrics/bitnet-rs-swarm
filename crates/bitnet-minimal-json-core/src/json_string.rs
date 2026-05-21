@@ -20,9 +20,8 @@ pub(super) fn parse_json_string(value: &str) -> Result<String, String> {
 }
 
 fn decode_escape(chars: &mut std::str::Chars<'_>, decoded: &mut String) -> Result<(), String> {
-    let escaped = chars
-        .next()
-        .ok_or_else(|| "unterminated escape sequence in JSON string".to_string())?;
+    let escaped =
+        chars.next().ok_or_else(|| "unterminated escape sequence in JSON string".to_string())?;
     match escaped {
         '"' => decoded.push('"'),
         '\\' => decoded.push('\\'),
@@ -60,7 +59,8 @@ fn decode_unicode_escape(chars: &mut std::str::Chars<'_>) -> Result<char, String
 fn read_hex_escape(chars: &mut std::str::Chars<'_>) -> Result<u32, String> {
     let mut code = 0_u32;
     for _ in 0..4 {
-        let digit = chars.next().ok_or_else(|| "short Unicode escape in JSON string".to_string())?;
+        let digit =
+            chars.next().ok_or_else(|| "short Unicode escape in JSON string".to_string())?;
         code = (code << 4)
             | digit.to_digit(16).ok_or_else(|| "invalid Unicode escape digit".to_string())?;
     }
