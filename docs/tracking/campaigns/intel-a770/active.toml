@@ -778,7 +778,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-018"
-status = "in_progress"
+status = "pr_open"
+pr = 242
+head_sha = "f8919442bb362189768016fa37cb12d9bd94391f"
 branch = "codex/intel-a770/A770-018-live-answer-corpus-diagnostic"
 stackable = false
 review_mode = "codex_premerge"
