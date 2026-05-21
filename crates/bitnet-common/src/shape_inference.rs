@@ -94,7 +94,7 @@ pub fn matmul_shape(a: &Shape, b: &Shape) -> Option<Shape> {
 }
 
 mod matmul_srp {
-    use super::{broadcast_shape, Shape};
+    use super::{Shape, broadcast_shape};
 
     pub(super) struct MatmulDims {
         pub(super) m: usize,
