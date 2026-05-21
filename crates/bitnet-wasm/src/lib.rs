@@ -112,21 +112,19 @@ mod tests {
     #[tokio::test]
     async fn generate_impl_returns_explicit_not_implemented_error() {
         let result = generate_impl("hello".to_owned()).await;
-        if let Err(error) = result {
-            assert_eq!(error, INFERENCE_NOT_READY_MESSAGE);
-        } else {
-            assert!(false, "expected error for inference path");
-        }
+        assert_eq!(
+            result.expect_err("expected error for inference path"),
+            INFERENCE_NOT_READY_MESSAGE
+        );
     }
 
     #[cfg(not(feature = "inference"))]
     #[tokio::test]
     async fn generate_impl_returns_explicit_feature_disabled_message() {
         let result = generate_impl("hello".to_owned()).await;
-        if let Ok(message) = result {
-            assert_eq!(message, INFERENCE_FEATURE_DISABLED_MESSAGE);
-        } else {
-            assert!(false, "expected success for non-inference path");
-        }
+        assert_eq!(
+            result.expect("expected success for non-inference path"),
+            INFERENCE_FEATURE_DISABLED_MESSAGE
+        );
     }
 }
