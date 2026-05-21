@@ -2834,7 +2834,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-074"
-status = "ready"
+status = "in_progress"
 branch = "codex/slm-cpu-074-packed-q8-sidecar-instrumentation"
 stackable = false
 review_mode = "codex_premerge"
