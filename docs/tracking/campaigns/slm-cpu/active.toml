@@ -2679,7 +2679,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-071"
-status = "ready"
+status = "pr_open"
+pr = 161
+head_sha = "36f7425bae32b6025ceafd3d57445fa8d2c4516a"
 branch = "codex/slm-cpu-071-post070-timing-gate"
 stackable = false
 review_mode = "codex_premerge"

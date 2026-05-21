@@ -1,0 +1,16 @@
+timestamp = "2026-05-21T07:08:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-071"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+actor = "codex"
+pr = 161
+branch = "codex/slm-cpu-071-post070-timing-gate"
+head_sha = "36f7425bae32b6025ceafd3d57445fa8d2c4516a"
+summary = "Opened the post-SLM-CPU-070 real Qwen3 timing gate PR."
+notes = [
+  "The PR records that the block-local packed Q8_0 matvec prototype needs a real i5-8250U before/after warm-session artifact before any timing interpretation.",
+  "The gate preserves eager_f32_candle as the default runtime and requires generated-ID, decoded-text, tokenizer, backend, model SHA, dense hook-selection identity, and fallback=false equivalence.",
+  "No speedup, sustained throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
