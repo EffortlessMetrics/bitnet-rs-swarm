@@ -336,7 +336,11 @@ impl ProgressiveLoader {
 
         // Calculate progress
         let progress = if let Some(total) = self.total_size {
-            if total == 0 { 1.0 } else { (self.loaded_size as f64 / total as f64).min(1.0) }
+            if total == 0 {
+                1.0
+            } else {
+                (self.loaded_size as f64 / total as f64).min(1.0)
+            }
         } else {
             0.0
         };
@@ -374,7 +378,11 @@ impl ProgressiveLoader {
     #[wasm_bindgen]
     pub fn get_progress(&self) -> f64 {
         if let Some(total) = self.total_size {
-            if total == 0 { 1.0 } else { (self.loaded_size as f64 / total as f64).min(1.0) }
+            if total == 0 {
+                1.0
+            } else {
+                (self.loaded_size as f64 / total as f64).min(1.0)
+            }
         } else {
             0.0
         }
@@ -393,29 +401,23 @@ impl ProgressiveLoader {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn track_allocation_rejects_overflow_before_limit_check() {
-        let manager_result = MemoryManager::new(Some(usize::MAX));
-        assert!(manager_result.is_ok());
-        let mut manager = if let Ok(m) = manager_result { m } else { return; };
+        let mut manager = MemoryManager::new(Some(usize::MAX)).expect("usize::MAX is a valid limit");
         manager.current_usage.store(usize::MAX, Ordering::Relaxed);
 
         let result = manager.track_allocation("overflow".to_string(), 1);
-        assert!(result.is_err());
-        let err_text = if let Err(err) = result { err.to_string() } else { String::new() };
+        let err_text = result.expect_err("overflow allocation should be rejected").to_string();
         assert!(err_text.contains("Allocation size overflow"));
     }
 
     #[test]
     fn stats_usage_percent_is_zero_when_limit_is_zero() {
-        let manager_result = MemoryManager::new(Some(0));
-        assert!(manager_result.is_ok());
-        let manager = if let Ok(m) = manager_result { m } else { return; };
+        let manager = MemoryManager::new(Some(0)).expect("zero limit is accepted");
         let stats = manager.get_stats();
         assert_eq!(stats.usage_percent(), 0.0);
     }
