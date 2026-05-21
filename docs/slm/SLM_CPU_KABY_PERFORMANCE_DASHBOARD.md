@@ -1037,3 +1037,83 @@ behavior remains identical.
 This gate does not claim packed Q8_0 execution, speedup, sustained throughput,
 broad answer quality, Q4/Q5 runtime support, server execution, accelerator
 execution, Qwen3.5 support, or BitNet QK256 changes.
+
+## SLM-CPU-074 Packed Q8 Sidecar Instrumentation
+
+SLM-CPU-074 adds aggregate runtime counters for the opt-in exact-tensor
+`layers.0.attention.q_proj.weight` packed Q8_0 sidecar path. The counters are
+available from `bitnet-transformer` through
+`dense_q8_sidecar_instrumentation_snapshot()` and can be reset with
+`reset_dense_q8_sidecar_instrumentation()`.
+
+The instrumentation measures the costs that SLM-CPU-073 identified as the next
+blocking surface:
+
+```text
+selector dispatch calls and elapsed ns
+selector selected / declined / error counts
+input materialization calls, elapsed ns, and value count
+bias extraction calls, elapsed ns, and value count
+packed matvec calls, elapsed ns, input rows, and output values
+output tensor construction calls and elapsed ns
+```
+
+The default production path remains `eager_f32_candle`. Packed Q8_0 sidecar
+execution remains opt-in, payload-gated, and exact-tensor scoped. These counters
+are diagnostic evidence only; they do not claim speedup, sustained 8250U
+throughput, broad answer quality, Q4/Q5 runtime support, server execution,
+accelerator execution, Qwen3.5 support, or BitNet QK256 changes.
+
+## SLM-CPU-075 Instrumentation Artifact Boundary
+
+SLM-CPU-075 records the first post-instrumentation diagnostic artifact:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-21/qwen3-slm-cpu-075-packed-q8-instrumentation-artifact.json
+```
+
+The artifact consumes the SLM-CPU-074 counter surface and keeps the prior
+SLM-CPU-072 before/after receipts as the behavior oracle. It classifies selector
+dispatch, input materialization, bias extraction, packed matvec compute, and
+output tensor construction as instrumented surfaces, but it does not claim real
+end-to-end counter values because the warm-session receipt path does not yet
+snapshot and serialize the transformer-side aggregate counters around a bounded
+Qwen3 Q8_0 run.
+
+The resulting blocker is narrow: add a warm-session sidecar instrumentation
+receipt bridge before using these counters to drive another packed-Q8 runtime
+promotion or optimization. That bridge must reset the counters before the
+opt-in exact-tensor run, snapshot them afterward, and prove generated IDs,
+decoded text, model SHA, tokenizer source and strictness, selected CPU backend
+identity, dense hook identity, and `fallback_used=false` remain unchanged.
+
+The default path remains `eager_f32_candle`; packed Q8_0 sidecar execution
+remains opt-in and exact-tensor scoped to `layers.0.attention.q_proj.weight`.
+SLM-CPU-075 makes no speedup, sustained-throughput, broad answer-quality,
+Q4/Q5 runtime-support, server, accelerator, Qwen3.5, or BitNet QK256 claim.
+
+## SLM-CPU-076 Warm-Session Instrumentation Bridge
+
+SLM-CPU-076 bridges the packed Q8_0 sidecar instrumentation counters into the
+Qwen3 Q8_0 warm-session aggregate receipt. The warm-session command resets the
+`bitnet-transformer` counters before the prompt loop and snapshots them after
+the bounded run, then records the result under
+`dense_q8_sidecar_instrumentation`.
+
+The receipt bridge serializes:
+
+```text
+selector dispatch / selected / declined / error counters
+input materialization calls, elapsed ns, and value count
+bias materialization calls, elapsed ns, and value count
+packed matvec calls, elapsed ns, input rows, and output values
+output tensor construction calls and elapsed ns
+```
+
+It also records that the sidecar path remains opt-in and exact-tensor scoped to
+`layers.0.attention.q_proj.weight`, while the default runtime remains
+`eager_f32_candle`. The bridge is diagnostic only. It does not enable packed
+Q8_0 sidecar execution by default, broaden the hook beyond the exact tensor,
+or claim speedup, sustained throughput, broad answer quality, Q4/Q5 runtime
+support, server execution, accelerator execution, Qwen3.5 support, or BitNet
+QK256 changes.

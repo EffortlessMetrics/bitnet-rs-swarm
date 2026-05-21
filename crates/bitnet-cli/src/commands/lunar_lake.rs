@@ -9034,7 +9034,9 @@ pub fn build_low_power_battery_plan_with_created_utc(
 fn low_power_battery_plan_required_artifacts() -> Vec<String> {
     [
         "lunar-lake-low-power-battery-before.json",
-        "battery-mode low_power route/profile receipts for dense_slm_default_cpu, dense_slm_openvino_gpu_candidate, and dense_slm_openvino_npu_candidate",
+        "lunar-lake-operator-ask-battery-low-power-cpu.json",
+        "lunar-lake-operator-ask-battery-low-power-gpu.json",
+        "lunar-lake-operator-ask-battery-low-power-npu.json",
         "lunar-lake-low-power-battery-after.json",
         LOW_POWER_ENERGY_PROXY_FILE,
         POWER_PROFILE_EVIDENCE_FILE,
@@ -9091,9 +9093,16 @@ fn low_power_battery_plan_commands() -> Vec<LowPowerBatteryPlanCommand> {
             step: "route_profile_samples".to_string(),
             purpose: "Run the battery-mode low_power route/profile matrix without hidden fallback.".to_string(),
             command: vec![
-                "run low_power samples for dense_slm_default_cpu, dense_slm_openvino_gpu_candidate, and dense_slm_openvino_npu_candidate with fallback_used=false receipts".to_string(),
+                "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_default_cpu --device cpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-battery-low-power-cpu.json".to_string(),
+                "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_openvino_gpu_candidate --device gpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-battery-low-power-gpu.json".to_string(),
+                "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_openvino_npu_candidate --device openvino-npu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-battery-low-power-npu.json".to_string(),
             ],
-            continue_if: vec!["each sampled route records answer gate, route identity, timing, memory, power, and thermal context".to_string()],
+            continue_if: vec![
+                "each sampled route records answer gate, route identity, timing, memory, power, and thermal context".to_string(),
+                "CPU receipt path lunar-lake-operator-ask-battery-low-power-cpu.json records selected_route=dense_slm_default_cpu and fallback_used=false".to_string(),
+                "GPU receipt path lunar-lake-operator-ask-battery-low-power-gpu.json records selected_route=dense_slm_openvino_gpu_candidate and fallback_used=false".to_string(),
+                "NPU receipt path lunar-lake-operator-ask-battery-low-power-npu.json records selected_route=dense_slm_openvino_npu_candidate and fallback_used=false".to_string(),
+            ],
             stop_if: vec!["a route falls back, cannot run, or loses route identity; preserve that receipt as blocker evidence".to_string()],
         },
         LowPowerBatteryPlanCommand {
@@ -10950,12 +10959,16 @@ pub fn resolve_operator_ask_route_selection(
         let route = load_operator_ask_route(root, operator_receipt, &requested_route)?;
         validate_operator_ask_requested_device(&requested_device, &route)?;
         let profile_guard = if let Some(route_profile_comparison) = route_profile_comparison {
+            // The low_power runbook explicitly samples candidate CPU/GPU/NPU routes before
+            // promotion; keep blockers in the receipt instead of treating them as route denial.
+            let require_promotion_ready =
+                route.route_id == DEFAULT_ASK_ROUTE && profile_id != "low_power";
             Some(validate_ask_route_profile_guard(
                 root,
                 route_profile_comparison,
                 &route.route_id,
                 profile_id,
-                route.route_id == DEFAULT_ASK_ROUTE,
+                require_promotion_ready,
             )?)
         } else {
             None
@@ -20021,6 +20034,24 @@ mod tests {
                 .iter()
                 .any(|item| { item == "lunar-lake-low-power-battery-before.json" })
         );
+        assert!(
+            receipt
+                .required_artifacts
+                .iter()
+                .any(|item| { item == "lunar-lake-operator-ask-battery-low-power-cpu.json" })
+        );
+        assert!(
+            receipt
+                .required_artifacts
+                .iter()
+                .any(|item| { item == "lunar-lake-operator-ask-battery-low-power-gpu.json" })
+        );
+        assert!(
+            receipt
+                .required_artifacts
+                .iter()
+                .any(|item| { item == "lunar-lake-operator-ask-battery-low-power-npu.json" })
+        );
         assert!(receipt.command_sequence.iter().any(|step| {
             step.step == "battery_start_receipt"
                 && step
@@ -20028,6 +20059,25 @@ mod tests {
                     .iter()
                     .any(|command| command.contains("telemetry-context --artifact-root"))
                 && step.command.iter().any(|command| command.contains("--require-battery"))
+        }));
+        let route_sample_step = receipt
+            .command_sequence
+            .iter()
+            .find(|step| step.step == "route_profile_samples")
+            .context("missing route_profile_samples step")?;
+        assert!(route_sample_step.command.iter().any(|command| {
+            command.contains("--route dense_slm_default_cpu")
+                && command.contains("lunar-lake-operator-ask-battery-low-power-cpu.json")
+        }));
+        assert!(route_sample_step.command.iter().any(|command| {
+            command.contains("--route dense_slm_openvino_gpu_candidate")
+                && command.contains("--device gpu")
+                && command.contains("lunar-lake-operator-ask-battery-low-power-gpu.json")
+        }));
+        assert!(route_sample_step.command.iter().any(|command| {
+            command.contains("--route dense_slm_openvino_npu_candidate")
+                && command.contains("--device openvino-npu")
+                && command.contains("lunar-lake-operator-ask-battery-low-power-npu.json")
         }));
         assert!(receipt.blockers.iter().any(|blocker| {
             blocker.contains("current telemetry is AC-only")
@@ -21514,6 +21564,43 @@ mod tests {
 
         assert!(err.contains("blocked by route-profile comparison"), "got: {err}");
         assert!(err.contains("profile `regression_tiny`"), "got: {err}");
+        Ok(())
+    }
+
+    #[test]
+    fn direct_low_power_cpu_sample_records_profile_blockers_without_promoting() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_auto_ask_selection_artifacts(temp.path())?;
+
+        let selection = resolve_operator_ask_route_selection(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Some(Path::new(ROUTE_PROFILE_COMPARISON)),
+            DEFAULT_ASK_ROUTE,
+            "cpu",
+            "low_power",
+        )?;
+
+        assert_eq!(selection.selection_source, "operator_receipt_direct");
+        assert_eq!(selection.requested_device, "cpu");
+        assert_eq!(selection.requested_route, DEFAULT_ASK_ROUTE);
+        assert_eq!(selection.selected_route, DEFAULT_ASK_ROUTE);
+        assert_eq!(selection.selected_backend, "cpu-rust");
+        assert_eq!(selection.runtime_api, "cpu");
+        assert_eq!(selection.promotion_status, "direct_route_validated");
+        assert_eq!(selection.route_profile_status.as_deref(), Some("candidate_only"));
+        assert!(!selection.route_profile_blockers.is_empty());
+        assert!(selection.route_profile_blockers.iter().any(|blocker| {
+            blocker.contains("benchmark_qualified_speedup_or_power_advantage")
+                || blocker.contains("low_power")
+        }));
+        assert!(
+            selection
+                .why_not_cpu
+                .iter()
+                .any(|reason| reason.contains("explicitly requested and validated"))
+        );
         Ok(())
     }
 

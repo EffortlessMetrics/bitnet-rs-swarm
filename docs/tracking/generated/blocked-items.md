@@ -426,8 +426,11 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-018 | LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | SWARM-LNL258V-MIGRATE-001 | LNL258V-GOAL-AUDIT-018 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-019 | SWARM-LNL258V-MIGRATE-001 | merged |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-020 | LNL258V-GOAL-AUDIT-019 | in_progress |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-020 | LNL258V-GOAL-AUDIT-019 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-021 | LNL258V-GOAL-AUDIT-020, LNL258V-POWER-011 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
+| intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
+| intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | in_progress |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
 | intel-258v-platform | LNL258V-ROUTE-024 | LNL258V-ROUTE-023, LNL258V-NPU-RESIDENT-002, LNL258V-POWER-004 | merged |
@@ -477,6 +480,9 @@
 | intel-a770 | A770-012 | A770-011 | merged |
 | intel-a770 | A770-013 | A770-012 | merged |
 | intel-a770 | A770-014 | A770-013 | merged |
+| intel-a770 | A770-016 | A770-015 | merged |
+| intel-a770 | A770-017 | A770-016 | merged |
+| intel-a770 | A770-018 | A770-017 | pr_open |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
@@ -565,7 +571,8 @@
 | nvidia-5070ti | CUDA-MODEL-014B | CUDA-MODEL-013 | merged |
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
-| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-016 | ready |
+| nvidia-5070ti | CUDA-MODEL-017A | CUDA-MODEL-016 | merged |
+| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-017A | ready |
 | nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | blocked |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
@@ -687,7 +694,9 @@
 | slm-cpu | SLM-CPU-071 | SLM-CPU-070 | merged |
 | slm-cpu | SLM-CPU-072 | SLM-CPU-071 | merged |
 | slm-cpu | SLM-CPU-073 | SLM-CPU-072 | merged |
-| slm-cpu | SLM-CPU-074 | SLM-CPU-073 | ready |
+| slm-cpu | SLM-CPU-074 | SLM-CPU-073 | merged |
+| slm-cpu | SLM-CPU-075 | SLM-CPU-074 | merged |
+| slm-cpu | SLM-CPU-076 | SLM-CPU-075 | merged |
 | slm-cpu | SLM-CPU-033 | SLM-CPU-032 | merged |
 | slm-cpu | SLM-CPU-034 | SLM-CPU-033 | merged |
 | slm-cpu | SLM-CPU-035 | SLM-CPU-034 | merged |
