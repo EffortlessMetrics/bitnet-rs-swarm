@@ -409,7 +409,12 @@ mod dense_q8_runtime_hook_tests {
     }
 
     #[test]
+    #[serial]
     fn dense_gguf_q8_sidecar_hooks_map_vendor_tensor_names() -> Result<()> {
+        unsafe {
+            std::env::remove_var(DENSE_Q8_RUNTIME_ENABLE_ENV);
+            std::env::remove_var(DENSE_Q8_RUNTIME_TENSOR_ENV);
+        }
         let mut registry = DenseGgufQ8SidecarRegistry::default();
         let tensor_info = q8_tensor_info("blk.0.attn_q.weight", vec![64, 32]);
         let data = vec![0_u8; tensor_info.size as usize];
@@ -430,7 +435,12 @@ mod dense_q8_runtime_hook_tests {
     }
 
     #[test]
+    #[serial]
     fn dense_gguf_q8_sidecar_hook_can_carry_one_real_payload_candidate() -> Result<()> {
+        unsafe {
+            std::env::remove_var(DENSE_Q8_RUNTIME_ENABLE_ENV);
+            std::env::remove_var(DENSE_Q8_RUNTIME_TENSOR_ENV);
+        }
         let mut registry = DenseGgufQ8SidecarRegistry::default();
         let tensor_info = q8_tensor_info("blk.0.attn_q.weight", vec![64, 32]);
         let data = vec![7_u8; tensor_info.size as usize];
