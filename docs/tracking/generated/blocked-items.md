@@ -428,6 +428,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-019 | SWARM-LNL258V-MIGRATE-001 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-020 | LNL258V-GOAL-AUDIT-019 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
+| intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | in_progress |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
 | intel-258v-platform | LNL258V-ROUTE-024 | LNL258V-ROUTE-023, LNL258V-NPU-RESIDENT-002, LNL258V-POWER-004 | merged |
@@ -566,7 +567,8 @@
 | nvidia-5070ti | CUDA-MODEL-014B | CUDA-MODEL-013 | merged |
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
-| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-016 | ready |
+| nvidia-5070ti | CUDA-MODEL-017A | CUDA-MODEL-016 | ready |
+| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-017A | blocked |
 | nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | blocked |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
