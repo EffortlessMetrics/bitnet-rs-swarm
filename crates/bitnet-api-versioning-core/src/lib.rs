@@ -56,6 +56,34 @@ mod tests {
     }
 
     #[test]
+    fn test_negotiate_selects_best_compatible_minor() {
+        let range = VersionRange::new(
+            vec![ApiVersion::new(1, 0), ApiVersion::new(1, 1), ApiVersion::new(1, 2)],
+            ApiVersion::new(1, 2),
+            ApiVersion::new(1, 0),
+        );
+        let result = range.negotiate(&ApiVersion::new(1, 3));
+        assert_eq!(result, NegotiationResult::Accepted(ApiVersion::new(1, 2)));
+    }
+
+    #[test]
+    fn test_negotiate_marks_deprecated_best_match() {
+        let range = VersionRange::new(
+            vec![ApiVersion::new(1, 0), ApiVersion::new(1, 1)],
+            ApiVersion::new(1, 1),
+            ApiVersion::new(1, 1),
+        );
+        let result = range.negotiate(&ApiVersion::new(1, 0));
+        assert_eq!(
+            result,
+            NegotiationResult::Deprecated {
+                accepted: ApiVersion::new(1, 0),
+                sunset_version: ApiVersion::new(1, 1),
+            }
+        );
+    }
+
+    #[test]
     fn test_extract_version_from_path() {
         assert_eq!(extract_version_from_path("/v1/chat"), Some(ApiVersion::new(1, 0)));
         assert_eq!(extract_version_from_path("/api/v2.1/models"), Some(ApiVersion::new(2, 1)));
