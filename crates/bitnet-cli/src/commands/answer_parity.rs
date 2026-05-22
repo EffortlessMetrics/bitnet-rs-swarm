@@ -2380,10 +2380,12 @@ mod tests {
         assert_eq!(row["right_chosen_id"], 7);
         assert_eq!(row["opposite_argmax"], true);
         assert_eq!(row["right_margin_near_tie"], true);
-        let left_margin = row["left_margin_over_right_chosen_on_left"].as_f64().unwrap();
-        let right_margin = row["right_margin_over_left_chosen_on_right"].as_f64().unwrap();
-        assert!((left_margin - 0.5).abs() < f64::EPSILON);
-        assert!((right_margin - 0.005).abs() < 1e-12);
+        assert_eq!(row["left_margin_over_right_chosen_on_left"].as_f64(), Some(0.5));
+        assert!(
+            row["right_margin_over_left_chosen_on_right"]
+                .as_f64()
+                .is_some_and(|right_margin| (right_margin - 0.005).abs() < 1e-12)
+        );
     }
 
     #[test]
@@ -2432,7 +2434,7 @@ mod tests {
         );
         assert_eq!(frontier["generated_output_mismatch_count"], 1);
         assert_eq!(frontier["missing_context_count"], 1);
-        assert_eq!(frontier["rows"].as_array().unwrap().len(), 1);
+        assert_eq!(frontier["rows"].as_array().map(Vec::len), Some(1));
         assert_eq!(frontier["rows_truncated"], false);
         assert_eq!(frontier["rows"][0]["reason"], "right_logits_step_missing");
     }
