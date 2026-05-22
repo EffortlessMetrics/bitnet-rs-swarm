@@ -1,0 +1,20 @@
+timestamp = "2026-05-22T16:48:53Z"
+campaign = "intel-a770"
+item = "A770-027"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+pr = 344
+branch = "codex/intel-a770/A770-027-readiness-divergence-logit-context"
+head_sha = "272d15b2e4c709a3997df9eed3e3f88678b0662d"
+merge_sha = "4ba74839e45b3006e37775720c63fd66864fa2f3"
+summary = "Closed A770-027 after PR #344 recorded focused CPU AVX2 and Intel A770 OpenCL logit context for the generated-output divergent readiness cases."
+notes = [
+  "Source PR: #344.",
+  "Head SHA: 272d15b2e4c709a3997df9eed3e3f88678b0662d.",
+  "Merge SHA: 4ba74839e45b3006e37775720c63fd66864fa2f3.",
+  "The focused parity receipt keeps both generated-output divergent readiness cases failing parity while adding first-mismatch logit context.",
+  "The frontier is generated_output_frontier_first_mismatch_has_logit_context with generated_output_logit_margin_frontier_opposite_argmax_right_near_tie.",
+  "This closeout does not promote CPU/A770 parity, strict answer readiness, broad A770 answer quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
