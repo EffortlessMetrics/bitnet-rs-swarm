@@ -4776,8 +4776,12 @@ impl MacTrendWindow {
         if days == 0 {
             anyhow::bail!("--since must be at least 1d");
         }
+        let day_offset = i64::try_from(days.saturating_sub(1))
+            .with_context(|| format!("--since value {raw:?} is too large"))?;
         let latest_date = chrono::Utc::now().date_naive();
-        let earliest_date = latest_date - chrono::Duration::days(days.saturating_sub(1) as i64);
+        let earliest_date = latest_date
+            .checked_sub_signed(chrono::Duration::days(day_offset))
+            .ok_or_else(|| anyhow::anyhow!("--since value {raw:?} is outside supported dates"))?;
         Ok(Some(Self { requested_since: raw.to_string(), days, earliest_date, latest_date }))
     }
 
