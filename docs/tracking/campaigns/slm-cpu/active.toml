@@ -2042,9 +2042,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-083"
-status = "pr_open"
-pr = 383
-head_sha = "d2092f60e"
+status = "ready"
 branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
 stackable = false
 review_mode = "codex_premerge"

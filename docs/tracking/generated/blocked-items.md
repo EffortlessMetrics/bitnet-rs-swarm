@@ -597,7 +597,7 @@
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
 | nvidia-5070ti | CUDA-MODEL-017A | CUDA-MODEL-016 | merged |
-| nvidia-5070ti | CUDA-MODEL-017 | CUDA-MODEL-017A | ready |
+| nvidia-5070ti | CUDA-MODEL-017 |  | blocked |
 | nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | blocked |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
@@ -704,7 +704,7 @@
 | slm-cpu | SLM-CPU-018 | SLM-CPU-017 | merged |
 | slm-cpu | SLM-CPU-019 | SLM-CPU-018 | merged |
 | slm-cpu | SLM-CPU-020 | SLM-CPU-019 | merged |
-| slm-cpu | SLM-CPU-083 | SLM-CPU-082, SLM-CPU-041 | pr_open |
+| slm-cpu | SLM-CPU-083 | SLM-CPU-082, SLM-CPU-041 | ready |
 | slm-cpu | SLM-CPU-080 | SLM-CPU-079, SLM-CPU-032, SLM-CPU-035 | merged |
 | slm-cpu | SLM-CPU-081 | SLM-CPU-079, SLM-CPU-080 | merged |
 | slm-cpu | SLM-CPU-082 | SLM-CPU-081 | merged |
