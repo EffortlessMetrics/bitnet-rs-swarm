@@ -3,3 +3,4 @@
 
 | Campaign | Item | PR | Branch | Notes |
 |---|---|---:|---|---|
+| intel-a770 | A770-025 | #329 | `codex/intel-a770/A770-025-live-answer-readiness-run` | OpenCL-first for native A770 proof. |

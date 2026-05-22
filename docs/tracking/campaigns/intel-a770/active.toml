@@ -1150,7 +1150,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-025"
-status = "in_progress"
+status = "pr_open"
+pr = 329
 branch = "codex/intel-a770/A770-025-live-answer-readiness-run"
 stackable = false
 review_mode = "codex_premerge"
