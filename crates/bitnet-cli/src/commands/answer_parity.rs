@@ -1535,10 +1535,12 @@ fn build_generated_output_logit_margin_frontier(
     let mut missing_cross_chosen_logit_count = 0usize;
     let mut opposite_argmax_count = 0usize;
     let mut right_near_tie_count = 0usize;
+    let mut row_candidate_count = 0usize;
 
     for id in case_ids {
         let Some(left_case) = left_cases.get(id).copied() else {
             missing_context_count += 1;
+            row_candidate_count += 1;
             push_limited_row(
                 &mut rows,
                 ROW_LIMIT,
@@ -1548,6 +1550,7 @@ fn build_generated_output_logit_margin_frontier(
         };
         let Some(right_case) = right_cases.get(id).copied() else {
             missing_context_count += 1;
+            row_candidate_count += 1;
             push_limited_row(
                 &mut rows,
                 ROW_LIMIT,
@@ -1558,6 +1561,7 @@ fn build_generated_output_logit_margin_frontier(
 
         let Some(left_generated) = token_id_vec(&left_case["token_ids"]["generated"]) else {
             missing_context_count += 1;
+            row_candidate_count += 1;
             push_limited_row(
                 &mut rows,
                 ROW_LIMIT,
@@ -1570,6 +1574,7 @@ fn build_generated_output_logit_margin_frontier(
         };
         let Some(right_generated) = token_id_vec(&right_case["token_ids"]["generated"]) else {
             missing_context_count += 1;
+            row_candidate_count += 1;
             push_limited_row(
                 &mut rows,
                 ROW_LIMIT,
@@ -1614,6 +1619,7 @@ fn build_generated_output_logit_margin_frontier(
         if row["right_margin_near_tie"].as_bool().unwrap_or(false) {
             right_near_tie_count += 1;
         }
+        row_candidate_count += 1;
         push_limited_row(&mut rows, ROW_LIMIT, row);
     }
 
@@ -1643,7 +1649,7 @@ fn build_generated_output_logit_margin_frontier(
         "opposite_argmax_count": opposite_argmax_count,
         "right_near_tie_count": right_near_tie_count,
         "near_tie_abs_logit_delta_threshold": NEAR_TIE_THRESHOLD,
-        "rows_truncated": generated_output_mismatch_count.saturating_add(missing_context_count) > rows.len(),
+        "rows_truncated": row_candidate_count > rows.len(),
         "row_limit": ROW_LIMIT,
         "rows": rows,
     })
@@ -2405,6 +2411,30 @@ mod tests {
             report["generated_output_logit_margin_frontier"]["rows"][0]["classification"],
             "generated_output_logit_margin_missing_cross_chosen_logit"
         );
+    }
+
+    #[test]
+    fn generic_parity_does_not_truncate_single_missing_context_logit_margin_row() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            logits_first_mismatch_margin_left(),
+        );
+        let a770 = a770_receipt(&[4, 5, 7], "4 5 7", logits_for_chosen(&[4, 5]));
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_logit_margin_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_logit_margin_frontier_missing_context"
+        );
+        assert_eq!(frontier["generated_output_mismatch_count"], 1);
+        assert_eq!(frontier["missing_context_count"], 1);
+        assert_eq!(frontier["rows"].as_array().unwrap().len(), 1);
+        assert_eq!(frontier["rows_truncated"], false);
+        assert_eq!(frontier["rows"][0]["reason"], "right_logits_step_missing");
     }
 
     #[test]
