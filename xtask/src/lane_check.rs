@@ -28,10 +28,8 @@ struct CheckReport {
 }
 
 pub fn run(args: LaneCheckArgs) -> Result<()> {
-    let mut report = CheckReport {
-        changed_files: changed_files(&args.base, &args.head)?,
-        ..CheckReport::default()
-    };
+    let changed_files = changed_files(&args.base, &args.head)?;
+    let mut report = CheckReport { changed_files: changed_files.clone(), ..CheckReport::default() };
 
     let pr_body = match args.pr_body.as_deref() {
         Some(path) => Some(
@@ -47,9 +45,9 @@ pub fn run(args: LaneCheckArgs) -> Result<()> {
     };
 
     if let Some(body) = pr_body.as_deref() {
-        validate_pr_body(body, args.branch.as_deref(), &report.changed_files, &mut report);
+        validate_pr_body(body, args.branch.as_deref(), &changed_files, &mut report);
     }
-    validate_changed_files(&report.changed_files, &mut report);
+    validate_changed_files(&changed_files, &mut report);
 
     print_report(&report);
     if !report.errors.is_empty() {
