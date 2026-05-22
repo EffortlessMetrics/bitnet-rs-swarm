@@ -2,14 +2,16 @@ timestamp = "2026-05-22T19:28:43Z"
 campaign = "intel-a770"
 item = "A770-029"
 event = "in_progress"
-previous_status = "planned"
+previous_status = "ready"
 new_status = "in_progress"
 actor = "codex-a770"
 branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
+base = "main"
 summary = "Start A770-029 prompt-contract repair for the five shared CPU/A770 answer-readiness content failures left by A770-028."
 notes = [
-  "This is a seeded corpus prompt/scoring repair, not a runtime math, tokenizer, model, or backend change.",
-  "A770-029 must keep CPU/A770 parity, strict answer readiness, broad quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims blocked unless separate receipts prove them.",
+  "This is a prompt and scoring contract repair for shared CPU/A770 answer-readiness corpus failures, not a runtime math change.",
+  "Fresh receipts must preserve fallback=false evidence and keep CPU/A770 parity failure explicit.",
+  "No strict answer readiness, broad quality, parity, residency, speed, trusted-partial acceleration, or full BitNet inference claim is promoted.",
 ]
 
 [claim_boundary]
