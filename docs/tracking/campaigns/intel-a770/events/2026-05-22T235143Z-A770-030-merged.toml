@@ -1,0 +1,18 @@
+timestamp = "2026-05-22T23:51:43Z"
+campaign = "intel-a770"
+item = "A770-030"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
+pr = 388
+head_sha = "93af6b4c00b5893e708ea9a9c48db1db8fd73acf"
+merge_sha = "5835f64271071a2078535b6a5003847651ee466c"
+summary = "Merged A770-030 focused summary logit-context diagnostic evidence."
+
+notes = [
+  "PR #388 merged focused CPU AVX2 and Intel A770 OpenCL multi-step logits for a770_summary_seed770024_keywords_014 under corpus v1.0.2.",
+  "The focused parity receipt preserves the current generated-output frontier and does not promote CPU/A770 parity.",
+  "This is adjacent A770 diagnostic evidence only: no Lunar Lake route promotion, speedup, power advantage, native NPU/OpenCL acceleration claim, broad answer quality claim, full BitNet inference claim, or BitNet QK256/I2_S behavior change.",
+]
