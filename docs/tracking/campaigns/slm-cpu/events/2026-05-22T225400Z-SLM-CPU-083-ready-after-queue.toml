@@ -1,0 +1,16 @@
+timestamp = "2026-05-22T22:54:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-083"
+event = "in_progress"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 383
+merge_sha = "3fd49ecbd249949cc92991d3030586c739cca226"
+branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
+actor = "codex"
+summary = "Merged PR #383 as the tracker queue slice and returned SLM-CPU-083 to ready for implementation."
+notes = [
+  "PR #383 queued SLM-CPU-083 after SLM-CPU-082 classified the repeated packed-Q8 sidecar timing as regressed while preserving behavior.",
+  "The queue PR did not implement the prompt_prefill.forward / model-forward allocation or layout slice.",
+  "SLM-CPU-083 remains open for a fresh implementation PR that preserves the Qwen3 Q8_0 appliance behavior oracle and makes no speedup or default-runtime claim without before/after receipts.",
+]
