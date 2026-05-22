@@ -3,4 +3,4 @@
 
 | Campaign | Item | PR | Branch | Notes |
 |---|---|---:|---|---|
-| intel-a770 | A770-025 | #329 | `codex/intel-a770/A770-025-live-answer-readiness-run` | Record the live seeded CPU AVX2 versus Intel A770 OpenCL answer-readiness run against the official BitNet 2B I2_S artifact, including quality failures and CPU/A770 parity divergence, while keeping strict answer readiness, broad answer quality, CPU/A770 parity, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed. |
+| slm-cpu | SLM-CPU-080 | #332 | `codex/slm-cpu-080-kaby-performance-dashboard-refresh` | Refresh the Kaby Lake Qwen3 Q8_0 CPU performance dashboard after the merged prompt-token cache, KV-cache reuse, prefill-attribution, and post-aligned packed-matvec evidence. The dashboard must preserve the Qwen3 Q8_0 behavior oracle, record that the current operator default is evidence-scoped to 4 threads, identify the current allocation and packed-matvec next targets, and keep speedup, sustained-throughput, Q4/Q5 runtime, server, accelerator, Qwen3.5, and BitNet QK256 claims false. |
