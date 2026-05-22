@@ -306,24 +306,24 @@ Do not merge action-runtime bumps until runner compatibility is confirmed.
 Batch related Node 24 action PRs mentally. Dependabot PRs must not update
 generated campaign dashboards.
 
-## Future Checker
+## Lane Checker
 
-A lightweight checker may later enforce this contract:
+A lightweight checker validates the most mechanical parts of this contract:
 
 ```text
-cargo run -p xtask --no-default-features -- lane-check
+cargo run --locked -p xtask --no-default-features -- lane-check \
+  --pr-body target/pr-review/body.md \
+  --base origin/main \
+  --head HEAD
 ```
 
-The first version should catch only obvious hazards:
+The first version intentionally catches only obvious hazards:
 
-- PR title or body includes `Lane:`;
-- PR body includes `Campaign:` or explicitly says `Campaign: none`;
-- branch name starts with `codex/<lane>/`, `claude/<lane>/`,
-  `droid/<lane>/`, or `dependabot/`;
+- required PR body fields are present and filled, not left as template
+  placeholders;
+- branch name starts with `codex/`, `claude/`, `droid/`, or `dependabot/`;
+- shared-surface changes are declared in the PR body;
 - generated dashboard changes also include campaign-source changes;
-- `pr_open` state includes a PR number;
-- `pr_open` events include `head_sha`;
-- event type is known;
 - generated dashboards do not contain conflict markers.
 
 Do not turn the checker into a second workflow engine.
