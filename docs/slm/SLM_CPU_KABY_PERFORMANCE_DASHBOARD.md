@@ -1375,3 +1375,28 @@ and `fallback_used = false` boundary.
 The exact-tensor packed-Q8 sidecar remains opt-in, scoped to
 `layers.0.attention.q_proj.weight`, and is not promoted to the default runtime by
 this gate.
+
+## SLM-CPU-082 Repeated Receipt Capture
+
+SLM-CPU-082 captures the repeated i5-8250U Qwen3 Q8_0 warm-session receipt pack
+required by the SLM-CPU-081 timing gate:
+
+```text
+baseline receipts = 3
+candidate receipts = 3
+baseline selected_path = eager_f32_candle
+candidate selected_path = packed_q8_sidecar
+candidate exact tensor = layers.0.attention.q_proj.weight
+classification.result = regressed
+classification.prompt_total_ratio = 1.11186
+behavior_equivalence.passed = true
+speedup_claim = false
+sustained_throughput_claim = false
+```
+
+The receipts preserve the Qwen3 Q8_0 behavior oracle: strict GGUF tokenizer
+authority, selected CPU backend, `fallback_used = false`, deterministic corpus
+quality, generated IDs, and decoded text. The timing classification is bounded
+to this host, model, corpus, 4-thread setting, and exact-tensor opt-in sidecar.
+It does not enable packed-Q8 by default, generalize beyond the exact Q
+projection tensor, or claim sustained throughput.
