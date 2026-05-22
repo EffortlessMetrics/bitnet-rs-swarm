@@ -1419,8 +1419,11 @@ mod tests {
 
         assert_eq!(report["artifact_kind"], "bitnet_answer_corpus_parity");
         assert_eq!(report["summary"]["failed"], 0);
-        let shared = report["shared_contract"]["failed_rules"].as_array().unwrap();
-        assert!(!shared.iter().any(|rule| rule == "artifact_kind_contract"));
+        assert!(
+            report["shared_contract"]["failed_rules"]
+                .as_array()
+                .is_some_and(|shared| !shared.iter().any(|rule| rule == "artifact_kind_contract"))
+        );
         assert_eq!(
             report["backend"]["lanes"]["right"]["backend"]["selected_backend"],
             "intel-a770-opencl"
