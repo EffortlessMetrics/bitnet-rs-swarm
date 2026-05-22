@@ -2152,9 +2152,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-082"
-status = "pr_open"
+status = "merged"
 pr = 374
-head_sha = "e35085410fe6aa150e512428a33628016e6099bf"
+merge_sha = "a3e5a98395adb769c94433738fb3bf09f102867a"
 branch = "codex/slm-cpu-082-receipt-capture"
 stackable = false
 review_mode = "codex_premerge"
