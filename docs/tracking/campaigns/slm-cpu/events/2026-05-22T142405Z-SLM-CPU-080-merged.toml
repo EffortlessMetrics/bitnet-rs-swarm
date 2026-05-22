@@ -1,0 +1,19 @@
+timestamp = "2026-05-22T14:24:05Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-080"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex"
+pr = 332
+branch = "codex/slm-cpu-080-kaby-performance-dashboard-refresh"
+head_sha = "a289b083fd612aa760b142f40d85fc497713151b"
+merge_sha = "f8f10d2176389fa358943fb30940ad90aa538b96"
+summary = "Closed SLM-CPU-080 after PR #332 refreshed the Kaby Lake Qwen3 Q8_0 performance dashboard."
+notes = [
+  "Source PR: #332.",
+  "Head SHA: a289b083fd612aa760b142f40d85fc497713151b.",
+  "Merge SHA: f8f10d2176389fa358943fb30940ad90aa538b96.",
+  "The dashboard now records the SLM-CPU-077 and SLM-CPU-079 packed-Q8 counter classifications and keeps the current operator default evidence-scoped to the recorded 4-thread operator profile.",
+  "This closeout does not claim a new inference/runtime optimization, end-to-end speedup, sustained 8250U throughput, broad answer quality, Q4/Q5 runtime support, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, hybrid architecture, or BitNet QK256/I2_S behavior.",
+]
