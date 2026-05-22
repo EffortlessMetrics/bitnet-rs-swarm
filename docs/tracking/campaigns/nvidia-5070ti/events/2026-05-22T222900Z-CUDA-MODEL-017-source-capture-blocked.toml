@@ -1,0 +1,22 @@
+timestamp = "2026-05-22T22:29:00Z"
+campaign = "nvidia-5070ti"
+item = "CUDA-MODEL-017"
+event = "blocked"
+actor = "codex"
+previous_status = "ready"
+new_status = "blocked"
+summary = "Marked CUDA-MODEL-017 blocked on Qwen3 source-capture execution before the first strict CUDA source receipt."
+
+artifacts = [
+  "docs/tracking/campaigns/nvidia-5070ti/active.toml",
+  "docs/reports/CUDA_MODEL_017M_QWEN3_SOURCE_CAPTURE_TIMEOUT.md",
+  "plans/native-rust-inference/dense-qwen3.md",
+]
+
+notes = [
+  "CUDA-MODEL-017A merged the source-capture profile tooling prerequisite, so CUDA-MODEL-017 is no longer blocked by missing profile surfaces.",
+  "CUDA-MODEL-017M recorded a normal strict Qwen3 CUDA one-token source-capture timeout after 15 minutes with no JSON receipt emitted.",
+  "The next implementation boundary is Qwen3 CUDA layer-0 RMSNorm execution in the normal source-capture path.",
+  "The qwen3_cuda_repeated_comparator generator remains correct to fail closed until all required source receipts exist.",
+  "Do not claim a CUDA-MODEL-017 source receipt, aggregate repeated comparator receipt, Qwen3 speedup, benchmark-qualified speed, full CUDA residency, broad dense GGUF readiness, Qwen2.5 inheritance, BitNet packed I2_S/QK256 proof, or server readiness from this status change.",
+]
