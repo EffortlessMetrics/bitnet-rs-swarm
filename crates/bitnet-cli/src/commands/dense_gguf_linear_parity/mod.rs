@@ -14135,7 +14135,7 @@ mod tests {
     }
 
     #[test]
-    fn qwen_one_token_phase_trace_writes_jsonl_events() {
+    fn qwen_one_token_phase_trace_writes_jsonl_events() -> Result<()> {
         let path = std::env::temp_dir().join(format!(
             "bitnet-qwen-phase-trace-{}-{}.jsonl",
             std::process::id(),
@@ -14143,13 +14143,11 @@ mod tests {
         ));
         let trace = DenseQwenPhaseTrace::new(Some(&path), "test-command");
 
-        trace
-            .emit("cpu_reference", "model_load_start", json!({ "model": "test.gguf" }))
-            .expect("write phase trace");
+        trace.emit("cpu_reference", "model_load_start", json!({ "model": "test.gguf" }))?;
 
-        let contents = std::fs::read_to_string(&path).expect("read phase trace");
-        let event: Value =
-            serde_json::from_str(contents.lines().next().expect("trace line")).expect("json line");
+        let contents = std::fs::read_to_string(&path)?;
+        let line = contents.lines().next().ok_or_else(|| anyhow!("missing trace line"))?;
+        let event: Value = serde_json::from_str(line)?;
         std::fs::remove_file(&path).ok();
 
         assert_eq!(event["schema"], json!(1));
@@ -14157,6 +14155,7 @@ mod tests {
         assert_eq!(event["phase"], json!("cpu_reference"));
         assert_eq!(event["state"], json!("model_load_start"));
         assert_eq!(event["details"]["model"], json!("test.gguf"));
+        Ok(())
     }
 
     #[test]
