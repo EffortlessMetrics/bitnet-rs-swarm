@@ -254,6 +254,20 @@ docs/tracking/LANE_OWNERSHIP.md
 The campaign manifest and append-only campaign events are authoritative.
 GitHub labels mirror the manifest for queue visibility; they do not replace it.
 
+Before opening a shared-surface PR, agents can run the lightweight metadata
+check against a saved PR body:
+
+```bash
+cargo run --locked -p xtask --no-default-features -- lane-check \
+  --pr-body target/pr-review/body.md \
+  --base origin/main \
+  --head HEAD
+```
+
+This check is deliberately narrow. It verifies filled lane fields, declared
+shared surfaces, generated-dashboard source changes, and conflict markers. It
+does not replace campaign manifests, proof commands, or human-readable review.
+
 Use lane-qualified branch names such as:
 
 ```text

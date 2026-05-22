@@ -55,6 +55,7 @@ mod grid_check;
 mod hardware;
 #[allow(dead_code)]
 mod health_check;
+mod lane_check;
 mod llm_experience;
 mod model_contract;
 mod model_coverage;
@@ -1245,6 +1246,10 @@ enum Cmd {
     #[command(name = "promote-to-source")]
     PromoteToSource(promotion_packet::PromotionPacketArgs),
 
+    /// Check swarm PR lane metadata and obvious shared-surface hazards.
+    #[command(name = "lane-check")]
+    LaneCheck(lane_check::LaneCheckArgs),
+
     /// Regenerate public Shields endpoint badge JSON under `badges/`.
     #[command(name = "badges")]
     Badges {
@@ -2220,6 +2225,7 @@ fn real_main() -> Result<()> {
         },
         Cmd::RepoBoundary { command } => repo_boundary::run(command),
         Cmd::PromoteToSource(args) => promotion_packet::run(args),
+        Cmd::LaneCheck(args) => lane_check::run(args),
     }
 }
 
