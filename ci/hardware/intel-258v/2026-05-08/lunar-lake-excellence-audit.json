@@ -2,9 +2,9 @@
   "schema_version": 1,
   "artifact_kind": "lunar_lake_excellence_audit",
   "proof_stage": "completion_audit_no_inference",
-  "created_utc": "2026-05-21T19:35:00Z",
+  "created_utc": "2026-05-22T00:51:10Z",
   "machine_id": "intel-258v",
-  "source_revision": "2f34c1947b033b7950d9a0b2d71f61a379bd31ec",
+  "source_revision": "116392b13009ef0ddae8223b345e64592d79e504",
   "audited_goal": "Profile-aware Lunar Lake local inference appliance with Qwen CPU control route, earned OpenVINO GPU/NPU routes, protected BitNet CPU reference, strict regression, and explicit claim boundaries.",
   "goal_status": "operator_ready_profile_aware_with_gpu_interactive_and_npu_warm_resident_promoted_low_power_blocked",
   "excellent_support_ready": false,
@@ -97,6 +97,12 @@
     "last_merged_low_power_sample_plan_merge_sha": "6fea0020926add54ef487990d115d0684dbf2e69",
     "last_merged_low_power_sample_plan_closeout_pr": 224,
     "last_merged_low_power_sample_plan_closeout_merge_sha": "2f34c1947b033b7950d9a0b2d71f61a379bd31ec",
+    "last_merged_low_power_sample_guard_item": "LNL258V-POWER-012",
+    "last_merged_low_power_sample_guard_pr": 232,
+    "last_merged_low_power_sample_guard_head_sha": "6cc56e2b4485575c43587c69d6fb3241b033e00d",
+    "last_merged_low_power_sample_guard_merge_sha": "b5b09adaa6a120c7f5f6bcdec4a480594262ddb9",
+    "last_merged_low_power_sample_guard_closeout_pr": 244,
+    "last_merged_low_power_sample_guard_closeout_merge_sha": "88ef947179763a9e1bc9949aee78afa8ee594bdf",
     "last_swarm_slm_cpu_q8_hook_pr": 109,
     "last_swarm_slm_cpu_q8_hook_merge_sha": "ec2145727cf48dcb5ea47da35acf85d5e427c8d4",
     "last_swarm_cuda_qwen25_ops_pr": 118,
@@ -125,7 +131,13 @@
     "last_m4_workload_tracker_closeout_merge_sha": "bc25a20f18ed5e93ef6e6b43b421586e9d333e0b",
     "last_swarm_runner_rollout_plan_pr": 207,
     "last_swarm_runner_rollout_plan_merge_sha": "ba1b2ebdfb7725d646c3a67c8da46de58838e98f",
-    "audit_refresh_scope": "no_inference_post_power011_sample_plan_closeout"
+    "last_swarm_cuda_qwen3_one_token_phase_trace_pr": 247,
+    "last_swarm_cuda_qwen3_one_token_phase_trace_merge_sha": "1774e8fbf1934ddca2d1a5adab2336f9fbe9921f",
+    "last_swarm_cuda_phase_trace_test_expect_removal_pr": 250,
+    "last_swarm_cuda_phase_trace_test_expect_removal_merge_sha": "116392b13009ef0ddae8223b345e64592d79e504",
+    "last_merged_goal_audit_022_closeout_pr": 248,
+    "last_merged_goal_audit_022_closeout_merge_sha": "f206367e65e3aa471d8defcfdedc39f51d41c7eb",
+    "audit_refresh_scope": "no_inference_current_main_after_cuda_phase_trace_followup"
   },
   "command_surface": {
     "ask": {
@@ -199,6 +211,11 @@
       "can_collect_battery_evidence_now": false,
       "evidence": "lunar-lake-low-power-battery-plan.json",
       "explicit_sample_commands_indexed": true,
+      "explicit_sample_guard_indexed": true,
+      "explicit_sample_guard_evidence": [
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/232",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/244"
+      ],
       "sample_receipts": [
         "lunar-lake-operator-ask-battery-low-power-cpu.json",
         "lunar-lake-operator-ask-battery-low-power-gpu.json",
@@ -510,10 +527,12 @@
     "BitNet CPU reference route evidence is now an explicit strict-regression-surface gate, separate from dense Qwen SLM evidence.",
     "Arc/NPU bounded proof receipts are now explicit strict-regression-surface gates, but still remain bounded proof and not full accelerator inference.",
     "BitNet accelerator inference and packed QK256 accelerator decode remain unclaimed.",
-    "The low_power battery-plan receipt is ready, but can_collect_battery_evidence_now=false while telemetry-context --require-battery remains AC-blocked."
+    "The low_power battery-plan receipt is ready, but can_collect_battery_evidence_now=false while telemetry-context --require-battery remains AC-blocked.",
+    "POWER-012/#232 plus closeout #244 allow explicit low_power CPU/GPU/NPU route samples to pass route-profile guard for evidence collection only; auto low_power remains promotion-gated and POWER-006 remains blocked until real battery-mode evidence exists."
   ],
   "next_recommended_work": [
     "Use bitnet lunar-lake low-power-plan to confirm operator_plan_ready=true before the physical POWER-006 battery run.",
+    "Use the POWER-012 explicit-route sample guard during the physical POWER-006 battery run so CPU/GPU/NPU low_power evidence-collection receipts preserve candidate blockers instead of failing before sampling.",
     "Follow docs/hardware/intel-258v-low-power-battery-runbook.md, rerun lunar-lake telemetry-context --require-battery while on battery power, then rebuild low_power power-profile evidence.",
     "LNL258V-POWER follow-up for benchmark-qualified low_power power advantage.",
     "Continue NPU low-power follow-up before any low_power NPU promotion.",
@@ -596,6 +615,11 @@
     "power_011_merged_event": "docs/tracking/campaigns/intel-258v-platform/events/2026-05-21T191032Z-LNL258V-POWER-011-merged.toml",
     "power_011_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/223",
     "power_011_closeout_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/224",
+    "power_012_merged_event": "docs/tracking/campaigns/intel-258v-platform/events/2026-05-21T232410Z-LNL258V-POWER-012-merged.toml",
+    "power_012_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/232",
+    "power_012_merge_sha": "b5b09adaa6a120c7f5f6bcdec4a480594262ddb9",
+    "power_012_closeout_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/244",
+    "power_012_closeout_merge_sha": "88ef947179763a9e1bc9949aee78afa8ee594bdf",
     "swarm_slm_cpu_q8_hook_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/109",
     "swarm_cuda_qwen25_ops_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/118",
     "swarm_slm_cpu_q8_timing_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/120",
@@ -616,7 +640,13 @@
     "m4_workload_tracker_closeout_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/215",
     "m4_workload_tracker_closeout_merge_sha": "bc25a20f18ed5e93ef6e6b43b421586e9d333e0b",
     "swarm_runner_rollout_plan_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/207",
-    "swarm_runner_rollout_plan_merge_sha": "ba1b2ebdfb7725d646c3a67c8da46de58838e98f"
+    "swarm_runner_rollout_plan_merge_sha": "ba1b2ebdfb7725d646c3a67c8da46de58838e98f",
+    "swarm_cuda_qwen3_one_token_phase_trace_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/247",
+    "swarm_cuda_qwen3_one_token_phase_trace_merge_sha": "1774e8fbf1934ddca2d1a5adab2336f9fbe9921f",
+    "swarm_cuda_phase_trace_test_expect_removal_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/250",
+    "swarm_cuda_phase_trace_test_expect_removal_merge_sha": "116392b13009ef0ddae8223b345e64592d79e504",
+    "goal_audit_022_closeout_pr": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/248",
+    "goal_audit_022_closeout_merge_sha": "f206367e65e3aa471d8defcfdedc39f51d41c7eb"
   },
   "claim_boundary": {
     "new_inference_run": false,
@@ -629,6 +659,6 @@
     "measured_temperature_claim": false,
     "full_bitnet_accelerator_inference_claim": false,
     "bitnet_qk256_i2s_behavior_change": false,
-    "new_inference_scope": "no new inference; audit refresh from committed readiness, appliance ask receipts, route-policy, route/model identity, power, regression, comparison, Arc/NPU bounded proof surface flags, BitNet CPU reference surface flags, BitNet semantic-intake, BITNET-INTAKE-005/#159 and closeout #179, POWER-007/POWER-008 runbook discoverability, OP-014 low_power blocked-ask guidance, VALIDATE-003 blocked-ask readiness indexing, POWER-009/#6097 power-profile runbook guidance, POWER-009 closeout #6099, REG-012/#6102, REG-012 closeout #6103, REG-013/#6106, REG-013 closeout #6107, A770-006/#6110, A770-006 closeout #6112, swarm history import #104, model-cache fix #100, Qwen3 support-bundle lock #99, and tracker evidence, POWER-010/#116 low_power battery-plan receipt, POWER-010 closeout #117, SLM-CPU-067/#109 adjacent sidecar runtime-support main update without Lunar Lake route-evidence change, A770-011/#115 plus A770-011 closeout #143 adjacent selected-device inline-scaled QK256 OpenCL candidate evidence without Lunar Lake route-evidence, semantic-intake, or BitNet behavior change, SWARM-LNL258V-MIGRATE-001/#201 plus closeout #204 migration inventory tracking without route-policy, evidence, command, or claim changes, PR #212 OpenVINO ask env overrides as runtime configuration only without committed route-evidence, promotion, speedup, power, native accelerator, or BitNet behavior claims, A770 #214 tracker closeout as adjacent non-Lunar-Lake state without semantic-intake, route-evidence, or claim changes, M4 #215 tracker closeout as adjacent non-Lunar-Lake state without route-evidence or claim changes, and runner rollout #207 as adjacent control-plane documentation without Lunar Lake route-evidence or claim changes"
+    "new_inference_scope": "no new inference; audit refresh from committed readiness, appliance ask receipts, route-policy, route/model identity, power, regression, comparison, Arc/NPU bounded proof surface flags, BitNet CPU reference surface flags, BitNet semantic-intake, BITNET-INTAKE-005/#159 and closeout #179, POWER-007/POWER-008 runbook discoverability, OP-014 low_power blocked-ask guidance, VALIDATE-003 blocked-ask readiness indexing, POWER-009/#6097 power-profile runbook guidance, POWER-009 closeout #6099, REG-012/#6102, REG-012 closeout #6103, REG-013/#6106, REG-013 closeout #6107, A770-006/#6110, A770-006 closeout #6112, swarm history import #104, model-cache fix #100, Qwen3 support-bundle lock #99, and tracker evidence, POWER-010/#116 low_power battery-plan receipt, POWER-010 closeout #117, SLM-CPU-067/#109 adjacent sidecar runtime-support main update without Lunar Lake route-evidence change, A770-011/#115 plus A770-011 closeout #143 adjacent selected-device inline-scaled QK256 OpenCL candidate evidence without Lunar Lake route-evidence, semantic-intake, or BitNet behavior change, SWARM-LNL258V-MIGRATE-001/#201 plus closeout #204 migration inventory tracking without route-policy, evidence, command, or claim changes, PR #212 OpenVINO ask env overrides as runtime configuration only without committed route-evidence, promotion, speedup, power, native accelerator, or BitNet behavior claims, A770 #214 tracker closeout as adjacent non-Lunar-Lake state without semantic-intake, route-evidence, or claim changes, M4 #215 tracker closeout as adjacent non-Lunar-Lake state without route-evidence or claim changes, runner rollout #207 as adjacent control-plane documentation without Lunar Lake route-evidence or claim changes, #247 CUDA Qwen3 one-token phase trace as adjacent CUDA/Qwen3 support without Lunar Lake route-evidence change, #250 CUDA phase-trace test-expect cleanup as adjacent CUDA/Qwen3 support without Lunar Lake route-evidence change, and #248 GOAL-AUDIT-022 tracker closeout without route-policy, evidence, command, or claim changes"
   }
 }
