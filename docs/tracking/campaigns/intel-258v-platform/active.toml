@@ -11852,13 +11852,13 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["LNL258V-GOAL-AUDIT-031"]
-acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-031/#350, closeout #357, post-357 handoff #359, adjacent SLM-CPU-081 #349/#354, repo-boundary tooling #351, and adjacent CUDA-MODEL-017M/#353, so source_revision points at e7785bcec1b8ca85c2385af00c96dc789c4b11b5 and the audit/checklist record those changes as audit, tracker, handoff, repo-boundary, or adjacent non-Lunar-Lake-route-evidence only. Preserve LNL258V-POWER-006 as the active blocker and preserve no inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator, acceleration, dense-SLM-as-BitNet-proof, broad quality, model-binary, semantic-intake stale claim, runtime/sidecar behavior claim, Qwen3 Lunar Lake promotion, source-promotion claim, or BitNet QK256/I2_S behavior-change claim."
+acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-031/#350, closeout #357, post-357 handoff #359, adjacent SLM-CPU-081 #349/#354, repo-boundary tooling #351/#360, and adjacent CUDA-MODEL-017M/#353, so source_revision points at d0d0cbaa8e9c8aa030ca63985668f75262be1a5e and the audit/checklist record those changes as audit, tracker, handoff, repo-boundary, or adjacent non-Lunar-Lake-route-evidence only. Preserve LNL258V-POWER-006 as the active blocker and preserve no inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator, acceleration, dense-SLM-as-BitNet-proof, broad quality, model-binary, semantic-intake stale claim, runtime/sidecar behavior claim, Qwen3 Lunar Lake promotion, source-promotion claim, or BitNet QK256/I2_S behavior-change claim."
 commands = [
   "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | ConvertFrom-Json | Out-Null\"",
-  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'e7785bcec1b8ca85c2385af00c96dc789c4b11b5' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post-357 handoff #359' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-GOAL-AUDIT-031/#350' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'closeout #357' | Out-Null\"",
-  "target/debug/bitnet.exe lunar-lake validate --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-validate-current-audit-032.json --created-utc 2026-05-22T18:20:00Z --strict",
-  "target/debug/bitnet.exe lunar-lake regress --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-regress-current-audit-032.json --created-utc 2026-05-22T18:20:00Z --strict",
-  "target/debug/bitnet.exe lunar-lake compare --artifact-root ci/hardware/intel-258v/2026-05-08 --regression-bundle target/tmp/lunar-lake-regress-current-audit-032.json --json-out target/tmp/lunar-lake-compare-current-audit-032.json --created-utc 2026-05-22T18:20:00Z --strict",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'd0d0cbaa8e9c8aa030ca63985668f75262be1a5e' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post-357 handoff #359' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-GOAL-AUDIT-031/#350' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'closeout #357' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String '#360' | Out-Null\"",
+  "target/debug/bitnet.exe lunar-lake validate --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-validate-current-audit-032.json --created-utc 2026-05-22T18:35:00Z --strict",
+  "target/debug/bitnet.exe lunar-lake regress --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-regress-current-audit-032.json --created-utc 2026-05-22T18:35:00Z --strict",
+  "target/debug/bitnet.exe lunar-lake compare --artifact-root ci/hardware/intel-258v/2026-05-08 --regression-bundle target/tmp/lunar-lake-regress-current-audit-032.json --json-out target/tmp/lunar-lake-compare-current-audit-032.json --created-utc 2026-05-22T18:35:00Z --strict",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",
@@ -11881,10 +11881,10 @@ forbidden_paths = [
   "ci/hardware/intel-258v/2026-05-08/lunar-lake-route-profile-comparison.json",
 ]
 may_claim = [
-  "The no-inference Lunar Lake audit/checklist now records current swarm main through e7785bcec1b8ca85c2385af00c96dc789c4b11b5.",
+  "The no-inference Lunar Lake audit/checklist now records current swarm main through d0d0cbaa8e9c8aa030ca63985668f75262be1a5e.",
   "PR #350 and closeout #357 are recorded as Lunar Lake audit/tracker state only.",
   "PR #359 is recorded as swarm handoff/operator state only.",
-  "PR #349/#354, #351, and #353 are recorded as adjacent SLM CPU, repo-boundary, or CUDA/Qwen3 state only.",
+  "PR #349/#354, #351/#360, and #353 are recorded as adjacent SLM CPU, repo-boundary, or CUDA/Qwen3 state only.",
   "Excellent support remains not complete while LNL258V-POWER-006 lacks real battery-mode low_power telemetry, energy-proxy evidence, measured thermal readings, and benchmark-qualified power advantage.",
 ]
 must_not_claim = [
