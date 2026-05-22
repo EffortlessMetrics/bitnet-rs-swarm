@@ -11,12 +11,13 @@ actor = "codex"
 summary = "Opened the no-inference Lunar Lake audit refresh PR for current swarm main."
 
 notes = [
-  "PR #340 refreshes the audit/checklist source_revision to 64ad8f88616e4bb9b3429e12ed77c6508c2ad133.",
+  "PR #340 refreshes the audit/checklist source_revision to fb9cd61b51ac9b21efbc15a4b6e6001935f7ccdd.",
   "The PR records LNL258V-GOAL-AUDIT-028/#323 and closeout #330 as Lunar Lake audit/tracker state only.",
   "The PR records A770-025/#329 and closeout #333 as adjacent A770 live answer-readiness state only.",
   "The PR records CUDA-MODEL-017K/#331 as adjacent CUDA/Qwen3 RMSNorm-square frontier diagnostic state only.",
   "The PR records SLM-CPU-080/#332 and closeout #334 as adjacent Kaby SLM CPU dashboard/tracker state only.",
   "The PR records A770-026/#336 and closeout #339 as adjacent A770 answer-readiness failure-frontier state only.",
+  "The PR records CUDA-MODEL-017L/#335 as adjacent CUDA/Qwen3 RMSNorm fused-op diagnostic state only.",
   "LNL258V-POWER-006 remains blocked pending physical battery-mode low_power telemetry, energy proxy, measured thermal context, and benchmark-qualified power advantage.",
   "No inference, route promotion, speedup, power advantage, native accelerator proof, runtime/sidecar behavior claim, semantic-intake stale claim, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior change is claimed.",
 ]
