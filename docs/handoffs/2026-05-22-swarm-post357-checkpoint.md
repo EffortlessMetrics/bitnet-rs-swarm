@@ -57,14 +57,24 @@ PRs: #349, #350, #351, #353, #354, #357
 
 ## Source Delta
 
-- `source/main` was fetched while writing this handoff.
-- `source/main` has no commits missing from `origin/main` at this checkpoint:
-  `rtk git rev-list --count source/main ^origin/main` returned `0`.
-- `source/main` is reachable from `origin/main`:
-  `rtk git merge-base --is-ancestor source/main origin/main` passed.
+- `source/main` was fetched while writing this handoff, then fetched again
+  during PR review after #357 landed.
+- Current review state:
+  - `source/main`: `9b655ae474e6ebe96e832d20c219dd8a92c0c63a`
+  - `origin/main`: `952dcf775a0a478bb88ae5ec21c745d2c644ce1a`
+- `source/main` has commits missing from `origin/main`:
+  `rtk git rev-list --count source/main ^origin/main` returned `4`.
+- `source/main` is not currently reachable from `origin/main`:
+  `rtk git merge-base --is-ancestor source/main origin/main` failed.
+- Missing source commits at review time:
+  - `9b655ae47` `[codex] Close Apple M4 inference excellence audit (#6199)`
+  - `982f65334` `M4 campaign overview status sync (#6198)`
+  - `bdceac95d` `M4-METAL-EX-002: Record merged tracker state (#6197)`
+  - `59a7c1ab0` `M4-METAL-EX-002: Add attention-score phase parity (#6196)`
 - This handoff does not start a swarm-to-source promotion. The recorded SHA is a
   promotion candidate only after the source-promotion operator chooses the batch
-  boundary and prepares an ancestry-preserving promotion.
+  boundary, accounts for the current source delta, and prepares an
+  ancestry-preserving promotion.
 
 ## Evidence
 
@@ -74,6 +84,8 @@ PRs: #349, #350, #351, #353, #354, #357
 - Independent open PR count:
   `rtk gh api -X GET repos/EffortlessMetrics/bitnet-rs-swarm/pulls -f state=open --jq 'length'`
   returned `0`.
+- During review of this handoff PR, the same open-PR commands returned this PR
+  as the only open swarm PR.
 - Generated active PR dashboard at checkpoint:
   `docs/tracking/generated/active-prs.md` contained only the header table and no
   active rows.
@@ -87,7 +99,7 @@ PRs: #349, #350, #351, #353, #354, #357
 
 - Queue refresh and independent REST count both proved zero open PRs.
 - `origin/main` and `source/main` were fetched before selecting the promotion
-  candidate SHA and source delta.
+  candidate SHA, then fetched again during review to correct the source delta.
 - This handoff is docs-only and does not regenerate tracker dashboards or run
   Cargo proof.
 - Local Cargo validation can stall on this Windows checkout behind
@@ -98,7 +110,11 @@ PRs: #349, #350, #351, #353, #354, #357
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
   `952dcf775a0a478bb88ae5ec21c745d2c644ce1a` as the current promotion candidate
-  SHA once the source-promotion operator chooses the batch boundary.
+  SHA only after the source-promotion operator chooses the batch boundary and
+  accounts for the four source commits currently missing from swarm.
+- Before source promotion, either sync the missing source M4 commits into swarm
+  with an ancestry-preserving source-to-swarm merge or explicitly include their
+  disposition in the promotion plan.
 - Continue processing new swarm PRs as they arrive:
   classify lane, inspect exact diff, verify claim boundaries, run focused proof,
   and squash-merge normal swarm PRs only when green.
@@ -111,7 +127,9 @@ PRs: #349, #350, #351, #353, #354, #357
 
 ## Blockers
 
-- None for the current empty queue checkpoint.
+- None for merging this docs-only handoff.
+- Source promotion from the recorded candidate SHA is blocked until the current
+  `source/main` delta is handled deliberately.
 
 ## Claim Boundary
 
