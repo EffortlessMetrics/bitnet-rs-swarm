@@ -882,6 +882,7 @@ impl DenseGgufQwenOneTokenStrictCudaCommand {
             self.phase_trace_jsonl.as_deref(),
             "dense-gguf-qwen-one-token-strict-cuda",
         );
+        phase_trace.reset()?;
         phase_trace.emit(
             "command",
             "start",
@@ -4239,6 +4240,22 @@ struct DenseQwenPhaseTrace {
 impl DenseQwenPhaseTrace {
     fn new(path: Option<&Path>, command: &'static str) -> Self {
         Self { path: path.map(Path::to_path_buf), command, started_at: std::time::Instant::now() }
+    }
+
+    fn reset(&self) -> Result<()> {
+        let Some(path) = &self.path else {
+            return Ok(());
+        };
+        if let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            std::fs::create_dir_all(parent).with_context(|| {
+                format!("failed to create phase trace directory {}", parent.display())
+            })?;
+        }
+        std::fs::File::create(path)
+            .with_context(|| format!("failed to reset phase trace {}", path.display()))?;
+        Ok(())
     }
 
     fn emit(&self, phase: &str, state: &str, details: Value) -> Result<()> {
@@ -14143,6 +14160,7 @@ mod tests {
         ));
         let trace = DenseQwenPhaseTrace::new(Some(&path), "test-command");
 
+        trace.reset()?;
         trace.emit("cpu_reference", "model_load_start", json!({ "model": "test.gguf" }))?;
 
         let contents = std::fs::read_to_string(&path)?;
@@ -14155,6 +14173,27 @@ mod tests {
         assert_eq!(event["phase"], json!("cpu_reference"));
         assert_eq!(event["state"], json!("model_load_start"));
         assert_eq!(event["details"]["model"], json!("test.gguf"));
+        Ok(())
+    }
+
+    #[test]
+    fn qwen_one_token_phase_trace_reset_discards_stale_events() -> Result<()> {
+        let path = std::env::temp_dir().join(format!(
+            "bitnet-qwen-phase-trace-reset-{}-{}.jsonl",
+            std::process::id(),
+            chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+        ));
+        std::fs::write(&path, "{\"stale\":true}\n")?;
+        let trace = DenseQwenPhaseTrace::new(Some(&path), "test-command");
+
+        trace.reset()?;
+        trace.emit("command", "start", json!({}))?;
+
+        let contents = std::fs::read_to_string(&path)?;
+        std::fs::remove_file(&path).ok();
+
+        assert!(!contents.contains("stale"));
+        assert_eq!(contents.lines().count(), 1);
         Ok(())
     }
 
