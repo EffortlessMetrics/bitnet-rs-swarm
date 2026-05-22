@@ -3876,6 +3876,7 @@ pub fn build_regression_bundle_with_created_utc_and_inputs(
 }
 
 #[cfg(test)]
+#[allow(clippy::too_many_arguments)]
 pub fn build_regression_bundle_with_created_utc_and_inputs_and_power_profile(
     root: &Path,
     operator_receipt: &Path,
@@ -3906,6 +3907,7 @@ pub fn build_regression_bundle_with_created_utc_and_inputs_and_power_profile(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_regression_bundle_with_created_utc_and_inputs_and_power_profile_and_warm_ask(
     root: &Path,
     operator_receipt: &Path,
@@ -4283,6 +4285,7 @@ pub fn build_regression_bundle_with_created_utc_and_inputs_and_power_profile_and
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_regression_surface_summary(
     answer_corpus_v2: Option<&AnswerCorpusV2Summary>,
     route_profile_comparison: Option<&RouteProfileRegressionSummary>,
@@ -14062,6 +14065,7 @@ fn promote_route(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn evaluate_workload_profile(
     root: &Path,
     profile: &WorkloadProfile,
@@ -15305,10 +15309,10 @@ fn cpu_profile_run_case<'a>(json: &'a Value, profile_id: &str) -> Option<&'a Val
             string_at(case, "profile").as_deref() == Some(profile_id)
                 && string_at(case, "route_id")
                     .as_deref()
-                    .map_or(true, |route_id| route_id == DEFAULT_ASK_ROUTE)
+                    .is_none_or(|route_id| route_id == DEFAULT_ASK_ROUTE)
                 && string_at(case, "selected_backend")
                     .as_deref()
-                    .map_or(true, |backend| backend == "cpu-rust")
+                    .is_none_or(|backend| backend == "cpu-rust")
         })
     }
 

@@ -4904,9 +4904,7 @@ fn sample_dense_qwen_logits_local(
             }
 
             let mut top_k_entries = Vec::with_capacity(observed_top_k);
-            for (rank, (token_id, value)) in
-                top_ids.into_iter().zip(top_values.into_iter()).enumerate()
-            {
+            for (rank, (token_id, value)) in top_ids.into_iter().zip(top_values).enumerate() {
                 if !value.is_finite() {
                     bail!("dense Qwen device top-k sampler returned a non-finite logit");
                 }
@@ -5090,7 +5088,7 @@ fn dense_qwen_short_decode_steps_json(
                     "logits_download_ms": cuda_step.logits_download_ms,
                     "decode_ms": cuda_step.decode_ms,
                     "logits_device_is_cuda": cuda_step.logits_device_is_cuda,
-                    "logits_transfer_bytes": cuda_step.logits_transfer_bytes as u64,
+                    "logits_transfer_bytes": cuda_step.logits_transfer_bytes,
                     "logits_transfer_mode": cuda_step.logits_transfer_mode.transfer_mode(),
                     "sampling_location": cuda_step.logits_transfer_mode.sampling_location()
                 }
