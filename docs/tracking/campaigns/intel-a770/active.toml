@@ -1252,7 +1252,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-027"
-status = "in_progress"
+status = "pr_open"
+pr = 344
+head_sha = "621520b3b1df2345e2292fa79885343664b9cd80"
 branch = "codex/intel-a770/A770-027-readiness-divergence-logit-context"
 stackable = false
 review_mode = "codex_premerge"
