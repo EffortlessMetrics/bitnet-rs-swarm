@@ -1,0 +1,10 @@
+campaign = "intel-a770"
+item = "A770-024"
+event = "merged"
+pr = 314
+branch = "codex/intel-a770/A770-024-seeded-answer-readiness-contract"
+head_sha = "b797f866a68f896892a25c8fe9709626675e748b"
+merge_sha = "ab0469e55bd4626cf1e12f0ff5717dce81e18c34"
+actor = "codex-a770"
+timestamp_utc = "2026-05-22T11:17:59Z"
+notes = "Closed A770-024 after #314 merged the seeded A770 BitNet answer-readiness corpus contract. This records tracker state only and does not promote live seeded corpus execution, CPU/A770 answer parity, broad answer quality, strict A770 answer readiness, residency, speed, trusted-partial acceleration, or full BitNet inference."
