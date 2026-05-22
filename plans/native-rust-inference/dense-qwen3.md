@@ -442,7 +442,7 @@ exact-profile server-ready state.
 
 ## Work item: CUDA-MODEL-017A
 
-Status: ready
+Status: merged
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
@@ -457,8 +457,8 @@ source before hardware receipts are collected.
 
 ### Production delta
 
-Add or update governed Qwen3 capture tooling so operators can produce source
-receipts for:
+Added governed Qwen3 capture tooling so operators can produce source receipts
+for:
 
 - `one_token`;
 - `short_decode_8`;
@@ -466,11 +466,9 @@ receipts for:
 - `warm_session_3_turns`;
 - `decode_128_from_warm_context`.
 
-The current CLI has one-token, short-decode, and warm-session source commands,
-but short-decode and warm-session receipts are still bounded to `5..=16`
-generated tokens, and there is no distinct warm-decode source receipt for the
-128-token warm-context profile. CUDA-MODEL-017 must remain blocked until that
-gap is closed.
+The capture-tooling prerequisite is complete. CUDA-MODEL-017 is no longer
+blocked by a missing profile surface; it is blocked by current-source execution
+failing to emit the first strict Qwen3 CUDA source receipt.
 
 Implemented source-capture surface:
 
@@ -507,17 +505,20 @@ product review explicitly changes them.
 
 ### Acceptance
 
-- Current source can emit or validate a Qwen3 `short_decode_32` source receipt
-  without weakening Qwen2.5 or product ask/chat bounds.
-- Current source can emit or validate an explicit Qwen3
-  `decode_128_from_warm_context` source receipt with unambiguous warm-context
-  or session-reuse evidence.
-- The source receipts preserve exact Qwen3 model identity, selected RTX 5070 Ti
-  CUDA backend, `dense_regular_llm_cuda` route, `fallback_used=false`,
-  quality/parity fields, timing, transfer, launch, VRAM, power, and thermal
-  fields required by CUDA-MODEL-016.
+- Current source has governed command surfaces to emit or validate a Qwen3
+  `short_decode_32` source receipt without weakening Qwen2.5 or product
+  ask/chat bounds.
+- Current source has a governed command surface to emit or validate an explicit
+  Qwen3 `decode_128_from_warm_context` source receipt with unambiguous
+  warm-context or session-reuse evidence.
+- The source receipt contract preserves exact Qwen3 model identity, selected
+  RTX 5070 Ti CUDA backend, `dense_regular_llm_cuda` route,
+  `fallback_used=false`, quality/parity fields, timing, transfer, launch, VRAM,
+  power, and thermal fields required by CUDA-MODEL-016.
 - The aggregate contract remains fail-closed if a source receipt is ambiguous
   about profile identity or warm-context reuse.
+- This item does not claim that current source successfully emitted any
+  CUDA-MODEL-017 hardware source receipt.
 
 ### Proof commands
 
@@ -544,7 +545,7 @@ Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
 Campaign: `docs/tracking/campaigns/nvidia-5070ti/active.toml`
 Blocks: CUDA-MODEL-018
-Blocked by: CUDA-MODEL-017A
+Blocked by: Qwen3 normal source-capture timeout before the first strict CUDA source receipt (CUDA-MODEL-017M)
 
 ### Goal
 
@@ -576,6 +577,18 @@ current source receipts may label as unmeasured.
 Running the generator without all source receipts now fails with a full
 per-profile missing-input report.
 
+### Current blocker
+
+CUDA-MODEL-017A landed the missing profile tooling and the repeated comparator
+manifest preflight works. CUDA-MODEL-017M then attempted the normal strict
+Qwen3 CUDA one-token source-capture path and timed out after 15 minutes without
+emitting a JSON receipt.
+
+The next implementation boundary is Qwen3 CUDA layer-0 RMSNorm execution in the
+normal source-capture path. The repeated comparator aggregate generator is not
+the blocker; it is behaving correctly by refusing to generate an aggregate
+without source receipts.
+
 ### Non-goals
 
 No model promotion, server promotion, speedup promotion, benchmark-qualified
@@ -596,6 +609,9 @@ change, kernel change, or server behavior change.
   `benchmark_qualified_speedup=false`, `full_cuda_residency_claimed=false`,
   `broad_dense_gguf_ready_claimed=false`, `qwen25_proof_inherited=false`, and
   `bitnet_packed_i2s_qk256_proof=false`.
+- A timeout report, diagnostic trace, manifest preflight, or aggregate
+  missing-input failure is not a CUDA-MODEL-017 source receipt and does not
+  satisfy this work item.
 
 ### Proof commands
 
