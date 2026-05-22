@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_repeated_packed_q8_timing_classification",
+  "claim": "repeated_packed_q8_timing_classification",
+  "tracking_item": "SLM-CPU-082",
+  "timestamp": "2026-05-22T20:44:08Z",
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": null
+  },
+  "host": {
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+    "threads": 4,
+    "backend": "cpu-rust",
+    "runtime_api": "cpu"
+  },
+  "tokenizer": {
+    "source": "gguf_metadata",
+    "strict": true
+  },
+  "corpus": {
+    "path": "ci/quality/slm-warm-session-corpus.yaml",
+    "repeat_runs": 2,
+    "prompt_count": null,
+    "quality_passed": true,
+    "determinism_passed": true
+  },
+  "behavior_equivalence": {
+    "passed": true,
+    "compared_fields": [
+      "prompt receipts tokens.prompt_ids",
+      "prompts[].case_id",
+      "prompts[].repeat_index",
+      "prompts[].prompt",
+      "prompts[].generated_token_ids",
+      "prompts[].text"
+    ],
+    "unique_behavior_hashes": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5"
+  },
+  "baseline": {
+    "receipt_count": 3,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "mean_prompt_total_ms": 148966.79,
+    "median_prompt_total_ms": 149080.911,
+    "mean_total_session_ms": 230569.894,
+    "median_total_session_ms": 230271.114
+  },
+  "candidate": {
+    "receipt_count": 3,
+    "selected_path": "packed_q8_sidecar",
+    "selected_kernel": "dense-q8-sidecar-linear",
+    "exact_tensor": "layers.0.attention.q_proj.weight",
+    "mean_prompt_total_ms": 165629.635,
+    "median_prompt_total_ms": 165556.59,
+    "mean_total_session_ms": 246428.177,
+    "median_total_session_ms": 246815.771
+  },
+  "classification": {
+    "result": "regressed",
+    "prompt_total_ratio": 1.11186,
+    "candidate_minus_baseline_prompt_total_ms": 16662.845,
+    "threshold_policy": "improved if candidate mean prompt_total_ms <= 0.98x baseline; regressed if >= 1.02x; otherwise inconclusive; behavior equivalence required",
+    "runtime_promotion_recommended": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "reason": "Candidate packed_q8_sidecar repeated prompt-loop timing is slower than baseline eager_f32_candle while prompt IDs, generated IDs, decoded text, strict no-fallback provenance, quality, and determinism are preserved."
+  },
+  "receipts": [
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-baseline-run-01.json",
+      "group": "baseline",
+      "selected_path": "eager_f32_candle",
+      "selected_kernel": "dense-f32-candle-linear",
+      "total_session_ms": 232724.485,
+      "prompt_total_ms": 149080.911,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 0,
+      "packed_matvec_ns": 0
+    },
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-baseline-run-02.json",
+      "group": "baseline",
+      "selected_path": "eager_f32_candle",
+      "selected_kernel": "dense-f32-candle-linear",
+      "total_session_ms": 228714.083,
+      "prompt_total_ms": 148032.066,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 0,
+      "packed_matvec_ns": 0
+    },
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-baseline-run-03.json",
+      "group": "baseline",
+      "selected_path": "eager_f32_candle",
+      "selected_kernel": "dense-f32-candle-linear",
+      "total_session_ms": 230271.114,
+      "prompt_total_ms": 149787.393,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 0,
+      "packed_matvec_ns": 0
+    },
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-candidate-run-01.json",
+      "group": "candidate",
+      "selected_path": "packed_q8_sidecar",
+      "selected_kernel": "dense-q8-sidecar-linear",
+      "total_session_ms": 245274.42,
+      "prompt_total_ms": 164754.749,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 216,
+      "packed_matvec_ns": 17144817100
+    },
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-candidate-run-02.json",
+      "group": "candidate",
+      "selected_path": "packed_q8_sidecar",
+      "selected_kernel": "dense-q8-sidecar-linear",
+      "total_session_ms": 247194.34,
+      "prompt_total_ms": 166577.566,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 216,
+      "packed_matvec_ns": 16971356800
+    },
+    {
+      "path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-22\\qwen3-slm-cpu-081-candidate-run-03.json",
+      "group": "candidate",
+      "selected_path": "packed_q8_sidecar",
+      "selected_kernel": "dense-q8-sidecar-linear",
+      "total_session_ms": 246815.771,
+      "prompt_total_ms": 165556.59,
+      "quality_passed": true,
+      "determinism_passed": true,
+      "fallback_used": false,
+      "behavior_hash": "2900474401d1bcbb45f5a26ff9a6b8d8469423f1f4661e4e834d5b76641fd2a5",
+      "packed_matvec_calls": 216,
+      "packed_matvec_ns": 17161444200
+    }
+  ],
+  "claim_boundary": {
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "packed_q8_sidecar_scope": "opt_in_exact_tensor_only",
+    "no_sustained_throughput_claim": true,
+    "no_broad_answer_quality_claim": true,
+    "no_q4_q5_runtime_support": true,
+    "no_server_or_accelerator_claim": true,
+    "no_qwen35_claim": true,
+    "no_bitnet_qk256_claim": true
+  }
+}
