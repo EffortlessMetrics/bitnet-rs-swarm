@@ -4,7 +4,7 @@ event = "in_progress"
 item = "LNL258V-GOAL-AUDIT-031"
 previous_status = "ready"
 new_status = "in_progress"
-branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-031-current-main"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-031-replacement"
 actor = "codex"
 summary = "Refresh the no-inference Lunar Lake goal audit to current swarm main after audit 030 closeout, ask model prerequisite docs, and adjacent A770-027 closeout."
 
