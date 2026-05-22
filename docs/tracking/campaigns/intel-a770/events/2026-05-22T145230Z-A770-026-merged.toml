@@ -1,0 +1,19 @@
+timestamp = "2026-05-22T14:52:30Z"
+campaign = "intel-a770"
+item = "A770-026"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex"
+pr = 336
+branch = "codex/intel-a770/A770-026-answer-readiness-failure-frontier"
+head_sha = "a2d43f55a89abb239b76eca0bea5ad05684c97ca"
+merge_sha = "5f4a6b5845eee89f1e2e4891b3524af7e3b37d41"
+summary = "Closed A770-026 after PR #336 classified the A770-025 answer-readiness failure frontier."
+notes = [
+  "Source PR: #336.",
+  "Head SHA: a2d43f55a89abb239b76eca0bea5ad05684c97ca.",
+  "Merge SHA: 5f4a6b5845eee89f1e2e4891b3524af7e3b37d41.",
+  "The report separates shared CPU/A770 seeded answer-readiness quality failures from CPU/A770 top-k logits and generated-output parity drift.",
+  "This closeout does not promote CPU/A770 answer parity, reference parity, strict A770 answer readiness, broad A770 answer quality, full A770 BitNet inference, QK256 production semantics, GPU-resident activation quantization, selected attention residency, resident KV, full residency, performance speedup, or trusted-partial acceleration.",
+]

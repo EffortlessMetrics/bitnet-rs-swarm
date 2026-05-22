@@ -1202,8 +1202,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-026"
-status = "pr_open"
+status = "merged"
 pr = 336
+head_sha = "a2d43f55a89abb239b76eca0bea5ad05684c97ca"
+merge_sha = "5f4a6b5845eee89f1e2e4891b3524af7e3b37d41"
 branch = "codex/intel-a770/A770-026-answer-readiness-failure-frontier"
 stackable = false
 review_mode = "codex_premerge"
