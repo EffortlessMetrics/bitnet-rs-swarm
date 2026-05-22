@@ -1,0 +1,17 @@
+timestamp = "2026-05-22T22:36:00Z"
+campaign = "intel-a770"
+item = "A770-030"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
+pr = 388
+head_sha = "796ae6e7316d6167651df1e656c4dcee38cc3b56"
+summary = "Opened the A770-030 focused summary logit-context diagnostic PR."
+
+notes = [
+  "PR #388 records focused CPU AVX2 and Intel A770 OpenCL multi-step logits for a770_summary_seed770024_keywords_014 under corpus v1.0.2.",
+  "The focused parity receipt still fails 0/1 and classifies the first generated-output mismatch as having logit context with opposite-argmax cross-chosen logits.",
+  "No runtime math, tokenizer, model artifact, backend routing, OpenCL kernel, QK256 dispatch, corpus contract, CPU/A770 parity, strict answer readiness, broad quality, residency, speed, trusted-partial acceleration, or full BitNet inference claim is changed.",
+]

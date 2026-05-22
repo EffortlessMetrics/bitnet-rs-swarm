@@ -1416,3 +1416,57 @@ must_not_claim = [
   "Performance speedup is proven.",
   "A770 trusted partial acceleration is claim-grade.",
 ]
+
+[[work_item]]
+id = "A770-030"
+status = "pr_open"
+pr = 388
+head_sha = "796ae6e7316d6167651df1e656c4dcee38cc3b56"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-029"]
+acceptance = "Record focused multi-step CPU AVX2 and Intel A770 OpenCL logits for the remaining A770-029 generated-output divergent summary case under corpus v1.0.2, compare the focused receipts, and keep CPU/A770 parity, strict answer readiness, broad answer quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed."
+commands = [
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --per-prompt-timeout-seconds 300",
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --per-prompt-timeout-seconds 300",
+  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_030_SUMMARY_LOGIT_CONTEXT.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+]
+may_claim = [
+  "The remaining A770-029 generated-output divergent summary case has focused CPU AVX2 and Intel A770 OpenCL receipts with multi-step logit context under corpus v1.0.2.",
+  "The focused parity receipt records the current first-mismatch frontier for that summary case.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
