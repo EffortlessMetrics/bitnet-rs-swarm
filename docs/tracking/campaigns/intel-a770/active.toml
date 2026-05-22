@@ -933,31 +933,29 @@ must_not_claim = [
 ]
 
 [[work_item]]
-id = "A770-029"
-status = "merged"
-pr = 371
-head_sha = "6d21cf1e35eaf1988b15afbad0c1f6ba7a6798bc"
-merge_sha = "12eb68ee7c85cc9917f996262a59239e4121af0d"
-branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
+id = "A770-030"
+status = "pr_open"
+pr = 388
+head_sha = "796ae6e7316d6167651df1e656c4dcee38cc3b56"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
-blocked_by = ["A770-028"]
-acceptance = "Repair only the A770 seeded answer-readiness corpus prompts and scoring rules whose A770-028 receipts left shared CPU/A770 content failures that targeted prompt probes showed were prompt-contract sensitive, rerun CPU AVX2 and Intel A770 OpenCL readiness receipts, and keep CPU/A770 parity, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed."
+blocked_by = ["A770-029"]
+acceptance = "Record focused multi-step CPU AVX2 and Intel A770 OpenCL logits for the remaining A770-029 generated-output divergent summary case under corpus v1.0.2, compare the focused receipts, and keep CPU/A770 parity, strict answer readiness, broad answer quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed."
 commands = [
-  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --dump-logit-steps 1 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json --per-prompt-timeout-seconds 300 --fail-on-quality # expected nonzero only if content failures remain",
-  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --dump-logit-steps 1 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json --per-prompt-timeout-seconds 300 --fail-on-quality # expected nonzero only if content failures remain",
-  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-vs-a770-answer-readiness-prompt-contract-parity.json # expected nonzero while CPU/A770 parity remains divergent",
-  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-vs-a770-answer-readiness-prompt-contract-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --per-prompt-timeout-seconds 300",
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --per-prompt-timeout-seconds 300",
+  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",
 ]
 allowed_paths = [
-  "ci/quality/a770-bitnet-answer-readiness-corpus.yaml",
-  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/**",
-  "docs/reports/A770_029_READINESS_PROMPT_CONTRACT.md",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_030_SUMMARY_LOGIT_CONTEXT.md",
   "docs/tracking/campaigns/intel-a770/**",
   "docs/tracking/generated/**",
 ]
@@ -970,8 +968,8 @@ forbidden_paths = [
   "crates/bitnet-cli/src/commands/answer_parity.rs",
 ]
 may_claim = [
-  "The A770 seeded answer-readiness corpus v1.0.2 repairs the prompt/scoring contract for the five shared CPU/A770 content failures left by A770-028.",
-  "Fresh CPU AVX2 and Intel A770 OpenCL receipts record the current quality and parity result under the repaired prompt contract.",
+  "The remaining A770-029 generated-output divergent summary case has focused CPU AVX2 and Intel A770 OpenCL receipts with multi-step logit context under corpus v1.0.2.",
+  "The focused parity receipt records the current first-mismatch frontier for that summary case.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
@@ -1418,29 +1416,31 @@ must_not_claim = [
 ]
 
 [[work_item]]
-id = "A770-030"
-status = "pr_open"
-pr = 388
-head_sha = "796ae6e7316d6167651df1e656c4dcee38cc3b56"
-branch = "codex/intel-a770/A770-030-summary-logit-context"
+id = "A770-029"
+status = "merged"
+pr = 371
+head_sha = "6d21cf1e35eaf1988b15afbad0c1f6ba7a6798bc"
+merge_sha = "12eb68ee7c85cc9917f996262a59239e4121af0d"
+branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
-blocked_by = ["A770-029"]
-acceptance = "Record focused multi-step CPU AVX2 and Intel A770 OpenCL logits for the remaining A770-029 generated-output divergent summary case under corpus v1.0.2, compare the focused receipts, and keep CPU/A770 parity, strict answer readiness, broad answer quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed."
+blocked_by = ["A770-028"]
+acceptance = "Repair only the A770 seeded answer-readiness corpus prompts and scoring rules whose A770-028 receipts left shared CPU/A770 content failures that targeted prompt probes showed were prompt-contract sensitive, rerun CPU AVX2 and Intel A770 OpenCL readiness receipts, and keep CPU/A770 parity, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed."
 commands = [
-  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --per-prompt-timeout-seconds 300",
-  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --per-prompt-timeout-seconds 300",
-  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
-  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --dump-logit-steps 1 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json --per-prompt-timeout-seconds 300 --fail-on-quality # expected nonzero only if content failures remain",
+  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --dump-logit-steps 1 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json --per-prompt-timeout-seconds 300 --fail-on-quality # expected nonzero only if content failures remain",
+  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-vs-a770-answer-readiness-prompt-contract-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-vs-a770-answer-readiness-prompt-contract-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",
 ]
 allowed_paths = [
-  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
-  "docs/reports/A770_030_SUMMARY_LOGIT_CONTEXT.md",
+  "ci/quality/a770-bitnet-answer-readiness-corpus.yaml",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/**",
+  "docs/reports/A770_029_READINESS_PROMPT_CONTRACT.md",
   "docs/tracking/campaigns/intel-a770/**",
   "docs/tracking/generated/**",
 ]
@@ -1453,8 +1453,8 @@ forbidden_paths = [
   "crates/bitnet-cli/src/commands/answer_parity.rs",
 ]
 may_claim = [
-  "The remaining A770-029 generated-output divergent summary case has focused CPU AVX2 and Intel A770 OpenCL receipts with multi-step logit context under corpus v1.0.2.",
-  "The focused parity receipt records the current first-mismatch frontier for that summary case.",
+  "The A770 seeded answer-readiness corpus v1.0.2 repairs the prompt/scoring contract for the five shared CPU/A770 content failures left by A770-028.",
+  "Fresh CPU AVX2 and Intel A770 OpenCL receipts record the current quality and parity result under the repaired prompt contract.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
