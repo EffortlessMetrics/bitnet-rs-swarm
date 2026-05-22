@@ -1307,7 +1307,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-028"
-status = "in_progress"
+status = "pr_open"
+pr = 362
 branch = "codex/intel-a770/A770-028-readiness-normalization-scoring"
 stackable = false
 review_mode = "codex_premerge"
