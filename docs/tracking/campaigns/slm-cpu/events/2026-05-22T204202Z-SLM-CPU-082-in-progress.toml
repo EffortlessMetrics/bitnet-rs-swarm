@@ -1,0 +1,16 @@
+timestamp = "2026-05-22T20:42:02Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-082"
+event = "in_progress"
+status = "in_progress"
+branch = "codex/slm-cpu-082-receipt-capture"
+actor = "codex"
+summary = "Started the SLM-CPU-082 repeated packed-Q8 receipt capture slice on the i5-8250U."
+notes = [
+  "Real 3+3 receipt capture completed locally; classification is regressed with speedup_claim=false.",
+]
+details = [
+  "Captured three baseline eager_f32_candle Qwen3 Q8_0 warm-session receipts and three opt-in exact-tensor packed_q8_sidecar candidate receipts.",
+  "Generated qwen3-slm-cpu-081-repeated-packed-q8-timing-classification.json with behavior equivalence preserved and timing classified as regressed.",
+  "The slice keeps packed_q8_sidecar opt-in and exact-tensor scoped, leaves the default runtime unchanged, and makes no speedup or sustained-throughput claim.",
+]
