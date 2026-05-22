@@ -828,7 +828,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-020"
-status = "in_progress"
+status = "pr_open"
+pr = 265
+head_sha = "a0b0de7a2d0fc941dcce2119f7572574373888bd"
 branch = "codex/intel-a770/A770-020-cpu-a770-answer-parity"
 stackable = false
 review_mode = "codex_premerge"
