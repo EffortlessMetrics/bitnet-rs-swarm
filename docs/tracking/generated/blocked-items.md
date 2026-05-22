@@ -134,7 +134,7 @@
 | apple-m4-inference-excellence | M4-EVIDENCE-REPLAY-001 | M4-RECEIPT-001, M4-CI-001, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-TREND-001 | M4-CI-001, M4-BENCH-003, M4-BITNET-REG-001, M4-ACCURACY-007, M4-BITNET-EX-012 | merged |
 | apple-m4-inference-excellence | M4-MODEL-LIFECYCLE-001 | M4-REPRO-002, M4-OPS-SLO-001, M4-CI-001 | merged |
-| apple-m4-inference-excellence | M4-COMPAT-001 | M4-SETUP-001, M4-MODEL-LIFECYCLE-001, M4-CI-001, M4-REPRO-001 | proposed |
+| apple-m4-inference-excellence | M4-COMPAT-001 | M4-SETUP-001, M4-MODEL-LIFECYCLE-001, M4-CI-001, M4-REPRO-001 | merged |
 | apple-m4-inference-excellence | M4-CLAIM-LINT-001 | M4-COMPAT-001, M4-REPRO-001 | proposed |
 | apple-m4-inference-excellence | M4-RELEASE-001 | M4-ACCURACY-007, M4-BENCH-003, M4-BENCH-007, M4-BITNET-EX-005, M4-BITNET-EX-015, M4-BITNET-REG-001, M4-CANARY-001, M4-CLAIM-LINT-001, M4-COMPAT-001, M4-CONTEXT-001, M4-CONTEXT-002, M4-DENSE-CHAT-001, M4-DENSE-REF-001, M4-EVIDENCE-REPLAY-001, M4-GATE-HYGIENE-001, M4-MODEL-LIFECYCLE-001, M4-OBS-001, M4-OPS-SLO-001, M4-OPS-UX-003, M4-RELIABILITY-001, M4-ROBUSTNESS-001, M4-ROUTE-MATRIX-001, M4-SERVE-EX-004, M4-SETUP-001, M4-TREND-001, M4-WORKLOAD-001, M4-CI-001 | proposed |
 | apple-m4-inference-excellence | M4-METAL-EX-001 | M4-EXCELLENCE-004 | proposed |
@@ -432,6 +432,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-023 | LNL258V-GOAL-AUDIT-022 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-024 | LNL258V-GOAL-AUDIT-023 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-025 | LNL258V-GOAL-AUDIT-024 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-026 | LNL258V-GOAL-AUDIT-025 | pr_open |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
@@ -689,6 +690,7 @@
 | slm-cpu | SLM-CPU-018 | SLM-CPU-017 | merged |
 | slm-cpu | SLM-CPU-019 | SLM-CPU-018 | merged |
 | slm-cpu | SLM-CPU-020 | SLM-CPU-019 | merged |
+| slm-cpu | SLM-CPU-080 | SLM-CPU-079, SLM-CPU-032, SLM-CPU-035 | ready |
 | slm-cpu | SLM-CPU-059 | SLM-CPU-058 | merged |
 | slm-cpu | SLM-CPU-060 | SLM-CPU-059 | merged |
 | slm-cpu | SLM-CPU-061 | SLM-CPU-060 | merged |
