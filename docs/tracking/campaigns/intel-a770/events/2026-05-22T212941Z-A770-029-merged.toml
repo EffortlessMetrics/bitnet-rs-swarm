@@ -1,0 +1,17 @@
+timestamp = "2026-05-22T21:29:41Z"
+campaign = "intel-a770"
+item = "A770-029"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+pr = 371
+branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
+head_sha = "6d21cf1e35eaf1988b15afbad0c1f6ba7a6798bc"
+merge_sha = "12eb68ee7c85cc9917f996262a59239e4121af0d"
+summary = "Merged PR #371 for A770-029 readiness prompt contract repair."
+notes = [
+  "The merged PR repairs the prompt/scoring contract for the five shared CPU/A770 answer-readiness content failures left by A770-028.",
+  "The committed receipts record CPU AVX2 and Intel A770 OpenCL 20/20 quality on corpus v1.0.2 with fallback=false.",
+  "CPU/A770 parity remains failed with top-k drift and one generated-output mismatch, so no parity, strict readiness, broad quality, residency, speed, trusted-partial acceleration, or full BitNet inference claim is promoted.",
+]
