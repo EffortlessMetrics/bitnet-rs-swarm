@@ -197,7 +197,7 @@ fn qwen_trace_rope_cuda_upload_probe(
             rows,
             cols,
             data.len(),
-            data.len() * std::mem::size_of::<f32>()
+            std::mem::size_of_val(data)
         )
     });
     qwen_trace_rope_cuda_upload_probe_impl(trace, table, data)
@@ -240,7 +240,7 @@ fn qwen_trace_rope_cuda_upload_probe_impl(
 
     let copy_start = Instant::now();
     qwen_trace_rope_init_event(Some(trace), "model_init.rope_cuda_htod_start", || {
-        format!("\"table\":\"{}\",\"bytes\":{}", table, data.len() * std::mem::size_of::<f32>())
+        format!("\"table\":\"{}\",\"bytes\":{}", table, std::mem::size_of_val(data))
     });
     cuda.memcpy_htod(data, &mut device_data)?;
     qwen_trace_rope_init_event(Some(trace), "model_init.rope_cuda_htod_finish", || {
@@ -248,7 +248,7 @@ fn qwen_trace_rope_cuda_upload_probe_impl(
             "\"table\":\"{}\",\"htod_ms\":{},\"bytes\":{}",
             table,
             qwen_trace_elapsed_ms(copy_start),
-            data.len() * std::mem::size_of::<f32>()
+            std::mem::size_of_val(data)
         )
     });
 
