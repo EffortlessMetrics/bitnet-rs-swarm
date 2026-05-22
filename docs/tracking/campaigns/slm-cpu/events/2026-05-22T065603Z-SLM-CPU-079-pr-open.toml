@@ -7,6 +7,7 @@ new_status = "pr_open"
 actor = "codex"
 pr = 291
 branch = "codex/slm-cpu-079-post-aligned-matvec-artifact"
+head_sha = "a62e2d12b3c447189006e8e6ff8c3dfe56095220"
 summary = "Opened the post-aligned packed Q8_0 exact-tensor warm-session artifact slice."
 notes = [
   "Captured a real i5-8250U Qwen3 Q8_0 warm-session artifact after the SLM-CPU-078 aligned packed matvec implementation.",
