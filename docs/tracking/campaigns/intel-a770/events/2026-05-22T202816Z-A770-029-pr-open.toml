@@ -1,0 +1,16 @@
+timestamp = "2026-05-22T20:28:16Z"
+campaign = "intel-a770"
+item = "A770-029"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+pr = 371
+branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
+head_sha = "d72e883f532e58527b2ea6ae7d41a9ec0e488fad"
+summary = "Opened PR #371 for A770-029 readiness prompt contract repair."
+notes = [
+  "The PR tightens five seeded corpus prompts or scoring contracts whose A770-028 receipts left shared CPU/A770 content failures.",
+  "Fresh CPU AVX2 and Intel A770 OpenCL receipts both record 20/20 quality passes with fallback=false.",
+  "The CPU/A770 parity receipt remains failed with 20/20 logits top-k mismatches and one generated-output mismatch, so no parity, readiness, quality, residency, speed, trusted-partial acceleration, or full BitNet inference claim is promoted.",
+]
