@@ -1,0 +1,28 @@
+timestamp = "2026-05-22T22:00:15Z"
+campaign = "intel-a770"
+item = "A770-030"
+event = "in_progress"
+previous_status = "none"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
+base = "main"
+summary = "Start A770-030 focused multi-step logit-context diagnostic for the remaining A770-029 summary generated-output divergence."
+
+notes = [
+  "A770-030 follows the A770-029 next frontier: record focused multi-step CPU AVX2 and Intel A770 OpenCL logits for a770_summary_seed770024_keywords_014 under corpus v1.0.2.",
+  "The item is diagnostic-only and keeps CPU/A770 parity, strict answer readiness, broad answer quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed.",
+]
+
+[claim_boundary]
+runtime_math_changed = false
+backend_changed = false
+tokenizer_changed = false
+model_changed = false
+strict_answer_readiness_claim = false
+cpu_a770_parity_claim = false
+broad_quality_claim = false
+residency_claim = false
+speedup_claim = false
+trusted_partial_claim = false
+full_inference_claim = false
