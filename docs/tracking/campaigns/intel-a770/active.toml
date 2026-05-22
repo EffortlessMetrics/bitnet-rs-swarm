@@ -934,9 +934,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-029"
-status = "in_progress"
+status = "merged"
 pr = 371
-head_sha = "d72e883f532e58527b2ea6ae7d41a9ec0e488fad"
+head_sha = "6d21cf1e35eaf1988b15afbad0c1f6ba7a6798bc"
+merge_sha = "12eb68ee7c85cc9917f996262a59239e4121af0d"
 branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
 stackable = false
 review_mode = "codex_premerge"
