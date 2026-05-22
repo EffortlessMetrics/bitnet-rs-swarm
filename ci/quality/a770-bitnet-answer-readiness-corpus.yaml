@@ -4,7 +4,7 @@ name: a770-bitnet-answer-readiness-corpus
 description: Seeded deterministic BitNet answer-readiness corpus for Intel Arc A770 CPU/OpenCL quality and parity gates.
 metadata:
   campaign: intel-a770
-  work_item: A770-028
+  work_item: A770-029
   seed: 770024
   generator_policy: deterministic-static-fixture-a770-bitnet-v1
   case_count_target: 20
@@ -13,7 +13,7 @@ metadata:
   corpus_contract:
     contract_version: a770-answer-readiness-corpus-v1
     corpus_id: a770-bitnet-answer-readiness-corpus
-    corpus_version: "1.0.1"
+    corpus_version: "1.0.2"
     seed_generation_rules: "Static deterministic fixtures derived from seed=770024; every case records seed_material with family, operation, and fixture inputs. Prompt, expected-output, scoring, or family-count changes require a corpus_version bump."
     expected_output_provenance: "Closed-form deterministic fixture answers derived from the prompt data in this YAML; live CPU/A770 receipts are comparison evidence, not expected-output authority."
     normalization_rules: answer_corpus_normalize_scoring_text_v1
@@ -136,7 +136,7 @@ cases:
     category: synthetic_extraction
     profile: context_conditioned
     seed_material: "seed=770024 family=extract index=9 code=R-42"
-    question: "Extract the short code from this note: package code R-42 is ready. Answer with only the code."
+    question: "Extract the code from this note: Package ID: R-42. Status: ready. Reply with only the ID after Package ID."
     max_new_tokens: 8
     scoring: {kind: normalized_match, expected_normalized: "r-42"}
     gate: {kind: contains_any, contains_any: ["R-42", "r-42"]}
@@ -163,8 +163,8 @@ cases:
     category: ordering_sorting
     profile: instruction_following
     seed_material: "seed=770024 family=sort index=12 words=dog,ant,cat"
-    question: "Sort these words alphabetically and separate them with commas: dog, ant, cat."
-    max_new_tokens: 16
+    question: "Which list is alphabetical: ant, cat, dog OR ant, dog, cat? Answer with only the alphabetical list."
+    max_new_tokens: 12
     scoring: {kind: normalized_match, expected_normalized: "ant, cat, dog"}
     gate: {kind: contains_any, contains_any: ["ant, cat, dog", "ant cat dog"]}
 
@@ -186,22 +186,22 @@ cases:
     scoring: {kind: required_keywords, required_keywords: ["fast", "safe"]}
     gate: {kind: contains_any, contains_any: ["fast", "safe"]}
 
-  - id: a770_yes_no_seed770024_water_015
+  - id: a770_yes_no_seed770024_true_015
     category: yes_no
     profile: ask_short
-    seed_material: "seed=770024 family=yes_no index=15 question=water_wet"
-    question: "Answer yes or no: is water wet?"
+    seed_material: "seed=770024 family=yes_no index=15 question=true_comparison"
+    question: "Choose exactly one word: yes or no. Is 2 greater than 1?"
     max_new_tokens: 4
-    scoring: {kind: exact_match, expected_normalized: "yes"}
+    scoring: {kind: normalized_match, expected_normalized: "yes"}
     gate: {kind: starts_with_any, starts_with_any: ["yes", "Yes"]}
 
-  - id: a770_yes_no_seed770024_sky_016
+  - id: a770_yes_no_seed770024_false_016
     category: yes_no
     profile: ask_short
-    seed_material: "seed=770024 family=yes_no index=16 question=sky_green"
-    question: "Answer yes or no: is the daytime sky usually green?"
+    seed_material: "seed=770024 family=yes_no index=16 question=false_comparison"
+    question: "Choose exactly one word: yes or no. Is 1 greater than 2?"
     max_new_tokens: 4
-    scoring: {kind: exact_match, expected_normalized: "no"}
+    scoring: {kind: normalized_match, expected_normalized: "no"}
     gate: {kind: starts_with_any, starts_with_any: ["no", "No"]}
 
   - id: a770_json_seed770024_status_017
@@ -237,7 +237,7 @@ cases:
     category: unknown_handling
     profile: ask_short
     seed_material: "seed=770024 family=unknown index=20 requested=not_in_prompt"
-    question: "The note says: Nova owns the ticket. What color is the ticket? If the color is not stated, answer unknown."
+    question: "Context: Nova owns the ticket. Color: not stated. Answer one word: unknown."
     max_new_tokens: 8
-    scoring: {kind: exact_match, expected_normalized: "unknown"}
+    scoring: {kind: normalized_match, expected_normalized: "unknown"}
     gate: {kind: contains_any, contains_any: ["unknown", "Unknown"]}

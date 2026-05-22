@@ -1,0 +1,22 @@
+schema_version = 1
+campaign = "intel-a770"
+item = "A770-029"
+event = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-029-readiness-prompt-contract"
+base = "main"
+created_at = "2026-05-22T19:28:43Z"
+summary = "Start A770-029 prompt-contract repair for the five shared CPU/A770 answer-readiness content failures left by A770-028."
+
+[claim_boundary]
+runtime_math_changed = false
+backend_changed = false
+tokenizer_changed = false
+model_changed = false
+strict_answer_readiness_claim = false
+cpu_a770_parity_claim = false
+broad_quality_claim = false
+residency_claim = false
+speedup_claim = false
+trusted_partial_claim = false
+full_inference_claim = false
