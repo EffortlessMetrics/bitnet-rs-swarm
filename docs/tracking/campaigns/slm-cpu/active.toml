@@ -2041,6 +2041,61 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "SLM-CPU-083"
+status = "ready"
+branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-082", "SLM-CPU-041"]
+acceptance = "Queue the next Kaby Lake Qwen3 Q8_0 performance slice after the repeated packed-Q8 sidecar timing regression. The implementation must return to the allocation/layout target identified by the dashboard and SLM-CPU-035 through SLM-CPU-041: reduce or narrowly classify one prompt_prefill.forward / model-forward owned-output allocation boundary using the existing typed transformer-forward workspace surfaces. Any runtime change must preserve the Qwen3 Q8_0 appliance behavior oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false. The item must not promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session_aggregate_allocation_audit",
+  "cargo clippy --locked -p bitnet-cli --no-default-features --features cpu,full-cli --all-targets -- -D warnings",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "The next Kaby Lake Qwen3 Q8_0 performance target returns to prompt_prefill.forward / model-forward allocation or layout work after the packed-Q8 sidecar repeated timing regression.",
+  "Any future implementation must preserve the established Qwen3 Q8_0 generated-ID and strict-receipt behavior oracle before claiming even a bounded improvement.",
+]
+must_not_claim = [
+  "A runtime optimization is implemented by this tracker item alone.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "End-to-end speedup is proven without before/after receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
 id = "SLM-CPU-080"
 status = "merged"
 pr = 332
