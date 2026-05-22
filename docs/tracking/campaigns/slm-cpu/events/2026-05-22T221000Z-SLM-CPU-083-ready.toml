@@ -1,0 +1,14 @@
+timestamp = "2026-05-22T22:10:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-083"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
+actor = "codex"
+summary = "Queued the next Kaby SLM performance slice after SLM-CPU-082."
+notes = [
+  "SLM-CPU-082 captured repeated i5-8250U before/after receipts for the opt-in exact-tensor packed-Q8 sidecar path and classified the candidate as timing-regressed while preserving behavior.",
+  "SLM-CPU-083 returns the performance lane to the alternative dashboard target: reducing or narrowly classifying one prompt_prefill.forward / model-forward allocation or layout boundary.",
+  "The item keeps the Qwen3 Q8_0 appliance behavior oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, and fallback_used=false.",
+]
