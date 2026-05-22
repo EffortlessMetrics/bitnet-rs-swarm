@@ -2433,9 +2433,20 @@ mod tests {
         );
         assert_eq!(frontier["generated_output_mismatch_count"], 1);
         assert_eq!(frontier["missing_context_count"], 1);
-        assert_eq!(frontier["rows"].as_array().unwrap().len(), 1);
         assert_eq!(frontier["rows_truncated"], false);
-        assert_eq!(frontier["rows"][0]["reason"], "right_logits_step_missing");
+        assert_eq!(
+            frontier["rows"],
+            json!([
+                {
+                    "case_id": "math",
+                    "classification": "generated_output_logit_margin_missing_context",
+                    "reason": "right_logits_step_missing",
+                    "first_mismatch_index": 2,
+                    "left_logits_step_count": 3,
+                    "right_logits_step_count": 2
+                }
+            ])
+        );
     }
 
     #[test]
