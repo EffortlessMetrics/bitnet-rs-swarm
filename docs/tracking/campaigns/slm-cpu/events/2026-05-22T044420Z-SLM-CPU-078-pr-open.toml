@@ -7,7 +7,7 @@ new_status = "pr_open"
 actor = "codex"
 pr = 277
 branch = "codex/slm-cpu-078-packed-matvec-aligned-path"
-head_sha = "04ca8ce040684477a3447fce485a95a06739c972"
+head_sha = "a5b7b8c4081a0639fd23bdf3cc6d25c26fa67e3a"
 summary = "Opened PR #277 with a guarded aligned packed Q8_0 matvec path for the exact-tensor sidecar lane."
 notes = [
   "The implementation adds a block-aligned packed Q8_0 matvec path when matrix_cols is a multiple of the Q8 block size.",
