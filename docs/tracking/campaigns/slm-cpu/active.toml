@@ -2100,8 +2100,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-084"
-status = "pr_open"
+status = "merged"
 pr = 399
+head_sha = "8c28874c867989c5f0dd8c0107c4defbd708f9b5"
+merge_sha = "47e3d657917981701d980d32cf4850fd3d0d096b"
 branch = "codex/slm-cpu-084-model-forward-output-storage-api"
 stackable = false
 review_mode = "codex_premerge"
