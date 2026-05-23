@@ -21,6 +21,40 @@ The live queue is generated locally under `target/pr-ledger/` because it is a
 throwaway refresh surface. This tracked file records the current durable
 disposition and retains the original large snapshot below for provenance.
 
+## Current Swarm Queue State
+
+- Date: 2026-05-23
+- Repository: `EffortlessMetrics/bitnet-rs-swarm`
+- Commands:
+  - `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
+  - `rtk git fetch origin --prune`
+  - `rtk git fetch source --prune`
+  - `rtk git rev-parse origin/main`
+  - `rtk git rev-parse source/main`
+  - `rtk git rev-list --count source/main ^origin/main`
+  - `rtk git rev-list --count origin/main ^source/main`
+- Open PR count: 0
+- Duplicate open PR clusters: none
+- Direct swarm PRs waiting for merge: none
+- Current queue-stabilized promotion candidate SHA:
+  `a944766a67303028d7d7787b5031cc9d9bb73cd3`
+- Source reachability: `source/main` is reachable from `origin/main`;
+  `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
+  count is `73`.
+
+| PR | Lane | Current signal | Disposition |
+|---:|---|---|---|
+| #451 | swarm handoff | Merged as the post-#450 operator checkpoint. | Operator-state documentation only; no source promotion started. |
+| #452 | CUDA/Qwen3 diagnostic | Merged as a short-decode source-set receipt. | Diagnostic source-set evidence only; no Qwen3 Lunar Lake promotion, quality, speed, or source-promotion claim. |
+| #453 | Lunar Lake tracker | Merged before its late repair commit was picked up. | No-inference tracker refresh only; the missed repair was ported into #455. |
+| #455 | Lunar Lake tracker closeout | Merged after generated-tracker proof. | Closed LNL258V-GOAL-AUDIT-043 and preserved the post-#452 repair markers. |
+| #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
+
+Do not start a swarm-to-source promotion from this snapshot alone. The recorded
+SHA is a promotion candidate only after the source-promotion operator chooses a
+batch boundary, prepares the promotion packet, and verifies source-owned release
+surfaces.
+
 ## Current Queue State
 
 - Date: 2026-05-20
