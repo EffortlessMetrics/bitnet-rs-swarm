@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T01:41:46Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-084"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 399
+head_sha = "8c28874c867989c5f0dd8c0107c4defbd708f9b5"
+merge_sha = "47e3d657917981701d980d32cf4850fd3d0d096b"
+branch = "codex/slm-cpu-084-model-forward-output-storage-api"
+actor = "codex"
+summary = "Merged PR #399 with the model-forward output slot API surface."
+notes = [
+  "PR #399 moves TransformerModel::forward_with_workspace output through a TransformerForwardWorkspace-owned model output slot before returning it to the caller.",
+  "The warm-session allocation audit reports model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops, keeping reusable caller-filled output storage blocked by Candle owned-tensor operations.",
+  "The merge does not promote packed_q8_sidecar, change dense math, claim speedup, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths.",
+]
