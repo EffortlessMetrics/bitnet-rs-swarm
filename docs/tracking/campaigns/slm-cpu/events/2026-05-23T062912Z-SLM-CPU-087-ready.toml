@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T06:29:12Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-087"
+event = "in_progress"
+previous_status = "missing"
+new_status = "ready"
+branch = "codex/slm-cpu-087-residual-block-output-gate"
+actor = "codex"
+summary = "Queued the post-SLM-CPU-086 residual-add and transformer block output-storage gate."
+notes = [
+  "SLM-CPU-086 narrowed model.final_norm.output to the public Candle LayerNorm/RMSNorm owned-output API gap.",
+  "SLM-CPU-087 moves the Kaby Lake Qwen3 Q8_0 performance lane to the residual-add / transformer.block.output boundary without making a runtime optimization in this queue slice.",
+  "Any later implementation must preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false before claiming even a bounded allocation improvement.",
+  "No packed-Q8 sidecar promotion, speedup claim, sustained-throughput claim, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is in scope.",
+]
