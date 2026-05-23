@@ -1,0 +1,13 @@
+campaign = "intel-a770"
+item = "A770-032"
+event = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-032-internal-logit-source-context"
+created_utc = "2026-05-23T03:37:45Z"
+summary = "Start A770-032 internal logit-source context diagnostic for the focused A770-030/A770-031 summary divergence."
+
+details = [
+  "A770-032 follows the A770-031 next frontier by adding compact first-mismatch hidden-operand fingerprints and output-head dispatch deltas to dumped logit steps.",
+  "The focused live receipt classifies generated_output_internal_logit_source_frontier_hidden_operand_drift for a770_summary_seed770024_keywords_014.",
+  "The PR keeps CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed.",
+]

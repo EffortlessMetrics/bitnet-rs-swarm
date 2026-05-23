@@ -219,6 +219,14 @@ fn build_answer_parity_receipt(
         left_label,
         right_label,
     );
+    let generated_output_internal_logit_source_frontier =
+        build_generated_output_internal_logit_source_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -311,6 +319,7 @@ fn build_answer_parity_receipt(
         "generated_output_frontier": generated_output_frontier,
         "generated_output_logit_margin_frontier": generated_output_logit_margin_frontier,
         "generated_output_argmax_source_frontier": generated_output_argmax_source_frontier,
+        "generated_output_internal_logit_source_frontier": generated_output_internal_logit_source_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -1956,6 +1965,295 @@ fn build_generated_output_argmax_source_frontier(
     })
 }
 
+fn build_generated_output_internal_logit_source_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut clean_count = 0usize;
+    let mut hidden_operand_drift_count = 0usize;
+    let mut output_head_logit_accumulation_count = 0usize;
+    let mut route_context_only_count = 0usize;
+    let mut missing_context_count = 0usize;
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let Some(left_case) = left_cases.get(id).copied() else {
+            missing_context_count += 1;
+            row_candidate_count += 1;
+            push_limited_row(
+                &mut rows,
+                ROW_LIMIT,
+                generated_output_internal_logit_source_missing_context_row(id, "left_case_missing"),
+            );
+            continue;
+        };
+        let Some(right_case) = right_cases.get(id).copied() else {
+            missing_context_count += 1;
+            row_candidate_count += 1;
+            push_limited_row(
+                &mut rows,
+                ROW_LIMIT,
+                generated_output_internal_logit_source_missing_context_row(
+                    id,
+                    "right_case_missing",
+                ),
+            );
+            continue;
+        };
+        let Some(left_generated) = token_id_vec(&left_case["token_ids"]["generated"]) else {
+            missing_context_count += 1;
+            row_candidate_count += 1;
+            push_limited_row(
+                &mut rows,
+                ROW_LIMIT,
+                generated_output_internal_logit_source_missing_context_row(
+                    id,
+                    "left_generated_token_ids_missing",
+                ),
+            );
+            continue;
+        };
+        let Some(right_generated) = token_id_vec(&right_case["token_ids"]["generated"]) else {
+            missing_context_count += 1;
+            row_candidate_count += 1;
+            push_limited_row(
+                &mut rows,
+                ROW_LIMIT,
+                generated_output_internal_logit_source_missing_context_row(
+                    id,
+                    "right_generated_token_ids_missing",
+                ),
+            );
+            continue;
+        };
+        let Some(first_mismatch_index) =
+            first_different_token_index(&left_generated, &right_generated)
+        else {
+            clean_count += 1;
+            continue;
+        };
+
+        let row = generated_output_internal_logit_source_row(
+            id,
+            left_case,
+            right_case,
+            &left_generated,
+            &right_generated,
+            first_mismatch_index,
+        );
+        match row["classification"].as_str() {
+            Some("generated_output_internal_logit_source_hidden_operand_drift") => {
+                hidden_operand_drift_count += 1;
+            }
+            Some("generated_output_internal_logit_source_output_head_logit_accumulation") => {
+                output_head_logit_accumulation_count += 1;
+            }
+            Some("generated_output_internal_logit_source_route_context_only") => {
+                route_context_only_count += 1;
+            }
+            _ => missing_context_count += 1,
+        }
+        row_candidate_count += 1;
+        push_limited_row(&mut rows, ROW_LIMIT, row);
+    }
+
+    let classification = if missing_context_count > 0 {
+        "generated_output_internal_logit_source_frontier_missing_context"
+    } else if hidden_operand_drift_count > 0 {
+        "generated_output_internal_logit_source_frontier_hidden_operand_drift"
+    } else if output_head_logit_accumulation_count > 0 {
+        "generated_output_internal_logit_source_frontier_output_head_logit_accumulation"
+    } else if route_context_only_count > 0 {
+        "generated_output_internal_logit_source_frontier_route_context_only"
+    } else {
+        "generated_output_internal_logit_source_frontier_clean"
+    };
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "clean_count": clean_count,
+        "hidden_operand_drift_count": hidden_operand_drift_count,
+        "output_head_logit_accumulation_count": output_head_logit_accumulation_count,
+        "route_context_only_count": route_context_only_count,
+        "missing_context_count": missing_context_count,
+        "hidden_operand_context_available": rows.iter().any(|row| {
+            row["hidden_operand_context_available"].as_bool().unwrap_or(false)
+        }),
+        "qk256_operand_context_available": rows.iter().any(|row| {
+            row["qk256_operand_context_available"].as_bool().unwrap_or(false)
+        }),
+        "output_head_logit_accumulation_context_available": rows.iter().any(|row| {
+            row["output_head_logit_accumulation_context_available"]
+                .as_bool()
+                .unwrap_or(false)
+        }),
+        "next_diagnostic": match classification {
+            "generated_output_internal_logit_source_frontier_hidden_operand_drift" => {
+                "localize hidden-state operand drift before output-head QK256"
+            }
+            "generated_output_internal_logit_source_frontier_output_head_logit_accumulation" => {
+                "replay output-head QK256 accumulation for the selected mismatch tokens"
+            }
+            "generated_output_internal_logit_source_frontier_route_context_only" => {
+                "capture hidden operand fingerprints and selected-token output-head accumulation"
+            }
+            "generated_output_internal_logit_source_frontier_missing_context" => {
+                "rerun focused receipts with logit_source_context enabled"
+            }
+            _ => "none",
+        },
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
+fn generated_output_internal_logit_source_missing_context_row(id: &str, reason: &str) -> Value {
+    json!({
+        "case_id": id,
+        "classification": "generated_output_internal_logit_source_missing_context",
+        "reason": reason,
+        "qk256_operand_context_available": false,
+        "output_head_logit_accumulation_context_available": false,
+    })
+}
+
+fn generated_output_internal_logit_source_row(
+    id: &str,
+    left_case: &Value,
+    right_case: &Value,
+    left_generated: &[u64],
+    right_generated: &[u64],
+    first_mismatch_index: usize,
+) -> Value {
+    let Some(left_step) =
+        left_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_internal_logit_source_missing_context_row(
+            id,
+            "left_logits_step_missing",
+        );
+    };
+    let Some(right_step) =
+        right_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_internal_logit_source_missing_context_row(
+            id,
+            "right_logits_step_missing",
+        );
+    };
+    let left_context = &left_step["logit_source_context"];
+    let right_context = &right_step["logit_source_context"];
+    if !left_context.is_object() {
+        return generated_output_internal_logit_source_missing_context_row(
+            id,
+            "left_logit_source_context_missing",
+        );
+    }
+    if !right_context.is_object() {
+        return generated_output_internal_logit_source_missing_context_row(
+            id,
+            "right_logit_source_context_missing",
+        );
+    }
+
+    let left_hidden = &left_context["hidden_operand"];
+    let right_hidden = &right_context["hidden_operand"];
+    let left_hidden_available = left_hidden["available"].as_bool().unwrap_or(false);
+    let right_hidden_available = right_hidden["available"].as_bool().unwrap_or(false);
+    let left_output_head_context =
+        left_context["output_head_logit_accumulation_context_available"].as_bool().unwrap_or(false);
+    let right_output_head_context =
+        right_context["output_head_logit_accumulation_context_available"]
+            .as_bool()
+            .unwrap_or(false);
+    let has_route_context = left_output_head_context || right_output_head_context;
+    let left_hidden_sha = left_hidden["sha256_f32_le"].as_str();
+    let right_hidden_sha = right_hidden["sha256_f32_le"].as_str();
+    let hidden_sha_match = match (left_hidden_sha, right_hidden_sha) {
+        (Some(left), Some(right)) => Some(left == right),
+        _ => None,
+    };
+    let qk256_operand_context_available =
+        left_hidden_available && right_hidden_available && hidden_sha_match.is_some();
+    let hidden_operand_context_available = qk256_operand_context_available;
+    let output_head_logit_accumulation_context_available =
+        left_output_head_context && right_output_head_context;
+    let margin_row =
+        generated_output_logit_margin_row(id, left_case, right_case, first_mismatch_index, 0.01);
+
+    let classification = if hidden_operand_context_available && hidden_sha_match == Some(false) {
+        "generated_output_internal_logit_source_hidden_operand_drift"
+    } else if qk256_operand_context_available
+        && hidden_sha_match == Some(true)
+        && output_head_logit_accumulation_context_available
+    {
+        "generated_output_internal_logit_source_output_head_logit_accumulation"
+    } else if has_route_context {
+        "generated_output_internal_logit_source_route_context_only"
+    } else {
+        "generated_output_internal_logit_source_missing_context"
+    };
+
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "first_mismatch_index": first_mismatch_index,
+        "left_token_id": left_generated.get(first_mismatch_index).copied(),
+        "right_token_id": right_generated.get(first_mismatch_index).copied(),
+        "left_chosen_id": left_step["chosen_id"],
+        "right_chosen_id": right_step["chosen_id"],
+        "opposite_argmax": margin_row["opposite_argmax"],
+        "left_margin_over_right_chosen_on_left": margin_row["left_margin_over_right_chosen_on_left"],
+        "right_margin_over_left_chosen_on_right": margin_row["right_margin_over_left_chosen_on_right"],
+        "hidden_operand_context_available": hidden_operand_context_available,
+        "qk256_operand_context_available": qk256_operand_context_available,
+        "output_head_logit_accumulation_context_available": output_head_logit_accumulation_context_available,
+        "left_hidden_operand_available": left_hidden_available,
+        "right_hidden_operand_available": right_hidden_available,
+        "hidden_operand_sha256_match": hidden_sha_match,
+        "left_hidden_operand_sha256_f32_le": left_hidden_sha,
+        "right_hidden_operand_sha256_f32_le": right_hidden_sha,
+        "left_hidden_operand_shape": left_hidden["shape"],
+        "right_hidden_operand_shape": right_hidden["shape"],
+        "left_hidden_operand_rms": left_hidden["rms"],
+        "right_hidden_operand_rms": right_hidden["rms"],
+        "hidden_operand_rms_abs_delta": number_abs_delta(&left_hidden["rms"], &right_hidden["rms"]),
+        "left_output_head_qk256_dispatch_delta": left_context["output_head_qk256_dispatch_delta"],
+        "right_output_head_qk256_dispatch_delta": right_context["output_head_qk256_dispatch_delta"],
+        "left_output_head_a770_opencl_runtime_delta": left_context["output_head_a770_opencl_runtime_delta"],
+        "right_output_head_a770_opencl_runtime_delta": right_context["output_head_a770_opencl_runtime_delta"],
+        "next_diagnostic": match classification {
+            "generated_output_internal_logit_source_hidden_operand_drift" => {
+                "localize hidden-state operand drift before output-head QK256"
+            }
+            "generated_output_internal_logit_source_output_head_logit_accumulation" => {
+                "replay output-head QK256 accumulation for the selected mismatch tokens"
+            }
+            "generated_output_internal_logit_source_route_context_only" => {
+                "capture hidden operand fingerprints and selected-token output-head accumulation"
+            }
+            _ => "rerun focused receipts with logit_source_context enabled",
+        },
+    })
+}
+
+fn number_abs_delta(left: &Value, right: &Value) -> Value {
+    match (left.as_f64(), right.as_f64()) {
+        (Some(left), Some(right)) => json!((left - right).abs()),
+        _ => Value::Null,
+    }
+}
+
 fn generated_output_argmax_source_missing_context_row(id: &str, reason: &str) -> Value {
     json!({
         "case_id": id,
@@ -2399,6 +2697,57 @@ mod tests {
         ])
     }
 
+    fn logit_source_context(hidden_sha: &str, hidden_rms: f64, on_a770: u64) -> Value {
+        json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_output_head_logit_source",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "hidden_operand": {
+                "available": true,
+                "shape": [1, 4],
+                "value_count": 4,
+                "finite_count": 4,
+                "nan_count": 0,
+                "infinite_count": 0,
+                "sha256_f32_le": hidden_sha,
+                "rms": hidden_rms,
+                "first_values": [0.1, 0.2, 0.3, 0.4]
+            },
+            "output_head_qk256_dispatch_delta": {
+                "bitnet_linear_layers_total": 1,
+                "bitnet_linear_layers_on_cuda": 0,
+                "bitnet_linear_layers_on_a770_opencl": on_a770,
+                "bitnet_linear_layers_cpu_fallback": 0,
+                "unsupported_ops": [],
+                "execution_claim": if on_a770 > 0 {
+                    "a770_opencl_qk256_contribution"
+                } else {
+                    "cpu_reference"
+                }
+            },
+            "output_head_a770_opencl_runtime_delta": {
+                "host_to_device_bytes": if on_a770 > 0 { 16 } else { 0 },
+                "device_to_host_bytes": if on_a770 > 0 { 8 } else { 0 },
+                "kernel_invocations": on_a770
+            },
+            "qk256_operand_context_available": true,
+            "output_head_logit_accumulation_context_available": true
+        })
+    }
+
+    fn logits_first_mismatch_margin_left_with_context(hidden_sha: &str) -> Value {
+        let mut logits = logits_first_mismatch_margin_left();
+        logits[2]["logit_source_context"] = logit_source_context(hidden_sha, 1.0, 0);
+        logits
+    }
+
+    fn logits_first_mismatch_margin_right_with_context(hidden_sha: &str) -> Value {
+        let mut logits = logits_first_mismatch_margin_right_near_tie();
+        logits[2]["logit_source_context"] = logit_source_context(hidden_sha, 1.5, 1);
+        logits
+    }
+
     fn logits_first_mismatch_missing_cross_chosen() -> Value {
         json!([
             {
@@ -2698,6 +3047,10 @@ mod tests {
         assert_eq!(frontier["sampler_logit_extraction_count"], 0);
         assert_eq!(frontier["qk256_operand_context_available"], false);
         assert_eq!(frontier["output_head_logit_accumulation_context_available"], false);
+        assert_eq!(
+            report["generated_output_internal_logit_source_frontier"]["classification"],
+            "generated_output_internal_logit_source_frontier_missing_context"
+        );
         let row = &frontier["rows"][0];
         assert_eq!(
             row["classification"],
@@ -2709,6 +3062,76 @@ mod tests {
         assert_eq!(
             row["next_diagnostic"],
             "capture first-mismatch QK256 operand and output-head logit accumulation context"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_internal_logit_source_hidden_operand_drift() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            logits_first_mismatch_margin_left_with_context("left-hidden"),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            logits_first_mismatch_margin_right_with_context("right-hidden"),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_internal_logit_source_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_internal_logit_source_frontier_hidden_operand_drift"
+        );
+        assert_eq!(frontier["hidden_operand_drift_count"], 1);
+        assert_eq!(frontier["hidden_operand_context_available"], true);
+        assert_eq!(frontier["qk256_operand_context_available"], true);
+        assert_eq!(frontier["output_head_logit_accumulation_context_available"], true);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_internal_logit_source_hidden_operand_drift"
+        );
+        assert_eq!(frontier["rows"][0]["hidden_operand_context_available"], true);
+        assert_eq!(frontier["rows"][0]["hidden_operand_sha256_match"], false);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "localize hidden-state operand drift before output-head QK256"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_internal_logit_source_output_head_accumulation() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            logits_first_mismatch_margin_left_with_context("same-hidden"),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            logits_first_mismatch_margin_right_with_context("same-hidden"),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_internal_logit_source_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_internal_logit_source_frontier_output_head_logit_accumulation"
+        );
+        assert_eq!(frontier["output_head_logit_accumulation_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_internal_logit_source_output_head_logit_accumulation"
+        );
+        assert_eq!(frontier["rows"][0]["hidden_operand_sha256_match"], true);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "replay output-head QK256 accumulation for the selected mismatch tokens"
         );
     }
 
