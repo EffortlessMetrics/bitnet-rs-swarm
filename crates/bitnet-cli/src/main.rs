@@ -12887,6 +12887,8 @@ fn compact_logit_source_model_forward_source(
     let earlier_block_source =
         compact_logit_source_earlier_block_source(source.earlier_block_source.as_ref());
     let block_sources = compact_logit_source_block_source_stack(&source.block_sources);
+    let attention_output_sources =
+        compact_logit_source_attention_output_sources(&source.attention_output_sources);
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -12901,6 +12903,7 @@ fn compact_logit_source_model_forward_source(
         "pre_antepenultimate_block_source": pre_antepenultimate_block_source,
         "earlier_block_source": earlier_block_source,
         "block_sources": block_sources,
+        "attention_output_sources": attention_output_sources,
         "source_context_available": source_context_available,
         "final_norm_matches_forward_output": final_norm_matches_forward_output,
     })
@@ -13271,6 +13274,165 @@ fn compact_logit_source_block_source_stack(
         "block_count": sources.len(),
         "source_context_available": source_context_available,
         "blocks": blocks,
+    })
+}
+
+fn compact_logit_source_attention_output_sources(
+    sources: &[bitnet_models::ModelAttentionOutputSourceContext],
+) -> serde_json::Value {
+    let sources = sources
+        .iter()
+        .map(|source| {
+            let attention_input = compact_logit_source_tensor_fingerprint(
+                &source.attention_input,
+                "attention_input_extract_failed",
+            );
+            let q_projection = compact_logit_source_tensor_fingerprint(
+                &source.q_projection,
+                "q_projection_extract_failed",
+            );
+            let k_projection = compact_logit_source_tensor_fingerprint(
+                &source.k_projection,
+                "k_projection_extract_failed",
+            );
+            let v_projection = compact_logit_source_tensor_fingerprint(
+                &source.v_projection,
+                "v_projection_extract_failed",
+            );
+            let q_heads =
+                compact_logit_source_tensor_fingerprint(&source.q_heads, "q_heads_extract_failed");
+            let k_heads =
+                compact_logit_source_tensor_fingerprint(&source.k_heads, "k_heads_extract_failed");
+            let v_heads =
+                compact_logit_source_tensor_fingerprint(&source.v_heads, "v_heads_extract_failed");
+            let q_norm =
+                compact_logit_source_tensor_fingerprint(&source.q_norm, "q_norm_extract_failed");
+            let k_norm =
+                compact_logit_source_tensor_fingerprint(&source.k_norm, "k_norm_extract_failed");
+            let q_rope =
+                compact_logit_source_tensor_fingerprint(&source.q_rope, "q_rope_extract_failed");
+            let k_rope =
+                compact_logit_source_tensor_fingerprint(&source.k_rope, "k_rope_extract_failed");
+            let k_context = compact_logit_source_tensor_fingerprint(
+                &source.k_context,
+                "k_context_extract_failed",
+            );
+            let v_context = compact_logit_source_tensor_fingerprint(
+                &source.v_context,
+                "v_context_extract_failed",
+            );
+            let expanded_k = compact_logit_source_tensor_fingerprint(
+                &source.expanded_k,
+                "expanded_k_extract_failed",
+            );
+            let expanded_v = compact_logit_source_tensor_fingerprint(
+                &source.expanded_v,
+                "expanded_v_extract_failed",
+            );
+            let scores =
+                compact_logit_source_tensor_fingerprint(&source.scores, "scores_extract_failed");
+            let probabilities = compact_logit_source_tensor_fingerprint(
+                &source.probabilities,
+                "probabilities_extract_failed",
+            );
+            let value_mix_output_heads = compact_logit_source_tensor_fingerprint(
+                &source.value_mix_output_heads,
+                "value_mix_output_heads_extract_failed",
+            );
+            let output_projection_input = compact_logit_source_tensor_fingerprint(
+                &source.output_projection_input,
+                "output_projection_input_extract_failed",
+            );
+            let sub_layernorm_output = source.sub_layernorm_output.as_ref().map_or_else(
+                || {
+                    serde_json::json!({
+                        "available": false,
+                        "reason": "sub_layernorm_not_present",
+                    })
+                },
+                |tensor| {
+                    compact_logit_source_tensor_fingerprint(
+                        tensor,
+                        "sub_layernorm_output_extract_failed",
+                    )
+                },
+            );
+            let attention_output = compact_logit_source_tensor_fingerprint(
+                &source.attention_output,
+                "attention_output_extract_failed",
+            );
+            let required = [
+                &attention_input,
+                &q_projection,
+                &k_projection,
+                &v_projection,
+                &q_heads,
+                &k_heads,
+                &v_heads,
+                &q_norm,
+                &k_norm,
+                &q_rope,
+                &k_rope,
+                &k_context,
+                &v_context,
+                &expanded_k,
+                &expanded_v,
+                &scores,
+                &probabilities,
+                &value_mix_output_heads,
+                &output_projection_input,
+                &attention_output,
+            ];
+            let required_context_available = required.iter().all(|fingerprint| {
+                fingerprint["available"].as_bool().unwrap_or(false)
+                    && fingerprint["sha256_f32_le"].as_str().is_some()
+            });
+
+            serde_json::json!({
+                "schema_version": "1.0.0",
+                "context_kind": "decode_step_attention_output_source",
+                "diagnostic_only": true,
+                "claim_allowed": false,
+                "layer_idx": source.layer_idx,
+                "attention_input": attention_input,
+                "q_projection": q_projection,
+                "k_projection": k_projection,
+                "v_projection": v_projection,
+                "q_heads": q_heads,
+                "k_heads": k_heads,
+                "v_heads": v_heads,
+                "q_norm": q_norm,
+                "k_norm": k_norm,
+                "q_rope": q_rope,
+                "k_rope": k_rope,
+                "k_context": k_context,
+                "v_context": v_context,
+                "expanded_k": expanded_k,
+                "expanded_v": expanded_v,
+                "scores": scores,
+                "probabilities": probabilities,
+                "value_mix_output_heads": value_mix_output_heads,
+                "output_projection_input": output_projection_input,
+                "sub_layernorm_output": sub_layernorm_output,
+                "attention_output": attention_output,
+                "required_context_available": required_context_available,
+                "source_context_available": required_context_available,
+            })
+        })
+        .collect::<Vec<_>>();
+    let source_context_available = !sources.is_empty()
+        && sources
+            .iter()
+            .all(|source| source["source_context_available"].as_bool().unwrap_or(false));
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_attention_output_source_stack",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "source_count": sources.len(),
+        "source_context_available": source_context_available,
+        "sources": sources,
     })
 }
 

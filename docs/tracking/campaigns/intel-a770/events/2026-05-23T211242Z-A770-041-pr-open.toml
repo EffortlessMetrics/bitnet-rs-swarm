@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T21:12:42Z"
+campaign = "intel-a770"
+item = "A770-041"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-041-layer0-attention-output-source"
+pr = 517
+head_sha = "9678a3c2c243b26c9e5c2f0e7861b352d75a798d"
+summary = "Opened PR #517 for the layer-0 attention output source frontier."
+notes = [
+  "The live result localizes the focused summary mismatch to layer-0 q_projection drift while layer-0 attention input matches.",
+  "The next diagnostic is to replay the earliest divergent block QKV projection source.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted partial acceleration, full BitNet inference, or release-source claims.",
+]
