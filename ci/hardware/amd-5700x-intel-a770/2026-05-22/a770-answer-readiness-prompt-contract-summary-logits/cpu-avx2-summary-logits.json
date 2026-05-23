@@ -43,9 +43,9 @@
         "selected_kernel": "i2_s-avx2-reference"
       },
       "latency": {
-        "cmd_to_first_ms": 54522,
-        "decode_first_ms": 54522,
-        "total_ms": 87023
+        "cmd_to_first_ms": 54255,
+        "decode_first_ms": 54255,
+        "total_ms": 86992
       },
       "loader": {
         "mode": "real_gguf"
@@ -1017,6 +1017,98 @@
                     2560
                   ],
                   "value_count": 2560
+                },
+                "penultimate_block_source": {
+                  "attention_output": {
+                    "available": true,
+                    "finite_count": 2560,
+                    "infinite_count": 0,
+                    "max": 2673.2099609375,
+                    "mean": -0.17382156635867432,
+                    "min": -2450.009033203125,
+                    "nan_count": 0,
+                    "rms": 493.22411249548475,
+                    "sha256_f32_le": "588f4cfe4ba389d6925cd161179c89a9a470642d9a9f245940cf1e669513efe7",
+                    "shape": [
+                      1,
+                      1,
+                      2560
+                    ],
+                    "value_count": 2560
+                  },
+                  "block_input": {
+                    "available": true,
+                    "finite_count": 2560,
+                    "infinite_count": 0,
+                    "max": 56694.625,
+                    "mean": -45.645428630709645,
+                    "min": -64282.0859375,
+                    "nan_count": 0,
+                    "rms": 5339.179345732112,
+                    "sha256_f32_le": "50aeea1fc627296aec1c9b23395f1795ac62675dd8b24e0cc09d53ef5199f7ec",
+                    "shape": [
+                      1,
+                      1,
+                      2560
+                    ],
+                    "value_count": 2560
+                  },
+                  "block_output": {
+                    "available": true,
+                    "finite_count": 2560,
+                    "infinite_count": 0,
+                    "max": 59309.23828125,
+                    "mean": -35.21051298379898,
+                    "min": -66932.8984375,
+                    "nan_count": 0,
+                    "rms": 5647.062044902543,
+                    "sha256_f32_le": "84ee13881e0df6e423fe9eee4936adf875e36b4388345a33522267df509ee362",
+                    "shape": [
+                      1,
+                      1,
+                      2560
+                    ],
+                    "value_count": 2560
+                  },
+                  "claim_allowed": false,
+                  "context_kind": "decode_step_penultimate_transformer_block_source",
+                  "diagnostic_only": true,
+                  "feed_forward_output": {
+                    "available": true,
+                    "finite_count": 2560,
+                    "infinite_count": 0,
+                    "max": 4393.08154296875,
+                    "mean": 10.608733655232935,
+                    "min": -4353.9130859375,
+                    "nan_count": 0,
+                    "rms": 896.5933427207921,
+                    "sha256_f32_le": "e97141c459a84ed930541de5d59b5c79f17215b0212807686fcee1aa49faaf0e",
+                    "shape": [
+                      1,
+                      1,
+                      2560
+                    ],
+                    "value_count": 2560
+                  },
+                  "post_attention_residual": {
+                    "available": true,
+                    "finite_count": 2560,
+                    "infinite_count": 0,
+                    "max": 56039.6796875,
+                    "mean": -45.8192479595542,
+                    "min": -63620.05078125,
+                    "nan_count": 0,
+                    "rms": 5393.089795293765,
+                    "sha256_f32_le": "170dc9883fcd7e9db4695b973b3b713ad59d02bd17ff4151cfc105aabb5040bd",
+                    "shape": [
+                      1,
+                      1,
+                      2560
+                    ],
+                    "value_count": 2560
+                  },
+                  "schema_version": "1.0.0",
+                  "source_context_available": true
                 },
                 "prior_layer_output": {
                   "available": true,
@@ -2101,24 +2193,24 @@
       "task_family": "constrained_summary",
       "throughput": {
         "decoded_tokens": 18,
-        "tokens_per_second": 0.2068418693908507
+        "tokens_per_second": 0.20691557844399483
       },
       "timing": {
         "a770_opencl_device_to_host_bytes": null,
         "a770_opencl_host_to_device_bytes": null,
         "a770_opencl_kernel_invocations": null,
         "cuda_kernel_time_ms": null,
-        "decode_steady_state_tok_s": 0.523,
-        "decode_total_ms": 34293.931,
+        "decode_steady_state_tok_s": 0.519,
+        "decode_total_ms": 34756.695,
         "device_to_host_bytes": null,
-        "first_token_decode_ms": 1793.485,
-        "first_token_ms": 54522,
+        "first_token_decode_ms": 2021.157,
+        "first_token_ms": 54255,
         "host_to_device_bytes": null,
-        "model_load_ms": 3432.185,
-        "prefill_ms": 52728.828,
-        "sampling_ms_per_token": 0.214,
-        "tokenize_ms": 1.143,
-        "tokenizer_load_ms": 480.945
+        "model_load_ms": 3331.952,
+        "prefill_ms": 52233.917,
+        "sampling_ms_per_token": 0.24,
+        "tokenize_ms": 1.459,
+        "tokenizer_load_ms": 611.483
       },
       "token_ids": {
         "generated": [
@@ -2644,7 +2736,7 @@
       "total": 1
     }
   },
-  "timestamp": "2026-05-23T11:05:12.002624500+00:00",
+  "timestamp": "2026-05-23T13:51:36.032833600+00:00",
   "tokenizer": {
     "authority": {
       "ggml_pre": "llama-bpe",
