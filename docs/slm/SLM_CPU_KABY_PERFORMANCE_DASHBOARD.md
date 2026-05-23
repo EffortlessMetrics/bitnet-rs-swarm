@@ -40,10 +40,11 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-079. It does not run new inference or
-add a runtime optimization. It re-indexes the merged Kaby Lake Qwen3 Q8_0
-evidence after KV-cache reuse, prompt-token caching, prefill attribution, and
-the post-aligned exact-tensor packed-Q8 matvec artifact.
+This refresh is current through SLM-CPU-090 and the queued SLM-CPU-091 next
+target. It does not run new inference or add a runtime optimization. It
+re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
+prompt-token caching, prefill attribution, the post-aligned exact-tensor
+packed-Q8 matvec artifact, and the residual-add output-storage blocker.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -1317,16 +1318,24 @@ support, or BitNet QK256 changes.
 
 ## Current Next Target
 
-The current performance lane has two valid next-target families. Neither is a
-default-runtime promotion gate by itself.
+The current performance lane has two valid target families. Neither is a
+default-runtime promotion gate by itself. After SLM-CPU-090, the
+residual-add/output-storage family is blocked at the public Candle Tensor API,
+so SLM-CPU-091 selects the non-duplicative `model.logits` / output-head tensor
+allocation boundary as the next ready item.
 
 1. Continue the allocation path from the SLM-CPU-035 prefill attribution and
    the SLM-CPU-038 typed transformer-forward workspace boundary by removing or
    narrowly classifying one `prompt_prefill.forward` owned-output allocation.
+   The residual-add subpath is currently blocked by SLM-CPU-090's exact Candle
+   API finding.
 2. Continue the packed Q8_0 exact-tensor path from SLM-CPU-079 by reducing the
    `packed_matvec_compute` counter or by collecting repeated before/after
    warm-session timing receipts, while keeping `packed_q8_sidecar` opt-in and
    exact-tensor scoped.
+3. Continue reducing `model.logits` tensor allocation and output-head costs
+   without weakening the logits/indexing receipts. SLM-CPU-091 queues this as
+   the next non-duplicative implementation or blocker slice.
 
 Both paths must use the Qwen3 Q8_0 appliance profile as the behavior oracle.
 Any before/after artifact must preserve:
@@ -1576,6 +1585,43 @@ generic owned-output problem.
 This slice must not promote `packed_q8_sidecar`, claim end-to-end speedup,
 claim sustained 8250U throughput, broaden Q4/Q5 support, or touch server, GPU,
 NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+## SLM-CPU-091 Logits / Output-Head Boundary
+
+SLM-CPU-091 is the next queued performance-lane target after SLM-CPU-090. The
+residual-add reusable-storage path is now blocked by a concrete public Candle
+Tensor API limitation:
+
+```text
+Tensor::add(&self, &Tensor) -> Result<Tensor>
+Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>
+std::ops::Add delegates to Tensor::add
+public_api_accepts_output_storage = false
+backend_internal_in_place_api_exposed = false
+```
+
+Rather than re-stating that blocker, SLM-CPU-091 moves to the next remaining
+allocation surface that the dashboard already names:
+
+```text
+target_surface = model.logits / output-head tensor allocation
+current_boundary = logits/output-head owned tensor or extraction path
+allowed_result = behavior-preserving reduction or exact blocker classification
+required_behavior_oracle = Qwen3 Q8_0 appliance receipt equivalence
+default_runtime_changed_without_oracle = false
+speedup_claim_without_before_after_receipts = false
+```
+
+Any runtime change must preserve model SHA, strict GGUF tokenizer authority,
+prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity,
+dense hook identity where applicable, and `fallback_used=false`. If the slice
+only narrows a blocker, it must make the blocker concrete enough to guide the
+next implementation step.
+
+This slice must not claim residual-add storage is solved, promote
+`packed_q8_sidecar`, claim end-to-end speedup, claim sustained 8250U
+throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD
+620, Qwen3.5, or BitNet QK256/I2_S paths.
 
 ## SLM-CPU-081 Repeated Timing Gate
 
