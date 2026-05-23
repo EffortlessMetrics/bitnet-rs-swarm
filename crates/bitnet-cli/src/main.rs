@@ -15471,6 +15471,25 @@ mod tests {
             "feed_forward.down_proj.output"
         );
         assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_owned_output_surface"],
+            "model.forward.output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_reuse_status"],
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_classification"],
+            "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations"
+        );
+        assert!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
+                .as_array()
+                .is_some_and(|surfaces| surfaces
+                    .iter()
+                    .any(|surface| surface == "model.forward.output"))
+        );
+        assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["claim_scope"],
             "allocation-boundary classification only; no dense math, kernel, or sustained-throughput claim is made"
         );
@@ -15555,11 +15574,11 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["alloc_bytes"], 1_500);
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "q8_dense_linear_locality_boundary"
+            "model_forward_owned_output_boundary"
         );
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "dense_linear_output_storage_blocked_by_candle_tensor_ops"
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
         assert_eq!(
@@ -15593,12 +15612,12 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "q8_dense_linear_locality_boundary"
+            "model_forward_owned_output_boundary"
         );
         assert_eq!(audit["next_optimization_target"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "dense_linear_output_storage_blocked_by_candle_tensor_ops"
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
     }

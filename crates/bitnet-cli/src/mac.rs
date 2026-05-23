@@ -12543,7 +12543,7 @@ async fn mac_serve_smoke_json_endpoint(
     let body = mac_serve_reply_json(&reply)?;
     let passed = reply.status == 200
         && body["artifact_kind"].as_str() == Some(expected_artifact_kind)
-        && body["generation_executed"].as_bool().unwrap_or(false) == false
+        && !body["generation_executed"].as_bool().unwrap_or(false)
         && body["claim_boundary"]["full_metal_inference_claimed"].as_bool() == Some(false);
     Ok(serde_json::json!({
         "executed": true,
@@ -12902,7 +12902,7 @@ async fn mac_serve_completion_http_reply(
     let declared_oversized = mac_serve_http_content_length(request)
         .map(|content_length| content_length > MAC_SERVE_MAX_REQUEST_BYTES)
         .unwrap_or(false);
-    if declared_oversized || body.as_bytes().len() > MAC_SERVE_MAX_REQUEST_BYTES {
+    if declared_oversized || body.len() > MAC_SERVE_MAX_REQUEST_BYTES {
         let mut body = serde_json::json!({
             "status": "error",
             "error": "request_too_large",
@@ -30279,7 +30279,7 @@ mod tests {
                     ),
                 ],
             );
-            std::fs::write(&child_path, serde_json::to_vec_pretty(&child)?)?;
+            std::fs::write(child_path.as_path(), serde_json::to_vec_pretty(&child)?)?;
             child_paths.push(child_path);
             child_summaries.push(child);
         }
@@ -30506,7 +30506,7 @@ mod tests {
                 child_path.clone(),
                 vec![test_valid_benchmark_profile_summary("resident_25")],
             );
-            std::fs::write(&child_path, serde_json::to_vec_pretty(&child_summary)?)?;
+            std::fs::write(child_path.as_path(), serde_json::to_vec_pretty(&child_summary)?)?;
             let child_path_text = child_path.display().to_string();
             prompt_count_total += child_summary["prompt_count"].as_u64().unwrap_or_default();
             generated_tokens_total +=
@@ -30649,7 +30649,7 @@ mod tests {
                 child_path.clone(),
                 vec![valid_profile, timeout_profile],
             );
-            std::fs::write(&child_path, serde_json::to_vec_pretty(&child)?)?;
+            std::fs::write(child_path.as_path(), serde_json::to_vec_pretty(&child)?)?;
             child_summaries.push(child);
         }
         let parent_path = temp.path().join("variance.json");

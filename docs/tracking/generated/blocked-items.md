@@ -441,6 +441,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-032 | LNL258V-GOAL-AUDIT-031 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-033 | LNL258V-GOAL-AUDIT-032 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-034 | LNL258V-GOAL-AUDIT-033 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-035 | LNL258V-GOAL-AUDIT-034 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
@@ -507,7 +508,8 @@
 | intel-a770 | A770-027 | A770-026 | merged |
 | intel-a770 | A770-028 | A770-027 | merged |
 | intel-a770 | A770-029 | A770-028 | merged |
-| intel-a770 | A770-030 | A770-029 | pr_open |
+| intel-a770 | A770-030 | A770-029 | merged |
+| intel-a770 | A770-031 | A770-030 | merged |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
@@ -704,7 +706,8 @@
 | slm-cpu | SLM-CPU-018 | SLM-CPU-017 | merged |
 | slm-cpu | SLM-CPU-019 | SLM-CPU-018 | merged |
 | slm-cpu | SLM-CPU-020 | SLM-CPU-019 | merged |
-| slm-cpu | SLM-CPU-083 | SLM-CPU-082, SLM-CPU-041 | ready |
+| slm-cpu | SLM-CPU-083 | SLM-CPU-082, SLM-CPU-041 | merged |
+| slm-cpu | SLM-CPU-084 | SLM-CPU-083 | merged |
 | slm-cpu | SLM-CPU-080 | SLM-CPU-079, SLM-CPU-032, SLM-CPU-035 | merged |
 | slm-cpu | SLM-CPU-081 | SLM-CPU-079, SLM-CPU-080 | merged |
 | slm-cpu | SLM-CPU-082 | SLM-CPU-081 | merged |

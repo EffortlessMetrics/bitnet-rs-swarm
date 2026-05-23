@@ -285,13 +285,20 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
             "forward": allocation_samples_json(audit.prompt_prefill_forward),
             "forward_boundary": {
                 "first_reusable_allocation_surface": "feed_forward.down_proj.output",
+                "model_forward_owned_output_surface": "model.forward.output",
+                "owned_output_surfaces": [
+                    "model.forward.output",
+                    "feed_forward.down_proj.output"
+                ],
                 "classification": "FeedForward::forward_with_workspace reaches the exact FeedForward::down_proj output boundary and the Candle Linear weight/bias tensors are readable, but Tensor::matmul plus optional broadcast_add still return owned tensors without caller-provided output storage",
                 "reuse_status": "dense_linear_output_storage_blocked_by_candle_tensor_ops",
+                "model_forward_reuse_status": "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
                 "workspace_storage_owner": "TransformerForwardWorkspace",
                 "workspace_owned_output_surface": "feed_forward.down_proj.output",
+                "model_forward_classification": "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations",
                 "no_reuse_reason": "candle_nn::Linear exposes weight and optional bias tensors, but its behavior-preserving compute path is Tensor::matmul plus optional broadcast_add, and those operations return owned Tensors without a caller-provided output-storage parameter",
                 "required_api_boundary": "dense_linear_output_storage_api_boundary",
-                "next_safe_change": "instrument and optimize the Q8_0 dense linear locality boundary after SLM-CPU-041 proved reusable output storage is blocked by Candle Tensor matmul/bias-add owned returns",
+                "next_safe_change": "continue prompt_prefill.forward/model.forward allocation-layout work by adding or adopting final-norm/layer-output caller-output-storage APIs before changing dense math or promoting packed Q8 sidecars",
                 "next_dense_math_boundary": {
                     "target": "q8_dense_linear_locality_boundary",
                     "source": "SLM-CPU-042",
@@ -386,6 +393,7 @@ pub(crate) fn warm_session_aggregate_allocation_audit_json(
             "workspace_api_present_reuse_deferred"
                 | "workspace_owned_output_reuse_deferred"
                 | "dense_linear_output_storage_blocked_by_candle_tensor_ops"
+                | "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         )
     );
 
@@ -410,14 +418,14 @@ fn warm_session_next_optimization_target(
         ranked_hotspots.first().and_then(|hotspot| hotspot["component"].as_str()).unwrap_or("none");
     let (target, rationale, status) = match component {
         "prompt_prefill" => (
-            "q8_dense_linear_locality_boundary",
-            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, reusable output storage is blocked by Candle Tensor matmul/bias-add owned returns, and the next safe slice is Q8_0 dense linear locality instrumentation",
-            "dense_linear_output_storage_blocked_by_candle_tensor_ops",
+            "model_forward_owned_output_boundary",
+            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and the next safe slice is final-norm/layer-output caller-output-storage API work before changing dense math",
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
         ),
         "prompt_prefill.forward" => (
-            "q8_dense_linear_locality_boundary",
-            "prompt_prefill.forward dominates aggregate allocation counters; the exact FeedForward::down_proj output boundary is reached, reusable output storage is blocked by Candle Tensor APIs, and the next safe slice is Q8_0 dense linear locality instrumentation",
-            "dense_linear_output_storage_blocked_by_candle_tensor_ops",
+            "model_forward_owned_output_boundary",
+            "prompt_prefill.forward dominates aggregate allocation counters; TransformerForwardWorkspace now moves model.forward.output through a workspace-owned slot and records feed_forward.down_proj.output, while reusable output storage remains blocked by Candle owned-tensor operations",
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
         ),
         "prompt_prefill.embed" => (
             "prefill_embedding_allocation_attribution",

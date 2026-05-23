@@ -1,0 +1,17 @@
+timestamp = "2026-05-22T23:51:43Z"
+campaign = "intel-a770"
+item = "A770-030"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-030-summary-logit-context"
+pr = 388
+head_sha = "93af6b4c00b5893e708ea9a9c48db1db8fd73acf"
+merge_sha = "5835f64271071a2078535b6a5003847651ee466c"
+summary = "Merged A770-030 focused summary logit-context diagnostic evidence."
+notes = [
+  "PR #388 merged focused CPU AVX2 and Intel A770 OpenCL multi-step logits for a770_summary_seed770024_keywords_014 under corpus v1.0.2.",
+  "The committed focused parity receipt remains failed 0/1 and classifies the first generated-output mismatch as opposite argmax with logit context.",
+  "The closeout does not change runtime math or promote reference parity, CPU/A770 answer parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference.",
+]

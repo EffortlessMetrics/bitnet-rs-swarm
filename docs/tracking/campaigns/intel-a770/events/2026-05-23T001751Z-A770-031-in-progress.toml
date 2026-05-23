@@ -1,0 +1,29 @@
+timestamp = "2026-05-23T00:17:51Z"
+campaign = "intel-a770"
+item = "A770-031"
+event = "in_progress"
+previous_status = "none"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-031-summary-argmax-source"
+base = "main"
+summary = "Start A770-031 first-mismatch argmax-source frontier for the focused A770-030 summary divergence."
+
+notes = [
+  "A770-031 follows the A770-030 next frontier by classifying whether the focused summary opposite-argmax mismatch is prompt-history serialization, sampler/logit extraction, trace/capture context loss, or missing internal QK256/output-head context.",
+  "The item is diagnostic-only and does not change runtime math, backend routing, QK256 dispatch, OpenCL kernels, tokenizer authority, model artifacts, or corpus scoring.",
+  "No CPU/A770 parity, strict answer readiness, broad quality, residency, speed, trusted-partial acceleration, or full BitNet inference claim is promoted.",
+]
+
+[claim_boundary]
+runtime_math_changed = false
+backend_changed = false
+tokenizer_changed = false
+model_changed = false
+strict_answer_readiness_claim = false
+cpu_a770_parity_claim = false
+broad_quality_claim = false
+residency_claim = false
+speedup_claim = false
+trusted_partial_claim = false
+full_inference_claim = false
