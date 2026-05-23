@@ -8,6 +8,10 @@ Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
 PRs: #496, #498, #499, #500, #501, #502
 
+This file records the swarm/source state at swarm SHA
+`d4bceb9b880b9140deaa6eadd8271deaf2e551a5`, immediately after #502 merged.
+Later swarm PRs should record their own updated queue checkpoint.
+
 ## Landed
 
 - #496 `xtask(repo-boundary): report checkout role`
@@ -56,11 +60,11 @@ PRs: #496, #498, #499, #500, #501, #502
 - No open PRs in `EffortlessMetrics/bitnet-rs-swarm`.
 - No open PRs in `EffortlessMetrics/BitNet-rs`.
 
-## Source Delta
+## Source Delta At This Checkpoint
 
-- Current source ref:
+- Checkpoint source ref:
   `origin/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
-- Current swarm ref:
+- Checkpoint swarm ref:
   `swarm/main` = `d4bceb9b880b9140deaa6eadd8271deaf2e551a5`
 - `origin/main` is reachable from `swarm/main`.
 - `rtk git rev-list --left-right --count origin/main...swarm/main`
