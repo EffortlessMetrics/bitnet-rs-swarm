@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T18:04:34Z"
+campaign = "intel-a770"
+item = "A770-039"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-039-earlier-block-source-frontier"
+pr = 500
+head_sha = "b88d7f35fbbc791e7fe7ca476eaa32bfe41495a6"
+summary = "Opened PR #500 for the earlier transformer block source frontier."
+notes = [
+  "The live result classifies the focused summary mismatch as earlier block input drift.",
+  "The next diagnostic remains upstream: capture preceding transformer block source frontier.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted partial acceleration, full BitNet inference, or release-source claims.",
+]
