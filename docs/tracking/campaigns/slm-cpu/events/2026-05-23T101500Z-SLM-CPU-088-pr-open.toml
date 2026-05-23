@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T10:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-088"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 459
+head_sha = "832debbc24881c4eaf48a7b57ac4d84e5993b35f"
+branch = "codex/slm-cpu-088-residual-block-output-boundary"
+actor = "codex"
+summary = "Opened PR #459 for the residual-add / transformer.block.output allocation-layout boundary."
+notes = [
+  "The PR records residual input and feed-forward branch output shapes at the transformer.block.output workspace boundary.",
+  "The committed artifact classifies the remaining blocker as Candle residual-add owned Tensor output without caller-provided storage.",
+  "No speedup, sustained-throughput, packed-Q8 default promotion, Q4/Q5 runtime, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T10:53:47Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-044"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 461
+head_sha = "11d731fd987ab9cadab367434b9092f5795d883a"
+merge_sha = "bd801748db47d6e4af4fff51fa68a88edf03c383"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-044-post-a770034"
+actor = "codex"
+summary = "Merged PR #461 for the no-inference Lunar Lake goal-audit refresh after GOAL-AUDIT-043 closeout and adjacent A770 model-forward source-frontier tracker state."
+notes = [
+  "The merged slice refreshes Lunar Lake audit/checklist artifacts to source revision 8ef1614f3175a4d27a1b2aec08c5c221db79c09e and keeps LNL258V-POWER-006 as the active low_power blocker.",
+  "#453 and #455 are Lunar Lake audit/tracker state only; #454, #456, and #458 are adjacent A770 model-forward source-frontier diagnostic/tracker state only, not Lunar Lake route evidence and not a semantic-intake stale trigger.",
+  "No inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, semantic-intake stale trigger, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim is made.",
+]
