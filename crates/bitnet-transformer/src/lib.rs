@@ -4798,8 +4798,13 @@ mod tests {
         let vb = VarBuilder::from_tensors(tensors, DType::F32, &device);
         let attention = MultiHeadAttention::new(&config, vb, 0)?;
         let x = Tensor::from_vec(vec![1.0f32, 3.0], &[1, 1, 2], &device)?;
-        let output =
-            attention.forward(&x, None, &HashMap::new(), &DenseLinearRuntimeHookRegistry::new())?;
+        let output = attention.forward(
+            &x,
+            None,
+            &HashMap::new(),
+            &DenseLinearRuntimeHookRegistry::new(),
+            None,
+        )?;
         let values: Vec<f32> = output.flatten_all()?.to_vec1()?;
 
         assert!(
