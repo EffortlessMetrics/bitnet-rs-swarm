@@ -33,9 +33,12 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-parse source/main`
   - `rtk git rev-list --count source/main ^origin/main`
   - `rtk git rev-list --count origin/main ^source/main`
-- Open PR count excluding this snapshot PR: 0
-- Duplicate open PR clusters: none
-- Direct swarm PRs waiting for merge excluding this snapshot PR: none
+- Open PR count excluding this snapshot PR: 1
+- Duplicate open PR clusters: #458 duplicates the already-landed #456 A770-034
+  closeout, except for one campaign-table status row now ported into this
+  snapshot PR.
+- Direct swarm PRs waiting for merge excluding this snapshot PR: none; #458 is
+  held for closure after this snapshot PR lands.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
   `e9319901741124c74fe9fbfb374d4b9f71896d04`
@@ -51,6 +54,7 @@ disposition and retains the original large snapshot below for provenance.
 | #455 | Lunar Lake tracker closeout | Merged after generated-tracker proof. | Closed LNL258V-GOAL-AUDIT-043 and preserved the post-#452 repair markers. |
 | #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
 | #456 | A770 tracker closeout | Merged after #454 with generated-dashboard proof. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, full inference, or BitNet QK256/I2_S behavior claim. |
+| #458 | A770 tracker closeout duplicate | Open and dirty against #456. | Hold until this snapshot PR lands, then close as superseded/clean-ported: #456 landed the tracker closeout and this PR ports the remaining `CAMPAIGN.md` status row. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a

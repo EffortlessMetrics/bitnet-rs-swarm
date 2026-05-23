@@ -48,6 +48,19 @@ PRs: #451, #452, #453, #454, #455, #456
 
 - None in this checkpoint window.
 
+## Held Open
+
+- #458 `docs(a770): close A770-034 model-forward frontier`
+  - Current disposition: hold until this handoff PR lands, then close as
+    superseded/clean-ported.
+  - Reason: #456 already landed the tracker closeout, generated dashboard
+    refresh, and A770-034 merge event. #458's only unique durable content is
+    the `docs/tracking/campaigns/intel-a770/CAMPAIGN.md` A770-034 status row,
+    which is ported into this handoff PR.
+  - Claim boundary remains tracker/docs-only; no runtime math, CPU/A770 parity,
+    answer readiness, broad quality, residency, speed, trusted partial
+    acceleration, full inference, or BitNet QK256/I2_S behavior claim.
+
 ## Source Delta
 
 - Current source ref:
@@ -66,8 +79,10 @@ PRs: #451, #452, #453, #454, #455, #456
 
 - Open swarm PR queue at the post-#456 checkpoint, excluding this handoff PR:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
-  returned only #457, this handoff PR.
-- Open swarm PR count excluding this handoff PR: `0`.
+  returned #457, this handoff PR, and #458, a dirty duplicate closeout with
+  one unique campaign-table status row now ported here.
+- Open swarm PR count excluding this handoff PR: `1` (#458, held for close
+  after this PR lands).
 - #456 auto-merged by squash after `Doctor + Generated Dashboards` and the
   normalized `BitNet Rust Small Result` passed.
 - #454 auto-merged by squash after the normalized `BitNet Rust Small Result`
@@ -111,6 +126,9 @@ PRs: #451, #452, #453, #454, #455, #456
 - Treat A770/BitNet diagnostics as a salvage lane. Port durable tools, tests,
   reports, and claim gates as small successors; close transient probes only
   after the useful learning is preserved.
+- Close #458 after this handoff lands with a disposition comment naming #456 as
+  the landed tracker closeout and this PR as the clean port for the remaining
+  `CAMPAIGN.md` row.
 
 ## Blockers
 
