@@ -1,0 +1,14 @@
+timestamp = "2026-05-23T11:07:48Z"
+campaign = "intel-a770"
+item = "A770-035"
+event = "in_progress"
+previous_status = "missing"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-035-final-block-source-frontier"
+summary = "Started A770-035 final transformer block source frontier after A770-034 routed the focused summary mismatch to prior-layer output drift."
+notes = [
+  "A770-035 adds compact final block input, attention output, post-attention residual, FFN output, and block output fingerprints to focused logit-source receipts.",
+  "The refreshed focused parity receipt classifies generated_output_final_block_source_frontier_block_input_drift for a770_summary_seed770024_keywords_014.",
+  "The slice does not change runtime math, promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]

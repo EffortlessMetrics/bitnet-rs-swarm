@@ -1623,6 +1623,7 @@ pub struct TransformerForwardWorkspace {
     model_output_slot: Option<Tensor>,
     model_output_surface: Option<TransformerWorkspaceOutputSurface>,
     model_forward_source_tensors: Option<TransformerModelForwardSourceTensors>,
+    final_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1639,6 +1640,15 @@ pub struct TransformerForwardWorkspace {
 pub struct TransformerModelForwardSourceTensors {
     pub prior_layer_output: Tensor,
     pub final_norm_output: Tensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerFinalBlockSourceTensors {
+    pub block_input: Tensor,
+    pub attention_output: Tensor,
+    pub post_attention_residual: Tensor,
+    pub feed_forward_output: Tensor,
+    pub block_output: Tensor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1847,6 +1857,10 @@ impl TransformerForwardWorkspace {
         self.model_forward_source_tensors.as_ref()
     }
 
+    pub fn final_block_source_tensors(&self) -> Option<&TransformerFinalBlockSourceTensors> {
+        self.final_block_source_tensors.as_ref()
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -1900,6 +1914,23 @@ impl TransformerForwardWorkspace {
         self.model_forward_source_tensors = Some(TransformerModelForwardSourceTensors {
             prior_layer_output: prior_layer_output.clone(),
             final_norm_output: final_norm_output.clone(),
+        });
+    }
+
+    fn record_final_block_source_tensors(
+        &mut self,
+        block_input: &Tensor,
+        attention_output: &Tensor,
+        post_attention_residual: &Tensor,
+        feed_forward_output: &Tensor,
+        block_output: &Tensor,
+    ) {
+        self.final_block_source_tensors = Some(TransformerFinalBlockSourceTensors {
+            block_input: block_input.clone(),
+            attention_output: attention_output.clone(),
+            post_attention_residual: post_attention_residual.clone(),
+            feed_forward_output: feed_forward_output.clone(),
+            block_output: block_output.clone(),
         });
     }
 
@@ -2212,6 +2243,7 @@ impl TransformerBlock {
         }
 
         // Pre-norm attention
+        let block_input_for_source = workspace.as_ref().map(|_| x.clone());
         let residual = x;
 
         // RMSNorm diagnostics (Layer 0 only) - attention norm
@@ -2421,6 +2453,7 @@ impl TransformerBlock {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
         let x = self.attention.forward(&x, kv_cache, raw_tensors, dense_linear_hooks)?;
+        let attention_output_for_source = workspace.as_ref().map(|_| x.clone());
         qwen_trace_runtime_event(trace_forward, "block.attention_finish", || {
             format!(
                 "\"layer\":{},\"attention_ms\":{}",
@@ -2429,6 +2462,7 @@ impl TransformerBlock {
             )
         });
         let x = (x + residual)?;
+        let post_attention_residual_for_source = workspace.as_ref().map(|_| x.clone());
         if qwen_trace_layer_enabled(self.attention.layer_idx) {
             qwen_trace_tensor("block.post_attention_residual", Some(self.attention.layer_idx), &x)?;
         }
@@ -2510,6 +2544,7 @@ impl TransformerBlock {
         } else {
             self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?
         };
+        let feed_forward_output_for_source = workspace.as_ref().map(|_| x.clone());
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_finish", || {
             format!(
                 "\"layer\":{},\"feed_forward_ms\":{}",
@@ -2520,6 +2555,25 @@ impl TransformerBlock {
         let x = (&feed_forward_output + residual)?;
         if let Some(workspace) = workspace.as_mut() {
             workspace.record_layer_output_storage_boundary(&x, residual, &feed_forward_output);
+            if let (
+                Some(block_input),
+                Some(attention_output),
+                Some(post_attention_residual),
+                Some(feed_forward_output),
+            ) = (
+                block_input_for_source.as_ref(),
+                attention_output_for_source.as_ref(),
+                post_attention_residual_for_source.as_ref(),
+                feed_forward_output_for_source.as_ref(),
+            ) {
+                workspace.record_final_block_source_tensors(
+                    block_input,
+                    attention_output,
+                    post_attention_residual,
+                    feed_forward_output,
+                    &x,
+                );
+            }
         }
         if qwen_trace_layer_enabled(self.attention.layer_idx) {
             qwen_trace_tensor("block.output", Some(self.attention.layer_idx), &x)?;
