@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T19:14:36Z"
+campaign = "intel-a770"
+item = "A770-040"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-040-block-source-stack-frontier"
+pr = 508
+head_sha = "0570903a45731bc5ccc4e710359b63bc7590de4a"
+summary = "Opened PR #508 for the transformer block source stack frontier."
+notes = [
+  "The live result localizes the focused summary mismatch to layer 0 attention output drift while layer 0 block input matches.",
+  "The next diagnostic is to replay the earliest divergent transformer block attention output source.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted partial acceleration, full BitNet inference, or release-source claims.",
+]

@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T19:05:37Z"
+campaign = "intel-a770"
+item = "A770-040"
+event = "in_progress"
+previous_status = "missing"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-040-block-source-stack-frontier"
+summary = "Started A770-040 transformer block source stack frontier after A770-039 routed the focused summary mismatch upstream to earlier block input drift."
+notes = [
+  "A770-040 adds compact per-transformer-block source fingerprints for block input, attention output, post-attention residual, FFN output, and block output.",
+  "The live focused receipt classifies the earliest divergent block as layer 0, with matching block input and divergent attention output.",
+  "The slice remains diagnostic-only and does not change runtime math, OpenCL dispatch, QK256 kernels, scoring, sampling, or claim boundaries.",
+  "The slice does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]
