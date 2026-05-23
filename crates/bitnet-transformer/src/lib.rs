@@ -2544,7 +2544,6 @@ impl TransformerBlock {
         } else {
             self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?
         };
-        let feed_forward_output_for_source = workspace.as_ref().map(|_| x.clone());
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_finish", || {
             format!(
                 "\"layer\":{},\"feed_forward_ms\":{}",
@@ -2555,22 +2554,16 @@ impl TransformerBlock {
         let x = (&feed_forward_output + residual)?;
         if let Some(workspace) = workspace.as_mut() {
             workspace.record_layer_output_storage_boundary(&x, residual, &feed_forward_output);
-            if let (
-                Some(block_input),
-                Some(attention_output),
-                Some(post_attention_residual),
-                Some(feed_forward_output),
-            ) = (
+            if let (Some(block_input), Some(attention_output), Some(post_attention_residual)) = (
                 block_input_for_source.as_ref(),
                 attention_output_for_source.as_ref(),
                 post_attention_residual_for_source.as_ref(),
-                feed_forward_output_for_source.as_ref(),
             ) {
                 workspace.record_final_block_source_tensors(
                     block_input,
                     attention_output,
                     post_attention_residual,
-                    feed_forward_output,
+                    &feed_forward_output,
                     &x,
                 );
             }
