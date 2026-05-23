@@ -1,0 +1,14 @@
+timestamp = "2026-05-23T00:10:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-084"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-084-model-forward-output-storage-api"
+actor = "codex"
+summary = "Queued the next Kaby Lake Qwen3 Q8_0 allocation-layout target after SLM-CPU-083."
+notes = [
+  "SLM-CPU-083 classified model.forward.output as the next owned-output boundary and recorded that reusable output storage remains blocked by the current behavior-preserving API.",
+  "SLM-CPU-084 is scoped to adding or further narrowing that model-forward output-storage API surface while preserving the Qwen3 Q8_0 appliance behavior oracle.",
+  "The item must not promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, touch server/GPU/NPU/OpenVINO/UHD 620, claim Qwen3.5 support, or modify BitNet QK256 paths.",
+]
