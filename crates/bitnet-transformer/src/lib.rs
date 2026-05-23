@@ -1658,11 +1658,15 @@ pub struct TransformerWorkspaceOutputStorageBoundary {
     pub next_api_hook: &'static str,
     pub last_shape: Vec<usize>,
     pub operation_family: &'static str,
+    pub operation_detail: &'static str,
     pub weight_shape: Option<Vec<usize>>,
     pub bias_shape: Option<Vec<usize>>,
+    pub epsilon: Option<String>,
+    pub input_accessible: bool,
     pub weight_accessible: bool,
     pub bias_accessible: bool,
     pub residual_add_involved: bool,
+    pub caller_output_helper_status: &'static str,
     pub can_fill_caller_output_storage: bool,
 }
 
@@ -1710,11 +1714,15 @@ pub struct NormOutputStorageApiBoundary {
     pub status: &'static str,
     pub reason: &'static str,
     pub next_api_hook: &'static str,
+    pub norm_kind: &'static str,
     pub weight_shape: Vec<usize>,
     pub bias_shape: Option<Vec<usize>>,
+    pub epsilon: String,
     pub remove_mean: bool,
+    pub input_accessible: bool,
     pub weight_accessible: bool,
     pub bias_accessible: bool,
+    pub caller_output_helper_status: &'static str,
     pub can_fill_caller_output_storage: bool,
 }
 
@@ -1726,13 +1734,17 @@ impl NormOutputStorageApiBoundary {
         Self {
             role,
             status: "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
-            reason: "candle_nn::LayerNorm exposes weight, bias, epsilon, and remove-mean metadata, but LayerNorm::forward returns an owned Tensor without a caller-provided output-storage parameter",
-            next_api_hook: "add or adopt a Candle LayerNorm/RMSNorm output-storage API before replacing model.final_norm output construction with reusable workspace-backed storage",
+            reason: "candle_nn::LayerNorm exposes input, weight, optional bias, epsilon, and remove-mean metadata, but both LayerNorm::forward and the public candle_nn::ops norm helpers return owned Tensors without a caller-provided output-storage parameter",
+            next_api_hook: "add or adopt a Candle LayerNorm/RMSNorm output-storage API or apply_op output-storage hook before replacing model.final_norm output construction with reusable workspace-backed storage",
+            norm_kind: if norm.remove_mean() { "layer_norm" } else { "rms_norm" },
             weight_shape,
             bias_shape,
+            epsilon: format!("{:.8e}", norm.eps()),
             remove_mean: norm.remove_mean(),
+            input_accessible: true,
             weight_accessible: true,
             bias_accessible: norm.bias().is_some(),
+            caller_output_helper_status: "final_norm_output_storage_helper_blocked_by_owned_candle_norm_output",
             can_fill_caller_output_storage: false,
         }
     }
@@ -1908,11 +1920,15 @@ impl TransformerForwardWorkspace {
             next_api_hook: boundary.next_api_hook,
             last_shape: tensor.dims().to_vec(),
             operation_family: "candle_core::Tensor residual_add",
+            operation_detail: "residual_add_owned_tensor_output",
             weight_shape: None,
             bias_shape: None,
+            epsilon: None,
+            input_accessible: true,
             weight_accessible: false,
             bias_accessible: false,
             residual_add_involved: boundary.residual_add_involved,
+            caller_output_helper_status: "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
             can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
         });
     }
@@ -1934,11 +1950,15 @@ impl TransformerForwardWorkspace {
             } else {
                 "candle_nn::RmsNorm::forward"
             },
+            operation_detail: boundary.norm_kind,
             weight_shape: Some(boundary.weight_shape),
             bias_shape: boundary.bias_shape,
+            epsilon: Some(boundary.epsilon),
+            input_accessible: boundary.input_accessible,
             weight_accessible: boundary.weight_accessible,
             bias_accessible: boundary.bias_accessible,
             residual_add_involved: false,
+            caller_output_helper_status: boundary.caller_output_helper_status,
             can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
         });
     }
