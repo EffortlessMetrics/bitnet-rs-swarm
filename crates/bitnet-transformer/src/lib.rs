@@ -1623,10 +1623,14 @@ pub struct TransformerForwardWorkspace {
     model_output_slot: Option<Tensor>,
     model_output_surface: Option<TransformerWorkspaceOutputSurface>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
+    final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
+    layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     workspace_owned_output_count: usize,
     model_workspace_owned_output_count: usize,
     model_output_storage_attempts: usize,
     down_proj_output_storage_attempts: usize,
+    final_norm_output_storage_attempts: usize,
+    layer_output_storage_attempts: usize,
     tensor_reuse_enabled: bool,
 }
 
@@ -1642,6 +1646,23 @@ pub struct TransformerWorkspaceOutputSurface {
     pub linear_bias_shape: Option<Vec<usize>>,
     pub weight_accessible: bool,
     pub bias_accessible: bool,
+    pub can_fill_caller_output_storage: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransformerWorkspaceOutputStorageBoundary {
+    pub name: &'static str,
+    pub storage_owner: &'static str,
+    pub status: &'static str,
+    pub reason: &'static str,
+    pub next_api_hook: &'static str,
+    pub last_shape: Vec<usize>,
+    pub operation_family: &'static str,
+    pub weight_shape: Option<Vec<usize>>,
+    pub bias_shape: Option<Vec<usize>>,
+    pub weight_accessible: bool,
+    pub bias_accessible: bool,
+    pub residual_add_involved: bool,
     pub can_fill_caller_output_storage: bool,
 }
 
@@ -1678,6 +1699,63 @@ impl DenseLinearOutputStorageApiBoundary {
             bias_shape,
             weight_accessible: true,
             bias_accessible: true,
+            can_fill_caller_output_storage: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NormOutputStorageApiBoundary {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub reason: &'static str,
+    pub next_api_hook: &'static str,
+    pub weight_shape: Vec<usize>,
+    pub bias_shape: Option<Vec<usize>>,
+    pub remove_mean: bool,
+    pub weight_accessible: bool,
+    pub bias_accessible: bool,
+    pub can_fill_caller_output_storage: bool,
+}
+
+impl NormOutputStorageApiBoundary {
+    pub fn from_candle_layer_norm(role: &'static str, norm: &LayerNorm) -> Self {
+        let weight_shape = norm.weight().dims().to_vec();
+        let bias_shape = norm.bias().map(|bias| bias.dims().to_vec());
+
+        Self {
+            role,
+            status: "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
+            reason: "candle_nn::LayerNorm exposes weight, bias, epsilon, and remove-mean metadata, but LayerNorm::forward returns an owned Tensor without a caller-provided output-storage parameter",
+            next_api_hook: "add or adopt a Candle LayerNorm/RMSNorm output-storage API before replacing model.final_norm output construction with reusable workspace-backed storage",
+            weight_shape,
+            bias_shape,
+            remove_mean: norm.remove_mean(),
+            weight_accessible: true,
+            bias_accessible: norm.bias().is_some(),
+            can_fill_caller_output_storage: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LayerOutputStorageApiBoundary {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub reason: &'static str,
+    pub next_api_hook: &'static str,
+    pub residual_add_involved: bool,
+    pub can_fill_caller_output_storage: bool,
+}
+
+impl LayerOutputStorageApiBoundary {
+    pub fn from_candle_residual_add(role: &'static str) -> Self {
+        Self {
+            role,
+            status: "layer_output_storage_blocked_by_candle_tensor_add_ops",
+            reason: "TransformerBlock layer output is produced by Candle tensor residual-add operations that return owned Tensors without a caller-provided output-storage parameter",
+            next_api_hook: "add or adopt a Candle Tensor residual-add output-storage API before replacing transformer.block.output construction with reusable workspace-backed storage",
+            residual_add_involved: true,
             can_fill_caller_output_storage: false,
         }
     }
@@ -1732,12 +1810,28 @@ impl TransformerForwardWorkspace {
         self.model_output_storage_attempts
     }
 
+    pub fn final_norm_output_storage_attempts(&self) -> usize {
+        self.final_norm_output_storage_attempts
+    }
+
+    pub fn layer_output_storage_attempts(&self) -> usize {
+        self.layer_output_storage_attempts
+    }
+
     pub fn model_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.model_output_surface.as_ref()
     }
 
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
+    }
+
+    pub fn final_norm_output_surface(&self) -> Option<&TransformerWorkspaceOutputStorageBoundary> {
+        self.final_norm_output_surface.as_ref()
+    }
+
+    pub fn layer_output_surface(&self) -> Option<&TransformerWorkspaceOutputStorageBoundary> {
+        self.layer_output_surface.as_ref()
     }
 
     pub fn reuse_status(&self) -> &'static str {
@@ -1799,6 +1893,54 @@ impl TransformerForwardWorkspace {
         self.down_proj_output_storage_attempts += 1;
         self.last_output_shape = tensor.dims().to_vec();
         self.feed_forward_output_surface = Some(boundary);
+    }
+
+    fn record_layer_output_storage_boundary(&mut self, tensor: &Tensor) {
+        let boundary =
+            LayerOutputStorageApiBoundary::from_candle_residual_add("transformer.block.output");
+        self.layer_output_storage_attempts += 1;
+        self.last_output_shape = tensor.dims().to_vec();
+        self.layer_output_surface = Some(TransformerWorkspaceOutputStorageBoundary {
+            name: boundary.role,
+            storage_owner: "TransformerForwardWorkspace",
+            status: boundary.status,
+            reason: boundary.reason,
+            next_api_hook: boundary.next_api_hook,
+            last_shape: tensor.dims().to_vec(),
+            operation_family: "candle_core::Tensor residual_add",
+            weight_shape: None,
+            bias_shape: None,
+            weight_accessible: false,
+            bias_accessible: false,
+            residual_add_involved: boundary.residual_add_involved,
+            can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
+        });
+    }
+
+    fn record_final_norm_output_storage_boundary(&mut self, tensor: &Tensor, norm: &LayerNorm) {
+        let boundary =
+            NormOutputStorageApiBoundary::from_candle_layer_norm("model.final_norm.output", norm);
+        self.final_norm_output_storage_attempts += 1;
+        self.last_output_shape = tensor.dims().to_vec();
+        self.final_norm_output_surface = Some(TransformerWorkspaceOutputStorageBoundary {
+            name: boundary.role,
+            storage_owner: "TransformerForwardWorkspace",
+            status: boundary.status,
+            reason: boundary.reason,
+            next_api_hook: boundary.next_api_hook,
+            last_shape: tensor.dims().to_vec(),
+            operation_family: if boundary.remove_mean {
+                "candle_nn::LayerNorm::forward"
+            } else {
+                "candle_nn::RmsNorm::forward"
+            },
+            weight_shape: Some(boundary.weight_shape),
+            bias_shape: boundary.bias_shape,
+            weight_accessible: boundary.weight_accessible,
+            bias_accessible: boundary.bias_accessible,
+            residual_add_involved: false,
+            can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
+        });
     }
 
     fn store_feed_forward_output(&mut self, tensor: Tensor) {
@@ -2323,6 +2465,9 @@ impl TransformerBlock {
             )
         });
         let x = (x + residual)?;
+        if let Some(workspace) = workspace.as_mut() {
+            workspace.record_layer_output_storage_boundary(&x);
+        }
         if qwen_trace_layer_enabled(self.attention.layer_idx) {
             qwen_trace_tensor("block.output", Some(self.attention.layer_idx), &x)?;
         }
@@ -3312,6 +3457,9 @@ impl TransformerModel {
             format!("\"dims\":[{}]", qwen_trace_dims_json(x.dims()))
         });
         let normalized = self.norm.forward(&x)?;
+        if let Some(workspace) = workspace.as_mut() {
+            workspace.record_final_norm_output_storage_boundary(&normalized, &self.norm);
+        }
         qwen_trace_runtime_event(trace_forward, "model.final_norm_finish", || {
             format!(
                 "\"norm_ms\":{},\"dims\":[{}],\"device\":\"{}\"",

@@ -1409,6 +1409,34 @@ does not claim end-to-end speedup, sustained 8250U throughput, broad answer
 quality, Q4/Q5 runtime support, server execution, accelerator execution,
 Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-085 Final-Norm And Layer-Output Boundary
+
+SLM-CPU-085 narrows the post-`model.forward.output` blocker into explicit
+machine-checkable final-norm and block-output surfaces. The workspace records
+that both surfaces are reachable without changing generation behavior, but both
+still rely on Candle operations that return owned tensors instead of filling
+caller-provided storage.
+
+```text
+final_norm_output_surface = model.final_norm.output
+final_norm_reuse_status = final_norm_output_storage_blocked_by_candle_layer_norm_ops
+layer_output_surface = transformer.block.output
+layer_output_reuse_status = layer_output_storage_blocked_by_candle_tensor_add_ops
+workspace_storage_owner = TransformerForwardWorkspace
+default_runtime_changed = false
+speedup_claim = false
+```
+
+This is a blocker classification, not a speed improvement. Reusable storage
+still requires behavior-preserving Candle LayerNorm/RMSNorm and residual-add
+output-storage APIs, plus the established Qwen3 Q8_0 appliance oracle, before
+any bounded allocation improvement can be claimed.
+
+This slice does not promote `packed_q8_sidecar`, does not change dense math, and
+does not claim end-to-end speedup, sustained 8250U throughput, broad answer
+quality, Q4/Q5 runtime support, server execution, accelerator execution,
+Qwen3.5 support, or BitNet QK256/I2_S changes.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8

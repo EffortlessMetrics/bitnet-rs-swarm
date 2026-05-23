@@ -2157,7 +2157,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-085"
-status = "ready"
+status = "pr_open"
+pr = 409
+head_sha = "c5b296b0aef35e53c3fbf4ef27e39f2942c59fc6"
 branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
 stackable = false
 review_mode = "codex_premerge"
