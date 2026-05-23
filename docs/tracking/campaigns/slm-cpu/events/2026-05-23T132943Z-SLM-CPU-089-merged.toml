@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T13:29:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-089"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 471
+head_sha = "e14a851bb85546e987a47f89114679c92c15dcd1"
+merge_sha = "e5f28c991de626f96ed2d3d91446b5c4be98df20"
+branch = "codex/slm-cpu-089-residual-add-storage-gate"
+actor = "codex"
+summary = "Closed SLM-CPU-089 after PR #471 merged."
+notes = [
+  "PR #471 queued the next transformer.block.output residual-add output-storage gate after SLM-CPU-088.",
+  "The merged slice is tracker/docs only and preserves the Qwen3 Q8_0 appliance oracle before any later bounded allocation improvement.",
+  "No residual-add runtime optimization, packed-Q8 default promotion, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

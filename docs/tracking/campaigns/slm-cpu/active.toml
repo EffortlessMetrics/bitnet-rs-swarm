@@ -5756,3 +5756,116 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-089"
+status = "merged"
+pr = 471
+head_sha = "e14a851bb85546e987a47f89114679c92c15dcd1"
+merge_sha = "e5f28c991de626f96ed2d3d91446b5c4be98df20"
+branch = "codex/slm-cpu-089-residual-add-storage-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-088"]
+acceptance = "Define the next behavior-preserving residual-add output-storage gate after SLM-CPU-088. The slice must either add or precisely specify a narrow transformer.block.output residual-add storage API that can reuse caller-owned storage, or emit a machine-checkable blocker proving why Candle still forces an owned Tensor output. Any implementation must preserve the established Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false before claiming even a bounded allocation improvement. The slice must not promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session_aggregate_allocation_audit",
+  "cargo clippy --locked -p bitnet-cli --no-default-features --features cpu,full-cli --all-targets -- -D warnings",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-089 is the next residual-add / transformer.block.output storage gate after SLM-CPU-088.",
+  "The current blocker remains Candle residual-add owned Tensor output unless SLM-CPU-089 proves a behavior-preserving reusable-storage API.",
+  "Any later allocation improvement remains gated by the Qwen3 Q8_0 appliance oracle.",
+]
+must_not_claim = [
+  "The residual-add/layer-output runtime path is optimized by this tracker queue slice.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "End-to-end speedup is proven without before/after receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-090"
+status = "ready"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-089"]
+acceptance = "Implement or conclusively block the narrow residual-add output-storage slice queued by SLM-CPU-089. A valid slice must either add a behavior-preserving transformer.block.output residual-add helper that can write into caller-provided reusable storage, or produce a machine-checkable blocker naming the exact Candle Tensor API limitation that still prevents reusable storage. Any runtime change must preserve the Qwen3 Q8_0 appliance oracle before claiming even bounded allocation improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false. The slice must not promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session_aggregate_allocation_audit",
+  "cargo clippy --locked -p bitnet-cli --no-default-features --features cpu,full-cli --all-targets -- -D warnings",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-090 is the implementation/blocker slice for transformer.block.output residual-add output storage after SLM-CPU-089.",
+  "The slice may narrow whether residual-add can reuse caller-owned storage without changing generated IDs.",
+  "Any allocation improvement remains gated by Qwen3 Q8_0 before/after behavior receipts.",
+]
+must_not_claim = [
+  "The residual-add/layer-output runtime path is optimized without a behavior-equivalent Qwen3 Q8_0 receipt.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "End-to-end speedup is proven without before/after receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
