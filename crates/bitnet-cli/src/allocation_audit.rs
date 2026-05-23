@@ -286,18 +286,27 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
             "forward_boundary": {
                 "first_reusable_allocation_surface": "feed_forward.down_proj.output",
                 "model_forward_owned_output_surface": "model.forward.output",
+                "final_norm_output_surface": "model.final_norm.output",
+                "layer_output_surface": "transformer.block.output",
                 "owned_output_surfaces": [
                     "model.forward.output",
+                    "model.final_norm.output",
+                    "transformer.block.output",
                     "feed_forward.down_proj.output"
                 ],
                 "classification": "FeedForward::forward_with_workspace reaches the exact FeedForward::down_proj output boundary and the Candle Linear weight/bias tensors are readable, but Tensor::matmul plus optional broadcast_add still return owned tensors without caller-provided output storage",
                 "reuse_status": "dense_linear_output_storage_blocked_by_candle_tensor_ops",
                 "model_forward_reuse_status": "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
+                "final_norm_reuse_status": "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
+                "layer_output_reuse_status": "layer_output_storage_blocked_by_candle_tensor_add_ops",
                 "workspace_storage_owner": "TransformerForwardWorkspace",
                 "workspace_owned_output_surface": "feed_forward.down_proj.output",
-                "model_forward_classification": "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations",
+                "model_forward_classification": "TransformerModel::forward_with_workspace moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; SLM-CPU-085 separately classifies final norm and layer output as caller-output-storage blockers",
+                "final_norm_classification": "model.final_norm.output remains blocked because candle_nn::LayerNorm exposes norm metadata but LayerNorm::forward returns an owned Tensor without caller-provided output storage",
+                "layer_output_classification": "transformer.block.output remains blocked because Candle residual-add operations return owned Tensors without caller-provided output storage",
                 "no_reuse_reason": "candle_nn::Linear exposes weight and optional bias tensors, but its behavior-preserving compute path is Tensor::matmul plus optional broadcast_add, and those operations return owned Tensors without a caller-provided output-storage parameter",
                 "required_api_boundary": "dense_linear_output_storage_api_boundary",
+                "post_model_forward_required_api_boundary": "final_norm_or_layer_output_storage_api_boundary",
                 "next_safe_change": "continue prompt_prefill.forward/model.forward allocation-layout work by adding or adopting final-norm/layer-output caller-output-storage APIs before changing dense math or promoting packed Q8 sidecars",
                 "next_dense_math_boundary": {
                     "target": "q8_dense_linear_locality_boundary",
@@ -310,6 +319,8 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "weight_accessible": true,
                 "bias_accessible": true,
                 "can_fill_caller_output_storage": false,
+                "can_fill_final_norm_output_storage": false,
+                "can_fill_layer_output_storage": false,
                 "behavior_gate": "generated IDs, decoded text, strict GGUF tokenizer authority, selected CPU backend/kernel, model SHA, and fallback=false must match the Qwen3 Q8_0 baseline",
                 "claim_scope": "allocation-boundary classification only; no dense math, kernel, or sustained-throughput claim is made",
             },
@@ -394,6 +405,8 @@ pub(crate) fn warm_session_aggregate_allocation_audit_json(
                 | "workspace_owned_output_reuse_deferred"
                 | "dense_linear_output_storage_blocked_by_candle_tensor_ops"
                 | "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+                | "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
+                | "layer_output_storage_blocked_by_candle_tensor_add_ops"
         )
     );
 
@@ -418,14 +431,14 @@ fn warm_session_next_optimization_target(
         ranked_hotspots.first().and_then(|hotspot| hotspot["component"].as_str()).unwrap_or("none");
     let (target, rationale, status) = match component {
         "prompt_prefill" => (
-            "model_forward_owned_output_boundary",
-            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and the next safe slice is final-norm/layer-output caller-output-storage API work before changing dense math",
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
+            "final_norm_layer_output_storage_boundary",
+            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and SLM-CPU-085 now narrows the final-norm/layer-output caller-output-storage blocker before changing dense math",
+            "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
         ),
         "prompt_prefill.forward" => (
-            "model_forward_owned_output_boundary",
-            "prompt_prefill.forward dominates aggregate allocation counters; TransformerForwardWorkspace now moves model.forward.output through a workspace-owned slot and records feed_forward.down_proj.output, while reusable output storage remains blocked by Candle owned-tensor operations",
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
+            "final_norm_layer_output_storage_boundary",
+            "prompt_prefill.forward dominates aggregate allocation counters; TransformerForwardWorkspace records model.forward.output, model.final_norm.output, transformer.block.output, and feed_forward.down_proj.output while reusable output storage remains blocked by Candle owned-tensor operations",
+            "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
         ),
         "prompt_prefill.embed" => (
             "prefill_embedding_allocation_attribution",

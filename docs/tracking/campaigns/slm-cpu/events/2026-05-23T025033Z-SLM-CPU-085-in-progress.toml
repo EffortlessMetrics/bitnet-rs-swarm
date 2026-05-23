@@ -1,0 +1,14 @@
+timestamp = "2026-05-23T02:50:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+actor = "codex"
+summary = "Started the final-norm/layer-output caller-output-storage boundary slice."
+notes = [
+  "The slice is scoped to machine-checkable final-norm and layer-output output-storage boundaries after the SLM-CPU-084 model.forward.output slot.",
+  "A runtime change, if any, must preserve the Qwen3 Q8_0 appliance behavior oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No packed-Q8 sidecar promotion, speedup claim, sustained-throughput claim, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is in scope.",
+]
