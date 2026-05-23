@@ -316,6 +316,27 @@ fn final_norm_output_storage_boundary_names_exact_candle_blocker() -> anyhow::Re
 }
 
 #[test]
+fn final_norm_output_storage_boundary_preserves_layernorm_metadata() -> anyhow::Result<()> {
+    let device = Device::Cpu;
+    let gamma = Tensor::ones(4, DType::F32, &device)?;
+    let beta = Tensor::zeros(4, DType::F32, &device)?;
+    let norm = candle_nn::LayerNorm::new(gamma, beta, 1e-5);
+    let boundary =
+        NormOutputStorageApiBoundary::from_candle_layer_norm("model.final_norm.output", &norm);
+
+    assert_eq!(boundary.norm_kind, "layer_norm");
+    assert_eq!(boundary.epsilon, "1.00000000e-5");
+    assert_eq!(boundary.weight_shape, vec![4]);
+    assert_eq!(boundary.bias_shape, Some(vec![4]));
+    assert!(boundary.remove_mean);
+    assert!(boundary.input_accessible);
+    assert!(boundary.weight_accessible);
+    assert!(boundary.bias_accessible);
+    assert!(!boundary.can_fill_caller_output_storage);
+    Ok(())
+}
+
+#[test]
 fn model_rejects_hidden_not_divisible_by_heads() {
     // hidden=6, heads=4 → 6 % 4 ≠ 0 → construction error
     let device = Device::Cpu;
