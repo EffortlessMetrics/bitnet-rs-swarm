@@ -1,0 +1,14 @@
+timestamp = "2026-05-23T13:52:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Queue the residual-add output-storage implementation or blocker slice after SLM-CPU-089."
+notes = [
+  "SLM-CPU-090 must either add a behavior-preserving transformer.block.output residual-add helper that can write to caller-provided reusable storage or produce a machine-checkable blocker naming the exact Candle Tensor API limitation.",
+  "Any runtime change remains gated by the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No packed-Q8 default promotion, speedup without before/after receipts, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
