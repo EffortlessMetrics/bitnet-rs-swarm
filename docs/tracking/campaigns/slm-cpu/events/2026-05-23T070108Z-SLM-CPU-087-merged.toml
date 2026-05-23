@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T07:01:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-087"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 437
+head_sha = "1bc33789a2e589c8ed408d12f1a291d41d3cf754"
+merge_sha = "550a9ba4d65a55e3c16beba699e916e17ea9b354"
+branch = "codex/slm-cpu-087-residual-block-output-gate"
+actor = "codex"
+summary = "Merged PR #437 for the residual-add and transformer block output-storage queue slice."
+notes = [
+  "The merged slice is tracker/control-plane only and queues the next allocation-layout implementation slice after SLM-CPU-086.",
+  "The next implementation target is the residual-add / transformer.block.output boundary after model.final_norm.output was narrowed to the public Candle LayerNorm/RMSNorm owned-output API gap.",
+  "No runtime optimization, packed-Q8 sidecar promotion, speedup claim, sustained-throughput claim, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is claimed.",
+]
