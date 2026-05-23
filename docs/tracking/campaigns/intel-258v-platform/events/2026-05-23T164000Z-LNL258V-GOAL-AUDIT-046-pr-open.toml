@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T16:40:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-046"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 493
+head_sha = "fd4aec5ddc231b44c740938aac0df10cfec4767a"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-046-post-a770037"
+actor = "codex"
+summary = "Opened PR #493 for the no-inference Lunar Lake audit/checklist refresh to current swarm main after adjacent A770-036/A770-037, SLM-CPU-090, migration cutoff, and tracker/control-plane state."
+notes = [
+  "#470/#472 are Lunar Lake audit/tracker state only.",
+  "#478/#480 and #488/#489 are adjacent A770 diagnostic/tracker state only, not shared BitNet semantic fixes, not Lunar Lake semantic-intake stale triggers, and not Lunar Lake route evidence.",
+  "#477/#483/#487 are adjacent SLM CPU tracker/evidence/closeout state only, and #484 is migration inventory cutoff metadata only.",
+  "LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, energy-proxy evidence, measured thermal readings, and benchmark-qualified power advantage exist.",
+  "No inference, model load, route promotion, speedup, power-advantage, native accelerator, broad quality, semantic-intake stale state, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior-change claim was made.",
+]
