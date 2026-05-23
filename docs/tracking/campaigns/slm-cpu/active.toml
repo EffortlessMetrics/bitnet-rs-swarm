@@ -2213,6 +2213,62 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "SLM-CPU-086"
+status = "pr_open"
+pr = 414
+head_sha = "e4c031121dc8d1f1703cc9819eb078450ceeba96"
+branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-085"]
+acceptance = "Burn down or further narrow the SLM-CPU-085 `model.final_norm.output` caller-output-storage blocker for the Qwen3 Q8_0 Kaby performance lane. A valid slice may add a behavior-preserving final-norm output-storage helper or record a more precise machine-checkable LayerNorm/RMSNorm API blocker, but any runtime change must preserve the established Qwen3 Q8_0 appliance behavior oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false. The slice must not move to residual-add/layer-output runtime changes, promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session_aggregate_allocation_audit",
+  "cargo clippy --locked -p bitnet-cli --no-default-features --features cpu,full-cli --all-targets -- -D warnings",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "The next Kaby Lake Qwen3 Q8_0 performance target is the `model.final_norm.output` caller-output-storage boundary identified by SLM-CPU-085.",
+  "A valid SLM-CPU-086 slice must preserve generated IDs, decoded text, strict tokenizer authority, selected CPU backend, model SHA, dense hook identity where applicable, and fallback=false before claiming even a bounded allocation improvement.",
+]
+must_not_claim = [
+  "The residual-add/layer-output runtime path is optimized.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "End-to-end speedup is proven without before/after receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
 id = "SLM-CPU-080"
 status = "merged"
 pr = 332

@@ -1,0 +1,13 @@
+timestamp = "2026-05-23T03:29:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-086"
+event = "in_progress"
+previous_status = "missing"
+new_status = "ready"
+branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
+actor = "codex"
+summary = "Queued the post-SLM-CPU-085 final-norm output-storage feasibility gate."
+notes = [
+  "SLM-CPU-085 closed with machine-checkable `model.final_norm.output` and `transformer.block.output` blockers, so the next non-duplicative performance slice starts with the narrower final-norm output-storage boundary.",
+  "The item must preserve the Qwen3 Q8_0 appliance behavior oracle before claiming even a bounded allocation improvement and must not move to residual-add, packed-Q8 promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 work.",
+]
