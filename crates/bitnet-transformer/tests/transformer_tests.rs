@@ -10,7 +10,7 @@
 #![cfg(feature = "cpu")]
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
-use bitnet_transformer::{KVCache, LayerKVCache, TransformerModel};
+use bitnet_transformer::{KVCache, LayerKVCache, NormOutputStorageApiBoundary, TransformerModel};
 use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::{RmsNorm, VarBuilder};
 use proptest::prelude::*;
@@ -286,6 +286,32 @@ fn rmsnorm_fused_ops_matches_layernorm_rmsnorm_for_trace_path() -> anyhow::Resul
             "fused RMSNorm mismatch at {idx}: expected {expected}, observed {observed}"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn final_norm_output_storage_boundary_names_exact_candle_blocker() -> anyhow::Result<()> {
+    let device = Device::Cpu;
+    let gamma = Tensor::ones(8, DType::F32, &device)?;
+    let norm = candle_nn::LayerNorm::rms_norm(gamma, 1e-6);
+    let boundary =
+        NormOutputStorageApiBoundary::from_candle_layer_norm("model.final_norm.output", &norm);
+
+    assert_eq!(boundary.role, "model.final_norm.output");
+    assert_eq!(boundary.norm_kind, "rms_norm");
+    assert_eq!(boundary.epsilon, "1.00000000e-6");
+    assert_eq!(boundary.weight_shape, vec![8]);
+    assert_eq!(boundary.bias_shape, None);
+    assert!(boundary.input_accessible);
+    assert!(boundary.weight_accessible);
+    assert!(!boundary.bias_accessible);
+    assert_eq!(
+        boundary.caller_output_helper_status,
+        "final_norm_output_storage_helper_blocked_by_owned_candle_norm_output"
+    );
+    assert!(!boundary.can_fill_caller_output_storage);
+    assert!(boundary.reason.contains("caller-provided output-storage"));
+    assert!(boundary.next_api_hook.contains("apply_op output-storage hook"));
     Ok(())
 }
 
