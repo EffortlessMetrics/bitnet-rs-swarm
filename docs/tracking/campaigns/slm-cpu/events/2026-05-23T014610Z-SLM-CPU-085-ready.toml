@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T01:46:10Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+actor = "codex"
+summary = "Queued the next Kaby Lake Qwen3 Q8_0 allocation-layout target after SLM-CPU-084."
+notes = [
+  "SLM-CPU-084 added a behavior-preserving model.forward.output slot but kept reusable output storage blocked by Candle owned-tensor operations.",
+  "SLM-CPU-085 is scoped to the final-norm/layer-output caller-output-storage boundary identified by the SLM-CPU-084 dashboard note.",
+  "The Qwen3 Q8_0 appliance behavior oracle remains model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No packed-Q8 sidecar promotion, speedup claim, sustained-throughput claim, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is in scope.",
+]
