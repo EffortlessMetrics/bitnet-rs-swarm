@@ -1666,6 +1666,8 @@ pub struct TransformerWorkspaceOutputStorageBoundary {
     pub last_shape: Vec<usize>,
     pub operation_family: &'static str,
     pub operation_detail: &'static str,
+    pub residual_input_shape: Option<Vec<usize>>,
+    pub branch_output_shape: Option<Vec<usize>>,
     pub weight_shape: Option<Vec<usize>>,
     pub bias_shape: Option<Vec<usize>>,
     pub epsilon: Option<String>,
@@ -1929,7 +1931,12 @@ impl TransformerForwardWorkspace {
         self.feed_forward_output_surface = Some(boundary);
     }
 
-    fn record_layer_output_storage_boundary(&mut self, tensor: &Tensor) {
+    fn record_layer_output_storage_boundary(
+        &mut self,
+        tensor: &Tensor,
+        residual_input: &Tensor,
+        branch_output: &Tensor,
+    ) {
         let boundary =
             LayerOutputStorageApiBoundary::from_candle_residual_add("transformer.block.output");
         self.layer_output_storage_attempts += 1;
@@ -1943,6 +1950,8 @@ impl TransformerForwardWorkspace {
             last_shape: tensor.dims().to_vec(),
             operation_family: "candle_core::Tensor residual_add",
             operation_detail: "residual_add_owned_tensor_output",
+            residual_input_shape: Some(residual_input.dims().to_vec()),
+            branch_output_shape: Some(branch_output.dims().to_vec()),
             weight_shape: None,
             bias_shape: None,
             epsilon: None,
@@ -1973,6 +1982,8 @@ impl TransformerForwardWorkspace {
                 "candle_nn::RmsNorm::forward"
             },
             operation_detail: boundary.norm_kind,
+            residual_input_shape: None,
+            branch_output_shape: None,
             weight_shape: Some(boundary.weight_shape),
             bias_shape: boundary.bias_shape,
             epsilon: Some(boundary.epsilon),
@@ -2489,7 +2500,7 @@ impl TransformerBlock {
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_start", || {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
-        let x = if let Some(workspace) = workspace.as_mut() {
+        let feed_forward_output = if let Some(workspace) = workspace.as_mut() {
             self.feed_forward.forward_with_workspace(
                 &x,
                 raw_tensors,
@@ -2506,9 +2517,9 @@ impl TransformerBlock {
                 qwen_trace_elapsed_ms(feed_forward_start)
             )
         });
-        let x = (x + residual)?;
+        let x = (&feed_forward_output + residual)?;
         if let Some(workspace) = workspace.as_mut() {
-            workspace.record_layer_output_storage_boundary(&x);
+            workspace.record_layer_output_storage_boundary(&x, residual, &feed_forward_output);
         }
         if qwen_trace_layer_enabled(self.attention.layer_idx) {
             qwen_trace_tensor("block.output", Some(self.attention.layer_idx), &x)?;

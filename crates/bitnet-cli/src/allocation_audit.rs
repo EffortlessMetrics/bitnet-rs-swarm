@@ -299,6 +299,13 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "model_forward_reuse_status": "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
                 "final_norm_reuse_status": "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
                 "layer_output_reuse_status": "layer_output_storage_blocked_by_candle_tensor_add_ops",
+                "layer_output_operation_family": "candle_core::Tensor residual_add",
+                "layer_output_operation_detail": "residual_add_owned_tensor_output",
+                "layer_output_input_accessible": true,
+                "layer_output_residual_add_involved": true,
+                "layer_output_residual_input_shape_recorded": true,
+                "layer_output_branch_output_shape_recorded": true,
+                "layer_output_caller_output_helper_status": "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
                 "final_norm_operation_family": "candle_nn::RmsNorm::forward",
                 "final_norm_operation_detail": "rms_norm",
                 "final_norm_input_accessible": true,
@@ -313,7 +320,7 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "no_reuse_reason": "candle_nn::Linear exposes weight and optional bias tensors, but its behavior-preserving compute path is Tensor::matmul plus optional broadcast_add, and those operations return owned Tensors without a caller-provided output-storage parameter",
                 "required_api_boundary": "dense_linear_output_storage_api_boundary",
                 "post_model_forward_required_api_boundary": "final_norm_output_storage_api_or_apply_op_output_hook",
-                "next_safe_change": "continue the final-norm boundary by adding or adopting a behavior-preserving Candle LayerNorm/RMSNorm caller-output-storage API before moving to residual-add, dense math, or packed Q8 sidecars",
+                "next_safe_change": "continue the residual-add / transformer.block.output boundary by adding or adopting a behavior-preserving Candle Tensor residual-add caller-output-storage API before replacing block output construction with reusable workspace-backed storage",
                 "next_dense_math_boundary": {
                     "target": "q8_dense_linear_locality_boundary",
                     "source": "SLM-CPU-042",
@@ -437,14 +444,14 @@ fn warm_session_next_optimization_target(
         ranked_hotspots.first().and_then(|hotspot| hotspot["component"].as_str()).unwrap_or("none");
     let (target, rationale, status) = match component {
         "prompt_prefill" => (
-            "final_norm_layer_output_storage_boundary",
-            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and SLM-CPU-085 now narrows the final-norm/layer-output caller-output-storage blocker before changing dense math",
-            "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
+            "residual_block_output_storage_boundary",
+            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and SLM-CPU-088 now narrows the residual-add / transformer.block.output caller-output-storage blocker before changing dense math",
+            "layer_output_storage_blocked_by_candle_tensor_add_ops",
         ),
         "prompt_prefill.forward" => (
-            "final_norm_layer_output_storage_boundary",
-            "prompt_prefill.forward dominates aggregate allocation counters; TransformerForwardWorkspace records model.forward.output, model.final_norm.output, transformer.block.output, and feed_forward.down_proj.output while reusable output storage remains blocked by Candle owned-tensor operations",
-            "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
+            "residual_block_output_storage_boundary",
+            "prompt_prefill.forward dominates aggregate allocation counters; TransformerForwardWorkspace records model.forward.output, model.final_norm.output, transformer.block.output, and feed_forward.down_proj.output while transformer.block.output is blocked by Candle residual-add owned tensor output",
+            "layer_output_storage_blocked_by_candle_tensor_add_ops",
         ),
         "prompt_prefill.embed" => (
             "prefill_embedding_allocation_attribution",
