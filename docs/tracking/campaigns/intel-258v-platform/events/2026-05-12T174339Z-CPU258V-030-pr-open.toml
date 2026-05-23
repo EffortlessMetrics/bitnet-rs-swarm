@@ -3,7 +3,14 @@ campaign = "intel-258v-platform"
 item = "CPU258V-030"
 event = "pr_open"
 pr = 4520
+head_sha = "e5b9345667d5162a309bfdff41dc951571430a31"
+branch = "codex/lunar-lake/CPU258V-030-phase-receipts-after-prompt-fix"
+actor = "codex"
 summary = "Opened CPU258V-030 to refresh 258V strict CPU warm-session phase receipts after the prompt-policy fix."
+notes = [
+  "Opened source PR #4520 for the corrected 258V strict CPU warm-session phase receipt refresh.",
+  "The PR head SHA is recorded from the source-repo PR metadata to keep campaign doctor event metadata complete.",
+]
 details = [
   "The PR records an aggregate warm-session receipt plus prefill_512 and decode_128 profile receipts from the release-built CLI.",
   "The run used real GGUF loading, explicit tokenizer resolution, corrected BitNet.cpp answer prompt policy, selected i2_s-avx2-reference, and fallback_used=false.",

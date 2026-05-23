@@ -6,6 +6,7 @@ from = "in_progress"
 to = "pr_open"
 actor = "codex"
 pr = 5240
+head_sha = "e9615007857412c28d2219d28cfd8d47251026b7"
 branch = "codex/lunar-lake/LNL258V-DURABLE-003-index-stability"
 summary = "Opened PR #5240 to index the existing repeated dense Qwen CPU warm-session receipt in the Lunar Lake durability bundle."
 
