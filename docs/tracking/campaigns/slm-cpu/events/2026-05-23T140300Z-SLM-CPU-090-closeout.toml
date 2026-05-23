@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T14:03:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 474
+merge_sha = "ccd639e26af43d088601a74662f0069fa9d7f9d3"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Returned SLM-CPU-090 to ready after PR #474 merged the queue definition but not the implementation/blocker slice."
+notes = [
+  "PR #474 closed the SLM-CPU-089 queue gate and added the SLM-CPU-090 work-item definition.",
+  "SLM-CPU-090 remains the next implementation-or-blocker slice and was not completed by #474.",
+  "No residual-add runtime optimization, packed-Q8 default promotion, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

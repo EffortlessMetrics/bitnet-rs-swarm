@@ -22,6 +22,12 @@ Base main SHA:
 Allowed paths:
 Shared surfaces touched:
 Closeout required:
+Source promotion needed:
+Model/hardware/proof claims added:
+Claims explicitly not promoted:
+Commands run:
+Validation gaps:
+Rollback:
 ```
 
 Repository-boundary PRs must also declare:
@@ -56,6 +62,15 @@ Allowed paths:
 Shared surfaces touched:
 - docs/tracking/generated/**
 Closeout required: yes
+Source promotion needed: no
+Model/hardware/proof claims added: none
+Claims explicitly not promoted: A770 support, quality, speed, server readiness
+Commands run:
+- cargo run --locked -p xtask --no-default-features -- campaign generate --check
+- git diff --check
+Validation gaps:
+- none
+Rollback: revert the tracker/spec PR
 ```
 
 ## Labels Mirror The Manifest

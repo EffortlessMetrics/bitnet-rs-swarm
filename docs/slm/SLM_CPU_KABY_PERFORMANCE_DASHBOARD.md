@@ -1506,6 +1506,64 @@ does not claim end-to-end speedup, sustained 8250U throughput, broad answer
 quality, Q4/Q5 runtime support, server execution, accelerator execution,
 Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-089 Residual-Add Storage Gate
+
+SLM-CPU-089 is the next queued performance-lane gate after SLM-CPU-088. It does
+not start from a speed target. It starts from the specific blocker that
+SLM-CPU-088 made machine-checkable:
+
+```text
+blocked_surface = transformer.block.output
+blocked_operation = residual_add
+current_output_ownership = owned Candle Tensor
+required_next_boundary = behavior-preserving caller-provided output storage
+default_runtime_changed = false
+speedup_claim = false
+```
+
+A valid implementation may add a narrow residual-add output-storage API or may
+prove that the current Candle tensor boundary still prevents reusable storage.
+Either result must stay useful to the performance lane by preserving the exact
+claim boundary: no runtime improvement can be claimed until before/after Qwen3
+Q8_0 receipts prove matching model SHA, strict GGUF tokenizer authority, prompt
+IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense
+hook identity where applicable, and `fallback_used=false`.
+
+This is intentionally still in the allocation/layout lane. It must not promote
+`packed_q8_sidecar`, broaden Q4/Q5 support, claim sustained 8250U throughput,
+or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S
+paths.
+
+## SLM-CPU-090 Residual-Add Output-Storage Slice
+
+SLM-CPU-090 is the next non-duplicative step after the SLM-CPU-089 queue gate.
+It is not allowed to infer performance from intent. It must either implement a
+behavior-preserving residual-add helper for `transformer.block.output` that can
+fill caller-provided reusable storage, or produce a machine-checkable blocker
+that names the exact Candle tensor API limitation preventing that storage reuse.
+
+```text
+target_surface = transformer.block.output
+target_operation = residual_add
+current_blocker = Candle residual-add returns owned Tensor output
+allowed_result = reusable-storage helper or exact API blocker
+required_behavior_oracle = Qwen3 Q8_0 appliance receipt equivalence
+default_runtime_changed_without_oracle = false
+speedup_claim_without_before_after_receipts = false
+```
+
+If SLM-CPU-090 changes runtime behavior, the change must be paired with
+before/after Qwen3 Q8_0 appliance evidence showing unchanged model SHA, strict
+GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU
+backend/kernel identity, dense hook identity where applicable, and
+`fallback_used=false`. If the API is still blocked, the blocker must be concrete
+enough to guide the next Candle/output-storage work rather than restating the
+generic owned-output problem.
+
+This slice must not promote `packed_q8_sidecar`, claim end-to-end speedup,
+claim sustained 8250U throughput, broaden Q4/Q5 support, or touch server, GPU,
+NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8
