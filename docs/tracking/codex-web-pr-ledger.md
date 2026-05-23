@@ -21,6 +21,49 @@ The live queue is generated locally under `target/pr-ledger/` because it is a
 throwaway refresh surface. This tracked file records the current durable
 disposition and retains the original large snapshot below for provenance.
 
+## Current Swarm Queue State
+
+- Date: 2026-05-23
+- Repository: `EffortlessMetrics/bitnet-rs-swarm`
+- Commands:
+  - `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
+  - `rtk git fetch origin --prune`
+  - `rtk git fetch source --prune`
+  - `rtk git rev-parse origin/main`
+  - `rtk git rev-parse source/main`
+  - `rtk git rev-list --count source/main ^origin/main`
+  - `rtk git rev-list --count origin/main ^source/main`
+- Open PR count excluding this snapshot PR: 1
+- Duplicate open PR clusters: none observed in the current open slice after
+  #462 merged.
+- Direct swarm PRs waiting for merge excluding this snapshot PR: #459; it
+  needs current status review and lane-specific proof before merge.
+- Current queue-stabilized promotion candidate SHA before this snapshot PR
+  merges:
+  `49b6e0f934287c0920796ea74be5f05709323fd3`
+- Source reachability: `source/main` is reachable from `origin/main`;
+  `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
+  count is `78`.
+
+| PR | Lane | Current signal | Disposition |
+|---:|---|---|---|
+| #451 | swarm handoff | Merged as the post-#450 operator checkpoint. | Operator-state documentation only; no source promotion started. |
+| #452 | CUDA/Qwen3 diagnostic | Merged as a short-decode source-set receipt. | Diagnostic source-set evidence only; no Qwen3 Lunar Lake promotion, quality, speed, or source-promotion claim. |
+| #453 | Lunar Lake tracker | Merged before its late repair commit was picked up. | No-inference tracker refresh only; the missed repair was ported into #455. |
+| #455 | Lunar Lake tracker closeout | Merged after generated-tracker proof. | Closed LNL258V-GOAL-AUDIT-043 and preserved the post-#452 repair markers. |
+| #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
+| #456 | A770 tracker closeout | Merged after #454 with generated-dashboard proof. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, full inference, or BitNet QK256/I2_S behavior claim. |
+| #458 | A770 campaign summary | Merged after #456. | Marked A770-034 merged in the campaign summary row only; no runtime/math/support claim. |
+| #461 | Lunar Lake tracker/audit | Merged after #458 with generated tracker proof. | No-inference audit/checklist refresh only; no route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
+| #460 | CUDA/Qwen3 source receipt | Merged after #461. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, or BitNet packed I2_S/QK256 proof. |
+| #462 | Lunar Lake tracker closeout | Merged after #461. | Tracker closeout only; no inference, route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
+| #459 | SLM runtime/perf | Open after #462 with auto-merge armed but `mergeStateStatus = DIRTY`. | Inspect exact runtime diff, resolve main drift, and require focused SLM proof before merge. |
+
+Do not start a swarm-to-source promotion from this snapshot alone. The recorded
+SHA is a promotion candidate only after the source-promotion operator chooses a
+batch boundary, prepares the promotion packet, and verifies source-owned release
+surfaces.
+
 ## Current Queue State
 
 - Date: 2026-05-20
