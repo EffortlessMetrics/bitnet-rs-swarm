@@ -1,0 +1,15 @@
+schema = 1
+campaign = "intel-a770"
+item = "A770-037"
+event = "in_progress"
+timestamp = "2026-05-23T15:15:29Z"
+previous_status = "missing"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-037-antepenultimate-block-source-frontier"
+summary = "Started A770-037 antepenultimate transformer block source frontier after A770-036 routed the focused summary mismatch to penultimate block input drift."
+notes = [
+  "A770-037 adds compact antepenultimate block input, attention output, post-attention residual, FFN output, and block output fingerprints to focused logit-source receipts.",
+  "The slice remains diagnostic-only and does not change runtime math.",
+  "The slice does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]

@@ -5817,7 +5817,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-090"
-status = "pr_open"
+status = "merged"
+pr = 483
+head_sha = "a6704f9acb6db624d20c0ddc770645c9a86500da"
+merge_sha = "bf3733505ff7c9f69433f5f5306fca23c25ad743"
 branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
 stackable = false
 review_mode = "codex_premerge"
