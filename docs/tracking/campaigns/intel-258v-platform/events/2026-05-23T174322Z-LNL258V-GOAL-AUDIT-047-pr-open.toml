@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T17:43:22Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-047"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 498
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-047-post-a770038"
+head_sha = "edb03e5834fc617451da849e906da7518246cdc8"
+actor = "codex"
+summary = "Opened the no-inference Lunar Lake audit/checklist refresh PR after adjacent A770-038 and closeout #497 reached current swarm main."
+notes = [
+  "The PR records A770-038/#495 and closeout #497 as adjacent A770 diagnostic/tracker state only.",
+  "A770-038 is not a shared BitNet semantic fix, not a Lunar Lake semantic-intake stale trigger, and not Lunar Lake route evidence.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry and benchmark-qualified power advantage.",
+]
