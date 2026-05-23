@@ -1,0 +1,74 @@
+{
+  "artifact_kind": "slm_cpu_allocation_boundary",
+  "work_item": "SLM-CPU-091",
+  "created_utc": "2026-05-23T19:10:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "behavior_oracle": {
+    "source": "established Qwen3 Q8_0 Kaby appliance receipts",
+    "must_preserve": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "scope": "model.logits / output-head tensor allocation boundary",
+  "classification": {
+    "status": "logits_output_storage_blocked_by_candle_tensor_ops",
+    "current_boundary": "TransformerModel::logits owned Tensor output and optional host logits extraction",
+    "operation_family": "candle output-head projection",
+    "operation_detail": "lm_head.forward_or_tied_embedding_matmul_then_reshape",
+    "lm_head_forward_involved": true,
+    "tied_embedding_matmul_involved": true,
+    "host_logits_extraction_involved_when_requested": true,
+    "exact_blocking_ops": [
+      "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::matmul(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::reshape(&self, shape) -> Result<Tensor>",
+      "Tensor::to_vec1::<f32>(&self) -> Result<Vec<f32>> when host logits extraction is requested"
+    ],
+    "public_api_return_type": "Result<Tensor>",
+    "public_api_accepts_output_storage": false,
+    "backend_internal_in_place_api_exposed": false,
+    "can_fill_caller_output_storage": false,
+    "required_missing_api": "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor"
+  },
+  "prior_cleanup_preserved": [
+    "SLM-CPU-024 greedy no-penalty sampler fast path avoids sampler logits scratch copying",
+    "SLM-CPU-025 deterministic no-penalty steps use direct tensor argmax where exact",
+    "SLM-CPU-026 reuses host logits scratch for default repetition-penalty decode steps"
+  ],
+  "result": {
+    "runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "packed_q8_sidecar_promoted": false,
+    "residual_add_storage_solved": false,
+    "next_safe_change": "add or adopt a behavior-preserving logits/output-head output-storage API or fused selection path, then prove Qwen3 Q8_0 behavior-equivalent before/after receipts"
+  },
+  "claim_boundary": {
+    "no_sustained_throughput_claim": true,
+    "no_broad_answer_quality_claim": true,
+    "no_q4_q5_runtime_support_claim": true,
+    "no_server_claim": true,
+    "no_gpu_npu_openvino_uhd620_claim": true,
+    "no_qwen35_claim": true,
+    "no_bitnet_qk256_claim": true
+  }
+}
