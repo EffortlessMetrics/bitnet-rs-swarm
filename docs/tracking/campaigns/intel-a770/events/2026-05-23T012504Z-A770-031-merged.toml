@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T01:25:04Z"
+campaign = "intel-a770"
+item = "A770-031"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-031-summary-argmax-source"
+pr = 398
+head_sha = "69944e2af258ac2e74ba994f5f6d983d1ed6f9db"
+merge_sha = "7dc230df006c5c5d64396ca1aa8ed6c5d00d3e32"
+summary = "Merged A770-031 summary argmax-source frontier diagnostic evidence."
+
+notes = [
+  "PR #398 added generated_output_argmax_source_frontier to answer-parity receipts and refreshed the focused A770-030 summary parity artifact.",
+  "The committed focused parity receipt classifies the remaining summary mismatch as generated_output_argmax_source_frontier_internal_logit_source_missing_context, with prompt-history serialization, sampler/logit extraction, and trace/capture context loss not implicated at the current top-k boundary.",
+  "The closeout does not change runtime math or promote reference parity, CPU/A770 answer parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference.",
+]
