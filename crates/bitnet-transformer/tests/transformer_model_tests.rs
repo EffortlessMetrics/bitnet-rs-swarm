@@ -222,6 +222,7 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
         "dense_linear_output_storage_blocked_by_candle_tensor_ops"
     );
     assert_eq!(workspace.workspace_owned_output_count(), model.config.model.num_layers);
+    assert_eq!(workspace.model_workspace_owned_output_count(), 1);
     assert_eq!(workspace.model_output_storage_attempts(), 1);
     assert_eq!(workspace.down_proj_output_storage_attempts(), model.config.model.num_layers);
     let Some(model_surface) = workspace.model_output_surface() else {
@@ -229,7 +230,10 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     };
     assert_eq!(model_surface.name, "model.forward.output");
     assert_eq!(model_surface.storage_owner, "TransformerForwardWorkspace");
-    assert_eq!(model_surface.status, "model_forward_output_storage_blocked_by_owned_tensor_api");
+    assert_eq!(
+        model_surface.status,
+        "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+    );
     assert_eq!(model_surface.last_shape, vec![1, 1, hidden]);
     assert!(!model_surface.weight_accessible);
     assert!(!model_surface.bias_accessible);

@@ -1379,6 +1379,36 @@ does not claim end-to-end speedup, sustained 8250U throughput, broad answer
 quality, Q4/Q5 runtime support, server execution, accelerator execution,
 Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-084 Model-Forward Output Slot
+
+SLM-CPU-084 burns down the `model.forward.output` boundary one step without
+changing Qwen3 Q8_0 runtime behavior. `TransformerModel::forward_with_workspace`
+now moves the final Candle `Tensor` through a
+`TransformerForwardWorkspace`-owned model output slot before returning it to the
+caller. This is an explicit behavior-preserving API surface, not reusable output
+storage.
+
+```text
+model_forward_owned_output_surface = model.forward.output
+model_forward_reuse_status = model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops
+workspace_storage_owner = TransformerForwardWorkspace
+model_workspace_owned_output_count = 1
+default_runtime_changed = false
+speedup_claim = false
+```
+
+Reusable caller-filled output storage remains blocked by the current Candle
+owned-tensor operations in the layer loop and final norm path. The next safe
+boundary is a final-norm/layer-output caller-output-storage API, still gated by
+the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority,
+prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity,
+dense hook identity where applicable, and `fallback_used=false`.
+
+This slice does not promote `packed_q8_sidecar`, does not change dense math, and
+does not claim end-to-end speedup, sustained 8250U throughput, broad answer
+quality, Q4/Q5 runtime support, server execution, accelerator execution,
+Qwen3.5 support, or BitNet QK256/I2_S changes.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8
