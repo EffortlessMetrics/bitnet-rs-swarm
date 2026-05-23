@@ -12,6 +12,7 @@ notes = [
   "Record LNL258V-GOAL-AUDIT-034/#382 plus closeout #386 as Lunar Lake audit/tracker state only.",
   "Record #383/#390 as adjacent SLM CPU tracker state, #384/#391 as adjacent CUDA/Qwen3 planning/blocker state, #385 as adjacent A770 tracker ordering repair, and #387 as repo-boundary tooling only.",
   "Record A770-030/#388 plus closeout #392 as adjacent A770 summary-logit diagnostic/tracker state only, not Lunar Lake route evidence or a shared BitNet semantic trigger.",
+  "Record SLM-CPU-083/#393 plus closeout #394 as adjacent SLM CPU model-forward output-boundary/tracker state only, not Lunar Lake route evidence.",
   "Keep LNL258V-POWER-006 blocked until real battery-mode low_power telemetry, energy proxy, measured thermal context, and benchmark-qualified power advantage exist.",
   "Preserve no inference, model load, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator, acceleration, broad quality, semantic-intake stale claim, CPU/A770 parity, strict A770 readiness, trusted partial acceleration, or BitNet QK256/I2_S behavior-change claim.",
 ]
