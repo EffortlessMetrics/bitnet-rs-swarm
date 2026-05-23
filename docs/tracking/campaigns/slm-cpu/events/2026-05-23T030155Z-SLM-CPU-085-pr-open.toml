@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T03:01:55Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 409
+head_sha = "c5b296b0aef35e53c3fbf4ef27e39f2942c59fc6"
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+actor = "codex"
+summary = "Opened PR #409 for the final-norm/layer-output output-storage blocker classification."
+notes = [
+  "The PR records machine-checkable `model.final_norm.output` and `transformer.block.output` caller-output-storage blockers in the transformer workspace and warm-session allocation audit.",
+  "The slice preserves the behavior-preserving model.forward.output path and makes no dense math, sidecar promotion, speedup, sustained-throughput, Q4/Q5 runtime, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim.",
+]

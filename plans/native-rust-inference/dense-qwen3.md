@@ -545,7 +545,7 @@ Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
 Campaign: `docs/tracking/campaigns/nvidia-5070ti/active.toml`
 Blocks: CUDA-MODEL-018
-Blocked by: Qwen3 normal source-capture timeout before the first strict CUDA source receipt (CUDA-MODEL-017M)
+Blocked by: missing repeated source receipts after the first one-token strict CUDA source receipt (CUDA-MODEL-017N)
 
 ### Goal
 
@@ -577,17 +577,39 @@ current source receipts may label as unmeasured.
 Running the generator without all source receipts now fails with a full
 per-profile missing-input report.
 
-### Current blocker
+### Current partial source receipt
 
 CUDA-MODEL-017A landed the missing profile tooling and the repeated comparator
-manifest preflight works. CUDA-MODEL-017M then attempted the normal strict
-Qwen3 CUDA one-token source-capture path and timed out after 15 minutes without
-emitting a JSON receipt.
+manifest preflight works. CUDA-MODEL-017N captured the first current-source
+`one_token` strict CUDA source receipt, and CUDA-MODEL-017O completed the
+three-run `one_token` source set:
 
-The next implementation boundary is Qwen3 CUDA layer-0 RMSNorm execution in the
-normal source-capture path. The repeated comparator aggregate generator is not
-the blocker; it is behaving correctly by refusing to generate an aggregate
-without source receipts.
+```text
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-one-token-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-one-token-cuda.json
+```
+
+The receipts record the exact Qwen3 0.6B Q8_0 artifact, selected
+`nvidia-rtx-5070-ti-cuda` backend, `dense_regular_llm_cuda` route,
+`fallback_used=false`, quality/parity pass fields, transfer accounting, VRAM,
+power, and thermal context. They preserve `speedup_claim=false`,
+`full_cuda_residency_claimed=false`, server promotion false for this receipt,
+Qwen2.5 inheritance false, and BitNet packed I2_S/QK256 proof false.
+
+The aggregate remains blocked because the current committed source set is:
+
+```text
+one_token: 3 / 3
+short_decode_8: 0 / 3
+short_decode_32: 0 / 3
+warm_session_3_turns: 0 / 3
+decode_128_from_warm_context: 0 / 3
+```
+
+The repeated comparator aggregate generator is not the blocker; it is behaving
+correctly by accepting the completed `one_token` source set and refusing to
+generate an aggregate until the remaining profile source receipts exist.
 
 ### Non-goals
 

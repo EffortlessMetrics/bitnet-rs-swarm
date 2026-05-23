@@ -2,9 +2,9 @@
   "schema_version": 1,
   "artifact_kind": "lunar_lake_goal_artifact_checklist",
   "proof_stage": "objective_artifact_mapping_no_inference",
-  "created_utc": "2026-05-23T00:07:00Z",
+  "created_utc": "2026-05-23T04:00:03Z",
   "machine_id": "intel-258v",
-  "source_revision": "abcfbbd96859bb8a133395b53aa5e1e953b8556c",
+  "source_revision": "d5ad9a6b36c2ad037a207ee76d723195ab776370",
   "audited_objective": "Make Lunar Lake an excellent profile-aware local inference appliance with a reliable dense Qwen route, earned OpenVINO GPU/NPU route promotion, protected BitNet CPU reference behavior, strict regression, and explicit claim boundaries.",
   "completion_decision": "not_complete",
   "excellent_support_ready": false,
@@ -16,6 +16,10 @@
   "post_394_checkpoint_delta": "Current swarm main now additionally includes SLM-CPU-083/#393 and closeout #394 as adjacent SLM CPU model-forward output-boundary and tracker state only. These changes do not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, runtime/sidecar behavior evidence for Lunar Lake, semantic-intake stale state, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior changes.",
   "post_397_checkpoint_delta": "Current swarm main now additionally includes #397 as a generated SLM dashboard freshness refresh only. This does not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, runtime or sidecar behavior evidence for Lunar Lake, semantic-intake stale state, Qwen3 Lunar Lake promotion, source-promotion completion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
   "post_396_checkpoint_delta": "Current swarm main now additionally includes SLM-CPU-084/#396 as adjacent SLM CPU target queue and tracker state only. This does not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, runtime or sidecar behavior evidence for Lunar Lake, semantic-intake stale state, Qwen3 Lunar Lake promotion, source-promotion completion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
+  "post_402_401_checkpoint_delta": "Current swarm main now additionally includes LNL258V-GOAL-AUDIT-035/#395 plus closeout #400 as Lunar Lake audit/tracker state, A770-031/#398 plus closeout #401 as adjacent A770 summary-argmax source-frontier diagnostic/tracker state, and SLM-CPU-084/#399 plus closeout #402 as adjacent SLM CPU model-forward output-slot runtime-support/tracker state only. These changes do not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, semantic-intake stale state, runtime or sidecar behavior evidence for Lunar Lake, source promotion completion, Qwen3 Lunar Lake promotion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
+  "post_403_checkpoint_delta": "Current swarm main now additionally includes CUDA-MODEL-017N/#403 as adjacent Nvidia 5070 Ti Qwen3 one-token source-receipt, report, tracker, and plan state only. This does not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, semantic-intake stale state, runtime or sidecar behavior evidence for Lunar Lake, source promotion completion, Qwen3 Lunar Lake promotion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
+  "post_410_checkpoint_delta": "Current swarm main now additionally includes #408 as a Lunar Lake audit source-revision repair, SLM-CPU-085/#409 as adjacent SLM CPU final-norm/layer-output caller-output-storage blocker classification, and SLM-CPU-085 closeout #410 as adjacent SLM CPU tracker state. These changes do not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, semantic-intake stale state, runtime or sidecar behavior evidence for Lunar Lake, source promotion completion, Qwen3 Lunar Lake promotion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
+  "post_415_checkpoint_delta": "Current swarm main now additionally includes #412 as adjacent Nvidia 5070 Ti Qwen3 one-token source-set receipt/report/tracker state, #413 as LNL258V-GOAL-AUDIT-037 audit refresh state, #414 as adjacent SLM-CPU-086 final-norm gate tracker queue state, and #415 as LNL258V-GOAL-AUDIT-037 tracker closeout state. These changes do not add Lunar Lake inference, model loading, fallback behavior changes, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality evidence, semantic-intake stale state, runtime or sidecar behavior evidence for Lunar Lake, source promotion completion, Qwen3 Lunar Lake promotion, native OpenCL/NPU proof, full BitNet accelerator inference, trusted partial acceleration, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior changes.",
   "active_blocker": {
     "work_item": "LNL258V-POWER-006",
     "status": "blocked",
@@ -514,7 +518,13 @@
         "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/350",
         "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/357",
         "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/359",
-        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/360"
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/360",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/395",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/400",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/398",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/401",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/399",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/402"
       ],
       "notes": [
         "The platform is well instrumented and profile-aware, but not yet excellent across all requested profiles.",
@@ -571,7 +581,10 @@
         "CUDA-MODEL-017L/#335 is recorded only as adjacent CUDA/Qwen3 RMSNorm fused-op diagnostic state; it does not change Lunar Lake route evidence, completion status, route promotion, speedup, power advantage, native accelerator proof, broad quality, semantic-intake status, runtime behavior, sidecar behavior, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior.",
         "LNL258V-GOAL-AUDIT-029/#340 plus closeout #343 are recorded as audit and tracker state only; they do not add route evidence, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, runtime behavior, sidecar behavior, semantic-intake stale evidence, Qwen3 Lunar Lake promotion, or BitNet behavior change.",
         "LNL258V-GOAL-AUDIT-031/#350 plus closeout #357 and post-357 handoff #359 are recorded as audit/tracker/operator state only; they do not change Lunar Lake route evidence, POWER-006 status, or claim boundaries.",
-        "Repo-boundary promotion-packet generator #360 is recorded as adjacent repo tooling only; it does not change Lunar Lake route evidence, POWER-006 status, source-promotion status, or claim boundaries."
+        "Repo-boundary promotion-packet generator #360 is recorded as adjacent repo tooling only; it does not change Lunar Lake route evidence, POWER-006 status, source-promotion status, or claim boundaries.",
+        "LNL258V-GOAL-AUDIT-035/#395 plus closeout #400 are recorded as audit/tracker state only; they do not change Lunar Lake route evidence, POWER-006 status, or claim boundaries.",
+        "A770-031/#398 plus closeout #401 are recorded only as adjacent A770 summary-argmax source-frontier diagnostic/tracker state; they do not change Lunar Lake route evidence, semantic-intake freshness, route promotion, speedup, power advantage, native accelerator proof, CPU/A770 parity, strict A770 readiness, broad A770 quality, or BitNet QK256/I2_S behavior.",
+        "SLM-CPU-084/#399 plus closeout #402 are recorded only as adjacent SLM CPU model-forward output-slot runtime-support/tracker state; they do not change Lunar Lake route evidence, completion status, route promotion, speedup, power advantage, battery-mode evidence, runtime behavior for Lunar Lake, or BitNet QK256/I2_S behavior."
       ]
     }
   ],
@@ -621,7 +634,8 @@
     "packed_qk256_accelerator_decode_claim_added": false,
     "current_main_delta_scope": "Current main after the prior audited #348 state adds LNL258V-GOAL-AUDIT-031/#350 and closeout #357 as Lunar Lake audit/tracker state only, post-357 handoff #359 as swarm operator-state documentation only, SLM-CPU-081 #349/#354 as adjacent SLM CPU planning/tracker state only, repo-boundary #351 as tooling only, and CUDA-MODEL-017M/#353 as adjacent CUDA/Qwen3 timeout diagnostic state only. None is Lunar Lake route evidence, completion evidence, runtime/sidecar behavior evidence, semantic-intake stale evidence, Qwen3 Lunar Lake promotion evidence, or BitNet behavior evidence; #360 is repo-boundary promotion-packet tooling only and is not Lunar Lake route evidence, completion evidence, runtime/sidecar behavior evidence, source-promotion completion evidence, semantic-intake stale evidence, Qwen3 Lunar Lake promotion evidence, or BitNet behavior evidence.",
     "audit_031_refresh_scope": "no new inference; #345/#346 are audit/tracker state, #347 is operator documentation, and #344/#348 are adjacent A770 diagnostic/tracker state only",
-    "audit_032_refresh_scope": "no new inference; #350/#357 are audit/tracker state, #359 is handoff/operator state, #349/#354 are adjacent SLM CPU state, #351 is repo-boundary tooling, and #353 is adjacent CUDA/Qwen3 diagnostic state only; #360 is repo-boundary tooling only"
+    "audit_032_refresh_scope": "no new inference; #350/#357 are audit/tracker state, #359 is handoff/operator state, #349/#354 are adjacent SLM CPU state, #351 is repo-boundary tooling, and #353 is adjacent CUDA/Qwen3 diagnostic state only; #360 is repo-boundary tooling only",
+    "post_402_401_refresh_scope": "no new inference; #395/#400 are Lunar Lake audit/tracker state, #398/#401 are adjacent A770 summary-argmax source-frontier diagnostic/tracker state, and #399/#402 are adjacent SLM CPU model-forward output-slot runtime-support/tracker state only"
   },
   "adjacent_support_updates": [
     {
@@ -1225,6 +1239,75 @@
       "closeout_merge_sha": "ca0cfefdf1cbf107ede57bf7b8534df5ae7cc2ef",
       "status": "adjacent_slm_cpu_forward_boundary_and_tracker_state_not_lunar_lake_route_evidence",
       "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim, sidecar behavior claim, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "LNL258V-GOAL-AUDIT-035",
+      "pr": 395,
+      "merge_sha": "66524d74ef7aee8cbd1de00617e915b1cb13d390",
+      "closeout_pr": 400,
+      "closeout_merge_sha": "57bb768df3c91898f7e0eac7df22b1269944d1f7",
+      "status": "lunar_lake_audit_and_tracker_state_not_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim, sidecar behavior claim, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "A770-031-SUMMARY-ARGMAX-SOURCE-FRONTIER",
+      "pr": 398,
+      "merge_sha": "7dc230df006c5c5d64396ca1aa8ed6c5d00d3e32",
+      "head_sha": "69944e2af258ac2e74ba994f5f6d983d1ed6f9db",
+      "closeout_pr": 401,
+      "closeout_merge_sha": "e2bdcf05b58546e6f79b436b0d5cf68d545a23c5",
+      "status": "adjacent_a770_summary_argmax_source_frontier_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim, sidecar behavior claim, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-084-MODEL-FORWARD-OUTPUT-SLOT",
+      "pr": 399,
+      "merge_sha": "47e3d657917981701d980d32cf4850fd3d0d096b",
+      "head_sha": "8c28874c867989c5f0dd8c0107c4defbd708f9b5",
+      "closeout_pr": 402,
+      "closeout_merge_sha": "4b34310b2c4af72931d4f6410a0df4047dace1f2",
+      "status": "adjacent_slm_cpu_model_forward_output_slot_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "LNL258V-GOAL-AUDIT-037",
+      "pr": 408,
+      "merge_sha": "dc3e2784f8d90d380f1e9eb4c977cc75f22626a1",
+      "head_sha": "b9c9b113b210d5973a1777a34351e8403e3e4ae0",
+      "status": "lunar_lake_audit_source_revision_repair_not_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-085-FINAL-NORM-LAYER-OUTPUT-BLOCKER",
+      "pr": 409,
+      "merge_sha": "e10f3b190e0d7999450899aaa41d56575068cd09",
+      "head_sha": "dc1f42d1e979e08a17b69407b65a8725e4e2b18a",
+      "closeout_pr": 410,
+      "closeout_merge_sha": "b5e0d2c46158c3b48f2fda5dcd79726f333a157f",
+      "status": "adjacent_slm_cpu_final_norm_layer_output_blocker_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "NVIDIA-QWEN3-ONE-TOKEN-SOURCE-SET",
+      "pr": 412,
+      "merge_sha": "800628c8a2fc74ffe6d1cc7db7a3a8e82d67dcbd",
+      "status": "adjacent_nvidia_qwen3_source_set_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "SLM-CPU-086-FINAL-NORM-GATE-QUEUE",
+      "pr": 414,
+      "merge_sha": "d5ad9a6b36c2ad037a207ee76d723195ab776370",
+      "status": "adjacent_slm_cpu_tracker_queue_not_lunar_lake_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
+    },
+    {
+      "id": "LNL258V-GOAL-AUDIT-038",
+      "pr": null,
+      "source_revision": "d5ad9a6b36c2ad037a207ee76d723195ab776370",
+      "depends_on_prs": [412, 413, 414, 415],
+      "status": "lunar_lake_audit_refresh_current_main_not_route_evidence",
+      "claim_boundary": "no Lunar Lake inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality claim, runtime behavior claim for Lunar Lake, sidecar behavior claim for Lunar Lake, source-promotion completion, semantic-intake stale claim, Qwen3 Lunar Lake model promotion, CPU/A770 parity claim, strict A770 readiness claim, trusted partial acceleration claim, or BitNet QK256/I2_S behavior claim"
     }
   ]
 }

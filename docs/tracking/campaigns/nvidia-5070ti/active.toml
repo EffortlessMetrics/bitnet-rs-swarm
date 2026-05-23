@@ -3181,13 +3181,15 @@ forbidden_paths = [
   ".github/workflows/**",
 ]
 may_claim = [
-  "CUDA-MODEL-017 is blocked on current-source Qwen3 strict CUDA source-capture execution before the first required source receipt.",
+  "CUDA-MODEL-017 has the current-source Qwen3 one_token strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/.",
+  "CUDA-MODEL-017 remains blocked on the remaining repeated source receipts and aggregate generation.",
   "CUDA-MODEL-017A merged the source-capture profile tooling prerequisite.",
   "The qwen3_cuda_repeated_comparator generator fail-closes until all required source receipts exist.",
   "The aggregate receipt may prove repeated Qwen3 same-artifact CPU/CUDA comparator evidence only after the hardware source receipts are collected and validated.",
 ]
 must_not_claim = [
-  "A CUDA-MODEL-017 source receipt exists.",
+  "All required CUDA-MODEL-017 source receipts exist.",
+  "Any non-one-token CUDA-MODEL-017 source receipt exists for the 2026-05-23 capture.",
   "The qwen3_cuda_repeated_comparator aggregate exists.",
   "Qwen3 speedup exists.",
   "Qwen3 benchmark-qualified speed exists.",
