@@ -1320,62 +1320,57 @@ mod tests {
     }
 
     #[test]
-    fn bitnet_perf_005_strict_bitnet_cuda_repeated_profiles_aggregate_builds_from_sources() {
-        let temp = tempfile::tempdir().expect("tempdir");
+    fn bitnet_perf_005_strict_bitnet_cuda_repeated_profiles_aggregate_builds_from_sources()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let temp = tempfile::tempdir()?;
         let args = Args {
-            one_token_runs: write_profile_runs(temp.path(), "one_token", 1, None),
-            short_decode_8_runs: write_profile_runs(temp.path(), "short_decode_8", 8, None),
-            short_decode_32_runs: write_profile_runs(temp.path(), "short_decode_32", 32, None),
+            one_token_runs: write_profile_runs(temp.path(), "one_token", 1, None)?,
+            short_decode_8_runs: write_profile_runs(temp.path(), "short_decode_8", 8, None)?,
+            short_decode_32_runs: write_profile_runs(temp.path(), "short_decode_32", 32, None)?,
             prefill_128_decode_16_runs: write_profile_runs(
                 temp.path(),
                 "prefill_128_decode_16",
                 16,
                 Some(128),
-            ),
+            )?,
             prefill_512_decode_32_runs: write_profile_runs(
                 temp.path(),
                 "prefill_512_decode_32",
                 32,
                 Some(512),
-            ),
-            warm_session_3_runs: write_profile_runs(temp.path(), "warm_session_3_turns", 24, None),
+            )?,
+            warm_session_3_runs: write_profile_runs(temp.path(), "warm_session_3_turns", 24, None)?,
             warm_session_10_runs: write_profile_runs(
                 temp.path(),
                 "warm_session_10_turns",
                 80,
                 None,
-            ),
+            )?,
             decode_128_runs: write_profile_runs(
                 temp.path(),
                 "decode_128_from_warm_context",
                 128,
                 None,
-            ),
+            )?,
             receipt_out: temp.path().join("aggregate.json"),
             manifest_out: None,
             print_manifest: false,
         };
 
         let runs = ProfileRuns {
-            one_token: read_runs(&args.one_token_runs).expect("one_token runs"),
-            short_decode_8: read_runs(&args.short_decode_8_runs).expect("short_decode_8 runs"),
-            short_decode_32: read_runs(&args.short_decode_32_runs).expect("short_decode_32 runs"),
-            prefill_128_decode_16: read_runs(&args.prefill_128_decode_16_runs)
-                .expect("prefill_128_decode_16 runs"),
-            prefill_512_decode_32: read_runs(&args.prefill_512_decode_32_runs)
-                .expect("prefill_512_decode_32 runs"),
-            warm_session_3: read_runs(&args.warm_session_3_runs)
-                .expect("warm_session_3_turns runs"),
-            warm_session_10: read_runs(&args.warm_session_10_runs)
-                .expect("warm_session_10_turns runs"),
-            decode_128: read_runs(&args.decode_128_runs)
-                .expect("decode_128_from_warm_context runs"),
+            one_token: read_runs(&args.one_token_runs)?,
+            short_decode_8: read_runs(&args.short_decode_8_runs)?,
+            short_decode_32: read_runs(&args.short_decode_32_runs)?,
+            prefill_128_decode_16: read_runs(&args.prefill_128_decode_16_runs)?,
+            prefill_512_decode_32: read_runs(&args.prefill_512_decode_32_runs)?,
+            warm_session_3: read_runs(&args.warm_session_3_runs)?,
+            warm_session_10: read_runs(&args.warm_session_10_runs)?,
+            decode_128: read_runs(&args.decode_128_runs)?,
         };
-        assert_repeated_sources(&runs).expect("source receipts validate");
+        assert_repeated_sources(&runs)?;
 
-        let receipt = build_receipt(&args, &runs).expect("aggregate receipt");
-        validate_strict_bitnet_cuda_repeated_profiles_receipt_json(&receipt)
-            .expect("aggregate validates");
+        let receipt = build_receipt(&args, &runs)?;
+        validate_strict_bitnet_cuda_repeated_profiles_receipt_json(&receipt)?;
 
         assert_eq!(receipt["profiles"].as_array().map(Vec::len), Some(8));
         assert_eq!(receipt["speedup_claim"], false);
@@ -1392,6 +1387,8 @@ mod tests {
         let mut bad_dense = receipt;
         bad_dense["dense_regular_llm_cuda_proof"] = json!(true);
         assert!(validate_strict_bitnet_cuda_repeated_profiles_receipt_json(&bad_dense).is_err());
+
+        Ok(())
     }
 
     fn write_profile_runs(
@@ -1399,16 +1396,16 @@ mod tests {
         profile: &str,
         generated_tokens: u64,
         expected_input_tokens: Option<u64>,
-    ) -> Vec<PathBuf> {
-        (1..=3)
-            .map(|run| {
-                let path = root.join(format!("{profile}-run-{run}.json"));
-                let receipt = source_receipt(profile, run, generated_tokens, expected_input_tokens);
-                std::fs::write(&path, serde_json::to_vec_pretty(&receipt).expect("source json"))
-                    .expect("write source receipt");
-                path
-            })
-            .collect()
+    ) -> std::io::Result<Vec<PathBuf>> {
+        let mut paths = Vec::new();
+        for run in 1..=3 {
+            let path = root.join(format!("{profile}-run-{run}.json"));
+            let receipt = source_receipt(profile, run, generated_tokens, expected_input_tokens);
+            let encoded = serde_json::to_vec_pretty(&receipt).map_err(std::io::Error::other)?;
+            std::fs::write(&path, encoded)?;
+            paths.push(path);
+        }
+        Ok(paths)
     }
 
     fn source_receipt(
