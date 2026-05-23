@@ -6,7 +6,7 @@ speed-qualified, benchmark-qualified, or full-residency-proven.
 
 ## Work item: CUDA-MODEL-009
 
-Status: merged
+Status: pr_open
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0013-model-onboarding-proof-ladder.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
