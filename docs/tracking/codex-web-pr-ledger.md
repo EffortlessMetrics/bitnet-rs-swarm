@@ -35,14 +35,14 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-list --count origin/main ^source/main`
 - Open PR count before this snapshot PR: 0
 - Duplicate open PR clusters: none observed in the current open slice after
-  #467 merged.
+  #472 merged.
 - Direct swarm PRs waiting for merge before this snapshot PR: none.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
-  `b38ba412c2928da42c2537dd41c015326e1e1768`
+  `a725118672002030ab6c3a0bfd3f2c778faa6796`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `85`.
+  count is `90`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
@@ -62,6 +62,11 @@ disposition and retains the original large snapshot below for provenance.
 | #463 | A770 diagnostic/runtime salvage | Merged after #465. | Final-block source-frontier diagnostics only; #467 corrected the landed FFN source fingerprint before this snapshot recorded a promotion candidate. No A770 support, quality, speed, parity, server readiness, route promotion, or completion claim. |
 | #466 | A770 tracker closeout | Merged after #463 and before #467. | Tracker closeout only; #467 landed afterward as the required runtime diagnostic correction. |
 | #467 | A770 diagnostic fix | Merged after `BitNet Rust Small Result` passed. | Corrected final-block diagnostics so `feed_forward_output` records the actual FFN branch output before the residual add; no support, quality, parity, speed, residency, route promotion, release, or source promotion claim. |
+| #468 | swarm handoff | Merged as the post-#467 operator checkpoint. | Operator-state documentation only; no source promotion, release-readiness, runtime, hardware-support, quality, speed, or parity claim. |
+| #470 | Lunar Lake tracker/audit | Merged after #468 with generated tracker proof. | No-inference audit/checklist refresh only; no model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, semantic-intake stale trigger, Qwen3 Lunar Lake promotion, A770 readiness, or BitNet QK256/I2_S claim. |
+| #469 | CUDA/Qwen3 receipt | Merged after #470. | Completed only the Qwen3 `short_decode_32` source set for CUDA-MODEL-017; aggregate, warm-session/decode-128 receipts, speedup, full residency, logits-transfer reduction, Qwen2.5 inheritance, BitNet packed proof, runtime, tokenizer, loader, kernel, server, model coverage, and workflow changes remain unclaimed. |
+| #471 | SLM tracker queue | Merged after #469. | Queued SLM-CPU-089 as the next residual-add output-storage gate; tracker/docs only, with no runtime math change, speedup, sustained throughput, packed-Q8 default promotion, Q4/Q5 runtime, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim. |
+| #472 | Lunar Lake tracker closeout | Merged after #471. | Tracker closeout only; no inference, route promotion, speedup or power-advantage claim, battery-mode evidence, native accelerator proof, semantic-intake stale trigger, or BitNet QK256/I2_S behavior change. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a
