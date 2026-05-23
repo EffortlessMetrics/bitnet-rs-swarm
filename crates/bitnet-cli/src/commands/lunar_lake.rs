@@ -1326,6 +1326,10 @@ pub struct PowerProfileRegressionSummary {
     pub battery_sample_source: Option<String>,
     pub energy_proxy_recorded: bool,
     pub energy_proxy_source: Option<String>,
+    #[serde(default)]
+    pub energy_proxy_attempt_recorded: bool,
+    #[serde(default)]
+    pub energy_proxy_attempt_source: Option<String>,
     pub thermal_context_recorded: bool,
     #[serde(default)]
     pub operator_runbook: Option<String>,
@@ -2461,6 +2465,10 @@ pub struct PowerProfileTelemetrySummary {
     pub battery_sample_source: Option<String>,
     pub energy_proxy_recorded: bool,
     pub energy_proxy_source: Option<String>,
+    #[serde(default)]
+    pub energy_proxy_attempt_recorded: bool,
+    #[serde(default)]
+    pub energy_proxy_attempt_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -2514,6 +2522,8 @@ pub struct LunarLakeLowPowerEnergyProxy {
     pub after_ac_power_inferred: Option<bool>,
     pub battery_mode_sample_recorded: bool,
     pub energy_proxy_recorded: bool,
+    #[serde(default)]
+    pub energy_proxy_attempt_recorded: bool,
     pub gaps: Vec<String>,
     pub claim_boundary: PowerProfileClaimBoundary,
 }
@@ -5389,6 +5399,8 @@ fn inspect_power_profile_regression(path: &Path) -> Result<PowerProfileRegressio
         battery_sample_source: power.telemetry.battery_sample_source,
         energy_proxy_recorded: power.telemetry.energy_proxy_recorded,
         energy_proxy_source: power.telemetry.energy_proxy_source,
+        energy_proxy_attempt_recorded: power.telemetry.energy_proxy_attempt_recorded,
+        energy_proxy_attempt_source: power.telemetry.energy_proxy_attempt_source,
         thermal_context_recorded: power.telemetry.thermal_context_recorded,
         operator_runbook: power.operator_runbook,
         next_required_evidence: power.next_required_evidence,
@@ -6049,6 +6061,11 @@ fn power_profile_regression_notes(summary: &PowerProfileRegressionSummary) -> Ve
         ),
         format!("energy_proxy_recorded={}", summary.energy_proxy_recorded),
         format!("energy_proxy_source={}", summary.energy_proxy_source.as_deref().unwrap_or("none")),
+        format!("energy_proxy_attempt_recorded={}", summary.energy_proxy_attempt_recorded),
+        format!(
+            "energy_proxy_attempt_source={}",
+            summary.energy_proxy_attempt_source.as_deref().unwrap_or("none")
+        ),
         format!("thermal_context_recorded={}", summary.thermal_context_recorded),
         format!("operator_runbook={}", summary.operator_runbook.as_deref().unwrap_or("none")),
         format!("next_required_evidence={}", join_or_none(&summary.next_required_evidence)),
@@ -8703,6 +8720,12 @@ pub fn build_power_profile_evidence_with_created_utc(
     if !telemetry.battery_mode_sample_recorded {
         gaps.push("battery-mode sample is missing for low_power promotion".to_string());
     }
+    if telemetry.energy_proxy_attempt_recorded && !telemetry.energy_proxy_recorded {
+        gaps.push(
+            "energy proxy receipt exists but is not valid battery-mode low_power evidence"
+                .to_string(),
+        );
+    }
     if !telemetry.energy_proxy_recorded {
         gaps.push("energy proxy evidence is missing for low_power promotion".to_string());
     }
@@ -8825,7 +8848,8 @@ pub fn build_low_power_energy_proxy_with_created_utc(
         value_at(&after_json, "power.ac_power_inferred").and_then(Value::as_bool);
     let battery_mode_sample_recorded =
         before_ac_power_inferred == Some(false) && after_ac_power_inferred == Some(false);
-    let energy_proxy_recorded = sample_count > 0 && charge_delta_percent.is_some();
+    let energy_proxy_attempt_recorded = sample_count > 0 && charge_delta_percent.is_some();
+    let energy_proxy_recorded = energy_proxy_attempt_recorded && battery_mode_sample_recorded;
 
     let mut gaps = Vec::new();
     if route_id.trim().is_empty() {
@@ -8846,6 +8870,12 @@ pub fn build_low_power_energy_proxy_with_created_utc(
     if !battery_mode_sample_recorded {
         gaps.push(
             "before and after telemetry must both be battery-mode samples for low_power evidence"
+                .to_string(),
+        );
+    }
+    if energy_proxy_attempt_recorded && !energy_proxy_recorded {
+        gaps.push(
+            "energy proxy attempt is not valid low_power evidence without battery-mode telemetry"
                 .to_string(),
         );
     }
@@ -8871,6 +8901,7 @@ pub fn build_low_power_energy_proxy_with_created_utc(
         after_ac_power_inferred,
         battery_mode_sample_recorded,
         energy_proxy_recorded,
+        energy_proxy_attempt_recorded,
         gaps,
         claim_boundary: PowerProfileClaimBoundary {
             new_inference_executed: false,
@@ -9181,15 +9212,25 @@ fn power_profile_telemetry_summary(
         None
     };
     let battery_mode_sample_recorded = battery_sample_source.is_some();
-    let energy_proxy_source = if low_power_energy_proxy_present(telemetry_json) {
+    let energy_proxy_attempt_source = if low_power_energy_proxy_attempted(telemetry_json) {
         Some("primary_telemetry_context".to_string())
-    } else if battery_telemetry_json.is_some_and(low_power_energy_proxy_present) {
+    } else if battery_telemetry_json.is_some_and(low_power_energy_proxy_attempted) {
         Some("battery_telemetry_context".to_string())
-    } else if energy_proxy_json.is_some_and(low_power_energy_proxy_present) {
+    } else if energy_proxy_json.is_some_and(low_power_energy_proxy_attempted) {
         Some("energy_proxy_receipt".to_string())
     } else {
         None
     };
+    let energy_proxy_source = if low_power_energy_proxy_valid(telemetry_json) {
+        Some("primary_telemetry_context".to_string())
+    } else if battery_telemetry_json.is_some_and(low_power_energy_proxy_valid) {
+        Some("battery_telemetry_context".to_string())
+    } else if energy_proxy_json.is_some_and(low_power_energy_proxy_valid) {
+        Some("energy_proxy_receipt".to_string())
+    } else {
+        None
+    };
+    let energy_proxy_attempt_recorded = energy_proxy_attempt_source.is_some();
     let energy_proxy_recorded = energy_proxy_source.is_some();
 
     PowerProfileTelemetrySummary {
@@ -9206,10 +9247,12 @@ fn power_profile_telemetry_summary(
         battery_sample_source,
         energy_proxy_recorded,
         energy_proxy_source,
+        energy_proxy_attempt_recorded,
+        energy_proxy_attempt_source,
     }
 }
 
-fn low_power_energy_proxy_present(json: &Value) -> bool {
+fn low_power_energy_proxy_attempted(json: &Value) -> bool {
     value_at(json, "energy_proxy").is_some()
         || value_at(json, "power.energy_proxy").is_some()
         || value_at(json, "battery_delta").is_some()
@@ -9217,6 +9260,20 @@ fn low_power_energy_proxy_present(json: &Value) -> bool {
         || value_at(json, "charge_delta_percent").is_some()
         || value_at(json, "estimated_charge_delta_percent").is_some()
         || value_at(json, "energy_proxy_recorded").and_then(Value::as_bool) == Some(true)
+}
+
+fn low_power_energy_proxy_valid(json: &Value) -> bool {
+    if !low_power_energy_proxy_attempted(json) {
+        return false;
+    }
+    if string_at(json, "artifact_kind").as_deref() == Some("lunar_lake_low_power_energy_proxy") {
+        return value_at(json, "energy_proxy_recorded").and_then(Value::as_bool) == Some(true)
+            && value_at(json, "battery_mode_sample_recorded").and_then(Value::as_bool)
+                == Some(true)
+            && value_at(json, "sample_count").and_then(Value::as_u64).unwrap_or(0) > 0
+            && value_at(json, "charge_delta_percent").is_some_and(|value| !value.is_null());
+    }
+    value_at(json, "power.ac_power_inferred").and_then(Value::as_bool) != Some(true)
 }
 
 fn low_power_input_claim_boundary_preserved(json: Option<&Value>) -> bool {
@@ -16525,7 +16582,9 @@ mod tests {
                     "battery_mode_sample_recorded": false,
                     "battery_sample_source": null,
                     "energy_proxy_recorded": false,
-                    "energy_proxy_source": null
+                    "energy_proxy_source": null,
+                    "energy_proxy_attempt_recorded": false,
+                    "energy_proxy_attempt_source": null
                 },
                 "low_power_routes": [
                     {
@@ -16554,8 +16613,9 @@ mod tests {
                 "gaps": [
                     "battery-mode sample is missing for low_power promotion"
                 ],
+                "operator_runbook": LOW_POWER_BATTERY_RUNBOOK,
                 "next_required_evidence": [
-                    "battery-mode low_power telemetry"
+                    "rerun telemetry-context --require-battery on battery power before collecting low_power route samples"
                 ],
                 "claim_boundary": {
                     "new_inference_executed": false,
@@ -19907,6 +19967,8 @@ mod tests {
                 "schema_version": "1.0.0",
                 "artifact_kind": "lunar_lake_low_power_energy_proxy",
                 "energy_proxy_recorded": true,
+                "energy_proxy_attempt_recorded": true,
+                "battery_mode_sample_recorded": true,
                 "charge_delta_percent": -1.0,
                 "sample_count": 10,
                 "claim_boundary": {
@@ -19933,6 +19995,11 @@ mod tests {
         );
         assert!(receipt.telemetry.energy_proxy_recorded);
         assert_eq!(receipt.telemetry.energy_proxy_source.as_deref(), Some("energy_proxy_receipt"));
+        assert!(receipt.telemetry.energy_proxy_attempt_recorded);
+        assert_eq!(
+            receipt.telemetry.energy_proxy_attempt_source.as_deref(),
+            Some("energy_proxy_receipt")
+        );
         assert!(!receipt.low_power_promotion_ready);
         assert!(!receipt.power_advantage_proven);
         assert!(!receipt.gaps.iter().any(|gap| gap.contains("battery-mode sample is missing")));
@@ -20005,6 +20072,7 @@ mod tests {
 
         assert!(receipt.battery_mode_sample_recorded, "{:?}", receipt.gaps);
         assert!(receipt.energy_proxy_recorded, "{:?}", receipt.gaps);
+        assert!(receipt.energy_proxy_attempt_recorded, "{:?}", receipt.gaps);
         assert_eq!(receipt.before_charge_percent, Some(96));
         assert_eq!(receipt.after_charge_percent, Some(94));
         assert_eq!(receipt.charge_delta_percent, Some(-2));
@@ -20013,6 +20081,53 @@ mod tests {
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.power_advantage_claim);
         assert!(!receipt.claim_boundary.acceleration_claim);
+        Ok(())
+    }
+
+    #[test]
+    fn low_power_energy_proxy_rejects_ac_only_proxy_as_valid_evidence() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for name in ["before-telemetry.json", "after-telemetry.json"] {
+            write_json(
+                temp.path(),
+                name,
+                json!({
+                    "schema_version": "1.0.0",
+                    "artifact_kind": "lunar_lake_power_thermal_context",
+                    "availability": {
+                        "memory_context_recorded": true,
+                        "power_context_recorded": true,
+                        "thermal_context_recorded": true
+                    },
+                    "power": {
+                        "active_scheme": "Balanced",
+                        "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=100",
+                        "ac_power_inferred": true
+                    },
+                    "thermal": {
+                        "thermal_zones_visible": 1,
+                        "temperatures_celsius": []
+                    }
+                }),
+            )?;
+        }
+
+        let receipt = build_low_power_energy_proxy_with_created_utc(
+            temp.path(),
+            Path::new("before-telemetry.json"),
+            Path::new("after-telemetry.json"),
+            "dense_slm_openvino_npu_candidate".to_string(),
+            "low_power".to_string(),
+            10,
+            "2026-05-19T10:45:00Z".to_string(),
+        )?;
+
+        assert!(!receipt.battery_mode_sample_recorded);
+        assert!(receipt.energy_proxy_attempt_recorded);
+        assert!(!receipt.energy_proxy_recorded);
+        assert_eq!(receipt.charge_delta_percent, Some(0));
+        assert!(receipt.gaps.iter().any(|gap| gap.contains("battery-mode samples")));
+        assert!(receipt.gaps.iter().any(|gap| gap.contains("not valid low_power evidence")));
         Ok(())
     }
 
@@ -22419,6 +22534,8 @@ mod tests {
             battery_sample_source: None,
             energy_proxy_recorded: false,
             energy_proxy_source: None,
+            energy_proxy_attempt_recorded: false,
+            energy_proxy_attempt_source: None,
             thermal_context_recorded: false,
             operator_runbook: Some(LOW_POWER_BATTERY_RUNBOOK.to_string()),
             next_required_evidence: blocked_operator_ask_next_required_evidence("low_power"),
@@ -23079,8 +23196,10 @@ mod tests {
                     "current_context_is_ac_only": true,
                     "battery_mode_sample_recorded": battery_requirement_satisfied,
                     "battery_sample_source": if battery_requirement_satisfied { Some("battery_telemetry_context") } else { None::<&str> },
-                    "energy_proxy_recorded": true,
-                    "energy_proxy_source": "energy_proxy_receipt"
+                    "energy_proxy_recorded": battery_requirement_satisfied,
+                    "energy_proxy_source": if battery_requirement_satisfied { Some("energy_proxy_receipt") } else { None::<&str> },
+                    "energy_proxy_attempt_recorded": true,
+                    "energy_proxy_attempt_source": "energy_proxy_receipt"
                 },
                 "low_power_routes": [
                     {
