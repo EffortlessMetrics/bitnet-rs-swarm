@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T15:30:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 483
+head_sha = "a6704f9acb6db624d20c0ddc770645c9a86500da"
+merge_sha = "bf3733505ff7c9f69433f5f5306fca23c25ad743"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Closed SLM-CPU-090 after PR #483 merged."
+notes = [
+  "PR #483 recorded the exact Candle residual-add output-storage blocker for transformer.block.output.",
+  "The merged slice exposed the blocker through warm-session allocation audit JSON and the SLM CPU dashboard.",
+  "The merge did not change transformer math or claim residual-add runtime optimization, allocation improvement, speedup, sustained throughput, Q4/Q5 support, server inference, GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes.",
+]
