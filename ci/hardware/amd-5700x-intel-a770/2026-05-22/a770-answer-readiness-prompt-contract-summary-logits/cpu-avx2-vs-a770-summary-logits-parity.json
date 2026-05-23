@@ -244,6 +244,71 @@
     "sampler_logit_extraction_count": 0,
     "trace_capture_context_loss_count": 0
   },
+  "generated_output_final_block_source_frontier": {
+    "attention_output_drift_count": 0,
+    "attention_residual_drift_count": 0,
+    "block_input_drift_count": 1,
+    "block_output_drift_count": 0,
+    "case_count": 1,
+    "classification": "generated_output_final_block_source_frontier_block_input_drift",
+    "clean_count": 0,
+    "ffn_output_drift_count": 0,
+    "final_block_source_context_available": true,
+    "left_label": "amd-5700x-cpu-avx2",
+    "missing_context_count": 0,
+    "next_diagnostic": "capture penultimate transformer block source frontier",
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "attention_output_context_available": true,
+        "attention_output_rms_abs_delta": 3.549200527364519,
+        "attention_output_sha256_match": false,
+        "block_input_context_available": true,
+        "block_input_rms_abs_delta": 156.20258235589608,
+        "block_input_sha256_match": false,
+        "block_output_context_available": true,
+        "block_output_rms_abs_delta": 173.66825931763378,
+        "block_output_sha256_match": false,
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_final_block_source_block_input_drift",
+        "feed_forward_output_context_available": true,
+        "feed_forward_output_rms_abs_delta": 17.84122973484648,
+        "feed_forward_output_sha256_match": false,
+        "final_block_source_context_available": true,
+        "first_mismatch_index": 9,
+        "left_attention_output_rms": 689.5290598434244,
+        "left_attention_output_sha256_f32_le": "519f6df2bd16a9b80a3e19137f39cf8d3026205b0b83ee984750319d6f8782cc",
+        "left_block_input_rms": 5647.062044902543,
+        "left_block_input_sha256_f32_le": "84ee13881e0df6e423fe9eee4936adf875e36b4388345a33522267df509ee362",
+        "left_block_output_rms": 5616.558052599897,
+        "left_block_output_sha256_f32_le": "338c8b6d1164bc13b83c0afd76cc85365fa2e412f8e6c01b7956372919d6c286",
+        "left_chosen_id": 40599,
+        "left_feed_forward_output_rms": 877.2261327450177,
+        "left_feed_forward_output_sha256_f32_le": "9e14f05fbac079669afe5d62a376d1727715a4538771d59a6e231c9d6528f3d8",
+        "left_post_attention_residual_rms": 5686.611009441047,
+        "left_post_attention_residual_sha256_f32_le": "5a4904a9ca46368024ae264e40535447a4d63910658690b5705ede163887e058",
+        "left_token_id": 40599,
+        "next_diagnostic": "capture penultimate transformer block source frontier",
+        "post_attention_residual_context_available": true,
+        "post_attention_residual_rms_abs_delta": 166.65428515064104,
+        "post_attention_residual_sha256_match": false,
+        "right_attention_output_rms": 685.9798593160599,
+        "right_attention_output_sha256_f32_le": "c72b388e615435123b53cc812f5eae5297cb76c4a002ce8d359891ce7585674a",
+        "right_block_input_rms": 5490.859462546647,
+        "right_block_input_sha256_f32_le": "d4fbf6de52b49d3d3a6c7ea783ebab598b1dd150423b58ad7f787c3236181351",
+        "right_block_output_rms": 5442.889793282263,
+        "right_block_output_sha256_f32_le": "34239dfc1f8d9be61d8d0e43bceb2c17e080379eef013b9a710a590d71d9c233",
+        "right_chosen_id": 27252,
+        "right_feed_forward_output_rms": 859.3849030101712,
+        "right_feed_forward_output_sha256_f32_le": "8c8b74e3a1f3cd2a22f7b5f9ab3a1dd17655160bac30de833bc67c7a21dc1c8e",
+        "right_post_attention_residual_rms": 5519.956724290406,
+        "right_post_attention_residual_sha256_f32_le": "14a38277a8f0b1d76c4fe953d6aca47e16dfcc58b51050b0c1adacf1d22f2e05",
+        "right_token_id": 27252
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_frontier": {
     "case_count": 1,
     "classification": "generated_output_frontier_first_mismatch_has_logit_context",
@@ -524,9 +589,9 @@
   },
   "inputs": {
     "left_label": "amd-5700x-cpu-avx2",
-    "left_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits.json",
+    "left_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json",
     "right_label": "intel-a770-opencl",
-    "right_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits.json"
+    "right_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json"
   },
   "kernel": {
     "left_label": "amd-5700x-cpu-avx2",
@@ -966,5 +1031,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-23T08:41:21.664187400+00:00"
+  "timestamp": "2026-05-23T11:06:13.439953400+00:00"
 }

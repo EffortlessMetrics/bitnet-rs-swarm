@@ -20,6 +20,16 @@ use std::sync::Arc;
 pub struct ModelForwardSourceContext {
     pub prior_layer_output: ConcreteTensor,
     pub final_norm_output: ConcreteTensor,
+    pub final_block_source: Option<ModelFinalBlockSourceContext>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelFinalBlockSourceContext {
+    pub block_input: ConcreteTensor,
+    pub attention_output: ConcreteTensor,
+    pub post_attention_residual: ConcreteTensor,
+    pub feed_forward_output: ConcreteTensor,
+    pub block_output: ConcreteTensor,
 }
 
 #[derive(Debug, Clone)]
@@ -575,10 +585,20 @@ impl Model for BitNetModel {
         let input_tensor = self.to_candle_tensor(input)?;
         let mut workspace = bitnet_transformer::TransformerForwardWorkspace::new();
         let output = transformer.forward_with_workspace(input_tensor, kv_cache, &mut workspace)?;
+        let final_block_source =
+            workspace.final_block_source_tensors().map(|source| ModelFinalBlockSourceContext {
+                block_input: self.candle_to_concrete(source.block_input.clone()),
+                attention_output: self.candle_to_concrete(source.attention_output.clone()),
+                post_attention_residual: self
+                    .candle_to_concrete(source.post_attention_residual.clone()),
+                feed_forward_output: self.candle_to_concrete(source.feed_forward_output.clone()),
+                block_output: self.candle_to_concrete(source.block_output.clone()),
+            });
         let source_context =
             workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
                 prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
                 final_norm_output: self.candle_to_concrete(source.final_norm_output.clone()),
+                final_block_source,
             });
 
         Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })
