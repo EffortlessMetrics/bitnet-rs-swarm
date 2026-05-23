@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T06:44:08Z"
+campaign = "intel-a770"
+item = "A770-033"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-033-hidden-state-source-frontier"
+base = "main"
+pr = 439
+head_sha = "717da0d482cc8efc52613766956880cb22b1fdd1"
+summary = "Open A770-033 hidden-state source frontier diagnostic PR."
+
+notes = [
+  "PR #439 adds compact hidden_state_source context to dumped logit steps and generated_output_hidden_state_source_frontier to answer-parity receipts.",
+  "The live focused parity receipt classifies generated_output_hidden_state_source_frontier_forward_output_drift for a770_summary_seed770024_keywords_014.",
+  "The PR keeps CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed.",
+]
