@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T17:02:31Z"
+campaign = "intel-a770"
+item = "A770-038"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-038-pre-antepenultimate-block-source-frontier"
+pr = 495
+head_sha = "87d00aab1dd170e8a908f21a370d8efaa2660b06"
+summary = "Opened PR #495 for the pre-antepenultimate transformer block source frontier."
+notes = [
+  "The live result classifies the focused summary mismatch as pre-antepenultimate block input drift.",
+  "The next diagnostic remains upstream: capture earlier transformer block source frontier.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted partial acceleration, full BitNet inference, or release-source claims.",
+]
