@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_low_power_energy_proxy",
   "proof_stage": "battery_drain_proxy_indexed_no_promotion_change",
-  "created_utc": "2026-05-19T19:30:00Z",
+  "created_utc": "2026-05-23T19:25:00Z",
   "machine_id": "intel-258v",
   "artifact_root": "ci/hardware/intel-258v/2026-05-08",
   "before_telemetry_context_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-power-thermal-context.json",
@@ -18,9 +18,11 @@
   "before_ac_power_inferred": true,
   "after_ac_power_inferred": true,
   "battery_mode_sample_recorded": false,
-  "energy_proxy_recorded": true,
+  "energy_proxy_recorded": false,
+  "energy_proxy_attempt_recorded": true,
   "gaps": [
-    "before and after telemetry must both be battery-mode samples for low_power evidence"
+    "before and after telemetry must both be battery-mode samples for low_power evidence",
+    "energy proxy attempt is not valid low_power evidence without battery-mode telemetry"
   ],
   "claim_boundary": {
     "new_inference_executed": false,
