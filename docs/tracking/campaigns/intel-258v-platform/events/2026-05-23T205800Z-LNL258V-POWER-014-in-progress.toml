@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T20:58:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-014"
+event = "in_progress"
+previous_status = "proposed"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-POWER-014-low-power-plan-energy-proxy-validity"
+actor = "codex"
+summary = "Started Lunar Lake low_power plan hardening so AC-only energy-proxy attempts are explicit but cannot satisfy battery-mode evidence."
+
+notes = [
+  "Start a no-inference low_power plan hardening slice that surfaces POWER-013 energy-proxy validity directly in the battery-run plan.",
+  "The plan should distinguish valid battery-mode energy_proxy_recorded evidence from AC-only energy_proxy_attempt_recorded artifacts before POWER-006 can proceed.",
+  "Keep LNL258V-POWER-006 blocked and preserve no route promotion, no speedup claim, no power-advantage claim, no battery-mode evidence claim, no measured-temperature claim, no native accelerator claim, and no BitNet QK256/I2_S behavior change.",
+]
