@@ -5759,7 +5759,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-089"
-status = "pr_open"
+status = "merged"
+pr = 471
+head_sha = "e14a851bb85546e987a47f89114679c92c15dcd1"
+merge_sha = "e5f28c991de626f96ed2d3d91446b5c4be98df20"
 branch = "codex/slm-cpu-089-residual-add-storage-gate"
 stackable = false
 review_mode = "codex_premerge"
