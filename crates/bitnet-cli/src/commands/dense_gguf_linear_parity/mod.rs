@@ -14269,7 +14269,7 @@ mod tests {
     }
 
     #[test]
-    fn dense_qwen_full_logits_transfer_records_non_reduced_blocker() {
+    fn dense_qwen_full_logits_transfer_records_non_reduced_blocker() -> Result<()> {
         let full_logits_bytes = 151_936 * 4 * 8;
         let reduction = dense_qwen_logits_transfer_reduction_json(
             151_936,
@@ -14277,8 +14277,7 @@ mod tests {
             10,
             full_logits_bytes,
             DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
-        )
-        .expect("full-logits transfer accounting should be valid");
+        )?;
 
         assert_eq!(reduction["transfer_mode"].as_str(), Some("full_logits_download_cpu_sampler"));
         assert_eq!(reduction["sampling_location"].as_str(), Some("cpu"));
@@ -14289,6 +14288,7 @@ mod tests {
         );
         assert_eq!(reduction["actual_device_to_host_bytes"].as_u64(), Some(full_logits_bytes));
         assert_eq!(reduction["full_logits_download_bytes"].as_u64(), Some(full_logits_bytes));
+        Ok(())
     }
 
     #[test]
