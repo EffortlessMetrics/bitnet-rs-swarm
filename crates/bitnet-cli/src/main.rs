@@ -12845,7 +12845,7 @@ fn compact_logit_source_tensor_fingerprint(
 }
 
 fn compact_f32_vector_fingerprint(shape: &[usize], values: &[f32]) -> serde_json::Value {
-    let mut bytes = Vec::with_capacity(values.len() * std::mem::size_of::<f32>());
+    let mut bytes = Vec::with_capacity(std::mem::size_of_val(values));
     let mut finite_count = 0usize;
     let mut nan_count = 0usize;
     let mut infinite_count = 0usize;
@@ -15802,7 +15802,27 @@ mod tests {
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["post_model_forward_required_api_boundary"],
-            "final_norm_or_layer_output_storage_api_boundary"
+            "final_norm_output_storage_api_or_apply_op_output_hook"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_operation_detail"],
+            "rms_norm"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_caller_output_helper_status"],
+            "final_norm_output_storage_helper_blocked_by_owned_candle_norm_output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_input_accessible"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_weight_accessible"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_bias_accessible"],
+            false
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["can_fill_final_norm_output_storage"],

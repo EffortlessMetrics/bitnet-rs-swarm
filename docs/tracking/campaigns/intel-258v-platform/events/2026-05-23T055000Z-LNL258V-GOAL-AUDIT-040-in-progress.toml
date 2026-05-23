@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T05:50:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-040"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-040-post-snapshot"
+actor = "codex"
+summary = "Started the no-inference Lunar Lake audit/checklist refresh after #421/#424, #423, and SLM-CPU-086 #425/#428."
+notes = [
+  "The slice records LNL258V-GOAL-AUDIT-039/#421 and closeout #424 as Lunar Lake audit/tracker state only.",
+  "It records #423 as adjacent A770 tracker/dashboard repair only and SLM-CPU-086 #425/#428 as adjacent SLM CPU final-norm output-storage boundary/tracker state only.",
+  "The active low_power blocker remains LNL258V-POWER-006 battery-mode telemetry, energy-proxy evidence, measured thermal readings, and benchmark-qualified power advantage.",
+  "No inference, model load, route promotion, speedup, power-advantage, native accelerator, broad quality, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, Qwen3 Lunar Lake promotion, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

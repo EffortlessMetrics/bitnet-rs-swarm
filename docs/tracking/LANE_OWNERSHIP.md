@@ -37,6 +37,10 @@ Excluded work:
 Machine clone or cutover impact:
 ```
 
+Use explicit `n/a` values when a repository-boundary field does not apply to an
+ordinary swarm-only PR. Empty fields make it unclear whether the author checked
+the boundary or skipped it.
+
 Example:
 
 ```text

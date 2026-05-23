@@ -5,6 +5,7 @@ event = "pr_open"
 from = "in_progress"
 to = "pr_open"
 pr = 5312
+head_sha = "cf03b5930691596f97f6260d51e5c8ded96ff88b"
 branch = "codex/slm-cpu-019-kaby-performance-dashboard"
 actor = "codex"
 summary = "Opened #5312 to formalize the Kaby Lake Qwen3 Q8_0 performance-dashboard baseline."

@@ -1437,6 +1437,38 @@ does not claim end-to-end speedup, sustained 8250U throughput, broad answer
 quality, Q4/Q5 runtime support, server execution, accelerator execution,
 Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-086 Final-Norm Output-Storage Gate
+
+SLM-CPU-086 narrows the `model.final_norm.output` blocker before any
+residual-add or dense-math change. The final norm is now classified at the
+public Candle norm API boundary: the workspace can identify whether the op is
+RMSNorm or LayerNorm, record the epsilon, and prove that input, weight, and
+optional bias metadata are readable. The remaining blocker is compute-side:
+`LayerNorm::forward` and the public `candle_nn::ops` norm helpers still return
+owned tensors and do not accept caller-provided output storage.
+
+```text
+final_norm_output_surface = model.final_norm.output
+final_norm_operation_detail = rms_norm
+final_norm_caller_output_helper_status = final_norm_output_storage_helper_blocked_by_owned_candle_norm_output
+post_model_forward_required_api_boundary = final_norm_output_storage_api_or_apply_op_output_hook
+can_fill_final_norm_output_storage = false
+default_runtime_changed = false
+speedup_claim = false
+```
+
+This is a narrower blocker than SLM-CPU-085, not a runtime improvement. A later
+slice must add or adopt a behavior-preserving Candle LayerNorm/RMSNorm
+caller-output-storage API, then regenerate before/after receipts proving the
+same model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs,
+decoded text, selected CPU backend/kernel identity, and `fallback_used=false`
+before claiming even a bounded allocation improvement.
+
+This slice does not move to residual-add/layer-output runtime changes, promote
+`packed_q8_sidecar`, claim speedup, claim sustained 8250U throughput, broaden
+Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8

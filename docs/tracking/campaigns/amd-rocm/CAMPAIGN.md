@@ -38,7 +38,7 @@ server proof.
 
 | Work item | Status | Notes |
 |---|---|---|
-| ROCM-DOCS-000 | ready | Add source-of-truth map, proposal, specs, plan, campaign tracker, specs index, and hardware matrix row. |
+| ROCM-DOCS-000 | merged | Source-of-truth map, proposal, specs, plan, campaign tracker, specs index, and hardware matrix row landed through source-history import `d8f934337060baccef166593008fa635ed77a0f2`; docs-only registered/scaffold evidence, no runtime claim. |
 | ROCM-PROBE-001 | planned | Harden ROCm detection receipt and `bitnet rocm doctor --format json`. |
 | ROCM-PROBE-002 | planned | Add strict selected-device identity. |
 | ROCM-KERNEL-003 | planned | Add HIP compile-smoke harness. |

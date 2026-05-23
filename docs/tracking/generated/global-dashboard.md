@@ -4,7 +4,7 @@
 | Campaign | Active item | PR | State | Next | Notes |
 |---|---|---:|---|---|---|
 | amd-cpu-baselines | AMD5700X-003 | TBD | ready | AMD9950X3D-003 | These lanes are CPU proof lanes, not accelerator lanes. |
-| amd-rocm | ROCM-DOCS-000 | TBD | ready | none | Do not claim generic AMD GPU support. |
+| amd-rocm | ROCM-DOCS-000 | TBD | merged | none | Do not claim generic AMD GPU support. |
 | apple-bitnet-artifact-sweep | ABAS-001 | TBD | proposed | ABAS-002 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
 | apple-m3-macbook-air | M3MBA-023 | TBD | proposed | M3MBA-024 | This is the Apple M3 MacBook Air lane, not the M4 Mac mini product, performance, or strict-proof lane. |
 | apple-m4 | M4-018 | #3826 | merged | none | Do not touch QK256 before a BitNet-specific Apple item explicitly allows it. |
@@ -45,7 +45,7 @@
 | official-bitnet-2b | OFFICIAL-2B-000 | TBD | ready | OFFICIAL-2B-001 | Do not commit model binaries. |
 | qwen36 | QWEN36-DOCS-000 | #5892 | merged | none | Qwen3.6 registration is not native BitNet-rs inference support. |
 | server-real-inference | SERVER-005 | #4490 | merged | none | Do not reintroduce simulated inference. |
-| slm-cpu | SLM-CPU-086 | TBD | ready | none | Do not edit BitNet QK256/I2_S kernels. |
+| slm-cpu | SLM-CPU-087 | #437 | pr_open | none | Do not edit BitNet QK256/I2_S kernels. |
 | tl1 | TL1-PLAN-000 | TBD | ready | none | TL1 registration is not native BitNet-rs inference support. |
 | tl2 | TL2-DOCS-000 | TBD | ready | none | TL2 registration is not native BitNet-rs inference support. |
 | tracker-infra | TRACKER-003 | #3724 | merged | none | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
