@@ -1,4 +1,4 @@
-# Swarm Post-458 Checkpoint Handoff
+# Swarm Post-461 Checkpoint Handoff
 
 Status: queue checkpoint, no source promotion started
 Linked proposal: not changed by this handoff
@@ -6,7 +6,7 @@ Linked specs: not changed by this handoff
 Linked ADRs: not changed by this handoff
 Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
-PRs: #451, #452, #453, #454, #455, #456, #458
+PRs: #451, #452, #453, #454, #455, #456, #458, #461
 
 ## Landed
 
@@ -44,25 +44,32 @@ PRs: #451, #452, #453, #454, #455, #456, #458
     answer readiness, broad quality, residency, speed, trusted partial
     acceleration, full inference, or BitNet QK256/I2_S behavior claim.
 - #458 `docs(a770): mark A770-034 merged in campaign summary`
-  - Squash commit and current queue-stabilized promotion candidate SHA:
+  - Squash commit:
     `8ef1614f3175a4d27a1b2aec08c5c221db79c09e`
   - Marked the A770-034 campaign summary row as merged after #454/#456.
   - Claim boundary: campaign-summary documentation only; no runtime math,
     CPU/A770 parity, answer readiness, broad quality, residency, speed,
     trusted partial acceleration, full inference, or BitNet QK256/I2_S
     behavior claim.
+- #461 `docs(lunar-lake): LNL258V-GOAL-AUDIT-044 refresh audit`
+  - Squash commit and current queue-stabilized promotion candidate SHA:
+    `bd801748db47d6e4af4fff51fa68a88edf03c383`
+  - Refreshed Lunar Lake audit/checklist and generated tracker surfaces through
+    the post-A770-034 state.
+  - Claim boundary: no route promotion, speedup, power, battery, native
+    accelerator, Qwen3, or BitNet QK256/I2_S behavior claim.
 
 ## Closed Unmerged
 
 - None in this checkpoint window.
 
-## Open Queue After #458
+## Open Queue After #461
 
 - #459 `perf(slm): SLM-CPU-088 residual block output boundary`
-  - Current disposition: open and behind after #458; inspect exact diff and
+  - Current disposition: open after #461; inspect exact diff and
     complete SLM/runtime proof before merge.
 - #460 `feat(cuda): add qwen3 short-decode-32 source receipt`
-  - Current disposition: open and behind after #458; receipt/docs checks were
+  - Current disposition: open after #461; receipt/docs checks were
     still settling when this handoff refreshed.
 
 ## Source Delta
@@ -70,10 +77,10 @@ PRs: #451, #452, #453, #454, #455, #456, #458
 - Current source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `origin/main` = `8ef1614f3175a4d27a1b2aec08c5c221db79c09e`
+  `origin/main` = `bd801748db47d6e4af4fff51fa68a88edf03c383`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --count source/main ^origin/main` returned `0`.
-- `rtk git rev-list --count origin/main ^source/main` returned `75`.
+- `rtk git rev-list --count origin/main ^source/main` returned `76`.
 - This handoff does not start a swarm-to-source promotion. The recorded SHA is a
   promotion candidate only after the source-promotion operator chooses the batch
   boundary, prepares the promotion packet, and verifies source-owned release
@@ -81,10 +88,12 @@ PRs: #451, #452, #453, #454, #455, #456, #458
 
 ## Evidence
 
-- Open swarm PR queue at the post-#458 checkpoint, excluding this handoff PR:
+- Open swarm PR queue at the post-#461 checkpoint, excluding this handoff PR:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
   returned #457, this handoff PR, plus #459 and #460 as open work.
 - Open swarm PR count excluding this handoff PR: `2` (#459 and #460).
+- #461 squash-merged while this handoff PR was waiting on the routed result.
+  The handoff branch was refreshed from `origin/main` afterward.
 - #458 was squash-merged after branch protection was verified to require only
   `BitNet Rust Small Result`, and the normalized routed result had passed on
   the current #458 head.
@@ -113,6 +122,7 @@ PRs: #451, #452, #453, #454, #455, #456, #458
 - `rtk git diff --check`
 - `rtk gh api repos/EffortlessMetrics/bitnet-rs-swarm/branches/main/protection/required_status_checks --jq '{strict: .strict, contexts: .contexts, checks: .checks}'`
 - `rtk gh pr view 458 --repo EffortlessMetrics/bitnet-rs-swarm --json state,mergedAt,mergeCommit,number,title`
+- `rtk gh pr view 461 --repo EffortlessMetrics/bitnet-rs-swarm --json state,mergedAt,mergeCommit,number,title`
 - `rtk git rev-list --count origin/main ^source/main`
 - Validation gap: `rtk cargo fmt --all -- --check` hit Windows OS error 206
   from overlong command expansion. The changed Rust files were checked with
@@ -121,7 +131,7 @@ PRs: #451, #452, #453, #454, #455, #456, #458
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `8ef1614f3175a4d27a1b2aec08c5c221db79c09e` as the current queue-stabilized
+  `bd801748db47d6e4af4fff51fa68a88edf03c383` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive:

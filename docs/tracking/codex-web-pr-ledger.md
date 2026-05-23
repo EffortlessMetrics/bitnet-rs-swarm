@@ -35,16 +35,15 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-list --count origin/main ^source/main`
 - Open PR count excluding this snapshot PR: 2
 - Duplicate open PR clusters: none observed in the current open slice after
-  #458 merged.
+  #461 merged.
 - Direct swarm PRs waiting for merge excluding this snapshot PR: #459 and #460;
-  both are behind current `main` after #458 and need branch refresh plus
-  lane-specific proof before merge.
+  both need current status review and lane-specific proof before merge.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
-  `8ef1614f3175a4d27a1b2aec08c5c221db79c09e`
+  `bd801748db47d6e4af4fff51fa68a88edf03c383`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `75`.
+  count is `76`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
@@ -55,8 +54,9 @@ disposition and retains the original large snapshot below for provenance.
 | #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
 | #456 | A770 tracker closeout | Merged after #454 with generated-dashboard proof. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, full inference, or BitNet QK256/I2_S behavior claim. |
 | #458 | A770 campaign summary | Merged after #456. | Marked A770-034 merged in the campaign summary row only; no runtime/math/support claim. |
-| #459 | SLM runtime/perf | Open and behind after #458; normalized routed result had passed before refresh. | Refresh from current `main`, inspect exact runtime diff, and require focused SLM proof before merge. |
-| #460 | CUDA/Qwen3 source receipt | Open and behind after #458; docs/link checks were still settling when this snapshot refreshed. | Refresh from current `main`, inspect receipt/docs diff, and require green docs/routed proof before merge. |
+| #461 | Lunar Lake tracker/audit | Merged after #458 with generated tracker proof. | No-inference audit/checklist refresh only; no route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
+| #459 | SLM runtime/perf | Open after #461. | Inspect exact runtime diff and require focused SLM proof before merge. |
+| #460 | CUDA/Qwen3 source receipt | Open after #461. | Inspect receipt/docs diff and require green docs/routed proof before merge. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a
