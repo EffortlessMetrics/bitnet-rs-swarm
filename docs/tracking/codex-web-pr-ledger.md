@@ -33,17 +33,16 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-parse source/main`
   - `rtk git rev-list --count source/main ^origin/main`
   - `rtk git rev-list --count origin/main ^source/main`
-- Open PR count excluding this snapshot PR: 1
+- Open PR count before this snapshot PR: 0
 - Duplicate open PR clusters: none observed in the current open slice after
-  #462 merged.
-- Direct swarm PRs waiting for merge excluding this snapshot PR: #459; it
-  needs current status review and lane-specific proof before merge.
+  #467 merged.
+- Direct swarm PRs waiting for merge before this snapshot PR: none.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
-  `49b6e0f934287c0920796ea74be5f05709323fd3`
+  `b38ba412c2928da42c2537dd41c015326e1e1768`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `78`.
+  count is `85`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
@@ -57,7 +56,12 @@ disposition and retains the original large snapshot below for provenance.
 | #461 | Lunar Lake tracker/audit | Merged after #458 with generated tracker proof. | No-inference audit/checklist refresh only; no route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
 | #460 | CUDA/Qwen3 source receipt | Merged after #461. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, or BitNet packed I2_S/QK256 proof. |
 | #462 | Lunar Lake tracker closeout | Merged after #461. | Tracker closeout only; no inference, route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
-| #459 | SLM runtime/perf | Open after #462 with auto-merge armed but `mergeStateStatus = DIRTY`. | Inspect exact runtime diff, resolve main drift, and require focused SLM proof before merge. |
+| #459 | SLM runtime/perf | Merged after #462. | SLM-CPU-088 residual block output boundary only; no release readiness, source promotion, broad quality, hardware readiness, or public support claim. |
+| #464 | SLM tracker closeout | Merged after #459. | Tracker closeout only; no additional runtime, release, or promotion claim. |
+| #465 | CUDA/Qwen3 receipt | Merged after #464. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, logits transfer reduction, Qwen2.5 inheritance, BitNet packed proof, or routing claim. |
+| #463 | A770 diagnostic/runtime salvage | Merged after #465. | Final-block source-frontier diagnostics only; #467 corrected the landed FFN source fingerprint before this snapshot recorded a promotion candidate. No A770 support, quality, speed, parity, server readiness, route promotion, or completion claim. |
+| #466 | A770 tracker closeout | Merged after #463 and before #467. | Tracker closeout only; #467 landed afterward as the required runtime diagnostic correction. |
+| #467 | A770 diagnostic fix | Merged after `BitNet Rust Small Result` passed. | Corrected final-block diagnostics so `feed_forward_output` records the actual FFN branch output before the residual add; no support, quality, parity, speed, residency, route promotion, release, or source promotion claim. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a
