@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T17:25:37Z"
+campaign = "intel-a770"
+item = "A770-038"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 495
+head_sha = "6f725dca045efc9926c34e2755f1273f532867ea"
+merge_sha = "a9be4b3c9fbf9b410fd24c142440cf905b0df7d0"
+branch = "codex/intel-a770/A770-038-pre-antepenultimate-block-source-frontier"
+actor = "codex"
+summary = "Merged #495 with the A770-038 pre-antepenultimate block source frontier diagnostic."
+notes = [
+  "The merged diagnostic records compact pre-antepenultimate transformer block source context in the focused CPU AVX2 vs Intel A770 OpenCL summary parity receipt.",
+  "The live receipt classifies the remaining generated-output mismatch as already present at pre-antepenultimate block input.",
+  "The merge did not change runtime math, OpenCL dispatch, QK256 kernels, scoring, sampling, route promotion, CPU/A770 parity, strict A770 readiness, broad A770 quality, residency, speed, full BitNet inference, or trusted-partial-acceleration claims.",
+]
