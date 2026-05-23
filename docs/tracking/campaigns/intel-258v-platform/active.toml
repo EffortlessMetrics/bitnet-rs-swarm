@@ -13329,6 +13329,68 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "LNL258V-POWER-014"
+status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-POWER-014-low-power-plan-energy-proxy-validity"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-POWER-013"]
+acceptance = "Make the no-inference Lunar Lake low_power battery-run plan surface POWER-013 energy-proxy validity explicitly: whether a valid battery-mode energy proxy is recorded, whether only an attempted AC-only proxy exists, the source receipt for either state, and blocker text that prevents operators from treating AC-only attempts as low_power evidence. Refresh only the low-power plan artifact and tracker state while keeping LNL258V-POWER-006 blocked and preserving no inference, route promotion, speedup, power-advantage, battery-mode evidence, measured-temperature, native accelerator, or BitNet QK256/I2_S behavior-change claims."
+commands = [
+  "rustfmt --check --config skip_children=true,newline_style=Unix --edition 2024 crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::low_power_battery_plan_surfaces_blocked_physical_run_without_claims -- --exact --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::low_power_battery_plan_marks_battery_preflight_ready_when_receipt_passes -- --exact --nocapture",
+  "cargo build --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet",
+  "target/debug/bitnet.exe lunar-lake low-power-plan --artifact-root ci/hardware/intel-258v/2026-05-08 --power-profile-evidence lunar-lake-power-profile-evidence.json --blocked-ask-receipt lunar-lake-operator-ask-auto-low-power-blocked.json --battery-telemetry-context lunar-lake-low-power-battery-telemetry-blocked.json --json-out lunar-lake-low-power-battery-plan.json --created-utc 2026-05-23T20:58:00Z --strict",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-low-power-battery-plan.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "ci/hardware/intel-258v/2026-05-08/lunar-lake-low-power-battery-plan.json",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "scripts/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-tokenizers/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-qk256-layout-core/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-server/**",
+]
+may_claim = [
+  "The low_power battery-run plan now records valid energy-proxy state separately from AC-only energy-proxy attempts.",
+  "The low_power battery-run plan blocks POWER-006 until a valid battery-mode energy proxy and benchmark-qualified power advantage exist.",
+]
+must_not_claim = [
+  "New inference was run by this PR.",
+  "Battery-mode low_power evidence is available.",
+  "Any route is promoted for low_power.",
+  "OpenVINO GPU or NPU speedup is claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "Measured temperature evidence is available.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Arc or NPU acceleration is proven.",
+  "Full BitNet inference works on Arc or NPU.",
+  "Packed QK256 decode works on Arc or NPU.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
 id = "LNL258V-POWER-005"
 status = "merged"
 pr = 5924
