@@ -3208,8 +3208,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "CUDA-MODEL-018"
-status = "merged"
+status = "pr_open"
 branch = "codex/nvidia-5070ti/CUDA-MODEL-018-qwen3-benchmark-review"
+pr = 511
+head_sha = "9dc8424b3f29bd2dafe7b37c32f2aa13cfb7433f"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
