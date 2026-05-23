@@ -1,0 +1,1426 @@
+{
+  "artifact_kind": "dense_gguf_qwen_short_decode_strict_cuda_proof",
+  "artifact_path": "ci\\hardware\\windows-9950x3d-rtx5070ti\\2026-05-23\\qwen3-perf-017\\run-03\\qwen3-0_6b-short-decode-8-cuda.json",
+  "claim": "dense_gguf_qwen_short_decode_strict_cuda_proof_recorded",
+  "claim_boundary": {
+    "bitnet_packed_i2s_qk256_proof": false,
+    "dense_gguf_all_layer_execution_plan_claimed": true,
+    "dense_gguf_attention_score_cuda_parity_claimed": true,
+    "dense_gguf_attention_softmax_cuda_parity_claimed": true,
+    "dense_gguf_attention_v_mix_cuda_parity_claimed": true,
+    "dense_gguf_descriptor_inspection_claimed": true,
+    "dense_gguf_inference_claimed": false,
+    "dense_gguf_linear_cuda_parity_claimed": true,
+    "dense_gguf_linear_fixture_extraction_claimed": true,
+    "dense_gguf_linear_role_sweep_cuda_parity_claimed": true,
+    "dense_gguf_mlp_activation_cuda_parity_claimed": true,
+    "dense_gguf_model_boundary_fixtures_claimed": true,
+    "dense_gguf_norm_cuda_parity_claimed": true,
+    "dense_gguf_one_layer_cpu_reference_claimed": true,
+    "dense_gguf_one_layer_cuda_integrated_parity_claimed": true,
+    "dense_gguf_one_layer_execution_plan_claimed": true,
+    "dense_gguf_one_layer_inference_claimed": false,
+    "dense_gguf_rope_cuda_parity_claimed": true,
+    "dense_regular_llm_cuda_claimed": true,
+    "dense_tensor_residency_claimed": true,
+    "full_cuda_residency_claimed": false,
+    "kv_cache_policy_claimed": true,
+    "persistent_session_residency_claimed": false,
+    "qwen_chat_cuda_claimed": false,
+    "qwen_one_token_cuda_claimed": true,
+    "qwen_short_decode_cuda_claimed": true,
+    "sampling_policy_claimed": true,
+    "server_ready_claimed": false,
+    "speedup_claim": false
+  },
+  "cuda": {
+    "available": true,
+    "compute_capability": "12.0",
+    "cuda_runtime_version": "12.9",
+    "cuda_toolkit_version": "12.9",
+    "device_count": 1,
+    "device_index": 0,
+    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+    "driver_version": "591.86",
+    "nvml_available": true,
+    "nvrtc_version": "12.9",
+    "power_draw_watts": 28.73,
+    "power_limit_watts": 300.0,
+    "temperature_c": 41.0,
+    "vram_bytes": 17094475776
+  },
+  "descriptor_coverage": {
+    "bitnet_packed_marker_found": false,
+    "dense_cuda_route_status": "descriptor_incomplete",
+    "dense_gguf_inference_claimed": false,
+    "full_cuda_residency_claimed": false,
+    "metadata_count": 28,
+    "quantization_families": [
+      "f32",
+      "q8_0"
+    ],
+    "required_roles_present": false,
+    "schema": 1,
+    "source_artifact_kind": "dense_gguf_tensor_descriptor_inspection",
+    "speedup_claim": false,
+    "strict_descriptor_complete": false,
+    "tensor_count": 310
+  },
+  "error": null,
+  "execution_path": {
+    "bitnet_packed_kernel_proof": false,
+    "kernel_family": "dense_qwen_short_decode_strict_cuda",
+    "model_class": "dense_regular_llm",
+    "qk256_proof": false,
+    "quantization_family": "dense_gguf_q8_0_f16_qwen_short_decode_contract"
+  },
+  "execution_plan": {
+    "bitnet_packed_qk256_cuda": false,
+    "cpu_fallback_ops": 0,
+    "cuda_bitnet_qk256_ops": 0,
+    "cuda_dense_regular_llm_ops": 3152,
+    "cuda_ops": 3152,
+    "dense_regular_llm_cuda": true,
+    "fallback_used": false,
+    "full_cuda_residency_claimed": false,
+    "mixed_cuda_routes": false,
+    "model_family": "qwen",
+    "planner_version": "cuda-planner-004",
+    "quantization": "dense_gguf_q8_0_f16_qwen_short_decode_contract",
+    "requested_backend": "nvidia-rtx-5070-ti-cuda",
+    "runtime_api": "cuda",
+    "selected_backend": "nvidia-rtx-5070-ti-cuda",
+    "selected_route": "dense_regular_llm_cuda",
+    "speedup_claim": false,
+    "strict_cuda_ready": true,
+    "strict_fallback_policy": "reject",
+    "total_ops": 3152,
+    "unsupported_ops": 0
+  },
+  "fallback_backend": null,
+  "fallback_reason": null,
+  "fallback_used": false,
+  "hardware_lane": "nvidia-rtx-5070-ti-cuda",
+  "kernel_coverage": {
+    "all_required_dense_kernels_executed": true,
+    "bitnet_qk256_kernel_invocations": 0,
+    "cpu_fallback_kernel_invocations": 0,
+    "dense_kernel_invocations": 3152,
+    "dense_kernel_launches": 3152,
+    "fallback_used": false,
+    "kernels_executed": [
+      "dense_qwen_short_decode_cuda_runtime",
+      "dense_qwen_lm_head_cuda",
+      "dense_qwen_logits_transfer_cuda"
+    ],
+    "route": "dense_regular_llm_cuda",
+    "schema": 1
+  },
+  "kernel_stats": [
+    {
+      "cpu_fallback_invocations": 0,
+      "device_to_host_bytes": 4861952,
+      "fallback_invocations": 0,
+      "host_to_device_bytes": 639446688,
+      "invocations": 3136,
+      "kernel_id": "dense_qwen_short_decode_cuda_runtime",
+      "kernel_launches": 3136,
+      "kernel_time_ms": 426813.16320000007,
+      "phase": "qwen_short_decode_runtime"
+    },
+    {
+      "cpu_fallback_invocations": 0,
+      "device_to_host_bytes": 0,
+      "fallback_invocations": 0,
+      "host_to_device_bytes": 0,
+      "invocations": 8,
+      "kernel_id": "dense_qwen_lm_head_cuda",
+      "kernel_launches": 8,
+      "kernel_time_ms": 2.548,
+      "phase": "lm_head"
+    },
+    {
+      "cpu_fallback_invocations": 0,
+      "device_to_host_bytes": 0,
+      "fallback_invocations": 0,
+      "host_to_device_bytes": 0,
+      "invocations": 8,
+      "kernel_id": "dense_qwen_logits_transfer_cuda",
+      "kernel_launches": 8,
+      "kernel_time_ms": 0.0,
+      "phase": "logits_transfer"
+    }
+  ],
+  "logits_transfer_reduction": {
+    "actual_device_to_host_bytes": 4861952,
+    "bytes_saved_vs_full_logits": 0,
+    "device_to_host_bytes_reduced": false,
+    "full_logits_bytes_per_step": 607744,
+    "full_logits_download_bytes": 4861952,
+    "generated_tokens_count": 8,
+    "logits_element_bytes": 4,
+    "logits_vector_length": 151936,
+    "quality_receipts_unchanged": true,
+    "reduction_blocker": "cpu_sampler_requires_full_logits_until_device_top_k_sampler",
+    "requested_top_k": 10,
+    "sampling_location": "cpu",
+    "schema": 1,
+    "scope": "dense_qwen_logits_top_k_transfer",
+    "selected_token_bytes_total_floor": 32,
+    "selected_token_equality_preserved": true,
+    "top_k_evidence_preserved": true,
+    "top_k_result_bytes_per_step_floor": 120,
+    "top_k_result_bytes_total_floor": 960,
+    "transfer_mode": "full_logits_download_cpu_sampler"
+  },
+  "machine_id": "windows-9950x3d-rtx5070ti",
+  "model": {
+    "architecture": "qwen3",
+    "artifact_kind": "dense_gguf",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "id": "qwen3-0.6b-instruct-q8_0",
+    "model_family": "qwen",
+    "path": "C:\\bntmp\\cuda-model-010\\Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031"
+  },
+  "model_coverage_row": "dense_qwen3_06b_q8_candidate",
+  "model_coverage_tier": "accelerator_answer_ready",
+  "notes": [
+    "CUDA-DENSE-045 proves a bounded deterministic greedy Qwen short decode through the dense regular-LLM CUDA route.",
+    "This receipt does not claim chat, server readiness, speedup, persistent residency, full CUDA residency, or BitNet packed I2_S/QK256 proof."
+  ],
+  "parity": {
+    "fixture_id": "qwen3-0.6b-instruct-q8_0-short-decode-greedy",
+    "kernel_id": "dense_qwen_short_decode_cuda_runtime",
+    "max_abs_error": 0.004428863525390625,
+    "mean_abs_error": 0.000817883014678955,
+    "passed": true,
+    "reference_backend": "amd-9950x3d-cpu-avx512",
+    "target_backend": "nvidia-rtx-5070-ti-cuda",
+    "tolerance": 0.004428863525390625,
+    "tolerance_source": "generated token equality; numeric drift recorded for top-k logits"
+  },
+  "prerequisite_receipts": {
+    "all_layer_execution_plan_artifact_kind": "dense_gguf_all_layer_execution_plan",
+    "all_layer_execution_plan_claimed": true,
+    "all_layer_execution_plan_receipt_sha256": "7dd0f1f3879920d2456ee8fe761fa9157a39751c4f9f9fe33f16b85698f3d75d",
+    "all_required_receipts_verified": true,
+    "kv_cache_policy_artifact_kind": "dense_gguf_kv_cache_policy",
+    "kv_cache_policy_claimed": true,
+    "kv_cache_policy_receipt_sha256": "53a3d173bb8da5f998afd3151745720910353ac12ec07245052075bddaab1253",
+    "model_boundary_fixtures_artifact_kind": "dense_gguf_model_boundary_fixtures",
+    "model_boundary_fixtures_claimed": true,
+    "model_boundary_fixtures_receipt_sha256": "a086742a1090300fa06d1435baf7e0be82204dab63cf902ba9cff3ddd7a2ee8e",
+    "one_token_proof_artifact_kind": "dense_gguf_qwen_one_token_strict_cuda_proof",
+    "one_token_proof_claimed": true,
+    "one_token_proof_receipt_sha256": "f34646d0bcd0785956074767ceb67182c2e5b46755124964ce79fe0078858dd0",
+    "sampling_policy_artifact_kind": "dense_gguf_sampling_policy",
+    "sampling_policy_claimed": true,
+    "sampling_policy_receipt_sha256": "99127c6d4d0e99dd1f93243d66bc37b191a1a76347de838b12322572c069afbb",
+    "schema": 1
+  },
+  "quality_gate": {
+    "answer_ready_claimed": false,
+    "chat_claimed": false,
+    "gate": "qwen_short_decode_cuda_parity",
+    "passed": true,
+    "schema": 1,
+    "short_decode_claimed": true
+  },
+  "requested_backend": "nvidia-rtx-5070-ti-cuda",
+  "runtime_api": "cuda",
+  "schema": 1,
+  "selected_backend": "nvidia-rtx-5070-ti-cuda",
+  "short_decode_proof": {
+    "bitnet_packed_i2s_qk256_proof": false,
+    "cpu_generated_token_ids": [
+      3555,
+      374,
+      220,
+      17,
+      10,
+      17,
+      10,
+      17
+    ],
+    "cpu_generated_token_ids_sha256": "8fa5b93700d1950dbb26f15ff5aadacc0ddb2281490f08119c352516bf73efa8",
+    "cpu_logits_top_k_steps_sha256": "f27a92408272b9fcf4ed036cbf31c425a4770df6d339328a682a762c525549ee",
+    "cpu_reference_backend": "amd-9950x3d-cpu-avx512",
+    "cuda_generated_token_ids": [
+      3555,
+      374,
+      220,
+      17,
+      10,
+      17,
+      10,
+      17
+    ],
+    "cuda_generated_token_ids_sha256": "8fa5b93700d1950dbb26f15ff5aadacc0ddb2281490f08119c352516bf73efa8",
+    "cuda_logits_top_k_steps_sha256": "f27a92408272b9fcf4ed036cbf31c425a4770df6d339328a682a762c525549ee",
+    "cuda_target_backend": "nvidia-rtx-5070-ti-cuda",
+    "decoded_text": " What is 2+2+2",
+    "dense_gguf_inference_claimed": false,
+    "deterministic": true,
+    "fallback_used": false,
+    "first_token_divergence_index": null,
+    "first_top_k_divergence_index": null,
+    "full_cuda_residency_claimed": false,
+    "generated_token_ids_match": true,
+    "generated_tokens_count": 8,
+    "generation_policy": "greedy",
+    "model_family": "qwen",
+    "profile_id": "short_decode",
+    "prompt_token_count": 8,
+    "prompt_token_ids_sha256": "fce2e7a181f42d00cd7e61594a169d03815b229a50939146d2798f4805dca5cf",
+    "proof_scope": "qwen_strict_short_decode_greedy",
+    "qwen_chat_cuda_claimed": false,
+    "qwen_one_token_cuda_claimed": true,
+    "qwen_short_decode_cuda_claimed": true,
+    "requested_new_tokens": 8,
+    "schema": 1,
+    "server_ready_claimed": false,
+    "speedup_claim": false,
+    "steps": [
+      {
+        "cpu_logits_sha256": "3491fc1e9b3e492374a51d23021cbd3bff6ecde1c8603ce14c1a33cf8f404ca3",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "9ee42fd0b77b5e69bf4af9f3edc03b81170e4d10bf5aadc9208ea76e3cc0d1c3",
+        "cpu_selected_token_id": 3555,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 3555,
+            "value": 15.665390014648438
+          },
+          {
+            "rank": 2,
+            "token_id": 220,
+            "value": 15.283088684082031
+          },
+          {
+            "rank": 3,
+            "token_id": 1597,
+            "value": 15.219593048095703
+          },
+          {
+            "rank": 4,
+            "token_id": 4710,
+            "value": 15.013675689697266
+          },
+          {
+            "rank": 5,
+            "token_id": 323,
+            "value": 14.603734016418457
+          },
+          {
+            "rank": 6,
+            "token_id": 6771,
+            "value": 14.392984390258789
+          },
+          {
+            "rank": 7,
+            "token_id": 481,
+            "value": 14.37895393371582
+          },
+          {
+            "rank": 8,
+            "token_id": 760,
+            "value": 14.069927215576172
+          },
+          {
+            "rank": 9,
+            "token_id": 2585,
+            "value": 13.821807861328125
+          },
+          {
+            "rank": 10,
+            "token_id": 2160,
+            "value": 13.553203582763672
+          }
+        ],
+        "cuda_logits_sha256": "3c3f686db18e7d8e67470a906f8d3a7ebf7978a23de00c034995c987973729d1",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "9ee42fd0b77b5e69bf4af9f3edc03b81170e4d10bf5aadc9208ea76e3cc0d1c3",
+        "cuda_selected_token_id": 3555,
+        "cuda_step_timing": {
+          "decode_ms": 1076.9296,
+          "embed_ms": 0.2314,
+          "forward_ms": 983.3885,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 92.3517,
+          "logits_ms": 0.9301,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 3555,
+            "value": 15.664361953735352
+          },
+          {
+            "rank": 2,
+            "token_id": 220,
+            "value": 15.283336639404297
+          },
+          {
+            "rank": 3,
+            "token_id": 1597,
+            "value": 15.218475341796875
+          },
+          {
+            "rank": 4,
+            "token_id": 4710,
+            "value": 15.013978004455566
+          },
+          {
+            "rank": 5,
+            "token_id": 323,
+            "value": 14.603156089782715
+          },
+          {
+            "rank": 6,
+            "token_id": 6771,
+            "value": 14.391695022583008
+          },
+          {
+            "rank": 7,
+            "token_id": 481,
+            "value": 14.378683090209961
+          },
+          {
+            "rank": 8,
+            "token_id": 760,
+            "value": 14.06998062133789
+          },
+          {
+            "rank": 9,
+            "token_id": 2585,
+            "value": 13.820271492004395
+          },
+          {
+            "rank": 10,
+            "token_id": 2160,
+            "value": 13.55255126953125
+          }
+        ],
+        "index": 0,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0015363693237304688,
+        "top_k_mean_abs_error": 0.0007076263427734375
+      },
+      {
+        "cpu_logits_sha256": "68269daedc2bab3992d947ae60558c229f81f14f6a4eb461f03c5f3ea0a1fa0b",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "90cb47813c22a0729fac218b6ebf69632a2d4991c9b2178c383f13d758b21c2b",
+        "cpu_selected_token_id": 374,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 374,
+            "value": 18.7156982421875
+          },
+          {
+            "rank": 2,
+            "token_id": 1558,
+            "value": 16.659866333007812
+          },
+          {
+            "rank": 3,
+            "token_id": 594,
+            "value": 16.245397567749023
+          },
+          {
+            "rank": 4,
+            "token_id": 525,
+            "value": 15.919286727905273
+          },
+          {
+            "rank": 5,
+            "token_id": 653,
+            "value": 15.483223915100098
+          },
+          {
+            "rank": 6,
+            "token_id": 646,
+            "value": 14.503067016601562
+          },
+          {
+            "rank": 7,
+            "token_id": 911,
+            "value": 13.809435844421387
+          },
+          {
+            "rank": 8,
+            "token_id": 1521,
+            "value": 13.745890617370605
+          },
+          {
+            "rank": 9,
+            "token_id": 8573,
+            "value": 13.554667472839355
+          },
+          {
+            "rank": 10,
+            "token_id": 1372,
+            "value": 13.38823127746582
+          }
+        ],
+        "cuda_logits_sha256": "7e9e8bb676336f33946e913b28cbd54a6b62c4aff2ce6ff65c8c510fd1e176f9",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "90cb47813c22a0729fac218b6ebf69632a2d4991c9b2178c383f13d758b21c2b",
+        "cuda_selected_token_id": 374,
+        "cuda_step_timing": {
+          "decode_ms": 1002.178,
+          "embed_ms": 1.1852,
+          "forward_ms": 910.7005,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 90.0707,
+          "logits_ms": 0.21330000000000002,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 374,
+            "value": 18.71538734436035
+          },
+          {
+            "rank": 2,
+            "token_id": 1558,
+            "value": 16.65903663635254
+          },
+          {
+            "rank": 3,
+            "token_id": 594,
+            "value": 16.244712829589844
+          },
+          {
+            "rank": 4,
+            "token_id": 525,
+            "value": 15.919018745422363
+          },
+          {
+            "rank": 5,
+            "token_id": 653,
+            "value": 15.482815742492676
+          },
+          {
+            "rank": 6,
+            "token_id": 646,
+            "value": 14.501971244812012
+          },
+          {
+            "rank": 7,
+            "token_id": 911,
+            "value": 13.809479713439941
+          },
+          {
+            "rank": 8,
+            "token_id": 1521,
+            "value": 13.74543285369873
+          },
+          {
+            "rank": 9,
+            "token_id": 8573,
+            "value": 13.552783966064453
+          },
+          {
+            "rank": 10,
+            "token_id": 1372,
+            "value": 13.387813568115234
+          }
+        ],
+        "index": 1,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0018835067749023438,
+        "top_k_mean_abs_error": 0.0006400108337402344
+      },
+      {
+        "cpu_logits_sha256": "4438ccafa675b4c3977b6bbd4083b8123f9f07141c03ce647e043d0a07ec5985",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "02a850838aa0611ec7c5a7f19e9262180bebe71d7610a12b6202db44c3370c8b",
+        "cpu_selected_token_id": 220,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 220,
+            "value": 18.968122482299805
+          },
+          {
+            "rank": 2,
+            "token_id": 279,
+            "value": 17.707855224609375
+          },
+          {
+            "rank": 3,
+            "token_id": 432,
+            "value": 14.594439506530762
+          },
+          {
+            "rank": 4,
+            "token_id": 419,
+            "value": 14.083081245422363
+          },
+          {
+            "rank": 5,
+            "token_id": 429,
+            "value": 14.050640106201172
+          },
+          {
+            "rank": 6,
+            "token_id": 264,
+            "value": 13.451947212219238
+          },
+          {
+            "rank": 7,
+            "token_id": 400,
+            "value": 13.176490783691406
+          },
+          {
+            "rank": 8,
+            "token_id": 481,
+            "value": 12.865715026855469
+          },
+          {
+            "rank": 9,
+            "token_id": 1181,
+            "value": 12.757208824157715
+          },
+          {
+            "rank": 10,
+            "token_id": 856,
+            "value": 12.697563171386719
+          }
+        ],
+        "cuda_logits_sha256": "dd9464dbc402e706e3fad07b9db9383e185273f482fae07f507d184667bb69cb",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "02a850838aa0611ec7c5a7f19e9262180bebe71d7610a12b6202db44c3370c8b",
+        "cuda_selected_token_id": 220,
+        "cuda_step_timing": {
+          "decode_ms": 1079.2681,
+          "embed_ms": 1.1804000000000001,
+          "forward_ms": 985.0883,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 92.7794,
+          "logits_ms": 0.2095,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 220,
+            "value": 18.967899322509766
+          },
+          {
+            "rank": 2,
+            "token_id": 279,
+            "value": 17.707069396972656
+          },
+          {
+            "rank": 3,
+            "token_id": 432,
+            "value": 14.594429016113281
+          },
+          {
+            "rank": 4,
+            "token_id": 419,
+            "value": 14.082819938659668
+          },
+          {
+            "rank": 5,
+            "token_id": 429,
+            "value": 14.050947189331055
+          },
+          {
+            "rank": 6,
+            "token_id": 264,
+            "value": 13.452229499816895
+          },
+          {
+            "rank": 7,
+            "token_id": 400,
+            "value": 13.177323341369629
+          },
+          {
+            "rank": 8,
+            "token_id": 481,
+            "value": 12.86633586883545
+          },
+          {
+            "rank": 9,
+            "token_id": 1181,
+            "value": 12.75645637512207
+          },
+          {
+            "rank": 10,
+            "token_id": 856,
+            "value": 12.697832107543945
+          }
+        ],
+        "index": 2,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0008325576782226562,
+        "top_k_mean_abs_error": 0.0004344940185546875
+      },
+      {
+        "cpu_logits_sha256": "4507243e36c02ca2ced3a1659c8ce6a6dd2a9e727bf82e8737f9f4a482f12c67",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "96001f5a14536af2ac7f464b7eb3f41312ab43ff56ba5c6937dbc1dfb27beda7",
+        "cpu_selected_token_id": 17,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 20.599191665649414
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 20.08441162109375
+          },
+          {
+            "rank": 3,
+            "token_id": 19,
+            "value": 18.459903717041016
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 18.153682708740234
+          },
+          {
+            "rank": 5,
+            "token_id": 20,
+            "value": 18.099945068359375
+          },
+          {
+            "rank": 6,
+            "token_id": 23,
+            "value": 16.901714324951172
+          },
+          {
+            "rank": 7,
+            "token_id": 21,
+            "value": 16.749155044555664
+          },
+          {
+            "rank": 8,
+            "token_id": 24,
+            "value": 16.701061248779297
+          },
+          {
+            "rank": 9,
+            "token_id": 22,
+            "value": 16.64068031311035
+          },
+          {
+            "rank": 10,
+            "token_id": 15,
+            "value": 14.462830543518066
+          }
+        ],
+        "cuda_logits_sha256": "b5f216450d237a926a45624bb880706b4f21e4d94e363314ae7db671991edcb0",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "96001f5a14536af2ac7f464b7eb3f41312ab43ff56ba5c6937dbc1dfb27beda7",
+        "cuda_selected_token_id": 17,
+        "cuda_step_timing": {
+          "decode_ms": 1060.714,
+          "embed_ms": 1.2847,
+          "forward_ms": 962.2097,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 97.01089999999999,
+          "logits_ms": 0.2002,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 20.598669052124023
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 20.083477020263672
+          },
+          {
+            "rank": 3,
+            "token_id": 19,
+            "value": 18.45811653137207
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 18.153057098388672
+          },
+          {
+            "rank": 5,
+            "token_id": 20,
+            "value": 18.097970962524414
+          },
+          {
+            "rank": 6,
+            "token_id": 23,
+            "value": 16.89971160888672
+          },
+          {
+            "rank": 7,
+            "token_id": 21,
+            "value": 16.747432708740234
+          },
+          {
+            "rank": 8,
+            "token_id": 24,
+            "value": 16.698707580566406
+          },
+          {
+            "rank": 9,
+            "token_id": 22,
+            "value": 16.638885498046875
+          },
+          {
+            "rank": 10,
+            "token_id": 15,
+            "value": 14.461386680603027
+          }
+        ],
+        "index": 3,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.002353668212890625,
+        "top_k_mean_abs_error": 0.0015161514282226562
+      },
+      {
+        "cpu_logits_sha256": "a9f86c55eed623454de3a8a200bcc58f83749d5f6248b9bb5dfe2e826eaa5142",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "73f37b529b7f90733735923c9cb3f7b4bc9cf48285a5784541596dc754ad071a",
+        "cpu_selected_token_id": 10,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 10,
+            "value": 19.588972091674805
+          },
+          {
+            "rank": 2,
+            "token_id": 9,
+            "value": 17.27928352355957
+          },
+          {
+            "rank": 3,
+            "token_id": 12,
+            "value": 16.9637393951416
+          },
+          {
+            "rank": 4,
+            "token_id": 17,
+            "value": 16.807268142700195
+          },
+          {
+            "rank": 5,
+            "token_id": 17779,
+            "value": 15.981541633605957
+          },
+          {
+            "rank": 6,
+            "token_id": 87,
+            "value": 15.899850845336914
+          },
+          {
+            "rank": 7,
+            "token_id": 17568,
+            "value": 15.814775466918945
+          },
+          {
+            "rank": 8,
+            "token_id": 15,
+            "value": 15.78415298461914
+          },
+          {
+            "rank": 9,
+            "token_id": 3039,
+            "value": 15.766752243041992
+          },
+          {
+            "rank": 10,
+            "token_id": 61,
+            "value": 15.746695518493652
+          }
+        ],
+        "cuda_logits_sha256": "11bb20e3177451a92dd1ee68c946d06eca497716b038419882a4a9ecf598f62f",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "73f37b529b7f90733735923c9cb3f7b4bc9cf48285a5784541596dc754ad071a",
+        "cuda_selected_token_id": 10,
+        "cuda_step_timing": {
+          "decode_ms": 1113.5437,
+          "embed_ms": 1.1914,
+          "forward_ms": 1007.8629999999999,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 104.1932,
+          "logits_ms": 0.2883,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 10,
+            "value": 19.588037490844727
+          },
+          {
+            "rank": 2,
+            "token_id": 9,
+            "value": 17.277851104736328
+          },
+          {
+            "rank": 3,
+            "token_id": 12,
+            "value": 16.96332550048828
+          },
+          {
+            "rank": 4,
+            "token_id": 17,
+            "value": 16.80693244934082
+          },
+          {
+            "rank": 5,
+            "token_id": 17779,
+            "value": 15.98093032836914
+          },
+          {
+            "rank": 6,
+            "token_id": 87,
+            "value": 15.89770221710205
+          },
+          {
+            "rank": 7,
+            "token_id": 17568,
+            "value": 15.814136505126953
+          },
+          {
+            "rank": 8,
+            "token_id": 15,
+            "value": 15.782636642456055
+          },
+          {
+            "rank": 9,
+            "token_id": 3039,
+            "value": 15.766584396362305
+          },
+          {
+            "rank": 10,
+            "token_id": 61,
+            "value": 15.744826316833496
+          }
+        ],
+        "index": 4,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0021486282348632812,
+        "top_k_mean_abs_error": 0.0010068893432617187
+      },
+      {
+        "cpu_logits_sha256": "a89d2a34f7f7e016f6ff5ae257c521f8334a714f8478b090af6f16e1319a9a13",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "bc44deecc10fbb558f98bdba7d1d96a8b1679947a1e452ec87fa28e38b9d6cf6",
+        "cpu_selected_token_id": 17,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 20.220956802368164
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 18.52460289001465
+          },
+          {
+            "rank": 3,
+            "token_id": 19,
+            "value": 16.445898056030273
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 16.084444046020508
+          },
+          {
+            "rank": 5,
+            "token_id": 20,
+            "value": 15.448600769042969
+          },
+          {
+            "rank": 6,
+            "token_id": 23,
+            "value": 14.417391777038574
+          },
+          {
+            "rank": 7,
+            "token_id": 22,
+            "value": 13.886558532714844
+          },
+          {
+            "rank": 8,
+            "token_id": 30,
+            "value": 13.813848495483398
+          },
+          {
+            "rank": 9,
+            "token_id": 1939,
+            "value": 13.716809272766113
+          },
+          {
+            "rank": 10,
+            "token_id": 21,
+            "value": 13.709113121032715
+          }
+        ],
+        "cuda_logits_sha256": "5af1f8b28a49c64efd14becc866036621e859c6d31c7d1bfe0090b07fa104baf",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "bc44deecc10fbb558f98bdba7d1d96a8b1679947a1e452ec87fa28e38b9d6cf6",
+        "cuda_selected_token_id": 17,
+        "cuda_step_timing": {
+          "decode_ms": 1067.2630000000001,
+          "embed_ms": 1.1832,
+          "forward_ms": 966.5154,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 99.33980000000001,
+          "logits_ms": 0.21489999999999998,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 20.221569061279297
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 18.523841857910156
+          },
+          {
+            "rank": 3,
+            "token_id": 19,
+            "value": 16.44561767578125
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 16.084360122680664
+          },
+          {
+            "rank": 5,
+            "token_id": 20,
+            "value": 15.448122024536133
+          },
+          {
+            "rank": 6,
+            "token_id": 23,
+            "value": 14.416977882385254
+          },
+          {
+            "rank": 7,
+            "token_id": 22,
+            "value": 13.886551856994629
+          },
+          {
+            "rank": 8,
+            "token_id": 30,
+            "value": 13.816118240356445
+          },
+          {
+            "rank": 9,
+            "token_id": 1939,
+            "value": 13.721238136291504
+          },
+          {
+            "rank": 10,
+            "token_id": 21,
+            "value": 13.708819389343262
+          }
+        ],
+        "index": 5,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.004428863525390625,
+        "top_k_mean_abs_error": 0.0009629249572753907
+      },
+      {
+        "cpu_logits_sha256": "f90ce58eddedde6f8c704df3642415f49a74e410056d9474141012bf250e701f",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "d401f0ba67384331bacf38319efd8744b3e8056571552aefa2e14a6c53472360",
+        "cpu_selected_token_id": 10,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 10,
+            "value": 19.38825035095215
+          },
+          {
+            "rank": 2,
+            "token_id": 30,
+            "value": 19.201717376708984
+          },
+          {
+            "rank": 3,
+            "token_id": 1939,
+            "value": 18.600332260131836
+          },
+          {
+            "rank": 4,
+            "token_id": 304,
+            "value": 18.353303909301758
+          },
+          {
+            "rank": 5,
+            "token_id": 5267,
+            "value": 17.196523666381836
+          },
+          {
+            "rank": 6,
+            "token_id": 28,
+            "value": 16.936113357543945
+          },
+          {
+            "rank": 7,
+            "token_id": 11,
+            "value": 16.602449417114258
+          },
+          {
+            "rank": 8,
+            "token_id": 323,
+            "value": 16.394001007080078
+          },
+          {
+            "rank": 9,
+            "token_id": 6144,
+            "value": 15.685689926147461
+          },
+          {
+            "rank": 10,
+            "token_id": 16819,
+            "value": 15.58464527130127
+          }
+        ],
+        "cuda_logits_sha256": "702aa77c781b8a930cec411ec502d5db7a20293093f5c5dd7867cfe77305c5a3",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "d401f0ba67384331bacf38319efd8744b3e8056571552aefa2e14a6c53472360",
+        "cuda_selected_token_id": 10,
+        "cuda_step_timing": {
+          "decode_ms": 1095.5630999999998,
+          "embed_ms": 1.2207999999999999,
+          "forward_ms": 980.4701,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 113.6024,
+          "logits_ms": 0.26039999999999996,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 10,
+            "value": 19.387937545776367
+          },
+          {
+            "rank": 2,
+            "token_id": 30,
+            "value": 19.200336456298828
+          },
+          {
+            "rank": 3,
+            "token_id": 1939,
+            "value": 18.599960327148438
+          },
+          {
+            "rank": 4,
+            "token_id": 304,
+            "value": 18.35247039794922
+          },
+          {
+            "rank": 5,
+            "token_id": 5267,
+            "value": 17.195133209228516
+          },
+          {
+            "rank": 6,
+            "token_id": 28,
+            "value": 16.93511962890625
+          },
+          {
+            "rank": 7,
+            "token_id": 11,
+            "value": 16.60270881652832
+          },
+          {
+            "rank": 8,
+            "token_id": 323,
+            "value": 16.393503189086914
+          },
+          {
+            "rank": 9,
+            "token_id": 6144,
+            "value": 15.68524169921875
+          },
+          {
+            "rank": 10,
+            "token_id": 16819,
+            "value": 15.58347225189209
+          }
+        ],
+        "index": 6,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0013904571533203125,
+        "top_k_mean_abs_error": 0.0007661819458007812
+      },
+      {
+        "cpu_logits_sha256": "3a828ec6aaf460d096af5e080b80fa2014709964daab59917ccb93399a37c71a",
+        "cpu_logits_sha256_available": true,
+        "cpu_logits_sha256_source": "full_logits_download",
+        "cpu_logits_top_k_sha256": "523ac9ddd5be6777675cb4fd82fe12eddfbb1842c537584ff70719524363c9d3",
+        "cpu_selected_token_id": 17,
+        "cpu_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 22.75709342956543
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 17.2709903717041
+          },
+          {
+            "rank": 3,
+            "token_id": 1112,
+            "value": 17.26911163330078
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 17.133840560913086
+          },
+          {
+            "rank": 5,
+            "token_id": 19,
+            "value": 16.57098960876465
+          },
+          {
+            "rank": 6,
+            "token_id": 1939,
+            "value": 16.45983123779297
+          },
+          {
+            "rank": 7,
+            "token_id": 30,
+            "value": 16.057313919067383
+          },
+          {
+            "rank": 8,
+            "token_id": 20,
+            "value": 14.80384635925293
+          },
+          {
+            "rank": 9,
+            "token_id": 5267,
+            "value": 14.7479248046875
+          },
+          {
+            "rank": 10,
+            "token_id": 15,
+            "value": 14.41551399230957
+          }
+        ],
+        "cuda_logits_sha256": "5614f5066771b9d5a1403f754583a4574c5864cd34d2f243f3d779ed5eb9acad",
+        "cuda_logits_sha256_available": true,
+        "cuda_logits_sha256_source": "full_logits_download",
+        "cuda_logits_top_k_sha256": "523ac9ddd5be6777675cb4fd82fe12eddfbb1842c537584ff70719524363c9d3",
+        "cuda_selected_token_id": 17,
+        "cuda_step_timing": {
+          "decode_ms": 1209.4281,
+          "embed_ms": 1.1495,
+          "forward_ms": 1097.6204,
+          "logits_device_is_cuda": true,
+          "logits_download_ms": 110.41629999999999,
+          "logits_ms": 0.2313,
+          "logits_transfer_bytes": 607744,
+          "logits_transfer_mode": "full_logits_download_cpu_sampler",
+          "sampling_location": "cpu"
+        },
+        "cuda_top_k": [
+          {
+            "rank": 1,
+            "token_id": 17,
+            "value": 22.75652503967285
+          },
+          {
+            "rank": 2,
+            "token_id": 18,
+            "value": 17.27121353149414
+          },
+          {
+            "rank": 3,
+            "token_id": 1112,
+            "value": 17.268817901611328
+          },
+          {
+            "rank": 4,
+            "token_id": 16,
+            "value": 17.1336612701416
+          },
+          {
+            "rank": 5,
+            "token_id": 19,
+            "value": 16.57119369506836
+          },
+          {
+            "rank": 6,
+            "token_id": 1939,
+            "value": 16.458810806274414
+          },
+          {
+            "rank": 7,
+            "token_id": 30,
+            "value": 16.05656623840332
+          },
+          {
+            "rank": 8,
+            "token_id": 20,
+            "value": 14.804158210754395
+          },
+          {
+            "rank": 9,
+            "token_id": 5267,
+            "value": 14.746597290039062
+          },
+          {
+            "rank": 10,
+            "token_id": 15,
+            "value": 14.415725708007812
+          }
+        ],
+        "index": 7,
+        "logits_vector_length": 151936,
+        "selected_token_match": true,
+        "top_k_match": true,
+        "top_k_max_abs_error": 0.0013275146484375,
+        "top_k_mean_abs_error": 0.0005087852478027344
+      }
+    ],
+    "top_k_all_match": true,
+    "top_k_compared": true,
+    "top_k_evidence_recorded": true,
+    "top_k_max_abs_error": 0.004428863525390625,
+    "top_k_mean_abs_error": 0.000817883014678955
+  },
+  "speedup_claim": false,
+  "tensor_residency": {
+    "dense_gguf_inference_claimed": false,
+    "fallback_used": false,
+    "full_cuda_residency_claimed": false,
+    "kv_cache_policy_recorded": true,
+    "model_class": "dense_regular_llm",
+    "per_token_weight_upload": false,
+    "persistent_session_residency_claimed": false,
+    "residency_accounting_recorded": true,
+    "runtime_logits_cuda_resident_before_download": true,
+    "sampling_policy_recorded": true,
+    "schema": 1,
+    "scope": "qwen_short_decode_strict_cuda",
+    "transfer_accounting": {
+      "device_to_host_bytes": 4861952,
+      "device_to_host_ms": 799.7643999999999,
+      "device_to_host_ms_source": "wall_clock_extract_logits_2d_local",
+      "host_to_device_bytes": 639446688,
+      "host_to_device_ms": 12256.4587,
+      "host_to_device_ms_includes_non_transfer_overhead": true,
+      "host_to_device_ms_scope": "model_load_wall_clock_envelope",
+      "host_to_device_ms_source": "wall_clock_model_load_with_cuda_weight_upload",
+      "kernel_invocations": 3152,
+      "kernel_launches": 3152,
+      "status": "measured",
+      "transfer_timing_status": "host_to_device_model_load_envelope_device_to_host_measured"
+    },
+    "weights_resident_on_cuda": true,
+    "weights_uploaded_once": true
+  },
+  "timestamp_utc": "2026-05-23T08:43:58Z",
+  "timing": {
+    "cpu_reference_model_load_ms": 11925.5102,
+    "cpu_reference_total_ms": 14762.7446,
+    "decode_total_ms": 8705.7882,
+    "device_to_host_bytes": 4861952,
+    "device_to_host_ms": 799.7643999999999,
+    "device_to_host_ms_source": "wall_clock_extract_logits_2d_local",
+    "embed_ms_total": 8.6266,
+    "first_token_ms": 1076.9296,
+    "forward_ms_total": 7893.8559000000005,
+    "generated_tokens_count": 8,
+    "host_to_device_bytes": 639446688,
+    "host_to_device_ms": 12256.4587,
+    "host_to_device_ms_includes_non_transfer_overhead": true,
+    "host_to_device_ms_scope": "model_load_wall_clock_envelope",
+    "host_to_device_ms_source": "wall_clock_model_load_with_cuda_weight_upload",
+    "kernel_invocations": 3152,
+    "kernel_launches": 3152,
+    "kernel_time_ms": 426813.16320000007,
+    "logits_download_ms_total": 799.7643999999999,
+    "logits_ms_total": 2.548,
+    "model_load_ms": 12256.4587,
+    "prefill_ms": 418916.75930000003,
+    "total_ms": 439963.5143,
+    "transfer_timing_status": "host_to_device_model_load_envelope_device_to_host_measured"
+  },
+  "tokenizer_prompt_authority": {
+    "bos_policy": "contract_default_add_bos",
+    "deterministic_prompt": true,
+    "prompt_authority": "contract_authoritative",
+    "prompt_template": "qwen-chat-raw-deterministic",
+    "prompt_token_count": 8,
+    "prompt_token_ids_sha256": "fce2e7a181f42d00cd7e61594a169d03815b229a50939146d2798f4805dca5cf",
+    "rendered_prompt_bytes": 12,
+    "rendered_prompt_sha256": "52cb6b5e4a038af1756708f98afb718a08c75b87b2f03dbee4dd9c8139c15c5e",
+    "schema": 1,
+    "tokenizer_authority": "contract_authoritative"
+  }
+}
