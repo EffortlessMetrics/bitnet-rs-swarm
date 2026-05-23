@@ -3,6 +3,7 @@ timestamp = "2026-05-21T01:15:00Z"
 event = "pr_open"
 item = "LNL258V-GOAL-AUDIT-014"
 pr = 107
+head_sha = "f0b3952600e08ab61e3bd86fa01f0a84c2fb2a14"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-014-swarm-main-sync"
 actor = "codex"
 summary = "Opened PR #107 for the no-inference Lunar Lake completion-audit refresh after swarm main sync."
