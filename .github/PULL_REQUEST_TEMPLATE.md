@@ -93,7 +93,7 @@ Receipts or proof manifests:
 
 - [ ] Actions are **SHA-pinned** (no @vN/@main/@stable/@latest)
 - [ ] Workflow `cargo`/`cross` commands use **--locked**
-- [ ] Toolchain respects **rust-toolchain.toml** (MSRV 1.89.0)
+- [ ] Toolchain respects **rust-toolchain.toml** (MSRV 1.95.0)
 - [ ] Receipt workflow: builds exclude Python/WASM (`--exclude bitnet-py --exclude bitnet-wasm`) in CPU+GPU lanes (if touching `verify-receipts.yml`)
 - [ ] **Guards** passes in CI (and locally if you run it)
 
