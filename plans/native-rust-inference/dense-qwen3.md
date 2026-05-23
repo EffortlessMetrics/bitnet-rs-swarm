@@ -6,7 +6,7 @@ speed-qualified, benchmark-qualified, or full-residency-proven.
 
 ## Work item: CUDA-MODEL-009
 
-Status: pr_open
+Status: merged
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0013-model-onboarding-proof-ladder.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
@@ -539,7 +539,7 @@ CUDA-MODEL-017 blocked until an equivalent source-capture path exists.
 
 ## Work item: CUDA-MODEL-017
 
-Status: blocked
+Status: merged
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
