@@ -8,12 +8,16 @@ Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
 PRs: #496, #498, #499, #500, #501, #502
 
+This file records the swarm/source state at swarm SHA
+`d4bceb9b880b9140deaa6eadd8271deaf2e551a5`, immediately after #502 merged.
+Later swarm PRs should record their own updated queue checkpoint.
+
 ## Latest Checkpoint Block
 
 This section records the latest merge-window block that established the
 post-#502 queue checkpoint. It is not a complete changelog for the full
 source-to-swarm delta; the promotion-readiness section below records that the
-current source-to-swarm range spans 117 swarm-only commits and must be split
+checkpoint source-to-swarm range spans 117 swarm-only commits and must be split
 before promotion.
 
 - #496 `xtask(repo-boundary): report checkout role`
@@ -63,11 +67,11 @@ before promotion.
   this handoff PR.
 - No open PRs in `EffortlessMetrics/BitNet-rs`.
 
-## Source Delta
+## Source Delta At This Checkpoint
 
-- Current source ref:
+- Checkpoint source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
-- Current swarm ref:
+- Checkpoint swarm ref:
   `origin/main` = `d4bceb9b880b9140deaa6eadd8271deaf2e551a5`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --left-right --count source/main...origin/main`
