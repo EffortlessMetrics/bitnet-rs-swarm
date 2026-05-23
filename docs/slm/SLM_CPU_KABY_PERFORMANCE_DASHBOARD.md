@@ -1552,6 +1552,19 @@ default_runtime_changed_without_oracle = false
 speedup_claim_without_before_after_receipts = false
 ```
 
+The SLM-CPU-090 blocker must be exact enough to be machine-checkable. The
+current public Candle residual-add boundary is:
+
+```text
+blocking_ops =
+  Tensor::add(&self, &Tensor) -> Result<Tensor>
+  Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>
+  std::ops::Add for Tensor/&Tensor delegates to Tensor::add and returns Result<Tensor>
+public_api_accepts_output_storage = false
+backend_internal_in_place_api_exposed = false
+required_missing_api = add_out/broadcast_add_out or equivalent Tensor residual-add API accepting caller-provided output storage
+```
+
 If SLM-CPU-090 changes runtime behavior, the change must be paired with
 before/after Qwen3 Q8_0 appliance evidence showing unchanged model SHA, strict
 GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU

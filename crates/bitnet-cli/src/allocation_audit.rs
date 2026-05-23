@@ -8,6 +8,11 @@
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
+use bitnet_transformer::{
+    CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS, CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
+    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+};
+
 static ALLOCATION_AUDIT_ENABLED: AtomicBool = AtomicBool::new(false);
 static ALLOCATION_AUDIT_ALLOC_COUNT: AtomicU64 = AtomicU64::new(0);
 static ALLOCATION_AUDIT_ALLOC_BYTES: AtomicU64 = AtomicU64::new(0);
@@ -306,6 +311,11 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "layer_output_residual_input_shape_recorded": true,
                 "layer_output_branch_output_shape_recorded": true,
                 "layer_output_caller_output_helper_status": "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
+                "layer_output_exact_blocking_ops": CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
+                "layer_output_public_api_return_type": CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
+                "layer_output_required_missing_api": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+                "layer_output_public_api_accepts_output_storage": false,
+                "layer_output_backend_internal_in_place_api_exposed": false,
                 "final_norm_operation_family": "candle_nn::RmsNorm::forward",
                 "final_norm_operation_detail": "rms_norm",
                 "final_norm_input_accessible": true,
@@ -316,11 +326,11 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "workspace_owned_output_surface": "feed_forward.down_proj.output",
                 "model_forward_classification": "TransformerModel::forward_with_workspace moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; SLM-CPU-085 separately classifies final norm and layer output as caller-output-storage blockers",
                 "final_norm_classification": "model.final_norm.output remains blocked at the public Candle norm compute boundary: input, weight, optional bias, epsilon, and RMSNorm/LayerNorm kind are readable, but LayerNorm::forward and candle_nn::ops norm helpers still return owned Tensors without caller-provided output storage",
-                "layer_output_classification": "transformer.block.output remains blocked because Candle residual-add operations return owned Tensors without caller-provided output storage",
+                "layer_output_classification": "transformer.block.output remains blocked because public Candle Tensor::add and Tensor::broadcast_add return Result<Tensor> owned outputs and expose no caller-provided output-storage parameter",
                 "no_reuse_reason": "candle_nn::Linear exposes weight and optional bias tensors, but its behavior-preserving compute path is Tensor::matmul plus optional broadcast_add, and those operations return owned Tensors without a caller-provided output-storage parameter",
                 "required_api_boundary": "dense_linear_output_storage_api_boundary",
                 "post_model_forward_required_api_boundary": "final_norm_output_storage_api_or_apply_op_output_hook",
-                "next_safe_change": "continue the residual-add / transformer.block.output boundary by adding or adopting a behavior-preserving Candle Tensor residual-add caller-output-storage API before replacing block output construction with reusable workspace-backed storage",
+                "next_safe_change": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
                 "next_dense_math_boundary": {
                     "target": "q8_dense_linear_locality_boundary",
                     "source": "SLM-CPU-042",

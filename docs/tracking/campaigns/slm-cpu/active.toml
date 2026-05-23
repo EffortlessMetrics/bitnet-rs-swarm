@@ -5817,7 +5817,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-090"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
 stackable = false
 review_mode = "codex_premerge"
