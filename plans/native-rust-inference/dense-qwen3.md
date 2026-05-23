@@ -585,7 +585,8 @@ manifest preflight works. CUDA-MODEL-017N captured the first current-source
 `one_token` source set, CUDA-MODEL-017P captured the first `short_decode_8`
 source receipt, CUDA-MODEL-017Q captured the second `short_decode_8` source
 receipt, CUDA-MODEL-017R completed the three-run `short_decode_8` source set,
-and CUDA-MODEL-017S captured the first `short_decode_32` source receipt:
+CUDA-MODEL-017S captured the first `short_decode_32` source receipt, and
+CUDA-MODEL-017T captured the second `short_decode_32` source receipt:
 
 ```text
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json
@@ -595,6 +596,7 @@ ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-short-decode-8-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-short-decode-8-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-short-decode-32-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-short-decode-32-cuda.json
 ```
 
 The receipts record the exact Qwen3 0.6B Q8_0 artifact, selected
@@ -609,7 +611,7 @@ The aggregate remains blocked because the current committed source set is:
 ```text
 one_token: 3 / 3
 short_decode_8: 3 / 3
-short_decode_32: 1 / 3
+short_decode_32: 2 / 3
 warm_session_3_turns: 0 / 3
 decode_128_from_warm_context: 0 / 3
 ```
@@ -617,7 +619,7 @@ decode_128_from_warm_context: 0 / 3
 The repeated comparator aggregate generator is not the blocker; it is behaving
 correctly by accepting the available source receipts and refusing to generate an
 aggregate until the remaining profile source receipts exist. The
-`short_decode_8` receipts and first `short_decode_32` receipt use explicit
+`short_decode_8` receipts and first two `short_decode_32` receipts use explicit
 full-logits D2H sampling (`full_logits_download_cpu_sampler`) and do not claim
 logits-transfer reduction.
 
