@@ -63,7 +63,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-031 | merged | Add a compact first-mismatch argmax-source frontier for the A770-030 summary divergence, preserving missing internal QK256/output-head context instead of promoting a runtime fix; merged in #398. |
 | A770-032 | merged | Add compact first-mismatch internal logit source context for the A770-030/A770-031 summary divergence, classifying the live source as hidden operand drift before output-head accumulation without promoting a runtime fix; merged in #418. |
 | A770-033 | merged | Add compact hidden-state source context for the A770-032 hidden-operand drift, classifying the live source as model.forward output drift before last-hidden extraction without promoting a runtime fix; merged in #439. |
-| A770-034 | in_progress | Add compact model-forward source context for the A770-033 model.forward drift, classifying the live source as prior layer output drift before final norm without promoting a runtime fix. |
+| A770-034 | merged | Add compact model-forward source context for the A770-033 model.forward drift, classifying the live source as prior layer output drift before final norm without promoting a runtime fix; merged in #454. |
 
 ## Current Claim Boundary
 
