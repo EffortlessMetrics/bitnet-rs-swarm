@@ -95,8 +95,9 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
 - Open swarm PR queue at the post-#450 checkpoint, before this handoff merges:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --json number,title,mergeStateStatus,autoMergeRequest,statusCheckRollup,updatedAt`
   returned only this handoff PR, #451.
-- Independent open PR count after this handoff merges is expected to return `0`
-  unless another swarm PR opens during the merge window.
+- Independent open PR count after this handoff merges should subtract #451; any
+  PR opened after the checkpoint, such as #452, remains separate follow-up
+  queue work.
 - #450 remote proof included green `Doctor + Generated Dashboards`,
   `PR Plan`, `PR Gate Success`, and `BitNet Rust Small Result` before/around
   auto-merge.
