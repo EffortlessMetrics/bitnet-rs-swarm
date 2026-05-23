@@ -8,7 +8,13 @@ Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
 PRs: #496, #498, #499, #500, #501, #502
 
-## Landed
+## Latest Checkpoint Block
+
+This section records the latest merge-window block that established the
+post-#502 queue checkpoint. It is not a complete changelog for the full
+source-to-swarm delta; the promotion-readiness section below records that the
+current source-to-swarm range spans 117 swarm-only commits and must be split
+before promotion.
 
 - #496 `xtask(repo-boundary): report checkout role`
   - Squash commit: `bd30a5507986585d4ff11bb64b8772d99f754dfa`
@@ -53,20 +59,21 @@ PRs: #496, #498, #499, #500, #501, #502
 
 ## Open Queue After #502
 
-- No open PRs in `EffortlessMetrics/bitnet-rs-swarm`.
+- No open operational PRs in `EffortlessMetrics/bitnet-rs-swarm` excluding
+  this handoff PR.
 - No open PRs in `EffortlessMetrics/BitNet-rs`.
 
 ## Source Delta
 
 - Current source ref:
-  `origin/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
+  `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `swarm/main` = `d4bceb9b880b9140deaa6eadd8271deaf2e551a5`
-- `origin/main` is reachable from `swarm/main`.
-- `rtk git rev-list --left-right --count origin/main...swarm/main`
+  `origin/main` = `d4bceb9b880b9140deaa6eadd8271deaf2e551a5`
+- `source/main` is reachable from `origin/main`.
+- `rtk git rev-list --left-right --count source/main...origin/main`
   returned `0 117`.
 - `cargo run --locked -p xtask --no-default-features -- repo-boundary status
-  --source-ref origin/main --swarm-ref swarm/main` returned
+  --source-ref source/main --swarm-ref origin/main` returned
   `repo-boundary status: Ok`.
 - Release workflow guard status: guarded.
 - Normalized result check: `BitNet Rust Small Result`.
@@ -76,7 +83,7 @@ PRs: #496, #498, #499, #500, #501, #502
 A dry-run packet was generated under `target/promotion/` for:
 
 ```text
-origin/main..swarm/main
+source/main..origin/main
 ef6eec8a6f95a54138fd69617235347944d2caae..d4bceb9b880b9140deaa6eadd8271deaf2e551a5
 ```
 
@@ -103,16 +110,16 @@ and rollback independently.
 
 - Open swarm PR queue:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 50 --json number,title,isDraft,mergeStateStatus,updatedAt,headRefName,baseRefName,labels,url`
-  returned `[]`.
+  returned this handoff PR (#503) only.
 - Open source PR queue:
   `rtk gh pr list --repo EffortlessMetrics/BitNet-rs --state open --limit 50 --json number,title,isDraft,mergeStateStatus,updatedAt,headRefName,baseRefName,labels,url`
   returned `[]`.
 - Repo-boundary status:
-  `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust/BitNet-rs && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref origin/main --swarm-ref swarm/main'`
+  `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref source/main --swarm-ref origin/main'`
   returned status `Ok`, source missing commits `0`, swarm-only commits `117`,
   and `release_workflows_guarded: true`.
 - Dry-run promotion packet generation:
-  `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust/BitNet-rs && cargo run --locked -p xtask --no-default-features -- promote-to-source --from origin/main --to swarm/main --out target/promotion/swarm-through-d4bceb9b8.md'`
+  `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- promote-to-source --from source/main --to origin/main --out target/promotion/swarm-through-d4bceb9b8.md'`
   completed and wrote the packet under `target/promotion/`.
 
 ## Validation
@@ -172,11 +179,11 @@ completion, or swarm-to-source promotion completion.
 rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,statusCheckRollup
 rtk gh pr list --repo EffortlessMetrics/BitNet-rs --state open --json number,title,headRefName,mergeStateStatus,updatedAt,statusCheckRollup
 rtk git fetch origin --prune
-rtk git fetch swarm --prune
+rtk git fetch source --prune
+rtk git rev-parse source/main
 rtk git rev-parse origin/main
-rtk git rev-parse swarm/main
-rtk git merge-base --is-ancestor origin/main swarm/main
-rtk git rev-list --left-right --count origin/main...swarm/main
-rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust/BitNet-rs && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref origin/main --swarm-ref swarm/main'
-rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust/BitNet-rs && cargo run --locked -p xtask --no-default-features -- promote-to-source --from origin/main --to swarm/main --out target/promotion/swarm-through-$(git rev-parse --short=12 swarm/main).md'
+rtk git merge-base --is-ancestor source/main origin/main
+rtk git rev-list --left-right --count source/main...origin/main
+rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref source/main --swarm-ref origin/main'
+rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- promote-to-source --from source/main --to origin/main --out target/promotion/swarm-through-<origin_main_short>.md'
 ```
