@@ -5875,8 +5875,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-091"
-status = "pr_open"
+status = "merged"
 pr = 507
+head_sha = "eb3a8aace3d373d31fd56a46e8ecf992d687be6a"
+merge_sha = "c4992d971957ee8b82b0e47668f2fb43b55cb7eb"
 branch = "codex/slm-cpu-091-logits-output-boundary"
 stackable = false
 review_mode = "codex_premerge"
