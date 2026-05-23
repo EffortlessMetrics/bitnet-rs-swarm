@@ -4662,6 +4662,7 @@ fn run_qwen_warm_session(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_qwen_short_decode_with_loaded_model(
     model: &dyn Model,
     candle_device: &CandleDevice,

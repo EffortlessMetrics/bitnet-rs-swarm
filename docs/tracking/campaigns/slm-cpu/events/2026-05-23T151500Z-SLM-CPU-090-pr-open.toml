@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T15:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 483
+head_sha = "1bff451e6cacf342e96bee8d6a71bb154c825440"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Opened #483 with the SLM-CPU-090 residual-add output-storage blocker slice."
+notes = [
+  "PR #483 records the exact public Candle Tensor residual-add APIs that return owned Result<Tensor> outputs and lack caller-provided output storage.",
+  "The slice does not change transformer runtime behavior or claim an allocation, speed, throughput, Q4/Q5, accelerator, server, Qwen3.5, or BitNet QK256 improvement.",
+]

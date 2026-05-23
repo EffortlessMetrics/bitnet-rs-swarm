@@ -3,6 +3,7 @@
   "artifact_kind": "lunar_lake_migration_manifest",
   "migration_id": "SWARM-LNL258V-MIGRATE-001",
   "created_utc": "2026-05-21T15:23:58Z",
+  "last_refreshed_utc": "2026-05-23T15:25:00Z",
   "source_repo": "EffortlessMetrics/BitNet-rs",
   "target_repo": "EffortlessMetrics/bitnet-rs-swarm",
   "source_cutoff": {
@@ -40,12 +41,30 @@
       }
     ],
     "current_swarm_audit_cutoff": {
-      "work_item": "LNL258V-GOAL-AUDIT-023",
-      "source_pr": 253,
-      "closeout_pr": 254,
-      "source_revision": "116392b13009ef0ddae8223b345e64592d79e504",
-      "summary": "Current committed swarm no-inference audit after adjacent CUDA/Qwen3 phase-trace support PR #247, LNL258V-GOAL-AUDIT-022 closeout PR #248, and adjacent CUDA phase-trace cleanup PR #250, with LNL258V-POWER-006 still blocked on battery-mode evidence."
-    }
+      "work_item": "LNL258V-GOAL-AUDIT-045",
+      "source_pr": 470,
+      "closeout_pr": 472,
+      "source_revision": "f06af55c0b941a8e8a2a298525d2febf8b7d5f5e",
+      "summary": "Current committed swarm no-inference audit after A770-035/#463, A770-035 closeout #466, A770-035 source-capture plumbing fix #467, and post-467 handoff/ledger documentation, with LNL258V-POWER-006 still blocked on battery-mode evidence."
+    },
+    "post_cutoff_adjacent_main_updates": [
+      {
+        "pr": 477,
+        "summary": "SLM-CPU-090 ready-state repair; adjacent SLM CPU tracker state only."
+      },
+      {
+        "pr": 478,
+        "summary": "A770-036 penultimate block source-frontier diagnostic; adjacent A770 diagnostic state only."
+      },
+      {
+        "pr": 480,
+        "summary": "A770-036 tracker closeout; adjacent A770 tracker state only."
+      },
+      {
+        "pr": 482,
+        "summary": "CUDA/Qwen3 warm-session receipt; adjacent CUDA/Qwen3 evidence only."
+      }
+    ]
   },
   "moved_items": [
     {

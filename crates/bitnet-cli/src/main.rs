@@ -16014,6 +16014,34 @@ mod tests {
             audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_caller_output_helper_status"],
             "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output"
         );
+        assert!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_exact_blocking_ops"]
+                .as_array()
+                .is_some_and(|ops| ops.iter().any(|op| op
+                    == "Tensor::add(&self, &Tensor) -> Result<Tensor>"))
+        );
+        assert!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_exact_blocking_ops"]
+                .as_array()
+                .is_some_and(|ops| ops.iter().any(|op| op
+                    == "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>"))
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_public_api_return_type"],
+            "Result<Tensor>"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_required_missing_api"],
+            "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_public_api_accepts_output_storage"],
+            false
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_backend_internal_in_place_api_exposed"],
+            false
+        );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["post_model_forward_required_api_boundary"],
             "final_norm_output_storage_api_or_apply_op_output_hook"
