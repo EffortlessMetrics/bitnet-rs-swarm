@@ -1821,6 +1821,48 @@ impl LayerOutputStorageApiBoundary {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LogitsOutputStorageApiBoundary {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub reason: &'static str,
+    pub next_api_hook: &'static str,
+    pub exact_blocking_ops: &'static [&'static str],
+    pub public_api_return_type: &'static str,
+    pub required_missing_api: &'static str,
+    pub public_api_accepts_output_storage: bool,
+    pub backend_internal_in_place_api_exposed: bool,
+    pub can_fill_caller_output_storage: bool,
+}
+
+pub const CANDLE_LOGITS_EXACT_BLOCKING_OPS: &[&str] = &[
+    "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>",
+    "Tensor::matmul(&self, &Tensor) -> Result<Tensor>",
+    "Tensor::reshape(&self, shape) -> Result<Tensor>",
+    "Tensor::to_vec1::<f32>(&self) -> Result<Vec<f32>> when host logits extraction is requested",
+];
+
+pub const CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE: &str = "Result<Tensor>";
+
+pub const CANDLE_LOGITS_REQUIRED_MISSING_API: &str = "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor";
+
+impl LogitsOutputStorageApiBoundary {
+    pub fn from_candle_logits(role: &'static str) -> Self {
+        Self {
+            role,
+            status: "logits_output_storage_blocked_by_candle_tensor_ops",
+            reason: "TransformerModel::logits produces an owned Candle Tensor through lm_head.forward or tied-embedding Tensor::matmul plus reshape; the public APIs expose no caller-provided output-storage parameter, and host logits extraction still allocates when full logits are requested",
+            next_api_hook: CANDLE_LOGITS_REQUIRED_MISSING_API,
+            exact_blocking_ops: CANDLE_LOGITS_EXACT_BLOCKING_OPS,
+            public_api_return_type: CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
+            required_missing_api: CANDLE_LOGITS_REQUIRED_MISSING_API,
+            public_api_accepts_output_storage: false,
+            backend_internal_in_place_api_exposed: false,
+            can_fill_caller_output_storage: false,
+        }
+    }
+}
+
 impl TransformerForwardWorkspace {
     pub fn new() -> Self {
         Self::default()
@@ -3898,6 +3940,28 @@ mod tests {
             boundary.required_missing_api,
             "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)"
         );
+        assert!(!boundary.can_fill_caller_output_storage);
+    }
+
+    #[test]
+    fn logits_output_storage_boundary_names_exact_candle_logits_blocker() {
+        let boundary = LogitsOutputStorageApiBoundary::from_candle_logits("model.logits");
+
+        assert_eq!(boundary.status, "logits_output_storage_blocked_by_candle_tensor_ops");
+        assert_eq!(boundary.public_api_return_type, "Result<Tensor>");
+        assert!(!boundary.public_api_accepts_output_storage);
+        assert!(!boundary.backend_internal_in_place_api_exposed);
+        assert!(
+            boundary
+                .exact_blocking_ops
+                .contains(&"candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>")
+        );
+        assert!(
+            boundary
+                .exact_blocking_ops
+                .contains(&"Tensor::matmul(&self, &Tensor) -> Result<Tensor>")
+        );
+        assert!(boundary.required_missing_api.contains("caller-provided output storage"));
         assert!(!boundary.can_fill_caller_output_storage);
     }
 

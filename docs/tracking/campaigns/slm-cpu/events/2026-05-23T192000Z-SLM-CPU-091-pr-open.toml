@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T19:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-091"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 507
+branch = "codex/slm-cpu-091-logits-output-boundary"
+head_sha = "c3e03d7b75aa7a9c62a7428139089717eb017daf"
+actor = "codex"
+summary = "Opened PR #507 for the SLM-CPU-091 logits/output-head allocation-boundary classification."
+notes = [
+  "The PR records the exact Candle logits/output-head owned-output and optional host extraction boundary in the warm-session allocation audit.",
+  "The committed artifact is ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json.",
+  "The slice does not change runtime selection or claim allocation reduction, speedup, sustained throughput, packed-Q8 promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 support.",
+]

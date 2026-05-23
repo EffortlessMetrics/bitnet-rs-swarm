@@ -9,8 +9,9 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use bitnet_transformer::{
-    CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS, CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
-    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+    CANDLE_LOGITS_EXACT_BLOCKING_OPS, CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
+    CANDLE_LOGITS_REQUIRED_MISSING_API, CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
+    CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE, CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
 };
 
 static ALLOCATION_AUDIT_ENABLED: AtomicBool = AtomicBool::new(false);
@@ -354,6 +355,31 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
             "embed": allocation_samples_json(audit.embed),
             "forward": allocation_samples_json(audit.forward),
             "logits": allocation_samples_json(audit.logits),
+            "logits_boundary": {
+                "target_surface": "model.logits / output-head tensor allocation",
+                "status": "logits_output_storage_blocked_by_candle_tensor_ops",
+                "current_boundary": "TransformerModel::logits owned Tensor output and optional host logits extraction",
+                "operation_family": "candle output-head projection",
+                "operation_detail": "lm_head.forward_or_tied_embedding_matmul_then_reshape",
+                "lm_head_forward_involved": true,
+                "tied_embedding_matmul_involved": true,
+                "host_logits_extraction_involved_when_requested": true,
+                "exact_blocking_ops": CANDLE_LOGITS_EXACT_BLOCKING_OPS,
+                "public_api_return_type": CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
+                "required_missing_api": CANDLE_LOGITS_REQUIRED_MISSING_API,
+                "public_api_accepts_output_storage": false,
+                "backend_internal_in_place_api_exposed": false,
+                "can_fill_caller_output_storage": false,
+                "prior_cleanup_preserved": [
+                    "SLM-CPU-024 greedy no-penalty sampler fast path avoids sampler logits scratch copying",
+                    "SLM-CPU-025 deterministic no-penalty steps use direct tensor argmax where exact",
+                    "SLM-CPU-026 reuses host logits scratch for default repetition-penalty decode steps"
+                ],
+                "remaining_boundary": "model still materializes a Candle logits Tensor before sampling or extraction; full host logits Vec extraction still allocates when diagnostics require it",
+                "next_safe_change": CANDLE_LOGITS_REQUIRED_MISSING_API,
+                "behavior_gate": "generated IDs, decoded text, strict GGUF tokenizer authority, selected CPU backend/kernel, model SHA, dense hook identity where applicable, and fallback=false must match the Qwen3 Q8_0 baseline",
+                "claim_scope": "allocation-boundary classification only; no logits/output-head runtime optimization, speedup, packed-Q8 promotion, or sustained-throughput claim is made"
+            },
             "sample": allocation_samples_json(audit.sample),
             "token_vector_update": allocation_samples_json(audit.token_vector_update),
             "token_decode": allocation_samples_json(audit.token_decode),
@@ -430,6 +456,7 @@ pub(crate) fn warm_session_aggregate_allocation_audit_json(
                 | "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
                 | "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
                 | "layer_output_storage_blocked_by_candle_tensor_add_ops"
+                | "logits_output_storage_blocked_by_candle_tensor_ops"
         )
     );
 
@@ -475,8 +502,8 @@ fn warm_session_next_optimization_target(
         ),
         "model.logits_and_extract" => (
             "logits_extraction_boundary",
-            "logits extraction remains the dominant allocation counter source after sampler and logits scratch reuse",
-            "needs_attribution",
+            "logits extraction remains the dominant allocation counter source after sampler and logits scratch reuse; SLM-CPU-091 classifies the remaining boundary as Candle output-head Tensor ownership plus optional host logits extraction when diagnostics require it",
+            "logits_output_storage_blocked_by_candle_tensor_ops",
         ),
         "prompt_tokenize" => (
             "prompt_token_cache_or_tokenizer_boundary",
@@ -610,4 +637,76 @@ pub(crate) fn mean_alloc_bytes(samples: &[AllocationAuditSnapshot]) -> Option<f6
         return None;
     }
     Some(samples.iter().map(|sample| sample.alloc_bytes).sum::<u64>() as f64 / samples.len() as f64)
+}
+
+#[cfg(all(test, feature = "full-cli"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn warm_session_aggregate_allocation_audit_marks_logits_boundary_deferred() {
+        let prompt = serde_json::json!({
+            "allocation_audit": {
+                "ranked_hotspots": [
+                    {
+                        "component": "model.logits_and_extract",
+                        "alloc_count": 7,
+                        "alloc_bytes": 4096
+                    }
+                ]
+            }
+        });
+
+        let audit = warm_session_aggregate_allocation_audit_json(true, "cpu", &[prompt]);
+
+        assert_eq!(audit["next_optimization_target"]["target"], "logits_extraction_boundary");
+        assert_eq!(
+            audit["next_optimization_target"]["status"],
+            "logits_output_storage_blocked_by_candle_tensor_ops"
+        );
+        assert_eq!(audit["optimization_deferred"], true);
+    }
+
+    #[test]
+    fn warm_session_prompt_allocation_audit_exposes_logits_output_boundary() {
+        let logits_sample = [AllocationAuditSnapshot {
+            alloc_count: 3,
+            alloc_bytes: 2048,
+            dealloc_count: 1,
+            dealloc_bytes: 1024,
+        }];
+        let empty = [];
+        let zero = AllocationAuditSnapshot::default();
+
+        let audit = warm_session_prompt_allocation_audit_json(WarmSessionPromptAllocationAudit {
+            enabled: true,
+            requested_backend: "cpu",
+            prompt_tokenize: zero,
+            prompt_setup: zero,
+            prompt_setup_breakdown: WarmSessionPromptSetupAllocationAudit {
+                buffer_reset: zero,
+                token_seed: zero,
+                kv_cache: zero,
+                sampler_setup: zero,
+            },
+            prompt_prefill: &empty,
+            prompt_prefill_embed: &empty,
+            prompt_prefill_forward: &empty,
+            decode_total: &empty,
+            embed: &empty,
+            forward: &empty,
+            logits: &logits_sample,
+            sample: &empty,
+            token_vector_update: &empty,
+            token_decode: &empty,
+            stop_tail_update: &empty,
+            receipt_construction: zero,
+        });
+
+        let boundary = &audit["decode"]["logits_boundary"];
+        assert_eq!(boundary["status"], "logits_output_storage_blocked_by_candle_tensor_ops");
+        assert_eq!(boundary["public_api_accepts_output_storage"], false);
+        assert_eq!(boundary["can_fill_caller_output_storage"], false);
+        assert_eq!(boundary["required_missing_api"], CANDLE_LOGITS_REQUIRED_MISSING_API);
+    }
 }
