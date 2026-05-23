@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T18:33:11Z"
+campaign = "intel-a770"
+item = "A770-039"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 500
+branch = "codex/intel-a770/A770-039-earlier-block-source-frontier"
+head_sha = "bbd2664cd0509ec4e4b8a6ebad92bd505b63988b"
+merge_sha = "75cb05cd7f24467d326f61dda2c8a1848beafac4"
+merged_at = "2026-05-23T18:23:40Z"
+actor = "codex"
+summary = "Closed A770-039 after PR #500 merged the earlier block source frontier diagnostic."
+notes = [
+  "A770-039 remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the focused generated-output mismatch as generated_output_earlier_block_source_frontier_block_input_drift.",
+  "The next diagnostic remains preceding transformer block source frontier capture.",
+]
