@@ -1187,9 +1187,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-038"
-status = "pr_open"
+status = "merged"
 pr = 495
-head_sha = "87d00aab1dd170e8a908f21a370d8efaa2660b06"
+head_sha = "6f725dca045efc9926c34e2755f1273f532867ea"
+merge_sha = "a9be4b3c9fbf9b410fd24c142440cf905b0df7d0"
 branch = "codex/intel-a770/A770-038-pre-antepenultimate-block-source-frontier"
 stackable = false
 review_mode = "codex_premerge"
