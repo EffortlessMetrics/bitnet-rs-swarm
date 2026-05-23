@@ -3147,8 +3147,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "CUDA-MODEL-017"
-status = "blocked"
-branch = "codex/nvidia-5070ti/CUDA-MODEL-017-qwen3-repeated-comparator"
+status = "merged"
+branch = "codex/nvidia-5070ti/CUDA-MODEL-017AA-qwen3-decode128-run03"
+pr = 506
+head_sha = "73785553f1f0b61963ee522c8a53a287e47cac1e"
+merge_sha = "53b908867874a71209f9c54d421a46322af33e2f"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -3205,7 +3208,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "CUDA-MODEL-018"
-status = "blocked"
+status = "merged"
 branch = "codex/nvidia-5070ti/CUDA-MODEL-018-qwen3-benchmark-review"
 stackable = false
 review_mode = "codex_premerge"
@@ -3238,9 +3241,9 @@ forbidden_paths = [
   ".github/workflows/**",
 ]
 may_claim = [
-  "CUDA-MODEL-018 is the blocked Qwen3 benchmark qualification review item after CUDA-MODEL-017.",
-  "CUDA-MODEL-018 cannot start until the qwen3_cuda_repeated_comparator aggregate exists and validates.",
-  "Any future Qwen3 benchmark or speed decision is exact-profile only and must cite the aggregate receipt.",
+  "CUDA-MODEL-018 reviewed the validated qwen3_cuda_repeated_comparator aggregate at ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/qwen3-0_6b-repeated-comparator.json.",
+  "CUDA-MODEL-018 rejected Qwen3 speedup, benchmark-qualified speed, and full-residency promotion for every reviewed exact profile.",
+  "Future Qwen3 benchmark or speed decisions remain exact-profile only and must cite a fresh repeated comparator after runtime optimization or sharper transfer/residency measurement.",
 ]
 must_not_claim = [
   "Qwen3 speedup exists.",
