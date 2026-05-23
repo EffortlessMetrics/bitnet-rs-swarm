@@ -3185,15 +3185,14 @@ may_claim = [
   "CUDA-MODEL-017 has the current-source Qwen3 one_token strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/.",
   "CUDA-MODEL-017 has the current-source Qwen3 short_decode_8 strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/ with full-logits D2H sampling explicitly recorded.",
   "CUDA-MODEL-017 has the current-source Qwen3 short_decode_32 strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/ with full-logits D2H sampling explicitly recorded.",
-  "CUDA-MODEL-017 has two current-source Qwen3 warm_session_3_turns strict CUDA source receipts under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ and run-02/ with full-logits D2H sampling explicitly recorded.",
-  "CUDA-MODEL-017 remains blocked on the remaining repeated source receipts and aggregate generation.",
+  "CUDA-MODEL-017 has the current-source Qwen3 warm_session_3_turns strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/ with full-logits D2H sampling explicitly recorded.",
+  "CUDA-MODEL-017 remains blocked on decode_128_from_warm_context source receipts and aggregate generation.",
   "CUDA-MODEL-017A merged the source-capture profile tooling prerequisite.",
   "The qwen3_cuda_repeated_comparator generator fail-closes until all required source receipts exist.",
   "The aggregate receipt may prove repeated Qwen3 same-artifact CPU/CUDA comparator evidence only after the hardware source receipts are collected and validated.",
 ]
 must_not_claim = [
   "All required CUDA-MODEL-017 source receipts exist.",
-  "The CUDA-MODEL-017 warm_session_3_turns source set is complete.",
   "Any CUDA-MODEL-017 decode_128_from_warm_context source receipt exists for the 2026-05-23 capture.",
   "The qwen3_cuda_repeated_comparator aggregate exists.",
   "Qwen3 speedup exists.",
