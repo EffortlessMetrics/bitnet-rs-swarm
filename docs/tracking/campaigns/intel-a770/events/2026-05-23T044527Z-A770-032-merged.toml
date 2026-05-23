@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T04:45:27Z"
+campaign = "intel-a770"
+item = "A770-032"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-032-internal-logit-source-context"
+pr = 418
+head_sha = "fd641aaa61173ace0d054ad15875febac85f79c0"
+merge_sha = "af11085b5113afe4ddf2e645f9fb5f964e119967"
+summary = "Merged PR #418 with internal logit-source context for the focused A770 summary mismatch."
+notes = [
+  "PR #418 adds compact logit_source_context fingerprints and output-head dispatch/runtime deltas to the focused A770-030/A770-031 summary first-mismatch receipt.",
+  "The committed focused parity receipt classifies the selected first mismatch as generated_output_internal_logit_source_frontier_hidden_operand_drift for a770_summary_seed770024_keywords_014.",
+  "The merge does not change runtime math, promote CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, full BitNet inference, or any Lunar Lake route claim.",
+]

@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T05:30:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-086"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 425
+head_sha = "6494cfb4c4209123f367aa3da037ad403bb94783"
+merge_sha = "959f5240216bb74d81e531a34a498fc8c9aee426"
+branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
+actor = "codex"
+summary = "Merged PR #425 for the final-norm output-storage feasibility gate."
+notes = [
+  "The merged slice narrows `model.final_norm.output` to the public Candle LayerNorm/RMSNorm owned-output boundary and records the missing caller-output helper status.",
+  "The closeout preserves the no residual-add, dense math, packed-Q8 promotion, speedup, sustained-throughput, Q4/Q5 runtime, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim boundary.",
+]

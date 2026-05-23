@@ -1,0 +1,13 @@
+timestamp = "2026-05-23T05:06:05Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-086"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
+actor = "codex"
+summary = "Started the final-norm output-storage feasibility gate."
+notes = [
+  "The slice is scoped to the `model.final_norm.output` caller-output-storage boundary after SLM-CPU-085.",
+  "The implementation must either add a behavior-preserving final-norm output-storage helper or record the exact remaining Candle LayerNorm/RMSNorm API blocker before moving to residual-add, dense math, packed-Q8 promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 work.",
+]

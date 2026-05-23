@@ -9,7 +9,7 @@
 
 | Item | State | PR | Branch | Review | Merge | Human gate | Acceptance |
 |---|---|---:|---|---|---|---|---|
-| ROCM-DOCS-000 | ready | TBD | `codex/amd-rocm/ROCM-DOCS-000-source-of-truth` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Add AMD ROCm source-of-truth docs, proposal, specs, plan, campaign tracker, specs index entry, and hardware matrix row as docs-only registered/scaffold evidence with no runtime, model, speed, residency, or server promotion. |
+| ROCM-DOCS-000 | merged | TBD | `codex/amd-rocm/ROCM-DOCS-000-source-of-truth` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Add AMD ROCm source-of-truth docs, proposal, specs, plan, campaign tracker, specs index entry, and hardware matrix row as docs-only registered/scaffold evidence with no runtime, model, speed, residency, or server promotion. |
 
 ## Hard Constraints
 

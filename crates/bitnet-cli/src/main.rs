@@ -4172,6 +4172,7 @@ async fn run_simple_generation(
         logits_vector_length: usize,
         top_logits: Vec<serde_json::Value>,
         chosen_id: Option<u32>,
+        logit_source_context: Option<serde_json::Value>,
     }
 
     simple_generation::environment::apply_deterministic_env(deterministic, threads);
@@ -4791,10 +4792,51 @@ async fn run_simple_generation(
             eprintln!("hidden_rms={:.6}", hidden_rms);
         }
 
+        let logit_source_context_requested = dump_logit_steps
+            .is_some_and(|max_steps| step_idx < max_steps)
+            && logit_source_context_enabled_for_step(step_idx);
+        let logit_source_hidden_operand = if logit_source_context_requested {
+            Some(compact_logit_source_hidden_operand(&last_hidden))
+        } else {
+            None
+        };
+        let qk256_coverage_before =
+            logit_source_context_requested.then(bitnet_qk256_dispatch::qk256_dispatch_coverage);
+        let qk256_cpu_hot_path_before =
+            logit_source_context_requested.then(bitnet_qk256_dispatch::qk256_cpu_hot_path_counters);
+        let a770_opencl_runtime_before = logit_source_context_requested
+            .then(bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats);
+
         // Get logits from last token hidden state
         let t2 = std::time::Instant::now();
         let logits_alloc_start = AllocationAuditSnapshot::current();
         let logits = model.logits(&last_hidden)?;
+        let logit_source_context = if let (
+            Some(hidden_operand),
+            Some(coverage_before),
+            Some(cpu_hot_path_before),
+            Some(a770_runtime_before),
+        ) = (
+            logit_source_hidden_operand,
+            qk256_coverage_before,
+            qk256_cpu_hot_path_before,
+            a770_opencl_runtime_before,
+        ) {
+            let coverage_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();
+            let cpu_hot_path_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
+            let a770_runtime_after = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
+            Some(logit_source_context_receipt(
+                &hidden_operand,
+                &coverage_before,
+                &coverage_after,
+                &cpu_hot_path_before,
+                &cpu_hot_path_after,
+                &a770_runtime_before,
+                &a770_runtime_after,
+            ))
+        } else {
+            None
+        };
         let logits_ms = elapsed_ms(t2);
         logits_step_ms.push(logits_ms);
         if timing_enabled {
@@ -4863,6 +4905,7 @@ async fn run_simple_generation(
                     })
                     .collect(),
                 chosen_id: None, // Will set after sampling
+                logit_source_context,
             };
             logits_dump.push(step);
         }
@@ -5641,7 +5684,8 @@ async fn run_simple_generation(
                         "step": step.step,
                         "logits_vector_length": step.logits_vector_length,
                         "top_logits": step.top_logits,
-                        "chosen_id": step.chosen_id
+                        "chosen_id": step.chosen_id,
+                        "logit_source_context": step.logit_source_context
                     })
                 }).collect::<Vec<_>>())
             } else {
@@ -12727,6 +12771,209 @@ fn compute_rms(xs: &[f32]) -> f32 {
     (sum_sq / (xs.len() as f32)).sqrt()
 }
 
+fn logit_source_context_enabled_for_step(step_idx: usize) -> bool {
+    let Ok(raw) = std::env::var("BITNET_LOGIT_SOURCE_CONTEXT_STEPS") else {
+        return true;
+    };
+    let trimmed = raw.trim();
+    if trimmed.is_empty() || trimmed.eq_ignore_ascii_case("all") {
+        return true;
+    }
+    trimmed
+        .split(',')
+        .filter_map(|part| part.trim().parse::<usize>().ok())
+        .any(|step| step == step_idx)
+}
+
+fn compact_logit_source_hidden_operand(
+    tensor: &bitnet_common::ConcreteTensor,
+) -> serde_json::Value {
+    match tensor_to_vec(tensor) {
+        Ok(values) => compact_f32_vector_fingerprint(tensor.shape(), &values),
+        Err(err) => serde_json::json!({
+            "available": false,
+            "reason": "hidden_operand_extract_failed",
+            "error": err.to_string(),
+            "shape": tensor.shape(),
+        }),
+    }
+}
+
+fn compact_f32_vector_fingerprint(shape: &[usize], values: &[f32]) -> serde_json::Value {
+    let mut bytes = Vec::with_capacity(std::mem::size_of_val(values));
+    let mut finite_count = 0usize;
+    let mut nan_count = 0usize;
+    let mut infinite_count = 0usize;
+    let mut finite_sum = 0.0f64;
+    let mut finite_sum_sq = 0.0f64;
+    let mut finite_min = f32::INFINITY;
+    let mut finite_max = f32::NEG_INFINITY;
+
+    for &value in values {
+        bytes.extend_from_slice(&value.to_bits().to_le_bytes());
+        if value.is_finite() {
+            finite_count += 1;
+            finite_sum += value as f64;
+            finite_sum_sq += (value as f64) * (value as f64);
+            finite_min = finite_min.min(value);
+            finite_max = finite_max.max(value);
+        } else if value.is_nan() {
+            nan_count += 1;
+        } else {
+            infinite_count += 1;
+        }
+    }
+
+    serde_json::json!({
+        "available": true,
+        "shape": shape,
+        "value_count": values.len(),
+        "finite_count": finite_count,
+        "nan_count": nan_count,
+        "infinite_count": infinite_count,
+        "sha256_f32_le": sha256_hex_bytes(&bytes),
+        "mean": (finite_count > 0).then(|| finite_sum / finite_count as f64),
+        "rms": (finite_count > 0).then(|| (finite_sum_sq / finite_count as f64).sqrt()),
+        "min": (finite_count > 0).then_some(finite_min),
+        "max": (finite_count > 0).then_some(finite_max),
+    })
+}
+
+fn logit_source_context_receipt(
+    hidden_operand: &serde_json::Value,
+    coverage_before: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+    coverage_after: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+    cpu_hot_path_before: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+    cpu_hot_path_after: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+    a770_runtime_before: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+    a770_runtime_after: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+) -> serde_json::Value {
+    let dispatch_delta =
+        qk256_dispatch_coverage_delta_receipt_for_logit_source(coverage_before, coverage_after);
+    let a770_runtime_delta =
+        qk256_a770_opencl_runtime_stats_delta(a770_runtime_before, a770_runtime_after);
+    let cpu_hot_path_delta =
+        qk256_cpu_hot_path_delta_receipt(cpu_hot_path_before, cpu_hot_path_after);
+    let output_head_qk256_total =
+        dispatch_delta["bitnet_linear_layers_total"].as_u64().unwrap_or(0);
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_output_head_logit_source",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "hidden_operand": hidden_operand,
+        "output_head_qk256_dispatch_delta": dispatch_delta,
+        "output_head_qk256_cpu_hot_path_delta": cpu_hot_path_delta,
+        "output_head_a770_opencl_runtime_delta": {
+            "host_to_device_bytes": a770_runtime_delta.host_to_device_bytes,
+            "device_to_host_bytes": a770_runtime_delta.device_to_host_bytes,
+            "kernel_invocations": a770_runtime_delta.kernel_invocations,
+        },
+        "hidden_operand_context_available": hidden_operand["available"].as_bool().unwrap_or(false),
+        "qk256_operand_context_available": hidden_operand["available"].as_bool().unwrap_or(false),
+        "output_head_logit_accumulation_context_available": output_head_qk256_total > 0,
+    })
+}
+
+fn qk256_dispatch_coverage_delta_receipt_for_logit_source(
+    before: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+    after: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+) -> serde_json::Value {
+    let total = after.bitnet_linear_layers_total.saturating_sub(before.bitnet_linear_layers_total);
+    let on_cuda =
+        after.bitnet_linear_layers_on_cuda.saturating_sub(before.bitnet_linear_layers_on_cuda);
+    let on_a770_opencl = after
+        .bitnet_linear_layers_on_a770_opencl
+        .saturating_sub(before.bitnet_linear_layers_on_a770_opencl);
+    let cpu_fallback = after
+        .bitnet_linear_layers_cpu_fallback
+        .saturating_sub(before.bitnet_linear_layers_cpu_fallback);
+    let unsupported_after =
+        after.unsupported_ops.iter().cloned().collect::<std::collections::BTreeSet<_>>();
+    let unsupported_before =
+        before.unsupported_ops.iter().cloned().collect::<std::collections::BTreeSet<_>>();
+    let execution_claim = if on_cuda > 0 {
+        "cuda_inference_contribution"
+    } else if on_a770_opencl > 0 {
+        "a770_opencl_qk256_contribution"
+    } else if cpu_fallback > 0 {
+        "cpu_fallback"
+    } else if total == 0 {
+        "no_qk256_dispatch_observed"
+    } else {
+        after.execution_claim
+    };
+
+    serde_json::json!({
+        "bitnet_linear_layers_total": total,
+        "bitnet_linear_layers_on_cuda": on_cuda,
+        "bitnet_linear_layers_on_a770_opencl": on_a770_opencl,
+        "bitnet_linear_layers_cpu_fallback": cpu_fallback,
+        "unsupported_ops": unsupported_after
+            .difference(&unsupported_before)
+            .cloned()
+            .collect::<Vec<_>>(),
+        "execution_claim": execution_claim,
+    })
+}
+
+fn qk256_cpu_hot_path_delta_receipt(
+    before: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+    after: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+) -> serde_json::Value {
+    let f32_scalar = after
+        .qk256_f32_scalar_gemv_invocations
+        .saturating_sub(before.qk256_f32_scalar_gemv_invocations);
+    let f32_avx2 = after
+        .qk256_f32_avx2_gemv_invocations
+        .saturating_sub(before.qk256_f32_avx2_gemv_invocations);
+    let scaled_scalar = after
+        .qk256_i8s_scaled_scalar_invocations
+        .saturating_sub(before.qk256_i8s_scaled_scalar_invocations);
+    let scaled_avx2 = after
+        .qk256_i8s_scaled_avx2_invocations
+        .saturating_sub(before.qk256_i8s_scaled_avx2_invocations);
+    let flat_bytes = after
+        .qk256_flat_bytes_extracted_count
+        .saturating_sub(before.qk256_flat_bytes_extracted_count);
+    let input_rows =
+        after.input_rows_materialized_count.saturating_sub(before.input_rows_materialized_count);
+    let output_rows =
+        after.output_rows_allocated_count.saturating_sub(before.output_rows_allocated_count);
+
+    serde_json::json!({
+        "qk256_f32_scalar_gemv_invocations": f32_scalar,
+        "qk256_f32_avx2_gemv_invocations": f32_avx2,
+        "qk256_i8s_scaled_scalar_invocations": scaled_scalar,
+        "qk256_i8s_scaled_avx2_invocations": scaled_avx2,
+        "qk256_flat_bytes_extracted_count": flat_bytes,
+        "input_rows_materialized_count": input_rows,
+        "output_rows_allocated_count": output_rows,
+        "no_scale_f32_gemv_invocations": f32_scalar.saturating_add(f32_avx2),
+        "scaled_i2s_i8s_gemv_invocations": scaled_scalar.saturating_add(scaled_avx2),
+        "audited_tensor_materialization_count": flat_bytes
+            .saturating_add(input_rows)
+            .saturating_add(output_rows),
+    })
+}
+
+fn qk256_a770_opencl_runtime_stats_delta(
+    before: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+    after: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+) -> bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats {
+    bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats {
+        host_to_device_bytes: after
+            .host_to_device_bytes
+            .saturating_sub(before.host_to_device_bytes),
+        device_to_host_bytes: after
+            .device_to_host_bytes
+            .saturating_sub(before.device_to_host_bytes),
+        kernel_invocations: after.kernel_invocations.saturating_sub(before.kernel_invocations),
+        last_device: after.last_device.clone().or_else(|| before.last_device.clone()),
+    }
+}
+
 fn elapsed_ms(start: std::time::Instant) -> f64 {
     start.elapsed().as_secs_f64() * 1000.0
 }
@@ -15507,7 +15754,27 @@ mod tests {
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["post_model_forward_required_api_boundary"],
-            "final_norm_or_layer_output_storage_api_boundary"
+            "final_norm_output_storage_api_or_apply_op_output_hook"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_operation_detail"],
+            "rms_norm"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_caller_output_helper_status"],
+            "final_norm_output_storage_helper_blocked_by_owned_candle_norm_output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_input_accessible"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_weight_accessible"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_bias_accessible"],
+            false
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["can_fill_final_norm_output_storage"],

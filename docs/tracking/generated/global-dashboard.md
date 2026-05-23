@@ -4,7 +4,7 @@
 | Campaign | Active item | PR | State | Next | Notes |
 |---|---|---:|---|---|---|
 | amd-cpu-baselines | AMD5700X-003 | TBD | ready | AMD9950X3D-003 | These lanes are CPU proof lanes, not accelerator lanes. |
-| amd-rocm | ROCM-DOCS-000 | TBD | ready | none | Do not claim generic AMD GPU support. |
+| amd-rocm | ROCM-DOCS-000 | TBD | merged | none | Do not claim generic AMD GPU support. |
 | apple-bitnet-artifact-sweep | ABAS-001 | TBD | proposed | ABAS-002 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
 | apple-m3-macbook-air | M3MBA-023 | TBD | proposed | M3MBA-024 | This is the Apple M3 MacBook Air lane, not the M4 Mac mini product, performance, or strict-proof lane. |
 | apple-m4 | M4-018 | #3826 | merged | none | Do not touch QK256 before a BitNet-specific Apple item explicitly allows it. |
@@ -36,8 +36,8 @@
 | falcon-e-family | FE-000 | TBD | ready | FE-001 | Do not commit model binaries. |
 | falcon3-family | F3-000 | TBD | ready | none | Do not commit model binaries. |
 | i2s | I2S-DOCS-000 | #5880 | merged | none | Do not change runtime code in docs-only I2_S tracker slices. |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-037 | TBD | in_progress | LNL258V-POWER-006 | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
-| intel-a770 | A770-031 | #398 | merged | none | OpenCL-first for native A770 proof. |
+| intel-258v-platform | LNL258V-POWER-006 | TBD | blocked | none | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
+| intel-a770 | A770-032 | #418 | merged | none | OpenCL-first for native A770 proof. |
 | intel-npu | NPU-013 | #5903 | merged | none | Device-node detection is not inference. |
 | llama3-8b-158 | LLAMA3-158-000 | TBD | ready | LLAMA3-158-001 | Do not commit model binaries. |
 | model-artifacts | MODEL-ARTIFACT-002 | #3928 | blocked | none | Do not weaken CPU, CUDA, Apple, NPU, SLM, server, or quality gates. |

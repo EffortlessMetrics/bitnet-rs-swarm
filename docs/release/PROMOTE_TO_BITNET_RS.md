@@ -28,6 +28,11 @@ Swarm-only commits do not become public-release authority until a promotion or
 sync PR names the included work, proof inputs, claim boundaries, and excluded
 work.
 
+Promotion is therefore a reviewable packeted handoff, not a branch drift repair.
+Do not promote by copying files, cherry-picking undocumented branch tips, or
+opening a vague "sync swarm" PR without source-impact and claim-boundary
+metadata.
+
 Source-to-swarm syncs are the opposite direction from release promotion. They
 keep `bitnet-rs-swarm` current with public source while source remains
 canonical. They do not make swarm the release repo, do not move publish or
