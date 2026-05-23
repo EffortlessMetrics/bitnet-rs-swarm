@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T00:45:40Z"
+campaign = "intel-a770"
+item = "A770-031"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-031-summary-argmax-source"
+pr = 398
+head_sha = "d096fb092c85f8865bf4e295c9fcd74498a8fece"
+summary = "Opened the A770-031 summary argmax-source frontier PR."
+
+notes = [
+  "PR #398 adds generated_output_argmax_source_frontier to answer-parity receipts and refreshes the focused A770-030 summary parity artifact.",
+  "The live classification is generated_output_argmax_source_frontier_internal_logit_source_missing_context, with prompt-history serialization, sampler/logit extraction, and trace/capture context loss not implicated at the current top-k boundary.",
+  "The PR routes the remaining source to missing internal QK256/output-head logit accumulation context and does not change runtime math or promote CPU/A770 parity, strict answer readiness, broad quality, residency, speed, trusted-partial acceleration, or full BitNet inference.",
+]
