@@ -443,7 +443,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-034 | LNL258V-GOAL-AUDIT-033 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-035 | LNL258V-GOAL-AUDIT-034 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-036 | LNL258V-GOAL-AUDIT-035 | merged |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-037 | LNL258V-GOAL-AUDIT-036 | in_progress |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-037 | LNL258V-GOAL-AUDIT-036 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
