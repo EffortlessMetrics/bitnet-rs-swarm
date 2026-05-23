@@ -64,7 +64,8 @@ cargo run --locked -p xtask --no-default-features -- repo-boundary status
 ```
 
 The status report identifies whether the checkout origin is source, swarm, or
-unknown; whether source and swarm remotes are configured; which refs were
+unknown; whether the current `HEAD` is source main, swarm main, a swarm branch,
+or unknown; whether source and swarm remotes are configured; which refs were
 checked; whether source main is reachable from the checked swarm ref; how many
 source commits swarm lacks; how many swarm commits are not yet in source; and
 whether release-sensitive workflow files keep the source-repo guard.
