@@ -276,6 +276,83 @@
     ],
     "rows_truncated": false
   },
+  "generated_output_internal_logit_source_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_internal_logit_source_frontier_hidden_operand_drift",
+    "clean_count": 0,
+    "hidden_operand_context_available": true,
+    "hidden_operand_drift_count": 1,
+    "left_label": "amd-5700x-cpu-avx2",
+    "missing_context_count": 0,
+    "next_diagnostic": "localize hidden-state operand drift before output-head QK256",
+    "output_head_logit_accumulation_context_available": false,
+    "output_head_logit_accumulation_count": 0,
+    "qk256_operand_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "route_context_only_count": 0,
+    "row_limit": 16,
+    "rows": [
+      {
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_internal_logit_source_hidden_operand_drift",
+        "first_mismatch_index": 9,
+        "hidden_operand_context_available": true,
+        "hidden_operand_rms_abs_delta": 0.0016226334791995672,
+        "hidden_operand_sha256_match": false,
+        "left_chosen_id": 40599,
+        "left_hidden_operand_available": true,
+        "left_hidden_operand_rms": 0.07708468808572078,
+        "left_hidden_operand_sha256_f32_le": "224d8c1fb08d05d0a3ce05e8e8491cbcc46da8a52f25461c3204a3c37993f650",
+        "left_hidden_operand_shape": [
+          1,
+          2560
+        ],
+        "left_margin_over_right_chosen_on_left": 0.009021759033199572,
+        "left_output_head_a770_opencl_runtime_delta": {
+          "device_to_host_bytes": 0,
+          "host_to_device_bytes": 0,
+          "kernel_invocations": 0
+        },
+        "left_output_head_qk256_dispatch_delta": {
+          "bitnet_linear_layers_cpu_fallback": 0,
+          "bitnet_linear_layers_on_a770_opencl": 0,
+          "bitnet_linear_layers_on_cuda": 0,
+          "bitnet_linear_layers_total": 0,
+          "execution_claim": "no_qk256_dispatch_observed",
+          "unsupported_ops": []
+        },
+        "left_token_id": 40599,
+        "next_diagnostic": "localize hidden-state operand drift before output-head QK256",
+        "opposite_argmax": true,
+        "output_head_logit_accumulation_context_available": false,
+        "qk256_operand_context_available": true,
+        "right_chosen_id": 27252,
+        "right_hidden_operand_available": true,
+        "right_hidden_operand_rms": 0.07870732156492034,
+        "right_hidden_operand_sha256_f32_le": "701a390a1879edd1b1df381a90098fec35e76288a38cd40a89fc187a02065114",
+        "right_hidden_operand_shape": [
+          1,
+          2560
+        ],
+        "right_margin_over_left_chosen_on_right": 0.16872406005859375,
+        "right_output_head_a770_opencl_runtime_delta": {
+          "device_to_host_bytes": 0,
+          "host_to_device_bytes": 0,
+          "kernel_invocations": 0
+        },
+        "right_output_head_qk256_dispatch_delta": {
+          "bitnet_linear_layers_cpu_fallback": 0,
+          "bitnet_linear_layers_on_a770_opencl": 0,
+          "bitnet_linear_layers_on_cuda": 0,
+          "bitnet_linear_layers_total": 0,
+          "execution_claim": "no_qk256_dispatch_observed",
+          "unsupported_ops": []
+        },
+        "right_token_id": 27252
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_logit_margin_frontier": {
     "case_count": 1,
     "classification": "generated_output_logit_margin_frontier_opposite_argmax",
@@ -759,5 +836,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-23T00:17:22.396193+00:00"
+  "timestamp": "2026-05-23T03:37:14.751474100+00:00"
 }
