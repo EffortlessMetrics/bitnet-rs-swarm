@@ -1,4 +1,4 @@
-# Swarm Post-522 Checkpoint Handoff
+# Swarm Post-523 Checkpoint Handoff
 
 Status: queue checkpoint, no source promotion started
 Linked proposal: not changed by this handoff
@@ -7,12 +7,13 @@ Linked ADRs: not changed by this handoff
 Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
 PRs: #503, #504, #505, #506, #507, #508, #509, #510, #511, #512, #513, #514,
-  #515, #516, #517, #518, #519, #520, #521, #522
+  #515, #516, #517, #518, #519, #520, #521, #522, #523
 
 This file records the swarm/source state at swarm SHA
-`69d4da1fdcb900c1407a81a2000931c5ee086a69`, after the queue returned to zero
-open PRs. PR #517 is the current `origin/main` tip because it auto-merged after
-the #521 and #522 tracker/receipt work.
+`1480cdf778193499f9f1baab9c7c2d9c1fe667e3`, after the A770-041 tracker
+closeout returned the queue to zero open work, excluding this handoff PR.
+PR #523 is the current `origin/main` tip because it closed A770-041 after PR #517
+auto-merged.
 
 ## Landed Since Post-502
 
@@ -74,7 +75,7 @@ the #521 and #522 tracker/receipt work.
   - Squash commit: `4b9f191a5c9be4b985b14c62eb58a1a73e578e5e`
   - Added a CUDA BitNet performance-profile manifest and receipt tooling.
 - #517 `diag(a770): replay layer 0 attention output source frontier`
-  - Squash commit and current queue-stabilized swarm SHA:
+  - Squash commit:
     `69d4da1fdcb900c1407a81a2000931c5ee086a69`
   - Added A770 layer-0 attention output source-frontier diagnostics, reports,
     and receipts.
@@ -82,14 +83,24 @@ the #521 and #522 tracker/receipt work.
     selected attention, resident KV cache, full residency, reference parity,
     server readiness, route promotion, hardware support, or BitNet completion
     claim.
+- #523 `docs(tracking): close A770-041 after PR 517`
+  - Squash commit and current queue-stabilized swarm SHA:
+    `1480cdf778193499f9f1baab9c7c2d9c1fe667e3`
+  - Closed the A770-041 tracker state after #517 and regenerated dashboard
+    state.
+  - Claim boundary: tracker closeout only. No runtime math, OpenCL dispatch,
+    QK256 kernels, receipt schema, model artifact, backend selection, A770
+    proof, CPU/A770 parity, strict answer readiness, broad quality, residency,
+    speed, trusted partial acceleration, or full BitNet inference claim.
 
 ## Closed Unmerged
 
 - None in this checkpoint window.
 
-## Open Queue After #517
+## Open Queue After #523
 
-- No open PRs in `EffortlessMetrics/bitnet-rs-swarm`.
+- No open PRs in `EffortlessMetrics/bitnet-rs-swarm`, excluding this handoff
+  PR.
 - No open PRs in `EffortlessMetrics/BitNet-rs`.
 
 ## Source Delta At This Checkpoint
@@ -97,10 +108,10 @@ the #521 and #522 tracker/receipt work.
 - Checkpoint source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Checkpoint swarm ref:
-  `origin/main` = `69d4da1fdcb900c1407a81a2000931c5ee086a69`
+  `origin/main` = `1480cdf778193499f9f1baab9c7c2d9c1fe667e3`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --left-right --count source/main...origin/main`
-  returned `0 137`.
+  returned `0 138`.
 - `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref source/main --swarm-ref origin/main'`
   returned `repo-boundary status: Ok`.
 - Release workflow guard status: guarded.
@@ -109,7 +120,7 @@ the #521 and #522 tracker/receipt work.
 ## Promotion Packet Readiness
 
 Do not promote `source/main..origin/main` as one source PR from this checkpoint
-alone. The range now spans 137 swarm-only commits across repo-boundary tooling,
+alone. The range now spans 138 swarm-only commits across repo-boundary tooling,
 tracker closeouts, CUDA/Qwen3 receipt evidence, SLM CPU boundary work, A770
 diagnostic lineage, Lunar Lake audit state, generated dashboards, and runtime
 diagnostic code.
@@ -122,23 +133,27 @@ artifacts, claim boundary, excluded work, release impact, and rollback.
 
 - Open swarm PR queue:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --json number,title,headRefName,mergeStateStatus,autoMergeRequest,statusCheckRollup,updatedAt`
-  returned `[]`.
+  returned this handoff PR (#524), so the open queue excluding this handoff was
+  empty.
 - Open source PR queue:
   `rtk gh pr list --repo EffortlessMetrics/BitNet-rs --state open --limit 50 --json number,title,headRefName,mergeStateStatus,updatedAt`
   returned `[]`.
 - Current swarm main:
   `rtk gh api repos/EffortlessMetrics/bitnet-rs-swarm/branches/main --jq '{sha:.commit.sha}'`
-  returned `69d4da1fdcb900c1407a81a2000931c5ee086a69`.
+  returned `1480cdf778193499f9f1baab9c7c2d9c1fe667e3`.
 - Source/swarm ancestry:
   `rtk git merge-base --is-ancestor source/main origin/main` returned success.
 - Repo-boundary status:
   `rtk wsl -d Ubuntu -- bash -lc 'cd /mnt/h/Code/Rust4/bitnet-rs-swarm && cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref source/main --swarm-ref origin/main'`
-  returned status `Ok`, source missing commits `0`, swarm-only commits `137`,
+  returned status `Ok`, source missing commits `0`, swarm-only commits `138`,
   `release_workflows_guarded: true`, and normalized result
   `BitNet Rust Small Result`.
 - #517 auto-merged by squash at
   `69d4da1fdcb900c1407a81a2000931c5ee086a69` after repeated generated
   dashboard refreshes and branch-protection checks.
+- #523 auto-merged by squash at
+  `1480cdf778193499f9f1baab9c7c2d9c1fe667e3` after the generated tracker
+  closeout and normalized `BitNet Rust Small Result` check completed.
 
 ## Validation
 
@@ -160,7 +175,7 @@ artifacts, claim boundary, excluded work, release impact, and rollback.
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `69d4da1fdcb900c1407a81a2000931c5ee086a69` as the current queue-stabilized
+  `1480cdf778193499f9f1baab9c7c2d9c1fe667e3` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive: classify lane, inspect
