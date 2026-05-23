@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T03:08:23Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 409
+head_sha = "dc1f42d1e979e08a17b69407b65a8725e4e2b18a"
+merge_sha = "e10f3b190e0d7999450899aaa41d56575068cd09"
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+actor = "codex"
+summary = "Merged PR #409 for the final-norm/layer-output output-storage blocker classification."
+notes = [
+  "The merged slice records machine-checkable `model.final_norm.output` and `transformer.block.output` caller-output-storage blockers in the transformer workspace and warm-session allocation audit.",
+  "The closeout preserves the no dense math, sidecar promotion, speedup, sustained-throughput, Q4/Q5 runtime, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim boundary.",
+]
