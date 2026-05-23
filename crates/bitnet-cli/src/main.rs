@@ -15479,8 +15479,20 @@ mod tests {
             "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_reuse_status"],
+            "layer_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_reuse_status"],
+            "final_norm_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
+        );
+        assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_classification"],
-            "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations"
+            "TransformerModel::forward_with_workspace moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot and records final-norm/layer-output blockers; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_layer_output_classification"],
+            "TransformerModel::forward_impl still receives transformer layer outputs and the final RMSNorm output as owned Candle Tensors, with no caller-provided output-storage API that can preserve behavior today"
         );
         assert!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
@@ -15488,6 +15500,20 @@ mod tests {
                 .is_some_and(|surfaces| surfaces
                     .iter()
                     .any(|surface| surface == "model.forward.output"))
+        );
+        assert!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
+                .as_array()
+                .is_some_and(|surfaces| surfaces
+                    .iter()
+                    .any(|surface| surface == "model.final_norm.output"))
+        );
+        assert!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
+                .as_array()
+                .is_some_and(|surfaces| surfaces
+                    .iter()
+                    .any(|surface| surface == "model.layer.output"))
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["claim_scope"],
@@ -15574,11 +15600,11 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["alloc_bytes"], 1_500);
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "model_forward_owned_output_boundary"
+            "final_norm_layer_output_storage_boundary"
         );
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+            "final_norm_layer_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
         assert_eq!(
@@ -15612,12 +15638,12 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "model_forward_owned_output_boundary"
+            "final_norm_layer_output_storage_boundary"
         );
         assert_eq!(audit["next_optimization_target"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+            "final_norm_layer_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
     }

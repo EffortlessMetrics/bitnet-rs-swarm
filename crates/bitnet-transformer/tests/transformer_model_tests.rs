@@ -224,6 +224,8 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert_eq!(workspace.workspace_owned_output_count(), model.config.model.num_layers);
     assert_eq!(workspace.model_workspace_owned_output_count(), 1);
     assert_eq!(workspace.model_output_storage_attempts(), 1);
+    assert_eq!(workspace.layer_output_storage_attempts(), model.config.model.num_layers);
+    assert_eq!(workspace.final_norm_output_storage_attempts(), 1);
     assert_eq!(workspace.down_proj_output_storage_attempts(), model.config.model.num_layers);
     let Some(model_surface) = workspace.model_output_surface() else {
         anyhow::bail!("workspace should classify the model forward output surface");
@@ -238,6 +240,32 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert!(!model_surface.weight_accessible);
     assert!(!model_surface.bias_accessible);
     assert!(!model_surface.can_fill_caller_output_storage);
+    let Some(layer_surface) = workspace.layer_output_surface() else {
+        anyhow::bail!("workspace should classify the transformer layer output surface");
+    };
+    assert_eq!(layer_surface.name, "model.layer.output");
+    assert_eq!(layer_surface.storage_owner, "CandleTensor");
+    assert_eq!(
+        layer_surface.status,
+        "layer_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
+    );
+    assert_eq!(layer_surface.last_shape, vec![1, 1, hidden]);
+    assert!(!layer_surface.weight_accessible);
+    assert!(!layer_surface.bias_accessible);
+    assert!(!layer_surface.can_fill_caller_output_storage);
+    let Some(final_norm_surface) = workspace.final_norm_output_surface() else {
+        anyhow::bail!("workspace should classify the final norm output surface");
+    };
+    assert_eq!(final_norm_surface.name, "model.final_norm.output");
+    assert_eq!(final_norm_surface.storage_owner, "CandleTensor");
+    assert_eq!(
+        final_norm_surface.status,
+        "final_norm_output_storage_api_surface_missing_blocked_by_candle_tensor_ops"
+    );
+    assert_eq!(final_norm_surface.last_shape, vec![1, 1, hidden]);
+    assert!(!final_norm_surface.weight_accessible);
+    assert!(!final_norm_surface.bias_accessible);
+    assert!(!final_norm_surface.can_fill_caller_output_storage);
     let Some(surface) = workspace.first_output_surface() else {
         anyhow::bail!("workspace should classify one output surface");
     };

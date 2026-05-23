@@ -1622,10 +1622,14 @@ pub struct TransformerForwardWorkspace {
     feed_forward_output_slot: Option<Tensor>,
     model_output_slot: Option<Tensor>,
     model_output_surface: Option<TransformerWorkspaceOutputSurface>,
+    layer_output_surface: Option<TransformerWorkspaceOutputSurface>,
+    final_norm_output_surface: Option<TransformerWorkspaceOutputSurface>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     workspace_owned_output_count: usize,
     model_workspace_owned_output_count: usize,
     model_output_storage_attempts: usize,
+    layer_output_storage_attempts: usize,
+    final_norm_output_storage_attempts: usize,
     down_proj_output_storage_attempts: usize,
     tensor_reuse_enabled: bool,
 }
@@ -1732,8 +1736,24 @@ impl TransformerForwardWorkspace {
         self.model_output_storage_attempts
     }
 
+    pub fn layer_output_storage_attempts(&self) -> usize {
+        self.layer_output_storage_attempts
+    }
+
+    pub fn final_norm_output_storage_attempts(&self) -> usize {
+        self.final_norm_output_storage_attempts
+    }
+
     pub fn model_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.model_output_surface.as_ref()
+    }
+
+    pub fn layer_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
+        self.layer_output_surface.as_ref()
+    }
+
+    pub fn final_norm_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
+        self.final_norm_output_surface.as_ref()
     }
 
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
@@ -1782,6 +1802,24 @@ impl TransformerForwardWorkspace {
         self.last_output_shape = tensor.dims().to_vec();
     }
 
+    fn record_layer_output_storage_boundary(&mut self, tensor: &Tensor) {
+        self.layer_output_storage_attempts += 1;
+        self.last_output_shape = tensor.dims().to_vec();
+        self.layer_output_surface = Some(TransformerWorkspaceOutputSurface {
+            name: "model.layer.output",
+            storage_owner: "CandleTensor",
+            status: "layer_output_storage_api_surface_missing_blocked_by_candle_tensor_ops",
+            reason: "TransformerModel::forward_impl still receives each transformer layer result as an owned Candle Tensor; there is no caller-provided layer-output storage parameter to fill from the layer stack without changing behavior",
+            next_api_hook: "add or adopt a transformer-layer caller-output-storage API before replacing per-layer owned Tensor outputs with reusable workspace-backed storage",
+            last_shape: tensor.dims().to_vec(),
+            linear_weight_shape: Vec::new(),
+            linear_bias_shape: None,
+            weight_accessible: false,
+            bias_accessible: false,
+            can_fill_caller_output_storage: false,
+        });
+    }
+
     fn record_feed_forward_input(&mut self, tensor: &Tensor) {
         self.feed_forward_calls += 1;
         self.last_input_shape = tensor.dims().to_vec();
@@ -1799,6 +1837,24 @@ impl TransformerForwardWorkspace {
         self.down_proj_output_storage_attempts += 1;
         self.last_output_shape = tensor.dims().to_vec();
         self.feed_forward_output_surface = Some(boundary);
+    }
+
+    fn record_final_norm_output_storage_boundary(&mut self, tensor: &Tensor) {
+        self.final_norm_output_storage_attempts += 1;
+        self.last_output_shape = tensor.dims().to_vec();
+        self.final_norm_output_surface = Some(TransformerWorkspaceOutputSurface {
+            name: "model.final_norm.output",
+            storage_owner: "CandleTensor",
+            status: "final_norm_output_storage_api_surface_missing_blocked_by_candle_tensor_ops",
+            reason: "TransformerModel::forward_impl still receives the final RMSNorm result as an owned Candle Tensor; there is no caller-provided final-norm output storage parameter to fill without changing behavior",
+            next_api_hook: "add or adopt a final RMSNorm caller-output-storage API before replacing the final norm allocation with reusable workspace-backed storage",
+            last_shape: tensor.dims().to_vec(),
+            linear_weight_shape: Vec::new(),
+            linear_bias_shape: None,
+            weight_accessible: false,
+            bias_accessible: false,
+            can_fill_caller_output_storage: false,
+        });
     }
 
     fn store_feed_forward_output(&mut self, tensor: Tensor) {
@@ -3305,6 +3361,9 @@ impl TransformerModel {
                     qwen_trace_device_kind(x.device())
                 )
             });
+            if let Some(workspace) = workspace.as_mut() {
+                workspace.record_layer_output_storage_boundary(&x);
+            }
         }
 
         let final_norm_start = Instant::now();
@@ -3321,6 +3380,9 @@ impl TransformerModel {
             )
         });
         qwen_trace_tensor("model.final_norm", None, &normalized)?;
+        if let Some(workspace) = workspace.as_mut() {
+            workspace.record_final_norm_output_storage_boundary(&normalized);
+        }
         if debug_attn_enabled()
             && let Ok(norm) = normalized.sqr()?.mean_all()?.sqrt()?.to_scalar::<f32>()
         {

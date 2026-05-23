@@ -1,0 +1,13 @@
+timestamp = "2026-05-23T02:53:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+actor = "codex"
+summary = "Started the SLM-CPU-085 final-norm/layer-output caller-output-storage boundary slice."
+notes = [
+  "The slice is scoped to behavior-preserving storage-boundary evidence for model.layer.output and model.final_norm.output.",
+  "No dense math, packed-Q8 sidecar promotion, speedup claim, sustained throughput claim, Q4/Q5 support, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 work is in scope.",
+]
