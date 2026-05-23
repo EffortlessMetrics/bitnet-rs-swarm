@@ -28,6 +28,10 @@ impact, excluded work, source commit, swarm base commit, merge method, and
 promotion or sync packet status. Generated dashboards remain derived state;
 they do not decide whether swarm-only work is source authority.
 
+For repo-boundary work, tracker state is a coordination aid. The authoritative
+handoff evidence is the promotion or sync packet plus the ancestry and proof
+commands recorded in the PR body.
+
 Use:
 
 ```bash

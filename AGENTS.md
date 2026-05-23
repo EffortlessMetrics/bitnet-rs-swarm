@@ -23,6 +23,13 @@ Do not open normal development PRs in `BitNet-rs` unless explicitly directed,
 or unless the PR is a source-repo promotion, sync, release, publish, or
 emergency hotfix.
 
+Quick role check:
+
+| Checkout role | Normal work | Boundary rule |
+| --- | --- | --- |
+| `EffortlessMetrics/bitnet-rs-swarm` | Agent development, proof execution, diagnostics, campaign work | No release, publish, signing, or source-truth claim without a promotion or sync packet. |
+| `EffortlessMetrics/BitNet-rs` | Public source, release, publish, signing, emergency hotfixes | No routine swarm development unless explicitly directed. |
+
 ## Merge Method Boundary
 
 Normal swarm PRs into `bitnet-rs-swarm/main` use squash merge.
