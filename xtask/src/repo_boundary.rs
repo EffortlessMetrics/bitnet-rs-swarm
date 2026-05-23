@@ -63,6 +63,7 @@ struct CiPolicy {
 #[derive(Debug, Serialize)]
 struct RepoBoundaryStatus {
     current_repo: RepoKind,
+    current_checkout: CheckoutKind,
     policy_path: String,
     source_repo: String,
     source_branch: String,
@@ -75,6 +76,10 @@ struct RepoBoundaryStatus {
     swarm_remote_configured: bool,
     source_ref: String,
     swarm_ref: String,
+    swarm_base_ref: Option<String>,
+    head_matches_source_ref: Option<bool>,
+    head_matches_swarm_base_ref: Option<bool>,
+    head_descends_from_swarm_base_ref: Option<bool>,
     source_ref_reachable_from_swarm_ref: Option<bool>,
     commits_source_has_that_swarm_lacks: Option<u64>,
     commits_swarm_has_that_source_lacks: Option<u64>,
@@ -89,6 +94,16 @@ struct RepoBoundaryStatus {
 enum RepoKind {
     Source,
     Swarm,
+    Unknown,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum CheckoutKind {
+    SourceMain,
+    SwarmMain,
+    SwarmBranch,
+    SharedMain,
     Unknown,
 }
 
@@ -127,9 +142,22 @@ fn status(args: StatusArgs) -> Result<()> {
     });
     let source_ref = args.source_ref.unwrap_or_else(|| default_source_ref(&current_repo));
     let swarm_ref = args.swarm_ref.unwrap_or_else(|| "HEAD".to_string());
+    let swarm_base_ref = default_swarm_base_ref(&current_repo);
 
     let source_ref_reachable =
         git_status(["merge-base", "--is-ancestor", source_ref.as_str(), swarm_ref.as_str()]);
+    let head_matches_source_ref = git_same_commit("HEAD", &source_ref);
+    let head_matches_swarm_base_ref = swarm_base_ref
+        .as_deref()
+        .and_then(|swarm_base_ref| git_same_commit("HEAD", swarm_base_ref));
+    let head_descends_from_swarm_base_ref = swarm_base_ref.as_deref().and_then(|swarm_base_ref| {
+        git_status(["merge-base", "--is-ancestor", swarm_base_ref, "HEAD"])
+    });
+    let current_checkout = classify_checkout(
+        head_matches_source_ref,
+        head_matches_swarm_base_ref,
+        head_descends_from_swarm_base_ref,
+    );
     let source_missing_commits = git_count([
         "rev-list".to_string(),
         "--count".to_string(),
@@ -193,6 +221,7 @@ fn status(args: StatusArgs) -> Result<()> {
     let swarm_remote_configured = swarm_remote_url.is_some();
     let report = RepoBoundaryStatus {
         current_repo,
+        current_checkout,
         policy_path: args.policy.display().to_string(),
         source_repo: policy.source.repo,
         source_branch: policy.source.branch,
@@ -205,6 +234,10 @@ fn status(args: StatusArgs) -> Result<()> {
         swarm_remote_configured,
         source_ref,
         swarm_ref,
+        swarm_base_ref,
+        head_matches_source_ref,
+        head_matches_swarm_base_ref,
+        head_descends_from_swarm_base_ref,
         source_ref_reachable_from_swarm_ref: source_ref_reachable,
         commits_source_has_that_swarm_lacks: source_missing_commits,
         commits_swarm_has_that_source_lacks: swarm_only_commits,
@@ -255,6 +288,31 @@ fn default_source_ref(current_repo: &RepoKind) -> String {
     }
 }
 
+fn default_swarm_base_ref(current_repo: &RepoKind) -> Option<String> {
+    if git_ref_exists("swarm/main") {
+        Some("swarm/main".to_string())
+    } else if *current_repo == RepoKind::Swarm && git_ref_exists("origin/main") {
+        Some("origin/main".to_string())
+    } else {
+        None
+    }
+}
+
+fn classify_checkout(
+    head_matches_source_ref: Option<bool>,
+    head_matches_swarm_base_ref: Option<bool>,
+    head_descends_from_swarm_base_ref: Option<bool>,
+) -> CheckoutKind {
+    match (head_matches_source_ref, head_matches_swarm_base_ref, head_descends_from_swarm_base_ref)
+    {
+        (Some(true), Some(true), _) => CheckoutKind::SharedMain,
+        (_, Some(true), _) => CheckoutKind::SwarmMain,
+        (_, Some(false), Some(true)) => CheckoutKind::SwarmBranch,
+        (Some(true), _, _) => CheckoutKind::SourceMain,
+        _ => CheckoutKind::Unknown,
+    }
+}
+
 fn normalize_repo_url(value: &str) -> String {
     value.trim().trim_end_matches(".git").replace(':', "/").replace('\\', "/").to_ascii_lowercase()
 }
@@ -285,6 +343,12 @@ fn git_status<const N: usize>(args: [&str; N]) -> Option<bool> {
         Some(1) => Some(false),
         _ => None,
     }
+}
+
+fn git_same_commit(left: &str, right: &str) -> Option<bool> {
+    let left = git_output(["rev-parse", "--verify", left]).ok()?;
+    let right = git_output(["rev-parse", "--verify", right]).ok()?;
+    Some(left == right)
 }
 
 fn git_count<I, S>(args: I) -> Option<u64>
@@ -392,6 +456,7 @@ fn is_release_sensitive_workflow(name: &str, raw: &str) -> bool {
 fn print_text(report: &RepoBoundaryStatus) {
     println!("repo-boundary status: {:?}", report.status);
     println!("current_repo: {:?}", report.current_repo);
+    println!("current_checkout: {:?}", report.current_checkout);
     println!("source_repo: {} ({})", report.source_repo, report.source_branch);
     println!("swarm_repo: {} ({})", report.swarm_repo, report.swarm_branch);
     println!("source_remote_configured: {}", report.source_remote_configured);
@@ -404,6 +469,15 @@ fn print_text(report: &RepoBoundaryStatus) {
     }
     println!("source_ref: {}", report.source_ref);
     println!("swarm_ref: {}", report.swarm_ref);
+    if let Some(swarm_base_ref) = &report.swarm_base_ref {
+        println!("swarm_base_ref: {swarm_base_ref}");
+    }
+    println!("head_matches_source_ref: {}", option_bool(report.head_matches_source_ref));
+    println!("head_matches_swarm_base_ref: {}", option_bool(report.head_matches_swarm_base_ref));
+    println!(
+        "head_descends_from_swarm_base_ref: {}",
+        option_bool(report.head_descends_from_swarm_base_ref)
+    );
     println!(
         "source_ref_reachable_from_swarm_ref: {}",
         option_bool(report.source_ref_reachable_from_swarm_ref)
@@ -476,6 +550,32 @@ mod tests {
         assert!(is_release_sensitive_workflow("release.yml", "name: Release"));
         assert!(is_release_sensitive_workflow("security.yml", "run: cargo publish --dry-run"));
         assert!(is_release_sensitive_workflow("image.yml", "env:\n  PUBLISH_IMAGE: true"));
+    }
+
+    #[test]
+    fn classifies_source_main_checkout() {
+        assert_eq!(
+            classify_checkout(Some(true), Some(false), Some(false)),
+            CheckoutKind::SourceMain
+        );
+    }
+
+    #[test]
+    fn classifies_swarm_main_checkout() {
+        assert_eq!(classify_checkout(Some(false), Some(true), Some(true)), CheckoutKind::SwarmMain);
+    }
+
+    #[test]
+    fn classifies_swarm_branch_checkout() {
+        assert_eq!(
+            classify_checkout(Some(false), Some(false), Some(true)),
+            CheckoutKind::SwarmBranch
+        );
+    }
+
+    #[test]
+    fn classifies_shared_main_checkout() {
+        assert_eq!(classify_checkout(Some(true), Some(true), Some(true)), CheckoutKind::SharedMain);
     }
 
     #[test]
