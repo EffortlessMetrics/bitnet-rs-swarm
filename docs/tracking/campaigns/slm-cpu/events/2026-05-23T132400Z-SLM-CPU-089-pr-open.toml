@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T13:24:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-089"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 471
+head_sha = "e91153b333a6c2f0ce7ff107f288f24974a17592"
+branch = "codex/slm-cpu-089-residual-add-storage-gate"
+actor = "codex"
+summary = "Opened SLM-CPU-089 residual-add output-storage gate PR."
+notes = [
+  "PR #471 queues the next transformer.block.output residual-add storage gate after SLM-CPU-088.",
+  "The slice remains tracker-only and keeps the Qwen3 Q8_0 appliance oracle as the gate before any bounded allocation improvement.",
+  "No residual-add runtime optimization, packed-Q8 default promotion, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

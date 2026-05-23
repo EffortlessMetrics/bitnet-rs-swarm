@@ -1506,6 +1506,34 @@ does not claim end-to-end speedup, sustained 8250U throughput, broad answer
 quality, Q4/Q5 runtime support, server execution, accelerator execution,
 Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-089 Residual-Add Storage Gate
+
+SLM-CPU-089 is the next queued performance-lane gate after SLM-CPU-088. It does
+not start from a speed target. It starts from the specific blocker that
+SLM-CPU-088 made machine-checkable:
+
+```text
+blocked_surface = transformer.block.output
+blocked_operation = residual_add
+current_output_ownership = owned Candle Tensor
+required_next_boundary = behavior-preserving caller-provided output storage
+default_runtime_changed = false
+speedup_claim = false
+```
+
+A valid implementation may add a narrow residual-add output-storage API or may
+prove that the current Candle tensor boundary still prevents reusable storage.
+Either result must stay useful to the performance lane by preserving the exact
+claim boundary: no runtime improvement can be claimed until before/after Qwen3
+Q8_0 receipts prove matching model SHA, strict GGUF tokenizer authority, prompt
+IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense
+hook identity where applicable, and `fallback_used=false`.
+
+This is intentionally still in the allocation/layout lane. It must not promote
+`packed_q8_sidecar`, broaden Q4/Q5 support, claim sustained 8250U throughput,
+or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S
+paths.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8

@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T13:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-089"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-089-residual-add-storage-gate"
+actor = "codex"
+summary = "Queue the next Kaby Lake Qwen3 Q8_0 residual-add output-storage gate after SLM-CPU-088."
+notes = [
+  "SLM-CPU-088 classified the remaining transformer.block.output blocker as Candle residual-add owned Tensor output without caller-provided storage.",
+  "SLM-CPU-089 must either add or precisely specify a behavior-preserving residual-add reusable-storage API, or emit a machine-checkable blocker proving why owned Tensor output remains unavoidable.",
+  "Any later allocation improvement remains gated by the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No speedup, sustained-throughput, packed-Q8 default promotion, Q4/Q5 runtime, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
