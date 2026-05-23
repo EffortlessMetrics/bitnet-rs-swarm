@@ -307,8 +307,8 @@ fn classify_checkout(
     {
         (Some(true), Some(true), _) => CheckoutKind::SharedMain,
         (_, Some(true), _) => CheckoutKind::SwarmMain,
-        (_, Some(false), Some(true)) => CheckoutKind::SwarmBranch,
         (Some(true), _, _) => CheckoutKind::SourceMain,
+        (_, Some(false), Some(true)) => CheckoutKind::SwarmBranch,
         _ => CheckoutKind::Unknown,
     }
 }
@@ -556,6 +556,14 @@ mod tests {
     fn classifies_source_main_checkout() {
         assert_eq!(
             classify_checkout(Some(true), Some(false), Some(false)),
+            CheckoutKind::SourceMain
+        );
+    }
+
+    #[test]
+    fn classifies_promoted_source_main_before_swarm_branch() {
+        assert_eq!(
+            classify_checkout(Some(true), Some(false), Some(true)),
             CheckoutKind::SourceMain
         );
     }
