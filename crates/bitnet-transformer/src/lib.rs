@@ -1627,6 +1627,7 @@ pub struct TransformerForwardWorkspace {
     penultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     antepenultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     pre_antepenultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
+    earlier_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1905,6 +1906,10 @@ impl TransformerForwardWorkspace {
         self.pre_antepenultimate_block_source_tensors.as_ref()
     }
 
+    pub fn earlier_block_source_tensors(&self) -> Option<&TransformerFinalBlockSourceTensors> {
+        self.earlier_block_source_tensors.as_ref()
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -1969,6 +1974,7 @@ impl TransformerForwardWorkspace {
         feed_forward_output: &Tensor,
         block_output: &Tensor,
     ) {
+        self.earlier_block_source_tensors = self.pre_antepenultimate_block_source_tensors.clone();
         self.pre_antepenultimate_block_source_tensors =
             self.antepenultimate_block_source_tensors.clone();
         self.antepenultimate_block_source_tensors = self.penultimate_block_source_tensors.clone();
