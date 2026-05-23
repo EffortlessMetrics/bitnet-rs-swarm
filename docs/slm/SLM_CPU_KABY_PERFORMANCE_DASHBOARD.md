@@ -22,6 +22,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Packed Q8_0 sidecar runtime proof gate | `ci/slm-cpu/intel-i5-8250u/2026-05-19/qwen3-packed-q8-sidecar-runtime-proof-validation.json` | Records that packed Q8_0 sidecar runtime execution remains blocked because production dispatch still preserves eager F32 and no after-execution receipts exist |
 | Post-bridge packed-Q8 counter classification | `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-077-post-bridge-counter-classification.json` | Records real i5-8250U sidecar instrumentation counters and identifies `packed_matvec_compute` as the dominant exact-tensor sidecar cost |
 | Post-aligned packed-Q8 matvec classification | `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-079-post-aligned-matvec-classification.json` | Preserves the Qwen3 behavior oracle while recording a bounded counter-level `packed_matvec_ns` reduction against the SLM-CPU-077 sidecar oracle |
+| Logits/output-head boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json` | Classifies the remaining `model.logits` / output-head boundary as owned Candle Tensor output plus optional host extraction, without claiming a runtime optimization |
 
 All rows use:
 
@@ -1622,6 +1623,26 @@ This slice must not claim residual-add storage is solved, promote
 `packed_q8_sidecar`, claim end-to-end speedup, claim sustained 8250U
 throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD
 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+SLM-CPU-091 records the boundary in the warm-session allocation audit rather
+than changing runtime selection:
+
+```text
+status = logits_output_storage_blocked_by_candle_tensor_ops
+exact_blocking_ops =
+  candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>
+  Tensor::matmul(&self, &Tensor) -> Result<Tensor>
+  Tensor::reshape(&self, shape) -> Result<Tensor>
+  Tensor::to_vec1::<f32>(&self) -> Result<Vec<f32>> when host logits extraction is requested
+required_missing_api =
+  logits/output-head API accepting caller-provided output storage
+  or a fused top-k/argmax path that avoids materializing a full owned logits tensor
+```
+
+This preserves the earlier sampler/logits-scratch cleanup while making the
+remaining owned-output surface explicit. It does not alter generated IDs,
+decoded text, tokenizer authority, backend identity, dense hook identity,
+packed-Q8 selection, or thread defaults.
 
 ## SLM-CPU-081 Repeated Timing Gate
 

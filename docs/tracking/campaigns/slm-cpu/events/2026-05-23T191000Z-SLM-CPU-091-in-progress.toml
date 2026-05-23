@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T19:10:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-091"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-091-logits-output-boundary"
+actor = "codex"
+summary = "Started the Kaby Lake Qwen3 Q8_0 logits/output-head allocation-boundary slice."
+notes = [
+  "The implementation classifies the remaining model.logits / output-head boundary in the warm-session allocation audit.",
+  "The slice names the owned Candle logits/output APIs and host extraction boundary without changing runtime selection.",
+  "Any later optimization remains gated by the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No runtime optimization, speedup, sustained-throughput, packed-Q8 promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
