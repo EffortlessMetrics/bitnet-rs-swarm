@@ -1220,6 +1220,10 @@ pub struct DenseGgufQwenShortDecodeStrictCudaCommand {
     #[arg(long, default_value_t = 10)]
     pub top_k: usize,
 
+    /// Logits transfer mode. The default records full-logits D2H until device top-k is qualified.
+    #[arg(long, value_enum, default_value = "full-logits-download-cpu-sampler")]
+    pub logits_transfer_mode: DenseQwenLogitsTransferMode,
+
     /// CUDA device index.
     #[arg(long, default_value_t = 0)]
     pub device_index: usize,
@@ -1368,6 +1372,7 @@ impl DenseGgufQwenShortDecodeStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             false,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         )
         .with_context(|| "failed CPU reference short-decode run")?;
         let cuda = run_qwen_short_decode(
@@ -1377,6 +1382,7 @@ impl DenseGgufQwenShortDecodeStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             true,
+            self.logits_transfer_mode,
         )
         .with_context(|| "failed CUDA target short-decode run")?;
 
@@ -1595,6 +1601,7 @@ impl DenseGgufQwenWarmDecodeStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             false,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         )
         .with_context(|| "failed CPU reference warm-decode run")?;
         let cuda = run_qwen_short_decode(
@@ -1604,6 +1611,7 @@ impl DenseGgufQwenWarmDecodeStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             true,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         )
         .with_context(|| "failed CUDA target warm-decode run")?;
 
@@ -1841,6 +1849,7 @@ impl DenseGgufQwenWarmSessionStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             false,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         )
         .with_context(|| "failed CPU reference warm-session run")?;
         let cuda = run_qwen_warm_session(
@@ -1850,6 +1859,7 @@ impl DenseGgufQwenWarmSessionStrictCudaCommand {
             self.max_new_tokens,
             self.top_k,
             true,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         )
         .with_context(|| "failed CUDA target warm-session run")?;
 
@@ -1976,6 +1986,7 @@ pub async fn run_dense_qwen_cuda_ask(
         max_new_tokens: options.max_new_tokens,
         capture_profile: DenseQwenSourceCaptureProfile::ShortDecode,
         top_k: options.top_k,
+        logits_transfer_mode: DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
         device_index: options.device_index,
         all_layer_plan: PathBuf::from(proof_receipts.all_layer_plan),
         model_boundary_fixtures: PathBuf::from(proof_receipts.model_boundary_fixtures),
@@ -3974,9 +3985,11 @@ struct DenseQwenLogitsSample {
     transfer_mode: DenseQwenLogitsTransferMode,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum DenseQwenLogitsTransferMode {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum DenseQwenLogitsTransferMode {
+    #[value(name = "full-logits-download-cpu-sampler")]
     FullLogitsDownloadCpuSampler,
+    #[value(name = "device-top-k-cuda-sampler")]
     DeviceTopKCudaSampler,
 }
 
@@ -4568,6 +4581,7 @@ fn run_qwen_short_decode(
     max_new_tokens: usize,
     top_k: usize,
     require_cuda: bool,
+    logits_transfer_mode: DenseQwenLogitsTransferMode,
 ) -> Result<DenseQwenShortDecodeRun> {
     let total_start = std::time::Instant::now();
     let candle_device = device.to_candle()?;
@@ -4590,6 +4604,7 @@ fn run_qwen_short_decode(
         max_new_tokens,
         top_k,
         require_cuda,
+        logits_transfer_mode,
         total_start,
         model_load_ms,
     )
@@ -4602,6 +4617,7 @@ fn run_qwen_warm_session(
     max_new_tokens: usize,
     top_k: usize,
     require_cuda: bool,
+    logits_transfer_mode: DenseQwenLogitsTransferMode,
 ) -> Result<DenseQwenWarmSessionRun> {
     let total_start = std::time::Instant::now();
     let device_start = std::time::Instant::now();
@@ -4630,6 +4646,7 @@ fn run_qwen_warm_session(
             max_new_tokens,
             top_k,
             require_cuda,
+            logits_transfer_mode,
             turn_start,
             0.0,
         )
@@ -4652,6 +4669,7 @@ fn run_qwen_short_decode_with_loaded_model(
     max_new_tokens: usize,
     top_k: usize,
     require_cuda: bool,
+    logits_transfer_mode: DenseQwenLogitsTransferMode,
     total_start: std::time::Instant,
     model_load_ms: f64,
 ) -> Result<DenseQwenShortDecodeRun> {
@@ -4689,7 +4707,7 @@ fn run_qwen_short_decode_with_loaded_model(
     let mut logits_all_cuda_resident = true;
     let mut logits_len = 0_usize;
     let logits_transfer_mode = if require_cuda {
-        DenseQwenLogitsTransferMode::DeviceTopKCudaSampler
+        logits_transfer_mode
     } else {
         DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler
     };
@@ -14248,6 +14266,29 @@ mod tests {
         );
 
         assert_eq!(resolved, PathBuf::from(DEFAULT_DENSE_QWEN_ALL_LAYER_PLAN_RECEIPT));
+    }
+
+    #[test]
+    fn dense_qwen_full_logits_transfer_records_non_reduced_blocker() -> Result<()> {
+        let full_logits_bytes = 151_936 * 4 * 8;
+        let reduction = dense_qwen_logits_transfer_reduction_json(
+            151_936,
+            8,
+            10,
+            full_logits_bytes,
+            DenseQwenLogitsTransferMode::FullLogitsDownloadCpuSampler,
+        )?;
+
+        assert_eq!(reduction["transfer_mode"].as_str(), Some("full_logits_download_cpu_sampler"));
+        assert_eq!(reduction["sampling_location"].as_str(), Some("cpu"));
+        assert_eq!(reduction["device_to_host_bytes_reduced"].as_bool(), Some(false));
+        assert_eq!(
+            reduction["reduction_blocker"].as_str(),
+            Some("cpu_sampler_requires_full_logits_until_device_top_k_sampler")
+        );
+        assert_eq!(reduction["actual_device_to_host_bytes"].as_u64(), Some(full_logits_bytes));
+        assert_eq!(reduction["full_logits_download_bytes"].as_u64(), Some(full_logits_bytes));
+        Ok(())
     }
 
     #[test]

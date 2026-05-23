@@ -581,13 +581,15 @@ per-profile missing-input report.
 
 CUDA-MODEL-017A landed the missing profile tooling and the repeated comparator
 manifest preflight works. CUDA-MODEL-017N captured the first current-source
-`one_token` strict CUDA source receipt, and CUDA-MODEL-017O completed the
-three-run `one_token` source set:
+`one_token` strict CUDA source receipt, CUDA-MODEL-017O completed the three-run
+`one_token` source set, and CUDA-MODEL-017P captured the first `short_decode_8`
+source receipt:
 
 ```text
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-one-token-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-one-token-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-short-decode-8-cuda.json
 ```
 
 The receipts record the exact Qwen3 0.6B Q8_0 artifact, selected
@@ -601,7 +603,7 @@ The aggregate remains blocked because the current committed source set is:
 
 ```text
 one_token: 3 / 3
-short_decode_8: 0 / 3
+short_decode_8: 1 / 3
 short_decode_32: 0 / 3
 warm_session_3_turns: 0 / 3
 decode_128_from_warm_context: 0 / 3
@@ -609,7 +611,10 @@ decode_128_from_warm_context: 0 / 3
 
 The repeated comparator aggregate generator is not the blocker; it is behaving
 correctly by accepting the completed `one_token` source set and refusing to
-generate an aggregate until the remaining profile source receipts exist.
+generate an aggregate until the remaining profile source receipts exist. The
+first `short_decode_8` receipt uses explicit full-logits D2H sampling
+(`full_logits_download_cpu_sampler`) and does not claim logits-transfer
+reduction.
 
 ### Non-goals
 
