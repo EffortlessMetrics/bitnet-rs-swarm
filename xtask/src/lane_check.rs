@@ -190,6 +190,9 @@ fn list_field_values(body: &str, field: &str) -> Vec<String> {
     let mut values = Vec::new();
     for line in lines.iter().skip(start + 1) {
         let trimmed = line.trim();
+        if trimmed.starts_with('#') {
+            break;
+        }
         if is_body_field_line(trimmed) && !trimmed.starts_with('-') {
             break;
         }
@@ -197,7 +200,7 @@ fn list_field_values(body: &str, field: &str) -> Vec<String> {
             continue;
         }
         let value = trimmed.trim_start_matches('-').trim();
-        if !value.is_empty() && !is_placeholder(value) {
+        if !value.is_empty() && !is_placeholder(value) && !is_checklist_item(value) {
             values.push(value.to_string());
         }
     }
@@ -206,6 +209,11 @@ fn list_field_values(body: &str, field: &str) -> Vec<String> {
 
 fn is_placeholder(value: &str) -> bool {
     value.contains("<!--") || value == "_" || value.eq_ignore_ascii_case("todo")
+}
+
+fn is_checklist_item(value: &str) -> bool {
+    let value = value.trim_start();
+    value.starts_with("[ ]") || value.starts_with("[x]") || value.starts_with("[X]")
 }
 
 fn is_body_field_line(line: &str) -> bool {
@@ -379,12 +387,16 @@ Commands run:
 - <!-- command or none -->
 Validation gaps:
 - <!-- gap or none -->
+- [ ] Tests pass locally with `cargo test --workspace`
+## CI cost and verification discipline
 Rollback:
 "#;
         let mut report = CheckReport::default();
         validate_pr_body(body, None, &[], &mut report);
         assert!(report.errors.iter().any(|error| error.contains("Lane")));
         assert!(report.errors.iter().any(|error| error.contains("Allowed paths")));
+        assert!(report.errors.iter().any(|error| error.contains("Commands run")));
+        assert!(report.errors.iter().any(|error| error.contains("Validation gaps")));
         assert!(report.errors.iter().any(|error| error.contains("Source promotion needed")));
         assert!(report.errors.iter().any(|error| error.contains("Rollback")));
     }
