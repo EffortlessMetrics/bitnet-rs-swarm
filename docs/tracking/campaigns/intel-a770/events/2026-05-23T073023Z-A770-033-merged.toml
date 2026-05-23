@@ -1,0 +1,20 @@
+timestamp = "2026-05-23T07:30:23Z"
+campaign = "intel-a770"
+item = "A770-033"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-033-hidden-state-source-frontier"
+pr = 439
+head_sha = "9d484f85236162c5c051f492489f8fdf4176855b"
+merge_sha = "9f80b18c3c8cbe616bed72214fd97b5cd78220ac"
+summary = "Merged PR #439 with hidden-state source frontier context for the focused A770 summary mismatch."
+notes = [
+  "Source PR: #439.",
+  "Head SHA: 9d484f85236162c5c051f492489f8fdf4176855b.",
+  "Merge SHA: 9f80b18c3c8cbe616bed72214fd97b5cd78220ac.",
+  "PR #439 adds compact model.forward output and last-hidden fingerprints to the focused A770 summary first-mismatch receipt.",
+  "The committed focused parity receipt classifies generated_output_hidden_state_source_frontier_forward_output_drift for a770_summary_seed770024_keywords_014.",
+  "The merge does not change runtime math, promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]

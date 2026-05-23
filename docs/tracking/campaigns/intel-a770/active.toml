@@ -1589,9 +1589,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-033"
-status = "pr_open"
+status = "merged"
 pr = 439
-head_sha = "717da0d482cc8efc52613766956880cb22b1fdd1"
+head_sha = "9d484f85236162c5c051f492489f8fdf4176855b"
+merge_sha = "9f80b18c3c8cbe616bed72214fd97b5cd78220ac"
 branch = "codex/intel-a770/A770-033-hidden-state-source-frontier"
 stackable = false
 review_mode = "codex_premerge"
