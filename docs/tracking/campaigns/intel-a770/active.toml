@@ -1529,9 +1529,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-032"
-status = "pr_open"
+status = "merged"
 pr = 418
-head_sha = "68befa3ba7b6541257877515b1c4c433ce5a023b"
+head_sha = "fd641aaa61173ace0d054ad15875febac85f79c0"
+merge_sha = "af11085b5113afe4ddf2e645f9fb5f964e119967"
 branch = "codex/intel-a770/A770-032-internal-logit-source-context"
 stackable = false
 review_mode = "codex_premerge"
