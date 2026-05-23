@@ -4746,7 +4746,15 @@ async fn run_simple_generation(
             );
             cuda_first_forward_started = true;
         }
-        let h = model.forward(&x, any_cache.as_mut())?;
+        let logit_source_context_requested = dump_logit_steps
+            .is_some_and(|max_steps| step_idx < max_steps)
+            && logit_source_context_enabled_for_step(step_idx);
+        let (h, model_forward_source_context) = if logit_source_context_requested {
+            let forward = model.forward_with_source_context(&x, any_cache.as_mut())?;
+            (forward.output, forward.source_context)
+        } else {
+            (model.forward(&x, any_cache.as_mut())?, None)
+        };
         if strict_cuda_backend_selected
             && cuda_first_forward_started
             && !cuda_first_forward_completed
@@ -4792,16 +4800,17 @@ async fn run_simple_generation(
             eprintln!("hidden_rms={:.6}", hidden_rms);
         }
 
-        let logit_source_context_requested = dump_logit_steps
-            .is_some_and(|max_steps| step_idx < max_steps)
-            && logit_source_context_enabled_for_step(step_idx);
         let logit_source_hidden_operand = if logit_source_context_requested {
             Some(compact_logit_source_hidden_operand(&last_hidden))
         } else {
             None
         };
         let logit_source_hidden_state_source = if logit_source_context_requested {
-            Some(compact_logit_source_hidden_state_source(&h, &last_hidden))
+            Some(compact_logit_source_hidden_state_source(
+                &h,
+                &last_hidden,
+                model_forward_source_context.as_ref(),
+            ))
         } else {
             None
         };
@@ -12810,23 +12819,76 @@ fn compact_logit_source_hidden_operand(
 fn compact_logit_source_hidden_state_source(
     forward_output: &bitnet_common::ConcreteTensor,
     last_hidden: &bitnet_common::ConcreteTensor,
+    model_forward_source: Option<&bitnet_models::ModelForwardSourceContext>,
 ) -> serde_json::Value {
-    let forward_output =
+    let forward_output_fingerprint =
         compact_logit_source_tensor_fingerprint(forward_output, "forward_output_extract_failed");
-    let last_hidden =
+    let last_hidden_fingerprint =
         compact_logit_source_tensor_fingerprint(last_hidden, "last_hidden_extract_failed");
-    let extraction_context_available = forward_output["available"].as_bool().unwrap_or(false)
-        && last_hidden["available"].as_bool().unwrap_or(false);
+    let model_forward_source = compact_logit_source_model_forward_source(
+        &forward_output_fingerprint,
+        model_forward_source,
+    );
+    let extraction_context_available =
+        forward_output_fingerprint["available"].as_bool().unwrap_or(false)
+            && last_hidden_fingerprint["available"].as_bool().unwrap_or(false);
 
     serde_json::json!({
         "schema_version": "1.0.0",
         "context_kind": "decode_step_hidden_state_source",
         "diagnostic_only": true,
         "claim_allowed": false,
-        "forward_output": forward_output,
-        "last_hidden": last_hidden,
+        "forward_output": forward_output_fingerprint,
+        "last_hidden": last_hidden_fingerprint,
+        "model_forward_source": model_forward_source,
         "extraction_context_available": extraction_context_available,
     })
+}
+
+fn compact_logit_source_model_forward_source(
+    forward_output: &serde_json::Value,
+    source: Option<&bitnet_models::ModelForwardSourceContext>,
+) -> serde_json::Value {
+    let Some(source) = source else {
+        return serde_json::json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_model_forward_source",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "source_context_available": false,
+            "reason": "model_forward_source_context_missing",
+        });
+    };
+
+    let prior_layer_output = compact_logit_source_tensor_fingerprint(
+        &source.prior_layer_output,
+        "prior_layer_output_extract_failed",
+    );
+    let final_norm_output = compact_logit_source_tensor_fingerprint(
+        &source.final_norm_output,
+        "final_norm_output_extract_failed",
+    );
+    let source_context_available = prior_layer_output["available"].as_bool().unwrap_or(false)
+        && final_norm_output["available"].as_bool().unwrap_or(false)
+        && prior_layer_output["sha256_f32_le"].as_str().is_some()
+        && final_norm_output["sha256_f32_le"].as_str().is_some();
+    let final_norm_matches_forward_output =
+        optional_json_sha_eq(&final_norm_output, forward_output);
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_model_forward_source",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "prior_layer_output": prior_layer_output,
+        "final_norm_output": final_norm_output,
+        "source_context_available": source_context_available,
+        "final_norm_matches_forward_output": final_norm_matches_forward_output,
+    })
+}
+
+fn optional_json_sha_eq(left: &serde_json::Value, right: &serde_json::Value) -> Option<bool> {
+    Some(left["sha256_f32_le"].as_str()? == right["sha256_f32_le"].as_str()?)
 }
 
 fn compact_logit_source_tensor_fingerprint(

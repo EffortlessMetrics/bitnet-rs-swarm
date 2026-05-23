@@ -43,9 +43,9 @@
         "selected_kernel": "i2_s-avx2-reference"
       },
       "latency": {
-        "cmd_to_first_ms": 54092,
-        "decode_first_ms": 54092,
-        "total_ms": 86602
+        "cmd_to_first_ms": 55601,
+        "decode_first_ms": 55601,
+        "total_ms": 89116
       },
       "loader": {
         "mode": "real_gguf"
@@ -903,6 +903,48 @@
                   2560
                 ],
                 "value_count": 2560
+              },
+              "model_forward_source": {
+                "claim_allowed": false,
+                "context_kind": "decode_step_model_forward_source",
+                "diagnostic_only": true,
+                "final_norm_matches_forward_output": true,
+                "final_norm_output": {
+                  "available": true,
+                  "finite_count": 2560,
+                  "infinite_count": 0,
+                  "max": 0.4943468570709229,
+                  "mean": 0.0003945303108537246,
+                  "min": -0.4310920536518097,
+                  "nan_count": 0,
+                  "rms": 0.07708468808572078,
+                  "sha256_f32_le": "224d8c1fb08d05d0a3ce05e8e8491cbcc46da8a52f25461c3204a3c37993f650",
+                  "shape": [
+                    1,
+                    1,
+                    2560
+                  ],
+                  "value_count": 2560
+                },
+                "prior_layer_output": {
+                  "available": true,
+                  "finite_count": 2560,
+                  "infinite_count": 0,
+                  "max": 56698.3671875,
+                  "mean": -30.345812698453663,
+                  "min": -64725.4609375,
+                  "nan_count": 0,
+                  "rms": 5616.558052599897,
+                  "sha256_f32_le": "338c8b6d1164bc13b83c0afd76cc85365fa2e412f8e6c01b7956372919d6c286",
+                  "shape": [
+                    1,
+                    1,
+                    2560
+                  ],
+                  "value_count": 2560
+                },
+                "schema_version": "1.0.0",
+                "source_context_available": true
               },
               "schema_version": "1.0.0"
             },
@@ -1961,30 +2003,30 @@
         },
         "schema": "bitnet_reference_vs_rust_v1"
       },
-      "run_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
+      "run_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
       "seed_material": "seed=770024 family=summary index=14 required=fast,safe",
       "status": "passed",
       "task_family": "constrained_summary",
       "throughput": {
         "decoded_tokens": 18,
-        "tokens_per_second": 0.20784739382462297
+        "tokens_per_second": 0.20198393105615153
       },
       "timing": {
         "a770_opencl_device_to_host_bytes": null,
         "a770_opencl_host_to_device_bytes": null,
         "a770_opencl_kernel_invocations": null,
         "cuda_kernel_time_ms": null,
-        "decode_steady_state_tok_s": 0.523,
-        "decode_total_ms": 34316.636,
+        "decode_steady_state_tok_s": 0.507,
+        "decode_total_ms": 35189.093,
         "device_to_host_bytes": null,
-        "first_token_decode_ms": 1808.333,
-        "first_token_ms": 54092,
+        "first_token_decode_ms": 1674.499,
+        "first_token_ms": 55601,
         "host_to_device_bytes": null,
-        "model_load_ms": 3224.188,
-        "prefill_ms": 52284.116,
-        "sampling_ms_per_token": 0.217,
-        "tokenize_ms": 1.053,
-        "tokenizer_load_ms": 465.048
+        "model_load_ms": 3352.402,
+        "prefill_ms": 53926.107,
+        "sampling_ms_per_token": 0.211,
+        "tokenize_ms": 1.122,
+        "tokenizer_load_ms": 549.719
       },
       "token_ids": {
         "generated": [
@@ -2184,7 +2226,7 @@
       "work_item": "A770-029"
     },
     "name": "a770-bitnet-answer-readiness-corpus",
-    "path": "ci/quality/a770-bitnet-answer-readiness-corpus.yaml",
+    "path": "ci\\quality\\a770-bitnet-answer-readiness-corpus.yaml",
     "selected_case_count": 1,
     "selected_case_ids": [
       "a770_summary_seed770024_keywords_014"
@@ -2510,7 +2552,7 @@
       "total": 1
     }
   },
-  "timestamp": "2026-05-23T05:49:57.010878+00:00",
+  "timestamp": "2026-05-23T08:40:19.588600800+00:00",
   "tokenizer": {
     "authority": {
       "ggml_pre": "llama-bpe",

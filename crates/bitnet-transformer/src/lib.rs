@@ -1622,6 +1622,7 @@ pub struct TransformerForwardWorkspace {
     feed_forward_output_slot: Option<Tensor>,
     model_output_slot: Option<Tensor>,
     model_output_surface: Option<TransformerWorkspaceOutputSurface>,
+    model_forward_source_tensors: Option<TransformerModelForwardSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1632,6 +1633,12 @@ pub struct TransformerForwardWorkspace {
     final_norm_output_storage_attempts: usize,
     layer_output_storage_attempts: usize,
     tensor_reuse_enabled: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerModelForwardSourceTensors {
+    pub prior_layer_output: Tensor,
+    pub final_norm_output: Tensor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1834,6 +1841,10 @@ impl TransformerForwardWorkspace {
         self.model_output_surface.as_ref()
     }
 
+    pub fn model_forward_source_tensors(&self) -> Option<&TransformerModelForwardSourceTensors> {
+        self.model_forward_source_tensors.as_ref()
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -1876,6 +1887,17 @@ impl TransformerForwardWorkspace {
             weight_accessible: false,
             bias_accessible: false,
             can_fill_caller_output_storage: false,
+        });
+    }
+
+    fn record_model_forward_source_tensors(
+        &mut self,
+        prior_layer_output: &Tensor,
+        final_norm_output: &Tensor,
+    ) {
+        self.model_forward_source_tensors = Some(TransformerModelForwardSourceTensors {
+            prior_layer_output: prior_layer_output.clone(),
+            final_norm_output: final_norm_output.clone(),
         });
     }
 
@@ -3478,6 +3500,7 @@ impl TransformerModel {
         });
         let normalized = self.norm.forward(&x)?;
         if let Some(workspace) = workspace.as_mut() {
+            workspace.record_model_forward_source_tensors(&x, &normalized);
             workspace.record_final_norm_output_storage_boundary(&normalized, &self.norm);
         }
         qwen_trace_runtime_event(trace_forward, "model.final_norm_finish", || {
