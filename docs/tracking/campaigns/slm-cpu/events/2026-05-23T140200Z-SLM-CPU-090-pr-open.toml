@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T14:02:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 474
+head_sha = "e116b2393c921f82891c3c0b69113ba378622317"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Opened SLM-CPU-090 residual-add output-storage implementation/blocker slice PR."
+notes = [
+  "PR #474 closes the SLM-CPU-089 queue gate and records SLM-CPU-090 as the next transformer.block.output residual-add output-storage implementation/blocker slice.",
+  "The slice is tracker/control-plane only and makes no runtime optimization claim.",
+  "No packed-Q8 default promotion, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
