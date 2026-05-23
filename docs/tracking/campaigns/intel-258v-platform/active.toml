@@ -12412,9 +12412,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GOAL-AUDIT-040"
-status = "pr_open"
+status = "merged"
 pr = 432
-head_sha = "fb6a04a3afc327ea5eefefb32a7a9ef2147e983b"
+head_sha = "7d4d1cfc0d386bbc51e058dcd03d1fc6c7778bcb"
+merge_sha = "64e6c9233b2964906ee562f0bfc298ec050c1495"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-040-post-snapshot"
 stackable = false
 review_mode = "codex_premerge"
