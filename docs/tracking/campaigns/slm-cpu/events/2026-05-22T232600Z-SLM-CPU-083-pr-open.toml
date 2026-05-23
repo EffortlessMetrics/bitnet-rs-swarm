@@ -1,0 +1,16 @@
+timestamp = "2026-05-22T23:26:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-083"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 393
+branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
+head_sha = "cefffdc9a4613ce394deb1ce4fbc16b52f9db3c3"
+actor = "codex"
+summary = "Opened PR #393 for the SLM-CPU-083 model-forward owned-output boundary classification."
+notes = [
+  "The slice records model.forward.output through TransformerForwardWorkspace alongside the existing feed_forward.down_proj.output surface.",
+  "Warm-session allocation audit now reports the model-forward owned-output boundary as the next allocation-layout API target after the packed-Q8 sidecar timing regression.",
+  "The PR makes no dense math change, packed_q8_sidecar promotion, speedup claim, sustained-throughput claim, Q4/Q5 claim, server/GPU/NPU/OpenVINO/UHD 620 claim, Qwen3.5 claim, or BitNet QK256 change.",
+]
