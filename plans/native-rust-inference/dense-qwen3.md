@@ -539,7 +539,7 @@ CUDA-MODEL-017 blocked until an equivalent source-capture path exists.
 
 ## Work item: CUDA-MODEL-017
 
-Status: blocked
+Status: merged
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
@@ -693,7 +693,7 @@ Keep Qwen3 product CLI readiness and exact-profile server readiness unchanged.
 
 ## Work item: CUDA-MODEL-018
 
-Status: blocked
+Status: merged
 Linked proposal: `docs/proposals/BITNET-PROP-0003-native-rust-inference-product.md`
 Linked specs: `docs/specs/BITNET-SPEC-0014-runtime-performance-contract.md`
 Linked ADRs: `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
@@ -713,6 +713,13 @@ profile. Any accepted claim must name the exact model artifact, tokenizer,
 prompt policy, backend, route, profile, comparator, token counts, timing
 fields, transfer accounting, VRAM context, and fallback state.
 
+CUDA-MODEL-018 rejects speedup, benchmark-qualified speed, TTFT/throughput
+qualification, and full-residency promotion for every reviewed Qwen3 profile.
+The aggregate is repeated fallback-free comparator evidence, but each CUDA
+profile is slower than the same-artifact CPU AVX-512 comparator by total
+wall-clock time and the current H2D timings remain model-load/weight-upload
+envelopes rather than pure transfer timing.
+
 ### Non-goals
 
 No global speedup, broad dense GGUF readiness, Qwen2.5 proof inheritance,
@@ -729,6 +736,40 @@ kernel change, or server behavior change.
   qualification.
 - Dense Qwen3 evidence remains Qwen3-specific and does not satisfy Qwen2.5,
   broad dense GGUF, or BitNet packed I2_S/QK256 proof.
+
+### Decision
+
+Primary report:
+
+```text
+docs/reports/CUDA_MODEL_018_QWEN3_EXACT_PROFILE_BENCHMARK_REVIEW.md
+```
+
+Primary aggregate:
+
+```text
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/qwen3-0_6b-repeated-comparator.json
+```
+
+Reviewed profile decisions:
+
+```text
+one_token: not_accepted
+short_decode_8: not_accepted
+short_decode_32: not_accepted
+warm_session_3_turns: not_accepted
+decode_128_from_warm_context: not_accepted
+```
+
+Model coverage remains:
+
+```text
+benchmark_qualified=false
+speedup_claim=false
+full_residency_claim=false
+server_ready=true only for the separate exact-profile server receipt
+bitnet_packed_i2s_qk256_proof=false
+```
 
 ### Proof commands
 
