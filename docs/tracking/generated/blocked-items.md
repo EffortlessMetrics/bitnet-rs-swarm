@@ -460,7 +460,7 @@
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
 | intel-258v-platform | LNL258V-POWER-013 | LNL258V-POWER-012 | merged |
-| intel-258v-platform | LNL258V-POWER-014 | LNL258V-POWER-013 | pr_open |
+| intel-258v-platform | LNL258V-POWER-014 | LNL258V-POWER-013 | merged |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
 | intel-258v-platform | LNL258V-ROUTE-024 | LNL258V-ROUTE-023, LNL258V-NPU-RESIDENT-002, LNL258V-POWER-004 | merged |
@@ -624,7 +624,7 @@
 | nvidia-5070ti | CUDA-MODEL-015 | CUDA-MODEL-014B | merged |
 | nvidia-5070ti | CUDA-MODEL-016 | CUDA-MODEL-015 | merged |
 | nvidia-5070ti | CUDA-MODEL-017A | CUDA-MODEL-016 | merged |
-| nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | pr_open |
+| nvidia-5070ti | CUDA-MODEL-018 | CUDA-MODEL-017 | merged |
 | nvidia-5070ti | CUDA-MODEL-SMOLLM2-001 | CUDA-MODEL-008 | merged |
 | nvidia-5070ti | CUDA-UX-009 | CUDA-PROD-010 | merged |
 | nvidia-5070ti | CUDA-UX-010 | CUDA-UX-008, CUDA-UX-009 | merged |

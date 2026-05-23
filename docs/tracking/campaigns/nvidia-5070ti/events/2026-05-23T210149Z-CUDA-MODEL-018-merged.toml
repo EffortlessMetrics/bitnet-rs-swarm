@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T21:01:49Z"
+campaign = "nvidia-5070ti"
+item = "CUDA-MODEL-018"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex"
+branch = "codex/nvidia-5070ti/CUDA-MODEL-018-qwen3-benchmark-review"
+pr = 511
+head_sha = "9dc8424b3f29bd2dafe7b37c32f2aa13cfb7433f"
+merge_sha = "fdcb3643ff9aabd97616cb6e9c76e7206aa14b6a"
+summary = "Closed CUDA-MODEL-018 after PR #511 merged."
+notes = [
+  "PR #511 reviewed the validated qwen3_cuda_repeated_comparator aggregate and rejected Qwen3 speedup, benchmark-qualified speed, and full-residency promotion for the current exact profiles.",
+  "The closeout records the live GitHub merge SHA so campaign doctor no longer treats CUDA-MODEL-018 as stale pr_open state.",
+  "No runtime math, tokenizer, loader, kernel, server, broad dense GGUF readiness, Qwen2.5 proof inheritance, or BitNet QK256 proof claim is added by this closeout.",
+]
