@@ -13194,7 +13194,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-013"
-status = "in_progress"
+status = "pr_open"
+pr = 509
+head_sha = "1d6c73f05f7936a563d532cf9b5338a8e484d28f"
 branch = "codex/lunar-lake/LNL258V-POWER-013-energy-proxy-validity"
 stackable = false
 review_mode = "codex_premerge"
