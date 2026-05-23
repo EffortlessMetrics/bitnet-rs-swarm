@@ -1,0 +1,20 @@
+timestamp = "2026-05-23T14:44:17Z"
+campaign = "intel-a770"
+item = "A770-036"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-036-penultimate-block-source-frontier"
+pr = 478
+head_sha = "e517f08343cfa5802346feda61e159e8acf771db"
+merge_sha = "a6887ef9cdc3eff9702d721c4d9d5d0be59e2a5a"
+summary = "Merged PR #478 with penultimate transformer block source frontier context for the focused A770 summary mismatch."
+notes = [
+  "Source PR: #478.",
+  "Head SHA: e517f08343cfa5802346feda61e159e8acf771db.",
+  "Merge SHA: a6887ef9cdc3eff9702d721c4d9d5d0be59e2a5a.",
+  "PR #478 adds compact penultimate block input, attention output, attention residual, FFN output, and block output fingerprints to the focused A770 summary first-mismatch receipt.",
+  "The committed focused parity receipt classifies generated_output_penultimate_block_source_frontier_block_input_drift for a770_summary_seed770024_keywords_014.",
+  "The merge does not change runtime math, promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any BitNet QK256/I2_S behavior claim.",
+]
