@@ -588,7 +588,8 @@ receipt, CUDA-MODEL-017R completed the three-run `short_decode_8` source set,
 CUDA-MODEL-017S captured the first `short_decode_32` source receipt,
 CUDA-MODEL-017T captured the second `short_decode_32` source receipt,
 CUDA-MODEL-017U completed the three-run `short_decode_32` source set, and
-CUDA-MODEL-017V captured the first `warm_session_3_turns` source receipt:
+CUDA-MODEL-017V captured the first `warm_session_3_turns` source receipt, and
+CUDA-MODEL-017W captured the second `warm_session_3_turns` source receipt:
 
 ```text
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json
@@ -601,6 +602,7 @@ ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-short-decode-32-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-short-decode-32-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-warm-session-3-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-warm-session-3-cuda.json
 ```
 
 The receipts record the exact Qwen3 0.6B Q8_0 artifact, selected
@@ -620,7 +622,7 @@ incomplete:
 one_token: 3 / 3
 short_decode_8: 3 / 3
 short_decode_32: 3 / 3
-warm_session_3_turns: 1 / 3
+warm_session_3_turns: 2 / 3
 decode_128_from_warm_context: 0 / 3
 ```
 
