@@ -934,9 +934,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-034"
-status = "pr_open"
+status = "merged"
 pr = 454
-head_sha = "116ce83758389708ed27578a9b6bf206d4ed448b"
+head_sha = "d8597304336e8047ba38dd7c6f20463f6a284a34"
+merge_sha = "a944766a67303028d7d7787b5031cc9d9bb73cd3"
 branch = "codex/intel-a770/A770-034-model-forward-source-frontier"
 stackable = false
 review_mode = "codex_premerge"

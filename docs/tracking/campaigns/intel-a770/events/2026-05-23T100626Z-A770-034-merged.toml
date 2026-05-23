@@ -1,0 +1,20 @@
+timestamp = "2026-05-23T10:06:26Z"
+campaign = "intel-a770"
+item = "A770-034"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-034-model-forward-source-frontier"
+pr = 454
+head_sha = "d8597304336e8047ba38dd7c6f20463f6a284a34"
+merge_sha = "a944766a67303028d7d7787b5031cc9d9bb73cd3"
+summary = "Merged PR #454 with compact model-forward source context for the focused A770 summary mismatch."
+notes = [
+  "Source PR: #454.",
+  "Head SHA: d8597304336e8047ba38dd7c6f20463f6a284a34.",
+  "Merge SHA: a944766a67303028d7d7787b5031cc9d9bb73cd3.",
+  "PR #454 adds compact final norm and prior layer output fingerprints to the focused A770 summary first-mismatch receipt.",
+  "The committed focused parity receipt classifies generated_output_model_forward_source_frontier_prior_layer_output_drift for a770_summary_seed770024_keywords_014.",
+  "The merge does not change runtime math, promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any BitNet QK256/I2_S behavior claim.",
+]
