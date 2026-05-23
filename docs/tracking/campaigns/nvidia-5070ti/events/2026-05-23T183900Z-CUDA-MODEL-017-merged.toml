@@ -1,0 +1,23 @@
+timestamp = "2026-05-23T18:39:00Z"
+campaign = "nvidia-5070ti"
+item = "CUDA-MODEL-017"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+actor = "codex"
+pr = 506
+branch = "codex/nvidia-5070ti/CUDA-MODEL-017AA-qwen3-decode128-run03"
+head_sha = "73785553f1f0b61963ee522c8a53a287e47cac1e"
+merge_sha = "53b908867874a71209f9c54d421a46322af33e2f"
+summary = "Merged the Qwen3 repeated same-artifact CPU/CUDA comparator aggregate evidence."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/506",
+  "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/qwen3-0_6b-repeated-comparator.json",
+  "docs/reports/CUDA_MODEL_017AA_QWEN3_REPEATED_COMPARATOR_AGGREGATE.md",
+]
+
+notes = [
+  "CUDA-MODEL-017 produced the repeated Qwen3 same-artifact CPU/CUDA comparator aggregate for the exact Qwen3 0.6B Q8_0 artifact.",
+  "The aggregate preserves speedup_claim=false, benchmark_qualified_speedup=false, full_cuda_residency_claimed=false, broad dense GGUF readiness false, Qwen2.5 inheritance false, and BitNet QK256 proof false.",
+]

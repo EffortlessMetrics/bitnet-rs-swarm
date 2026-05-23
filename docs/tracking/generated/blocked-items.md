@@ -458,7 +458,7 @@
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
-| intel-258v-platform | LNL258V-POWER-013 | LNL258V-POWER-012 | pr_open |
+| intel-258v-platform | LNL258V-POWER-013 | LNL258V-POWER-012 | merged |
 | intel-258v-platform | LNL258V-POWER-005 | LNL258V-POWER-004, LNL258V-ASK-005 | merged |
 | intel-258v-platform | LNL258V-ASK-005 | LNL258V-ROUTE-024 | merged |
 | intel-258v-platform | LNL258V-ROUTE-024 | LNL258V-ROUTE-023, LNL258V-NPU-RESIDENT-002, LNL258V-POWER-004 | merged |
@@ -519,7 +519,7 @@
 | intel-a770 | A770-037 | A770-036 | merged |
 | intel-a770 | A770-038 | A770-037 | merged |
 | intel-a770 | A770-039 | A770-038 | merged |
-| intel-a770 | A770-040 | A770-039 | pr_open |
+| intel-a770 | A770-040 | A770-039 | merged |
 | intel-a770 | A770-021 | A770-020 | merged |
 | intel-a770 | A770-022 | A770-021 | merged |
 | intel-a770 | A770-023 | A770-022 | merged |
@@ -798,7 +798,7 @@
 | slm-cpu | SLM-CPU-088 | SLM-CPU-087 | merged |
 | slm-cpu | SLM-CPU-089 | SLM-CPU-088 | merged |
 | slm-cpu | SLM-CPU-090 | SLM-CPU-089 | merged |
-| slm-cpu | SLM-CPU-091 | SLM-CPU-090 | pr_open |
+| slm-cpu | SLM-CPU-091 | SLM-CPU-090 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |
