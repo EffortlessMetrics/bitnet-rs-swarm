@@ -33,14 +33,15 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-parse source/main`
   - `rtk git rev-list --count source/main ^origin/main`
   - `rtk git rev-list --count origin/main ^source/main`
-- Open PR count: 0
+- Open PR count excluding this snapshot PR: 0
 - Duplicate open PR clusters: none
-- Direct swarm PRs waiting for merge: none
-- Current queue-stabilized promotion candidate SHA:
-  `a944766a67303028d7d7787b5031cc9d9bb73cd3`
+- Direct swarm PRs waiting for merge excluding this snapshot PR: none
+- Current queue-stabilized promotion candidate SHA before this snapshot PR
+  merges:
+  `e9319901741124c74fe9fbfb374d4b9f71896d04`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `73`.
+  count is `74`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
@@ -49,6 +50,7 @@ disposition and retains the original large snapshot below for provenance.
 | #453 | Lunar Lake tracker | Merged before its late repair commit was picked up. | No-inference tracker refresh only; the missed repair was ported into #455. |
 | #455 | Lunar Lake tracker closeout | Merged after generated-tracker proof. | Closed LNL258V-GOAL-AUDIT-043 and preserved the post-#452 repair markers. |
 | #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
+| #456 | A770 tracker closeout | Merged after #454 with generated-dashboard proof. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, full inference, or BitNet QK256/I2_S behavior claim. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a

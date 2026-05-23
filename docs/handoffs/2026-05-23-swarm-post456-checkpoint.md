@@ -1,4 +1,4 @@
-# Swarm Post-455 Checkpoint Handoff
+# Swarm Post-456 Checkpoint Handoff
 
 Status: queue checkpoint, no source promotion started
 Linked proposal: not changed by this handoff
@@ -6,7 +6,7 @@ Linked specs: not changed by this handoff
 Linked ADRs: not changed by this handoff
 Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
-PRs: #451, #452, #453, #454, #455
+PRs: #451, #452, #453, #454, #455, #456
 
 ## Landed
 
@@ -28,13 +28,21 @@ PRs: #451, #452, #453, #454, #455
   - Closed the LNL258V-GOAL-AUDIT-043 tracker state and preserved the post-#452
     repair markers that missed #453.
 - #454 `diag(a770): A770-034 model-forward source frontier`
-  - Squash commit and current queue-stabilized promotion candidate SHA:
+  - Squash commit:
     `a944766a67303028d7d7787b5031cc9d9bb73cd3`
   - A770 diagnostic/runtime source-frontier tooling, tests, reports, and
     receipts only.
   - Claim boundary: no A770 quality, selected attention, resident KV, full
     residency, reference parity, server readiness, speedup, hardware support,
     route promotion, or BitNet completion claim.
+- #456 `docs(a770): close A770-034`
+  - Squash commit and current queue-stabilized promotion candidate SHA:
+    `e9319901741124c74fe9fbfb374d4b9f71896d04`
+  - Closed the A770-034 tracker state after #454 and removed #454 from the
+    generated active PR dashboard.
+  - Claim boundary: tracker closeout only; no runtime math, CPU/A770 parity,
+    answer readiness, broad quality, residency, speed, trusted partial
+    acceleration, full inference, or BitNet QK256/I2_S behavior claim.
 
 ## Closed Unmerged
 
@@ -45,10 +53,10 @@ PRs: #451, #452, #453, #454, #455
 - Current source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `origin/main` = `a944766a67303028d7d7787b5031cc9d9bb73cd3`
+  `origin/main` = `e9319901741124c74fe9fbfb374d4b9f71896d04`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --count source/main ^origin/main` returned `0`.
-- `rtk git rev-list --count origin/main ^source/main` returned `73`.
+- `rtk git rev-list --count origin/main ^source/main` returned `74`.
 - This handoff does not start a swarm-to-source promotion. The recorded SHA is a
   promotion candidate only after the source-promotion operator chooses the batch
   boundary, prepares the promotion packet, and verifies source-owned release
@@ -56,10 +64,12 @@ PRs: #451, #452, #453, #454, #455
 
 ## Evidence
 
-- Open swarm PR queue at the post-#454/#455 checkpoint:
+- Open swarm PR queue at the post-#456 checkpoint, excluding this handoff PR:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
-  returned `[]`.
-- Open swarm PR count: `0`.
+  returned only #457, this handoff PR.
+- Open swarm PR count excluding this handoff PR: `0`.
+- #456 auto-merged by squash after `Doctor + Generated Dashboards` and the
+  normalized `BitNet Rust Small Result` passed.
 - #454 auto-merged by squash after the normalized `BitNet Rust Small Result`
   passed on the refreshed head `d8597304336e8047ba38dd7c6f20463f6a284a34`.
 - #455 auto-merged by squash after the generated-tracker repair branch passed
@@ -88,7 +98,7 @@ PRs: #451, #452, #453, #454, #455
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `a944766a67303028d7d7787b5031cc9d9bb73cd3` as the current queue-stabilized
+  `e9319901741124c74fe9fbfb374d4b9f71896d04` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive:
