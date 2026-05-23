@@ -269,6 +269,8 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert_eq!(layer_surface.name, "transformer.block.output");
     assert_eq!(layer_surface.status, "layer_output_storage_blocked_by_candle_tensor_add_ops");
     assert_eq!(layer_surface.last_shape, vec![1, 1, hidden]);
+    assert_eq!(layer_surface.residual_input_shape, Some(vec![1, 1, hidden]));
+    assert_eq!(layer_surface.branch_output_shape, Some(vec![1, 1, hidden]));
     assert!(layer_surface.residual_add_involved);
     assert!(!layer_surface.weight_accessible);
     assert!(!layer_surface.can_fill_caller_output_storage);

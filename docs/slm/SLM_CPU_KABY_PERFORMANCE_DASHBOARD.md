@@ -1469,6 +1469,43 @@ This slice does not move to residual-add/layer-output runtime changes, promote
 Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
 QK256/I2_S paths.
 
+## SLM-CPU-088 Residual Block-Output Boundary
+
+SLM-CPU-088 moves the active allocation-layout blocker from the final-norm API
+surface to the residual-add / `transformer.block.output` boundary queued by
+SLM-CPU-087. The typed workspace now records the two owned tensors that feed the
+second block residual add: the post-attention residual input and the
+feed-forward branch output. That makes the remaining blocker machine-checkable:
+both input shapes are known, the output shape is known, and the operation family
+is the Candle tensor residual-add path that still returns an owned `Tensor`
+instead of filling caller-provided storage.
+
+```text
+layer_output_surface = transformer.block.output
+layer_output_operation_family = candle_core::Tensor residual_add
+layer_output_operation_detail = residual_add_owned_tensor_output
+layer_output_residual_input_shape_recorded = true
+layer_output_branch_output_shape_recorded = true
+layer_output_caller_output_helper_status = layer_output_storage_helper_blocked_by_owned_candle_residual_add_output
+can_fill_layer_output_storage = false
+next_safe_change = residual-add caller-output-storage API
+default_runtime_changed = false
+speedup_claim = false
+```
+
+This is still a blocker/implementation-boundary slice. It does not replace the
+residual add, does not reuse tensor storage, and does not claim a runtime
+improvement. A later optimization must add or adopt a behavior-preserving Candle
+Tensor residual-add caller-output-storage API and then prove the Qwen3 Q8_0
+appliance oracle again with matching model SHA, strict GGUF tokenizer authority,
+prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity,
+dense hook identity where applicable, and `fallback_used=false`.
+
+This slice does not promote `packed_q8_sidecar`, does not change dense math, and
+does not claim end-to-end speedup, sustained 8250U throughput, broad answer
+quality, Q4/Q5 runtime support, server execution, accelerator execution,
+Qwen3.5 support, or BitNet QK256/I2_S changes.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8
