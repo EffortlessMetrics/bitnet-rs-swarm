@@ -309,6 +309,59 @@
     "sampler_logit_extraction_count": 0,
     "trace_capture_context_loss_count": 0
   },
+  "generated_output_attention_output_source_frontier": {
+    "attention_output_source_context_available": true,
+    "case_count": 1,
+    "classification": "generated_output_attention_output_source_frontier_q_projection_drift",
+    "classification_counts": {
+      "generated_output_attention_output_source_q_projection_drift": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "replay earliest divergent block QKV projection source",
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "attention_output_source_context_available": true,
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_attention_output_source_q_projection_drift",
+        "fields": [
+          {
+            "available": true,
+            "field": "attention_input",
+            "left_rms": 0.016132854576369458,
+            "left_sha256_f32_le": "c66e52b4401a4ff527aec2fb0e0897329bf2ac1e28bafb13ff96f0df06463604",
+            "right_rms": 0.016132854576369458,
+            "right_sha256_f32_le": "c66e52b4401a4ff527aec2fb0e0897329bf2ac1e28bafb13ff96f0df06463604",
+            "rms_abs_delta": 0.0,
+            "sha256_match": true
+          },
+          {
+            "available": true,
+            "field": "q_projection",
+            "left_rms": 1.1568787420709823,
+            "left_sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "right_rms": 1.1568787818792203,
+            "right_sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "rms_abs_delta": 3.9808238039285015e-8,
+            "sha256_match": false
+          }
+        ],
+        "first_mismatch_index": 9,
+        "left_attention_output_source_count": 30,
+        "left_chosen_id": 40599,
+        "left_token_id": 40599,
+        "next_diagnostic": "replay earliest divergent block QKV projection source",
+        "reason": null,
+        "right_attention_output_source_count": 30,
+        "right_chosen_id": 27252,
+        "right_token_id": 27252,
+        "target_layer_idx": 0,
+        "transformer_block_source_stack_classification": "generated_output_transformer_block_source_stack_attention_output_drift"
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_earlier_block_source_frontier": {
     "attention_output_drift_count": 0,
     "attention_residual_drift_count": 0,
@@ -1360,5 +1413,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-23T19:02:39.179146900+00:00"
+  "timestamp": "2026-05-23T21:03:03.702828400+00:00"
 }

@@ -26,6 +26,7 @@ pub struct ModelForwardSourceContext {
     pub pre_antepenultimate_block_source: Option<ModelFinalBlockSourceContext>,
     pub earlier_block_source: Option<ModelFinalBlockSourceContext>,
     pub block_sources: Vec<ModelFinalBlockSourceContext>,
+    pub attention_output_sources: Vec<ModelAttentionOutputSourceContext>,
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +37,32 @@ pub struct ModelFinalBlockSourceContext {
     pub post_attention_residual: ConcreteTensor,
     pub feed_forward_output: ConcreteTensor,
     pub block_output: ConcreteTensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelAttentionOutputSourceContext {
+    pub layer_idx: usize,
+    pub attention_input: ConcreteTensor,
+    pub q_projection: ConcreteTensor,
+    pub k_projection: ConcreteTensor,
+    pub v_projection: ConcreteTensor,
+    pub q_heads: ConcreteTensor,
+    pub k_heads: ConcreteTensor,
+    pub v_heads: ConcreteTensor,
+    pub q_norm: ConcreteTensor,
+    pub k_norm: ConcreteTensor,
+    pub q_rope: ConcreteTensor,
+    pub k_rope: ConcreteTensor,
+    pub k_context: ConcreteTensor,
+    pub v_context: ConcreteTensor,
+    pub expanded_k: ConcreteTensor,
+    pub expanded_v: ConcreteTensor,
+    pub scores: ConcreteTensor,
+    pub probabilities: ConcreteTensor,
+    pub value_mix_output_heads: ConcreteTensor,
+    pub output_projection_input: ConcreteTensor,
+    pub sub_layernorm_output: Option<ConcreteTensor>,
+    pub attention_output: ConcreteTensor,
 }
 
 #[derive(Debug, Clone)]
@@ -659,6 +686,39 @@ impl Model for BitNetModel {
                 block_output: self.candle_to_concrete(source.block_output.clone()),
             })
             .collect();
+        let attention_output_sources = workspace
+            .attention_output_source_tensors()
+            .iter()
+            .map(|source| ModelAttentionOutputSourceContext {
+                layer_idx: source.layer_idx,
+                attention_input: self.candle_to_concrete(source.attention_input.clone()),
+                q_projection: self.candle_to_concrete(source.q_projection.clone()),
+                k_projection: self.candle_to_concrete(source.k_projection.clone()),
+                v_projection: self.candle_to_concrete(source.v_projection.clone()),
+                q_heads: self.candle_to_concrete(source.q_heads.clone()),
+                k_heads: self.candle_to_concrete(source.k_heads.clone()),
+                v_heads: self.candle_to_concrete(source.v_heads.clone()),
+                q_norm: self.candle_to_concrete(source.q_norm.clone()),
+                k_norm: self.candle_to_concrete(source.k_norm.clone()),
+                q_rope: self.candle_to_concrete(source.q_rope.clone()),
+                k_rope: self.candle_to_concrete(source.k_rope.clone()),
+                k_context: self.candle_to_concrete(source.k_context.clone()),
+                v_context: self.candle_to_concrete(source.v_context.clone()),
+                expanded_k: self.candle_to_concrete(source.expanded_k.clone()),
+                expanded_v: self.candle_to_concrete(source.expanded_v.clone()),
+                scores: self.candle_to_concrete(source.scores.clone()),
+                probabilities: self.candle_to_concrete(source.probabilities.clone()),
+                value_mix_output_heads: self
+                    .candle_to_concrete(source.value_mix_output_heads.clone()),
+                output_projection_input: self
+                    .candle_to_concrete(source.output_projection_input.clone()),
+                sub_layernorm_output: source
+                    .sub_layernorm_output
+                    .clone()
+                    .map(|tensor| self.candle_to_concrete(tensor)),
+                attention_output: self.candle_to_concrete(source.attention_output.clone()),
+            })
+            .collect();
         let source_context =
             workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
                 prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
@@ -669,6 +729,7 @@ impl Model for BitNetModel {
                 pre_antepenultimate_block_source,
                 earlier_block_source,
                 block_sources,
+                attention_output_sources,
             });
 
         Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })

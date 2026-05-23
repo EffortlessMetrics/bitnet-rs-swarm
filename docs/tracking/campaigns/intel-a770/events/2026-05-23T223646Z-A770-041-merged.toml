@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T22:36:46Z"
+campaign = "intel-a770"
+item = "A770-041"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 517
+branch = "codex/intel-a770/A770-041-layer0-attention-output-source"
+head_sha = "44b214d513adf50fe78fdf29c777e21b2f687155"
+merge_sha = "69d4da1fdcb900c1407a81a2000931c5ee086a69"
+merged_at = "2026-05-23T22:32:57Z"
+actor = "codex-a770"
+summary = "Closed A770-041 after PR #517 merged the layer-0 attention output source frontier diagnostic."
+notes = [
+  "A770-041 remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the focused generated-output mismatch as generated_output_attention_output_source_frontier_q_projection_drift with matching layer-0 attention input.",
+  "The next diagnostic is to replay the earliest divergent block QKV projection source.",
+]
