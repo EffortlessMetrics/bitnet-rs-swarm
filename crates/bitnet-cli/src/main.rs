@@ -15480,7 +15480,7 @@ mod tests {
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_classification"],
-            "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations"
+            "TransformerModel::forward_with_workspace moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; SLM-CPU-085 separately classifies final norm and layer output as caller-output-storage blockers"
         );
         assert!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
@@ -15488,6 +15488,34 @@ mod tests {
                 .is_some_and(|surfaces| surfaces
                     .iter()
                     .any(|surface| surface == "model.forward.output"))
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_output_surface"],
+            "model.final_norm.output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_surface"],
+            "transformer.block.output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["final_norm_reuse_status"],
+            "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_reuse_status"],
+            "layer_output_storage_blocked_by_candle_tensor_add_ops"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["post_model_forward_required_api_boundary"],
+            "final_norm_or_layer_output_storage_api_boundary"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["can_fill_final_norm_output_storage"],
+            false
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["can_fill_layer_output_storage"],
+            false
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["claim_scope"],
@@ -15574,11 +15602,11 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["alloc_bytes"], 1_500);
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "model_forward_owned_output_boundary"
+            "final_norm_layer_output_storage_boundary"
         );
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+            "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
         assert_eq!(
@@ -15612,12 +15640,12 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "model_forward_owned_output_boundary"
+            "final_norm_layer_output_storage_boundary"
         );
         assert_eq!(audit["next_optimization_target"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
+            "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
     }

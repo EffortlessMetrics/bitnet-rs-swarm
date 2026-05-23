@@ -16,10 +16,11 @@ use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
     DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
     DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
-    DenseLinearRuntimeHookRegistry, KVCache, TransformerForwardWorkspace, TransformerModel,
+    DenseLinearRuntimeHookRegistry, KVCache, LayerOutputStorageApiBoundary,
+    NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
 };
 use candle_core::{DType, Device, Tensor};
-use candle_nn::{Linear, VarBuilder};
+use candle_nn::{LayerNorm, Linear, VarBuilder};
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -225,6 +226,8 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert_eq!(workspace.model_workspace_owned_output_count(), 1);
     assert_eq!(workspace.model_output_storage_attempts(), 1);
     assert_eq!(workspace.down_proj_output_storage_attempts(), model.config.model.num_layers);
+    assert_eq!(workspace.layer_output_storage_attempts(), model.config.model.num_layers);
+    assert_eq!(workspace.final_norm_output_storage_attempts(), 1);
     let Some(model_surface) = workspace.model_output_surface() else {
         anyhow::bail!("workspace should classify the model forward output surface");
     };
@@ -250,11 +253,71 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert!(surface.weight_accessible);
     assert!(surface.bias_accessible);
     assert!(!surface.can_fill_caller_output_storage);
+    let Some(layer_surface) = workspace.layer_output_surface() else {
+        anyhow::bail!("workspace should classify the transformer block output surface");
+    };
+    assert_eq!(layer_surface.name, "transformer.block.output");
+    assert_eq!(layer_surface.status, "layer_output_storage_blocked_by_candle_tensor_add_ops");
+    assert_eq!(layer_surface.last_shape, vec![1, 1, hidden]);
+    assert!(layer_surface.residual_add_involved);
+    assert!(!layer_surface.weight_accessible);
+    assert!(!layer_surface.can_fill_caller_output_storage);
+    let Some(final_norm_surface) = workspace.final_norm_output_surface() else {
+        anyhow::bail!("workspace should classify the final norm output surface");
+    };
+    assert_eq!(final_norm_surface.name, "model.final_norm.output");
+    assert_eq!(
+        final_norm_surface.status,
+        "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
+    );
+    assert_eq!(final_norm_surface.last_shape, vec![1, 1, hidden]);
+    assert_eq!(final_norm_surface.weight_shape, Some(vec![hidden]));
+    assert!(final_norm_surface.weight_accessible);
+    assert!(!final_norm_surface.can_fill_caller_output_storage);
     assert!(
         !workspace.tensor_reuse_enabled(),
         "SLM-CPU-041 proves the dense linear output hook still lacks reusable Candle storage"
     );
     Ok(())
+}
+
+#[test]
+fn final_norm_output_storage_boundary_records_candle_layer_norm_blocker() -> anyhow::Result<()> {
+    let device = Device::Cpu;
+    let weight = Tensor::ones(4, DType::F32, &device)?;
+    let norm = LayerNorm::rms_norm(weight, 1e-5);
+
+    let boundary =
+        NormOutputStorageApiBoundary::from_candle_layer_norm("model.final_norm.output", &norm);
+
+    assert_eq!(boundary.role, "model.final_norm.output");
+    assert_eq!(boundary.status, "final_norm_output_storage_blocked_by_candle_layer_norm_ops");
+    assert_eq!(boundary.weight_shape, vec![4]);
+    assert!(boundary.bias_shape.is_none());
+    assert!(!boundary.remove_mean);
+    assert!(boundary.weight_accessible);
+    assert!(!boundary.bias_accessible);
+    assert!(!boundary.can_fill_caller_output_storage);
+    assert!(
+        boundary.reason.contains("LayerNorm::forward")
+            && boundary.reason.contains("caller-provided output-storage")
+    );
+    Ok(())
+}
+
+#[test]
+fn layer_output_storage_boundary_records_candle_residual_add_blocker() {
+    let boundary =
+        LayerOutputStorageApiBoundary::from_candle_residual_add("transformer.block.output");
+
+    assert_eq!(boundary.role, "transformer.block.output");
+    assert_eq!(boundary.status, "layer_output_storage_blocked_by_candle_tensor_add_ops");
+    assert!(boundary.residual_add_involved);
+    assert!(!boundary.can_fill_caller_output_storage);
+    assert!(
+        boundary.reason.contains("residual-add")
+            && boundary.reason.contains("caller-provided output-storage")
+    );
 }
 
 #[test]
