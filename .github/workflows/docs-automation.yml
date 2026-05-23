@@ -42,28 +42,23 @@ jobs:
     outputs:
       tracker_only: ${{ steps.classify.outputs.tracker_only }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
-        with:
-          fetch-depth: 0
-
       - name: Detect tracker-only docs PR
         id: classify
         env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
           tracker_only=false
 
-          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${BASE_SHA:-}" ] && [ -n "${HEAD_SHA:-}" ]; then
-            if git cat-file -e "${BASE_SHA}" 2>/dev/null && git cat-file -e "${HEAD_SHA}" 2>/dev/null; then
-              changed_files=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
-            else
-              changed_files=""
-            fi
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER:-}" ]; then
+            changed_files=$(gh api --paginate \
+              "repos/${OWNER}/${REPO}/pulls/${PR_NUMBER}/files" \
+              --jq '.[].filename')
             echo "Changed files considered by docs automation:"
             printf '%s\n' "$changed_files"
 
