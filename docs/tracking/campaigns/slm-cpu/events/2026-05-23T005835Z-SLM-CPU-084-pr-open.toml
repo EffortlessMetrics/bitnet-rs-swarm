@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T00:58:35Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-084"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 399
+branch = "codex/slm-cpu-084-model-forward-output-storage-api"
+head_sha = "486a048fb634fd58075a8c59fa6c6baad863153c"
+actor = "codex"
+summary = "Opened PR #399 for the SLM-CPU-084 model-forward output-storage API surface."
+notes = [
+  "The slice moves TransformerModel::forward_with_workspace output through a TransformerForwardWorkspace-owned model output slot before returning it to the caller.",
+  "The allocation audit now records model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops, keeping reusable caller-filled output storage blocked by Candle owned-tensor operations.",
+  "The claim boundary remains behavior-preserving: no dense math change, packed-Q8 sidecar promotion, speedup claim, sustained throughput claim, Q4/Q5 support, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 work.",
+]

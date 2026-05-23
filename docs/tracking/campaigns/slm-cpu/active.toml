@@ -2100,7 +2100,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-084"
-status = "ready"
+status = "pr_open"
+pr = 399
 branch = "codex/slm-cpu-084-model-forward-output-storage-api"
 stackable = false
 review_mode = "codex_premerge"

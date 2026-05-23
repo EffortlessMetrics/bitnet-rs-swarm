@@ -15476,11 +15476,11 @@ mod tests {
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_reuse_status"],
-            "model_forward_output_storage_blocked_by_owned_tensor_api"
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["model_forward_classification"],
-            "TransformerModel::forward_with_workspace now records the model.forward.output owned-output boundary; the current behavior-preserving API still returns the final Candle Tensor without caller-provided output storage"
+            "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; reusable caller-filled output storage remains blocked because final norm and layer outputs still come from Candle owned-tensor operations"
         );
         assert!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["owned_output_surfaces"]
@@ -15578,7 +15578,7 @@ mod tests {
         );
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_blocked_by_owned_tensor_api"
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
         assert_eq!(
@@ -15617,7 +15617,7 @@ mod tests {
         assert_eq!(audit["next_optimization_target"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "model_forward_output_storage_blocked_by_owned_tensor_api"
+            "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
     }
