@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T21:04:38Z"
+campaign = "intel-a770"
+item = "A770-041"
+event = "in_progress"
+previous_status = "missing"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-041-layer0-attention-output-source"
+summary = "Started A770-041 layer-0 attention output source frontier after A770-040 routed the focused summary mismatch to layer-0 attention output drift."
+notes = [
+  "A770-041 adds compact attention output source fingerprints for attention input, Q/K/V projection, heads, Q/K norm, RoPE, KV context, scores, softmax probabilities, value mix, output projection input, optional sub-layernorm output, and attention output.",
+  "The live focused receipt classifies the earliest layer-0 attention output source drift as q_projection, with matching layer-0 attention input.",
+  "The next diagnostic is to replay the earliest divergent block QKV projection source.",
+  "The slice remains diagnostic-only and does not change runtime math, OpenCL dispatch, QK256 kernels, scoring, sampling, or claim boundaries.",
+  "The slice does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]
