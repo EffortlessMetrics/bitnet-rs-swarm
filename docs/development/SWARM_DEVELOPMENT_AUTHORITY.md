@@ -249,8 +249,9 @@ reasons.
 ## Lane Coordination
 
 Every active PR must name its lane, campaign, work item, orchestrator, branch,
-base main SHA, allowed paths, shared surfaces touched, and whether closeout is
-required. See:
+base main SHA, allowed paths, shared surfaces touched, whether closeout is
+required, whether source promotion is needed, claim boundary, validation
+commands, validation gaps, and rollback. See:
 
 ```text
 docs/tracking/LANE_OWNERSHIP.md
