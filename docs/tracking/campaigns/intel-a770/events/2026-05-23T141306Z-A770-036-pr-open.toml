@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T14:13:06Z"
+campaign = "intel-a770"
+item = "A770-036"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 478
+head_sha = "b409df9b044345087d8f04529b9af111532fe2e8"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-036-penultimate-block-source-frontier"
+summary = "Opened A770-036 penultimate transformer block source frontier PR."
+notes = [
+  "PR #478 adds compact penultimate block input, attention output, attention residual, FFN output, and block output fingerprints to the focused A770 summary first-mismatch receipt.",
+  "The live focused receipt classifies generated_output_penultimate_block_source_frontier_block_input_drift and names capture antepenultimate transformer block source frontier as the next diagnostic.",
+  "The slice remains diagnostic-only and does not promote CPU/A770 parity, strict answer readiness, broad A770 quality, selected attention, resident KV, residency, speed, trusted-partial acceleration, full BitNet inference, or any release/source-repo claim.",
+]

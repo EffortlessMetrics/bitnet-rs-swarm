@@ -21,6 +21,7 @@ pub struct ModelForwardSourceContext {
     pub prior_layer_output: ConcreteTensor,
     pub final_norm_output: ConcreteTensor,
     pub final_block_source: Option<ModelFinalBlockSourceContext>,
+    pub penultimate_block_source: Option<ModelFinalBlockSourceContext>,
 }
 
 #[derive(Debug, Clone)]
@@ -594,11 +595,22 @@ impl Model for BitNetModel {
                 feed_forward_output: self.candle_to_concrete(source.feed_forward_output.clone()),
                 block_output: self.candle_to_concrete(source.block_output.clone()),
             });
+        let penultimate_block_source = workspace.penultimate_block_source_tensors().map(|source| {
+            ModelFinalBlockSourceContext {
+                block_input: self.candle_to_concrete(source.block_input.clone()),
+                attention_output: self.candle_to_concrete(source.attention_output.clone()),
+                post_attention_residual: self
+                    .candle_to_concrete(source.post_attention_residual.clone()),
+                feed_forward_output: self.candle_to_concrete(source.feed_forward_output.clone()),
+                block_output: self.candle_to_concrete(source.block_output.clone()),
+            }
+        });
         let source_context =
             workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
                 prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
                 final_norm_output: self.candle_to_concrete(source.final_norm_output.clone()),
                 final_block_source,
+                penultimate_block_source,
             });
 
         Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })
