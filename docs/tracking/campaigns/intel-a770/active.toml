@@ -997,9 +997,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-035"
-status = "pr_open"
+status = "merged"
 pr = 463
-head_sha = "6f27a9f9d2e171f2351c0718fed4f0984de94b14"
+head_sha = "390efe8d57ffac8526409d0971485f55020fdf4c"
+merge_sha = "9933d6eed73e111b3945daad1a9872c607dea20f"
 branch = "codex/intel-a770/A770-035-final-block-source-frontier"
 stackable = false
 review_mode = "codex_premerge"
