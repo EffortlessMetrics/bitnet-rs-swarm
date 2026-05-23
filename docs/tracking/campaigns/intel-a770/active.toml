@@ -1474,9 +1474,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-031"
-status = "pr_open"
+status = "merged"
 pr = 398
-head_sha = "d096fb092c85f8865bf4e295c9fcd74498a8fece"
+head_sha = "69944e2af258ac2e74ba994f5f6d983d1ed6f9db"
+merge_sha = "7dc230df006c5c5d64396ca1aa8ed6c5d00d3e32"
 branch = "codex/intel-a770/A770-031-summary-argmax-source"
 stackable = false
 review_mode = "codex_premerge"
