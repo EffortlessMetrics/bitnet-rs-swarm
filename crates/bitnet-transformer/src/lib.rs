@@ -1628,6 +1628,7 @@ pub struct TransformerForwardWorkspace {
     antepenultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     pre_antepenultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     earlier_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
+    block_source_tensors: Vec<TransformerFinalBlockSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1648,6 +1649,7 @@ pub struct TransformerModelForwardSourceTensors {
 
 #[derive(Debug, Clone)]
 pub struct TransformerFinalBlockSourceTensors {
+    pub layer_idx: usize,
     pub block_input: Tensor,
     pub attention_output: Tensor,
     pub post_attention_residual: Tensor,
@@ -1952,6 +1954,10 @@ impl TransformerForwardWorkspace {
         self.earlier_block_source_tensors.as_ref()
     }
 
+    pub fn block_source_tensors(&self) -> &[TransformerFinalBlockSourceTensors] {
+        &self.block_source_tensors
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -2010,6 +2016,7 @@ impl TransformerForwardWorkspace {
 
     fn record_final_block_source_tensors(
         &mut self,
+        layer_idx: usize,
         block_input: &Tensor,
         attention_output: &Tensor,
         post_attention_residual: &Tensor,
@@ -2021,13 +2028,16 @@ impl TransformerForwardWorkspace {
             self.antepenultimate_block_source_tensors.clone();
         self.antepenultimate_block_source_tensors = self.penultimate_block_source_tensors.clone();
         self.penultimate_block_source_tensors = self.final_block_source_tensors.clone();
-        self.final_block_source_tensors = Some(TransformerFinalBlockSourceTensors {
+        let source = TransformerFinalBlockSourceTensors {
+            layer_idx,
             block_input: block_input.clone(),
             attention_output: attention_output.clone(),
             post_attention_residual: post_attention_residual.clone(),
             feed_forward_output: feed_forward_output.clone(),
             block_output: block_output.clone(),
-        });
+        };
+        self.block_source_tensors.push(source.clone());
+        self.final_block_source_tensors = Some(source);
     }
 
     fn record_block_input(&mut self, tensor: &Tensor) {
@@ -2668,6 +2678,7 @@ impl TransformerBlock {
                 post_attention_residual_for_source.as_ref(),
             ) {
                 workspace.record_final_block_source_tensors(
+                    self.attention.layer_idx,
                     block_input,
                     attention_output,
                     post_attention_residual,

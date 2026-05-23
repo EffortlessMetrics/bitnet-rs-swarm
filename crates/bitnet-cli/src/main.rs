@@ -12886,6 +12886,7 @@ fn compact_logit_source_model_forward_source(
     );
     let earlier_block_source =
         compact_logit_source_earlier_block_source(source.earlier_block_source.as_ref());
+    let block_sources = compact_logit_source_block_source_stack(&source.block_sources);
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -12899,6 +12900,7 @@ fn compact_logit_source_model_forward_source(
         "antepenultimate_block_source": antepenultimate_block_source,
         "pre_antepenultimate_block_source": pre_antepenultimate_block_source,
         "earlier_block_source": earlier_block_source,
+        "block_sources": block_sources,
         "source_context_available": source_context_available,
         "final_norm_matches_forward_output": final_norm_matches_forward_output,
     })
@@ -12954,6 +12956,7 @@ fn compact_logit_source_final_block_source(
         "context_kind": "decode_step_final_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "layer_idx": source.layer_idx,
         "block_input": block_input,
         "attention_output": attention_output,
         "post_attention_residual": post_attention_residual,
@@ -13013,6 +13016,7 @@ fn compact_logit_source_penultimate_block_source(
         "context_kind": "decode_step_penultimate_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "layer_idx": source.layer_idx,
         "block_input": block_input,
         "attention_output": attention_output,
         "post_attention_residual": post_attention_residual,
@@ -13072,6 +13076,7 @@ fn compact_logit_source_antepenultimate_block_source(
         "context_kind": "decode_step_antepenultimate_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "layer_idx": source.layer_idx,
         "block_input": block_input,
         "attention_output": attention_output,
         "post_attention_residual": post_attention_residual,
@@ -13131,6 +13136,7 @@ fn compact_logit_source_pre_antepenultimate_block_source(
         "context_kind": "decode_step_pre_antepenultimate_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "layer_idx": source.layer_idx,
         "block_input": block_input,
         "attention_output": attention_output,
         "post_attention_residual": post_attention_residual,
@@ -13190,12 +13196,81 @@ fn compact_logit_source_earlier_block_source(
         "context_kind": "decode_step_earlier_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "layer_idx": source.layer_idx,
         "block_input": block_input,
         "attention_output": attention_output,
         "post_attention_residual": post_attention_residual,
         "feed_forward_output": feed_forward_output,
         "block_output": block_output,
         "source_context_available": source_context_available,
+    })
+}
+
+fn compact_logit_source_block_source_stack(
+    sources: &[bitnet_models::ModelFinalBlockSourceContext],
+) -> serde_json::Value {
+    let blocks = sources
+        .iter()
+        .map(|source| {
+            let block_input = compact_logit_source_tensor_fingerprint(
+                &source.block_input,
+                "block_input_extract_failed",
+            );
+            let attention_output = compact_logit_source_tensor_fingerprint(
+                &source.attention_output,
+                "attention_output_extract_failed",
+            );
+            let post_attention_residual = compact_logit_source_tensor_fingerprint(
+                &source.post_attention_residual,
+                "post_attention_residual_extract_failed",
+            );
+            let feed_forward_output = compact_logit_source_tensor_fingerprint(
+                &source.feed_forward_output,
+                "feed_forward_output_extract_failed",
+            );
+            let block_output = compact_logit_source_tensor_fingerprint(
+                &source.block_output,
+                "block_output_extract_failed",
+            );
+            let source_context_available = [
+                &block_input,
+                &attention_output,
+                &post_attention_residual,
+                &feed_forward_output,
+                &block_output,
+            ]
+            .iter()
+            .all(|fingerprint| {
+                fingerprint["available"].as_bool().unwrap_or(false)
+                    && fingerprint["sha256_f32_le"].as_str().is_some()
+            });
+
+            serde_json::json!({
+                "schema_version": "1.0.0",
+                "context_kind": "decode_step_transformer_block_source",
+                "diagnostic_only": true,
+                "claim_allowed": false,
+                "layer_idx": source.layer_idx,
+                "block_input": block_input,
+                "attention_output": attention_output,
+                "post_attention_residual": post_attention_residual,
+                "feed_forward_output": feed_forward_output,
+                "block_output": block_output,
+                "source_context_available": source_context_available,
+            })
+        })
+        .collect::<Vec<_>>();
+    let source_context_available = !blocks.is_empty()
+        && blocks.iter().all(|block| block["source_context_available"].as_bool().unwrap_or(false));
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_transformer_block_source_stack",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "block_count": sources.len(),
+        "source_context_available": source_context_available,
+        "blocks": blocks,
     })
 }
 
