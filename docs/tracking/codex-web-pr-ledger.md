@@ -35,33 +35,37 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-list --count origin/main ^source/main`
 - Open PR count before this snapshot PR: 0
 - Duplicate open PR clusters: none observed in the current open slice after
-  #467 merged.
+  #489 merged.
 - Direct swarm PRs waiting for merge before this snapshot PR: none.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
-  `b38ba412c2928da42c2537dd41c015326e1e1768`
+  `59474d267b61721ea583ba05237ed6e26218ee78`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `85`.
+  count is `105`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
-| #451 | swarm handoff | Merged as the post-#450 operator checkpoint. | Operator-state documentation only; no source promotion started. |
-| #452 | CUDA/Qwen3 diagnostic | Merged as a short-decode source-set receipt. | Diagnostic source-set evidence only; no Qwen3 Lunar Lake promotion, quality, speed, or source-promotion claim. |
-| #453 | Lunar Lake tracker | Merged before its late repair commit was picked up. | No-inference tracker refresh only; the missed repair was ported into #455. |
-| #455 | Lunar Lake tracker closeout | Merged after generated-tracker proof. | Closed LNL258V-GOAL-AUDIT-043 and preserved the post-#452 repair markers. |
-| #454 | A770 diagnostic/runtime salvage | Merged after #455 and after refreshed generated-dashboard proof. | Durable diagnostic source-frontier tooling/tests/reports only; no A770 support, quality, speed, parity, server-readiness, or completion claim. |
-| #456 | A770 tracker closeout | Merged after #454 with generated-dashboard proof. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, full inference, or BitNet QK256/I2_S behavior claim. |
-| #458 | A770 campaign summary | Merged after #456. | Marked A770-034 merged in the campaign summary row only; no runtime/math/support claim. |
-| #461 | Lunar Lake tracker/audit | Merged after #458 with generated tracker proof. | No-inference audit/checklist refresh only; no route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
-| #460 | CUDA/Qwen3 source receipt | Merged after #461. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, or BitNet packed I2_S/QK256 proof. |
-| #462 | Lunar Lake tracker closeout | Merged after #461. | Tracker closeout only; no inference, route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
-| #459 | SLM runtime/perf | Merged after #462. | SLM-CPU-088 residual block output boundary only; no release readiness, source promotion, broad quality, hardware readiness, or public support claim. |
-| #464 | SLM tracker closeout | Merged after #459. | Tracker closeout only; no additional runtime, release, or promotion claim. |
-| #465 | CUDA/Qwen3 receipt | Merged after #464. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, logits transfer reduction, Qwen2.5 inheritance, BitNet packed proof, or routing claim. |
-| #463 | A770 diagnostic/runtime salvage | Merged after #465. | Final-block source-frontier diagnostics only; #467 corrected the landed FFN source fingerprint before this snapshot recorded a promotion candidate. No A770 support, quality, speed, parity, server readiness, route promotion, or completion claim. |
-| #466 | A770 tracker closeout | Merged after #463 and before #467. | Tracker closeout only; #467 landed afterward as the required runtime diagnostic correction. |
-| #467 | A770 diagnostic fix | Merged after `BitNet Rust Small Result` passed. | Corrected final-block diagnostics so `feed_forward_output` records the actual FFN branch output before the residual add; no support, quality, parity, speed, residency, route promotion, release, or source promotion claim. |
+| #468 | swarm handoff | Merged as the post-#467 operator checkpoint. | Operator-state documentation only; no source promotion started. |
+| #469 | CUDA/Qwen3 diagnostic | Merged as the third Qwen3 short-decode source receipt slice. | Receipt evidence only; no Qwen3 quality, speed, full residency, BitNet packed proof, routing, release, or source-promotion claim. |
+| #470 | Lunar Lake tracker | Merged as a post-A770-035 audit refresh. | Migration/audit state only; no native accelerator, route, power, battery, Qwen3, or BitNet QK256/I2_S claim. |
+| #471 | SLM tracker | Merged as the SLM-CPU-089 residual-add storage gate queueing slice. | Tracker/plan state only; no release readiness or broad quality claim. |
+| #472 | Lunar Lake tracker closeout | Merged as the LNL258V-GOAL-AUDIT-045 closeout. | Closeout only; no inference, route, speed, power, or battery claim. |
+| #473 | SLM tracker closeout | Merged as the SLM-CPU-089 closeout. | Tracker closeout only; no runtime release or source-promotion claim. |
+| #474 | SLM tracker sequencing | Merged as SLM-CPU-089 closeout plus SLM-CPU-090 queue state. | Tracker sequencing only; no kernel, quality, release, or public support claim. |
+| #476 | governance/checker | Merged after lane-check proof metadata hardening. | Checker hardening only; no runtime, release, or source-promotion claim. |
+| #477 | SLM tracker repair | Merged as the SLM-CPU-090 ready-state repair. | Tracker state repair only. |
+| #478 | A770 diagnostic/runtime salvage | Merged as A770-036 penultimate block source-frontier diagnostics. | Diagnostic evidence only; no A770 support, quality, speed, parity, server readiness, route promotion, or completion claim. |
+| #479 | CUDA/Qwen3 diagnostic | Merged as Qwen3 warm-session run 1 source receipt. | Receipt evidence only; no aggregate completion, speedup, full residency, transfer reduction, BitNet packed proof, or route claim. |
+| #480 | A770 tracker closeout | Merged after #478. | Tracker closeout only; no runtime math, CPU/A770 parity, answer readiness, quality, residency, speed, or trusted partial acceleration claim. |
+| #481 | governance/checker | Merged after lane-check list parsing hardening. | Tracker/checker hardening only. |
+| #482 | CUDA/Qwen3 diagnostic | Merged as Qwen3 warm-session run 2 source receipt. | Receipt evidence only; no aggregate completion, speedup, full residency, dense GGUF readiness, BitNet packed proof, or route claim. |
+| #483 | SLM tracker/blocker | Merged as the exact SLM-CPU-090 residual-add storage blocker. | Blocker documentation only; no runtime fix or release readiness claim. |
+| #484 | Lunar Lake tracker | Merged as the migration inventory cutoff refresh. | Migration inventory only; no native accelerator, route, speed, power, battery, Qwen3, or BitNet QK256/I2_S behavior claim. |
+| #486 | CUDA/Qwen3 diagnostic | Merged as Qwen3 warm-session run 3 source receipt. | Receipt evidence only; no speedup, full CUDA residency, server readiness, BitNet packed proof, transfer reduction, or route promotion claim. |
+| #487 | SLM tracker closeout | Merged after #483. | Tracker closeout only; no runtime, release, or promotion claim. |
+| #488 | A770 diagnostic/runtime salvage | Merged after local proof and `BitNet Rust Small Result`. | Antepenultimate source-frontier diagnostics only; no runtime math, OpenCL dispatch, QK256 kernels, scoring, sampling, route promotion, CPU/A770 parity, readiness, quality, residency, speed, or trusted partial acceleration claim. |
+| #489 | A770 tracker closeout | Merged after generated-tracker proof and `BitNet Rust Small Result`. | Tracker closeout only; current queue-stabilized promotion candidate is `59474d267b61721ea583ba05237ed6e26218ee78`; no source promotion started. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a
