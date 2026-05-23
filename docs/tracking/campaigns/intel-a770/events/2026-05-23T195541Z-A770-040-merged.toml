@@ -1,0 +1,18 @@
+timestamp = "2026-05-23T19:55:41Z"
+campaign = "intel-a770"
+item = "A770-040"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 508
+branch = "codex/intel-a770/A770-040-block-source-stack-frontier"
+head_sha = "0ae2e55d09cde13f1fce61fad6581e74f93bc409"
+merge_sha = "8bb462c16d4f2a6a7b22f5d71cdd653d0f9bff21"
+merged_at = "2026-05-23T19:54:00Z"
+actor = "codex"
+summary = "Closed A770-040 after PR #508 merged the transformer block source stack frontier diagnostic."
+notes = [
+  "A770-040 remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the focused generated-output mismatch as generated_output_transformer_block_source_stack_frontier_attention_output_drift.",
+  "The next diagnostic is to replay the earliest divergent transformer block attention output source.",
+]
