@@ -2214,9 +2214,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-086"
-status = "pr_open"
-pr = 414
-head_sha = "140ae52f465ec099ab10c0cfabbba2416f71615f"
+status = "ready"
 branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
 stackable = false
 review_mode = "codex_premerge"
