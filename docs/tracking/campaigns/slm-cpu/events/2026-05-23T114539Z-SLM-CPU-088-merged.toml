@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T11:45:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-088"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 459
+head_sha = "5ece9f17394d927845eb806ceccc335138d47c25"
+merge_sha = "c1050aa483bac674c26b523dd7b6182a40801827"
+branch = "codex/slm-cpu-088-residual-block-output-boundary"
+actor = "codex"
+summary = "Merged PR #459 for the residual-add / transformer.block.output allocation-layout boundary."
+notes = [
+  "The merged slice records residual input and feed-forward branch output shapes at the transformer.block.output workspace boundary.",
+  "The committed artifact classifies the remaining blocker as Candle residual-add owned Tensor output without caller-provided storage.",
+  "The closeout preserves the no speedup, sustained-throughput, packed-Q8 default promotion, Q4/Q5 runtime, server, accelerator, Qwen3.5, or BitNet QK256 claim boundary.",
+]
