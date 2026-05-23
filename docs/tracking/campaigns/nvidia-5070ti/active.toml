@@ -3165,6 +3165,7 @@ commands = [
 ]
 allowed_paths = [
   "ci/hardware/windows-9950x3d-rtx5070ti/**",
+  "crates/bitnet-cli/src/commands/dense_gguf_linear_parity/mod.rs",
   "docs/reports/**",
   "plans/native-rust-inference/dense-qwen3.md",
   "docs/tracking/campaigns/nvidia-5070ti/**",
@@ -3182,6 +3183,7 @@ forbidden_paths = [
 ]
 may_claim = [
   "CUDA-MODEL-017 has the current-source Qwen3 one_token strict CUDA source receipt set complete under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ through run-03/.",
+  "CUDA-MODEL-017 has one current-source Qwen3 short_decode_8 strict CUDA source receipt under ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/ with full-logits D2H sampling explicitly recorded.",
   "CUDA-MODEL-017 remains blocked on the remaining repeated source receipts and aggregate generation.",
   "CUDA-MODEL-017A merged the source-capture profile tooling prerequisite.",
   "The qwen3_cuda_repeated_comparator generator fail-closes until all required source receipts exist.",
@@ -3189,12 +3191,14 @@ may_claim = [
 ]
 must_not_claim = [
   "All required CUDA-MODEL-017 source receipts exist.",
-  "Any non-one-token CUDA-MODEL-017 source receipt exists for the 2026-05-23 capture.",
+  "The CUDA-MODEL-017 short_decode_8 source set is complete.",
+  "Any CUDA-MODEL-017 short_decode_32, warm_session_3_turns, or decode_128_from_warm_context source receipt exists for the 2026-05-23 capture.",
   "The qwen3_cuda_repeated_comparator aggregate exists.",
   "Qwen3 speedup exists.",
   "Qwen3 benchmark-qualified speed exists.",
   "Qwen3 full CUDA residency exists.",
   "Qwen3 broad dense GGUF readiness exists.",
+  "Qwen3 logits transfer reduction exists.",
   "Qwen3 proof inherits Qwen2.5 evidence.",
   "Dense regular LLM CUDA proof satisfies BitNet packed I2S/QK256 proof.",
   "Runtime math, tokenizer, loader, kernel, or server behavior changed.",
