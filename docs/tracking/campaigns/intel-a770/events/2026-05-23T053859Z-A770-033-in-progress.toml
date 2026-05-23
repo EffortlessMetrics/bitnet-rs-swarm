@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T05:38:59Z"
+campaign = "intel-a770"
+item = "A770-033"
+event = "in_progress"
+previous_status = "none"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-033-hidden-state-source-frontier"
+base = "main"
+summary = "Start A770-033 hidden-state source frontier for the focused A770-032 summary divergence."
+
+notes = [
+  "A770-033 follows the A770-032 next frontier by adding compact model.forward output and last-hidden fingerprints to dumped logit source context.",
+  "The focused live receipt classifies generated_output_hidden_state_source_frontier_forward_output_drift for a770_summary_seed770024_keywords_014.",
+  "The PR keeps CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, and full BitNet inference claims closed.",
+]

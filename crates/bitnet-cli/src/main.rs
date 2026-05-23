@@ -4800,6 +4800,11 @@ async fn run_simple_generation(
         } else {
             None
         };
+        let logit_source_hidden_state_source = if logit_source_context_requested {
+            Some(compact_logit_source_hidden_state_source(&h, &last_hidden))
+        } else {
+            None
+        };
         let qk256_coverage_before =
             logit_source_context_requested.then(bitnet_qk256_dispatch::qk256_dispatch_coverage);
         let qk256_cpu_hot_path_before =
@@ -4816,17 +4821,20 @@ async fn run_simple_generation(
             Some(coverage_before),
             Some(cpu_hot_path_before),
             Some(a770_runtime_before),
+            Some(hidden_state_source),
         ) = (
             logit_source_hidden_operand,
             qk256_coverage_before,
             qk256_cpu_hot_path_before,
             a770_opencl_runtime_before,
+            logit_source_hidden_state_source,
         ) {
             let coverage_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();
             let cpu_hot_path_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
             let a770_runtime_after = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
             Some(logit_source_context_receipt(
                 &hidden_operand,
+                &hidden_state_source,
                 &coverage_before,
                 &coverage_after,
                 &cpu_hot_path_before,
@@ -12799,6 +12807,43 @@ fn compact_logit_source_hidden_operand(
     }
 }
 
+fn compact_logit_source_hidden_state_source(
+    forward_output: &bitnet_common::ConcreteTensor,
+    last_hidden: &bitnet_common::ConcreteTensor,
+) -> serde_json::Value {
+    let forward_output =
+        compact_logit_source_tensor_fingerprint(forward_output, "forward_output_extract_failed");
+    let last_hidden =
+        compact_logit_source_tensor_fingerprint(last_hidden, "last_hidden_extract_failed");
+    let extraction_context_available = forward_output["available"].as_bool().unwrap_or(false)
+        && last_hidden["available"].as_bool().unwrap_or(false);
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_hidden_state_source",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "forward_output": forward_output,
+        "last_hidden": last_hidden,
+        "extraction_context_available": extraction_context_available,
+    })
+}
+
+fn compact_logit_source_tensor_fingerprint(
+    tensor: &bitnet_common::ConcreteTensor,
+    failure_reason: &str,
+) -> serde_json::Value {
+    match tensor_to_vec(tensor) {
+        Ok(values) => compact_f32_vector_fingerprint(tensor.shape(), &values),
+        Err(err) => serde_json::json!({
+            "available": false,
+            "reason": failure_reason,
+            "error": err.to_string(),
+            "shape": tensor.shape(),
+        }),
+    }
+}
+
 fn compact_f32_vector_fingerprint(shape: &[usize], values: &[f32]) -> serde_json::Value {
     let mut bytes = Vec::with_capacity(values.len() * std::mem::size_of::<f32>());
     let mut finite_count = 0usize;
@@ -12841,6 +12886,7 @@ fn compact_f32_vector_fingerprint(shape: &[usize], values: &[f32]) -> serde_json
 
 fn logit_source_context_receipt(
     hidden_operand: &serde_json::Value,
+    hidden_state_source: &serde_json::Value,
     coverage_before: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
     coverage_after: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
     cpu_hot_path_before: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
@@ -12863,6 +12909,7 @@ fn logit_source_context_receipt(
         "diagnostic_only": true,
         "claim_allowed": false,
         "hidden_operand": hidden_operand,
+        "hidden_state_source": hidden_state_source,
         "output_head_qk256_dispatch_delta": dispatch_delta,
         "output_head_qk256_cpu_hot_path_delta": cpu_hot_path_delta,
         "output_head_a770_opencl_runtime_delta": {
@@ -12871,6 +12918,7 @@ fn logit_source_context_receipt(
             "kernel_invocations": a770_runtime_delta.kernel_invocations,
         },
         "hidden_operand_context_available": hidden_operand["available"].as_bool().unwrap_or(false),
+        "hidden_state_source_context_available": hidden_state_source["extraction_context_available"].as_bool().unwrap_or(false),
         "qk256_operand_context_available": hidden_operand["available"].as_bool().unwrap_or(false),
         "output_head_logit_accumulation_context_available": output_head_qk256_total > 0,
     })
