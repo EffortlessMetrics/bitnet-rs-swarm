@@ -5,6 +5,7 @@ event = "pr_open"
 from = "in_progress"
 to = "pr_open"
 pr = 4599
+head_sha = "4d46f3d8e25816e29dcf1c79181022d2d80366dd"
 actor = "codex"
 branch = "codex/lunar-lake/CPU-BITNET-REF-001-reference-boundary"
 summary = "Opened CPU-BITNET-REF-001 to record the external BitNet.cpp generated-text boundary against the corrected 258V CPU reference bundle."
