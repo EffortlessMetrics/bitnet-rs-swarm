@@ -52,6 +52,8 @@ Source impact:
 Release/publish/signing impact:
 Excluded work:
 Machine clone or cutover impact:
+Current checkout role:
+Source promotion needed:
 
 ## Source-of-truth links
 
