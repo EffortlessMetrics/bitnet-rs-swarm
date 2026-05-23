@@ -1629,6 +1629,7 @@ pub struct TransformerForwardWorkspace {
     pre_antepenultimate_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     earlier_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     block_source_tensors: Vec<TransformerFinalBlockSourceTensors>,
+    attention_output_source_tensors: Vec<TransformerAttentionOutputSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1655,6 +1656,32 @@ pub struct TransformerFinalBlockSourceTensors {
     pub post_attention_residual: Tensor,
     pub feed_forward_output: Tensor,
     pub block_output: Tensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerAttentionOutputSourceTensors {
+    pub layer_idx: usize,
+    pub attention_input: Tensor,
+    pub q_projection: Tensor,
+    pub k_projection: Tensor,
+    pub v_projection: Tensor,
+    pub q_heads: Tensor,
+    pub k_heads: Tensor,
+    pub v_heads: Tensor,
+    pub q_norm: Tensor,
+    pub k_norm: Tensor,
+    pub q_rope: Tensor,
+    pub k_rope: Tensor,
+    pub k_context: Tensor,
+    pub v_context: Tensor,
+    pub expanded_k: Tensor,
+    pub expanded_v: Tensor,
+    pub scores: Tensor,
+    pub probabilities: Tensor,
+    pub value_mix_output_heads: Tensor,
+    pub output_projection_input: Tensor,
+    pub sub_layernorm_output: Option<Tensor>,
+    pub attention_output: Tensor,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1958,6 +1985,10 @@ impl TransformerForwardWorkspace {
         &self.block_source_tensors
     }
 
+    pub fn attention_output_source_tensors(&self) -> &[TransformerAttentionOutputSourceTensors] {
+        &self.attention_output_source_tensors
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -2038,6 +2069,58 @@ impl TransformerForwardWorkspace {
         };
         self.block_source_tensors.push(source.clone());
         self.final_block_source_tensors = Some(source);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn record_attention_output_source_tensors(
+        &mut self,
+        layer_idx: usize,
+        attention_input: &Tensor,
+        q_projection: &Tensor,
+        k_projection: &Tensor,
+        v_projection: &Tensor,
+        q_heads: &Tensor,
+        k_heads: &Tensor,
+        v_heads: &Tensor,
+        q_norm: &Tensor,
+        k_norm: &Tensor,
+        q_rope: &Tensor,
+        k_rope: &Tensor,
+        k_context: &Tensor,
+        v_context: &Tensor,
+        expanded_k: &Tensor,
+        expanded_v: &Tensor,
+        scores: &Tensor,
+        probabilities: &Tensor,
+        value_mix_output_heads: &Tensor,
+        output_projection_input: &Tensor,
+        sub_layernorm_output: Option<&Tensor>,
+        attention_output: &Tensor,
+    ) {
+        self.attention_output_source_tensors.push(TransformerAttentionOutputSourceTensors {
+            layer_idx,
+            attention_input: attention_input.clone(),
+            q_projection: q_projection.clone(),
+            k_projection: k_projection.clone(),
+            v_projection: v_projection.clone(),
+            q_heads: q_heads.clone(),
+            k_heads: k_heads.clone(),
+            v_heads: v_heads.clone(),
+            q_norm: q_norm.clone(),
+            k_norm: k_norm.clone(),
+            q_rope: q_rope.clone(),
+            k_rope: k_rope.clone(),
+            k_context: k_context.clone(),
+            v_context: v_context.clone(),
+            expanded_k: expanded_k.clone(),
+            expanded_v: expanded_v.clone(),
+            scores: scores.clone(),
+            probabilities: probabilities.clone(),
+            value_mix_output_heads: value_mix_output_heads.clone(),
+            output_projection_input: output_projection_input.clone(),
+            sub_layernorm_output: sub_layernorm_output.cloned(),
+            attention_output: attention_output.clone(),
+        });
     }
 
     fn record_block_input(&mut self, tensor: &Tensor) {
@@ -2570,7 +2653,13 @@ impl TransformerBlock {
         qwen_trace_runtime_event(trace_forward, "block.attention_start", || {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
-        let x = self.attention.forward(&x, kv_cache, raw_tensors, dense_linear_hooks)?;
+        let x = self.attention.forward(
+            &x,
+            kv_cache,
+            raw_tensors,
+            dense_linear_hooks,
+            workspace.as_deref_mut(),
+        )?;
         let attention_output_for_source = workspace.as_ref().map(|_| x.clone());
         qwen_trace_runtime_event(trace_forward, "block.attention_finish", || {
             format!(

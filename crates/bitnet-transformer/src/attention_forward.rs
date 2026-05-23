@@ -7,10 +7,11 @@
 #[cfg(feature = "trace")]
 use super::BitNetError;
 use super::{
-    DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention, attention_f16_dot_input,
-    attention_score_key_input, dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled,
-    debug_gqa_enabled, debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled,
-    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, trace_rms_enabled,
+    DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention, TransformerForwardWorkspace,
+    attention_f16_dot_input, attention_score_key_input, dbg_finite, dbg_stats, debug_attn_enabled,
+    debug_attn_scale_enabled, debug_gqa_enabled, debug_rope_enabled, qwen_trace_event,
+    qwen_trace_events_enabled, qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor,
+    trace_rms_enabled,
 };
 use bitnet_common::Result;
 use candle_core::{DType, Module, Tensor};
@@ -33,6 +34,12 @@ struct ExpandedKv {
     v: Tensor,
 }
 
+struct AttentionOutputProjection {
+    projection_input: Tensor,
+    sub_layernorm_output: Option<Tensor>,
+    output: Tensor,
+}
+
 impl MultiHeadAttention {
     pub fn forward(
         &self,
@@ -40,6 +47,7 @@ impl MultiHeadAttention {
         kv_cache: Option<&mut LayerKVCache>,
         raw_tensors: &std::collections::HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        mut workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
         let (batch_size, seq_len, _) = x.dims3()?;
         let trace_attention = qwen_trace_events_enabled();
@@ -56,6 +64,9 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let projections = self.project_qkv(x, raw_tensors, dense_linear_hooks)?;
+        let q_projection_for_source = projections.q.clone();
+        let k_projection_for_source = projections.k.clone();
+        let v_projection_for_source = projections.v.clone();
         qwen_attention_trace_event(trace_attention, "attention.qkv_projection_finish", || {
             format!(
                 "\"layer\":{},\"projection_ms\":{}",
@@ -71,6 +82,9 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let heads = self.reshape_qkv_heads(projections, batch_size, seq_len)?;
+        let q_heads_for_source = heads.q.clone();
+        let k_heads_for_source = heads.k.clone();
+        let v_heads_for_source = heads.v.clone();
         qwen_attention_trace_event(trace_attention, "attention.reshape_heads_finish", || {
             format!(
                 "\"layer\":{},\"reshape_ms\":{}",
@@ -83,6 +97,8 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let heads = self.apply_qk_norms(heads)?;
+        let q_norm_for_source = heads.q.clone();
+        let k_norm_for_source = heads.k.clone();
         qwen_attention_trace_event(trace_attention, "attention.qk_norm_finish", || {
             format!(
                 "\"layer\":{},\"qk_norm_ms\":{}",
@@ -101,6 +117,8 @@ impl MultiHeadAttention {
             )
         });
         let heads = self.apply_rotary_embeddings(heads, kv_cache.as_ref().map(|c| c.seq_len))?;
+        let q_rope_for_source = heads.q.clone();
+        let k_rope_for_source = heads.k.clone();
         qwen_attention_trace_event(trace_attention, "attention.rope_finish", || {
             format!(
                 "\"layer\":{},\"rope_ms\":{}",
@@ -113,6 +131,8 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let (k_ctx, v_ctx) = Self::kv_context(&heads.k, &heads.v, kv_cache)?;
+        let k_context_for_source = k_ctx.clone();
+        let v_context_for_source = v_ctx.clone();
         qwen_attention_trace_event(trace_attention, "attention.kv_cache_finish", || {
             format!(
                 "\"layer\":{},\"kv_cache_ms\":{}",
@@ -125,6 +145,8 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let expanded = self.expand_grouped_query_kv(k_ctx, v_ctx, batch_size)?;
+        let expanded_k_for_source = expanded.k.clone();
+        let expanded_v_for_source = expanded.v.clone();
         qwen_attention_trace_event(trace_attention, "attention.gqa_expand_finish", || {
             format!(
                 "\"layer\":{},\"gqa_expand_ms\":{}",
@@ -138,6 +160,7 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let scores = self.prepare_attention_scores(&heads.q, &expanded.k, seq_len)?;
+        let scores_for_source = scores.clone();
         qwen_attention_trace_event(trace_attention, "attention.scores_finish", || {
             format!(
                 "\"layer\":{},\"scores_ms\":{}",
@@ -150,6 +173,7 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let attn_weights = self.softmax_attention_scores(&scores)?;
+        let probabilities_for_source = attn_weights.clone();
         qwen_attention_trace_event(trace_attention, "attention.softmax_finish", || {
             format!(
                 "\"layer\":{},\"softmax_ms\":{}",
@@ -162,6 +186,7 @@ impl MultiHeadAttention {
             format!("\"layer\":{}", self.layer_idx)
         });
         let output_heads = self.apply_attention_weights(&attn_weights, &expanded.v)?;
+        let output_heads_for_source = output_heads.clone();
         qwen_attention_trace_event(trace_attention, "attention.value_mix_finish", || {
             format!(
                 "\"layer\":{},\"value_mix_ms\":{}",
@@ -174,13 +199,39 @@ impl MultiHeadAttention {
         qwen_attention_trace_event(trace_attention, "attention.output_projection_start", || {
             format!("\"layer\":{}", self.layer_idx)
         });
-        let output = self.project_attention_output(
+        let output_projection = self.project_attention_output(
             output_heads,
             batch_size,
             seq_len,
             raw_tensors,
             dense_linear_hooks,
         )?;
+        if let Some(workspace) = workspace.as_mut() {
+            workspace.record_attention_output_source_tensors(
+                self.layer_idx,
+                x,
+                &q_projection_for_source,
+                &k_projection_for_source,
+                &v_projection_for_source,
+                &q_heads_for_source,
+                &k_heads_for_source,
+                &v_heads_for_source,
+                &q_norm_for_source,
+                &k_norm_for_source,
+                &q_rope_for_source,
+                &k_rope_for_source,
+                &k_context_for_source,
+                &v_context_for_source,
+                &expanded_k_for_source,
+                &expanded_v_for_source,
+                &scores_for_source,
+                &probabilities_for_source,
+                &output_heads_for_source,
+                &output_projection.projection_input,
+                output_projection.sub_layernorm_output.as_ref(),
+                &output_projection.output,
+            );
+        }
         qwen_attention_trace_event(trace_attention, "attention.output_projection_finish", || {
             format!(
                 "\"layer\":{},\"output_projection_ms\":{}",
@@ -195,7 +246,7 @@ impl MultiHeadAttention {
                 qwen_attention_elapsed_ms(attention_start)
             )
         });
-        Ok(output)
+        Ok(output_projection.output)
     }
 
     fn project_qkv(
@@ -581,25 +632,26 @@ impl MultiHeadAttention {
         seq_len: usize,
         raw_tensors: &std::collections::HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
-    ) -> Result<Tensor> {
+    ) -> Result<AttentionOutputProjection> {
         // Reshape and project output
-        let attn_output = attn_output.transpose(1, 2)?.reshape(&[
+        let projection_input = attn_output.transpose(1, 2)?.reshape(&[
             batch_size,
             seq_len,
             self.n_heads * self.head_dim,
         ])?;
-        let attn_output = if let Some(sub_layernorm) = &self.sub_layernorm {
-            let normalized = sub_layernorm.forward(&attn_output)?;
+        let sub_layernorm_output = if let Some(sub_layernorm) = &self.sub_layernorm {
+            let normalized = sub_layernorm.forward(&projection_input)?;
             if qwen_trace_layer_enabled(self.layer_idx) {
                 qwen_trace_tensor("attention.sub_layernorm", Some(self.layer_idx), &normalized)?;
             }
-            normalized
+            Some(normalized)
         } else {
-            attn_output
+            None
         };
+        let projected_input = sub_layernorm_output.as_ref().unwrap_or(&projection_input);
 
         let projected = self.apply_linear(
-            &attn_output,
+            projected_input,
             &self.o_proj,
             "o_proj",
             raw_tensors,
@@ -608,7 +660,7 @@ impl MultiHeadAttention {
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("attention.o_proj", Some(self.layer_idx), &projected)?;
         }
-        Ok(projected)
+        Ok(AttentionOutputProjection { projection_input, sub_layernorm_output, output: projected })
     }
 }
 
