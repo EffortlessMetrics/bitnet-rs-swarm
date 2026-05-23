@@ -452,7 +452,8 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-043 | LNL258V-GOAL-AUDIT-042 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-044 | LNL258V-GOAL-AUDIT-043 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-045 | LNL258V-GOAL-AUDIT-044 | merged |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-046 | LNL258V-GOAL-AUDIT-045 | pr_open |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-046 | LNL258V-GOAL-AUDIT-045 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-047 | LNL258V-GOAL-AUDIT-046 | pr_open |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
@@ -514,6 +515,7 @@
 | intel-a770 | A770-035 | A770-034 | merged |
 | intel-a770 | A770-036 | A770-035 | merged |
 | intel-a770 | A770-037 | A770-036 | merged |
+| intel-a770 | A770-038 | A770-037 | merged |
 | intel-a770 | A770-021 | A770-020 | merged |
 | intel-a770 | A770-022 | A770-021 | merged |
 | intel-a770 | A770-023 | A770-022 | merged |
@@ -793,6 +795,7 @@
 | slm-cpu | SLM-CPU-088 | SLM-CPU-087 | merged |
 | slm-cpu | SLM-CPU-089 | SLM-CPU-088 | merged |
 | slm-cpu | SLM-CPU-090 | SLM-CPU-089 | merged |
+| slm-cpu | SLM-CPU-091 | SLM-CPU-090 | ready |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |
