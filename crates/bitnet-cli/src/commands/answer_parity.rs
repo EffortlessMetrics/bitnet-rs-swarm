@@ -283,6 +283,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_transformer_block_source_stack_frontier =
+        build_generated_output_transformer_block_source_stack_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -383,6 +391,7 @@ fn build_answer_parity_receipt(
         "generated_output_antepenultimate_block_source_frontier": generated_output_antepenultimate_block_source_frontier,
         "generated_output_pre_antepenultimate_block_source_frontier": generated_output_pre_antepenultimate_block_source_frontier,
         "generated_output_earlier_block_source_frontier": generated_output_earlier_block_source_frontier,
+        "generated_output_transformer_block_source_stack_frontier": generated_output_transformer_block_source_stack_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -4377,6 +4386,330 @@ fn generated_output_earlier_block_source_missing_context_row(id: &str, reason: &
     })
 }
 
+fn build_generated_output_transformer_block_source_stack_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut clean_count = 0usize;
+    let mut block_input_drift_count = 0usize;
+    let mut attention_output_drift_count = 0usize;
+    let mut attention_residual_drift_count = 0usize;
+    let mut ffn_output_drift_count = 0usize;
+    let mut block_output_drift_count = 0usize;
+    let mut missing_context_count = 0usize;
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_transformer_block_source_stack_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        match row["classification"].as_str() {
+            Some("generated_output_transformer_block_source_stack_block_input_drift") => {
+                block_input_drift_count += 1;
+            }
+            Some("generated_output_transformer_block_source_stack_attention_output_drift") => {
+                attention_output_drift_count += 1;
+            }
+            Some("generated_output_transformer_block_source_stack_attention_residual_drift") => {
+                attention_residual_drift_count += 1;
+            }
+            Some("generated_output_transformer_block_source_stack_ffn_output_drift") => {
+                ffn_output_drift_count += 1;
+            }
+            Some("generated_output_transformer_block_source_stack_block_output_drift") => {
+                block_output_drift_count += 1;
+            }
+            Some("generated_output_transformer_block_source_stack_clean") => clean_count += 1,
+            Some("generated_output_transformer_block_source_stack_not_applicable") => continue,
+            _ => missing_context_count += 1,
+        }
+        row_candidate_count += 1;
+        push_limited_row(&mut rows, ROW_LIMIT, row);
+    }
+
+    let classification = if missing_context_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_missing_context"
+    } else if block_input_drift_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_block_input_drift"
+    } else if attention_output_drift_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_attention_output_drift"
+    } else if attention_residual_drift_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_attention_residual_drift"
+    } else if ffn_output_drift_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_ffn_output_drift"
+    } else if block_output_drift_count > 0 {
+        "generated_output_transformer_block_source_stack_frontier_block_output_drift"
+    } else {
+        "generated_output_transformer_block_source_stack_frontier_clean"
+    };
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "clean_count": clean_count,
+        "block_input_drift_count": block_input_drift_count,
+        "attention_output_drift_count": attention_output_drift_count,
+        "attention_residual_drift_count": attention_residual_drift_count,
+        "ffn_output_drift_count": ffn_output_drift_count,
+        "block_output_drift_count": block_output_drift_count,
+        "missing_context_count": missing_context_count,
+        "transformer_block_source_stack_context_available": rows.iter().any(|row| {
+            row["transformer_block_source_stack_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": transformer_block_source_stack_next_diagnostic(classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
+fn generated_output_transformer_block_source_stack_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let Some(left_case) = left_case else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "left_case_missing",
+        );
+    };
+    let Some(right_case) = right_case else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "right_case_missing",
+        );
+    };
+    let Some(left_generated) = token_id_vec(&left_case["token_ids"]["generated"]) else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "left_generated_token_ids_missing",
+        );
+    };
+    let Some(right_generated) = token_id_vec(&right_case["token_ids"]["generated"]) else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "right_generated_token_ids_missing",
+        );
+    };
+    let Some(first_mismatch_index) = first_different_token_index(&left_generated, &right_generated)
+    else {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_transformer_block_source_stack_not_applicable",
+            "reason": "generated_token_ids_match",
+        });
+    };
+
+    let Some(left_step) =
+        left_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "left_logits_step_missing",
+        );
+    };
+    let Some(right_step) =
+        right_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "right_logits_step_missing",
+        );
+    };
+
+    let left_stack = &left_step["logit_source_context"]["hidden_state_source"]["model_forward_source"]
+        ["block_sources"];
+    let right_stack = &right_step["logit_source_context"]["hidden_state_source"]["model_forward_source"]
+        ["block_sources"];
+    let Some(left_blocks) = left_stack["blocks"].as_array() else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "left_transformer_block_source_stack_missing",
+        );
+    };
+    let Some(right_blocks) = right_stack["blocks"].as_array() else {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "right_transformer_block_source_stack_missing",
+        );
+    };
+    if left_blocks.is_empty() || right_blocks.is_empty() {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "transformer_block_source_stack_empty",
+        );
+    }
+    if left_blocks.len() != right_blocks.len() {
+        return generated_output_transformer_block_source_stack_missing_context_row(
+            id,
+            "transformer_block_source_stack_length_mismatch",
+        );
+    }
+
+    for (block_index, (left_block, right_block)) in
+        left_blocks.iter().zip(right_blocks.iter()).enumerate()
+    {
+        let left_layer_idx = left_block["layer_idx"].as_u64();
+        let right_layer_idx = right_block["layer_idx"].as_u64();
+        if left_layer_idx != right_layer_idx {
+            return generated_output_transformer_block_source_stack_missing_context_row(
+                id,
+                "transformer_block_source_stack_layer_mismatch",
+            );
+        }
+        let (block_input_available, block_input_sha_match) =
+            final_block_tensor_pair_status(left_block, right_block, "block_input");
+        let (attention_output_available, attention_output_sha_match) =
+            final_block_tensor_pair_status(left_block, right_block, "attention_output");
+        let (post_attention_residual_available, post_attention_residual_sha_match) =
+            final_block_tensor_pair_status(left_block, right_block, "post_attention_residual");
+        let (feed_forward_output_available, feed_forward_output_sha_match) =
+            final_block_tensor_pair_status(left_block, right_block, "feed_forward_output");
+        let (block_output_available, block_output_sha_match) =
+            final_block_tensor_pair_status(left_block, right_block, "block_output");
+        let block_context_available = block_input_available
+            && attention_output_available
+            && post_attention_residual_available
+            && feed_forward_output_available
+            && block_output_available;
+
+        let classification = if !block_context_available {
+            "generated_output_transformer_block_source_stack_missing_context"
+        } else if block_input_sha_match == Some(false) {
+            "generated_output_transformer_block_source_stack_block_input_drift"
+        } else if attention_output_sha_match == Some(false) {
+            "generated_output_transformer_block_source_stack_attention_output_drift"
+        } else if post_attention_residual_sha_match == Some(false) {
+            "generated_output_transformer_block_source_stack_attention_residual_drift"
+        } else if feed_forward_output_sha_match == Some(false) {
+            "generated_output_transformer_block_source_stack_ffn_output_drift"
+        } else if block_output_sha_match == Some(false) {
+            "generated_output_transformer_block_source_stack_block_output_drift"
+        } else {
+            continue;
+        };
+
+        return json!({
+            "case_id": id,
+            "classification": classification,
+            "first_mismatch_index": first_mismatch_index,
+            "left_token_id": left_generated.get(first_mismatch_index).copied(),
+            "right_token_id": right_generated.get(first_mismatch_index).copied(),
+            "left_chosen_id": left_step["chosen_id"],
+            "right_chosen_id": right_step["chosen_id"],
+            "transformer_block_source_stack_context_available": true,
+            "compared_block_count": left_blocks.len(),
+            "earliest_divergent_block_index": block_index,
+            "earliest_divergent_layer_idx": left_layer_idx,
+            "block_context_available": block_context_available,
+            "block_input_context_available": block_input_available,
+            "attention_output_context_available": attention_output_available,
+            "post_attention_residual_context_available": post_attention_residual_available,
+            "feed_forward_output_context_available": feed_forward_output_available,
+            "block_output_context_available": block_output_available,
+            "block_input_sha256_match": block_input_sha_match,
+            "attention_output_sha256_match": attention_output_sha_match,
+            "post_attention_residual_sha256_match": post_attention_residual_sha_match,
+            "feed_forward_output_sha256_match": feed_forward_output_sha_match,
+            "block_output_sha256_match": block_output_sha_match,
+            "left_block_input_sha256_f32_le": left_block["block_input"]["sha256_f32_le"],
+            "right_block_input_sha256_f32_le": right_block["block_input"]["sha256_f32_le"],
+            "left_block_input_rms": left_block["block_input"]["rms"],
+            "right_block_input_rms": right_block["block_input"]["rms"],
+            "block_input_rms_abs_delta": number_abs_delta(&left_block["block_input"]["rms"], &right_block["block_input"]["rms"]),
+            "left_attention_output_sha256_f32_le": left_block["attention_output"]["sha256_f32_le"],
+            "right_attention_output_sha256_f32_le": right_block["attention_output"]["sha256_f32_le"],
+            "left_attention_output_rms": left_block["attention_output"]["rms"],
+            "right_attention_output_rms": right_block["attention_output"]["rms"],
+            "attention_output_rms_abs_delta": number_abs_delta(&left_block["attention_output"]["rms"], &right_block["attention_output"]["rms"]),
+            "left_post_attention_residual_sha256_f32_le": left_block["post_attention_residual"]["sha256_f32_le"],
+            "right_post_attention_residual_sha256_f32_le": right_block["post_attention_residual"]["sha256_f32_le"],
+            "left_post_attention_residual_rms": left_block["post_attention_residual"]["rms"],
+            "right_post_attention_residual_rms": right_block["post_attention_residual"]["rms"],
+            "post_attention_residual_rms_abs_delta": number_abs_delta(&left_block["post_attention_residual"]["rms"], &right_block["post_attention_residual"]["rms"]),
+            "left_feed_forward_output_sha256_f32_le": left_block["feed_forward_output"]["sha256_f32_le"],
+            "right_feed_forward_output_sha256_f32_le": right_block["feed_forward_output"]["sha256_f32_le"],
+            "left_feed_forward_output_rms": left_block["feed_forward_output"]["rms"],
+            "right_feed_forward_output_rms": right_block["feed_forward_output"]["rms"],
+            "feed_forward_output_rms_abs_delta": number_abs_delta(&left_block["feed_forward_output"]["rms"], &right_block["feed_forward_output"]["rms"]),
+            "left_block_output_sha256_f32_le": left_block["block_output"]["sha256_f32_le"],
+            "right_block_output_sha256_f32_le": right_block["block_output"]["sha256_f32_le"],
+            "left_block_output_rms": left_block["block_output"]["rms"],
+            "right_block_output_rms": right_block["block_output"]["rms"],
+            "block_output_rms_abs_delta": number_abs_delta(&left_block["block_output"]["rms"], &right_block["block_output"]["rms"]),
+            "next_diagnostic": transformer_block_source_stack_next_diagnostic(classification),
+        });
+    }
+
+    json!({
+        "case_id": id,
+        "classification": "generated_output_transformer_block_source_stack_clean",
+        "first_mismatch_index": first_mismatch_index,
+        "left_token_id": left_generated.get(first_mismatch_index).copied(),
+        "right_token_id": right_generated.get(first_mismatch_index).copied(),
+        "left_chosen_id": left_step["chosen_id"],
+        "right_chosen_id": right_step["chosen_id"],
+        "transformer_block_source_stack_context_available": true,
+        "compared_block_count": left_blocks.len(),
+        "next_diagnostic": transformer_block_source_stack_next_diagnostic(
+            "generated_output_transformer_block_source_stack_clean",
+        ),
+    })
+}
+
+fn transformer_block_source_stack_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_transformer_block_source_stack_frontier_block_input_drift"
+        | "generated_output_transformer_block_source_stack_block_input_drift" => {
+            "inspect transformer stack input source before earliest divergent block"
+        }
+        "generated_output_transformer_block_source_stack_frontier_attention_output_drift"
+        | "generated_output_transformer_block_source_stack_attention_output_drift" => {
+            "replay earliest divergent transformer block attention output source"
+        }
+        "generated_output_transformer_block_source_stack_frontier_attention_residual_drift"
+        | "generated_output_transformer_block_source_stack_attention_residual_drift" => {
+            "inspect earliest divergent transformer block attention residual add serialization"
+        }
+        "generated_output_transformer_block_source_stack_frontier_ffn_output_drift"
+        | "generated_output_transformer_block_source_stack_ffn_output_drift" => {
+            "replay earliest divergent transformer block FFN output source"
+        }
+        "generated_output_transformer_block_source_stack_frontier_block_output_drift"
+        | "generated_output_transformer_block_source_stack_block_output_drift" => {
+            "inspect earliest divergent transformer block FFN residual add serialization"
+        }
+        "generated_output_transformer_block_source_stack_frontier_missing_context"
+        | "generated_output_transformer_block_source_stack_missing_context" => {
+            "rerun focused receipts with transformer block source stack context enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn generated_output_transformer_block_source_stack_missing_context_row(
+    id: &str,
+    reason: &str,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": "generated_output_transformer_block_source_stack_missing_context",
+        "reason": reason,
+        "transformer_block_source_stack_context_available": false,
+    })
+}
+
 fn optional_str_eq(left: Option<&str>, right: Option<&str>) -> Option<bool> {
     Some(left? == right?)
 }
@@ -4985,6 +5318,7 @@ mod tests {
             "context_kind": "decode_step_final_transformer_block_source",
             "diagnostic_only": true,
             "claim_allowed": false,
+            "layer_idx": 0,
             "block_input": final_block_tensor_fixture(block_input_sha, rms),
             "attention_output": final_block_tensor_fixture(attention_output_sha, rms),
             "post_attention_residual": final_block_tensor_fixture(post_attention_residual_sha, rms),
@@ -5198,6 +5532,41 @@ mod tests {
                 block_output_sha,
                 rms,
             );
+        logits
+    }
+
+    fn transformer_block_source_fixture(
+        layer_idx: u64,
+        block_input_sha: &str,
+        attention_output_sha: &str,
+        post_attention_residual_sha: &str,
+        feed_forward_output_sha: &str,
+        block_output_sha: &str,
+        rms: f64,
+    ) -> Value {
+        let mut block = final_block_source_fixture(
+            block_input_sha,
+            attention_output_sha,
+            post_attention_residual_sha,
+            feed_forward_output_sha,
+            block_output_sha,
+            rms,
+        );
+        block["context_kind"] = json!("decode_step_transformer_block_source");
+        block["layer_idx"] = json!(layer_idx);
+        block
+    }
+
+    fn with_transformer_block_source_stack(mut logits: Value, blocks: Vec<Value>) -> Value {
+        logits[2]["logit_source_context"]["hidden_state_source"]["model_forward_source"]["block_sources"] = json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_transformer_block_source_stack",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "block_count": blocks.len(),
+            "source_context_available": !blocks.is_empty(),
+            "blocks": blocks,
+        });
         logits
     }
 
@@ -6478,6 +6847,221 @@ mod tests {
         assert_eq!(
             frontier["rows"][0]["classification"],
             "generated_output_earlier_block_source_missing_context"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_transformer_block_source_stack_block_input_drift() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            with_transformer_block_source_stack(
+                logits_first_mismatch_margin_left_with_model_forward_source(
+                    "left-hidden",
+                    "same-forward",
+                    "left-hidden",
+                    "same-prior-layer",
+                    "same-forward",
+                ),
+                vec![
+                    transformer_block_source_fixture(
+                        0,
+                        "left-block-input",
+                        "left-attention-output",
+                        "left-post-attention-residual",
+                        "left-ffn-output",
+                        "left-block-output",
+                        1.0,
+                    ),
+                    transformer_block_source_fixture(
+                        1,
+                        "left-layer1-input",
+                        "left-layer1-attention",
+                        "left-layer1-residual",
+                        "left-layer1-ffn",
+                        "left-layer1-output",
+                        1.0,
+                    ),
+                ],
+            ),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            with_transformer_block_source_stack(
+                logits_first_mismatch_margin_right_with_model_forward_source(
+                    "right-hidden",
+                    "same-forward",
+                    "right-hidden",
+                    "same-prior-layer",
+                    "same-forward",
+                ),
+                vec![
+                    transformer_block_source_fixture(
+                        0,
+                        "right-block-input",
+                        "right-attention-output",
+                        "right-post-attention-residual",
+                        "right-ffn-output",
+                        "right-block-output",
+                        1.5,
+                    ),
+                    transformer_block_source_fixture(
+                        1,
+                        "right-layer1-input",
+                        "right-layer1-attention",
+                        "right-layer1-residual",
+                        "right-layer1-ffn",
+                        "right-layer1-output",
+                        1.5,
+                    ),
+                ],
+            ),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_transformer_block_source_stack_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_transformer_block_source_stack_frontier_block_input_drift"
+        );
+        assert_eq!(frontier["block_input_drift_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_transformer_block_source_stack_block_input_drift"
+        );
+        assert_eq!(frontier["rows"][0]["earliest_divergent_layer_idx"], 0);
+        assert_eq!(frontier["rows"][0]["block_input_sha256_match"], false);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "inspect transformer stack input source before earliest divergent block"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_transformer_block_source_stack_ffn_output_drift() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            with_transformer_block_source_stack(
+                logits_first_mismatch_margin_left_with_model_forward_source(
+                    "left-hidden",
+                    "same-forward",
+                    "left-hidden",
+                    "same-prior-layer",
+                    "same-forward",
+                ),
+                vec![
+                    transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "same-layer0-attention",
+                        "same-layer0-residual",
+                        "same-layer0-ffn",
+                        "same-layer0-output",
+                        1.0,
+                    ),
+                    transformer_block_source_fixture(
+                        1,
+                        "same-layer1-input",
+                        "same-layer1-attention",
+                        "same-layer1-residual",
+                        "left-layer1-ffn",
+                        "left-layer1-output",
+                        1.0,
+                    ),
+                ],
+            ),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            with_transformer_block_source_stack(
+                logits_first_mismatch_margin_right_with_model_forward_source(
+                    "right-hidden",
+                    "same-forward",
+                    "right-hidden",
+                    "same-prior-layer",
+                    "same-forward",
+                ),
+                vec![
+                    transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "same-layer0-attention",
+                        "same-layer0-residual",
+                        "same-layer0-ffn",
+                        "same-layer0-output",
+                        1.5,
+                    ),
+                    transformer_block_source_fixture(
+                        1,
+                        "same-layer1-input",
+                        "same-layer1-attention",
+                        "same-layer1-residual",
+                        "right-layer1-ffn",
+                        "right-layer1-output",
+                        1.5,
+                    ),
+                ],
+            ),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_transformer_block_source_stack_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_transformer_block_source_stack_frontier_ffn_output_drift"
+        );
+        assert_eq!(frontier["ffn_output_drift_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_transformer_block_source_stack_ffn_output_drift"
+        );
+        assert_eq!(frontier["rows"][0]["earliest_divergent_layer_idx"], 1);
+        assert_eq!(frontier["rows"][0]["feed_forward_output_sha256_match"], false);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "replay earliest divergent transformer block FFN output source"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_transformer_block_source_stack_missing_context() {
+        let mut left_logits = logits_first_mismatch_margin_left_with_model_forward_source(
+            "left-hidden",
+            "same-forward",
+            "left-hidden",
+            "same-prior-layer",
+            "same-forward",
+        );
+        let right_logits = logits_first_mismatch_margin_right_with_model_forward_source(
+            "right-hidden",
+            "same-forward",
+            "right-hidden",
+            "same-prior-layer",
+            "same-forward",
+        );
+        left_logits[2]["logit_source_context"]["hidden_state_source"]["model_forward_source"]["block_sources"] =
+            Value::Null;
+        let scalar = receipt("i2_s-avx2-reference", &[4, 5, 6], "4 5 6", left_logits);
+        let a770 = a770_receipt(&[4, 5, 7], "4 5 7", right_logits);
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_transformer_block_source_stack_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_transformer_block_source_stack_frontier_missing_context"
+        );
+        assert_eq!(frontier["missing_context_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_transformer_block_source_stack_missing_context"
         );
     }
 

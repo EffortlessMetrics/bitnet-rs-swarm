@@ -25,10 +25,12 @@ pub struct ModelForwardSourceContext {
     pub antepenultimate_block_source: Option<ModelFinalBlockSourceContext>,
     pub pre_antepenultimate_block_source: Option<ModelFinalBlockSourceContext>,
     pub earlier_block_source: Option<ModelFinalBlockSourceContext>,
+    pub block_sources: Vec<ModelFinalBlockSourceContext>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ModelFinalBlockSourceContext {
+    pub layer_idx: usize,
     pub block_input: ConcreteTensor,
     pub attention_output: ConcreteTensor,
     pub post_attention_residual: ConcreteTensor,
@@ -591,6 +593,7 @@ impl Model for BitNetModel {
         let output = transformer.forward_with_workspace(input_tensor, kv_cache, &mut workspace)?;
         let final_block_source =
             workspace.final_block_source_tensors().map(|source| ModelFinalBlockSourceContext {
+                layer_idx: source.layer_idx,
                 block_input: self.candle_to_concrete(source.block_input.clone()),
                 attention_output: self.candle_to_concrete(source.attention_output.clone()),
                 post_attention_residual: self
@@ -600,6 +603,7 @@ impl Model for BitNetModel {
             });
         let penultimate_block_source = workspace.penultimate_block_source_tensors().map(|source| {
             ModelFinalBlockSourceContext {
+                layer_idx: source.layer_idx,
                 block_input: self.candle_to_concrete(source.block_input.clone()),
                 attention_output: self.candle_to_concrete(source.attention_output.clone()),
                 post_attention_residual: self
@@ -611,6 +615,7 @@ impl Model for BitNetModel {
         let antepenultimate_block_source =
             workspace.antepenultimate_block_source_tensors().map(|source| {
                 ModelFinalBlockSourceContext {
+                    layer_idx: source.layer_idx,
                     block_input: self.candle_to_concrete(source.block_input.clone()),
                     attention_output: self.candle_to_concrete(source.attention_output.clone()),
                     post_attention_residual: self
@@ -623,6 +628,7 @@ impl Model for BitNetModel {
         let pre_antepenultimate_block_source = workspace
             .pre_antepenultimate_block_source_tensors()
             .map(|source| ModelFinalBlockSourceContext {
+                layer_idx: source.layer_idx,
                 block_input: self.candle_to_concrete(source.block_input.clone()),
                 attention_output: self.candle_to_concrete(source.attention_output.clone()),
                 post_attention_residual: self
@@ -632,6 +638,7 @@ impl Model for BitNetModel {
             });
         let earlier_block_source =
             workspace.earlier_block_source_tensors().map(|source| ModelFinalBlockSourceContext {
+                layer_idx: source.layer_idx,
                 block_input: self.candle_to_concrete(source.block_input.clone()),
                 attention_output: self.candle_to_concrete(source.attention_output.clone()),
                 post_attention_residual: self
@@ -639,6 +646,19 @@ impl Model for BitNetModel {
                 feed_forward_output: self.candle_to_concrete(source.feed_forward_output.clone()),
                 block_output: self.candle_to_concrete(source.block_output.clone()),
             });
+        let block_sources = workspace
+            .block_source_tensors()
+            .iter()
+            .map(|source| ModelFinalBlockSourceContext {
+                layer_idx: source.layer_idx,
+                block_input: self.candle_to_concrete(source.block_input.clone()),
+                attention_output: self.candle_to_concrete(source.attention_output.clone()),
+                post_attention_residual: self
+                    .candle_to_concrete(source.post_attention_residual.clone()),
+                feed_forward_output: self.candle_to_concrete(source.feed_forward_output.clone()),
+                block_output: self.candle_to_concrete(source.block_output.clone()),
+            })
+            .collect();
         let source_context =
             workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
                 prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
@@ -648,6 +668,7 @@ impl Model for BitNetModel {
                 antepenultimate_block_source,
                 pre_antepenultimate_block_source,
                 earlier_block_source,
+                block_sources,
             });
 
         Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })
