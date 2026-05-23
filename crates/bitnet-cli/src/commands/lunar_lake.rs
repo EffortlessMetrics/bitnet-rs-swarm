@@ -2543,6 +2543,16 @@ pub struct LunarLakeLowPowerBatteryPlan {
     pub current_status: String,
     pub operator_plan_ready: bool,
     pub can_collect_battery_evidence_now: bool,
+    #[serde(default)]
+    pub energy_proxy_recorded: bool,
+    #[serde(default)]
+    pub energy_proxy_source: Option<String>,
+    #[serde(default)]
+    pub energy_proxy_attempt_recorded: bool,
+    #[serde(default)]
+    pub energy_proxy_attempt_source: Option<String>,
+    #[serde(default)]
+    pub energy_proxy_evidence_status: String,
     pub blockers: Vec<String>,
     pub required_artifacts: Vec<String>,
     pub command_sequence: Vec<LowPowerBatteryPlanCommand>,
@@ -8959,6 +8969,17 @@ pub fn build_low_power_battery_plan_with_created_utc(
         .as_ref()
         .and_then(|json| value_at(json, "power.ac_power_inferred"))
         .and_then(Value::as_bool);
+    let energy_proxy_recorded = power.telemetry.energy_proxy_recorded;
+    let energy_proxy_source = power.telemetry.energy_proxy_source.clone();
+    let energy_proxy_attempt_recorded = power.telemetry.energy_proxy_attempt_recorded;
+    let energy_proxy_attempt_source = power.telemetry.energy_proxy_attempt_source.clone();
+    let energy_proxy_evidence_status = if energy_proxy_recorded {
+        "valid_battery_mode_energy_proxy_recorded"
+    } else if energy_proxy_attempt_recorded {
+        "attempt_recorded_but_invalid_without_battery_mode"
+    } else {
+        "missing_battery_mode_energy_proxy"
+    };
 
     let mut blockers = Vec::new();
     if power.operator_runbook.as_deref() != Some(LOW_POWER_BATTERY_RUNBOOK) {
@@ -8991,6 +9012,14 @@ pub fn build_low_power_battery_plan_with_created_utc(
         blockers.push(
             "current telemetry is AC-only; battery comparison evidence is missing".to_string(),
         );
+    }
+    if energy_proxy_attempt_recorded && !energy_proxy_recorded {
+        blockers
+            .push("energy proxy attempt is not valid battery-mode low_power evidence".to_string());
+    }
+    if !energy_proxy_recorded {
+        blockers
+            .push("valid battery-mode energy proxy is missing for low_power promotion".to_string());
     }
     if !power.power_advantage_proven {
         blockers.push("no low_power route has benchmark-qualified power evidence".to_string());
@@ -9057,6 +9086,11 @@ pub fn build_low_power_battery_plan_with_created_utc(
         current_status: current_status.to_string(),
         operator_plan_ready,
         can_collect_battery_evidence_now,
+        energy_proxy_recorded,
+        energy_proxy_source,
+        energy_proxy_attempt_recorded,
+        energy_proxy_attempt_source,
+        energy_proxy_evidence_status: energy_proxy_evidence_status.to_string(),
         blockers,
         required_artifacts: low_power_battery_plan_required_artifacts(),
         command_sequence: low_power_battery_plan_commands(),
@@ -20146,6 +20180,14 @@ mod tests {
 
         assert!(receipt.operator_plan_ready, "{:?}", receipt.blockers);
         assert!(!receipt.can_collect_battery_evidence_now);
+        assert!(receipt.energy_proxy_attempt_recorded);
+        assert!(!receipt.energy_proxy_recorded);
+        assert_eq!(receipt.energy_proxy_attempt_source.as_deref(), Some("energy_proxy_receipt"));
+        assert_eq!(receipt.energy_proxy_source.as_deref(), None);
+        assert_eq!(
+            receipt.energy_proxy_evidence_status,
+            "attempt_recorded_but_invalid_without_battery_mode"
+        );
         assert_eq!(receipt.operator_runbook, LOW_POWER_BATTERY_RUNBOOK);
         assert!(
             receipt
@@ -20202,6 +20244,18 @@ mod tests {
             blocker.contains("current telemetry is AC-only")
                 || blocker.contains("current power context indicates AC power")
         }));
+        assert!(
+            receipt
+                .blockers
+                .iter()
+                .any(|blocker| blocker.contains("energy proxy attempt is not valid"))
+        );
+        assert!(
+            receipt
+                .blockers
+                .iter()
+                .any(|blocker| blocker.contains("valid battery-mode energy proxy is missing"))
+        );
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.power_advantage_claim);
@@ -20247,6 +20301,12 @@ mod tests {
 
         assert!(receipt.operator_plan_ready, "{:?}", receipt.blockers);
         assert!(receipt.can_collect_battery_evidence_now);
+        assert!(receipt.energy_proxy_attempt_recorded);
+        assert!(receipt.energy_proxy_recorded);
+        assert_eq!(
+            receipt.energy_proxy_evidence_status,
+            "valid_battery_mode_energy_proxy_recorded"
+        );
         assert_eq!(
             receipt.current_status,
             "battery_mode_preflight_satisfied_collect_route_matrix_next"
