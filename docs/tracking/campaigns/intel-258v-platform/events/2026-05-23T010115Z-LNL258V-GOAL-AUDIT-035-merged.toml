@@ -1,0 +1,28 @@
+campaign = "intel-258v-platform"
+timestamp = "2026-05-23T01:01:15Z"
+event = "merged"
+item = "LNL258V-GOAL-AUDIT-035"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-035-post-a770030-closeout"
+pr = 395
+head_sha = "4d50563dfe4e1dd6856495c9a3f757d93811765b"
+merge_sha = "66524d74ef7aee8cbd1de00617e915b1cb13d390"
+actor = "codex"
+summary = "Merged the no-inference Lunar Lake goal audit refresh after A770-030 and adjacent SLM/CUDA/tracker deltas."
+
+notes = [
+  "PR #395 merged by squash automerge after required GitHub checks passed.",
+  "The audit/checklist now record current swarm main through abcfbbd96859bb8a133395b53aa5e1e953b8556c.",
+  "PR #382/#386 are recorded as Lunar Lake audit/tracker state only.",
+  "PR #383/#390 are recorded as adjacent SLM CPU tracker state only.",
+  "PR #384/#391 are recorded as adjacent CUDA/Qwen3 planning/blocker state only.",
+  "PR #385 is recorded as adjacent A770 tracker ordering repair only.",
+  "PR #387 is recorded as repo-boundary tooling only.",
+  "PR #388/#392 are recorded as adjacent A770 summary-logit diagnostic/tracker state only.",
+  "PR #393/#394 are recorded as adjacent SLM CPU model-forward output-boundary/tracker state only.",
+  "PR #397 is recorded as generated SLM dashboard freshness only.",
+  "PR #396 is recorded as adjacent SLM CPU target queue/tracker state only.",
+  "LNL258V-POWER-006 remains blocked pending physical battery-mode low_power telemetry, energy proxy, measured thermal context, and benchmark-qualified power advantage.",
+  "No inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, source-promotion completion, Qwen3 Lunar Lake promotion, CPU/A770 parity, strict A770 readiness, trusted partial acceleration, or BitNet QK256/I2_S behavior change is claimed.",
+]
