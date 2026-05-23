@@ -27,6 +27,7 @@ pub struct ModelForwardSourceContext {
     pub earlier_block_source: Option<ModelFinalBlockSourceContext>,
     pub block_sources: Vec<ModelFinalBlockSourceContext>,
     pub attention_output_sources: Vec<ModelAttentionOutputSourceContext>,
+    pub qkv_projection_sources: Vec<ModelQkvProjectionSourceContext>,
 }
 
 #[derive(Debug, Clone)]
@@ -63,6 +64,51 @@ pub struct ModelAttentionOutputSourceContext {
     pub output_projection_input: ConcreteTensor,
     pub sub_layernorm_output: Option<ConcreteTensor>,
     pub attention_output: ConcreteTensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQk256DispatchDeltaContext {
+    pub bitnet_linear_layers_total: u64,
+    pub bitnet_linear_layers_on_cuda: u64,
+    pub bitnet_linear_layers_on_a770_opencl: u64,
+    pub bitnet_linear_layers_cpu_fallback: u64,
+    pub unsupported_ops: Vec<String>,
+    pub execution_claim: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQk256CpuHotPathDeltaContext {
+    pub qk256_f32_scalar_gemv_invocations: u64,
+    pub qk256_f32_avx2_gemv_invocations: u64,
+    pub qk256_i8s_scaled_scalar_invocations: u64,
+    pub qk256_i8s_scaled_avx2_invocations: u64,
+    pub qk256_flat_bytes_extracted_count: u64,
+    pub input_rows_materialized_count: u64,
+    pub output_rows_allocated_count: u64,
+    pub requested_kernel: Option<String>,
+    pub selected_kernel: Option<String>,
+    pub qk256_execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelA770OpenClRuntimeDeltaContext {
+    pub host_to_device_bytes: u64,
+    pub device_to_host_bytes: u64,
+    pub kernel_invocations: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQkvProjectionSourceContext {
+    pub layer_idx: usize,
+    pub projection: String,
+    pub tensor_name: String,
+    pub qk256_key: String,
+    pub qk256_raw_tensor_present: bool,
+    pub input: ConcreteTensor,
+    pub output: ConcreteTensor,
+    pub dispatch_delta: ModelQk256DispatchDeltaContext,
+    pub cpu_hot_path_delta: ModelQk256CpuHotPathDeltaContext,
+    pub a770_opencl_runtime_delta: ModelA770OpenClRuntimeDeltaContext,
 }
 
 #[derive(Debug, Clone)]
@@ -719,6 +765,64 @@ impl Model for BitNetModel {
                 attention_output: self.candle_to_concrete(source.attention_output.clone()),
             })
             .collect();
+        let qkv_projection_sources = workspace
+            .qkv_projection_source_tensors()
+            .iter()
+            .map(|source| ModelQkvProjectionSourceContext {
+                layer_idx: source.layer_idx,
+                projection: source.projection.clone(),
+                tensor_name: source.tensor_name.clone(),
+                qk256_key: source.qk256_key.clone(),
+                qk256_raw_tensor_present: source.qk256_raw_tensor_present,
+                input: self.candle_to_concrete(source.input.clone()),
+                output: self.candle_to_concrete(source.output.clone()),
+                dispatch_delta: ModelQk256DispatchDeltaContext {
+                    bitnet_linear_layers_total: source.dispatch_delta.bitnet_linear_layers_total,
+                    bitnet_linear_layers_on_cuda: source
+                        .dispatch_delta
+                        .bitnet_linear_layers_on_cuda,
+                    bitnet_linear_layers_on_a770_opencl: source
+                        .dispatch_delta
+                        .bitnet_linear_layers_on_a770_opencl,
+                    bitnet_linear_layers_cpu_fallback: source
+                        .dispatch_delta
+                        .bitnet_linear_layers_cpu_fallback,
+                    unsupported_ops: source.dispatch_delta.unsupported_ops.clone(),
+                    execution_claim: source.dispatch_delta.execution_claim.clone(),
+                },
+                cpu_hot_path_delta: ModelQk256CpuHotPathDeltaContext {
+                    qk256_f32_scalar_gemv_invocations: source
+                        .cpu_hot_path_delta
+                        .qk256_f32_scalar_gemv_invocations,
+                    qk256_f32_avx2_gemv_invocations: source
+                        .cpu_hot_path_delta
+                        .qk256_f32_avx2_gemv_invocations,
+                    qk256_i8s_scaled_scalar_invocations: source
+                        .cpu_hot_path_delta
+                        .qk256_i8s_scaled_scalar_invocations,
+                    qk256_i8s_scaled_avx2_invocations: source
+                        .cpu_hot_path_delta
+                        .qk256_i8s_scaled_avx2_invocations,
+                    qk256_flat_bytes_extracted_count: source
+                        .cpu_hot_path_delta
+                        .qk256_flat_bytes_extracted_count,
+                    input_rows_materialized_count: source
+                        .cpu_hot_path_delta
+                        .input_rows_materialized_count,
+                    output_rows_allocated_count: source
+                        .cpu_hot_path_delta
+                        .output_rows_allocated_count,
+                    requested_kernel: source.cpu_hot_path_delta.requested_kernel.clone(),
+                    selected_kernel: source.cpu_hot_path_delta.selected_kernel.clone(),
+                    qk256_execution_path: source.cpu_hot_path_delta.qk256_execution_path.clone(),
+                },
+                a770_opencl_runtime_delta: ModelA770OpenClRuntimeDeltaContext {
+                    host_to_device_bytes: source.a770_opencl_runtime_delta.host_to_device_bytes,
+                    device_to_host_bytes: source.a770_opencl_runtime_delta.device_to_host_bytes,
+                    kernel_invocations: source.a770_opencl_runtime_delta.kernel_invocations,
+                },
+            })
+            .collect();
         let source_context =
             workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
                 prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
@@ -730,6 +834,7 @@ impl Model for BitNetModel {
                 earlier_block_source,
                 block_sources,
                 attention_output_sources,
+                qkv_projection_sources,
             });
 
         Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })

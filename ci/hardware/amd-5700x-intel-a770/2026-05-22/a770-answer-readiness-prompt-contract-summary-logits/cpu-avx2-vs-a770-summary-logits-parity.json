@@ -900,6 +900,117 @@
     ],
     "rows_truncated": false
   },
+  "generated_output_qkv_projection_source_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_qkv_projection_source_frontier_dispatch_path_drift",
+    "classification_counts": {
+      "generated_output_qkv_projection_source_dispatch_path_drift": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "replay selected QKV projection CPU versus A770 dispatch policy",
+    "qkv_projection_source_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "attention_output_source_classification": "generated_output_attention_output_source_q_projection_drift",
+        "attention_output_source_field": "q_projection",
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_qkv_projection_source_dispatch_path_drift",
+        "dispatch_match": false,
+        "first_mismatch_index": 9,
+        "input": {
+          "available": true,
+          "left_rms": 0.016132854576369458,
+          "left_sha256_f32_le": "c66e52b4401a4ff527aec2fb0e0897329bf2ac1e28bafb13ff96f0df06463604",
+          "right_rms": 0.016132854576369458,
+          "right_sha256_f32_le": "c66e52b4401a4ff527aec2fb0e0897329bf2ac1e28bafb13ff96f0df06463604",
+          "rms_abs_delta": 0.0,
+          "sha256_match": true
+        },
+        "left_dispatch": {
+          "a770_opencl_runtime_delta": {
+            "device_to_host_bytes": 0,
+            "host_to_device_bytes": 0,
+            "kernel_invocations": 0
+          },
+          "cpu_hot_path_delta": {
+            "input_rows_materialized_count": 1,
+            "output_rows_allocated_count": 1,
+            "qk256_execution_path": "scaled_i2s_i8s",
+            "qk256_f32_avx2_gemv_invocations": 0,
+            "qk256_f32_scalar_gemv_invocations": 0,
+            "qk256_flat_bytes_extracted_count": 1,
+            "qk256_i8s_scaled_avx2_invocations": 0,
+            "qk256_i8s_scaled_scalar_invocations": 1,
+            "requested_kernel": "avx2",
+            "selected_kernel": "qk256-i2s-i8s-scaled-scalar-gemv"
+          },
+          "dispatch_delta": {
+            "bitnet_linear_layers_cpu_fallback": 0,
+            "bitnet_linear_layers_on_a770_opencl": 0,
+            "bitnet_linear_layers_on_cuda": 0,
+            "bitnet_linear_layers_total": 1,
+            "execution_claim": "cpu_qk256_reference",
+            "unsupported_ops": []
+          }
+        },
+        "left_metadata": {
+          "qk256_key": "layers.0.attention.q_proj.weight.qk256_qs",
+          "qk256_raw_tensor_present": true,
+          "tensor_name": "layers.0.attention.q_proj.weight"
+        },
+        "metadata_match": true,
+        "next_diagnostic": "replay selected QKV projection CPU versus A770 dispatch policy",
+        "output": {
+          "available": true,
+          "left_rms": 1.1568787420709823,
+          "left_sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+          "right_rms": 1.1568787818792203,
+          "right_sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+          "rms_abs_delta": 3.9808238039285015e-8,
+          "sha256_match": false
+        },
+        "projection": "q_proj",
+        "qkv_projection_source_context_available": true,
+        "reason": null,
+        "right_dispatch": {
+          "a770_opencl_runtime_delta": {
+            "device_to_host_bytes": 10240,
+            "host_to_device_bytes": 1640960,
+            "kernel_invocations": 1
+          },
+          "cpu_hot_path_delta": {
+            "input_rows_materialized_count": 1,
+            "output_rows_allocated_count": 1,
+            "qk256_execution_path": "not_observed",
+            "qk256_f32_avx2_gemv_invocations": 0,
+            "qk256_f32_scalar_gemv_invocations": 0,
+            "qk256_flat_bytes_extracted_count": 1,
+            "qk256_i8s_scaled_avx2_invocations": 0,
+            "qk256_i8s_scaled_scalar_invocations": 0,
+            "requested_kernel": null,
+            "selected_kernel": null
+          },
+          "dispatch_delta": {
+            "bitnet_linear_layers_cpu_fallback": 0,
+            "bitnet_linear_layers_on_a770_opencl": 1,
+            "bitnet_linear_layers_on_cuda": 0,
+            "bitnet_linear_layers_total": 1,
+            "execution_claim": "a770_opencl_qk256_contribution",
+            "unsupported_ops": []
+          }
+        },
+        "right_metadata": {
+          "qk256_key": "layers.0.attention.q_proj.weight.qk256_qs",
+          "qk256_raw_tensor_present": true,
+          "tensor_name": "layers.0.attention.q_proj.weight"
+        },
+        "target_layer_idx": 0
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_transformer_block_source_stack_frontier": {
     "attention_output_drift_count": 1,
     "attention_residual_drift_count": 0,
@@ -1413,5 +1524,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-23T21:03:03.702828400+00:00"
+  "timestamp": "2026-05-23T23:22:09.637714400+00:00"
 }

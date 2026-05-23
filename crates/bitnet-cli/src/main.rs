@@ -12889,6 +12889,8 @@ fn compact_logit_source_model_forward_source(
     let block_sources = compact_logit_source_block_source_stack(&source.block_sources);
     let attention_output_sources =
         compact_logit_source_attention_output_sources(&source.attention_output_sources);
+    let qkv_projection_sources =
+        compact_logit_source_qkv_projection_sources(&source.qkv_projection_sources);
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -12904,6 +12906,7 @@ fn compact_logit_source_model_forward_source(
         "earlier_block_source": earlier_block_source,
         "block_sources": block_sources,
         "attention_output_sources": attention_output_sources,
+        "qkv_projection_sources": qkv_projection_sources,
         "source_context_available": source_context_available,
         "final_norm_matches_forward_output": final_norm_matches_forward_output,
     })
@@ -13428,6 +13431,82 @@ fn compact_logit_source_attention_output_sources(
     serde_json::json!({
         "schema_version": "1.0.0",
         "context_kind": "decode_step_attention_output_source_stack",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "source_count": sources.len(),
+        "source_context_available": source_context_available,
+        "sources": sources,
+    })
+}
+
+fn compact_logit_source_qkv_projection_sources(
+    sources: &[bitnet_models::ModelQkvProjectionSourceContext],
+) -> serde_json::Value {
+    let sources = sources
+        .iter()
+        .map(|source| {
+            let input = compact_logit_source_tensor_fingerprint(
+                &source.input,
+                "qkv_projection_input_extract_failed",
+            );
+            let output = compact_logit_source_tensor_fingerprint(
+                &source.output,
+                "qkv_projection_output_extract_failed",
+            );
+            let source_context_available = input["available"].as_bool().unwrap_or(false)
+                && output["available"].as_bool().unwrap_or(false)
+                && input["sha256_f32_le"].as_str().is_some()
+                && output["sha256_f32_le"].as_str().is_some();
+
+            serde_json::json!({
+                "schema_version": "1.0.0",
+                "context_kind": "decode_step_qkv_projection_source",
+                "diagnostic_only": true,
+                "claim_allowed": false,
+                "layer_idx": source.layer_idx,
+                "projection": source.projection,
+                "tensor_name": source.tensor_name,
+                "qk256_key": source.qk256_key,
+                "qk256_raw_tensor_present": source.qk256_raw_tensor_present,
+                "input": input,
+                "output": output,
+                "dispatch_delta": {
+                    "bitnet_linear_layers_total": source.dispatch_delta.bitnet_linear_layers_total,
+                    "bitnet_linear_layers_on_cuda": source.dispatch_delta.bitnet_linear_layers_on_cuda,
+                    "bitnet_linear_layers_on_a770_opencl": source.dispatch_delta.bitnet_linear_layers_on_a770_opencl,
+                    "bitnet_linear_layers_cpu_fallback": source.dispatch_delta.bitnet_linear_layers_cpu_fallback,
+                    "unsupported_ops": source.dispatch_delta.unsupported_ops,
+                    "execution_claim": source.dispatch_delta.execution_claim,
+                },
+                "cpu_hot_path_delta": {
+                    "qk256_f32_scalar_gemv_invocations": source.cpu_hot_path_delta.qk256_f32_scalar_gemv_invocations,
+                    "qk256_f32_avx2_gemv_invocations": source.cpu_hot_path_delta.qk256_f32_avx2_gemv_invocations,
+                    "qk256_i8s_scaled_scalar_invocations": source.cpu_hot_path_delta.qk256_i8s_scaled_scalar_invocations,
+                    "qk256_i8s_scaled_avx2_invocations": source.cpu_hot_path_delta.qk256_i8s_scaled_avx2_invocations,
+                    "qk256_flat_bytes_extracted_count": source.cpu_hot_path_delta.qk256_flat_bytes_extracted_count,
+                    "input_rows_materialized_count": source.cpu_hot_path_delta.input_rows_materialized_count,
+                    "output_rows_allocated_count": source.cpu_hot_path_delta.output_rows_allocated_count,
+                    "requested_kernel": source.cpu_hot_path_delta.requested_kernel,
+                    "selected_kernel": source.cpu_hot_path_delta.selected_kernel,
+                    "qk256_execution_path": source.cpu_hot_path_delta.qk256_execution_path,
+                },
+                "a770_opencl_runtime_delta": {
+                    "host_to_device_bytes": source.a770_opencl_runtime_delta.host_to_device_bytes,
+                    "device_to_host_bytes": source.a770_opencl_runtime_delta.device_to_host_bytes,
+                    "kernel_invocations": source.a770_opencl_runtime_delta.kernel_invocations,
+                },
+                "source_context_available": source_context_available,
+            })
+        })
+        .collect::<Vec<_>>();
+    let source_context_available = !sources.is_empty()
+        && sources
+            .iter()
+            .all(|source| source["source_context_available"].as_bool().unwrap_or(false));
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_qkv_projection_source_stack",
         "diagnostic_only": true,
         "claim_allowed": false,
         "source_count": sources.len(),

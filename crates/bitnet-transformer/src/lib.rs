@@ -1630,6 +1630,7 @@ pub struct TransformerForwardWorkspace {
     earlier_block_source_tensors: Option<TransformerFinalBlockSourceTensors>,
     block_source_tensors: Vec<TransformerFinalBlockSourceTensors>,
     attention_output_source_tensors: Vec<TransformerAttentionOutputSourceTensors>,
+    qkv_projection_source_tensors: Vec<TransformerQkvProjectionSourceTensors>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     final_norm_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
     layer_output_surface: Option<TransformerWorkspaceOutputStorageBoundary>,
@@ -1682,6 +1683,51 @@ pub struct TransformerAttentionOutputSourceTensors {
     pub output_projection_input: Tensor,
     pub sub_layernorm_output: Option<Tensor>,
     pub attention_output: Tensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQk256DispatchDelta {
+    pub bitnet_linear_layers_total: u64,
+    pub bitnet_linear_layers_on_cuda: u64,
+    pub bitnet_linear_layers_on_a770_opencl: u64,
+    pub bitnet_linear_layers_cpu_fallback: u64,
+    pub unsupported_ops: Vec<String>,
+    pub execution_claim: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQk256CpuHotPathDelta {
+    pub qk256_f32_scalar_gemv_invocations: u64,
+    pub qk256_f32_avx2_gemv_invocations: u64,
+    pub qk256_i8s_scaled_scalar_invocations: u64,
+    pub qk256_i8s_scaled_avx2_invocations: u64,
+    pub qk256_flat_bytes_extracted_count: u64,
+    pub input_rows_materialized_count: u64,
+    pub output_rows_allocated_count: u64,
+    pub requested_kernel: Option<String>,
+    pub selected_kernel: Option<String>,
+    pub qk256_execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerA770OpenClRuntimeDelta {
+    pub host_to_device_bytes: u64,
+    pub device_to_host_bytes: u64,
+    pub kernel_invocations: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQkvProjectionSourceTensors {
+    pub layer_idx: usize,
+    pub projection: String,
+    pub tensor_name: String,
+    pub qk256_key: String,
+    pub qk256_raw_tensor_present: bool,
+    pub input: Tensor,
+    pub output: Tensor,
+    pub dispatch_delta: TransformerQk256DispatchDelta,
+    pub cpu_hot_path_delta: TransformerQk256CpuHotPathDelta,
+    pub a770_opencl_runtime_delta: TransformerA770OpenClRuntimeDelta,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1989,6 +2035,10 @@ impl TransformerForwardWorkspace {
         &self.attention_output_source_tensors
     }
 
+    pub fn qkv_projection_source_tensors(&self) -> &[TransformerQkvProjectionSourceTensors] {
+        &self.qkv_projection_source_tensors
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -2121,6 +2171,13 @@ impl TransformerForwardWorkspace {
             sub_layernorm_output: sub_layernorm_output.cloned(),
             attention_output: attention_output.clone(),
         });
+    }
+
+    fn record_qkv_projection_source_tensors(
+        &mut self,
+        source: TransformerQkvProjectionSourceTensors,
+    ) {
+        self.qkv_projection_source_tensors.push(source);
     }
 
     fn record_block_input(&mut self, tensor: &Tensor) {
