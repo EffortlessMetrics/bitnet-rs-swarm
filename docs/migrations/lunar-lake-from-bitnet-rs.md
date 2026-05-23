@@ -8,6 +8,8 @@ Target repo: `EffortlessMetrics/bitnet-rs-swarm`
 
 Created: `2026-05-21T15:23:58Z`
 
+Last refreshed: `2026-05-23T15:25:00Z`
+
 ## Purpose
 
 This inventory records the Lunar Lake operating state carried into
@@ -38,13 +40,21 @@ route, regression, telemetry, and audit receipts:
 
 Swarm then continued the lane with later no-inference and evidence-indexing
 work. The current committed Lunar Lake audit cutoff is
-`LNL258V-GOAL-AUDIT-023` from PR #253, with tracker closeout PR #254 and
-`source_revision = 116392b13009ef0ddae8223b345e64592d79e504`.
+`LNL258V-GOAL-AUDIT-045` from PR #470, with tracker closeout PR #472 and
+`source_revision = f06af55c0b941a8e8a2a298525d2febf8b7d5f5e`.
 
-That cutoff records adjacent CUDA/Qwen3 phase-trace PRs #247 and #250 plus
-`LNL258V-GOAL-AUDIT-022` closeout PR #248 as non-Lunar-Lake-route evidence.
-They do not change route policy, promotion status, inference evidence, power
-claims, or BitNet behavior.
+That cutoff records current swarm audit/tracker state through A770-035/#463,
+A770-035 closeout #466, A770-035 source-capture plumbing fix #467, and the
+post-467 handoff/ledger documentation checkpoint. These are adjacent A770
+diagnostic, tracker, or operator-documentation state only. They are not shared
+BitNet semantic fixes, not Lunar Lake semantic-intake stale triggers, and not
+Lunar Lake route evidence.
+
+Current swarm main also contains later adjacent work after that Lunar Lake audit
+cutoff: SLM-CPU-090 ready-state repair #477, A770-036 diagnostic PR #478 and
+closeout #480, and CUDA/Qwen3 warm-session receipt PR #482. Those changes are
+not part of the migrated Lunar Lake operating state and do not change route
+policy, promotion status, inference evidence, power claims, or BitNet behavior.
 
 ## Carried State
 
