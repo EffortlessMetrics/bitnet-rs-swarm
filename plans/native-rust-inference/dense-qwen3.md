@@ -592,7 +592,8 @@ CUDA-MODEL-017V captured the first `warm_session_3_turns` source receipt,
 CUDA-MODEL-017W captured the second `warm_session_3_turns` source receipt, and
 CUDA-MODEL-017X completed the three-run `warm_session_3_turns` source set.
 CUDA-MODEL-017Y captured the first `decode_128_from_warm_context` source
-receipt, and CUDA-MODEL-017Z captured the second:
+receipt, CUDA-MODEL-017Z captured the second, and CUDA-MODEL-017AA completed
+the third source receipt plus repeated-comparator aggregate:
 
 ```text
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json
@@ -609,6 +610,8 @@ ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-warm-session-3-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-decode-128-from-warm-context-cuda.json
 ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-decode-128-from-warm-context-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-decode-128-from-warm-context-cuda.json
+ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/qwen3-0_6b-repeated-comparator.json
 ```
 
 The receipts record the exact Qwen3 0.6B Q8_0 artifact, selected
@@ -621,24 +624,25 @@ The warm-session receipt records generated token equality and a passed quality
 gate while preserving the recorded top-k divergence as evidence, not as a
 top-k-perfect claim.
 
-The aggregate remains blocked because the current committed source set is
-incomplete:
+The repeated source set is complete and the aggregate validates as
+`qwen3_cuda_repeated_comparator`:
 
 ```text
 one_token: 3 / 3
 short_decode_8: 3 / 3
 short_decode_32: 3 / 3
 warm_session_3_turns: 3 / 3
-decode_128_from_warm_context: 2 / 3
+decode_128_from_warm_context: 3 / 3
 ```
 
-The repeated comparator aggregate generator is not the blocker; it is behaving
-correctly by accepting the available source receipts and refusing to generate an
-aggregate until the remaining profile source receipts exist. The
-`short_decode_8`, `short_decode_32`, and `warm_session_3_turns` receipts use
-explicit full-logits D2H sampling (`full_logits_download_cpu_sampler`) and do
-not claim logits-transfer reduction. The aggregate remains blocked only on the
-one remaining `decode_128_from_warm_context` source receipt.
+The repeated comparator aggregate is repeated same-artifact CPU/CUDA comparator
+evidence only. It records five profiles, three CPU comparator runs and three
+strict CUDA runs per profile, `fallback_used=false`, generated-token equality,
+and `speedup_claim=false`. The `short_decode_8`, `short_decode_32`,
+`warm_session_3_turns`, and `decode_128_from_warm_context` receipts use explicit
+full-logits D2H sampling (`full_logits_download_cpu_sampler`) and do not claim
+logits-transfer reduction. The next proof is a separate exact-profile benchmark
+qualification review; the aggregate itself does not qualify speedup.
 
 ### Non-goals
 
