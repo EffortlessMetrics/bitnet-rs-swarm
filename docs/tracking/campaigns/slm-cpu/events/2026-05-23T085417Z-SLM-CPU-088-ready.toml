@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T08:54:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-088"
+event = "in_progress"
+previous_status = "missing"
+new_status = "ready"
+branch = "codex/slm-cpu-088-residual-block-output-boundary"
+actor = "codex"
+summary = "Queued the post-SLM-CPU-087 residual-add and transformer.block.output allocation-layout boundary."
+notes = [
+  "SLM-CPU-087 landed as the queue gate for moving beyond the model.final_norm.output public Candle owned-output API gap.",
+  "SLM-CPU-088 is the implementation or machine-checkable blocker slice for the residual-add / transformer.block.output boundary.",
+  "Any runtime change must preserve the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No packed-Q8 sidecar promotion, speedup claim without before/after receipts, sustained-throughput claim, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is in scope.",
+]
