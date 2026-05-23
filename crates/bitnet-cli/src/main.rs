@@ -12881,6 +12881,9 @@ fn compact_logit_source_model_forward_source(
     let antepenultimate_block_source = compact_logit_source_antepenultimate_block_source(
         source.antepenultimate_block_source.as_ref(),
     );
+    let pre_antepenultimate_block_source = compact_logit_source_pre_antepenultimate_block_source(
+        source.pre_antepenultimate_block_source.as_ref(),
+    );
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -12892,6 +12895,7 @@ fn compact_logit_source_model_forward_source(
         "final_block_source": final_block_source,
         "penultimate_block_source": penultimate_block_source,
         "antepenultimate_block_source": antepenultimate_block_source,
+        "pre_antepenultimate_block_source": pre_antepenultimate_block_source,
         "source_context_available": source_context_available,
         "final_norm_matches_forward_output": final_norm_matches_forward_output,
     })
@@ -13063,6 +13067,65 @@ fn compact_logit_source_antepenultimate_block_source(
     serde_json::json!({
         "schema_version": "1.0.0",
         "context_kind": "decode_step_antepenultimate_transformer_block_source",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "block_input": block_input,
+        "attention_output": attention_output,
+        "post_attention_residual": post_attention_residual,
+        "feed_forward_output": feed_forward_output,
+        "block_output": block_output,
+        "source_context_available": source_context_available,
+    })
+}
+
+fn compact_logit_source_pre_antepenultimate_block_source(
+    source: Option<&bitnet_models::ModelFinalBlockSourceContext>,
+) -> serde_json::Value {
+    let Some(source) = source else {
+        return serde_json::json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_pre_antepenultimate_transformer_block_source",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "source_context_available": false,
+            "reason": "pre_antepenultimate_block_source_context_missing",
+        });
+    };
+
+    let block_input =
+        compact_logit_source_tensor_fingerprint(&source.block_input, "block_input_extract_failed");
+    let attention_output = compact_logit_source_tensor_fingerprint(
+        &source.attention_output,
+        "attention_output_extract_failed",
+    );
+    let post_attention_residual = compact_logit_source_tensor_fingerprint(
+        &source.post_attention_residual,
+        "post_attention_residual_extract_failed",
+    );
+    let feed_forward_output = compact_logit_source_tensor_fingerprint(
+        &source.feed_forward_output,
+        "feed_forward_output_extract_failed",
+    );
+    let block_output = compact_logit_source_tensor_fingerprint(
+        &source.block_output,
+        "block_output_extract_failed",
+    );
+    let source_context_available = [
+        &block_input,
+        &attention_output,
+        &post_attention_residual,
+        &feed_forward_output,
+        &block_output,
+    ]
+    .iter()
+    .all(|fingerprint| {
+        fingerprint["available"].as_bool().unwrap_or(false)
+            && fingerprint["sha256_f32_le"].as_str().is_some()
+    });
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_pre_antepenultimate_transformer_block_source",
         "diagnostic_only": true,
         "claim_allowed": false,
         "block_input": block_input,
