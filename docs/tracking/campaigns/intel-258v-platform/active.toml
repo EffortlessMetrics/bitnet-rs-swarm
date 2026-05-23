@@ -13330,7 +13330,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-014"
-status = "in_progress"
+status = "pr_open"
+pr = 516
 branch = "codex/lunar-lake/LNL258V-POWER-014-low-power-plan-energy-proxy-validity"
 stackable = false
 review_mode = "codex_premerge"
