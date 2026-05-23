@@ -61,7 +61,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-029 | merged | Repair the five shared prompt/scoring content failures left by A770-028, rerun CPU/A770 readiness receipts, and keep CPU/A770 parity divergence non-promoting. |
 | A770-030 | merged | Record focused CPU/A770 multi-step logits for the remaining A770-029 summary generated-output divergence under corpus v1.0.2; merged in #388. |
 | A770-031 | merged | Add a compact first-mismatch argmax-source frontier for the A770-030 summary divergence, preserving missing internal QK256/output-head context instead of promoting a runtime fix; merged in #398. |
-| A770-032 | in_progress | Add compact first-mismatch internal logit source context for the A770-030/A770-031 summary divergence, classifying the live source as hidden operand drift before output-head accumulation without promoting a runtime fix. |
+| A770-032 | pr_open | Add compact first-mismatch internal logit source context for the A770-030/A770-031 summary divergence, classifying the live source as hidden operand drift before output-head accumulation without promoting a runtime fix; opened in #418. |
 
 ## Current Claim Boundary
 
