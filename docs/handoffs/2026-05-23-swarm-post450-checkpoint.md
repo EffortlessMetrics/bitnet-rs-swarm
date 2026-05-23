@@ -57,7 +57,7 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
     surface to blocked `LNL258V-POWER-006`.
 - #450 `docs(slm-cpu): queue SLM-CPU-088`
   - Squash commit and current queue-stabilized promotion candidate SHA:
-    `64a52ae798a6fbbcd829d5598eb30464c8398c97`
+    `64a52ae794f283029eb08a7e4d4bcc2a2552a67e`
   - Queued `SLM-CPU-088` as the residual-add / `transformer.block.output`
     allocation-layout implementation or machine-checkable blocker slice after
     #437/#444 closed the SLM-CPU-087 queue gate.
@@ -81,7 +81,7 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
 - Current source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `origin/main` = `64a52ae798a6fbbcd829d5598eb30464c8398c97`
+  `origin/main` = `64a52ae794f283029eb08a7e4d4bcc2a2552a67e`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --count source/main ^origin/main` returned `0`.
 - `rtk git rev-list --count origin/main ^source/main` returned `68`.
@@ -92,18 +92,19 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
 
 ## Evidence
 
-- Open swarm PR queue before #450/#451 follow-up:
+- Open swarm PR queue at the post-#450 checkpoint, before this handoff merges:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --json number,title,mergeStateStatus,autoMergeRequest,statusCheckRollup,updatedAt`
-  returned `[]` after #449 was closed.
-- Independent open PR count before #450/#451 follow-up:
-  `rtk gh api 'repos/EffortlessMetrics/bitnet-rs-swarm/pulls?state=open&per_page=1' --jq 'length'`
-  returned `0`.
+  returned only this handoff PR, #451.
+- Independent open PR count after this handoff merges is expected to return `0`
+  unless another swarm PR opens during the merge window.
 - #450 remote proof included green `Doctor + Generated Dashboards`,
   `PR Plan`, `PR Gate Success`, and `BitNet Rust Small Result` before/around
   auto-merge.
-- Generated active PR dashboard at checkpoint:
-  `docs/tracking/generated/active-prs.md` contained only the header table and no
-  active rows.
+- #450 local proof after checkout included:
+  `target/debug/xtask campaign check slm-cpu`,
+  `target/debug/xtask campaign generate --check`,
+  `target/debug/xtask campaign doctor`, `git diff --check`, and a touched-file
+  conflict-marker scan.
 - Campaign manifest stale-PR scan:
   `Select-String -Path "docs\tracking\campaigns\**\active.toml" -Pattern 'status = "pr_open"'`
   returned no matches.
@@ -127,7 +128,7 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `64a52ae798a6fbbcd829d5598eb30464c8398c97` as the current queue-stabilized
+  `64a52ae794f283029eb08a7e4d4bcc2a2552a67e` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive:
