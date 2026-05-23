@@ -1,4 +1,4 @@
-# Swarm Post-448 Checkpoint Handoff
+# Swarm Post-450 Checkpoint Handoff
 
 Status: queue checkpoint, no source promotion started
 Linked proposal: not changed by this handoff
@@ -6,7 +6,7 @@ Linked specs: not changed by this handoff
 Linked ADRs: not changed by this handoff
 Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
-PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
+PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448, #450
 
 ## Landed
 
@@ -55,6 +55,15 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
     `c97e5451d478e950d9fe43b237cab2a49526d493`
   - Closed LNL258V-GOAL-AUDIT-042 and returned the active Lunar Lake tracker
     surface to blocked `LNL258V-POWER-006`.
+- #450 `docs(slm-cpu): queue SLM-CPU-088`
+  - Squash commit and current queue-stabilized promotion candidate SHA:
+    `64a52ae794f283029eb08a7e4d4bcc2a2552a67e`
+  - Queued `SLM-CPU-088` as the next Kaby Lake SLM CPU tracker item after
+    SLM-CPU-087.
+  - Claim boundary: tracker queue only; no runtime code, dense math,
+    packed-Q8 sidecar promotion, speedup, sustained-throughput, Q4/Q5 runtime
+    support, server inference, GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5
+    support, or BitNet QK256/I2_S behavior change.
 
 ## Closed Unmerged
 
@@ -70,10 +79,10 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
 - Current source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `origin/main` = `c97e5451d478e950d9fe43b237cab2a49526d493`
+  `origin/main` = `64a52ae794f283029eb08a7e4d4bcc2a2552a67e`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --count source/main ^origin/main` returned `0`.
-- `rtk git rev-list --count origin/main ^source/main` returned `67`.
+- `rtk git rev-list --count origin/main ^source/main` returned `68`.
 - This handoff does not start a swarm-to-source promotion. The recorded SHA is a
   promotion candidate only after the source-promotion operator chooses the batch
   boundary, prepares the promotion packet, and verifies source-owned release
@@ -81,15 +90,11 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
 
 ## Evidence
 
-- Open swarm PR queue at checkpoint:
+- Open swarm PR queue at the post-#450 checkpoint, before this handoff merges:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --json number,title,mergeStateStatus,autoMergeRequest,statusCheckRollup,updatedAt`
-  returned `[]` after #449 was closed.
-- Independent open PR count:
-  `rtk gh api 'repos/EffortlessMetrics/bitnet-rs-swarm/pulls?state=open&per_page=1' --jq 'length'`
-  returned `0`.
-- Generated active PR dashboard at checkpoint:
-  `docs/tracking/generated/active-prs.md` contained only the header table and no
-  active rows.
+  returned only this handoff PR, #451.
+- Independent open PR count after this handoff merges is expected to return `0`
+  unless another swarm PR opens during the merge window.
 - Campaign manifest stale-PR scan:
   `Select-String -Path "docs\tracking\campaigns\**\active.toml" -Pattern 'status = "pr_open"'`
   returned no matches.
@@ -98,6 +103,14 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
 - #446 remote proof included green `Doctor + Generated Dashboards`,
   `PR Plan`, `PR Gate Success`, and `BitNet Rust Small Result` before/around
   auto-merge.
+- #450 remote proof included green `Doctor + Generated Dashboards`,
+  `BitNet Rust Small Result`, and ordinary documentation/tracker checks before
+  merge.
+- #450 local proof after checkout included:
+  `target/debug/xtask campaign check slm-cpu`,
+  `target/debug/xtask campaign generate --check`,
+  `target/debug/xtask campaign doctor`, `git diff --check`, and a touched-file
+  conflict-marker scan.
 
 ## Validation
 
@@ -113,7 +126,7 @@ PRs: #437, #438, #439, #440, #441, #442, #443, #444, #446, #447, #448
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `c97e5451d478e950d9fe43b237cab2a49526d493` as the current queue-stabilized
+  `64a52ae794f283029eb08a7e4d4bcc2a2552a67e` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive:
