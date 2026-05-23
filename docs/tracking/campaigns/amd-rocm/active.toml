@@ -24,8 +24,9 @@ hard_constraints = [
 
 [[work_item]]
 id = "ROCM-DOCS-000"
-status = "ready"
+status = "merged"
 branch = "codex/amd-rocm/ROCM-DOCS-000-source-of-truth"
+merge_sha = "d8f934337060baccef166593008fa635ed77a0f2"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

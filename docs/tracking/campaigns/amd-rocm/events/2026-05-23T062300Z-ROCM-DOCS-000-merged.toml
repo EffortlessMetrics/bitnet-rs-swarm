@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T06:23:00Z"
+campaign = "amd-rocm"
+item = "ROCM-DOCS-000"
+event = "merged"
+previous_status = "ready"
+new_status = "merged"
+merge_sha = "d8f934337060baccef166593008fa635ed77a0f2"
+branch = "codex/amd-rocm/ROCM-DOCS-000-source-of-truth"
+actor = "codex"
+summary = "Closed ROCM-DOCS-000 after verifying the AMD ROCm source-of-truth scaffold already landed through the source-history import."
+notes = [
+  "Verified docs/rocm/README.md, plans/rocm, BITNET-PROP-0008, ROCm specs, specs index, hardware matrix, and amd-rocm campaign files exist in current swarm main.",
+  "The landed content registers AMD ROCm as docs/status scaffold evidence only.",
+  "No ROCm/HIP runtime detection, selected AMD GPU, HIP compile, kernel execution, BitNet QK256, dense SLM, answer quality, speedup, full residency, product CLI readiness, or server readiness claim is promoted.",
+]
