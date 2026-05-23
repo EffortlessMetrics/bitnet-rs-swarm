@@ -107,14 +107,17 @@ jobs:
       fast_path_checks_required: ${{ steps.classify.outputs.fast_path_checks_required }}
       changed_files: ${{ steps.classify.outputs.changed_files }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        with:
+          fetch-depth: 0
+
       - name: Classify no-Rust PR shapes
         id: classify
         env:
-          GH_TOKEN: ${{ github.token }}
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
           EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
 
@@ -127,10 +130,12 @@ jobs:
           fast_path_checks_required=false
           changed_files=""
 
-          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER:-}" ]; then
-            changed_files=$(gh api --paginate \
-              "repos/${OWNER}/${REPO}/pulls/${PR_NUMBER}/files" \
-              --jq '.[].filename')
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${BASE_SHA:-}" ] && [ -n "${HEAD_SHA:-}" ]; then
+            if git cat-file -e "${BASE_SHA}" 2>/dev/null && git cat-file -e "${HEAD_SHA}" 2>/dev/null; then
+              changed_files=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
+            else
+              changed_files=""
+            fi
             echo "Changed files considered by CI Core:"
             printf '%s\n' "$changed_files"
 

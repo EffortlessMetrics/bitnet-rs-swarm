@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_allocation_boundary",
+  "work_item": "SLM-CPU-088",
+  "model_family": "qwen3",
+  "model_quant_format": "Q8_0",
+  "host": "intel-i5-8250u",
+  "scope": "residual-add / transformer.block.output allocation-layout boundary",
+  "source_surface": {
+    "workspace_owner": "TransformerForwardWorkspace",
+    "surface": "transformer.block.output",
+    "operation_family": "candle_core::Tensor residual_add",
+    "operation_detail": "residual_add_owned_tensor_output",
+    "residual_input_shape_recorded": true,
+    "branch_output_shape_recorded": true,
+    "output_shape_recorded": true,
+    "caller_output_helper_status": "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
+    "can_fill_caller_output_storage": false
+  },
+  "classification": {
+    "status": "blocked_by_owned_candle_residual_add_output",
+    "reason": "Transformer block output is produced by adding the feed-forward branch output to the residual tensor through Candle tensor add semantics; the public behavior-preserving path returns an owned Tensor and does not expose caller-provided output storage.",
+    "next_safe_change": "add or adopt a behavior-preserving Candle Tensor residual-add output-storage API before replacing transformer.block.output construction with reusable workspace-backed storage"
+  },
+  "behavior_oracle": {
+    "model_sha_required": true,
+    "strict_gguf_tokenizer_required": true,
+    "prompt_ids_must_match": true,
+    "generated_ids_must_match": true,
+    "decoded_text_must_match": true,
+    "selected_cpu_backend_must_match": true,
+    "fallback_used": false
+  },
+  "claim_boundary": {
+    "runtime_speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "packed_q8_sidecar_promotion": false,
+    "q4_or_q5_runtime_support": false,
+    "server_claim": false,
+    "accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_change": false
+  }
+}

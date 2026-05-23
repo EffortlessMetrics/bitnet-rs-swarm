@@ -15863,6 +15863,34 @@ mod tests {
             "layer_output_storage_blocked_by_candle_tensor_add_ops"
         );
         assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_operation_family"],
+            "candle_core::Tensor residual_add"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_operation_detail"],
+            "residual_add_owned_tensor_output"
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_input_accessible"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_residual_add_involved"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_residual_input_shape_recorded"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_branch_output_shape_recorded"],
+            true
+        );
+        assert_eq!(
+            audit["prompt_prefill_breakdown"]["forward_boundary"]["layer_output_caller_output_helper_status"],
+            "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output"
+        );
+        assert_eq!(
             audit["prompt_prefill_breakdown"]["forward_boundary"]["post_model_forward_required_api_boundary"],
             "final_norm_output_storage_api_or_apply_op_output_hook"
         );
@@ -15979,11 +16007,11 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["alloc_bytes"], 1_500);
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "final_norm_layer_output_storage_boundary"
+            "residual_block_output_storage_boundary"
         );
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
+            "layer_output_storage_blocked_by_candle_tensor_add_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
         assert_eq!(
@@ -16017,12 +16045,12 @@ mod tests {
         assert_eq!(audit["dominant_hotspot"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["target"],
-            "final_norm_layer_output_storage_boundary"
+            "residual_block_output_storage_boundary"
         );
         assert_eq!(audit["next_optimization_target"]["component"], "prompt_prefill.forward");
         assert_eq!(
             audit["next_optimization_target"]["status"],
-            "final_norm_output_storage_blocked_by_candle_layer_norm_ops"
+            "layer_output_storage_blocked_by_candle_tensor_add_ops"
         );
         assert_eq!(audit["optimization_deferred"], true);
     }
