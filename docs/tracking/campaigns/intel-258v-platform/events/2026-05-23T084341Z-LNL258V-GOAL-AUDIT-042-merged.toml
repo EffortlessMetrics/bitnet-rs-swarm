@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T08:43:41Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-042"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 446
+head_sha = "3ee9941a7cb59bd0a4e3ea8fc4a0818981eaf202"
+merge_sha = "3a54754fc1732e50eea7e1a16129afb5703e2f75"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-042-post-a770033-cuda"
+actor = "codex"
+summary = "Merged PR #446 for the no-inference Lunar Lake goal-audit refresh after adjacent tracker, PR-template, SLM closeout, and CUDA source-receipt updates."
+notes = [
+  "The merged slice refreshes Lunar Lake audit/checklist artifacts to current swarm main at 72061c7279137a47a379db3590a8d317b0679635 and keeps LNL258V-POWER-006 as the active low_power blocker.",
+  "#443 is repository documentation/control-plane guidance only; #444 is adjacent SLM CPU tracker closeout state only; #447 is adjacent CUDA/Qwen3 source-receipt state only.",
+  "No inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, semantic-intake stale trigger, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim is made.",
+]
