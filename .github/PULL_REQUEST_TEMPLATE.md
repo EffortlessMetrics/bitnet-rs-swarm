@@ -107,9 +107,17 @@ Receipts or proof manifests:
 - <!-- Add a bullet point for each meaningful change -->
 -
 
-## Testing
+## Validation
 
-<!-- Describe how you tested these changes -->
+<!-- Describe the exact proof used for this PR. Use `none` only when the PR truly has no local validation path. -->
+
+Commands run:
+
+- <!-- command or none -->
+
+Validation gaps:
+
+- <!-- unavailable command/gap or none -->
 
 - [ ] Tests pass locally with `cargo test --workspace --no-default-features --features cpu`
 - [ ] Code formatted with `cargo fmt --all`
@@ -153,6 +161,8 @@ See: docs/ci/cost-and-verification-policy.md
 ## Rollback
 
 <!-- How to revert safely if needed -->
+
+Rollback:
 
 ## Checklist
 

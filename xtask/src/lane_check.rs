@@ -91,13 +91,17 @@ fn validate_pr_body(
         "Branch",
         "Base main SHA",
         "Closeout required",
+        "Source promotion needed",
+        "Model/hardware/proof claims added",
+        "Claims explicitly not promoted",
+        "Rollback",
     ] {
         if scalar_field_value(body, field).is_none() {
             report.errors.push(format!("PR body must fill `{field}:`"));
         }
     }
 
-    for field in ["Allowed paths", "Shared surfaces touched"] {
+    for field in ["Allowed paths", "Shared surfaces touched", "Commands run", "Validation gaps"] {
         if list_field_values(body, field).is_empty() {
             report.errors.push(format!("PR body must list `{field}:`"));
         }
@@ -334,6 +338,14 @@ Allowed paths:
 Shared surfaces touched:
 - xtask/**
 Closeout required: no
+Source promotion needed: no
+Model/hardware/proof claims added: none
+Claims explicitly not promoted: release, publish, signing, runtime, model, hardware, speed
+Commands run:
+- cargo test --locked -p xtask --no-default-features lane_check
+Validation gaps:
+- none
+Rollback: revert this PR
 Promotion or sync packet path: n/a
 Source repo commit: n/a
 Swarm base commit: n/a
@@ -360,11 +372,21 @@ Allowed paths:
 Shared surfaces touched:
 - <!-- shared surface or none -->
 Closeout required:
+Source promotion needed:
+Model/hardware/proof claims added:
+Claims explicitly not promoted:
+Commands run:
+- <!-- command or none -->
+Validation gaps:
+- <!-- gap or none -->
+Rollback:
 "#;
         let mut report = CheckReport::default();
         validate_pr_body(body, None, &[], &mut report);
         assert!(report.errors.iter().any(|error| error.contains("Lane")));
         assert!(report.errors.iter().any(|error| error.contains("Allowed paths")));
+        assert!(report.errors.iter().any(|error| error.contains("Source promotion needed")));
+        assert!(report.errors.iter().any(|error| error.contains("Rollback")));
     }
 
     #[test]
