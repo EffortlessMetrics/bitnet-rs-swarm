@@ -59,7 +59,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-027 | merged | Record focused CPU/A770 logit context for the two generated-output divergent answer-readiness cases; merged in #344. |
 | A770-028 | merged | Normalize only the punctuation/casing scoring cases identified by A770-026, rerun CPU/A770 readiness receipts, and keep remaining failures and parity divergence non-promoting. |
 | A770-029 | merged | Repair the five shared prompt/scoring content failures left by A770-028, rerun CPU/A770 readiness receipts, and keep CPU/A770 parity divergence non-promoting. |
-| A770-030 | in progress | Record focused CPU/A770 multi-step logits for the remaining A770-029 summary generated-output divergence under corpus v1.0.2. |
+| A770-030 | merged | Record focused CPU/A770 multi-step logits for the remaining A770-029 summary generated-output divergence under corpus v1.0.2; merged in #388. |
 
 ## Current Claim Boundary
 
