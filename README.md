@@ -56,6 +56,10 @@ Do not retarget an existing `BitNet-rs` clone to this repository. Start with
 and [`docs/release/PROMOTE_TO_BITNET_RS.md`](docs/release/PROMOTE_TO_BITNET_RS.md)
 before opening repo-boundary, promotion, or release-adjacent work.
 
+Swarm evidence is not public release authority by itself. Source-facing claims
+must travel through a promotion or sync packet that names the included swarm
+commits, proof commands, claim boundary, release impact, and excluded work.
+
 ## What This Repo Is For
 
 BitNet-rs is moving toward a Rust-native local model runner with strict proof

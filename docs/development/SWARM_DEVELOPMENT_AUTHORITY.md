@@ -35,6 +35,11 @@ Use this repository for:
 branches, package metadata, signed artifacts when present, emergency
 release-blocking fixes, and the public source-of-truth stack until cutover.
 
+| Repository | Role | Must not do |
+| --- | --- | --- |
+| `EffortlessMetrics/BitNet-rs` | Public source-of-truth, release, publish, signing, user-facing canonical repo | Absorb routine swarm development without a promotion or sync packet. |
+| `EffortlessMetrics/bitnet-rs-swarm` | High-throughput same-repo development and proof execution repo | Publish, sign, release, or promote user-facing claims directly. |
+
 ## Migration Boundary
 
 Swarm is not a replacement source repo yet. Work that lands here is execution
