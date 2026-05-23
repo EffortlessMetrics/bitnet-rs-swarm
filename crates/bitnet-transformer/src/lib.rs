@@ -1620,8 +1620,10 @@ pub struct TransformerForwardWorkspace {
     last_input_shape: Vec<usize>,
     last_output_shape: Vec<usize>,
     feed_forward_output_slot: Option<Tensor>,
+    model_output_surface: Option<TransformerWorkspaceOutputSurface>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     workspace_owned_output_count: usize,
+    model_output_storage_attempts: usize,
     down_proj_output_storage_attempts: usize,
     tensor_reuse_enabled: bool,
 }
@@ -1720,6 +1722,14 @@ impl TransformerForwardWorkspace {
         self.down_proj_output_storage_attempts
     }
 
+    pub fn model_output_storage_attempts(&self) -> usize {
+        self.model_output_storage_attempts
+    }
+
+    pub fn model_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
+        self.model_output_surface.as_ref()
+    }
+
     pub fn first_output_surface(&self) -> Option<&TransformerWorkspaceOutputSurface> {
         self.feed_forward_output_surface.as_ref()
     }
@@ -1741,6 +1751,20 @@ impl TransformerForwardWorkspace {
 
     fn record_model_output(&mut self, tensor: &Tensor) {
         self.last_output_shape = tensor.dims().to_vec();
+        self.model_output_storage_attempts += 1;
+        self.model_output_surface = Some(TransformerWorkspaceOutputSurface {
+            name: "model.forward.output",
+            storage_owner: "TransformerForwardWorkspace",
+            status: "model_forward_output_storage_blocked_by_owned_tensor_api",
+            reason: "TransformerModel::forward_impl returns the final Candle Tensor produced by the layer loop; the current behavior-preserving model-forward API has no caller-provided output storage parameter",
+            next_api_hook: "add or adopt a model-forward caller-output-storage API before replacing the final TransformerModel::forward output with reusable workspace-backed storage",
+            last_shape: tensor.dims().to_vec(),
+            linear_weight_shape: Vec::new(),
+            linear_bias_shape: None,
+            weight_accessible: false,
+            bias_accessible: false,
+            can_fill_caller_output_storage: false,
+        });
     }
 
     fn record_block_input(&mut self, tensor: &Tensor) {

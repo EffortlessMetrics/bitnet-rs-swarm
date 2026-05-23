@@ -1350,6 +1350,35 @@ This dashboard does not claim end-to-end speedup, sustained 8250U throughput,
 broad answer quality, Q4/Q5 runtime support, server execution, GPU/NPU/OpenVINO
 or UHD 620 execution, Qwen3.5 support, or BitNet QK256/I2_S changes.
 
+## SLM-CPU-083 Model-Forward Output Boundary
+
+SLM-CPU-083 returns the Kaby Qwen3 Q8_0 performance lane to the
+`prompt_prefill.forward` / `model.forward` allocation path after the repeated
+packed-Q8 sidecar timing gate regressed. The runtime classification remains
+behavior-preserving: `TransformerForwardWorkspace` now records the
+`model.forward.output` owned-output surface in addition to the existing
+`feed_forward.down_proj.output` surface.
+
+```text
+model_forward_owned_output_surface = model.forward.output
+model_forward_reuse_status = model_forward_output_storage_blocked_by_owned_tensor_api
+workspace_storage_owner = TransformerForwardWorkspace
+default_runtime_changed = false
+speedup_claim = false
+```
+
+The classification narrows the next allocation-layout API boundary: the
+current `TransformerModel::forward_with_workspace` path can name the
+model-forward output surface, but the behavior-preserving API still returns the
+final Candle `Tensor` without caller-provided output storage. Any future reuse
+work must add or adopt an output-storage API and must preserve the Qwen3 Q8_0
+appliance oracle before claiming even a bounded counter improvement.
+
+This slice does not promote `packed_q8_sidecar`, does not change dense math, and
+does not claim end-to-end speedup, sustained 8250U throughput, broad answer
+quality, Q4/Q5 runtime support, server execution, accelerator execution,
+Qwen3.5 support, or BitNet QK256/I2_S changes.
+
 ## SLM-CPU-081 Repeated Timing Gate
 
 SLM-CPU-081 records the next evidence boundary for the exact-tensor packed-Q8

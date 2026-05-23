@@ -1,0 +1,17 @@
+timestamp = "2026-05-23T00:07:05Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-083"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 393
+head_sha = "1db5d185d0895aba705ea161c25c50b089f9b125"
+merge_sha = "107409f014e234f8af1a77d0491ee30899ba7b4b"
+branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
+actor = "codex"
+summary = "Merged PR #393 with the model-forward owned-output boundary classification."
+notes = [
+  "PR #393 records the model.forward.output owned-output surface through TransformerForwardWorkspace alongside feed_forward.down_proj.output.",
+  "Warm-session allocation audit JSON now reports the model-forward boundary and preserves the existing Qwen3 Q8_0 behavior oracle.",
+  "The merge does not promote packed_q8_sidecar, speedup, sustained throughput, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claims.",
+]

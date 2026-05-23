@@ -2042,7 +2042,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-083"
-status = "ready"
+status = "merged"
+pr = 393
+head_sha = "1db5d185d0895aba705ea161c25c50b089f9b125"
+merge_sha = "107409f014e234f8af1a77d0491ee30899ba7b4b"
 branch = "codex/slm-cpu-083-prefill-forward-allocation-target"
 stackable = false
 review_mode = "codex_premerge"

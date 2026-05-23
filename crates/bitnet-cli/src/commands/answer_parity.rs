@@ -1780,12 +1780,7 @@ fn token_id_vec(value: &Value) -> Option<Vec<u64>> {
 }
 
 fn first_different_token_index(left: &[u64], right: &[u64]) -> Option<usize> {
-    for index in 0..left.len().max(right.len()) {
-        if left.get(index) != right.get(index) {
-            return Some(index);
-        }
-    }
-    None
+    (0..left.len().max(right.len())).find(|&index| left.get(index) != right.get(index))
 }
 
 fn case_summary(case: &Value) -> Value {
