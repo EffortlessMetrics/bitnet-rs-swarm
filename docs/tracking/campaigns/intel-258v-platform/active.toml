@@ -12421,10 +12421,10 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["LNL258V-GOAL-AUDIT-039"]
-acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-039/#421, LNL258V-GOAL-AUDIT-039 closeout #424, adjacent A770-032 campaign-summary status repair #423, adjacent SLM-CPU-086 final-norm output-storage gate #425, SLM-CPU-086 closeout #428, and adjacent SLM-CPU-086 layernorm metadata coverage #429, so source_revision points at 93bfd2a774d3eaf0af4c63cb7d65a5349d44ed04. Record #421/#424 as Lunar Lake audit/tracker state only, #423 as adjacent A770 tracker/dashboard repair only, #425/#428 as adjacent SLM CPU final-norm output-storage boundary/tracker state only, and #429 as adjacent SLM CPU transformer test coverage only. Preserve LNL258V-POWER-006 as the active blocker and preserve no inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, acceleration claim, dense-SLM-as-BitNet-proof, broad quality, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim."
+acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-039/#421, LNL258V-GOAL-AUDIT-039 closeout #424, adjacent A770-032 campaign-summary status repair #423, adjacent SLM-CPU-086 final-norm output-storage gate #425, SLM-CPU-086 closeout #428, adjacent SLM-CPU-086 layernorm metadata coverage #429, repo authority documentation #431, and adjacent SLM-CPU-086 campaign-summary repair #430, so source_revision points at 9aeb60b6b540afc2561da7ac610e6c0c281476b1. Record #421/#424 as Lunar Lake audit/tracker state only, #423 as adjacent A770 tracker/dashboard repair only, #425/#428 as adjacent SLM CPU final-norm output-storage boundary/tracker state only, #429 as adjacent SLM CPU transformer test coverage only, #431 as repo documentation only, and #430 as adjacent SLM CPU tracker/documentation repair only. Preserve LNL258V-POWER-006 as the active blocker and preserve no inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, acceleration claim, dense-SLM-as-BitNet-proof, broad quality, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim."
 commands = [
   "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | ConvertFrom-Json | Out-Null\"",
-  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String '93bfd2a774d3eaf0af4c63cb7d65a5349d44ed04' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_429_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'adjacent_slm_cpu_layernorm_metadata_test_not_lunar_lake_route_evidence' | Out-Null\"",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String '9aeb60b6b540afc2561da7ac610e6c0c281476b1' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_431_430_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'adjacent_slm_cpu_campaign_summary_repair_not_lunar_lake_route_evidence' | Out-Null\"",
   "target/debug/bitnet.exe lunar-lake validate --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-validate-current-audit-040.json --created-utc 2026-05-23T05:50:00Z --strict",
   "target/debug/bitnet.exe lunar-lake regress --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out target/tmp/lunar-lake-regress-current-audit-040.json --created-utc 2026-05-23T05:50:00Z --strict",
   "target/debug/bitnet.exe lunar-lake compare --artifact-root ci/hardware/intel-258v/2026-05-08 --regression-bundle target/tmp/lunar-lake-regress-current-audit-040.json --json-out target/tmp/lunar-lake-compare-current-audit-040.json --created-utc 2026-05-23T05:50:00Z --strict",
@@ -12446,7 +12446,7 @@ forbidden_paths = [
   "models/**",
 ]
 may_claim = [
-  "The Lunar Lake audit and checklist are refreshed to current swarm main through LNL258V-GOAL-AUDIT-039/#421, closeout #424, adjacent A770 #423, and adjacent SLM-CPU #425/#428/#429.",
+  "The Lunar Lake audit and checklist are refreshed to current swarm main through LNL258V-GOAL-AUDIT-039/#421, closeout #424, adjacent A770 #423, adjacent SLM-CPU #425/#428/#429/#430, and repo docs #431.",
   "The refreshed audit/checklist keep LNL258V-POWER-006 as the active blocker for real battery-mode low_power telemetry, energy-proxy evidence, measured thermal readings, and benchmark-qualified power advantage.",
 ]
 must_not_claim = [
@@ -12463,6 +12463,8 @@ must_not_claim = [
   "A770-032 status repair stales Lunar Lake semantic-intake evidence.",
   "SLM-CPU-086 is Lunar Lake route evidence.",
   "SLM-CPU-086 layernorm metadata coverage is Lunar Lake route evidence.",
+  "SLM-CPU-086 campaign-summary repair is Lunar Lake route evidence.",
+  "Swarm development authority documentation is Lunar Lake route evidence.",
   "CPU/A770 parity is promoted.",
   "Strict A770 answer readiness is proven.",
   "Trusted partial acceleration is claim-grade.",
