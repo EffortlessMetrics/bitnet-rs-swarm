@@ -1,4 +1,4 @@
-# Swarm Post-461 Checkpoint Handoff
+# Swarm Post-462 Checkpoint Handoff
 
 Status: queue checkpoint, no source promotion started
 Linked proposal: not changed by this handoff
@@ -6,7 +6,7 @@ Linked specs: not changed by this handoff
 Linked ADRs: not changed by this handoff
 Linked plan: post-repair swarm operating phase
 Campaign: swarm merge marshal / repo operating phase
-PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
+PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460, #462
 
 ## Landed
 
@@ -59,7 +59,7 @@ PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
   - Claim boundary: no route promotion, speedup, power, battery, native
     accelerator, Qwen3, or BitNet QK256/I2_S behavior claim.
 - #460 `feat(cuda): add qwen3 short-decode-32 source receipt`
-  - Squash commit and current queue-stabilized promotion candidate SHA:
+  - Squash commit:
     `b2b6b78c156071d4d229d20640bcb22335d74683`
   - Added the first current-source Qwen3 `short_decode_32` strict CUDA receipt
     for CUDA-MODEL-017.
@@ -67,29 +67,35 @@ PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
     no aggregate completion, speedup, full residency, broad dense GGUF
     readiness, logits transfer reduction, Qwen2.5 inheritance, BitNet packed
     I2_S/QK256 proof, or runtime/kernel/tokenizer/loader/server/routing claim.
+- #462 `docs(lunar-lake): close LNL258V-GOAL-AUDIT-044`
+  - Squash commit and current queue-stabilized promotion candidate SHA:
+    `49b6e0f934287c0920796ea74be5f05709323fd3`
+  - Closed the LNL258V-GOAL-AUDIT-044 tracker state after #461 and regenerated
+    the Lunar Lake/generated dashboard surfaces.
+  - Claim boundary: tracker closeout only; no inference, route promotion,
+    speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S
+    behavior claim.
 
 ## Closed Unmerged
 
 - None in this checkpoint window.
 
-## Open Queue After #460/#461
+## Open Queue After #462
 
 - #459 `perf(slm): SLM-CPU-088 residual block output boundary`
-  - Current disposition: open after #460/#461; inspect exact diff and
-    complete SLM/runtime proof before merge.
-- #462 `docs(lunar-lake): close LNL258V-GOAL-AUDIT-044`
-  - Current disposition: open generated-tracker closeout; process only in a
-    tracker merge window with generated proof.
+  - Current disposition: open after #462 with auto-merge armed but
+    `mergeStateStatus = DIRTY`; inspect exact diff, resolve main drift, and
+    complete focused SLM/runtime proof before merge.
 
 ## Source Delta
 
 - Current source ref:
   `source/main` = `ef6eec8a6f95a54138fd69617235347944d2caae`
 - Current swarm ref:
-  `origin/main` = `b2b6b78c156071d4d229d20640bcb22335d74683`
+  `origin/main` = `49b6e0f934287c0920796ea74be5f05709323fd3`
 - `source/main` is reachable from `origin/main`.
 - `rtk git rev-list --count source/main ^origin/main` returned `0`.
-- `rtk git rev-list --count origin/main ^source/main` returned `77`.
+- `rtk git rev-list --count origin/main ^source/main` returned `78`.
 - This handoff does not start a swarm-to-source promotion. The recorded SHA is a
   promotion candidate only after the source-promotion operator chooses the batch
   boundary, prepares the promotion packet, and verifies source-owned release
@@ -97,11 +103,13 @@ PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
 
 ## Evidence
 
-- Open swarm PR queue at the post-#460/#461 checkpoint, excluding this handoff
+- Open swarm PR queue at the post-#462 checkpoint, excluding this handoff
   PR:
   `rtk gh pr list --repo EffortlessMetrics/bitnet-rs-swarm --state open --limit 100 --json number,title,headRefName,mergeStateStatus,autoMergeRequest,updatedAt,isDraft`
-  returned #457, this handoff PR, plus #459 and #462 as open work.
-- Open swarm PR count excluding this handoff PR: `2` (#459 and #462).
+  returned this handoff PR (#457) plus #459 as open work.
+- Open swarm PR count excluding this handoff PR: `1` (#459).
+- #462 squash-merged while this handoff PR was waiting on the routed result.
+  The handoff branch was refreshed from `origin/main` afterward.
 - #460 squash-merged while this handoff PR was waiting on the routed result.
   The handoff branch was refreshed from `origin/main` afterward.
 - #461 squash-merged while this handoff PR was waiting on the routed result.
@@ -136,6 +144,7 @@ PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
 - `rtk gh pr view 458 --repo EffortlessMetrics/bitnet-rs-swarm --json state,mergedAt,mergeCommit,number,title`
 - `rtk gh pr view 461 --repo EffortlessMetrics/bitnet-rs-swarm --json state,mergedAt,mergeCommit,number,title`
 - `rtk gh pr view 460 --repo EffortlessMetrics/bitnet-rs-swarm --json state,mergedAt,mergeCommit,number,title`
+- `rtk gh pr view 462 --repo EffortlessMetrics/bitnet-rs-swarm --json number,title,state,mergedAt,closedAt,mergeCommit,headRefOid,files,body`
 - `rtk git rev-list --count origin/main ^source/main`
 - Validation gap: `rtk cargo fmt --all -- --check` hit Windows OS error 206
   from overlong command expansion. The changed Rust files were checked with
@@ -144,14 +153,14 @@ PRs: #451, #452, #453, #454, #455, #456, #458, #461, #460
 ## Remaining Work
 
 - Do not start a swarm-to-source promotion from this handoff alone. Use
-  `b2b6b78c156071d4d229d20640bcb22335d74683` as the current queue-stabilized
+  `49b6e0f934287c0920796ea74be5f05709323fd3` as the current queue-stabilized
   promotion candidate SHA only after the source-promotion operator chooses the
   batch boundary and verifies source-owned release surfaces.
 - Continue processing new swarm PRs as they arrive:
   classify lane, inspect exact diff, verify claim boundaries, run focused proof,
   and squash-merge normal swarm PRs only when green.
-- Process #459 and #462 next only after refreshing from current `main` and
-  recording focused proof for their lanes.
+- Process #459 next only after refreshing from current `main` and recording
+  focused SLM/runtime proof.
 - Keep source-history repair, source-to-swarm sync, and swarm-to-source
   promotion ancestry-preserving. Do not squash those repository-boundary PRs.
 - Keep generated dashboards, campaign `active.toml`, workflows, `Cargo.lock`,

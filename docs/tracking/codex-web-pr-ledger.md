@@ -33,17 +33,17 @@ disposition and retains the original large snapshot below for provenance.
   - `rtk git rev-parse source/main`
   - `rtk git rev-list --count source/main ^origin/main`
   - `rtk git rev-list --count origin/main ^source/main`
-- Open PR count excluding this snapshot PR: 2
+- Open PR count excluding this snapshot PR: 1
 - Duplicate open PR clusters: none observed in the current open slice after
-  #460 merged.
-- Direct swarm PRs waiting for merge excluding this snapshot PR: #459 and #462;
-  both need current status review and lane-specific proof before merge.
+  #462 merged.
+- Direct swarm PRs waiting for merge excluding this snapshot PR: #459; it
+  needs current status review and lane-specific proof before merge.
 - Current queue-stabilized promotion candidate SHA before this snapshot PR
   merges:
-  `b2b6b78c156071d4d229d20640bcb22335d74683`
+  `49b6e0f934287c0920796ea74be5f05709323fd3`
 - Source reachability: `source/main` is reachable from `origin/main`;
   `source/main ^origin/main` count is `0`, and `origin/main ^source/main`
-  count is `77`.
+  count is `78`.
 
 | PR | Lane | Current signal | Disposition |
 |---:|---|---|---|
@@ -56,8 +56,8 @@ disposition and retains the original large snapshot below for provenance.
 | #458 | A770 campaign summary | Merged after #456. | Marked A770-034 merged in the campaign summary row only; no runtime/math/support claim. |
 | #461 | Lunar Lake tracker/audit | Merged after #458 with generated tracker proof. | No-inference audit/checklist refresh only; no route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
 | #460 | CUDA/Qwen3 source receipt | Merged after #461. | One Qwen3 `short_decode_32` source receipt only; no aggregate completion, speedup, full residency, dense GGUF readiness, or BitNet packed I2_S/QK256 proof. |
-| #459 | SLM runtime/perf | Open after #460/#461. | Inspect exact runtime diff and require focused SLM proof before merge. |
-| #462 | Lunar Lake tracker closeout | Open after #461. | Process only in a generated-tracker merge window with generated proof. |
+| #462 | Lunar Lake tracker closeout | Merged after #461. | Tracker closeout only; no inference, route promotion, speedup, power, battery, native accelerator, Qwen3, or BitNet QK256/I2_S behavior claim. |
+| #459 | SLM runtime/perf | Open after #462 with auto-merge armed but `mergeStateStatus = DIRTY`. | Inspect exact runtime diff, resolve main drift, and require focused SLM proof before merge. |
 
 Do not start a swarm-to-source promotion from this snapshot alone. The recorded
 SHA is a promotion candidate only after the source-promotion operator chooses a
