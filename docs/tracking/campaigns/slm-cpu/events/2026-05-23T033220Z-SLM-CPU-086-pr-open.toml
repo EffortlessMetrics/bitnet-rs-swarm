@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T03:32:20Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-086"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 414
+head_sha = "140ae52f465ec099ab10c0cfabbba2416f71615f"
+branch = "codex/slm-cpu-086-final-norm-output-storage-gate"
+actor = "codex"
+summary = "Opened PR #414 to queue the final-norm output-storage feasibility gate."
+notes = [
+  "This is a tracker-only queue PR after SLM-CPU-085 merged.",
+  "The next implementation slice is scoped to `model.final_norm.output` caller-output-storage feasibility before moving to residual-add, dense math, sidecar promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 work.",
+]
