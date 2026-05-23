@@ -1,0 +1,16 @@
+campaign = "intel-a770"
+item = "A770-034"
+event = "in_progress"
+timestamp = "2026-05-23T08:41:39Z"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-034-model-forward-source-frontier"
+base_sha = "c78e4ac7bcad859aa0decc618747485bed2f4260"
+head_sha = "c78e4ac7bcad859aa0decc618747485bed2f4260"
+claim_allowed = false
+diagnostic_only = true
+
+notes = [
+  "A770-034 follows the A770-033 next frontier by adding compact final norm and prior layer output fingerprints to model.forward source context.",
+  "The focused live receipt classifies generated_output_model_forward_source_frontier_prior_layer_output_drift for a770_summary_seed770024_keywords_014.",
+  "No runtime math, QK256 dispatch, OpenCL kernel, tokenizer, model artifact, corpus, quality, residency, speed, trusted-partial, or full-inference claim is promoted.",
+]

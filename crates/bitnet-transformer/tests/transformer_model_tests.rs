@@ -228,6 +228,16 @@ fn test_incremental_forward_workspace_matches_existing_path() -> anyhow::Result<
     assert_eq!(workspace.down_proj_output_storage_attempts(), model.config.model.num_layers);
     assert_eq!(workspace.layer_output_storage_attempts(), model.config.model.num_layers);
     assert_eq!(workspace.final_norm_output_storage_attempts(), 1);
+    let Some(source_tensors) = workspace.model_forward_source_tensors() else {
+        anyhow::bail!("workspace should retain model forward source tensors");
+    };
+    assert_eq!(source_tensors.prior_layer_output.dims(), &[1, 1, hidden]);
+    assert_eq!(source_tensors.final_norm_output.dims(), &[1, 1, hidden]);
+    assert_eq!(
+        source_tensors.final_norm_output.flatten_all()?.to_vec1::<f32>()?,
+        with_workspace_values,
+        "final norm output source tensor should match model.forward output"
+    );
     let Some(model_surface) = workspace.model_output_surface() else {
         anyhow::bail!("workspace should classify the model forward output surface");
     };

@@ -16,6 +16,18 @@ use candle_core::{DType, Tensor as CandleTensor};
 use std::collections::HashMap;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
+pub struct ModelForwardSourceContext {
+    pub prior_layer_output: ConcreteTensor,
+    pub final_norm_output: ConcreteTensor,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelForwardDiagnosticOutput {
+    pub output: ConcreteTensor,
+    pub source_context: Option<ModelForwardSourceContext>,
+}
+
 /// Trait for BitNet models
 pub trait Model: Send + Sync {
     fn config(&self) -> &BitNetConfig;
@@ -24,6 +36,16 @@ pub trait Model: Send + Sync {
         input: &ConcreteTensor,
         cache: &mut dyn std::any::Any,
     ) -> Result<ConcreteTensor>;
+    fn forward_with_source_context(
+        &self,
+        input: &ConcreteTensor,
+        cache: &mut dyn std::any::Any,
+    ) -> Result<ModelForwardDiagnosticOutput> {
+        Ok(ModelForwardDiagnosticOutput {
+            output: self.forward(input, cache)?,
+            source_context: None,
+        })
+    }
     fn embed(&self, tokens: &[u32]) -> Result<ConcreteTensor>;
     fn logits(&self, hidden: &ConcreteTensor) -> Result<ConcreteTensor>;
     fn dense_q8_hook_selection_receipt(&self) -> serde_json::Value {
@@ -536,6 +558,30 @@ impl Model for BitNetModel {
 
         // Convert back to ConcreteTensor
         Ok(self.candle_to_concrete(output))
+    }
+
+    fn forward_with_source_context(
+        &self,
+        input: &ConcreteTensor,
+        cache: &mut dyn std::any::Any,
+    ) -> Result<ModelForwardDiagnosticOutput> {
+        let transformer = self.transformer.as_ref().ok_or_else(|| {
+            BitNetError::Model(bitnet_common::ModelError::LoadingFailed {
+                reason: "BitNetModel::transformer not initialized (GGUF load failed or build_transformer returned error)".to_string()
+            })
+        })?;
+
+        let kv_cache = cache.downcast_mut::<KVCache>();
+        let input_tensor = self.to_candle_tensor(input)?;
+        let mut workspace = bitnet_transformer::TransformerForwardWorkspace::new();
+        let output = transformer.forward_with_workspace(input_tensor, kv_cache, &mut workspace)?;
+        let source_context =
+            workspace.model_forward_source_tensors().map(|source| ModelForwardSourceContext {
+                prior_layer_output: self.candle_to_concrete(source.prior_layer_output.clone()),
+                final_norm_output: self.candle_to_concrete(source.final_norm_output.clone()),
+            });
+
+        Ok(ModelForwardDiagnosticOutput { output: self.candle_to_concrete(output), source_context })
     }
 
     fn embed(&self, tokens: &[u32]) -> Result<ConcreteTensor> {

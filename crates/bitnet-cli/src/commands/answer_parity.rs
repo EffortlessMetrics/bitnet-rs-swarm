@@ -235,6 +235,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_model_forward_source_frontier =
+        build_generated_output_model_forward_source_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -329,6 +337,7 @@ fn build_answer_parity_receipt(
         "generated_output_argmax_source_frontier": generated_output_argmax_source_frontier,
         "generated_output_internal_logit_source_frontier": generated_output_internal_logit_source_frontier,
         "generated_output_hidden_state_source_frontier": generated_output_hidden_state_source_frontier,
+        "generated_output_model_forward_source_frontier": generated_output_model_forward_source_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -2636,6 +2645,287 @@ fn generated_output_hidden_state_source_common_row(
     row
 }
 
+fn build_generated_output_model_forward_source_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut clean_count = 0usize;
+    let mut prior_layer_output_drift_count = 0usize;
+    let mut final_norm_output_drift_count = 0usize;
+    let mut forward_output_serialization_drift_count = 0usize;
+    let mut missing_context_count = 0usize;
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_model_forward_source_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        match row["classification"].as_str() {
+            Some("generated_output_model_forward_source_prior_layer_output_drift") => {
+                prior_layer_output_drift_count += 1;
+            }
+            Some("generated_output_model_forward_source_final_norm_output_drift") => {
+                final_norm_output_drift_count += 1;
+            }
+            Some("generated_output_model_forward_source_forward_output_serialization_drift") => {
+                forward_output_serialization_drift_count += 1;
+            }
+            Some("generated_output_model_forward_source_clean") => clean_count += 1,
+            Some("generated_output_model_forward_source_not_applicable") => {
+                continue;
+            }
+            _ => missing_context_count += 1,
+        }
+        row_candidate_count += 1;
+        push_limited_row(&mut rows, ROW_LIMIT, row);
+    }
+
+    let classification = if missing_context_count > 0 {
+        "generated_output_model_forward_source_frontier_missing_context"
+    } else if prior_layer_output_drift_count > 0 {
+        "generated_output_model_forward_source_frontier_prior_layer_output_drift"
+    } else if final_norm_output_drift_count > 0 {
+        "generated_output_model_forward_source_frontier_final_norm_output_drift"
+    } else if forward_output_serialization_drift_count > 0 {
+        "generated_output_model_forward_source_frontier_forward_output_serialization_drift"
+    } else {
+        "generated_output_model_forward_source_frontier_clean"
+    };
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "clean_count": clean_count,
+        "prior_layer_output_drift_count": prior_layer_output_drift_count,
+        "final_norm_output_drift_count": final_norm_output_drift_count,
+        "forward_output_serialization_drift_count": forward_output_serialization_drift_count,
+        "missing_context_count": missing_context_count,
+        "model_forward_source_context_available": rows.iter().any(|row| {
+            row["model_forward_source_context_available"].as_bool().unwrap_or(false)
+        }),
+        "prior_layer_output_context_available": rows.iter().any(|row| {
+            row["prior_layer_output_context_available"].as_bool().unwrap_or(false)
+        }),
+        "final_norm_output_context_available": rows.iter().any(|row| {
+            row["final_norm_output_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": match classification {
+            "generated_output_model_forward_source_frontier_prior_layer_output_drift" => {
+                "capture final transformer block residual, attention output, and FFN output fingerprints"
+            }
+            "generated_output_model_forward_source_frontier_final_norm_output_drift" => {
+                "replay final norm input/output numeric policy for selected generated step"
+            }
+            "generated_output_model_forward_source_frontier_forward_output_serialization_drift" => {
+                "inspect model.forward output serialization after final norm"
+            }
+            "generated_output_model_forward_source_frontier_missing_context" => {
+                "rerun focused receipts with model_forward_source context enabled"
+            }
+            _ => "none",
+        },
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
+fn generated_output_model_forward_source_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let Some(left_case) = left_case else {
+        return generated_output_model_forward_source_missing_context_row(id, "left_case_missing");
+    };
+    let Some(right_case) = right_case else {
+        return generated_output_model_forward_source_missing_context_row(id, "right_case_missing");
+    };
+    let Some(left_generated) = token_id_vec(&left_case["token_ids"]["generated"]) else {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "left_generated_token_ids_missing",
+        );
+    };
+    let Some(right_generated) = token_id_vec(&right_case["token_ids"]["generated"]) else {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "right_generated_token_ids_missing",
+        );
+    };
+    let Some(first_mismatch_index) = first_different_token_index(&left_generated, &right_generated)
+    else {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_model_forward_source_not_applicable",
+            "reason": "generated_token_ids_match",
+        });
+    };
+
+    let Some(left_step) =
+        left_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "left_logits_step_missing",
+        );
+    };
+    let Some(right_step) =
+        right_case["logits_dump"].as_array().and_then(|steps| steps.get(first_mismatch_index))
+    else {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "right_logits_step_missing",
+        );
+    };
+
+    let left_source = &left_step["logit_source_context"]["hidden_state_source"];
+    let right_source = &right_step["logit_source_context"]["hidden_state_source"];
+    if !left_source.is_object() {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "left_hidden_state_source_missing",
+        );
+    }
+    if !right_source.is_object() {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "right_hidden_state_source_missing",
+        );
+    }
+
+    let left_model_source = &left_source["model_forward_source"];
+    let right_model_source = &right_source["model_forward_source"];
+    if !left_model_source.is_object() {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "left_model_forward_source_missing",
+        );
+    }
+    if !right_model_source.is_object() {
+        return generated_output_model_forward_source_missing_context_row(
+            id,
+            "right_model_forward_source_missing",
+        );
+    }
+
+    let left_prior = &left_model_source["prior_layer_output"];
+    let right_prior = &right_model_source["prior_layer_output"];
+    let left_final_norm = &left_model_source["final_norm_output"];
+    let right_final_norm = &right_model_source["final_norm_output"];
+    let left_forward = &left_source["forward_output"];
+    let right_forward = &right_source["forward_output"];
+
+    let left_prior_available = left_prior["available"].as_bool().unwrap_or(false);
+    let right_prior_available = right_prior["available"].as_bool().unwrap_or(false);
+    let left_final_norm_available = left_final_norm["available"].as_bool().unwrap_or(false);
+    let right_final_norm_available = right_final_norm["available"].as_bool().unwrap_or(false);
+    let prior_sha_match = optional_str_eq(
+        left_prior["sha256_f32_le"].as_str(),
+        right_prior["sha256_f32_le"].as_str(),
+    );
+    let final_norm_sha_match = optional_str_eq(
+        left_final_norm["sha256_f32_le"].as_str(),
+        right_final_norm["sha256_f32_le"].as_str(),
+    );
+    let forward_sha_match = optional_str_eq(
+        left_forward["sha256_f32_le"].as_str(),
+        right_forward["sha256_f32_le"].as_str(),
+    );
+    let model_forward_source_context_available = left_prior_available
+        && right_prior_available
+        && left_final_norm_available
+        && right_final_norm_available
+        && prior_sha_match.is_some()
+        && final_norm_sha_match.is_some();
+    let classification = if model_forward_source_context_available && prior_sha_match == Some(false)
+    {
+        "generated_output_model_forward_source_prior_layer_output_drift"
+    } else if model_forward_source_context_available
+        && prior_sha_match == Some(true)
+        && final_norm_sha_match == Some(false)
+    {
+        "generated_output_model_forward_source_final_norm_output_drift"
+    } else if model_forward_source_context_available
+        && final_norm_sha_match == Some(true)
+        && forward_sha_match == Some(false)
+    {
+        "generated_output_model_forward_source_forward_output_serialization_drift"
+    } else if model_forward_source_context_available {
+        "generated_output_model_forward_source_clean"
+    } else {
+        "generated_output_model_forward_source_missing_context"
+    };
+
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "first_mismatch_index": first_mismatch_index,
+        "left_token_id": left_generated.get(first_mismatch_index).copied(),
+        "right_token_id": right_generated.get(first_mismatch_index).copied(),
+        "left_chosen_id": left_step["chosen_id"],
+        "right_chosen_id": right_step["chosen_id"],
+        "model_forward_source_context_available": model_forward_source_context_available,
+        "prior_layer_output_context_available": left_prior_available && right_prior_available && prior_sha_match.is_some(),
+        "final_norm_output_context_available": left_final_norm_available && right_final_norm_available && final_norm_sha_match.is_some(),
+        "prior_layer_output_sha256_match": prior_sha_match,
+        "final_norm_output_sha256_match": final_norm_sha_match,
+        "forward_output_sha256_match": forward_sha_match,
+        "left_prior_layer_output_sha256_f32_le": left_prior["sha256_f32_le"],
+        "right_prior_layer_output_sha256_f32_le": right_prior["sha256_f32_le"],
+        "left_prior_layer_output_shape": left_prior["shape"],
+        "right_prior_layer_output_shape": right_prior["shape"],
+        "left_prior_layer_output_rms": left_prior["rms"],
+        "right_prior_layer_output_rms": right_prior["rms"],
+        "prior_layer_output_rms_abs_delta": number_abs_delta(&left_prior["rms"], &right_prior["rms"]),
+        "left_final_norm_output_sha256_f32_le": left_final_norm["sha256_f32_le"],
+        "right_final_norm_output_sha256_f32_le": right_final_norm["sha256_f32_le"],
+        "left_final_norm_output_shape": left_final_norm["shape"],
+        "right_final_norm_output_shape": right_final_norm["shape"],
+        "left_final_norm_output_rms": left_final_norm["rms"],
+        "right_final_norm_output_rms": right_final_norm["rms"],
+        "final_norm_output_rms_abs_delta": number_abs_delta(&left_final_norm["rms"], &right_final_norm["rms"]),
+        "left_final_norm_matches_forward_output": left_model_source["final_norm_matches_forward_output"],
+        "right_final_norm_matches_forward_output": right_model_source["final_norm_matches_forward_output"],
+        "next_diagnostic": match classification {
+            "generated_output_model_forward_source_prior_layer_output_drift" => {
+                "capture final transformer block residual, attention output, and FFN output fingerprints"
+            }
+            "generated_output_model_forward_source_final_norm_output_drift" => {
+                "replay final norm input/output numeric policy for selected generated step"
+            }
+            "generated_output_model_forward_source_forward_output_serialization_drift" => {
+                "inspect model.forward output serialization after final norm"
+            }
+            "generated_output_model_forward_source_missing_context" => {
+                "rerun focused receipts with model_forward_source context enabled"
+            }
+            _ => "none",
+        },
+    })
+}
+
+fn generated_output_model_forward_source_missing_context_row(id: &str, reason: &str) -> Value {
+    json!({
+        "case_id": id,
+        "classification": "generated_output_model_forward_source_missing_context",
+        "reason": reason,
+        "model_forward_source_context_available": false,
+        "prior_layer_output_context_available": false,
+        "final_norm_output_context_available": false,
+    })
+}
+
 fn optional_str_eq(left: Option<&str>, right: Option<&str>) -> Option<bool> {
     Some(left? == right?)
 }
@@ -3218,6 +3508,92 @@ mod tests {
         logits
     }
 
+    fn logits_first_mismatch_margin_left_with_model_forward_source(
+        hidden_sha: &str,
+        forward_sha: &str,
+        last_hidden_sha: &str,
+        prior_sha: &str,
+        final_norm_sha: &str,
+    ) -> Value {
+        let mut logits = logits_first_mismatch_margin_left_with_hidden_state_source(
+            hidden_sha,
+            forward_sha,
+            last_hidden_sha,
+        );
+        logits[2]["logit_source_context"]["hidden_state_source"]["model_forward_source"] = json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_model_forward_source",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "prior_layer_output": {
+                "available": true,
+                "shape": [1, 1, 4],
+                "value_count": 4,
+                "finite_count": 4,
+                "nan_count": 0,
+                "infinite_count": 0,
+                "sha256_f32_le": prior_sha,
+                "rms": 1.0,
+            },
+            "final_norm_output": {
+                "available": true,
+                "shape": [1, 1, 4],
+                "value_count": 4,
+                "finite_count": 4,
+                "nan_count": 0,
+                "infinite_count": 0,
+                "sha256_f32_le": final_norm_sha,
+                "rms": 1.0,
+            },
+            "source_context_available": true,
+            "final_norm_matches_forward_output": final_norm_sha == forward_sha,
+        });
+        logits
+    }
+
+    fn logits_first_mismatch_margin_right_with_model_forward_source(
+        hidden_sha: &str,
+        forward_sha: &str,
+        last_hidden_sha: &str,
+        prior_sha: &str,
+        final_norm_sha: &str,
+    ) -> Value {
+        let mut logits = logits_first_mismatch_margin_right_with_hidden_state_source(
+            hidden_sha,
+            forward_sha,
+            last_hidden_sha,
+        );
+        logits[2]["logit_source_context"]["hidden_state_source"]["model_forward_source"] = json!({
+            "schema_version": "1.0.0",
+            "context_kind": "decode_step_model_forward_source",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "prior_layer_output": {
+                "available": true,
+                "shape": [1, 1, 4],
+                "value_count": 4,
+                "finite_count": 4,
+                "nan_count": 0,
+                "infinite_count": 0,
+                "sha256_f32_le": prior_sha,
+                "rms": 1.5,
+            },
+            "final_norm_output": {
+                "available": true,
+                "shape": [1, 1, 4],
+                "value_count": 4,
+                "finite_count": 4,
+                "nan_count": 0,
+                "infinite_count": 0,
+                "sha256_f32_le": final_norm_sha,
+                "rms": 1.5,
+            },
+            "source_context_available": true,
+            "final_norm_matches_forward_output": final_norm_sha == forward_sha,
+        });
+        logits
+    }
+
     fn logits_first_mismatch_missing_cross_chosen() -> Value {
         json!([
             {
@@ -3619,6 +3995,97 @@ mod tests {
         assert_eq!(
             frontier["rows"][0]["next_diagnostic"],
             "capture final norm and prior layer output fingerprints before model.forward output"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_model_forward_source_prior_layer_output_drift() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            logits_first_mismatch_margin_left_with_model_forward_source(
+                "left-hidden",
+                "left-forward",
+                "left-hidden",
+                "left-prior-layer",
+                "left-forward",
+            ),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            logits_first_mismatch_margin_right_with_model_forward_source(
+                "right-hidden",
+                "right-forward",
+                "right-hidden",
+                "right-prior-layer",
+                "right-forward",
+            ),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_model_forward_source_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_model_forward_source_frontier_prior_layer_output_drift"
+        );
+        assert_eq!(frontier["prior_layer_output_drift_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_model_forward_source_prior_layer_output_drift"
+        );
+        assert_eq!(frontier["rows"][0]["prior_layer_output_sha256_match"], false);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "capture final transformer block residual, attention output, and FFN output fingerprints"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_model_forward_source_final_norm_output_drift() {
+        let scalar = receipt(
+            "i2_s-avx2-reference",
+            &[4, 5, 6],
+            "4 5 6",
+            logits_first_mismatch_margin_left_with_model_forward_source(
+                "left-hidden",
+                "left-forward",
+                "left-hidden",
+                "same-prior-layer",
+                "left-forward",
+            ),
+        );
+        let a770 = a770_receipt(
+            &[4, 5, 7],
+            "4 5 7",
+            logits_first_mismatch_margin_right_with_model_forward_source(
+                "right-hidden",
+                "right-forward",
+                "right-hidden",
+                "same-prior-layer",
+                "right-forward",
+            ),
+        );
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_model_forward_source_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_model_forward_source_frontier_final_norm_output_drift"
+        );
+        assert_eq!(frontier["final_norm_output_drift_count"], 1);
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_model_forward_source_final_norm_output_drift"
+        );
+        assert_eq!(frontier["rows"][0]["prior_layer_output_sha256_match"], true);
+        assert_eq!(frontier["rows"][0]["final_norm_output_sha256_match"], false);
+        assert_eq!(
+            frontier["rows"][0]["next_diagnostic"],
+            "replay final norm input/output numeric policy for selected generated step"
         );
     }
 
