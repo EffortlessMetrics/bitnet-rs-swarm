@@ -1,0 +1,16 @@
+timestamp = "2026-05-23T03:32:55Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-085"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 411
+branch = "codex/slm-cpu-085-final-norm-output-storage-boundary"
+head_sha = "4b7228411f0f76bcdf2276f73365721b72ed5ac0"
+actor = "codex"
+summary = "Opened PR #411 for the SLM-CPU-085 final-norm/layer-output boundary classification."
+notes = [
+  "TransformerForwardWorkspace now records model.layer.output and model.final_norm.output blockers without replacing Candle owned-tensor operations.",
+  "The allocation audit reports final_norm_layer_output_storage_boundary as the next safe target while keeping optimization_deferred=true.",
+  "The claim boundary remains behavior-preserving: no dense math change, packed-Q8 sidecar promotion, speedup claim, sustained throughput claim, Q4/Q5 support, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 work.",
+]
