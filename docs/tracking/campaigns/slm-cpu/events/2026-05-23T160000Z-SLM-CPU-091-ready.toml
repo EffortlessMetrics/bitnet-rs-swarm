@@ -1,0 +1,15 @@
+timestamp = "2026-05-23T16:00:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-091"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-091-logits-output-boundary"
+actor = "codex"
+summary = "Queued the next Kaby Lake Qwen3 Q8_0 logits/output-head allocation boundary after SLM-CPU-090."
+notes = [
+  "SLM-CPU-090 recorded the exact Candle residual-add output-storage blocker for transformer.block.output.",
+  "SLM-CPU-091 moves the next non-duplicative performance target to the model.logits / output-head tensor allocation boundary already identified by the Kaby performance dashboard.",
+  "Any implementation remains gated by the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No residual-add storage fix, speedup, sustained-throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
