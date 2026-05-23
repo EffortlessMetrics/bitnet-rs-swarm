@@ -1620,9 +1620,11 @@ pub struct TransformerForwardWorkspace {
     last_input_shape: Vec<usize>,
     last_output_shape: Vec<usize>,
     feed_forward_output_slot: Option<Tensor>,
+    model_output_slot: Option<Tensor>,
     model_output_surface: Option<TransformerWorkspaceOutputSurface>,
     feed_forward_output_surface: Option<TransformerWorkspaceOutputSurface>,
     workspace_owned_output_count: usize,
+    model_workspace_owned_output_count: usize,
     model_output_storage_attempts: usize,
     down_proj_output_storage_attempts: usize,
     tensor_reuse_enabled: bool,
@@ -1718,6 +1720,10 @@ impl TransformerForwardWorkspace {
         self.workspace_owned_output_count
     }
 
+    pub fn model_workspace_owned_output_count(&self) -> usize {
+        self.model_workspace_owned_output_count
+    }
+
     pub fn down_proj_output_storage_attempts(&self) -> usize {
         self.down_proj_output_storage_attempts
     }
@@ -1755,9 +1761,9 @@ impl TransformerForwardWorkspace {
         self.model_output_surface = Some(TransformerWorkspaceOutputSurface {
             name: "model.forward.output",
             storage_owner: "TransformerForwardWorkspace",
-            status: "model_forward_output_storage_blocked_by_owned_tensor_api",
-            reason: "TransformerModel::forward_impl returns the final Candle Tensor produced by the layer loop; the current behavior-preserving model-forward API has no caller-provided output storage parameter",
-            next_api_hook: "add or adopt a model-forward caller-output-storage API before replacing the final TransformerModel::forward output with reusable workspace-backed storage",
+            status: "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
+            reason: "TransformerModel::forward_with_workspace now moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot, preserving behavior while keeping reusable caller-filled output storage blocked by Candle tensor operations that still return owned Tensors",
+            next_api_hook: "add or adopt final-norm/layer-output caller-output-storage APIs before replacing the final TransformerModel::forward output allocation with reusable workspace-backed storage",
             last_shape: tensor.dims().to_vec(),
             linear_weight_shape: Vec::new(),
             linear_bias_shape: None,
@@ -1809,6 +1815,25 @@ impl TransformerForwardWorkspace {
         self.feed_forward_output_slot.take().ok_or_else(|| {
             BitNetError::Validation(
                 "TransformerForwardWorkspace feed-forward output slot must be populated before take"
+                    .to_string(),
+            )
+        })
+    }
+
+    fn store_model_output(&mut self, tensor: Tensor) {
+        let last_shape = tensor.dims().to_vec();
+        self.last_output_shape = last_shape.clone();
+        if let Some(surface) = self.model_output_surface.as_mut() {
+            surface.last_shape = last_shape;
+        }
+        self.model_workspace_owned_output_count += 1;
+        self.model_output_slot = Some(tensor);
+    }
+
+    fn take_model_output(&mut self) -> Result<Tensor> {
+        self.model_output_slot.take().ok_or_else(|| {
+            BitNetError::Validation(
+                "TransformerForwardWorkspace model output slot must be populated before take"
                     .to_string(),
             )
         })
@@ -3208,7 +3233,8 @@ impl TransformerModel {
         workspace.record_model_input(&hidden);
         let output = self.forward_impl(hidden, kv_cache, Some(workspace))?;
         workspace.record_model_output(&output);
-        Ok(output)
+        workspace.store_model_output(output);
+        workspace.take_model_output()
     }
 
     fn forward_impl(
