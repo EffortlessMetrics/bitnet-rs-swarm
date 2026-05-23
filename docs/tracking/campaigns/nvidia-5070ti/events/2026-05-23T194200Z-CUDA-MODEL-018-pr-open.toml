@@ -1,0 +1,22 @@
+timestamp = "2026-05-23T19:42:00Z"
+campaign = "nvidia-5070ti"
+item = "CUDA-MODEL-018"
+event = "pr_open"
+previous_status = "blocked"
+new_status = "pr_open"
+actor = "codex"
+pr = 511
+branch = "codex/nvidia-5070ti/CUDA-MODEL-018-qwen3-benchmark-review"
+head_sha = "9dc8424b3f29bd2dafe7b37c32f2aa13cfb7433f"
+summary = "Opened the Qwen3 exact-profile benchmark qualification review after CUDA-MODEL-017 merged."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/511",
+  "docs/reports/CUDA_MODEL_018_QWEN3_EXACT_PROFILE_BENCHMARK_REVIEW.md",
+  "ci/model-artifacts/model-coverage-matrix.toml",
+]
+
+notes = [
+  "The review rejects Qwen3 speedup, benchmark-qualified speed, and full-residency promotion for the current exact-profile aggregate.",
+  "CUDA-MODEL-018 remains pr_open until PR #511 lands and a post-merge closeout records the merge SHA.",
+]
