@@ -5700,9 +5700,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-088"
-status = "pr_open"
+status = "merged"
 pr = 459
-head_sha = "832debbc24881c4eaf48a7b57ac4d84e5993b35f"
+head_sha = "5ece9f17394d927845eb806ceccc335138d47c25"
+merge_sha = "c1050aa483bac674c26b523dd7b6182a40801827"
 branch = "codex/slm-cpu-088-residual-block-output-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -5740,11 +5741,12 @@ forbidden_paths = [
 ]
 may_claim = [
   "SLM-CPU-087 has landed as the residual-add / transformer.block.output queue gate.",
-  "SLM-CPU-088 is the next Kaby Lake Qwen3 Q8_0 allocation-layout implementation or blocker slice at the residual-add / transformer.block.output boundary.",
-  "A valid SLM-CPU-088 slice must preserve generated IDs, decoded text, strict tokenizer authority, selected CPU backend, model SHA, dense hook identity where applicable, and fallback=false before claiming even a bounded allocation improvement.",
+  "SLM-CPU-088 records residual input and feed-forward branch output shape evidence at the residual-add / transformer.block.output boundary.",
+  "SLM-CPU-088 classifies the remaining blocker as Candle residual-add owned Tensor output without caller-provided storage.",
+  "SLM-CPU-088 keeps the Qwen3 Q8_0 appliance oracle as the gate before any later bounded allocation improvement can be claimed.",
 ]
 must_not_claim = [
-  "The residual-add/layer-output runtime path is optimized before SLM-CPU-088 implementation evidence exists.",
+  "The residual-add/layer-output runtime path is optimized by SLM-CPU-088.",
   "The packed-Q8 sidecar is promoted to the default runtime.",
   "End-to-end speedup is proven without before/after receipts.",
   "Sustained 8250U throughput is proven.",
