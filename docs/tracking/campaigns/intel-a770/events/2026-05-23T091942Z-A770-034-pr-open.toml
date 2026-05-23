@@ -1,0 +1,16 @@
+campaign = "intel-a770"
+item = "A770-034"
+event = "pr_open"
+timestamp = "2026-05-23T09:19:42Z"
+actor = "codex-a770"
+pr = 454
+branch = "codex/intel-a770/A770-034-model-forward-source-frontier"
+head_sha = "116ce83758389708ed27578a9b6bf206d4ed448b"
+claim_allowed = false
+diagnostic_only = true
+
+notes = [
+  "Opened PR #454 to add compact model-forward source fingerprints for the focused A770 summary divergence.",
+  "The refreshed receipt classifies generated_output_model_forward_source_frontier_prior_layer_output_drift for a770_summary_seed770024_keywords_014.",
+  "Closeout is required after merge; no A770 parity, readiness, quality, residency, speed, trusted-partial, or full-inference claim is promoted.",
+]
