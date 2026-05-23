@@ -934,7 +934,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-033"
-status = "in_progress"
+status = "pr_open"
+pr = 439
+head_sha = "717da0d482cc8efc52613766956880cb22b1fdd1"
 branch = "codex/intel-a770/A770-033-hidden-state-source-frontier"
 stackable = false
 review_mode = "codex_premerge"
