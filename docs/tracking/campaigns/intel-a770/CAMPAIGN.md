@@ -66,7 +66,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-034 | merged | Add compact model-forward source context for the A770-033 model.forward drift, classifying the live source as prior layer output drift before final norm without promoting a runtime fix; merged in #454. |
 | A770-035 | merged | Add compact final transformer block source context for the A770-034 prior-layer drift, classifying the live source as final block input drift before final-block attention/FFN without promoting a runtime fix; merged in #463. |
 | A770-036 | merged | Add compact penultimate transformer block source context for the A770-035 final-block-input drift, classifying whether the live source is already present at penultimate block input or introduced by penultimate attention/FFN boundaries without promoting a runtime fix; merged in #478. |
-| A770-037 | in_progress | Add compact antepenultimate transformer block source context for the A770-036 penultimate-block-input drift, classifying whether the live source is already present at antepenultimate block input or introduced by antepenultimate attention/FFN boundaries without promoting a runtime fix. |
+| A770-037 | merged | #488 added compact antepenultimate transformer block source context for the A770-036 penultimate-block-input drift; the live receipt classifies the remaining generated-output mismatch as already present at antepenultimate block input, without changing runtime math, OpenCL dispatch, QK256 kernels, scoring, sampling, route promotion, parity, readiness, quality, residency, speed, or trusted-partial-acceleration claims. |
 
 ## Current Claim Boundary
 
