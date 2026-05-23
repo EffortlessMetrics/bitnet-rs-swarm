@@ -2580,6 +2580,7 @@ fn generated_output_hidden_state_source_row(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generated_output_hidden_state_source_row_without_source_context(
     id: &str,
     left_context: &Value,

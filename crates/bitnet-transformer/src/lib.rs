@@ -1688,6 +1688,11 @@ pub struct TransformerWorkspaceOutputStorageBoundary {
     pub residual_add_involved: bool,
     pub caller_output_helper_status: &'static str,
     pub can_fill_caller_output_storage: bool,
+    pub exact_blocking_ops: Option<&'static [&'static str]>,
+    pub public_api_return_type: Option<&'static str>,
+    pub required_missing_api: Option<&'static str>,
+    pub public_api_accepts_output_storage: Option<bool>,
+    pub backend_internal_in_place_api_exposed: Option<bool>,
 }
 
 /// Behavior-preserving dense linear output-storage API boundary.
@@ -1778,17 +1783,37 @@ pub struct LayerOutputStorageApiBoundary {
     pub next_api_hook: &'static str,
     pub residual_add_involved: bool,
     pub can_fill_caller_output_storage: bool,
+    pub exact_blocking_ops: &'static [&'static str],
+    pub public_api_return_type: &'static str,
+    pub required_missing_api: &'static str,
+    pub public_api_accepts_output_storage: bool,
+    pub backend_internal_in_place_api_exposed: bool,
 }
+
+pub const CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS: &[&str] = &[
+    "Tensor::add(&self, &Tensor) -> Result<Tensor>",
+    "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>",
+    "std::ops::Add for Tensor/&Tensor delegates to Tensor::add and returns Result<Tensor>",
+];
+
+pub const CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE: &str = "Result<Tensor>";
+
+pub const CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API: &str = "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)";
 
 impl LayerOutputStorageApiBoundary {
     pub fn from_candle_residual_add(role: &'static str) -> Self {
         Self {
             role,
             status: "layer_output_storage_blocked_by_candle_tensor_add_ops",
-            reason: "TransformerBlock layer output is produced by Candle tensor residual-add operations that return owned Tensors without a caller-provided output-storage parameter",
-            next_api_hook: "add or adopt a Candle Tensor residual-add output-storage API before replacing transformer.block.output construction with reusable workspace-backed storage",
+            reason: "TransformerBlock layer output is produced by Candle Tensor::add/broadcast_add residual-add operations whose public API returns owned Result<Tensor> values and exposes no caller-provided output-storage parameter",
+            next_api_hook: CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
             residual_add_involved: true,
             can_fill_caller_output_storage: false,
+            exact_blocking_ops: CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
+            public_api_return_type: CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
+            required_missing_api: CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+            public_api_accepts_output_storage: false,
+            backend_internal_in_place_api_exposed: false,
         }
     }
 }
@@ -1998,6 +2023,13 @@ impl TransformerForwardWorkspace {
             residual_add_involved: boundary.residual_add_involved,
             caller_output_helper_status: "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
             can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
+            exact_blocking_ops: Some(boundary.exact_blocking_ops),
+            public_api_return_type: Some(boundary.public_api_return_type),
+            required_missing_api: Some(boundary.required_missing_api),
+            public_api_accepts_output_storage: Some(boundary.public_api_accepts_output_storage),
+            backend_internal_in_place_api_exposed: Some(
+                boundary.backend_internal_in_place_api_exposed,
+            ),
         });
     }
 
@@ -2030,6 +2062,11 @@ impl TransformerForwardWorkspace {
             residual_add_involved: false,
             caller_output_helper_status: boundary.caller_output_helper_status,
             can_fill_caller_output_storage: boundary.can_fill_caller_output_storage,
+            exact_blocking_ops: None,
+            public_api_return_type: None,
+            required_missing_api: None,
+            public_api_accepts_output_storage: None,
+            backend_internal_in_place_api_exposed: None,
         });
     }
 
@@ -3815,6 +3852,30 @@ mod tests {
         let mean = squared.mean_all()?;
         let rms = mean.sqrt()?.to_scalar::<f32>()? as f64;
         Ok(rms)
+    }
+
+    #[test]
+    fn layer_output_storage_boundary_names_exact_candle_residual_add_blocker() {
+        let boundary =
+            LayerOutputStorageApiBoundary::from_candle_residual_add("transformer.block.output");
+
+        assert_eq!(boundary.status, "layer_output_storage_blocked_by_candle_tensor_add_ops");
+        assert_eq!(boundary.public_api_return_type, "Result<Tensor>");
+        assert!(!boundary.public_api_accepts_output_storage);
+        assert!(!boundary.backend_internal_in_place_api_exposed);
+        assert!(
+            boundary.exact_blocking_ops.contains(&"Tensor::add(&self, &Tensor) -> Result<Tensor>")
+        );
+        assert!(
+            boundary
+                .exact_blocking_ops
+                .contains(&"Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>")
+        );
+        assert_eq!(
+            boundary.required_missing_api,
+            "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)"
+        );
+        assert!(!boundary.can_fill_caller_output_storage);
     }
 
     #[test]

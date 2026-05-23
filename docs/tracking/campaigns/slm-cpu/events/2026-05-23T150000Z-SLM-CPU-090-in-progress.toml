@@ -1,0 +1,13 @@
+timestamp = "2026-05-23T15:00:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-090"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-090-residual-add-output-storage-slice"
+actor = "codex"
+summary = "Started SLM-CPU-090 residual-add output-storage blocker slice."
+notes = [
+  "This slice names the exact Candle public Tensor residual-add APIs that still return owned Result<Tensor> outputs.",
+  "The slice does not change transformer runtime behavior or claim an allocation, speed, throughput, Q4/Q5, accelerator, server, Qwen3.5, or BitNet QK256 improvement.",
+]
