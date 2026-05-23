@@ -934,7 +934,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-034"
-status = "in_progress"
+status = "pr_open"
+pr = 454
+head_sha = "116ce83758389708ed27578a9b6bf206d4ed448b"
 branch = "codex/intel-a770/A770-034-model-forward-source-frontier"
 stackable = false
 review_mode = "codex_premerge"
