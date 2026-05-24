@@ -6262,7 +6262,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-098"
-status = "pr_open"
+status = "merged"
+pr = 606
+head_sha = "01fdf4aa31f3cd9b29d729bf536ad9f118d17f60"
+merge_sha = "6fe3ae0eec1d6913cf9cfaea0ac2085133ba9c2d"
+merged_at = "2026-05-24T12:27:35Z"
 branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
 stackable = false
 review_mode = "codex_premerge"

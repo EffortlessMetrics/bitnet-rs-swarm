@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T12:27:35Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-098"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 606
+branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
+head_sha = "01fdf4aa31f3cd9b29d729bf536ad9f118d17f60"
+merge_sha = "6fe3ae0eec1d6913cf9cfaea0ac2085133ba9c2d"
+merged_at = "2026-05-24T12:27:35Z"
+actor = "codex"
+summary = "Closed SLM-CPU-098 after PR #606 merged the fused output consumer boundary classification."
+notes = [
+  "PR #606 records the exact packed-Q8 sidecar fused output consumer blocker for the Qwen3 Q8_0 appliance path.",
+  "The merged slice names the downstream Candle Tensor consumer boundary without changing the runtime default.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256/I2_S claim changed.",
+]
