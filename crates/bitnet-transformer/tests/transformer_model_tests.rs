@@ -19,6 +19,7 @@ use bitnet_transformer::{
     DenseLinearRuntimeHookRegistry, KVCache, LayerOutputStorageApiBoundary,
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
+    dense_q8_sidecar_fused_q_projection_consumer_contract,
 };
 use candle_core::{DType, Device, Tensor};
 use candle_nn::{LayerNorm, Linear, VarBuilder};
@@ -596,6 +597,80 @@ fn dense_q8_sidecar_fused_consumer_boundary_names_downstream_tensor_blocker() {
     assert!(boundary.exact_blocking_ops.iter().any(|op| op.contains("Tensor::from_vec")));
     assert!(boundary.exact_blocking_ops.iter().any(|op| op.contains("reshape_qkv_heads")));
     assert!(boundary.required_missing_api.contains("typed fused Q projection consumer"));
+}
+
+#[test]
+fn dense_q8_sidecar_fused_q_projection_contract_is_design_only() {
+    let boundary = dense_q8_sidecar_fused_consumer_boundary();
+    let contract = dense_q8_sidecar_fused_q_projection_consumer_contract();
+
+    assert_eq!(contract.role, "attention.q_proj.typed_fused_consumer_contract");
+    assert_eq!(contract.status, "contract_defined_runtime_disabled");
+    assert_eq!(contract.source_boundary_status, boundary.status);
+    assert_eq!(contract.exact_tensor_name, boundary.exact_tensor_name);
+    assert_eq!(contract.exact_tensor_role, "AttentionQ");
+    assert!(contract.owns_packed_q8_matvec_output_slice);
+    assert!(!contract.intermediate_returned_candle_tensor_allowed);
+    assert!(!contract.runtime_execution_enabled);
+    assert!(!contract.default_runtime_changed);
+    assert!(!contract.allocation_reduction_claim);
+    assert!(!contract.speedup_claim);
+}
+
+#[test]
+fn dense_q8_sidecar_fused_q_projection_contract_covers_q_downstream_stages() {
+    let contract = dense_q8_sidecar_fused_q_projection_consumer_contract();
+    let stages: Vec<_> = contract.stages.iter().map(|stage| stage.stage).collect();
+
+    assert_eq!(
+        stages,
+        vec![
+            "packed_q8_matvec_output_slice",
+            "q_proj_reshape",
+            "q_proj_transpose",
+            "optional_q_norm",
+            "q_rope",
+            "trace_workspace_identity",
+            "attention_head_handoff",
+        ]
+    );
+    assert!(contract.stages.iter().all(|stage| stage.fused_consumer_must_own));
+    assert!(
+        contract
+            .stages
+            .iter()
+            .find(|stage| stage.stage == "optional_q_norm")
+            .is_some_and(|stage| stage.optional)
+    );
+    assert_eq!(contract.shape.input_rank, 3);
+    assert_eq!(contract.shape.projected_rank, 3);
+    assert_eq!(contract.shape.attention_heads_rank, 4);
+    assert_eq!(contract.shape.head_handoff_shape, "AttentionHeads.q");
+}
+
+#[test]
+fn dense_q8_sidecar_fused_q_projection_contract_requires_behavior_receipts() {
+    let contract = dense_q8_sidecar_fused_q_projection_consumer_contract();
+
+    assert!(contract.receipt.required_before_runtime_execution);
+    assert!(contract.receipt.required_before_allocation_claim);
+    assert!(contract.receipt.required_before_speedup_claim);
+    for required in [
+        "model.sha256",
+        "tokenizer.strict=true",
+        "prompt_ids",
+        "generated_ids",
+        "decoded_text",
+        "selected_backend=cpu-rust",
+        "dense_hook identity",
+        "fallback_used=false",
+    ] {
+        assert!(
+            contract.receipt.required_fields.contains(&required),
+            "contract receipt fields should include {required}"
+        );
+    }
+    assert!(contract.receipt.gate.contains("before_after_receipts"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────

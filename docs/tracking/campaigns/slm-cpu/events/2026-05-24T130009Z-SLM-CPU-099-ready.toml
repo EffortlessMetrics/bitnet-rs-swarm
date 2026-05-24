@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T13:00:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "in_progress"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
+actor = "codex"
+summary = "Queued the typed fused Q projection consumer contract after SLM-CPU-098."
+notes = [
+  "SLM-CPU-098 classified the exact Qwen3 Q8_0 packed-Q8 sidecar fused-consumer boundary as blocked by downstream Candle Tensor consumers.",
+  "SLM-CPU-099 is a design/contract gate for a typed fused Q projection consumer API covering q_proj output slices, reshape/transpose, optional q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics.",
+  "The item must not enable runtime fused consumer execution or claim allocation/timing improvement; any later implementation remains gated by repeated Qwen3 Q8_0 before/after receipts preserving generated IDs/text and fallback=false.",
+]

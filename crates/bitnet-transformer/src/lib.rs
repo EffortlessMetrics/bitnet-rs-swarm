@@ -2112,6 +2112,54 @@ pub struct DenseQ8SidecarFusedConsumerBoundary {
     pub appliance_oracle_required_before_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarFusedQProjectionStageContract {
+    pub stage: &'static str,
+    pub consumes: &'static str,
+    pub produces: &'static str,
+    pub fused_consumer_must_own: bool,
+    pub candle_tensor_semantics_required_today: bool,
+    pub optional: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarFusedQProjectionShapeContract {
+    pub input_rank: usize,
+    pub projected_rank: usize,
+    pub attention_heads_rank: usize,
+    pub projected_shape: &'static str,
+    pub attention_heads_shape: &'static str,
+    pub head_handoff_shape: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarFusedQProjectionReceiptContract {
+    pub required_before_runtime_execution: bool,
+    pub required_before_allocation_claim: bool,
+    pub required_before_speedup_claim: bool,
+    pub required_fields: &'static [&'static str],
+    pub gate: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarFusedQProjectionConsumerContract {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub source_boundary_status: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub shape: DenseQ8SidecarFusedQProjectionShapeContract,
+    pub stages: &'static [DenseQ8SidecarFusedQProjectionStageContract],
+    pub receipt: DenseQ8SidecarFusedQProjectionReceiptContract,
+    pub owns_packed_q8_matvec_output_slice: bool,
+    pub intermediate_returned_candle_tensor_allowed: bool,
+    pub runtime_execution_enabled: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub default_runtime_changed: bool,
+    pub required_missing_implementation: &'static str,
+}
+
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
     "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
     "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
@@ -2121,6 +2169,79 @@ pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
 ];
 
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_REQUIRED_API: &str = "typed fused Q projection consumer accepting packed-Q8 matvec output slices and applying reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff without materializing an intermediate returned Candle Tensor";
+
+pub const DENSE_Q8_SIDECAR_FUSED_Q_PROJECTION_STAGES:
+    &[DenseQ8SidecarFusedQProjectionStageContract] = &[
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "packed_q8_matvec_output_slice",
+        consumes: "DenseLinearPackedQ8Payload plus input rows",
+        produces: "&mut [f32] q projection rows",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: false,
+        optional: false,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "q_proj_reshape",
+        consumes: "[batch, seq, n_heads * head_dim]",
+        produces: "[batch, seq, n_heads, head_dim]",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "q_proj_transpose",
+        consumes: "[batch, seq, n_heads, head_dim]",
+        produces: "[batch, n_heads, seq, head_dim]",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "optional_q_norm",
+        consumes: "[batch, n_heads, seq, head_dim]",
+        produces: "[batch, n_heads, seq, head_dim]",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: true,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "q_rope",
+        consumes: "[batch, n_heads, seq, head_dim] plus position",
+        produces: "[batch, n_heads, seq, head_dim]",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "trace_workspace_identity",
+        consumes: "projection, heads, q_norm, q_rope identity",
+        produces: "trace/workspace source identity",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarFusedQProjectionStageContract {
+        stage: "attention_head_handoff",
+        consumes: "[batch, n_heads, seq, head_dim]",
+        produces: "AttentionHeads.q-compatible handoff before scores",
+        fused_consumer_must_own: true,
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+];
+
+pub const DENSE_Q8_SIDECAR_FUSED_Q_PROJECTION_RECEIPT_FIELDS: &[&str] = &[
+    "model.sha256",
+    "tokenizer.source=gguf_metadata",
+    "tokenizer.strict=true",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend=cpu-rust",
+    "selected_kernel identity",
+    "dense_hook identity",
+    "fallback_used=false",
+];
 
 pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumerBoundary {
     DenseQ8SidecarFusedConsumerBoundary {
@@ -2135,6 +2256,40 @@ pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumer
         exact_blocking_ops: DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS,
         required_missing_api: DENSE_Q8_SIDECAR_FUSED_CONSUMER_REQUIRED_API,
         appliance_oracle_required_before_claim: true,
+    }
+}
+
+pub fn dense_q8_sidecar_fused_q_projection_consumer_contract()
+-> DenseQ8SidecarFusedQProjectionConsumerContract {
+    DenseQ8SidecarFusedQProjectionConsumerContract {
+        role: "attention.q_proj.typed_fused_consumer_contract",
+        status: "contract_defined_runtime_disabled",
+        source_boundary_status: "blocked_by_downstream_candle_tensor_consumers",
+        exact_tensor_name: SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
+        exact_tensor_role: "AttentionQ",
+        shape: DenseQ8SidecarFusedQProjectionShapeContract {
+            input_rank: 3,
+            projected_rank: 3,
+            attention_heads_rank: 4,
+            projected_shape: "[batch, seq, n_heads * head_dim]",
+            attention_heads_shape: "[batch, n_heads, seq, head_dim]",
+            head_handoff_shape: "AttentionHeads.q",
+        },
+        stages: DENSE_Q8_SIDECAR_FUSED_Q_PROJECTION_STAGES,
+        receipt: DenseQ8SidecarFusedQProjectionReceiptContract {
+            required_before_runtime_execution: true,
+            required_before_allocation_claim: true,
+            required_before_speedup_claim: true,
+            required_fields: DENSE_Q8_SIDECAR_FUSED_Q_PROJECTION_RECEIPT_FIELDS,
+            gate: "repeated_qwen3_q8_before_after_receipts_with_identical_generated_ids_text_backend_dense_hook_and_fallback_false",
+        },
+        owns_packed_q8_matvec_output_slice: true,
+        intermediate_returned_candle_tensor_allowed: false,
+        runtime_execution_enabled: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        default_runtime_changed: false,
+        required_missing_implementation: "behavior-preserving fused Q projection consumer implementation plus before/after Qwen3 Q8_0 receipts",
     }
 }
 

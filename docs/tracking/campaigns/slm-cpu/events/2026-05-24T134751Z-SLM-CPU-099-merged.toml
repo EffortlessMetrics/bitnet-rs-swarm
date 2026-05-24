@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T13:47:51Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 617
+head_sha = "c1013835f9eea40e006b1881ba0e8d51b264db2c"
+merge_sha = "8aba7b29c0b5b4ce7102cc24ffe735061fb9feca"
+merged_at = "2026-05-24T13:46:25Z"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-contract"
+actor = "codex"
+summary = "Marked SLM-CPU-099 merged after PR #617 landed the typed fused Q projection consumer contract."
+notes = [
+  "PR #617 defined the exact `layers.0.attention.q_proj.weight` typed fused Q projection consumer contract and receipt-safety gate.",
+  "The merged slice added machine-checkable transformer tests plus the SLM-CPU-099 artifact and dashboard refresh.",
+  "The PR made no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
