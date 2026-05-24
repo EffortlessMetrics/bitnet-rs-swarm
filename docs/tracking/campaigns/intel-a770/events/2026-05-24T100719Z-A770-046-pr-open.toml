@@ -1,0 +1,37 @@
+timestamp = "2026-05-24T10:07:19Z"
+campaign = "intel-a770"
+item = "A770-046"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 592
+head_sha = "7de026b839f625b113c5b8bf5eba8fe318b6de8c"
+branch = "codex/intel-a770/A770-046-output-readback-trace-impl"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened A770-046 to classify compact selected QK256 output sample/readback evidence after A770-045 routed the split to device value-summary drift."
+notes = [
+  "The live focused receipt classifies the selected output readback trace frontier as generated_output_qk256_output_readback_trace_frontier_device_side_evaluation.",
+  "The selected sample count, shape, value count, and device-to-host byte count match, while the first sampled policy-versus-A770 value differs by 1.1920928955078125e-7.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-046 may classify compact selected QK256 OpenCL output sample/readback evidence for the committed focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

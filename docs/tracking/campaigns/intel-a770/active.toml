@@ -1678,7 +1678,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-046"
-status = "in_progress"
+status = "pr_open"
+pr = 592
+head_sha = "7de026b839f625b113c5b8bf5eba8fe318b6de8c"
 branch = "codex/intel-a770/A770-046-output-readback-trace-impl"
 stackable = false
 review_mode = "codex_premerge"
