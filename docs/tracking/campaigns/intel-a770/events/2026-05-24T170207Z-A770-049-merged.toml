@@ -1,0 +1,41 @@
+timestamp = "2026-05-24T17:02:07Z"
+campaign = "intel-a770"
+item = "A770-049"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 634
+branch = "codex/intel-a770/A770-049-device-math-mode-frontier"
+head_sha = "b061f7381076e487f1d65473c7587f4aea3cf334"
+merge_sha = "c052f1fbccb99db6bbcafa73db0d4168247f6717"
+merged_at = "2026-05-24T17:02:07Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Closed A770-049 after PR #634 merged the QK256 device math-mode frontier diagnostic."
+notes = [
+  "The merged diagnostic classifies the selected QK256 OpenCL device math-mode frontier as generated_output_qk256_device_math_mode_frontier_default_div_then_mul.",
+  "The selected A770 readback follows device-side div-then-mul, reciprocal-then-mul, and volatile div-then-mul bits, while device-side mul-then-div matches the host-policy bit.",
+  "The next diagnostic is to compare host replay f32 div/mul rounding against selected A770 OpenCL device div/mul before any runtime policy change.",
+  "No production QK256 dispatch policy, runtime math, answer scoring, sampling, model loading, fallback policy, CPU/A770 parity, answer readiness, speedup, residency, trusted acceleration, full BitNet inference, or production QK256 semantics claim changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-049 classified the selected QK256 device math-mode frontier for the focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
