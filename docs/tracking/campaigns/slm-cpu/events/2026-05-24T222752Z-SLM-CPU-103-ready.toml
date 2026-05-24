@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T22:27:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-103"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-103-typed-qnorm-consumer-gate"
+actor = "codex"
+summary = "Queued SLM-CPU-103 as the next typed q_norm/RoPE consumer gate after SLM-CPU-102."
+notes = [
+  "SLM-CPU-102 classified the typed attention-head consumer boundary and kept runtime fused Q execution disabled.",
+  "The next narrow gate is q_norm/RoPE/trace/score handoff or a proven single-materialization boundary for the exact Qwen3 Q8_0 q_proj packed-Q8 sidecar path.",
+  "Before any allocation or timing claim, the Qwen3 Q8_0 and Qwen2.5 Q8_0 behavior oracles must preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false.",
+]
