@@ -10,7 +10,7 @@ pr = 561
 head_sha = "852bfab983ebf0c50a93410f2e50ab8807a29323"
 summary = "Opened PR #561 for the no-inference Lunar Lake audit/checklist refresh after adjacent A770-043 and support/dependency updates."
 notes = [
-  "PR #561 refreshes audit/checklist source_revision to 0651df10e855d50958e384f8d99cc20c6bc079d5 and records post_557_checkpoint_delta.",
+  "PR #561 refreshes audit/checklist source_revision to c302f87d17e0357c06b057481ffd28fb290376f2 and records post_557_checkpoint_delta.",
   "The PR classifies A770-043/#552 and closeout #557 as adjacent A770 diagnostic/tracker state only, not Lunar Lake route evidence or a semantic-intake stale trigger.",
   "LNL258V-POWER-006 remains blocked and no inference, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, full BitNet accelerator inference, or BitNet QK256/I2_S behavior change is claimed.",
 ]
