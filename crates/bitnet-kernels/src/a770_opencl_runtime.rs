@@ -50,6 +50,55 @@ __kernel void qk256_i2s_i8s_scaled_gemv(
 }
 "#;
 
+const QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC: &str = r#"
+__kernel void qk256_i2s_i8s_scaled_gemv_debug(
+    __global const char* q,
+    __global const uchar* qs,
+    __global int* int_values,
+    __global uint* bit_values,
+    const uint rows,
+    const uint cols,
+    const uint row_stride_bytes,
+    const int activation_sum,
+    const float activation_scale,
+    const float weight_scale,
+    const uint sample_limit
+) {
+    const uint row = get_global_id(0);
+    if (row >= rows || row >= sample_limit) return;
+
+    int int_dot = 0;
+    const uint row_base = row * row_stride_bytes;
+
+    for (uint col = 0; col < cols; col++) {
+        const uint block = col / 256;
+        const uint offset = col - block * 256;
+        const uint chunk = offset / 128;
+        const uint lane = (offset - chunk * 128) / 32;
+        const uint gp = offset & 31;
+        const uint byte_index = row_base + block * 64 + chunk * 32 + gp;
+        const uchar packed = qs[byte_index];
+        const uchar code = (packed >> (6 - lane * 2)) & 0x03;
+        int_dot += ((int)code) * ((int)q[col]);
+    }
+
+    const int adjusted_dot = int_dot - activation_sum;
+    const float adjusted_f32 = (float)adjusted_dot;
+    const float output = (adjusted_f32 / activation_scale) * weight_scale;
+
+    const uint int_base = row * 3;
+    int_values[int_base + 0] = int_dot;
+    int_values[int_base + 1] = activation_sum;
+    int_values[int_base + 2] = adjusted_dot;
+
+    const uint bit_base = row * 4;
+    bit_values[bit_base + 0] = as_uint(activation_scale);
+    bit_values[bit_base + 1] = as_uint(weight_scale);
+    bit_values[bit_base + 2] = as_uint(adjusted_f32);
+    bit_values[bit_base + 3] = as_uint(output);
+}
+"#;
+
 /// Runtime request for the selected-device A770 QK256 scaled GEMV.
 #[derive(Debug)]
 pub struct A770OpenClQk256ScaledGemv<'a> {
@@ -71,11 +120,85 @@ pub struct A770OpenClQk256ScaledGemv<'a> {
     pub weight_scale: f32,
 }
 
+/// Runtime request for a bounded selected-device A770 QK256 debug capture.
+///
+/// This uses a separate diagnostic kernel that writes sampled integer and
+/// `f32` bit intermediates. It is not a production dispatch path.
+#[derive(Debug)]
+pub struct A770OpenClQk256ScaledGemvDebug<'a> {
+    /// Prequantized I8_S activation row.
+    pub activations_i8: &'a [i8],
+    /// GGML grouped QK256 I2_S weight bytes.
+    pub packed_qk256: &'a [u8],
+    /// Number of output rows.
+    pub rows: usize,
+    /// Number of input columns.
+    pub cols: usize,
+    /// Packed byte stride for each output row.
+    pub row_stride_bytes: usize,
+    /// Sum of the prequantized I8_S activation row.
+    pub activation_sum: i32,
+    /// I8_S activation scale.
+    pub activation_scale: f32,
+    /// BitNet.cpp inline weight scale.
+    pub weight_scale: f32,
+    /// Maximum number of output rows to sample.
+    pub sample_limit: usize,
+}
+
 /// Runtime result for the selected-device A770 QK256 scaled GEMV.
 #[derive(Debug, Clone, PartialEq)]
 pub struct A770OpenClQk256ScaledGemvResult {
     /// Output values in row order.
     pub output: Vec<f32>,
+    /// OpenCL platform index selected for execution.
+    pub platform_index: usize,
+    /// OpenCL device index selected for execution.
+    pub device_index: usize,
+    /// OpenCL platform name.
+    pub platform_name: String,
+    /// Selected OpenCL device name.
+    pub runtime_device: String,
+    /// Selected OpenCL device vendor.
+    pub vendor: String,
+    /// Selected OpenCL driver version.
+    pub driver_version: String,
+    /// Host-to-device bytes uploaded for this invocation.
+    pub host_to_device_bytes: usize,
+    /// Device-to-host bytes read for this invocation.
+    pub device_to_host_bytes: usize,
+    /// Number of OpenCL kernel invocations.
+    pub kernel_invocations: usize,
+}
+
+/// One sampled row from the selected-device A770 QK256 debug kernel.
+#[derive(Debug, Clone, PartialEq)]
+pub struct A770OpenClQk256DebugSample {
+    /// Output row index within the projection matrix.
+    pub output_index: usize,
+    /// Integer dot product before activation-sum correction.
+    pub int_dot: i32,
+    /// Sum of the prequantized I8_S activation row as seen by the kernel.
+    pub activation_sum: i32,
+    /// `int_dot - activation_sum` as seen by the kernel.
+    pub adjusted_dot: i32,
+    /// Raw `f32` bits for the activation scale as seen by the kernel.
+    pub activation_scale_bits: u32,
+    /// Raw `f32` bits for the weight scale as seen by the kernel.
+    pub weight_scale_bits: u32,
+    /// Raw `f32` bits for `(float)adjusted_dot`.
+    pub adjusted_f32_bits: u32,
+    /// Raw `f32` bits for the debug kernel output expression.
+    pub output_bits: u32,
+    /// Debug kernel output expression value.
+    pub output: f32,
+}
+
+/// Runtime result for the selected-device A770 QK256 debug kernel.
+#[derive(Debug, Clone, PartialEq)]
+pub struct A770OpenClQk256ScaledGemvDebugResult {
+    /// Sampled output rows in row order.
+    pub samples: Vec<A770OpenClQk256DebugSample>,
     /// OpenCL platform index selected for execution.
     pub platform_index: usize,
     /// OpenCL device index selected for execution.
@@ -182,6 +305,145 @@ pub fn run_a770_qk256_i8s_scaled_gemv(
         driver_version: selected.driver_version,
         host_to_device_bytes: std::mem::size_of_val(request.activations_i8) + weight_bytes.len(),
         device_to_host_bytes: std::mem::size_of::<f32>() * request.rows,
+        kernel_invocations: 1,
+    })
+}
+
+/// Run a bounded diagnostic QK256 intermediate capture on the selected A770.
+pub fn run_a770_qk256_i8s_scaled_gemv_debug(
+    request: A770OpenClQk256ScaledGemvDebug<'_>,
+) -> Result<A770OpenClQk256ScaledGemvDebugResult> {
+    let gemv_request = A770OpenClQk256ScaledGemv {
+        activations_i8: request.activations_i8,
+        packed_qk256: request.packed_qk256,
+        rows: request.rows,
+        cols: request.cols,
+        row_stride_bytes: request.row_stride_bytes,
+        activation_sum: request.activation_sum,
+        activation_scale: request.activation_scale,
+        weight_scale: request.weight_scale,
+    };
+    validate_request(&gemv_request)?;
+    if request.sample_limit == 0 {
+        return Err(KernelError::InvalidArguments {
+            reason: "A770 QK256 OpenCL debug sample_limit must be non-zero".to_string(),
+        }
+        .into());
+    }
+
+    let sample_count = request.rows.min(request.sample_limit);
+    let selected = find_a770_device()?;
+    let context = Context::from_device(&selected.device).map_err(gpu_err("create context"))?;
+    let queue =
+        CommandQueue::create_default_with_properties(&context, CL_QUEUE_PROFILING_ENABLE, 0)
+            .map_err(gpu_err("create command queue"))?;
+    let program =
+        Program::create_and_build_from_source(&context, QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC, "")
+            .map_err(gpu_err("build qk256_i2s_i8s_scaled_gemv_debug program"))?;
+    let kernel = Kernel::create(&program, "qk256_i2s_i8s_scaled_gemv_debug")
+        .map_err(gpu_err("create debug kernel"))?;
+
+    let mut int_values = vec![0i32; sample_count * 3];
+    let mut bit_values = vec![0u32; sample_count * 4];
+    let mut buf_q = unsafe {
+        Buffer::<i8>::create(
+            &context,
+            CL_MEM_READ_ONLY,
+            request.activations_i8.len(),
+            std::ptr::null_mut(),
+        )
+        .map_err(gpu_err("create debug activation buffer"))?
+    };
+    let mut buf_qs = unsafe {
+        Buffer::<u8>::create(
+            &context,
+            CL_MEM_READ_ONLY,
+            request.rows * request.row_stride_bytes,
+            std::ptr::null_mut(),
+        )
+        .map_err(gpu_err("create debug packed weight buffer"))?
+    };
+    let buf_int = unsafe {
+        Buffer::<i32>::create(&context, CL_MEM_WRITE_ONLY, int_values.len(), std::ptr::null_mut())
+            .map_err(gpu_err("create debug int buffer"))?
+    };
+    let buf_bits = unsafe {
+        Buffer::<u32>::create(&context, CL_MEM_WRITE_ONLY, bit_values.len(), std::ptr::null_mut())
+            .map_err(gpu_err("create debug bits buffer"))?
+    };
+
+    let weight_bytes = &request.packed_qk256[..request.rows * request.row_stride_bytes];
+    unsafe {
+        queue
+            .enqueue_write_buffer(&mut buf_q, CL_BLOCKING, 0, request.activations_i8, &[])
+            .map_err(gpu_err("write debug activation buffer"))?;
+        queue
+            .enqueue_write_buffer(&mut buf_qs, CL_BLOCKING, 0, weight_bytes, &[])
+            .map_err(gpu_err("write debug packed weight buffer"))?;
+    }
+
+    let rows = request.rows as u32;
+    let cols = request.cols as u32;
+    let row_stride_bytes = request.row_stride_bytes as u32;
+    let sample_limit = sample_count as u32;
+    let event = unsafe {
+        ExecuteKernel::new(&kernel)
+            .set_arg(&buf_q.get())
+            .set_arg(&buf_qs.get())
+            .set_arg(&buf_int.get())
+            .set_arg(&buf_bits.get())
+            .set_arg(&rows)
+            .set_arg(&cols)
+            .set_arg(&row_stride_bytes)
+            .set_arg(&request.activation_sum)
+            .set_arg(&request.activation_scale)
+            .set_arg(&request.weight_scale)
+            .set_arg(&sample_limit)
+            .set_global_work_sizes(&[sample_count])
+            .enqueue_nd_range(&queue)
+            .map_err(gpu_err("enqueue qk256_i2s_i8s_scaled_gemv_debug kernel"))?
+    };
+    event.wait().map_err(gpu_err("wait for qk256_i2s_i8s_scaled_gemv_debug kernel"))?;
+
+    unsafe {
+        queue
+            .enqueue_read_buffer(&buf_int, CL_BLOCKING, 0, &mut int_values, &[])
+            .map_err(gpu_err("read debug int buffer"))?;
+        queue
+            .enqueue_read_buffer(&buf_bits, CL_BLOCKING, 0, &mut bit_values, &[])
+            .map_err(gpu_err("read debug bits buffer"))?;
+    }
+
+    let samples = (0..sample_count)
+        .map(|output_index| {
+            let int_base = output_index * 3;
+            let bit_base = output_index * 4;
+            let output_bits = bit_values[bit_base + 3];
+            A770OpenClQk256DebugSample {
+                output_index,
+                int_dot: int_values[int_base],
+                activation_sum: int_values[int_base + 1],
+                adjusted_dot: int_values[int_base + 2],
+                activation_scale_bits: bit_values[bit_base],
+                weight_scale_bits: bit_values[bit_base + 1],
+                adjusted_f32_bits: bit_values[bit_base + 2],
+                output_bits,
+                output: f32::from_bits(output_bits),
+            }
+        })
+        .collect();
+
+    Ok(A770OpenClQk256ScaledGemvDebugResult {
+        samples,
+        platform_index: selected.platform_index,
+        device_index: selected.device_index,
+        platform_name: selected.platform_name,
+        runtime_device: selected.device_name,
+        vendor: selected.vendor,
+        driver_version: selected.driver_version,
+        host_to_device_bytes: std::mem::size_of_val(request.activations_i8) + weight_bytes.len(),
+        device_to_host_bytes: std::mem::size_of_val(int_values.as_slice())
+            + std::mem::size_of_val(bit_values.as_slice()),
         kernel_invocations: 1,
     })
 }
@@ -351,5 +613,23 @@ mod tests {
         let q = vec![0; 256];
         let weights = vec![0; 64];
         validate_request(&request(&q, &weights))
+    }
+
+    #[test]
+    fn debug_validation_rejects_zero_sample_limit() {
+        let q = vec![0; 256];
+        let weights = vec![0; 64];
+        let req = A770OpenClQk256ScaledGemvDebug {
+            activations_i8: &q,
+            packed_qk256: &weights,
+            rows: 1,
+            cols: 256,
+            row_stride_bytes: 64,
+            activation_sum: 0,
+            activation_scale: 1.0,
+            weight_scale: 0.25,
+            sample_limit: 0,
+        };
+        assert!(run_a770_qk256_i8s_scaled_gemv_debug(req).is_err());
     }
 }

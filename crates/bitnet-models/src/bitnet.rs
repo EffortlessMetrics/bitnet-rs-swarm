@@ -108,6 +108,7 @@ pub struct ModelQkvProjectionDispatchReplayContext {
     pub opencl_policy_output: ConcreteTensor,
     pub a770_output: Option<ConcreteTensor>,
     pub device_expression_trace: Option<ModelQk256DeviceExpressionTraceContext>,
+    pub device_intermediate_trace: Option<ModelQk256DeviceIntermediateTraceContext>,
     pub cpu: ModelQkvProjectionDispatchReplayCpuContext,
     pub a770: ModelQkvProjectionDispatchReplayA770Context,
 }
@@ -134,6 +135,40 @@ pub struct ModelQk256DeviceExpressionSampleContext {
     pub mul_then_div: f32,
     pub reciprocal_then_mul: f32,
     pub f64_div_then_mul_cast: f32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModelQk256DeviceIntermediateTraceContext {
+    pub compiled_opencl: bool,
+    pub attempted: bool,
+    pub success: bool,
+    pub error: Option<String>,
+    pub input_row_index: usize,
+    pub sample_limit: usize,
+    pub sample_count: usize,
+    pub platform_index: Option<usize>,
+    pub device_index: Option<usize>,
+    pub platform_name: Option<String>,
+    pub runtime_device: Option<String>,
+    pub vendor: Option<String>,
+    pub driver_version: Option<String>,
+    pub host_to_device_bytes: usize,
+    pub device_to_host_bytes: usize,
+    pub kernel_invocations: usize,
+    pub samples: Vec<ModelQk256DeviceIntermediateSampleContext>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModelQk256DeviceIntermediateSampleContext {
+    pub output_index: usize,
+    pub int_dot: i32,
+    pub activation_sum: i32,
+    pub adjusted_dot: i32,
+    pub activation_scale_bits: u32,
+    pub weight_scale_bits: u32,
+    pub adjusted_f32_bits: u32,
+    pub output_bits: u32,
+    pub output: f32,
 }
 
 #[derive(Debug, Clone)]
@@ -926,6 +961,41 @@ impl Model for BitNetModel {
                                         mul_then_div: sample.mul_then_div,
                                         reciprocal_then_mul: sample.reciprocal_then_mul,
                                         f64_div_then_mul_cast: sample.f64_div_then_mul_cast,
+                                    })
+                                    .collect(),
+                            },
+                        ),
+                        device_intermediate_trace: replay.device_intermediate_trace.as_ref().map(
+                            |trace| ModelQk256DeviceIntermediateTraceContext {
+                                compiled_opencl: trace.compiled_opencl,
+                                attempted: trace.attempted,
+                                success: trace.success,
+                                error: trace.error.clone(),
+                                input_row_index: trace.input_row_index,
+                                sample_limit: trace.sample_limit,
+                                sample_count: trace.sample_count,
+                                platform_index: trace.platform_index,
+                                device_index: trace.device_index,
+                                platform_name: trace.platform_name.clone(),
+                                runtime_device: trace.runtime_device.clone(),
+                                vendor: trace.vendor.clone(),
+                                driver_version: trace.driver_version.clone(),
+                                host_to_device_bytes: trace.host_to_device_bytes,
+                                device_to_host_bytes: trace.device_to_host_bytes,
+                                kernel_invocations: trace.kernel_invocations,
+                                samples: trace
+                                    .samples
+                                    .iter()
+                                    .map(|sample| ModelQk256DeviceIntermediateSampleContext {
+                                        output_index: sample.output_index,
+                                        int_dot: sample.int_dot,
+                                        activation_sum: sample.activation_sum,
+                                        adjusted_dot: sample.adjusted_dot,
+                                        activation_scale_bits: sample.activation_scale_bits,
+                                        weight_scale_bits: sample.weight_scale_bits,
+                                        adjusted_f32_bits: sample.adjusted_f32_bits,
+                                        output_bits: sample.output_bits,
+                                        output: sample.output,
                                     })
                                     .collect(),
                             },

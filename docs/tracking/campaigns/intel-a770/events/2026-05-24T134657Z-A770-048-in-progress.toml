@@ -1,0 +1,37 @@
+timestamp = "2026-05-24T13:46:57Z"
+campaign = "intel-a770"
+item = "A770-048"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-048-device-intermediate-debug"
+actor = "codex-a770"
+base_main_sha = "b921fe227a5189ace0bd9058ceccb30ab2b337ae"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-048 to capture bounded selected QK256 OpenCL device-side intermediates after A770-047 classified the sampled device expression as an unmatched device value."
+notes = [
+  "A770-048 adds diagnostic replay context and a bounded debug kernel for selected QK256 intermediate samples.",
+  "The live focused receipt will classify whether the split is in integer dot accumulation, activation/adjusted-dot correction, scalar bit inputs, debug output versus readback, debug output versus host policy, unmatched device context, clean replay, or missing context.",
+  "This remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-048 may classify compact selected QK256 OpenCL device-intermediate evidence for the committed focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

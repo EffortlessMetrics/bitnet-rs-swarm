@@ -1,0 +1,38 @@
+timestamp = "2026-05-24T14:18:03Z"
+campaign = "intel-a770"
+item = "A770-048"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 624
+head_sha = "20eb40b371a2f9e24d17ae4e1ba423fb98783ee4"
+branch = "codex/intel-a770/A770-048-device-intermediate-debug"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened A770-048 to classify bounded selected QK256 OpenCL device-side intermediates after A770-047 routed the split to unmatched device expression output."
+notes = [
+  "The live focused receipt classifies the device-intermediate frontier as generated_output_qk256_device_intermediate_frontier_debug_output_matches_readback.",
+  "The bounded debug kernel matches the A770 readback while the host policy replay remains one f32 bit away; integer dot, activation sum, adjusted dot, and scale-bit inputs match between host and device.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, answer readiness, quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-048 classifies compact selected QK256 OpenCL device-intermediate evidence for the committed focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
