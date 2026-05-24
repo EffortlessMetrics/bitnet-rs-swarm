@@ -13527,6 +13527,10 @@ fn compact_qkv_projection_dispatch_replay(
         &replay.cpu_output,
         "cpu_replay_output_extract_failed",
     );
+    let opencl_policy_output = compact_logit_source_tensor_fingerprint(
+        &replay.opencl_policy_output,
+        "opencl_policy_replay_output_extract_failed",
+    );
     let a770_output = replay
         .a770_output
         .as_ref()
@@ -13548,9 +13552,13 @@ fn compact_qkv_projection_dispatch_replay(
         });
     let cpu_available = cpu_output["available"].as_bool().unwrap_or(false)
         && cpu_output["sha256_f32_le"].as_str().is_some();
+    let opencl_policy_available = opencl_policy_output["available"].as_bool().unwrap_or(false)
+        && opencl_policy_output["sha256_f32_le"].as_str().is_some();
     let a770_available = a770_output["available"].as_bool().unwrap_or(false)
         && a770_output["sha256_f32_le"].as_str().is_some();
     let cpu_a770_sha256_match = optional_json_sha_eq(&cpu_output, &a770_output);
+    let cpu_opencl_policy_sha256_match = optional_json_sha_eq(&cpu_output, &opencl_policy_output);
+    let opencl_policy_a770_sha256_match = optional_json_sha_eq(&opencl_policy_output, &a770_output);
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -13563,12 +13571,27 @@ fn compact_qkv_projection_dispatch_replay(
         "row_stride_bytes": replay.row_stride_bytes,
         "inline_scale": replay.inline_scale,
         "cpu_output": cpu_output,
+        "opencl_policy_output": opencl_policy_output,
         "a770_output": a770_output,
         "cpu_a770_output_sha256_match": cpu_a770_sha256_match,
+        "cpu_opencl_policy_output_sha256_match": cpu_opencl_policy_sha256_match,
+        "opencl_policy_a770_output_sha256_match": opencl_policy_a770_sha256_match,
         "cpu_a770_output_rms_abs_delta": compact_number_abs_delta(
             &cpu_output["rms"],
             &a770_output["rms"],
         ),
+        "cpu_opencl_policy_output_rms_abs_delta": compact_number_abs_delta(
+            &cpu_output["rms"],
+            &opencl_policy_output["rms"],
+        ),
+        "opencl_policy_a770_output_rms_abs_delta": compact_number_abs_delta(
+            &opencl_policy_output["rms"],
+            &a770_output["rms"],
+        ),
+        "numeric_policy": {
+            "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+            "host_opencl_policy_replay": "opencl_linear_i32_accumulation",
+        },
         "cpu": {
             "scalar_invocations": replay.cpu.scalar_invocations,
             "execution_path": replay.cpu.execution_path,
@@ -13591,7 +13614,7 @@ fn compact_qkv_projection_dispatch_replay(
             "error": replay.a770.error,
             "execution_path": replay.a770.execution_path,
         },
-        "source_context_available": cpu_available && a770_available,
+        "source_context_available": cpu_available && opencl_policy_available && a770_available,
     })
 }
 

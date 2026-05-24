@@ -17,7 +17,6 @@ use bitnet_kernels::cuda::{
 use bitnet_qk256_layout_core::{
     Qk256InputShape, Qk256Layout, parse_input_shape, parse_qk256_layout, validate_input_cols,
 };
-#[cfg(feature = "opencl")]
 use bitnet_quantization::i2s_qk256::quantize_row_i8_s_activation;
 use candle_core::Tensor;
 #[cfg(feature = "cuda")]
@@ -121,6 +120,8 @@ pub struct Qk256CpuA770DispatchReplay {
     pub inline_scale: Option<f32>,
     /// CPU scalar replay output tensor.
     pub cpu_output: Tensor,
+    /// Host-side replay of the OpenCL kernel's numeric expression policy.
+    pub opencl_policy_output: Tensor,
     /// A770 OpenCL replay output tensor when the replay ran successfully.
     pub a770_output: Option<Tensor>,
     /// CPU replay stats.
@@ -583,6 +584,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
     let prepared = prepare_qk256_forward_untracked(input, qk256_tensor, weight_name)?;
     let output_row_count = prepared.shape.batch_size * prepared.shape.seq_len;
     let mut cpu_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
+    let mut opencl_policy_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
     let mut cpu_scalar_invocations = 0u64;
 
     for input_row in &prepared.input_rows {
@@ -603,9 +605,23 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         })?;
         cpu_scalar_invocations += 1;
         cpu_flat.extend_from_slice(&output_row);
+
+        let mut opencl_policy_row = vec![0.0f32; prepared.layout.rows];
+        gemv_qk256_opencl_linear_i8s_scaled(
+            &prepared.flat_bytes,
+            input_row,
+            &mut opencl_policy_row,
+            prepared.layout.rows,
+            prepared.layout.cols,
+            prepared.layout.row_stride_bytes,
+            weight_scale,
+        )?;
+        opencl_policy_flat.extend_from_slice(&opencl_policy_row);
     }
 
     let cpu_output = tensor_from_flat_output(cpu_flat, &prepared.shape, &prepared.layout, input)?;
+    let opencl_policy_output =
+        tensor_from_flat_output(opencl_policy_flat, &prepared.shape, &prepared.layout, input)?;
     let (a770_output, a770) = replay_qk256_a770_opencl_untracked(&prepared, input, weight_scale);
 
     Ok(Qk256CpuA770DispatchReplay {
@@ -615,6 +631,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         row_stride_bytes: prepared.layout.row_stride_bytes,
         inline_scale,
         cpu_output,
+        opencl_policy_output,
         a770_output,
         cpu: Qk256CpuDispatchReplayStats {
             scalar_invocations: cpu_scalar_invocations,
@@ -622,6 +639,61 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         },
         a770,
     })
+}
+
+fn gemv_qk256_opencl_linear_i8s_scaled(
+    qs_data: &[u8],
+    x: &[f32],
+    y_out: &mut [f32],
+    rows: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+    weight_scale: f32,
+) -> Result<()> {
+    if y_out.len() != rows {
+        return Err(BitNetError::Validation(format!(
+            "OpenCL-policy QK256 replay y_out length {} != rows {}",
+            y_out.len(),
+            rows
+        )));
+    }
+    if x.len() < cols {
+        return Err(BitNetError::Validation(format!(
+            "OpenCL-policy QK256 replay x length {} < cols {}",
+            x.len(),
+            cols
+        )));
+    }
+    let expected_total = rows.checked_mul(row_stride_bytes).ok_or_else(|| {
+        BitNetError::Validation("OpenCL-policy QK256 replay packed length overflow".to_string())
+    })?;
+    if qs_data.len() < expected_total {
+        return Err(BitNetError::Validation(format!(
+            "OpenCL-policy QK256 replay data too short: {} < {}",
+            qs_data.len(),
+            expected_total
+        )));
+    }
+
+    let (q, activation_scale, activation_sum) = quantize_row_i8_s_activation(x, cols);
+    for (row, output) in y_out.iter_mut().enumerate().take(rows) {
+        let row_base = row * row_stride_bytes;
+        let mut int_dot = 0i32;
+        for (col, &q_value) in q.iter().enumerate().take(cols) {
+            let block = col / 256;
+            let offset = col - block * 256;
+            let chunk = offset / 128;
+            let lane = (offset - chunk * 128) / 32;
+            let gp = offset & 31;
+            let byte_index = row_base + block * 64 + chunk * 32 + gp;
+            let packed = qs_data[byte_index];
+            let code = ((packed >> (6 - lane * 2)) & 0x03) as i32;
+            int_dot += code * q_value as i32;
+        }
+        *output = (((int_dot - activation_sum) as f32) / activation_scale) * weight_scale;
+    }
+
+    Ok(())
 }
 
 #[cfg(feature = "opencl")]

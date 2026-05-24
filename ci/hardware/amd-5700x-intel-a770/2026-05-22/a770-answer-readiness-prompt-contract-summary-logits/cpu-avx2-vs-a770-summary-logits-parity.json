@@ -900,6 +900,140 @@
     ],
     "rows_truncated": false
   },
+  "generated_output_qk256_numeric_policy_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_qk256_numeric_policy_frontier_output_casting_serialization",
+    "classification_counts": {
+      "generated_output_qk256_numeric_policy_output_casting_serialization": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "inspect selected QK256 OpenCL output casting and receipt serialization",
+    "qk256_numeric_policy_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_qk256_numeric_policy_output_casting_serialization",
+        "first_mismatch_index": 9,
+        "left_cpu_opencl_policy_output_match": true,
+        "left_opencl_policy_a770_output_match": false,
+        "left_replay": {
+          "a770": {
+            "attempted": true,
+            "compiled_opencl": true,
+            "device_to_host_bytes": 10240,
+            "error": null,
+            "execution_path": "a770_opencl_qk256_i2s_i8s_scaled_replay",
+            "host_to_device_bytes": 1640960,
+            "kernel_invocations": 1,
+            "last_device": {
+              "device_index": 0,
+              "driver_version": "32.0.101.8801",
+              "platform_index": 0,
+              "platform_name": "Intel(R) OpenCL Graphics",
+              "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+              "vendor": "Intel(R) Corporation"
+            },
+            "success": true
+          },
+          "a770_output": {
+            "rms": 1.1568787818792203,
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+          },
+          "cols": 2560,
+          "cpu": {
+            "execution_path": "cpu_qk256_i2s_i8s_scaled_scalar_replay",
+            "scalar_invocations": 1
+          },
+          "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "cpu_a770_output_sha256_match": false,
+          "cpu_opencl_policy_output_rms_abs_delta": 0.0,
+          "cpu_opencl_policy_output_sha256_match": true,
+          "cpu_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
+          "inline_scale": 1.2188547849655151,
+          "input_rows": 1,
+          "numeric_policy": {
+            "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+            "host_opencl_policy_replay": "opencl_linear_i32_accumulation"
+          },
+          "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "opencl_policy_a770_output_sha256_match": false,
+          "opencl_policy_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
+          "output_rows": 2560,
+          "row_stride_bytes": 640
+        },
+        "next_diagnostic": "inspect selected QK256 OpenCL output casting and receipt serialization",
+        "opencl_policy_output_match_across_receipts": true,
+        "projection": "q_proj",
+        "qk256_numeric_policy_context_available": true,
+        "qkv_projection_dispatch_replay_classification": "generated_output_qkv_projection_dispatch_replay_cpu_a770_output_drift",
+        "qkv_projection_source_classification": "generated_output_qkv_projection_source_dispatch_path_drift",
+        "reason": null,
+        "right_cpu_opencl_policy_output_match": true,
+        "right_opencl_policy_a770_output_match": false,
+        "right_replay": {
+          "a770": {
+            "attempted": true,
+            "compiled_opencl": true,
+            "device_to_host_bytes": 10240,
+            "error": null,
+            "execution_path": "a770_opencl_qk256_i2s_i8s_scaled_replay",
+            "host_to_device_bytes": 1640960,
+            "kernel_invocations": 1,
+            "last_device": {
+              "device_index": 0,
+              "driver_version": "32.0.101.8801",
+              "platform_index": 0,
+              "platform_name": "Intel(R) OpenCL Graphics",
+              "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+              "vendor": "Intel(R) Corporation"
+            },
+            "success": true
+          },
+          "a770_output": {
+            "rms": 1.1568787818792203,
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+          },
+          "cols": 2560,
+          "cpu": {
+            "execution_path": "cpu_qk256_i2s_i8s_scaled_scalar_replay",
+            "scalar_invocations": 1
+          },
+          "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "cpu_a770_output_sha256_match": false,
+          "cpu_opencl_policy_output_rms_abs_delta": 0.0,
+          "cpu_opencl_policy_output_sha256_match": true,
+          "cpu_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
+          "inline_scale": 1.2188547849655151,
+          "input_rows": 1,
+          "numeric_policy": {
+            "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+            "host_opencl_policy_replay": "opencl_linear_i32_accumulation"
+          },
+          "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "opencl_policy_a770_output_sha256_match": false,
+          "opencl_policy_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
+          "output_rows": 2560,
+          "row_stride_bytes": 640
+        },
+        "target_layer_idx": 0
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_qkv_projection_dispatch_replay_frontier": {
     "case_count": 1,
     "classification": "generated_output_qkv_projection_dispatch_replay_frontier_cpu_a770_output_drift",
@@ -949,12 +1083,24 @@
           },
           "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "cpu_a770_output_sha256_match": false,
+          "cpu_opencl_policy_output_rms_abs_delta": 0.0,
+          "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "rms": 1.1568787420709823,
             "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
+          "numeric_policy": {
+            "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+            "host_opencl_policy_replay": "opencl_linear_i32_accumulation"
+          },
+          "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "opencl_policy_a770_output_sha256_match": false,
+          "opencl_policy_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
           "output_rows": 2560,
           "row_stride_bytes": 640
         },
@@ -995,12 +1141,24 @@
           },
           "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "cpu_a770_output_sha256_match": false,
+          "cpu_opencl_policy_output_rms_abs_delta": 0.0,
+          "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "rms": 1.1568787420709823,
             "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
+          "numeric_policy": {
+            "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+            "host_opencl_policy_replay": "opencl_linear_i32_accumulation"
+          },
+          "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
+          "opencl_policy_a770_output_sha256_match": false,
+          "opencl_policy_output": {
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+          },
           "output_rows": 2560,
           "row_stride_bytes": 640
         },
@@ -1192,9 +1350,9 @@
   },
   "inputs": {
     "left_label": "amd-5700x-cpu-avx2",
-    "left_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json",
+    "left_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits.json",
     "right_label": "intel-a770-opencl",
-    "right_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json"
+    "right_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits.json"
   },
   "kernel": {
     "left_label": "amd-5700x-cpu-avx2",
@@ -1634,5 +1792,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-24T01:16:19.222063900+00:00"
+  "timestamp": "2026-05-24T02:57:59.450489400+00:00"
 }

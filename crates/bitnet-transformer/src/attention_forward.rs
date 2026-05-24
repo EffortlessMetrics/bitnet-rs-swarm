@@ -808,6 +808,7 @@ fn transformer_dispatch_replay_tensors(
         row_stride_bytes: replay.row_stride_bytes,
         inline_scale: replay.inline_scale,
         cpu_output: replay.cpu_output,
+        opencl_policy_output: replay.opencl_policy_output,
         a770_output: replay.a770_output,
         cpu: TransformerQkvProjectionDispatchReplayCpuStats {
             scalar_invocations: replay.cpu.scalar_invocations,
