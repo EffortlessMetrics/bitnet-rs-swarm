@@ -1732,7 +1732,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-047"
-status = "pr_open"
+status = "merged"
+pr = 611
+head_sha = "7bd02b6e30fa46bfe9c5e36106203f5e9b09a62e"
+merge_sha = "df0e287e8e90f024ad94540fcd2758fa09bfe760"
+merged_at = "2026-05-24T13:07:47Z"
 branch = "codex/intel-a770/A770-047-device-expression-frontier"
 stackable = false
 review_mode = "codex_premerge"

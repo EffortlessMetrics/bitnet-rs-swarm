@@ -1,0 +1,38 @@
+timestamp = "2026-05-24T13:07:47Z"
+campaign = "intel-a770"
+item = "A770-047"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 611
+branch = "codex/intel-a770/A770-047-device-expression-frontier"
+head_sha = "7bd02b6e30fa46bfe9c5e36106203f5e9b09a62e"
+merge_sha = "df0e287e8e90f024ad94540fcd2758fa09bfe760"
+merged_at = "2026-05-24T13:07:47Z"
+actor = "codex-a770"
+claim_allowed = false
+summary = "Closed A770-047 after PR #611 merged the QK256 device-expression frontier diagnostic."
+notes = [
+  "The merged diagnostic classifies the selected QK256 OpenCL device-expression frontier for the committed A770-046 focused replay context.",
+  "The receipt records generated_output_qk256_device_expression_frontier_unmatched_device_value and selects a bounded device-intermediate debug kernel as the next diagnostic.",
+  "No runtime math, OpenCL kernel math, dispatch policy, scoring, sampling, model loading, fallback policy, CPU/A770 parity, answer readiness, speedup, residency, trusted acceleration, full BitNet inference, or production QK256 semantics claim changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-047 classified the selected QK256 device-expression frontier for the focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
