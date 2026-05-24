@@ -2867,9 +2867,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-054"
-status = "pr_open"
+status = "merged"
 pr = 660
-head_sha = "7aa5018c9330279056f66234cdbf43718b58c907"
+head_sha = "9326149ff6c982a56c88c3ed4ef942e8556cb776"
+merge_sha = "dbebfd6d144a288d0317857f3251515ad8c01327"
+merged_at = "2026-05-24T23:12:07Z"
 branch = "codex/intel-a770/A770-054-host-compiler-strict-f32-barrier-implementation"
 stackable = false
 review_mode = "codex_premerge"
