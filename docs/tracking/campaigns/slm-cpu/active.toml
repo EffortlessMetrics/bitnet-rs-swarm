@@ -6100,3 +6100,55 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-095"
+status = "pr_open"
+pr = 577
+head_sha = "a747c282202b2d82152fb53ccb9f209c3c3915a4"
+branch = "codex/slm-cpu-095-packed-q8-matvec-scratch"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-094"]
+acceptance = "Implement or precisely classify the packed Q8_0 sidecar matvec output-scratch boundary queued by SLM-CPU-094. A valid slice may add behavior-preserving inner matvec helpers that fill caller-provided output slices for the opt-in exact-tensor packed Q8_0 sidecar path, and must record whether the full runtime can reuse caller-owned output storage through Candle Tensor construction. Any runtime-adjacent change must preserve the established Qwen3 Q8_0 appliance oracle before claiming even bounded allocation improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false. The slice must not promote packed_q8_sidecar to the default runtime, claim speedup without before/after repeated receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo test --locked -p bitnet-transformer --lib dense_q8_sidecar",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "The packed Q8_0 sidecar matvec core has a behavior-preserving caller-output-slice helper if tests prove equivalence.",
+  "The full packed sidecar runtime still requires an owned Candle Tensor output unless a behavior-preserving Tensor construction path can keep reusable caller storage alive.",
+  "No speedup is claimed without before/after repeated Qwen3 Q8_0 receipts.",
+]
+must_not_claim = [
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "The full runtime output Tensor now reuses caller-owned storage if Candle still consumes an owned Vec.",
+  "End-to-end speedup is proven without before/after repeated receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
