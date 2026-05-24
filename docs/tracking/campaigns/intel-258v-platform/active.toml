@@ -16159,3 +16159,61 @@ must_not_claim = [
   "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
   "BitNet QK256/I2_S behavior changed.",
 ]
+
+[[work_item]]
+id = "LNL258V-ASK-008"
+status = "merged"
+pr = 576
+head_sha = "70391ad483555d06174081c95350f3439f9cce34"
+merge_sha = "1d37ed23741019fca808218e7b26f65d5dd61513"
+branch = "codex/lunar-lake/LNL258V-ASK-008-bitnet-reference-blocked-ask"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-BITNET-INTAKE-004", "LNL258V-ASK-007"]
+acceptance = "Make bitnet lunar-lake ask fail closed with an explicit BitNet strict-reference evidence-only explanation when auto or direct selection reaches bitnet_reference_cpu / bitnet_strict_reference, preserving no inference, no fallback, no route-promotion, no speedup, no power-advantage, no native accelerator, no broad quality, and no BitNet QK256/I2_S behavior-change claims."
+commands = [
+  "rustfmt --check --config skip_children=true,newline_style=Unix --edition 2024 crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::auto_ask_bitnet_reference_profile_blocks_as_evidence_only -- --exact --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::direct_ask_rejects_bitnet_reference_route_as_evidence_only -- --exact --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::auto_ask_selects_promoted_cpu_route_from_ledger -- --exact --nocapture",
+  "cargo build --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet",
+  "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile bitnet_strict_reference --route auto --device auto --question \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out %TEMP%/lnl-current-ask-bitnet-reference-live-after-ask008.json",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "scripts/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-tokenizers/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-qk256-layout-core/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-server/**",
+]
+may_claim = [
+  "bitnet lunar-lake ask now blocks BitNet strict-reference profile selection before model execution with a BitNet evidence-only explanation.",
+  "The blocked BitNet reference ask receipt preserves new_inference_executed=false, fallback_used=false, and BitNet-specific next evidence.",
+]
+must_not_claim = [
+  "New successful BitNet inference was run by this PR.",
+  "Any route is promoted by this PR.",
+  "OpenVINO GPU or NPU speedup is claimed by this PR.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Arc or NPU acceleration is proven.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "Full BitNet inference works on Arc or NPU.",
+  "BitNet QK256/I2_S behavior changed.",
+]
