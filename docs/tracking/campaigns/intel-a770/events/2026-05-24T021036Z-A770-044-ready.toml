@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T02:10:36Z"
+campaign = "intel-a770"
+item = "A770-044"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
+actor = "codex-a770"
+summary = "Queued the next A770 diagnostic after A770-043 identified selected q_proj CPU/A770 replay output drift."
+notes = [
+  "A770-043 classified the selected QKV projection dispatch replay frontier as CPU versus A770 output drift under identical materialized inputs and raw QK256 metadata.",
+  "A770-044 is scoped to inspect the selected QK256 CPU scalar versus A770 OpenCL GEMV numeric policy and classify the next boundary without changing runtime math or dispatch policy.",
+  "The item does not promote CPU/A770 parity, reference parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
