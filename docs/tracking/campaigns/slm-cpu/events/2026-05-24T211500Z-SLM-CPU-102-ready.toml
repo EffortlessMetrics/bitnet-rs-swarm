@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T21:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-102"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-102-typed-attention-head-consumer-gate"
+actor = "codex"
+summary = "Queued the typed attention-head consumer gate after SLM-CPU-101."
+notes = [
+  "SLM-CPU-101 defined the runtime-disabled typed attention-head buffer/view contract required before exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` packed-Q8 fused Q projection consumer execution.",
+  "The next safe performance-lane gate is the typed attention-head consumer boundary that carries fused Q output through q_norm, RoPE, trace/workspace identity, and score handoff without returning an intermediate Candle Tensor.",
+  "Any runtime-adjacent change remains gated by before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts preserving model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false.",
+  "The item makes no packed_q8_sidecar default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 claim, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim.",
+]
