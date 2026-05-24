@@ -1,0 +1,74 @@
+{
+  "artifact_kind": "slm_cpu_fused_output_consumer_boundary",
+  "work_item": "SLM-CPU-098",
+  "created_utc": "2026-05-24T11:58:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "behavior_oracle": {
+    "source": "established Qwen3 Q8_0 Kaby appliance receipts",
+    "must_preserve_before_any_improvement_claim": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "input_evidence": {
+    "previous_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json",
+    "slm_cpu_096_result": "blocked_by_candle_owned_storage_api",
+    "inner_matvec_helpers_accept_caller_output_slice": true,
+    "runtime_entrypoint_still_returns_candle_tensor": true,
+    "next_safe_change_from_slm_cpu_096": "move to a fused consumer path that avoids returning a Candle Tensor for this boundary and proves Qwen3 Q8_0 behavior equivalence with before/after receipts"
+  },
+  "boundary": {
+    "role": "attention.q_proj.fused_output_consumer",
+    "status": "blocked_by_downstream_candle_tensor_consumers",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "sidecar_inner_matvec_accepts_output_slice": true,
+    "can_avoid_returned_candle_tensor_for_current_consumer": false,
+    "downstream_consumers_require_tensor_semantics": true,
+    "reason": "The packed-Q8 inner matvec helpers can fill caller-provided output slices, but the exact sidecar tensor currently feeds Candle Tensor consumers: q_proj output is reshaped, transposed, optionally q_norm-normalized, RoPE-transformed, traced, and recorded before attention scores. Avoiding the returned Candle Tensor would require a typed fused projection consumer covering those downstream semantics, not only a reusable matvec output buffer.",
+    "exact_blocking_ops": [
+      "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
+      "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
+      "MultiHeadAttention::reshape_qkv_heads consumes q_proj as a Candle Tensor and applies Tensor::reshape plus Tensor::transpose",
+      "Qwen q_norm/k_norm paths consume attention heads as Candle Tensors through candle_nn::LayerNorm::forward",
+      "RoPE/cache/trace/workspace paths preserve Tensor-shaped attention-head semantics before score computation"
+    ],
+    "required_missing_api": "typed fused Q projection consumer accepting packed-Q8 matvec output slices and applying reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff without materializing an intermediate returned Candle Tensor",
+    "machine_check": "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_fused_consumer_boundary_names_downstream_tensor_blocker"
+  },
+  "classification": {
+    "status": "fused_consumer_blocked",
+    "safe_runtime_change_available_now": false,
+    "next_safe_change": "Design a typed fused Q projection consumer that owns the downstream reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics, then prove behavior preservation with before/after Qwen3 Q8_0 receipts before claiming allocation or timing improvement."
+  },
+  "result": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "fused_consumer_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

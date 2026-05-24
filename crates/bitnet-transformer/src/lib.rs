@@ -2037,6 +2037,47 @@ impl LogitsOutputStorageApiBoundary {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarFusedConsumerBoundary {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub reason: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub sidecar_inner_matvec_accepts_output_slice: bool,
+    pub can_avoid_returned_candle_tensor_for_current_consumer: bool,
+    pub downstream_consumers_require_tensor_semantics: bool,
+    pub exact_blocking_ops: &'static [&'static str],
+    pub required_missing_api: &'static str,
+    pub appliance_oracle_required_before_claim: bool,
+}
+
+pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
+    "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
+    "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
+    "MultiHeadAttention::reshape_qkv_heads consumes q_proj as a Candle Tensor and applies Tensor::reshape plus Tensor::transpose",
+    "Qwen q_norm/k_norm paths consume attention heads as Candle Tensors through candle_nn::LayerNorm::forward",
+    "RoPE/cache/trace/workspace paths preserve Tensor-shaped attention-head semantics before score computation",
+];
+
+pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_REQUIRED_API: &str = "typed fused Q projection consumer accepting packed-Q8 matvec output slices and applying reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff without materializing an intermediate returned Candle Tensor";
+
+pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumerBoundary {
+    DenseQ8SidecarFusedConsumerBoundary {
+        role: "attention.q_proj.fused_output_consumer",
+        status: "blocked_by_downstream_candle_tensor_consumers",
+        reason: "The packed-Q8 inner matvec helpers can fill caller-provided output slices, but the exact sidecar tensor currently feeds Candle Tensor consumers: q_proj output is reshaped, transposed, optionally q_norm-normalized, RoPE-transformed, traced, and recorded before attention scores. Avoiding the returned Candle Tensor would require a typed fused projection consumer covering those downstream semantics, not only a reusable matvec output buffer.",
+        exact_tensor_name: SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
+        exact_tensor_role: "AttentionQ",
+        sidecar_inner_matvec_accepts_output_slice: true,
+        can_avoid_returned_candle_tensor_for_current_consumer: false,
+        downstream_consumers_require_tensor_semantics: true,
+        exact_blocking_ops: DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS,
+        required_missing_api: DENSE_Q8_SIDECAR_FUSED_CONSUMER_REQUIRED_API,
+        appliance_oracle_required_before_claim: true,
+    }
+}
+
 impl TransformerForwardWorkspace {
     pub fn new() -> Self {
         Self::default()

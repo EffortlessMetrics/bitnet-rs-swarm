@@ -24,6 +24,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Post-aligned packed-Q8 matvec classification | `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-079-post-aligned-matvec-classification.json` | Preserves the Qwen3 behavior oracle while recording a bounded counter-level `packed_matvec_ns` reduction against the SLM-CPU-077 sidecar oracle |
 | Logits/output-head boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json` | Classifies the remaining `model.logits` / output-head boundary as owned Candle Tensor output plus optional host extraction, without claiming a runtime optimization |
 | Runtime output tensor storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json` | Records that inner packed-Q8 matvec helpers can fill caller-owned slices, but full runtime Tensor output reuse remains blocked by public Candle owned-storage construction |
+| Fused output consumer boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-098-fused-output-consumer-boundary.json` | Classifies the exact `attention.q_proj` fused-consumer boundary as blocked by downstream Candle Tensor consumers unless a typed fused Q projection consumer owns reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics |
 
 All rows use:
 
@@ -68,12 +69,13 @@ backend/kernel identity, dense hook identity where applicable, and
 `fallback_used=false`.
 
 SLM-CPU-097 queued the fused output consumer gate after SLM-CPU-096. SLM-CPU-098
-is the next concrete gate: it must either prove a fused output consumer path that
-avoids returning a reusable-storage-hostile Candle Tensor at the packed-Q8
-exact-tensor boundary, or record a machine-checkable blocker explaining why that
-boundary is unsafe. Any implementation remains before/after receipt gated by the
-same Qwen3 Q8_0 behavior oracle before claiming allocation or timing
-improvement.
+classified the concrete fused-consumer boundary: the exact packed-Q8 sidecar
+matvec can fill caller-provided slices, but `layers.0.attention.q_proj.weight`
+immediately feeds Tensor-shaped consumers for reshape, transpose, optional q_norm,
+RoPE, trace/workspace identity, and attention-head handoff. A future improvement
+must design a typed fused Q projection consumer for those semantics before
+claiming allocation or timing improvement, and remains before/after receipt gated
+by the same Qwen3 Q8_0 behavior oracle.
 
 ## Thread Envelope
 
