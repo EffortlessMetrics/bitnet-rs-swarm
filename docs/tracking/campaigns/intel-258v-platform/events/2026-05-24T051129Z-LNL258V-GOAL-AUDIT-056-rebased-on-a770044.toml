@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T05:11:29Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-056"
+event = "pr_open"
+previous_status = "pr_open"
+new_status = "pr_open"
+actor = "codex-lunar-lake"
+pr = 570
+head_sha = "4d5d052cfa98465ca1192218544ba4adeec996c6"
+base_sha = "303f59aa44f8825b68c078b04529c66f08f094bc"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-056-post-ci-invariants-closeout"
+summary = "Rebased PR #570 on current main after A770-044/#565 and classified #565 as adjacent A770 diagnostic state only."
+notes = [
+  "A770-044/#565 is adjacent A770 QK256 numeric-policy diagnostic state only.",
+  "A770-044/#565 is not a shared BitNet semantic fix, not a Lunar Lake semantic-intake stale trigger, and not Lunar Lake route evidence.",
+  "#567 remains repository control-plane/Codex guidance only; #568 remains Lunar Lake tracker closeout state only; #551 remains dependency maintenance only.",
+  "LNL258V-POWER-006 remains blocked.",
+]

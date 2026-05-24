@@ -105,6 +105,7 @@ pub struct ModelQkvProjectionDispatchReplayContext {
     pub row_stride_bytes: usize,
     pub inline_scale: Option<f32>,
     pub cpu_output: ConcreteTensor,
+    pub opencl_policy_output: ConcreteTensor,
     pub a770_output: Option<ConcreteTensor>,
     pub cpu: ModelQkvProjectionDispatchReplayCpuContext,
     pub a770: ModelQkvProjectionDispatchReplayA770Context,
@@ -873,6 +874,8 @@ impl Model for BitNetModel {
                         row_stride_bytes: replay.row_stride_bytes,
                         inline_scale: replay.inline_scale,
                         cpu_output: self.candle_to_concrete(replay.cpu_output.clone()),
+                        opencl_policy_output: self
+                            .candle_to_concrete(replay.opencl_policy_output.clone()),
                         a770_output: replay
                             .a770_output
                             .clone()

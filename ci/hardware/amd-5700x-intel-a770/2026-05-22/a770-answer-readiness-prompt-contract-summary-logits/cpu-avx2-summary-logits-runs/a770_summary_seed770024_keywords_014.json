@@ -1,6 +1,6 @@
 {
   "artifact_kind": "strict_bitnet_cpu_reference",
-  "artifact_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
+  "artifact_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
   "bitnet": {
     "activation_quantization": "A8",
     "execution_phase": "decode",
@@ -85,9 +85,9 @@
     "layout": "gguf_packed_i2_s"
   },
   "latency": {
-    "cmd_to_first_ms": 56095,
-    "decode_first_ms": 56095,
-    "total_ms": 89838
+    "cmd_to_first_ms": 54983,
+    "decode_first_ms": 54983,
+    "total_ms": 87705
   },
   "loader": {
     "minimal_fallback_allowed": false,
@@ -15747,6 +15747,8 @@
                     },
                     "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
                     "cpu_a770_output_sha256_match": false,
+                    "cpu_opencl_policy_output_rms_abs_delta": 0.0,
+                    "cpu_opencl_policy_output_sha256_match": true,
                     "cpu_output": {
                       "available": true,
                       "finite_count": 2560,
@@ -15767,6 +15769,29 @@
                     "diagnostic_only": true,
                     "inline_scale": 1.2188547849655151,
                     "input_rows": 1,
+                    "numeric_policy": {
+                      "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+                      "host_opencl_policy_replay": "opencl_linear_i32_accumulation"
+                    },
+                    "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
+                    "opencl_policy_a770_output_sha256_match": false,
+                    "opencl_policy_output": {
+                      "available": true,
+                      "finite_count": 2560,
+                      "infinite_count": 0,
+                      "max": 6.754318714141846,
+                      "mean": -0.017587722323060006,
+                      "min": -5.372337818145752,
+                      "nan_count": 0,
+                      "rms": 1.1568787420709825,
+                      "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+                      "shape": [
+                        1,
+                        1,
+                        2560
+                      ],
+                      "value_count": 2560
+                    },
                     "output_rows": 2560,
                     "row_stride_bytes": 640,
                     "schema_version": "1.0.0",
@@ -23155,7 +23180,7 @@
     "format": "gguf",
     "loader_mode": "real_gguf",
     "output_head_tensor": "tied_token_embeddings",
-    "path": "E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf",
+    "path": "E:\\Code\\Rust\\BitNet-rs\\models\\BitNet-b1.58-2B-4T\\ggml-model-i2_s.gguf",
     "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
     "sha256": "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162",
     "tie_word_embeddings": true,
@@ -23325,80 +23350,80 @@
         "count": 18,
         "max_ms": 0.007,
         "mean_ms": 0.006,
-        "min_ms": 0.004,
+        "min_ms": 0.005,
         "p50_ms": 0.006,
         "p95_ms": 0.007,
         "total_ms": 0.106
       },
-      "first_token_decode_ms": 1950.149,
+      "first_token_decode_ms": 1907.159,
       "forward_ms": {
         "count": 18,
-        "max_ms": 2213.404,
-        "mean_ms": 1922.997,
-        "min_ms": 1601.256,
-        "p50_ms": 1911.592,
-        "p95_ms": 2213.404,
-        "total_ms": 34613.944
+        "max_ms": 2086.445,
+        "mean_ms": 1863.62,
+        "min_ms": 1617.129,
+        "p50_ms": 1853.212,
+        "p95_ms": 2086.445,
+        "total_ms": 33545.167
       },
       "generated_tokens": 18,
       "logits_ms": {
         "count": 18,
-        "max_ms": 47.438,
-        "mean_ms": 44.054,
-        "min_ms": 40.644,
-        "p50_ms": 43.756,
-        "p95_ms": 47.438,
-        "total_ms": 792.971
+        "max_ms": 48.129,
+        "mean_ms": 43.999,
+        "min_ms": 39.861,
+        "p50_ms": 43.767,
+        "p95_ms": 48.129,
+        "total_ms": 791.984
       },
       "per_token_ms": {
         "count": 18,
-        "max_ms": 2308.733,
-        "mean_ms": 1982.718,
-        "min_ms": 1661.304,
-        "p50_ms": 1965.004,
-        "p95_ms": 2308.733,
-        "total_ms": 35688.916
+        "max_ms": 2196.138,
+        "mean_ms": 1923.578,
+        "min_ms": 1675.791,
+        "p50_ms": 1909.94,
+        "p95_ms": 2196.138,
+        "total_ms": 34624.41
       },
       "sample_ms": {
         "count": 18,
-        "max_ms": 0.364,
-        "mean_ms": 0.223,
+        "max_ms": 0.344,
+        "mean_ms": 0.222,
         "min_ms": 0.143,
-        "p50_ms": 0.227,
-        "p95_ms": 0.364,
-        "total_ms": 4.023
+        "p50_ms": 0.211,
+        "p95_ms": 0.344,
+        "total_ms": 3.988
       },
       "steady_per_token_ms": {
         "count": 17,
-        "max_ms": 2308.733,
-        "mean_ms": 1984.633,
-        "min_ms": 1661.304,
-        "p50_ms": 2004.944,
-        "p95_ms": 2308.733,
-        "total_ms": 33738.767
+        "max_ms": 2196.138,
+        "mean_ms": 1924.544,
+        "min_ms": 1675.791,
+        "p50_ms": 1934.225,
+        "p95_ms": 2196.138,
+        "total_ms": 32717.251
       },
-      "steady_state_tok_s": 0.504,
+      "steady_state_tok_s": 0.52,
       "steady_state_tokens": 17,
       "token_decode_ms": {
         "count": 18,
-        "max_ms": 0.032,
+        "max_ms": 0.039,
         "mean_ms": 0.008,
         "min_ms": 0.004,
         "p50_ms": 0.007,
-        "p95_ms": 0.032,
-        "total_ms": 0.14
+        "p95_ms": 0.039,
+        "total_ms": 0.148
       },
       "warmup_tokens": 1
     },
     "id": "default",
     "kind": "steady_decode_prefill",
     "machine_context_recorded": true,
-    "model_load_ms": 3370.396,
+    "model_load_ms": 3489.26,
     "phase": "decode",
     "prompt_prefill": {
       "exercised": true,
       "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
-      "ms": 54145.012,
+      "ms": 53076.026,
       "per_token_ms": {
         "count": 0,
         "max_ms": null,
@@ -23410,9 +23435,9 @@
       },
       "tokens": 28
     },
-    "prompt_tokenize_ms": 1.144,
+    "prompt_tokenize_ms": 1.138,
     "requested": false,
-    "tokenizer_load_ms": 545.411
+    "tokenizer_load_ms": 544.251
   },
   "prompt": "Summarize in one short sentence and include the words fast and safe: Rust helps teams build reliable systems software.",
   "prompt_generation_identity": {
@@ -23553,7 +23578,7 @@
     ],
     "cpu_model": "unknown-windows-cpu",
     "decode_tokens": 18,
-    "decode_tps": 0.20036064916850332,
+    "decode_tps": 0.20523345305284763,
     "fallback_reason": null,
     "fallback_used": false,
     "loader_mode": "real_gguf",
@@ -23572,25 +23597,25 @@
   "text": "Rust enables fast and safe software development by eliminating null pointer exceptions and memory leaks.",
   "throughput": {
     "decoded_tokens": 18,
-    "tokens_per_second": 0.20036064916850332
+    "tokens_per_second": 0.20523345305284763
   },
-  "timestamp": "2026-05-24T01:15:16.964418+00:00",
+  "timestamp": "2026-05-24T02:56:51.753958400+00:00",
   "timing": {
     "a770_opencl_device_to_host_bytes": null,
     "a770_opencl_host_to_device_bytes": null,
     "a770_opencl_kernel_invocations": null,
     "cuda_kernel_time_ms": null,
-    "decode_steady_state_tok_s": 0.504,
-    "decode_total_ms": 35688.916,
+    "decode_steady_state_tok_s": 0.52,
+    "decode_total_ms": 34624.41,
     "device_to_host_bytes": null,
-    "first_token_decode_ms": 1950.149,
-    "first_token_ms": 56095,
+    "first_token_decode_ms": 1907.159,
+    "first_token_ms": 54983,
     "host_to_device_bytes": null,
-    "model_load_ms": 3370.396,
-    "prefill_ms": 54145.012,
-    "sampling_ms_per_token": 0.223,
-    "tokenize_ms": 1.144,
-    "tokenizer_load_ms": 545.411
+    "model_load_ms": 3489.26,
+    "prefill_ms": 53076.026,
+    "sampling_ms_per_token": 0.222,
+    "tokenize_ms": 1.138,
+    "tokenizer_load_ms": 544.251
   },
   "tokenizer": {
     "bos": 1,

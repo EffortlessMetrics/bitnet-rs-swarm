@@ -315,6 +315,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_numeric_policy_frontier =
+        build_generated_output_qk256_numeric_policy_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -419,6 +427,7 @@ fn build_answer_parity_receipt(
         "generated_output_attention_output_source_frontier": generated_output_attention_output_source_frontier,
         "generated_output_qkv_projection_source_frontier": generated_output_qkv_projection_source_frontier,
         "generated_output_qkv_projection_dispatch_replay_frontier": generated_output_qkv_projection_dispatch_replay_frontier,
+        "generated_output_qk256_numeric_policy_frontier": generated_output_qk256_numeric_policy_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -5209,6 +5218,70 @@ fn build_generated_output_qkv_projection_dispatch_replay_frontier(
     })
 }
 
+fn build_generated_output_qk256_numeric_policy_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_numeric_policy_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_numeric_policy_missing_context");
+        if classification != "generated_output_qk256_numeric_policy_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_numeric_policy_missing_context",
+        "generated_output_qk256_numeric_policy_raw_input_materialization",
+        "generated_output_qk256_numeric_policy_packed_weight_decode",
+        "generated_output_qk256_numeric_policy_scale_application",
+        "generated_output_qk256_numeric_policy_accumulation_order",
+        "generated_output_qk256_numeric_policy_output_casting_serialization",
+        "generated_output_qk256_numeric_policy_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_numeric_policy_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_numeric_policy_",
+        "generated_output_qk256_numeric_policy_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_numeric_policy_context_available": rows.iter().any(|row| {
+            row["qk256_numeric_policy_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_numeric_policy_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -5393,9 +5466,193 @@ fn generated_output_qkv_projection_dispatch_replay_row(
     })
 }
 
+fn generated_output_qk256_numeric_policy_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let replay_row = generated_output_qkv_projection_dispatch_replay_row(id, left_case, right_case);
+    let replay_classification = replay_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qkv_projection_dispatch_replay_missing_context");
+    if replay_classification == "generated_output_qkv_projection_dispatch_replay_not_applicable" {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_numeric_policy_not_applicable",
+            "reason": "qkv_projection_dispatch_replay_not_applicable",
+            "qkv_projection_dispatch_replay_classification": replay_row["classification"],
+        });
+    }
+
+    let source_classification =
+        replay_row["qkv_projection_source_classification"].as_str().unwrap_or_default();
+    if source_classification == "generated_output_qkv_projection_source_projection_input_drift" {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_raw_input_materialization",
+            "qkv_projection_input_sha_drift",
+            replay_row,
+        );
+    }
+    if source_classification == "generated_output_qkv_projection_source_projection_metadata_drift" {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_packed_weight_decode",
+            "qk256_projection_metadata_drift",
+            replay_row,
+        );
+    }
+
+    if replay_classification == "generated_output_qkv_projection_dispatch_replay_missing_context" {
+        let reason =
+            replay_row["reason"].as_str().unwrap_or("dispatch_replay_missing_context").to_string();
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_missing_context",
+            &reason,
+            replay_row,
+        );
+    }
+    if replay_classification
+        == "generated_output_qkv_projection_dispatch_replay_runtime_replay_mismatch"
+    {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_missing_context",
+            "runtime_replay_mismatch_blocks_numeric_policy_classification",
+            replay_row,
+        );
+    }
+
+    let Some(left_replay) = replay_row.get("left_replay") else {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_missing_context",
+            "left_replay_summary_missing",
+            replay_row,
+        );
+    };
+    let Some(right_replay) = replay_row.get("right_replay") else {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_missing_context",
+            "right_replay_summary_missing",
+            replay_row,
+        );
+    };
+
+    if left_replay["inline_scale"].is_null() || right_replay["inline_scale"].is_null() {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_scale_application",
+            "inline_scale_missing",
+            replay_row,
+        );
+    }
+    if left_replay["inline_scale"] != right_replay["inline_scale"] {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_scale_application",
+            "inline_scale_mismatch_across_receipts",
+            replay_row,
+        );
+    }
+
+    let left_cpu_opencl_policy_match =
+        optional_json_sha_eq(&left_replay["cpu_output"], &left_replay["opencl_policy_output"]);
+    let right_cpu_opencl_policy_match =
+        optional_json_sha_eq(&right_replay["cpu_output"], &right_replay["opencl_policy_output"]);
+    let left_opencl_policy_a770_match =
+        optional_json_sha_eq(&left_replay["opencl_policy_output"], &left_replay["a770_output"]);
+    let right_opencl_policy_a770_match =
+        optional_json_sha_eq(&right_replay["opencl_policy_output"], &right_replay["a770_output"]);
+    let opencl_policy_match_across_receipts = optional_json_sha_eq(
+        &left_replay["opencl_policy_output"],
+        &right_replay["opencl_policy_output"],
+    );
+
+    if [
+        left_cpu_opencl_policy_match,
+        right_cpu_opencl_policy_match,
+        left_opencl_policy_a770_match,
+        right_opencl_policy_a770_match,
+        opencl_policy_match_across_receipts,
+    ]
+    .iter()
+    .any(Option::is_none)
+    {
+        return generated_output_qk256_numeric_policy_context_row(
+            id,
+            "generated_output_qk256_numeric_policy_missing_context",
+            "numeric_policy_output_fingerprint_missing",
+            replay_row,
+        );
+    }
+
+    let cpu_differs_from_opencl_policy =
+        left_cpu_opencl_policy_match == Some(false) || right_cpu_opencl_policy_match == Some(false);
+    let a770_matches_opencl_policy = left_opencl_policy_a770_match == Some(true)
+        && right_opencl_policy_a770_match == Some(true)
+        && opencl_policy_match_across_receipts == Some(true);
+    let all_clean = left_cpu_opencl_policy_match == Some(true)
+        && right_cpu_opencl_policy_match == Some(true)
+        && a770_matches_opencl_policy;
+
+    let classification = if all_clean {
+        "generated_output_qk256_numeric_policy_clean"
+    } else if cpu_differs_from_opencl_policy && a770_matches_opencl_policy {
+        "generated_output_qk256_numeric_policy_accumulation_order"
+    } else if !cpu_differs_from_opencl_policy && !a770_matches_opencl_policy {
+        "generated_output_qk256_numeric_policy_output_casting_serialization"
+    } else {
+        "generated_output_qk256_numeric_policy_packed_weight_decode"
+    };
+
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": Value::Null,
+        "first_mismatch_index": replay_row["first_mismatch_index"],
+        "target_layer_idx": replay_row["target_layer_idx"],
+        "projection": replay_row["projection"],
+        "qkv_projection_source_classification": replay_row["qkv_projection_source_classification"],
+        "qkv_projection_dispatch_replay_classification": replay_row["classification"],
+        "qk256_numeric_policy_context_available": true,
+        "left_cpu_opencl_policy_output_match": left_cpu_opencl_policy_match,
+        "right_cpu_opencl_policy_output_match": right_cpu_opencl_policy_match,
+        "left_opencl_policy_a770_output_match": left_opencl_policy_a770_match,
+        "right_opencl_policy_a770_output_match": right_opencl_policy_a770_match,
+        "opencl_policy_output_match_across_receipts": opencl_policy_match_across_receipts,
+        "left_replay": left_replay,
+        "right_replay": right_replay,
+        "next_diagnostic": qk256_numeric_policy_next_diagnostic(classification),
+    })
+}
+
+fn generated_output_qk256_numeric_policy_context_row(
+    id: &str,
+    classification: &str,
+    reason: &str,
+    replay_row: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "qkv_projection_source_classification": replay_row["qkv_projection_source_classification"],
+        "qkv_projection_dispatch_replay_classification": replay_row["classification"],
+        "qk256_numeric_policy_context_available":
+            classification != "generated_output_qk256_numeric_policy_missing_context",
+        "left_replay": replay_row["left_replay"],
+        "right_replay": replay_row["right_replay"],
+        "next_diagnostic": qk256_numeric_policy_next_diagnostic(classification),
+    })
+}
+
 fn qkv_projection_dispatch_replay_available(replay: &Value) -> bool {
     replay["source_context_available"].as_bool().unwrap_or(false)
         && replay["cpu_output"]["sha256_f32_le"].as_str().is_some()
+        && replay["opencl_policy_output"]["sha256_f32_le"].as_str().is_some()
         && replay["a770_output"]["sha256_f32_le"].as_str().is_some()
 }
 
@@ -5410,12 +5667,21 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
             "sha256_f32_le": replay["cpu_output"]["sha256_f32_le"],
             "rms": replay["cpu_output"]["rms"],
         },
+        "opencl_policy_output": {
+            "sha256_f32_le": replay["opencl_policy_output"]["sha256_f32_le"],
+            "rms": replay["opencl_policy_output"]["rms"],
+        },
         "a770_output": {
             "sha256_f32_le": replay["a770_output"]["sha256_f32_le"],
             "rms": replay["a770_output"]["rms"],
         },
         "cpu_a770_output_sha256_match": replay["cpu_a770_output_sha256_match"],
+        "cpu_opencl_policy_output_sha256_match": replay["cpu_opencl_policy_output_sha256_match"],
+        "opencl_policy_a770_output_sha256_match": replay["opencl_policy_a770_output_sha256_match"],
         "cpu_a770_output_rms_abs_delta": replay["cpu_a770_output_rms_abs_delta"],
+        "cpu_opencl_policy_output_rms_abs_delta": replay["cpu_opencl_policy_output_rms_abs_delta"],
+        "opencl_policy_a770_output_rms_abs_delta": replay["opencl_policy_a770_output_rms_abs_delta"],
+        "numeric_policy": replay["numeric_policy"],
         "cpu": replay["cpu"],
         "a770": replay["a770"],
     })
@@ -5731,6 +5997,36 @@ fn qkv_projection_dispatch_replay_next_diagnostic(classification: &str) -> &'sta
         "generated_output_qkv_projection_dispatch_replay_frontier_missing_context"
         | "generated_output_qkv_projection_dispatch_replay_missing_context" => {
             "rerun focused receipts with QKV projection dispatch replay enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_numeric_policy_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_numeric_policy_frontier_raw_input_materialization"
+        | "generated_output_qk256_numeric_policy_raw_input_materialization" => {
+            "inspect selected QK256 replay input materialization before numeric policy"
+        }
+        "generated_output_qk256_numeric_policy_frontier_packed_weight_decode"
+        | "generated_output_qk256_numeric_policy_packed_weight_decode" => {
+            "inspect selected QK256 packed weight decode and byte-order policy"
+        }
+        "generated_output_qk256_numeric_policy_frontier_scale_application"
+        | "generated_output_qk256_numeric_policy_scale_application" => {
+            "inspect selected QK256 inline scale and activation scale application"
+        }
+        "generated_output_qk256_numeric_policy_frontier_accumulation_order"
+        | "generated_output_qk256_numeric_policy_accumulation_order" => {
+            "align or gate selected QK256 OpenCL accumulation policy after before/after receipts"
+        }
+        "generated_output_qk256_numeric_policy_frontier_output_casting_serialization"
+        | "generated_output_qk256_numeric_policy_output_casting_serialization" => {
+            "inspect selected QK256 OpenCL output casting and receipt serialization"
+        }
+        "generated_output_qk256_numeric_policy_frontier_missing_context"
+        | "generated_output_qk256_numeric_policy_missing_context" => {
+            "rerun focused receipts with QK256 numeric policy replay context enabled"
         }
         _ => "none",
     }
@@ -6708,6 +7004,19 @@ mod tests {
         cpu_rms: f64,
         a770_rms: f64,
     ) -> Value {
+        qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            cpu_sha, a770_sha, a770_sha, cpu_rms, a770_rms, a770_rms,
+        )
+    }
+
+    fn qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+        cpu_sha: &str,
+        a770_sha: &str,
+        opencl_policy_sha: &str,
+        cpu_rms: f64,
+        a770_rms: f64,
+        opencl_policy_rms: f64,
+    ) -> Value {
         json!({
             "schema_version": "1.0.0",
             "context_kind": "decode_step_qkv_projection_dispatch_replay",
@@ -6719,9 +7028,18 @@ mod tests {
             "row_stride_bytes": 640,
             "inline_scale": 0.25,
             "cpu_output": final_block_tensor_fixture(cpu_sha, cpu_rms),
+            "opencl_policy_output": final_block_tensor_fixture(opencl_policy_sha, opencl_policy_rms),
             "a770_output": final_block_tensor_fixture(a770_sha, a770_rms),
             "cpu_a770_output_sha256_match": cpu_sha == a770_sha,
+            "cpu_opencl_policy_output_sha256_match": cpu_sha == opencl_policy_sha,
+            "opencl_policy_a770_output_sha256_match": opencl_policy_sha == a770_sha,
             "cpu_a770_output_rms_abs_delta": (cpu_rms - a770_rms).abs(),
+            "cpu_opencl_policy_output_rms_abs_delta": (cpu_rms - opencl_policy_rms).abs(),
+            "opencl_policy_a770_output_rms_abs_delta": (opencl_policy_rms - a770_rms).abs(),
+            "numeric_policy": {
+                "cpu_replay": "bitnet_i8s_scaled_wrapping_accumulation",
+                "host_opencl_policy_replay": "opencl_linear_i32_accumulation",
+            },
             "cpu": {
                 "scalar_invocations": 1,
                 "execution_path": "cpu_qk256_i2s_i8s_scaled_scalar_replay",
@@ -6757,6 +7075,27 @@ mod tests {
     ) -> Value {
         source["dispatch_replay"] =
             qkv_projection_dispatch_replay_fixture(cpu_sha, a770_sha, cpu_rms, a770_rms);
+        source["dispatch_replay_error"] = Value::Null;
+        source
+    }
+
+    fn with_qkv_projection_dispatch_replay_policy(
+        mut source: Value,
+        cpu_sha: &str,
+        a770_sha: &str,
+        opencl_policy_sha: &str,
+        cpu_rms: f64,
+        a770_rms: f64,
+        opencl_policy_rms: f64,
+    ) -> Value {
+        source["dispatch_replay"] = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            cpu_sha,
+            a770_sha,
+            opencl_policy_sha,
+            cpu_rms,
+            a770_rms,
+            opencl_policy_rms,
+        );
         source["dispatch_replay_error"] = Value::Null;
         source
     }
@@ -8765,6 +9104,126 @@ mod tests {
             frontier["next_diagnostic"],
             "inspect selected QK256 CPU scalar versus A770 OpenCL GEMV numeric policy"
         );
+
+        let numeric_frontier = &report["generated_output_qk256_numeric_policy_frontier"];
+        assert_eq!(
+            numeric_frontier["classification"],
+            "generated_output_qk256_numeric_policy_frontier_accumulation_order"
+        );
+        assert_eq!(
+            numeric_frontier["rows"][0]["classification"],
+            "generated_output_qk256_numeric_policy_accumulation_order"
+        );
+        assert_eq!(numeric_frontier["rows"][0]["left_cpu_opencl_policy_output_match"], false);
+        assert_eq!(numeric_frontier["rows"][0]["right_opencl_policy_a770_output_match"], true);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qkv_projection_dispatch_replay_numeric_policy_output_casting() {
+        let left_source = attention_output_source_fixture(0, 1.0);
+        let mut right_source = attention_output_source_fixture(0, 1.5);
+        right_source["q_projection"] = final_block_tensor_fixture("a770-replay-output", 1.5);
+
+        let scalar_logits = with_qkv_projection_sources(
+            with_attention_output_sources(
+                with_transformer_block_source_stack(
+                    logits_first_mismatch_margin_left_with_model_forward_source(
+                        "left-hidden",
+                        "same-forward",
+                        "left-hidden",
+                        "same-prior-layer",
+                        "same-forward",
+                    ),
+                    vec![transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "left-layer0-attention",
+                        "left-layer0-residual",
+                        "left-layer0-ffn",
+                        "left-layer0-output",
+                        1.0,
+                    )],
+                ),
+                vec![left_source],
+            ),
+            vec![with_qkv_projection_dispatch_replay_policy(
+                qkv_projection_source_fixture(
+                    0,
+                    "q_proj",
+                    "same-projection-input",
+                    "cpu-replay-output",
+                    "cpu_qk256_reference",
+                    0,
+                    1,
+                    0,
+                    1.0,
+                ),
+                "cpu-replay-output",
+                "a770-replay-output",
+                "cpu-replay-output",
+                1.0,
+                1.5,
+                1.0,
+            )],
+        );
+        let a770_logits = with_qkv_projection_sources(
+            with_attention_output_sources(
+                with_transformer_block_source_stack(
+                    logits_first_mismatch_margin_right_with_model_forward_source(
+                        "right-hidden",
+                        "same-forward",
+                        "right-hidden",
+                        "same-prior-layer",
+                        "same-forward",
+                    ),
+                    vec![transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "right-layer0-attention",
+                        "right-layer0-residual",
+                        "right-layer0-ffn",
+                        "right-layer0-output",
+                        1.5,
+                    )],
+                ),
+                vec![right_source],
+            ),
+            vec![with_qkv_projection_dispatch_replay_policy(
+                qkv_projection_source_fixture(
+                    0,
+                    "q_proj",
+                    "same-projection-input",
+                    "a770-replay-output",
+                    "a770_opencl_qk256_contribution",
+                    1,
+                    0,
+                    1,
+                    1.5,
+                ),
+                "cpu-replay-output",
+                "a770-replay-output",
+                "cpu-replay-output",
+                1.0,
+                1.5,
+                1.0,
+            )],
+        );
+        let scalar = receipt("i2_s-avx2-reference", &[4, 5, 6], "4 5 6", scalar_logits);
+        let a770 = a770_receipt(&[4, 5, 7], "4 5 7", a770_logits);
+
+        let report = build_generic_report(&scalar, &a770);
+        let frontier = &report["generated_output_qk256_numeric_policy_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_numeric_policy_frontier_output_casting_serialization"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_numeric_policy_output_casting_serialization"
+        );
+        assert_eq!(frontier["rows"][0]["left_cpu_opencl_policy_output_match"], true);
+        assert_eq!(frontier["rows"][0]["right_opencl_policy_a770_output_match"], false);
     }
 
     #[test]
@@ -8955,6 +9414,13 @@ mod tests {
             "generated_output_qkv_projection_dispatch_replay_frontier_missing_context"
         );
         assert_eq!(frontier["rows"][0]["reason"], "left_dispatch_replay_missing");
+
+        let numeric_frontier = &report["generated_output_qk256_numeric_policy_frontier"];
+        assert_eq!(
+            numeric_frontier["classification"],
+            "generated_output_qk256_numeric_policy_frontier_missing_context"
+        );
+        assert_eq!(numeric_frontier["rows"][0]["reason"], "left_dispatch_replay_missing");
     }
 
     #[test]
