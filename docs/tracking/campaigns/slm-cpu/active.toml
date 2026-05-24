@@ -6545,9 +6545,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-103"
-status = "pr_open"
-pr = 661
-head_sha = "cf32b42beffaa0af8015affc1f9762f843c8abe3"
+status = "ready"
 branch = "codex/slm-cpu-103-typed-qnorm-consumer-gate"
 stackable = false
 review_mode = "codex_premerge"
