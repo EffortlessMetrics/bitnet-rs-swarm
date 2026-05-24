@@ -1162,10 +1162,17 @@ mod tests {
             .context("support-bundle placeholder must be a string")?;
         for required_fragment in [
             "\"kind\": \"bitnet_support_bundle\"",
+            "\"current_tier\":",
+            "\"product_cli_ready\":",
             "\"selected_backend\": \"nvidia-rtx-5070-ti-cuda\"",
             "\"selected_route\":",
             "\"fallback_used\": false",
+            "\"server_ready\":",
+            "\"server_ready_scope\":",
             "\"speedup_claim\": false",
+            "\"full_residency_claim\":",
+            "\"bitnet_packed_i2s_qk256_proof\":",
+            "\"dense_regular_llm_cuda_proof\":",
             "\"claim_boundary\":",
         ] {
             assert!(
@@ -1189,7 +1196,10 @@ mod tests {
         for required_boundary in [
             "selected backend is `nvidia-rtx-5070-ti-cuda`, not generic `cuda`",
             "`fallback_used=false`",
+            "`product_cli_ready=true`",
+            "`server_ready_scope`",
             "`speedup_claim=false`",
+            "`full_residency_claim=false`",
             "Qwen2.5 exact-profile server readiness is not being treated as broad dense GGUF server readiness",
             "Dense CUDA proof is not being treated as BitNet I2_S/QK256 proof",
             "Qwen2.5 evidence is not being treated as Qwen3 evidence",
