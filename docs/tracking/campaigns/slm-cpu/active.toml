@@ -6262,7 +6262,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-098"
-status = "in_progress"
+status = "pr_open"
 branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
 stackable = false
 review_mode = "codex_premerge"
