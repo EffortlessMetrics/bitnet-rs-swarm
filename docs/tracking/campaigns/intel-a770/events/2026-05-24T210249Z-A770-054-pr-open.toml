@@ -1,0 +1,39 @@
+timestamp = "2026-05-24T21:02:49Z"
+campaign = "intel-a770"
+item = "A770-054"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 654
+branch = "codex/intel-a770/A770-054-host-compiler-strict-f32-barrier"
+head_sha = "5e275b841873ead501ab4917e9eaaac71312ab31"
+actor = "codex-a770"
+base_main_sha = "d23b535733b01637268e33a0ae4bb83e174b4d63"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #654 to queue A770-054 as the next A770 diagnostic item."
+notes = [
+  "PR #654 is tracker authority only and queues A770-054 after A770-053.",
+  "The PR regenerates campaign and global dashboards so intel-a770 points at the A770-054 open work item.",
+  "This remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-054 may capture or derive compact host compiler strict-f32 barrier codegen context for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
