@@ -6431,7 +6431,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-101"
-status = "ready"
+status = "pr_open"
+pr = 644
+head_sha = "48e7c6e490762b7ddf55cc0d1ea6d0539b7e558f"
 branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
 stackable = false
 review_mode = "codex_premerge"

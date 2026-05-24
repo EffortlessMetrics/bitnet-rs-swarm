@@ -27,6 +27,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Fused output consumer boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-098-fused-output-consumer-boundary.json` | Classifies the exact `attention.q_proj` fused-consumer boundary as blocked by downstream Candle Tensor consumers unless a typed fused Q projection consumer owns reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics |
 | Typed fused Q consumer contract | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-099-typed-fused-q-consumer-contract.json` | Defines the design-only API and receipt-safety contract for a future exact `attention.q_proj` fused consumer while keeping runtime execution, allocation claims, and speed claims disabled |
 | Typed fused Q consumer implementation gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-100-typed-fused-q-consumer-implementation-gate.json` | Records that the exact `attention.q_proj` fused consumer remains runtime-disabled until a typed attention-head buffer/view owns reshape, q_norm, RoPE, trace identity, and score handoff semantics |
+| Typed attention-head view gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-101-typed-attention-head-view-gate.json` | Defines the runtime-disabled typed Q-head view contract and records the remaining q_norm, RoPE, trace identity, score-handoff, and receipt-safety blockers |
 
 All rows use:
 
@@ -45,14 +46,14 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-100 typed fused Q consumer
-implementation gate. It does not run new inference or add a runtime
+This refresh is current through the SLM-CPU-101 typed attention-head view gate.
+It does not run new inference or add a runtime
 optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
-the typed fused Q projection consumer implementation blocker.
+the typed fused Q projection consumer and attention-head view blockers.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -1834,6 +1835,44 @@ Candle `Tensor`. Runtime execution still requires before/after Qwen3 Q8_0
 receipts proving identical model SHA, strict GGUF tokenizer authority, prompt
 IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense
 hook identity, and `fallback_used=false`.
+
+This slice does not change the default runtime, promote `packed_q8_sidecar`,
+prove allocation reduction, claim speedup, claim sustained 8250U throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256/I2_S paths.
+
+SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
+contract. The exact Q projection can be represented as a logical
+`[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
+without a returned intermediate Candle `Tensor`, but current downstream
+consumers still require Tensor-shaped APIs:
+
+```text
+status = contract_defined_runtime_disabled
+can_represent_q_heads_without_candle_tensor = true
+can_feed_current_attention_score_api_without_materialization = false
+selected_materialization_point = null
+runtime_execution_enabled = false
+default_runtime_changed = false
+allocation_reduction_claim = false
+speedup_claim = false
+```
+
+The machine-checkable blockers are:
+
+```text
+q_norm_requires_tensor_or_typed_norm
+rope_requires_tensor_or_typed_rope
+trace_source_identity_requires_tensor_mapping
+attention_scores_require_tensor_or_typed_score_path
+receipt_safety_evidence
+```
+
+The next safe slice is a typed q_norm/RoPE path or an explicit
+single-materialization score-handoff boundary, still gated by repeated
+before/after Qwen3 Q8_0 receipts proving identical model SHA, strict GGUF
+tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU
+backend/kernel identity, dense hook identity, and `fallback_used=false`.
 
 This slice does not change the default runtime, promote `packed_q8_sidecar`,
 prove allocation reduction, claim speedup, claim sustained 8250U throughput,
