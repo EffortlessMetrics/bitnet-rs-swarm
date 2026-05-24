@@ -1,0 +1,17 @@
+timestamp = "2026-05-24T13:21:22Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 613
+head_sha = "3ec5a0a027f08d5abcb7755d9d5511eff058af3d"
+merge_sha = "53bc4b85f2123d3d519bec4803ca88b0a3e8dd3c"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-099 to ready after PR #613 merged the queue definition but not the contract implementation slice."
+notes = [
+  "PR #613 queued the typed fused Q projection consumer contract gate after SLM-CPU-098.",
+  "The next SLM-CPU-099 implementation slice remains ready and must define the typed API/receipt-safety contract before any runtime fused Q projection execution.",
+  "The queue PR made no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]

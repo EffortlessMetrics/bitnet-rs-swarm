@@ -6318,7 +6318,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-099"
-status = "pr_open"
+status = "ready"
 branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
 stackable = false
 review_mode = "codex_premerge"
