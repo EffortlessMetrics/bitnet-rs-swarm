@@ -9,8 +9,9 @@ use super::BitNetError;
 use super::{
     DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention,
     TransformerA770OpenClRuntimeDelta, TransformerA770OpenClRuntimeDevice,
-    TransformerForwardWorkspace, TransformerQk256CpuHotPathDelta, TransformerQk256DispatchDelta,
-    TransformerQkvProjectionDispatchReplayA770Stats,
+    TransformerForwardWorkspace, TransformerQk256CpuHotPathDelta,
+    TransformerQk256DeviceExpressionSample, TransformerQk256DeviceExpressionTrace,
+    TransformerQk256DispatchDelta, TransformerQkvProjectionDispatchReplayA770Stats,
     TransformerQkvProjectionDispatchReplayCpuStats, TransformerQkvProjectionDispatchReplayTensors,
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
@@ -810,6 +811,31 @@ fn transformer_dispatch_replay_tensors(
         cpu_output: replay.cpu_output,
         opencl_policy_output: replay.opencl_policy_output,
         a770_output: replay.a770_output,
+        device_expression_trace: replay.device_expression_trace.map(|trace| {
+            TransformerQk256DeviceExpressionTrace {
+                input_row_index: trace.input_row_index,
+                sample_limit: trace.sample_limit,
+                sample_count: trace.sample_count,
+                samples: trace
+                    .samples
+                    .into_iter()
+                    .map(|sample| TransformerQk256DeviceExpressionSample {
+                        output_index: sample.output_index,
+                        int_dot: sample.int_dot,
+                        activation_sum: sample.activation_sum,
+                        adjusted_dot: sample.adjusted_dot,
+                        activation_scale: sample.activation_scale,
+                        activation_scale_bits: sample.activation_scale_bits,
+                        weight_scale: sample.weight_scale,
+                        weight_scale_bits: sample.weight_scale_bits,
+                        div_then_mul: sample.div_then_mul,
+                        mul_then_div: sample.mul_then_div,
+                        reciprocal_then_mul: sample.reciprocal_then_mul,
+                        f64_div_then_mul_cast: sample.f64_div_then_mul_cast,
+                    })
+                    .collect(),
+            }
+        }),
         cpu: TransformerQkvProjectionDispatchReplayCpuStats {
             scalar_invocations: replay.cpu.scalar_invocations,
             execution_path: replay.cpu.execution_path.to_string(),
