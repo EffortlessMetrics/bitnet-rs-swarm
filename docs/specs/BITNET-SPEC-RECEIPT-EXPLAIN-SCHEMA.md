@@ -106,13 +106,22 @@ The nested objects must preserve these responsibilities:
 | `backend` | requested backend, selected backend, runtime API, fallback status/reason |
 | `execution_plan` | selected route, model family, profile, route-specific claims |
 | `quality` | quality gate pass/fail, blocker, answer/UTF-8 status when present |
-| `timing` | phase timing and throughput fields when present |
+| `timing` | phase timing, throughput, transfer byte counts, transfer milliseconds, and transfer timing sample counts when present |
 | `residency` | residency, transfer, VRAM, and workspace reuse evidence when present |
 | `benchmark_qualification` | accepted/rejected/not-reviewed benchmark decision |
 | `claim_limits` | forbidden claims and promotion warnings |
 
 Receipts from older lanes may leave some nested fields empty, but the object
 shape must remain stable.
+
+For CUDA receipts that expose `kernel_stats` or
+`cuda_execution_residency.host_device_transfer_accounting`, receipt explanation
+must normalize measured transfer timing into `timing.host_to_device_ms` and
+`timing.device_to_host_ms` without treating those milliseconds as speedup,
+throughput, or full-residency promotion. When receipts provide
+`host_to_device_time_samples` or `device_to_host_time_samples`, explanation must
+preserve those counts so support automation can distinguish measured timing
+from byte-only accounting.
 
 ## Proof-Family And Promotion Warnings
 
