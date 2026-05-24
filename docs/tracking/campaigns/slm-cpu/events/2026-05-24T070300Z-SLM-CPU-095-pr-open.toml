@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T07:03:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-095"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 577
+head_sha = "a747c282202b2d82152fb53ccb9f209c3c3915a4"
+branch = "codex/slm-cpu-095-packed-q8-matvec-scratch"
+actor = "codex"
+summary = "Opened PR #577 for the packed Q8_0 sidecar matvec output-scratch boundary."
+notes = [
+  "PR #577 adds behavior-preserving inner packed-Q8 matvec caller-output-slice helpers and records the remaining Candle Tensor::from_vec owned-output runtime blocker.",
+  "The PR keeps packed_q8_sidecar opt-in and makes no speedup, sustained-throughput, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim.",
+]

@@ -503,6 +503,7 @@
 | intel-258v-platform | LNL258V-REG-008 | LNL258V-POWER-001, LNL258V-REG-007 | merged |
 | intel-258v-platform | LNL258V-POWER-001 | LNL258V-ROUTE-019, LNL258V-NPU-RESIDENT-002, LNL258V-BENCH-004 | merged |
 | intel-258v-platform | LNL258V-OP-006 | LNL258V-ROUTE-015 | merged |
+| intel-258v-platform | LNL258V-ASK-008 | LNL258V-BITNET-INTAKE-004, LNL258V-ASK-007 | merged |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
 | intel-a770 | A770-005 | A770-004 | merged |
@@ -816,6 +817,7 @@
 | slm-cpu | SLM-CPU-092 | SLM-CPU-091 | merged |
 | slm-cpu | SLM-CPU-093 | SLM-CPU-092 | merged |
 | slm-cpu | SLM-CPU-094 | SLM-CPU-093 | merged |
+| slm-cpu | SLM-CPU-095 | SLM-CPU-094 | pr_open |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |

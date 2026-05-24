@@ -137,6 +137,7 @@ Make the Intel i5-8250U a strict CPU proof host for small dense transformer GGUF
 | SLM-CPU-082 | merged | #374 captured the required 3 baseline and 3 candidate Qwen3 Q8_0 warm-session receipts locally on the i5-8250U; classification records behavior preservation with the opt-in exact-tensor packed-Q8 sidecar regressed, so no speedup or runtime-promotion claim is made. |
 | SLM-CPU-083 | merged | #393 classified the `model.forward.output` owned-output boundary through `TransformerForwardWorkspace` alongside the existing `feed_forward.down_proj.output` surface, preserving behavior and making no speedup, sidecar promotion, server, accelerator, Qwen3.5, or BitNet QK256 claim. |
 | SLM-CPU-094 | merged | #572 queued the next bounded dense-CPU performance gate after SLM-CPU-093: opt-in packed Q8_0 sidecar output-scratch reuse or an exact blocker, preserving the Qwen3 Q8_0 appliance behavior oracle and making no runtime, speedup, default-promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim. |
+| SLM-CPU-095 | in_progress | Implements or classifies the packed Q8_0 sidecar matvec output-scratch boundary queued by SLM-CPU-094, preserving the Qwen3 Q8_0 behavior oracle and making no speedup, sidecar-default, sustained-throughput, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim. |
 
 ## Review Policy
 

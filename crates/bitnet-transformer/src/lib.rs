@@ -677,9 +677,28 @@ fn dense_q8_sidecar_matvec_block_aligned(
     payload: &DenseLinearPackedQ8Payload,
     output: &mut Vec<f32>,
 ) {
+    let input_rows = input_values.len() / payload.matrix_cols;
+    let output_start = output.len();
+    let output_values = input_rows.saturating_mul(payload.matrix_rows);
+    output.resize(output_start + output_values, 0.0);
+    dense_q8_sidecar_matvec_block_aligned_into(
+        input_values,
+        bias_values,
+        payload,
+        &mut output[output_start..],
+    );
+}
+
+fn dense_q8_sidecar_matvec_block_aligned_into(
+    input_values: &[f32],
+    bias_values: Option<&[f32]>,
+    payload: &DenseLinearPackedQ8Payload,
+    output: &mut [f32],
+) {
     let block_stride = 2 + payload.q8_block_size;
     let blocks_per_row = payload.matrix_cols / payload.q8_block_size;
-    for input_row in input_values.chunks_exact(payload.matrix_cols) {
+    debug_assert_eq!(output.len(), input_values.len() / payload.matrix_cols * payload.matrix_rows);
+    for (input_row_idx, input_row) in input_values.chunks_exact(payload.matrix_cols).enumerate() {
         for row in 0..payload.matrix_rows {
             let mut sum = bias_values.map_or(0.0, |bias| bias[row]);
             let row_block_start = row * blocks_per_row;
@@ -693,7 +712,7 @@ fn dense_q8_sidecar_matvec_block_aligned(
                     sum += scale * f32::from(q) * input_row[input_start + offset];
                 }
             }
-            output.push(sum);
+            output[input_row_idx * payload.matrix_rows + row] = sum;
         }
     }
 }
@@ -704,8 +723,27 @@ fn dense_q8_sidecar_matvec_generic(
     payload: &DenseLinearPackedQ8Payload,
     output: &mut Vec<f32>,
 ) {
+    let input_rows = input_values.len() / payload.matrix_cols;
+    let output_start = output.len();
+    let output_values = input_rows.saturating_mul(payload.matrix_rows);
+    output.resize(output_start + output_values, 0.0);
+    dense_q8_sidecar_matvec_generic_into(
+        input_values,
+        bias_values,
+        payload,
+        &mut output[output_start..],
+    );
+}
+
+fn dense_q8_sidecar_matvec_generic_into(
+    input_values: &[f32],
+    bias_values: Option<&[f32]>,
+    payload: &DenseLinearPackedQ8Payload,
+    output: &mut [f32],
+) {
     let block_stride = 2 + payload.q8_block_size;
-    for input_row in input_values.chunks_exact(payload.matrix_cols) {
+    debug_assert_eq!(output.len(), input_values.len() / payload.matrix_cols * payload.matrix_rows);
+    for (input_row_idx, input_row) in input_values.chunks_exact(payload.matrix_cols).enumerate() {
         for row in 0..payload.matrix_rows {
             let mut sum = bias_values.map_or(0.0, |bias| bias[row]);
             let row_start = row * payload.matrix_cols;
@@ -726,7 +764,7 @@ fn dense_q8_sidecar_matvec_generic(
                 }
                 col += values_to_process;
             }
-            output.push(sum);
+            output[input_row_idx * payload.matrix_rows + row] = sum;
         }
     }
 }
@@ -4553,6 +4591,80 @@ mod tests {
             output.flatten_all()?.to_vec1::<f32>()?,
             linear.forward(&input)?.flatten_all()?.to_vec1::<f32>()?
         );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_q8_sidecar_block_aligned_matvec_fills_caller_output_slice() -> Result<()> {
+        let mut packed = Vec::new();
+        packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
+        packed.extend(std::iter::repeat_n(1_u8, 32));
+        packed.extend_from_slice(&f32_to_fp16(0.25).to_le_bytes());
+        packed.extend(std::iter::repeat_n(2_u8, 32));
+        let payload = DenseLinearPackedQ8Payload {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+            q8_block_size: 32,
+            q8_block_count: 2,
+            matrix_rows: 2,
+            matrix_cols: 32,
+        };
+        let input = vec![1.0f32; 32];
+        let bias = [1.0f32, -2.0];
+        let mut caller_output = [f32::NAN; 2];
+
+        dense_q8_sidecar_matvec_block_aligned_into(
+            &input,
+            Some(&bias),
+            &payload,
+            &mut caller_output,
+        );
+
+        assert_eq!(caller_output, [17.0, 14.0]);
+        Ok(())
+    }
+
+    #[test]
+    fn dense_q8_sidecar_generic_matvec_fills_caller_output_slice() -> Result<()> {
+        let matrix_rows = 2;
+        let matrix_cols = 40;
+        let q8_block_size = 32;
+        let q8_block_count = 3;
+        let scales = [0.125f32, 0.25, 0.5];
+        let mut packed = Vec::new();
+        for block_idx in 0..q8_block_count {
+            packed.extend_from_slice(&f32_to_fp16(scales[block_idx]).to_le_bytes());
+            for offset in 0..q8_block_size {
+                let flat_idx = block_idx * q8_block_size + offset;
+                let q = ((flat_idx % 17) as i8) - 8;
+                packed.push(q as u8);
+            }
+        }
+        let payload = DenseLinearPackedQ8Payload {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+            q8_block_size,
+            q8_block_count,
+            matrix_rows,
+            matrix_cols,
+        };
+        let input_values: Vec<f32> = (0..matrix_cols)
+            .map(|idx| match idx % 6 {
+                0 => -1.25,
+                1 => -0.75,
+                2 => -0.25,
+                3 => 0.25,
+                4 => 0.75,
+                _ => 1.25,
+            })
+            .collect();
+        let mut expected = Vec::new();
+        dense_q8_sidecar_matvec_generic(&input_values, None, &payload, &mut expected);
+        let mut caller_output = vec![f32::NAN; expected.len()];
+
+        dense_q8_sidecar_matvec_generic_into(&input_values, None, &payload, &mut caller_output);
+
+        assert_eq!(caller_output, expected);
         Ok(())
     }
 
