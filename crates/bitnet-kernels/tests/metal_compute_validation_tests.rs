@@ -79,7 +79,7 @@ mod tests {
             let slice = staging.slice(..);
             let (tx, rx) = std::sync::mpsc::channel();
             slice.map_async(MapMode::Read, move |res| tx.send(res).unwrap());
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
             rx.recv().unwrap().expect("map failed");
 
             let data = slice.get_mapped_range();
@@ -201,7 +201,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             }
             queue.submit(std::iter::once(encoder.finish()));
         }
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
 
         // Apple Silicon SIMD group size is 32 — verify constant compiles.
         const APPLE_SIMD_GROUP_SIZE: u32 = 32;
@@ -330,7 +330,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         let slice = staging.slice(..);
         let (tx, rx) = std::sync::mpsc::channel();
         slice.map_async(MapMode::Read, move |res| tx.send(res).unwrap());
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
         rx.recv().unwrap().expect("map failed");
 
         let data = slice.get_mapped_range();
@@ -372,7 +372,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             let mut enc = device.create_command_encoder(&CommandEncoderDescriptor { label: None });
             enc.copy_buffer_to_buffer(&src, 0, &dst, 0, BUF_SIZE);
             queue.submit(std::iter::once(enc.finish()));
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
         }
 
         let start = std::time::Instant::now();
@@ -381,7 +381,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             enc.copy_buffer_to_buffer(&src, 0, &dst, 0, BUF_SIZE);
             queue.submit(std::iter::once(enc.finish()));
         }
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
         let elapsed = start.elapsed();
 
         let total_bytes = BUF_SIZE as f64 * ITERATIONS as f64;

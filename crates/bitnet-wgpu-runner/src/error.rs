@@ -11,6 +11,8 @@ pub enum RunnerError {
     ShaderCompilation(String),
     /// Buffer mapping failed.
     BufferMap(wgpu::BufferAsyncError),
+    /// Failed while polling the device for completion.
+    DevicePoll(wgpu::PollError),
     /// Invalid dimensions for the operation.
     InvalidDimensions { expected: usize, actual: usize, name: &'static str },
     /// Dispatch workgroup count is zero on at least one axis.
@@ -24,6 +26,7 @@ impl fmt::Display for RunnerError {
             Self::DeviceRequest(e) => write!(f, "wgpu device request failed: {e}"),
             Self::ShaderCompilation(msg) => write!(f, "shader compilation failed: {msg}"),
             Self::BufferMap(e) => write!(f, "buffer mapping failed: {e}"),
+            Self::DevicePoll(e) => write!(f, "wgpu device poll failed: {e}"),
             Self::InvalidDimensions { expected, actual, name } => {
                 write!(f, "invalid dimensions for {name}: expected {expected}, got {actual}")
             }
@@ -37,6 +40,7 @@ impl std::error::Error for RunnerError {
         match self {
             Self::DeviceRequest(e) => Some(e),
             Self::BufferMap(e) => Some(e),
+            Self::DevicePoll(e) => Some(e),
             _ => None,
         }
     }
@@ -51,6 +55,12 @@ impl From<wgpu::RequestDeviceError> for RunnerError {
 impl From<wgpu::BufferAsyncError> for RunnerError {
     fn from(e: wgpu::BufferAsyncError) -> Self {
         Self::BufferMap(e)
+    }
+}
+
+impl From<wgpu::PollError> for RunnerError {
+    fn from(e: wgpu::PollError) -> Self {
+        Self::DevicePoll(e)
     }
 }
 

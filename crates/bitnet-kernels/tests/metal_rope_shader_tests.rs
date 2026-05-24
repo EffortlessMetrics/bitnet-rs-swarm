@@ -504,8 +504,8 @@ fn run_rope_gpu(
 
     let pipeline_layout = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("rope_pl"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -551,7 +551,7 @@ fn run_rope_gpu(
     let slice = buf_readback.slice(..);
     let (tx, rx) = std::sync::mpsc::channel();
     slice.map_async(wgpu::MapMode::Read, move |r| tx.send(r).unwrap());
-    ctx.device.poll(wgpu::Maintain::Wait);
+    let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
 
     let mapped = slice.get_mapped_range();
@@ -650,8 +650,8 @@ fn run_rope_ntk_gpu(
 
     let pipeline_layout = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("ntk_pl"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -697,7 +697,7 @@ fn run_rope_ntk_gpu(
     let slice = buf_readback.slice(..);
     let (tx, rx) = std::sync::mpsc::channel();
     slice.map_async(wgpu::MapMode::Read, move |r| tx.send(r).unwrap());
-    ctx.device.poll(wgpu::Maintain::Wait);
+    let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
 
     let mapped = slice.get_mapped_range();
@@ -805,8 +805,8 @@ fn run_rope_yarn_gpu(
 
     let pipeline_layout = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("yarn_pl"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -852,7 +852,7 @@ fn run_rope_yarn_gpu(
     let slice = buf_readback.slice(..);
     let (tx, rx) = std::sync::mpsc::channel();
     slice.map_async(wgpu::MapMode::Read, move |r| tx.send(r).unwrap());
-    ctx.device.poll(wgpu::Maintain::Wait);
+    let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
 
     let mapped = slice.get_mapped_range();
@@ -944,8 +944,8 @@ fn run_freq_table_gpu(
 
     let pipeline_layout = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("freq_pl"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -1000,7 +1000,7 @@ fn run_freq_table_gpu(
     let cos_slice = buf_cos_rb.slice(..);
     let (tx, rx) = std::sync::mpsc::channel();
     cos_slice.map_async(wgpu::MapMode::Read, move |r| tx.send(r).unwrap());
-    ctx.device.poll(wgpu::Maintain::Wait);
+    let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
     let cos_mapped = cos_slice.get_mapped_range();
     let cos_result: Vec<f32> = bytemuck::cast_slice(&cos_mapped[..table_len * 4]).to_vec();
@@ -1011,7 +1011,7 @@ fn run_freq_table_gpu(
     let sin_slice = buf_sin_rb.slice(..);
     let (tx2, rx2) = std::sync::mpsc::channel();
     sin_slice.map_async(wgpu::MapMode::Read, move |r| tx2.send(r).unwrap());
-    ctx.device.poll(wgpu::Maintain::Wait);
+    let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx2.recv().unwrap().unwrap();
     let sin_mapped = sin_slice.get_mapped_range();
     let sin_result: Vec<f32> = bytemuck::cast_slice(&sin_mapped[..table_len * 4]).to_vec();

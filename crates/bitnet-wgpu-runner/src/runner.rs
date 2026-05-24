@@ -19,9 +19,9 @@ pub struct KernelRunner {
 impl KernelRunner {
     /// Create a new `KernelRunner` with Vulkan backend preference.
     pub async fn new() -> Result<Self, RunnerError> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::DX12,
-            ..Default::default()
+            ..wgpu::InstanceDescriptor::new_without_display_handle()
         });
 
         let adapter = instance
@@ -31,7 +31,7 @@ impl KernelRunner {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or(RunnerError::AdapterNotFound)?;
+            .map_err(|_| RunnerError::AdapterNotFound)?;
 
         tracing::info!(
             adapter_name = %adapter.get_info().name,
@@ -39,8 +39,7 @@ impl KernelRunner {
             "wgpu adapter selected"
         );
 
-        let (device, queue) =
-            adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await?;
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await?;
 
         Ok(Self { device, queue })
     }
@@ -109,8 +108,8 @@ impl KernelRunner {
 
         let pipeline_layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("bitnet_pipeline_layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&bind_group_layout)],
+            immediate_size: 0,
         });
 
         let pipeline = self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -204,7 +203,7 @@ impl KernelRunner {
         slice.map_async(wgpu::MapMode::Read, move |result| {
             let _ = sender.send(result);
         });
-        self.device.poll(wgpu::Maintain::Wait);
+        self.device.poll(wgpu::PollType::wait_indefinitely())?;
         receiver.recv().unwrap()?;
 
         let data = slice.get_mapped_range();

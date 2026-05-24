@@ -177,7 +177,7 @@ fn adapter_to_info(adapter: &wgpu::Adapter) -> WgpuDeviceInfo {
             max_compute_invocations: limits.max_compute_invocations_per_workgroup,
             max_bind_groups: limits.max_bind_groups,
             subgroup_size: if features.contains(wgpu::Features::SUBGROUP) {
-                limits.min_subgroup_size
+                info.subgroup_min_size
             } else {
                 0
             },
@@ -191,12 +191,12 @@ fn adapter_to_info(adapter: &wgpu::Adapter) -> WgpuDeviceInfo {
 /// Returns an empty `Vec` if no adapters are found or wgpu initialisation fails.
 pub fn probe_wgpu_devices() -> Vec<WgpuDeviceInfo> {
     pollster::block_on(async {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
-            ..Default::default()
+            ..wgpu::InstanceDescriptor::new_without_display_handle()
         });
 
-        let adapters = instance.enumerate_adapters(wgpu::Backends::all());
+        let adapters = instance.enumerate_adapters(wgpu::Backends::all()).await;
         adapters.iter().map(|a| adapter_to_info(a)).collect()
     })
 }

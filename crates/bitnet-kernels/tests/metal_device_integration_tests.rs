@@ -216,8 +216,8 @@ fn test_metal_compute_shader_add_buffers() {
 
     let pipeline_layout = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("add_pipeline_layout"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -253,7 +253,7 @@ fn test_metal_compute_shader_add_buffers() {
         slice.map_async(wgpu::MapMode::Read, move |r| {
             tx.send(r).unwrap();
         });
-        ctx.device.poll(wgpu::Maintain::Wait);
+        let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
         rx.recv().unwrap().unwrap();
 
         let data = slice.get_mapped_range();
