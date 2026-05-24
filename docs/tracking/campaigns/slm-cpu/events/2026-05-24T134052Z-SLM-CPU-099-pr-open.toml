@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T13:40:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 617
+head_sha = "6ea3decc86546d29e2f57e037db3e8302d6091e7"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-contract"
+actor = "codex"
+summary = "Opened PR #617 for the typed fused Q projection consumer contract implementation slice."
+notes = [
+  "PR #617 defines a machine-checkable typed fused Q projection consumer contract after SLM-CPU-098 classified the exact `layers.0.attention.q_proj.weight` boundary.",
+  "The contract covers packed-Q8 matvec output slices, q_proj reshape/transpose, optional q_norm, RoPE, trace/workspace identity, and attention-head handoff.",
+  "The PR makes no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
