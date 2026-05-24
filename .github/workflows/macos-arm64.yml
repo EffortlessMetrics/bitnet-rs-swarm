@@ -40,7 +40,7 @@ env:
 jobs:
   route-macos:
     name: "Route macOS PR lane"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -238,7 +238,7 @@ jobs:
     # rustfmt is platform-independent and does not need scarce Apple Silicon
     # capacity. Keeping the check name stable preserves branch protection while
     # preventing the final macOS gate from failing on an unstarted format job.
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -261,7 +261,7 @@ jobs:
     name: macOS arm64 Success
     # This job only summarizes check outcomes; it should not consume or wait for
     # an Apple Silicon runner after the platform-specific jobs have completed.
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 5
     needs: [route-macos, build-cpu, build-metal, clippy, fmt]
     if: always()

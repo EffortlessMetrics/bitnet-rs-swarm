@@ -231,7 +231,7 @@ jobs:
 
   abi-stability:
     name: ABI Stability Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     # ABI surface only changes when bitnet-ffi / public C headers move.
     # Gate to main, manual dispatch, or PRs that opt in via the `ffi` or
@@ -257,7 +257,7 @@ jobs:
 
   ffi-smoke-test:
     name: FFI Smoke Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     continue-on-error: true
     timeout-minutes: 10
     # Builds libbitnet_ffi.so and a C harness; only useful when FFI surface
@@ -294,7 +294,7 @@ jobs:
 
   validation-pr:
     name: Model Validation (PR Lane)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     # Currently a no-op when no test model is committed; only run when a real
     # model fixture exists (signaled via the `model-validation` or `full-ci` label),
@@ -351,7 +351,7 @@ jobs:
 
   tokenizer-fixtures:
     name: Tokenizer Compatibility Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     continue-on-error: true  # Informational while stabilizing baselines
     timeout-minutes: 10
     # Installs transformers + torch + scipy and replays tokenizer fixtures.
@@ -420,7 +420,7 @@ jobs:
 
   gguf-compat:
     name: GGUF Compatibility Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     # Downloads a multi-GB GGUF on cache miss; not worth running on every PR.
     # Run on main, manual dispatch, or when explicitly requested via labels.
@@ -459,7 +459,7 @@ jobs:
 
   cross-val-determinism:
     name: Cross-Validation Determinism
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     if: contains(github.event.pull_request.labels.*.name, 'crossval')
     steps:
@@ -496,7 +496,7 @@ jobs:
 
   audit-and-deny:
     name: Security and License Audit
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 15
     continue-on-error: true  # Non-blocking for PRs
     # Audit/license output is informational and duplicated by the dedicated
