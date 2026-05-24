@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T17:50:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-101"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 638
+branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
+head_sha = "7efbe8007790b35bb3ffe59a69167ace2e2d1511"
+actor = "codex"
+summary = "Opened PR #638 with the SLM-CPU-101 typed attention-head buffer/view gate."
+notes = [
+  "The PR refreshes the Kaby performance dashboard through SLM-CPU-100 and queues SLM-CPU-101 as the next typed attention-head buffer/view gate.",
+  "The PR is docs/tracker scope only and does not enable runtime fused Q execution, promote packed_q8_sidecar, or claim allocation reduction, speedup, sustained throughput, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 work.",
+]

@@ -6428,3 +6428,59 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-101"
+status = "pr_open"
+pr = 638
+head_sha = "7efbe8007790b35bb3ffe59a69167ace2e2d1511"
+branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-100"]
+acceptance = "Define or precisely block the typed attention-head buffer/view gate required by SLM-CPU-100 before any exact `layers.0.attention.q_proj.weight` packed-Q8 fused consumer can execute. A valid slice may add a behavior-preserving typed attention-head view or buffer contract that carries the Q projection through reshape, transpose, optional q_norm, RoPE, trace/workspace identity, and attention score handoff without constructing an intermediate returned Candle Tensor; otherwise it must emit a machine-checkable blocker naming the exact API, lifetime, tensor-layout, q_norm/RoPE, trace identity, score-handoff, or receipt-safety gap. This item must keep the default Qwen3 Q8_0 behavior oracle intact and must not enable runtime fused Q execution, promote packed_q8_sidecar, claim allocation reduction, claim speedup, claim sustained 8250U throughput, broaden Q4/Q5 runtime support, or touch server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 paths."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "runtime fused Q projection execution without before/after Qwen3 Q8_0 receipts",
+  "packed_q8_sidecar default-runtime promotion",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-100 recorded that the exact typed fused Q projection consumer remains blocked by downstream attention-head Tensor semantics.",
+  "SLM-CPU-101 may define the typed attention-head buffer/view contract or record the concrete blocker that still prevents safe fused consumer execution.",
+  "Any runtime improvement remains gated by behavior-preserving before/after Qwen3 Q8_0 receipts.",
+]
+must_not_claim = [
+  "A fused Q projection consumer executes in production.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
