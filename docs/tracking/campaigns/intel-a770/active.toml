@@ -2035,7 +2035,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-052"
-status = "ready"
+status = "pr_open"
+pr = 646
+head_sha = "4253b3e12e8878f8cfb9eb413e3abfa87049607b"
 branch = "codex/intel-a770/A770-052-host-replay-f32-codegen-ordering"
 stackable = false
 review_mode = "codex_premerge"
