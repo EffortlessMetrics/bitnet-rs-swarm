@@ -38,6 +38,7 @@ the `receipts explain` summary plus:
 ```text
 model_coverage_row
 current_tier
+product_cli_ready
 model id or artifact SHA
 requested backend
 selected_backend
@@ -47,7 +48,7 @@ fallback_used
 quality gate result
 speedup_claim
 server_ready
-server_scope
+server_ready_scope
 server_endpoint
 server_streaming
 server_smoke

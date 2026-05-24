@@ -43,10 +43,16 @@ The support-bundle field must:
 - be required;
 - render as JSON;
 - show `kind = bitnet_support_bundle`;
+- show `current_tier`;
+- show `product_cli_ready`;
 - show `selected_backend = nvidia-rtx-5070-ti-cuda`;
 - show `selected_route`;
 - show `fallback_used`;
+- show `server_ready`;
+- show `server_ready_scope`;
 - show `speedup_claim`;
+- show `full_residency_claim`;
+- show proof-family booleans;
 - show `claim_boundary`.
 
 ## Claim Boundary Checklist
@@ -56,7 +62,10 @@ The template must preserve these review boundaries:
 ```text
 selected backend is nvidia-rtx-5070-ti-cuda, not generic cuda
 fallback_used=false is required for strict selected-backend proof
+product_cli_ready=true only when model coverage earned normal ask/chat readiness
+server_ready_scope is exact-profile or broad only when explicitly earned
 speedup_claim=false unless exact-profile benchmark proof accepts speedup
+full_residency_claim=false unless every required residency phase is proven
 Qwen2.5 exact-profile server readiness is not broad dense GGUF server readiness
 dense CUDA proof is not BitNet I2_S/QK256 proof
 Qwen2.5 evidence is not Qwen3 evidence

@@ -1504,9 +1504,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-043"
-status = "pr_open"
+status = "merged"
 pr = 552
-head_sha = "871d04f74b48187015b79743ad29566cf0d3654f"
+head_sha = "66c5fd7ea905543e65490ccf2dccaa6e28655861"
+merge_sha = "1828d7904dc7643fe77b99a158cbd31e0d402565"
 branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
 stackable = false
 review_mode = "codex_premerge"
@@ -1551,6 +1552,56 @@ may_claim = [
   "The focused summary first mismatch now carries a diagnostic selected QKV projection CPU versus A770 dispatch replay receipt.",
   "The replay uses identical materialized projection input and raw QK256 metadata when the focused source context is available.",
   "The committed focused receipt classifies the selected QKV dispatch replay frontier without changing runtime dispatch policy.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-044"
+status = "ready"
+branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-043"]
+acceptance = "Use the committed A770-043 selected QKV projection dispatch replay context to inspect the selected QK256 CPU scalar versus A770 OpenCL GEMV numeric policy, classifying whether the replay output drift is raw input materialization, packed weight decode, scale application, accumulation/order, output casting/serialization, clean, or still missing context, without changing runtime math, kernels, dispatch policy, answer scoring, sampling, or promoting CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qkv_projection_dispatch_replay -- --nocapture",
+  "cargo check --locked -p bitnet-qk256-dispatch --no-default-features --features opencl",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-qk256-dispatch/src/lib.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_044_QK256_NUMERIC_POLICY.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+]
+may_claim = [
+  "The selected QK256 CPU-scalar versus A770 OpenCL numeric-policy frontier is classified for the committed A770-043 replay context.",
+  "The diagnostic identifies the next numeric-policy boundary needed to explain the selected q_proj CPU/A770 replay output drift.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
