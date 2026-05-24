@@ -1504,9 +1504,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-043"
-status = "pr_open"
+status = "merged"
 pr = 552
-head_sha = "871d04f74b48187015b79743ad29566cf0d3654f"
+head_sha = "66c5fd7ea905543e65490ccf2dccaa6e28655861"
+merge_sha = "1828d7904dc7643fe77b99a158cbd31e0d402565"
 branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
 stackable = false
 review_mode = "codex_premerge"
