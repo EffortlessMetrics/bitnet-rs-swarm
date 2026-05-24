@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T16:52:39Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-065"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-065-post-slmcpu100-typed-fused-q"
+actor = "codex"
+summary = "Started a no-inference Lunar Lake audit refresh after adjacent SLM-CPU-100 typed fused-Q consumer implementation #631 and closeout #633 merged."
+notes = [
+  "The refresh records #631 as adjacent SLM CPU typed fused-Q consumer implementation/test state only.",
+  "The refresh records #633 as adjacent SLM-CPU-100 tracker closeout state only.",
+  "The refresh preserves LNL258V-POWER-006 as blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+  "The refresh does not run Lunar Lake inference, load a model, change fallback behavior, promote a route, claim speedup or power advantage, create battery-mode evidence, prove native accelerator execution, promote Qwen3, or change BitNet QK256/I2_S behavior.",
+]
