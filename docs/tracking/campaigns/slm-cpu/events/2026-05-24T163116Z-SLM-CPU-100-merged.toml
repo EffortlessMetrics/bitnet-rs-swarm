@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T16:31:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-100"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 631
+branch = "codex/slm-cpu-100-typed-fused-q-consumer-implementation-gate"
+head_sha = "9949c9f162b06473b00d3cf76d9bf6dbc93eb6b3"
+merge_sha = "9ed97a0fc49d1d6910a9389df54974470a52911d"
+merged_at = "2026-05-24T16:31:16Z"
+actor = "codex"
+summary = "Closed SLM-CPU-100 after PR #631 merged the typed fused Q consumer implementation gate blocker."
+notes = [
+  "PR #631 records the concrete runtime blockers for the exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` typed fused Q projection consumer path.",
+  "The merged slice adds machine-checkable transformer tests plus the SLM-CPU-100 blocker artifact and dashboard refresh.",
+  "No runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim changed.",
+]
