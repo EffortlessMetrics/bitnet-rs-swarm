@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T00:39:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-092"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 535
+head_sha = "d81607c3b5f1cae20c03693c1c990cef379ad74c"
+branch = "codex/slm-cpu-092-logits-fused-selection-gate"
+actor = "codex"
+summary = "Opened PR #535 for the SLM-CPU-092 logits/output-head fused-selection gate."
+notes = [
+  "The PR is tracker/control-plane only and queues the next behavior-preserving logits/output-head fused-selection or exact-blocker implementation slice after SLM-CPU-091.",
+  "No runtime optimization, allocation reduction, speedup, sustained throughput, packed-Q8 default promotion, Q4/Q5 support, server inference, GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is claimed.",
+]
