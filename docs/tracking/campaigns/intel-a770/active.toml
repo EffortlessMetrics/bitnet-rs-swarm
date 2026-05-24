@@ -1623,9 +1623,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-045"
-status = "pr_open"
+status = "merged"
 pr = 574
-head_sha = "7ae299d8e277e0265256b938bc6c5352d18b22d3"
+head_sha = "dadc32289f1b0d7c7e832882dc3fe9b44debc4fc"
+merge_sha = "fc9d2334261845cfa451c003b58bcd2f84497096"
 branch = "codex/intel-a770/A770-045-qk256-output-casting-frontier"
 stackable = false
 review_mode = "codex_premerge"
