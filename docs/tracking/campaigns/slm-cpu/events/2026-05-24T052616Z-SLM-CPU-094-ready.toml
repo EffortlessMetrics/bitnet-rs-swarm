@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T05:26:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-094"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-094-packed-q8-output-scratch"
+actor = "codex"
+summary = "Queued SLM-CPU-094 as the next Kaby Qwen3 Q8_0 dense-CPU performance gate after SLM-CPU-093."
+notes = [
+  "SLM-CPU-093 blocked logits/output-head fused selection at the Candle owned Tensor materialization boundary.",
+  "SLM-CPU-094 targets the opt-in exact-tensor packed Q8_0 sidecar output-scratch boundary and preserves the Qwen3 Q8_0 appliance behavior oracle before any bounded allocation or timing claim.",
+  "This tracker slice does not touch runtime code, promote packed_q8_sidecar, claim speedup, claim sustained throughput, broaden Q4/Q5 support, touch server/GPU/NPU/OpenVINO/UHD 620/Qwen3.5 paths, or modify BitNet QK256 kernels.",
+]
