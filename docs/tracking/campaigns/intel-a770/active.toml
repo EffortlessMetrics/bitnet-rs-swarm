@@ -1915,7 +1915,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-050"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-050-host-device-div-mul-replay"
 stackable = false
 review_mode = "codex_premerge"
