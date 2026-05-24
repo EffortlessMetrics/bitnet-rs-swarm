@@ -25,10 +25,17 @@ body:
           "kind": "bitnet_support_bundle",
           "summary": {
             "model_coverage_row": "...",
+            "current_tier": "...",
+            "product_cli_ready": false,
             "selected_backend": "nvidia-rtx-5070-ti-cuda",
             "selected_route": "...",
             "fallback_used": false,
+            "server_ready": false,
+            "server_ready_scope": "none",
             "speedup_claim": false,
+            "full_residency_claim": false,
+            "bitnet_packed_i2s_qk256_proof": false,
+            "dense_regular_llm_cuda_proof": false,
             "claim_boundary": "..."
           }
         }
@@ -58,7 +65,10 @@ body:
       options:
         - label: "The selected backend is `nvidia-rtx-5070-ti-cuda`, not generic `cuda`."
         - label: "`fallback_used=false` in the relevant receipt."
+        - label: "`product_cli_ready=true` only when the model coverage row has earned normal ask/chat readiness."
+        - label: "`server_ready_scope` is exact-profile or broad only when the row explicitly earned that server scope."
         - label: "`speedup_claim=false` unless an exact-profile benchmark qualification receipt accepts speedup."
+        - label: "`full_residency_claim=false` unless every required residency phase is proven."
         - label: "Qwen2.5 exact-profile server readiness is not being treated as broad dense GGUF server readiness."
         - label: "Dense CUDA proof is not being treated as BitNet I2_S/QK256 proof."
         - label: "Qwen2.5 evidence is not being treated as Qwen3 evidence."
