@@ -363,6 +363,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_host_device_div_mul_replay_frontier =
+        build_generated_output_qk256_host_device_div_mul_replay_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -473,6 +481,7 @@ fn build_answer_parity_receipt(
         "generated_output_qk256_device_expression_frontier": generated_output_qk256_device_expression_frontier,
         "generated_output_qk256_device_intermediate_frontier": generated_output_qk256_device_intermediate_frontier,
         "generated_output_qk256_device_math_mode_frontier": generated_output_qk256_device_math_mode_frontier,
+        "generated_output_qk256_host_device_div_mul_replay_frontier": generated_output_qk256_host_device_div_mul_replay_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -5646,6 +5655,73 @@ fn build_generated_output_qk256_device_math_mode_frontier(
     })
 }
 
+fn build_generated_output_qk256_host_device_div_mul_replay_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_host_device_div_mul_replay_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_host_device_div_mul_replay_missing_context");
+        if classification != "generated_output_qk256_host_device_div_mul_replay_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_host_device_div_mul_replay_missing_context",
+        "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch",
+        "generated_output_qk256_host_device_div_mul_replay_unmatched",
+        "generated_output_qk256_host_device_div_mul_replay_device_optimized_div_then_mul",
+        "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul",
+        "generated_output_qk256_host_device_div_mul_replay_volatile_reassociation",
+        "generated_output_qk256_host_device_div_mul_replay_matches_host_policy",
+        "generated_output_qk256_host_device_div_mul_replay_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_host_device_div_mul_replay_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_host_device_div_mul_replay_",
+        "generated_output_qk256_host_device_div_mul_replay_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_host_device_div_mul_replay_context_available": rows.iter().any(|row| {
+            row["qk256_host_device_div_mul_replay_context_available"]
+                .as_bool()
+                .unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_host_device_div_mul_replay_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -6882,6 +6958,270 @@ fn qk256_device_math_mode_side_summary(intermediate_side: &Value) -> Value {
     })
 }
 
+fn generated_output_qk256_host_device_div_mul_replay_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let math_mode_row = generated_output_qk256_device_math_mode_row(id, left_case, right_case);
+    let math_mode_classification = math_mode_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_device_math_mode_missing_context");
+    if math_mode_classification == "generated_output_qk256_device_math_mode_not_applicable" {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_host_device_div_mul_replay_not_applicable",
+            "reason": "device_math_mode_not_applicable",
+            "qk256_device_math_mode_classification": math_mode_row["classification"],
+        });
+    }
+    if math_mode_classification == "generated_output_qk256_device_math_mode_clean" {
+        return generated_output_qk256_host_device_div_mul_replay_context_row(
+            id,
+            "generated_output_qk256_host_device_div_mul_replay_clean",
+            "device_math_mode_clean",
+            math_mode_row,
+            json!({"classification": "generated_output_qk256_host_device_div_mul_replay_clean"}),
+            json!({"classification": "generated_output_qk256_host_device_div_mul_replay_clean"}),
+        );
+    }
+
+    let intermediate_row =
+        generated_output_qk256_device_intermediate_row(id, left_case, right_case);
+    let left = qk256_host_device_div_mul_replay_side_summary(
+        &math_mode_row["left"],
+        &intermediate_row["left"],
+    );
+    let right = qk256_host_device_div_mul_replay_side_summary(
+        &math_mode_row["right"],
+        &intermediate_row["right"],
+    );
+    let left_classification = left["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_host_device_div_mul_replay_missing_context");
+    let right_classification = right["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_host_device_div_mul_replay_missing_context");
+    let classification = qk256_host_device_div_mul_replay_pair_classification(
+        left_classification,
+        right_classification,
+    );
+
+    generated_output_qk256_host_device_div_mul_replay_context_row(
+        id,
+        classification,
+        "host_device_div_mul_replay_compared",
+        math_mode_row,
+        left,
+        right,
+    )
+}
+
+fn generated_output_qk256_host_device_div_mul_replay_context_row(
+    id: &str,
+    classification: &str,
+    reason: &str,
+    math_mode_row: Value,
+    left: Value,
+    right: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "qk256_device_math_mode_classification": math_mode_row["classification"],
+        "qk256_device_intermediate_classification":
+            math_mode_row["qk256_device_intermediate_classification"],
+        "qk256_device_expression_classification":
+            math_mode_row["qk256_device_expression_classification"],
+        "qk256_host_device_div_mul_replay_context_available":
+            classification != "generated_output_qk256_host_device_div_mul_replay_missing_context",
+        "first_mismatch_index": math_mode_row["first_mismatch_index"],
+        "target_layer_idx": math_mode_row["target_layer_idx"],
+        "projection": math_mode_row["projection"],
+        "left": left,
+        "right": right,
+        "next_diagnostic": qk256_host_device_div_mul_replay_next_diagnostic(classification),
+    })
+}
+
+fn qk256_host_device_div_mul_replay_side_summary(
+    math_mode_side: &Value,
+    intermediate_side: &Value,
+) -> Value {
+    let math_mode_classification = math_mode_side["classification"].as_str().unwrap_or("");
+    if math_mode_classification == "generated_output_qk256_device_math_mode_clean" {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_clean",
+            "reason": "device_math_mode_clean",
+            "qk256_host_device_div_mul_replay_context_available": true,
+        });
+    }
+
+    let Some(a770_bits) = json_u32(&math_mode_side["a770_first_value_bits"]) else {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_missing_context",
+            "reason": "a770_first_value_bits_missing",
+            "qk256_host_device_div_mul_replay_context_available": false,
+        });
+    };
+    let Some(device_output_bits) = json_u32(&math_mode_side["device_output_bits"]) else {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_missing_context",
+            "reason": "device_output_bits_missing",
+            "qk256_host_device_div_mul_replay_context_available": false,
+            "a770_first_value_bits": a770_bits,
+        });
+    };
+    let Some(host_adjusted_dot) = intermediate_side["host_adjusted_dot"].as_i64() else {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_missing_context",
+            "reason": "host_adjusted_dot_missing",
+            "qk256_host_device_div_mul_replay_context_available": false,
+            "a770_first_value_bits": a770_bits,
+            "device_output_bits": device_output_bits,
+        });
+    };
+    let Some(host_activation_scale_bits) =
+        json_u32(&intermediate_side["host_activation_scale_bits"])
+    else {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_missing_context",
+            "reason": "host_activation_scale_bits_missing",
+            "qk256_host_device_div_mul_replay_context_available": false,
+            "a770_first_value_bits": a770_bits,
+            "device_output_bits": device_output_bits,
+            "host_adjusted_dot": host_adjusted_dot,
+        });
+    };
+    let Some(host_weight_scale_bits) = json_u32(&intermediate_side["host_weight_scale_bits"])
+    else {
+        return json!({
+            "classification": "generated_output_qk256_host_device_div_mul_replay_missing_context",
+            "reason": "host_weight_scale_bits_missing",
+            "qk256_host_device_div_mul_replay_context_available": false,
+            "a770_first_value_bits": a770_bits,
+            "device_output_bits": device_output_bits,
+            "host_adjusted_dot": host_adjusted_dot,
+            "host_activation_scale_bits": host_activation_scale_bits,
+        });
+    };
+
+    let host_adjusted_f32 = host_adjusted_dot as f32;
+    let host_activation_scale = f32::from_bits(host_activation_scale_bits);
+    let host_weight_scale = f32::from_bits(host_weight_scale_bits);
+    let host_div_then_mul = (host_adjusted_f32 / host_activation_scale) * host_weight_scale;
+    let host_mul_then_div = (host_adjusted_f32 * host_weight_scale) / host_activation_scale;
+    let host_reciprocal_then_mul = host_adjusted_f32 * (host_weight_scale / host_activation_scale);
+    let host_adjusted_f32_bits = host_adjusted_f32.to_bits();
+    let host_div_then_mul_bits = host_div_then_mul.to_bits();
+    let host_mul_then_div_bits = host_mul_then_div.to_bits();
+    let host_reciprocal_then_mul_bits = host_reciprocal_then_mul.to_bits();
+
+    let policy_bits = json_u32(&math_mode_side["policy_first_value_bits"]);
+    let device_div_then_mul_bits = json_u32(&math_mode_side["device_div_then_mul_bits"]);
+    let device_mul_then_div_bits = json_u32(&math_mode_side["device_mul_then_div_bits"]);
+    let device_reciprocal_then_mul_bits =
+        json_u32(&math_mode_side["device_reciprocal_then_mul_bits"]);
+    let device_volatile_div_then_mul_bits =
+        json_u32(&math_mode_side["device_volatile_div_then_mul_bits"]);
+
+    let matches_readback = device_output_bits == a770_bits;
+    let matches_host_policy = policy_bits == Some(a770_bits)
+        || math_mode_side["matches_host_policy"].as_bool().unwrap_or(false);
+    let matches_device_div_then_mul = device_div_then_mul_bits == Some(a770_bits)
+        || math_mode_side["matches_device_div_then_mul"].as_bool().unwrap_or(false);
+    let matches_device_mul_then_div = device_mul_then_div_bits == Some(a770_bits)
+        || math_mode_side["matches_device_mul_then_div"].as_bool().unwrap_or(false);
+    let matches_device_reciprocal_then_mul = device_reciprocal_then_mul_bits == Some(a770_bits)
+        || math_mode_side["matches_device_reciprocal_then_mul"].as_bool().unwrap_or(false);
+    let matches_device_volatile_div_then_mul = device_volatile_div_then_mul_bits == Some(a770_bits)
+        || math_mode_side["matches_device_volatile_div_then_mul"].as_bool().unwrap_or(false);
+    let host_div_then_mul_matches_readback = host_div_then_mul_bits == a770_bits;
+    let host_mul_then_div_matches_readback = host_mul_then_div_bits == a770_bits;
+    let host_reciprocal_then_mul_matches_readback = host_reciprocal_then_mul_bits == a770_bits;
+
+    let classification = if !matches_readback {
+        "generated_output_qk256_host_device_div_mul_replay_missing_context"
+    } else if matches_host_policy {
+        "generated_output_qk256_host_device_div_mul_replay_matches_host_policy"
+    } else if matches_device_div_then_mul && matches_device_volatile_div_then_mul {
+        if host_div_then_mul_matches_readback {
+            "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul"
+        } else {
+            "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch"
+        }
+    } else if matches_device_div_then_mul {
+        if host_div_then_mul_matches_readback {
+            "generated_output_qk256_host_device_div_mul_replay_device_optimized_div_then_mul"
+        } else {
+            "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch"
+        }
+    } else if matches_device_volatile_div_then_mul
+        || matches_device_mul_then_div
+        || matches_device_reciprocal_then_mul
+        || host_mul_then_div_matches_readback
+        || host_reciprocal_then_mul_matches_readback
+    {
+        "generated_output_qk256_host_device_div_mul_replay_volatile_reassociation"
+    } else if host_div_then_mul_matches_readback {
+        "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul"
+    } else {
+        "generated_output_qk256_host_device_div_mul_replay_unmatched"
+    };
+    let reason = if matches_readback {
+        "host_device_div_mul_bits_compared"
+    } else {
+        "device_output_no_longer_matches_readback"
+    };
+
+    json!({
+        "classification": classification,
+        "reason": reason,
+        "qk256_host_device_div_mul_replay_context_available":
+            classification != "generated_output_qk256_host_device_div_mul_replay_missing_context",
+        "first_mismatch_index": math_mode_side["first_mismatch_index"],
+        "output_index": math_mode_side["output_index"],
+        "a770_first_value": math_mode_side["a770_first_value"],
+        "a770_first_value_bits": a770_bits,
+        "policy_first_value": math_mode_side["policy_first_value"],
+        "policy_first_value_bits": math_mode_side["policy_first_value_bits"],
+        "device_output": math_mode_side["device_output"],
+        "device_output_bits": device_output_bits,
+        "host_adjusted_dot": host_adjusted_dot,
+        "host_adjusted_f32": host_adjusted_f32,
+        "host_adjusted_f32_bits": host_adjusted_f32_bits,
+        "host_activation_scale": host_activation_scale,
+        "host_activation_scale_bits": host_activation_scale_bits,
+        "host_weight_scale": host_weight_scale,
+        "host_weight_scale_bits": host_weight_scale_bits,
+        "host_div_then_mul": host_div_then_mul,
+        "host_div_then_mul_bits": host_div_then_mul_bits,
+        "host_mul_then_div": host_mul_then_div,
+        "host_mul_then_div_bits": host_mul_then_div_bits,
+        "host_reciprocal_then_mul": host_reciprocal_then_mul,
+        "host_reciprocal_then_mul_bits": host_reciprocal_then_mul_bits,
+        "device_div_then_mul": math_mode_side["device_div_then_mul"],
+        "device_div_then_mul_bits": math_mode_side["device_div_then_mul_bits"],
+        "device_mul_then_div": math_mode_side["device_mul_then_div"],
+        "device_mul_then_div_bits": math_mode_side["device_mul_then_div_bits"],
+        "device_reciprocal_then_mul": math_mode_side["device_reciprocal_then_mul"],
+        "device_reciprocal_then_mul_bits": math_mode_side["device_reciprocal_then_mul_bits"],
+        "device_volatile_div_then_mul": math_mode_side["device_volatile_div_then_mul"],
+        "device_volatile_div_then_mul_bits": math_mode_side["device_volatile_div_then_mul_bits"],
+        "matches_host_policy": matches_host_policy,
+        "matches_device_div_then_mul": matches_device_div_then_mul,
+        "matches_device_mul_then_div": matches_device_mul_then_div,
+        "matches_device_reciprocal_then_mul": matches_device_reciprocal_then_mul,
+        "matches_device_volatile_div_then_mul": matches_device_volatile_div_then_mul,
+        "host_div_then_mul_matches_readback": host_div_then_mul_matches_readback,
+        "host_mul_then_div_matches_readback": host_mul_then_div_matches_readback,
+        "host_reciprocal_then_mul_matches_readback": host_reciprocal_then_mul_matches_readback,
+        "runtime_device": math_mode_side["runtime_device"],
+        "driver_version": math_mode_side["driver_version"],
+    })
+}
+
 fn qk256_device_expression_match(
     sample: &Value,
     target_bits: u32,
@@ -6901,6 +7241,10 @@ fn qk256_device_expression_match(
 
 fn json_f32_bits(value: &Value) -> Option<u32> {
     Some((value.as_f64()? as f32).to_bits())
+}
+
+fn json_u32(value: &Value) -> Option<u32> {
+    u32::try_from(value.as_u64()?).ok()
 }
 
 fn qk256_device_expression_pair_classification(
@@ -6967,6 +7311,28 @@ fn qk256_device_math_mode_pair_classification(
             *classification == left_classification || *classification == right_classification
         })
         .unwrap_or("generated_output_qk256_device_math_mode_missing_context")
+}
+
+fn qk256_host_device_div_mul_replay_pair_classification(
+    left_classification: &str,
+    right_classification: &str,
+) -> &'static str {
+    let priority = [
+        "generated_output_qk256_host_device_div_mul_replay_missing_context",
+        "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch",
+        "generated_output_qk256_host_device_div_mul_replay_unmatched",
+        "generated_output_qk256_host_device_div_mul_replay_device_optimized_div_then_mul",
+        "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul",
+        "generated_output_qk256_host_device_div_mul_replay_volatile_reassociation",
+        "generated_output_qk256_host_device_div_mul_replay_matches_host_policy",
+        "generated_output_qk256_host_device_div_mul_replay_clean",
+    ];
+    priority
+        .into_iter()
+        .find(|classification| {
+            *classification == left_classification || *classification == right_classification
+        })
+        .unwrap_or("generated_output_qk256_host_device_div_mul_replay_missing_context")
 }
 
 fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
@@ -7759,6 +8125,40 @@ fn qk256_device_math_mode_next_diagnostic(classification: &str) -> &'static str 
         "generated_output_qk256_device_math_mode_frontier_missing_context"
         | "generated_output_qk256_device_math_mode_missing_context" => {
             "rerun focused receipts with QK256 device math-mode variant trace enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_host_device_div_mul_replay_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_host_device_div_mul_replay_frontier_host_replay_mismatch"
+        | "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch" => {
+            "capture host compiler and OpenCL build-option div/mul replay for the selected QK256 row before any runtime policy change"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_device_default_div_then_mul"
+        | "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul" => {
+            "compare production OpenCL kernel output bits against the debug div-then-mul replay for the selected QK256 row"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_device_optimized_div_then_mul"
+        | "generated_output_qk256_host_device_div_mul_replay_device_optimized_div_then_mul" => {
+            "inspect OpenCL optimization flags with a bounded selected-row build-option replay"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_volatile_reassociation"
+        | "generated_output_qk256_host_device_div_mul_replay_volatile_reassociation" => {
+            "separate volatile expression guarding from reassociation before considering a runtime expression policy"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_matches_host_policy"
+        | "generated_output_qk256_host_device_div_mul_replay_matches_host_policy" => {
+            "return to the next downstream generated-output frontier because selected host/device div-mul replay is clean"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_unmatched"
+        | "generated_output_qk256_host_device_div_mul_replay_unmatched" => {
+            "add one more compact selected-row expression variant only if existing div/mul context cannot classify the bit"
+        }
+        "generated_output_qk256_host_device_div_mul_replay_frontier_missing_context"
+        | "generated_output_qk256_host_device_div_mul_replay_missing_context" => {
+            "rerun focused receipts with QK256 device math-mode and host replay inputs enabled"
         }
         _ => "none",
     }
@@ -8832,6 +9232,18 @@ mod tests {
                 "f64_div_then_mul_cast_bits": f64_div_then_mul_cast.to_bits(),
             }],
         })
+    }
+
+    fn qk256_device_expression_trace_with_host_scalars(
+        mut trace: Value,
+        int_dot: i64,
+        activation_sum: i64,
+        adjusted_dot: i64,
+    ) -> Value {
+        trace["samples"][0]["int_dot"] = json!(int_dot);
+        trace["samples"][0]["activation_sum"] = json!(activation_sum);
+        trace["samples"][0]["adjusted_dot"] = json!(adjusted_dot);
+        trace
     }
 
     fn with_qk256_device_expression_trace(
@@ -11627,6 +12039,118 @@ mod tests {
             "generated_output_qk256_device_math_mode_frontier_optimized_div_then_mul"
         );
         assert_eq!(frontier["rows"][0]["left"]["matches_device_volatile_div_then_mul"], false);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_host_device_div_mul_replay_default_div_then_mul() {
+        let expression_trace = qk256_device_expression_trace_with_host_scalars(
+            qk256_device_expression_trace_fixture(1, -0.25, -0.5, -0.75, -1.0),
+            0,
+            5,
+            -5,
+        );
+        let intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 0, 5, -5);
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_host_device_div_mul_replay_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_host_device_div_mul_replay_frontier_device_default_div_then_mul"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_host_device_div_mul_replay_device_default_div_then_mul"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["host_div_then_mul_matches_readback"], true);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_host_device_div_mul_replay_host_mismatch() {
+        let expression_trace = qk256_device_expression_trace_fixture(1, -0.25, -0.5, -0.75, -1.0);
+        let intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 101, 5, 96);
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_host_device_div_mul_replay_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_host_device_div_mul_replay_frontier_host_replay_mismatch"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_host_device_div_mul_replay_host_replay_mismatch"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["host_div_then_mul_matches_readback"], false);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_host_device_div_mul_replay_missing_context() {
+        let mut expression_trace = qk256_device_expression_trace_with_host_scalars(
+            qk256_device_expression_trace_fixture(1, -0.25, -0.5, -0.75, -1.0),
+            0,
+            5,
+            -5,
+        );
+        expression_trace["samples"][0]["activation_scale_bits"] = Value::Null;
+        let intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 0, 5, -5);
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_host_device_div_mul_replay_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_host_device_div_mul_replay_frontier_missing_context"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["reason"], "host_activation_scale_bits_missing");
     }
 
     #[test]
