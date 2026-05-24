@@ -934,7 +934,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-055"
-status = "ready"
+status = "pr_open"
+pr = 664
+head_sha = "23fea3e4100956210b45e4ece32ae64d544af2d5"
 branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen-contract"
 stackable = false
 review_mode = "codex_premerge"
