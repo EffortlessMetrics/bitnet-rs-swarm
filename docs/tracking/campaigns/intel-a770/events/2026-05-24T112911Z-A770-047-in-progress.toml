@@ -1,0 +1,35 @@
+timestamp = "2026-05-24T11:29:11Z"
+campaign = "intel-a770"
+item = "A770-047"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-047-device-expression-frontier"
+actor = "codex-a770"
+base_main_sha = "1c6768e818b601d5c3eb7ad77a61ef6df4b46219"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-047 to inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices after A770-046 routed the split to device-side evaluation."
+notes = [
+  "A770-047 remains diagnostic-only and does not change runtime math, kernels, dispatch policy, answer scoring, or sampling.",
+  "The live focused receipt will classify whether the selected A770 sample matches div-then-mul, multiply-then-divide, reciprocal multiply, f64-cast replay, an unmatched device value, clean replay, or missing context.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-047 may classify compact selected QK256 OpenCL device-expression evidence for the committed focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

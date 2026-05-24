@@ -13576,6 +13576,10 @@ fn compact_qkv_projection_dispatch_replay(
         "cpu_output": cpu_output,
         "opencl_policy_output": opencl_policy_output,
         "a770_output": a770_output,
+        "device_expression_trace": replay
+            .device_expression_trace
+            .as_ref()
+            .map(compact_qk256_device_expression_trace),
         "cpu_a770_output_sha256_match": cpu_a770_sha256_match,
         "cpu_opencl_policy_output_sha256_match": cpu_opencl_policy_sha256_match,
         "opencl_policy_a770_output_sha256_match": opencl_policy_a770_sha256_match,
@@ -13618,6 +13622,46 @@ fn compact_qkv_projection_dispatch_replay(
             "execution_path": replay.a770.execution_path,
         },
         "source_context_available": cpu_available && opencl_policy_available && a770_available,
+    })
+}
+
+fn compact_qk256_device_expression_trace(
+    trace: &bitnet_models::ModelQk256DeviceExpressionTraceContext,
+) -> serde_json::Value {
+    let samples = trace
+        .samples
+        .iter()
+        .map(|sample| {
+            serde_json::json!({
+                "output_index": sample.output_index,
+                "int_dot": sample.int_dot,
+                "activation_sum": sample.activation_sum,
+                "adjusted_dot": sample.adjusted_dot,
+                "activation_scale": sample.activation_scale,
+                "activation_scale_bits": sample.activation_scale_bits,
+                "weight_scale": sample.weight_scale,
+                "weight_scale_bits": sample.weight_scale_bits,
+                "div_then_mul": sample.div_then_mul,
+                "div_then_mul_bits": sample.div_then_mul.to_bits(),
+                "mul_then_div": sample.mul_then_div,
+                "mul_then_div_bits": sample.mul_then_div.to_bits(),
+                "reciprocal_then_mul": sample.reciprocal_then_mul,
+                "reciprocal_then_mul_bits": sample.reciprocal_then_mul.to_bits(),
+                "f64_div_then_mul_cast": sample.f64_div_then_mul_cast,
+                "f64_div_then_mul_cast_bits": sample.f64_div_then_mul_cast.to_bits(),
+            })
+        })
+        .collect::<Vec<_>>();
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "qk256_device_expression_trace",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "input_row_index": trace.input_row_index,
+        "sample_limit": trace.sample_limit,
+        "sample_count": trace.sample_count,
+        "samples": samples,
     })
 }
 

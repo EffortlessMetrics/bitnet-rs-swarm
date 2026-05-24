@@ -1764,8 +1764,33 @@ pub struct TransformerQkvProjectionDispatchReplayTensors {
     pub cpu_output: Tensor,
     pub opencl_policy_output: Tensor,
     pub a770_output: Option<Tensor>,
+    pub device_expression_trace: Option<TransformerQk256DeviceExpressionTrace>,
     pub cpu: TransformerQkvProjectionDispatchReplayCpuStats,
     pub a770: TransformerQkvProjectionDispatchReplayA770Stats,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQk256DeviceExpressionTrace {
+    pub input_row_index: usize,
+    pub sample_limit: usize,
+    pub sample_count: usize,
+    pub samples: Vec<TransformerQk256DeviceExpressionSample>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransformerQk256DeviceExpressionSample {
+    pub output_index: usize,
+    pub int_dot: i32,
+    pub activation_sum: i32,
+    pub adjusted_dot: i32,
+    pub activation_scale: f32,
+    pub activation_scale_bits: u32,
+    pub weight_scale: f32,
+    pub weight_scale_bits: u32,
+    pub div_then_mul: f32,
+    pub mul_then_div: f32,
+    pub reciprocal_then_mul: f32,
+    pub f64_div_then_mul_cast: f32,
 }
 
 #[derive(Debug, Clone)]

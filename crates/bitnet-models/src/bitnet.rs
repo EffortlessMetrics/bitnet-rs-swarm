@@ -107,8 +107,33 @@ pub struct ModelQkvProjectionDispatchReplayContext {
     pub cpu_output: ConcreteTensor,
     pub opencl_policy_output: ConcreteTensor,
     pub a770_output: Option<ConcreteTensor>,
+    pub device_expression_trace: Option<ModelQk256DeviceExpressionTraceContext>,
     pub cpu: ModelQkvProjectionDispatchReplayCpuContext,
     pub a770: ModelQkvProjectionDispatchReplayA770Context,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQk256DeviceExpressionTraceContext {
+    pub input_row_index: usize,
+    pub sample_limit: usize,
+    pub sample_count: usize,
+    pub samples: Vec<ModelQk256DeviceExpressionSampleContext>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModelQk256DeviceExpressionSampleContext {
+    pub output_index: usize,
+    pub int_dot: i32,
+    pub activation_sum: i32,
+    pub adjusted_dot: i32,
+    pub activation_scale: f32,
+    pub activation_scale_bits: u32,
+    pub weight_scale: f32,
+    pub weight_scale_bits: u32,
+    pub div_then_mul: f32,
+    pub mul_then_div: f32,
+    pub reciprocal_then_mul: f32,
+    pub f64_div_then_mul_cast: f32,
 }
 
 #[derive(Debug, Clone)]
@@ -880,6 +905,31 @@ impl Model for BitNetModel {
                             .a770_output
                             .clone()
                             .map(|tensor| self.candle_to_concrete(tensor)),
+                        device_expression_trace: replay.device_expression_trace.as_ref().map(
+                            |trace| ModelQk256DeviceExpressionTraceContext {
+                                input_row_index: trace.input_row_index,
+                                sample_limit: trace.sample_limit,
+                                sample_count: trace.sample_count,
+                                samples: trace
+                                    .samples
+                                    .iter()
+                                    .map(|sample| ModelQk256DeviceExpressionSampleContext {
+                                        output_index: sample.output_index,
+                                        int_dot: sample.int_dot,
+                                        activation_sum: sample.activation_sum,
+                                        adjusted_dot: sample.adjusted_dot,
+                                        activation_scale: sample.activation_scale,
+                                        activation_scale_bits: sample.activation_scale_bits,
+                                        weight_scale: sample.weight_scale,
+                                        weight_scale_bits: sample.weight_scale_bits,
+                                        div_then_mul: sample.div_then_mul,
+                                        mul_then_div: sample.mul_then_div,
+                                        reciprocal_then_mul: sample.reciprocal_then_mul,
+                                        f64_div_then_mul_cast: sample.f64_div_then_mul_cast,
+                                    })
+                                    .collect(),
+                            },
+                        ),
                         cpu: ModelQkvProjectionDispatchReplayCpuContext {
                             scalar_invocations: replay.cpu.scalar_invocations,
                             execution_path: replay.cpu.execution_path.clone(),
