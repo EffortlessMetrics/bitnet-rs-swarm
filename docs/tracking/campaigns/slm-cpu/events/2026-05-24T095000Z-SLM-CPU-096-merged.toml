@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T09:50:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-096"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 589
+head_sha = "8e196da7347b89575643b732f818e9175136def4"
+merge_sha = "e3d350069d008cfbb23643b04d4c486c2bfaddca"
+branch = "codex/slm-cpu-096-runtime-output-tensor-storage-gate"
+actor = "codex"
+summary = "Merged PR #589, recording the runtime output Tensor storage blocker."
+notes = [
+  "The merged slice records that public Candle Tensor construction preserves returned Tensor semantics but transfers owned output storage into Candle, so reusable caller-owned output storage is still blocked.",
+  "The closeout preserves the no packed-Q8 default promotion, no allocation-improvement claim, no speedup claim, no sustained-throughput claim, no Q4/Q5 runtime support, no server or accelerator, no Qwen3.5, and no BitNet QK256 boundary.",
+]
