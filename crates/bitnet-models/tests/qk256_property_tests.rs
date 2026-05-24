@@ -218,7 +218,7 @@ proptest! {
         (rows, cols) in qk256_dimensions(),
         seed in any::<u64>(),
     ) {
-        use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
 
         // Generate random codes for each row
@@ -405,7 +405,7 @@ proptest! {
         (rows, cols) in qk256_dimensions(),
         seed in any::<u64>(),
     ) {
-        use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
 
         // Generate random matrix and input

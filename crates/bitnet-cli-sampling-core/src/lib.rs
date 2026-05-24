@@ -7,7 +7,7 @@
     clippy::option_if_let_else
 )]
 
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 /// Sampling strategy for text generation

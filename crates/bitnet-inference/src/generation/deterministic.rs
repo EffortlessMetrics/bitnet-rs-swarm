@@ -5,9 +5,9 @@
 
 use anyhow::{Context, Result};
 use bitnet_common::{BitNetTensor, Tensor};
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, SeedableRng, TryRng};
 use rand_chacha::ChaCha8Rng;
-use std::sync::Mutex;
+use std::{convert::Infallible, sync::Mutex};
 
 /// Global deterministic state
 static DETERMINISTIC_STATE: Mutex<Option<DeterministicState>> = Mutex::new(None);
@@ -270,22 +270,28 @@ impl DeterministicRng {
     pub fn reset(&mut self) {
         self.state = self.seed;
     }
-}
 
-impl RngCore for DeterministicRng {
-    fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
-    }
-
-    fn next_u64(&mut self) -> u64 {
+    fn next_word(&mut self) -> u64 {
         // Simple linear congruential generator for deterministic behavior
         self.state = self.state.wrapping_mul(1103515245).wrapping_add(12345);
         self.state
     }
+}
 
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+impl TryRng for DeterministicRng {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        Ok(self.next_word() as u32)
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.next_word())
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
         for chunk in dest.chunks_mut(8) {
-            let val = self.next_u64();
+            let val = self.next_word();
             let bytes = val.to_le_bytes();
             for (i, &byte) in bytes.iter().enumerate() {
                 if i < chunk.len() {
@@ -293,9 +299,8 @@ impl RngCore for DeterministicRng {
                 }
             }
         }
+        Ok(())
     }
-
-    // try_fill_bytes is not part of RngCore trait in this version
 }
 
 /// Validate deterministic behavior
