@@ -493,7 +493,7 @@ metrics = "0.24.2"
 metrics-prometheus = "0.11.1"
 opentelemetry = { version = "0.31.0", default-features = false, features = ["trace", "metrics"] }
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["grpc-tonic", "trace", "metrics"] }
-opentelemetry_sdk = { version = "0.31.0", features = ["trace", "metrics", "rt-tokio"] }
+opentelemetry_sdk = { version = "0.32.0", features = ["trace", "metrics", "rt-tokio"] }
 prometheus = "0.14.0"
 tonic = "0.14.2"
 tracing-appender = "0.2.3"
