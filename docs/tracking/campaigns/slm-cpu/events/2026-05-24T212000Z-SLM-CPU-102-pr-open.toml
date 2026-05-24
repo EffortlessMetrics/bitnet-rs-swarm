@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T21:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-102"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 655
+branch = "codex/slm-cpu-102-typed-attention-head-consumer-gate"
+actor = "codex"
+summary = "Opened PR #655 for the SLM-CPU-102 typed attention-head consumer gate."
+notes = [
+  "PR #655 is tracker-only and queues the next Kaby Lake Qwen3 Q8_0 performance-lane gate after SLM-CPU-101.",
+  "The queued item preserves the Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU behavior oracles before any allocation or timing improvement can be claimed.",
+  "No packed_q8_sidecar default-runtime promotion, speedup claim, sustained throughput claim, Q4/Q5 claim, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim is made.",
+]
