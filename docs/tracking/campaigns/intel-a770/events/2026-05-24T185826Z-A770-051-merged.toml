@@ -1,0 +1,41 @@
+timestamp = "2026-05-24T18:58:26Z"
+campaign = "intel-a770"
+item = "A770-051"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 643
+head_sha = "76713a9d6d659d13a71a6b07af8cd779d7690c0b"
+merge_sha = "5d756aeab04d7bb6bb329c57c7eb597e7797df82"
+merged_at = "2026-05-24T18:58:26Z"
+branch = "codex/intel-a770/A770-051-host-div-mul-expression-order"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Closed A770-051 after PR #643 merged the host div-mul expression-order diagnostic."
+notes = [
+  "The merged diagnostic classifies the selected host div-mul expression-order frontier as generated_output_qk256_host_div_mul_expression_order_frontier_host_expression_order_mismatch.",
+  "The receipt records host variants collapsing to policy bits while selected A770 device div-then-mul lands one f32 bit away.",
+  "A770-052 is queued to inspect host replay f32 codegen and operation ordering before any production QK256 policy change.",
+  "This remains diagnostic-only and does not promote CPU/A770 parity, reference parity, strict answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-051 classified compact host replay f32 expression-order evidence for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
