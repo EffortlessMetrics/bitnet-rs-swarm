@@ -1623,7 +1623,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-045"
-status = "in_progress"
+status = "pr_open"
+pr = 574
+head_sha = "7ae299d8e277e0265256b938bc6c5352d18b22d3"
 branch = "codex/intel-a770/A770-045-qk256-output-casting-frontier"
 stackable = false
 review_mode = "codex_premerge"
