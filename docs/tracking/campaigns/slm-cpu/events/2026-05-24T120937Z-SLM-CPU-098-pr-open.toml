@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T12:09:37Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-098"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 606
+head_sha = "744dda197336a8ef1f45d351a0440c50f3ea49a5"
+branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
+actor = "codex"
+summary = "Opened PR #606 for the SLM-CPU-098 fused output consumer boundary classification."
+notes = [
+  "PR #606 emits a machine-checkable blocker for the exact Qwen3 Q8_0 packed-Q8 sidecar tensor boundary after SLM-CPU-097.",
+  "The slice records that inner matvec helpers accept caller output slices, but downstream Candle Tensor consumers still require a typed fused Q projection consumer before safely avoiding returned Tensor materialization.",
+  "The PR makes no runtime default change, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]

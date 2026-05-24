@@ -18,6 +18,7 @@ use bitnet_transformer::{
     DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, KVCache, LayerOutputStorageApiBoundary,
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
+    dense_q8_sidecar_fused_consumer_boundary,
 };
 use candle_core::{DType, Device, Tensor};
 use candle_nn::{LayerNorm, Linear, VarBuilder};
@@ -578,6 +579,23 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
     assert!(!boundary.dense_runtime_replaced);
     assert!(boundary.preserves_eager_f32());
     Ok(())
+}
+
+#[test]
+fn dense_q8_sidecar_fused_consumer_boundary_names_downstream_tensor_blocker() {
+    let boundary = dense_q8_sidecar_fused_consumer_boundary();
+
+    assert_eq!(boundary.role, "attention.q_proj.fused_output_consumer");
+    assert_eq!(boundary.status, "blocked_by_downstream_candle_tensor_consumers");
+    assert_eq!(boundary.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(boundary.exact_tensor_role, "AttentionQ");
+    assert!(boundary.sidecar_inner_matvec_accepts_output_slice);
+    assert!(!boundary.can_avoid_returned_candle_tensor_for_current_consumer);
+    assert!(boundary.downstream_consumers_require_tensor_semantics);
+    assert!(boundary.appliance_oracle_required_before_claim);
+    assert!(boundary.exact_blocking_ops.iter().any(|op| op.contains("Tensor::from_vec")));
+    assert!(boundary.exact_blocking_ops.iter().any(|op| op.contains("reshape_qkv_heads")));
+    assert!(boundary.required_missing_api.contains("typed fused Q projection consumer"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
