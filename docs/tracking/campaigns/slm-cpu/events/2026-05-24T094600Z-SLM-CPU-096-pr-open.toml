@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T09:46:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-096"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 589
+head_sha = "47d6ca8bb92a12869c812f3525f9c898df8e5f3c"
+branch = "codex/slm-cpu-096-runtime-output-tensor-storage-gate"
+actor = "codex"
+summary = "Opened PR #589 for the runtime output Tensor storage blocker."
+notes = [
+  "PR #589 records that Tensor::from_vec and the reviewed Tensor::from_storage(Storage::Cpu(CpuStorage::F32(Vec<f32>))) path preserve returned Tensor semantics but transfer owned output storage into Candle.",
+  "The PR keeps packed_q8_sidecar opt-in and makes no allocation-improvement, speedup, sustained-throughput, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim.",
+]

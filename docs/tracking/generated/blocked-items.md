@@ -465,6 +465,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-056 | LNL258V-GOAL-AUDIT-055 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-057 | LNL258V-GOAL-AUDIT-056, LNL258V-ASK-008 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-058 | LNL258V-GOAL-AUDIT-057 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-059 | LNL258V-GOAL-AUDIT-058 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
@@ -821,7 +822,7 @@
 | slm-cpu | SLM-CPU-093 | SLM-CPU-092 | merged |
 | slm-cpu | SLM-CPU-094 | SLM-CPU-093 | merged |
 | slm-cpu | SLM-CPU-095 | SLM-CPU-094 | merged |
-| slm-cpu | SLM-CPU-096 | SLM-CPU-095 | ready |
+| slm-cpu | SLM-CPU-096 | SLM-CPU-095 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |

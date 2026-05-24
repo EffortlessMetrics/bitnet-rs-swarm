@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T09:35:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-096"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-096-runtime-output-tensor-storage-gate"
+actor = "codex"
+summary = "Start the runtime output Tensor storage gate with a machine-checkable Candle owned-storage blocker."
+notes = [
+  "SLM-CPU-095 proved behavior-preserving inner packed Q8_0 matvec helpers can fill caller-owned output slices, but the full runtime still has to return a Candle Tensor.",
+  "The reviewed public Candle construction paths, Tensor::from_vec and Tensor::from_storage(Storage::Cpu(CpuStorage::F32(Vec<f32>))), transfer owned storage into the returned Tensor.",
+  "The slice records the API/lifetime blocker without changing the default runtime, promoting packed_q8_sidecar, claiming allocation improvement, claiming speedup, claiming sustained throughput, broadening Q4/Q5 support, or touching server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 paths.",
+]
