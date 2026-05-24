@@ -2244,6 +2244,48 @@ pub struct DenseQ8SidecarTypedAttentionHeadViewGate {
     pub next_required_slice: &'static str,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+    pub stage: &'static str,
+    pub consumes: &'static str,
+    pub required_surface: &'static str,
+    pub current_status: &'static str,
+    pub candle_tensor_materialization_required_today: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+    pub blocker: &'static str,
+    pub category: &'static str,
+    pub exact_api_or_surface: &'static str,
+    pub required_before_runtime_execution: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadConsumerGate {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub source_gate_status: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub stages: &'static [DenseQ8SidecarTypedAttentionHeadConsumerStageContract],
+    pub blockers: &'static [DenseQ8SidecarTypedAttentionHeadConsumerBlocker],
+    pub receipt_gate: DenseQ8SidecarFusedQProjectionReceiptContract,
+    pub can_consume_projection_output_slice: bool,
+    pub can_apply_logical_head_view_without_candle_tensor: bool,
+    pub can_apply_q_norm_without_candle_tensor: bool,
+    pub can_apply_rope_without_candle_tensor: bool,
+    pub can_feed_attention_scores_without_candle_tensor: bool,
+    pub first_blocking_stage: &'static str,
+    pub accepted_single_materialization_point: Option<&'static str>,
+    pub candidate_materialization_points: &'static [&'static str],
+    pub runtime_execution_enabled: bool,
+    pub default_runtime_changed: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub next_required_slice: &'static str,
+}
+
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
     "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
     "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
@@ -2453,6 +2495,106 @@ pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_VIEW_BLOCKERS:
     },
 ];
 
+pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_STAGES:
+    &[DenseQ8SidecarTypedAttentionHeadConsumerStageContract] = &[
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "projection_slice_ingress",
+        consumes: "&mut [f32] rows from the exact packed-Q8 q_proj matvec",
+        required_surface: "typed projection-row slice with [batch, seq, n_heads * head_dim] metadata",
+        current_status: "representable_without_candle_tensor",
+        candle_tensor_materialization_required_today: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "logical_head_view_ingress",
+        consumes: "typed projection-row slice",
+        required_surface: "typed [batch, n_heads, seq, head_dim] Q-head logical view",
+        current_status: "representable_without_candle_tensor",
+        candle_tensor_materialization_required_today: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "q_norm_consumer",
+        consumes: "typed Q-head logical view",
+        required_surface: "behavior-equivalent typed q_norm or proven materialization boundary",
+        current_status: "blocked_by_layernorm_tensor_api",
+        candle_tensor_materialization_required_today: true,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "rope_consumer",
+        consumes: "q_norm output or typed Q-head logical view",
+        required_surface: "behavior-equivalent typed RoPE preserving split-layout table and position semantics",
+        current_status: "blocked_by_rotary_embedding_tensor_api",
+        candle_tensor_materialization_required_today: true,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "trace_identity_consumer",
+        consumes: "typed projection, head, q_norm, and q_rope identities",
+        required_surface: "typed trace fingerprints equivalent to TransformerAttentionOutputSourceTensors",
+        current_status: "blocked_by_tensor_receipt_identity_gap",
+        candle_tensor_materialization_required_today: true,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "attention_score_consumer",
+        consumes: "typed Q-head buffer after q_norm/RoPE",
+        required_surface: "typed score path or proven score-handoff materialization boundary",
+        current_status: "blocked_by_prepare_attention_scores_tensor_api",
+        candle_tensor_materialization_required_today: true,
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerStageContract {
+        stage: "receipt_safety_gate",
+        consumes: "runtime-adjacent fused Q execution candidate",
+        required_surface: "repeated Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts",
+        current_status: "blocked_until_behavior_oracles_pass",
+        candle_tensor_materialization_required_today: true,
+    },
+];
+
+pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_BLOCKERS:
+    &[DenseQ8SidecarTypedAttentionHeadConsumerBlocker] = &[
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "q_norm_typed_consumer_absent",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::apply_qk_norms calls candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+        required_before_runtime_execution: "Add a behavior-equivalent typed q_norm over the logical Q-head view, or prove a materialization boundary at q_norm input with strict before/after Qwen3 and Qwen2.5 CPU receipts.",
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "rope_typed_consumer_absent",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::apply_rotary_embeddings calls RotaryEmbedding::apply(&Tensor, position)",
+        required_before_runtime_execution: "Add a typed RoPE consumer preserving split-layout tables, position indexing, dtype behavior, and trace summaries before attention scores.",
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "trace_identity_typed_receipt_gap",
+        category: "receipt-safety",
+        exact_api_or_surface: "TransformerAttentionOutputSourceTensors stores q_projection, q_heads, q_norm, and q_rope as Candle Tensor values",
+        required_before_runtime_execution: "Define typed trace fingerprints for projection, head, q_norm, and q_rope surfaces without weakening checkpoint comparability or receipt provenance.",
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "attention_score_typed_path_absent",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::prepare_attention_scores consumes q as &Tensor and uses Tensor matmul, transpose, dtype, and GQA score operations",
+        required_before_runtime_execution: "Add a typed attention-score path or prove a single score-handoff materialization boundary after q_norm/RoPE with strict generated-ID and dense-hook preservation.",
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "accumulator_order_unproven",
+        category: "accumulator-order",
+        exact_api_or_surface: "Typed q_norm/RoPE/score execution could change floating-point operation order relative to Candle Tensor operations",
+        required_before_runtime_execution: "Capture before/after CPU behavior receipts and any focused numerical parity evidence before claiming an allocation or timing improvement.",
+    },
+    DenseQ8SidecarTypedAttentionHeadConsumerBlocker {
+        blocker: "receipt_safety_evidence",
+        category: "receipt-safety",
+        exact_api_or_surface: "Runtime-adjacent fused Q execution requires repeated Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU behavior-oracle receipts",
+        required_before_runtime_execution: "Prove identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false before runtime enablement.",
+    },
+];
+
+pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_CANDIDATE_MATERIALIZATION_POINTS:
+    &[&str] = &[
+    "q_norm_input_candle_tensor_boundary",
+    "after_q_norm_before_rope_candle_tensor_boundary",
+    "after_q_rope_before_attention_scores_candle_tensor_boundary",
+];
+
 pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumerBoundary {
     DenseQ8SidecarFusedConsumerBoundary {
         role: "attention.q_proj.fused_output_consumer",
@@ -2553,6 +2695,35 @@ pub fn dense_q8_sidecar_typed_attention_head_view_gate() -> DenseQ8SidecarTypedA
         allocation_reduction_claim: false,
         speedup_claim: false,
         next_required_slice: "typed q_norm/RoPE or explicit single-materialization score-handoff boundary plus repeated behavior-preserving Qwen3 Q8_0 receipts",
+    }
+}
+
+pub fn dense_q8_sidecar_typed_attention_head_consumer_gate()
+-> DenseQ8SidecarTypedAttentionHeadConsumerGate {
+    let source = dense_q8_sidecar_typed_attention_head_view_gate();
+    DenseQ8SidecarTypedAttentionHeadConsumerGate {
+        role: "attention.q_proj.typed_attention_head_consumer_gate",
+        status: "blocked_runtime_disabled",
+        source_gate_status: source.status,
+        exact_tensor_name: source.exact_tensor_name,
+        exact_tensor_role: source.exact_tensor_role,
+        stages: DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_STAGES,
+        blockers: DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_BLOCKERS,
+        receipt_gate: source.receipt_gate,
+        can_consume_projection_output_slice: true,
+        can_apply_logical_head_view_without_candle_tensor: true,
+        can_apply_q_norm_without_candle_tensor: false,
+        can_apply_rope_without_candle_tensor: false,
+        can_feed_attention_scores_without_candle_tensor: false,
+        first_blocking_stage: "q_norm_consumer",
+        accepted_single_materialization_point: None,
+        candidate_materialization_points:
+            DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_CANDIDATE_MATERIALIZATION_POINTS,
+        runtime_execution_enabled: false,
+        default_runtime_changed: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        next_required_slice: "typed q_norm/RoPE implementation or a proven single-materialization boundary with strict Qwen3/Qwen2.5 CPU receipts",
     }
 }
 

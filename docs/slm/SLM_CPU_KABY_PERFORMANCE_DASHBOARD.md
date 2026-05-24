@@ -28,6 +28,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Typed fused Q consumer contract | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-099-typed-fused-q-consumer-contract.json` | Defines the design-only API and receipt-safety contract for a future exact `attention.q_proj` fused consumer while keeping runtime execution, allocation claims, and speed claims disabled |
 | Typed fused Q consumer implementation gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-100-typed-fused-q-consumer-implementation-gate.json` | Records that the exact `attention.q_proj` fused consumer remains runtime-disabled until a typed attention-head buffer/view owns reshape, q_norm, RoPE, trace identity, and score handoff semantics |
 | Typed attention-head view gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-101-typed-attention-head-view-gate.json` | Defines the runtime-disabled typed Q-head view contract and records the remaining q_norm, RoPE, trace identity, score-handoff, and receipt-safety blockers |
+| Typed attention-head consumer gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-102-typed-attention-head-consumer-gate.json` | Classifies the current typed Q-head consumer boundary as blocked before q_norm/RoPE/trace/score handoff, records candidate materialization points, and keeps runtime execution, allocation claims, and timing claims disabled |
 
 All rows use:
 
@@ -46,14 +47,16 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-101 typed attention-head view gate.
+This refresh is current through the SLM-CPU-102 typed attention-head consumer
+gate.
 It does not run new inference or add a runtime
 optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
-the typed fused Q projection consumer and attention-head view blockers.
+the typed fused Q projection consumer, attention-head view, and attention-head
+consumer blockers.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -102,6 +105,18 @@ attention score handoff without constructing an intermediate returned Candle
 `q_norm_tensor_api`, `rope_tensor_api`, `trace_workspace_tensor_identity`,
 `attention_handoff_tensor_contract`, and `receipt_safety_evidence`. No
 allocation reduction, timing improvement, or default-runtime change is claimed.
+
+SLM-CPU-101 defined that typed attention-head view as a runtime-disabled
+contract. SLM-CPU-102 then classifies the consumer side of the same boundary:
+projection-slice ingress and the logical Q-head view are representable without a
+returned Candle `Tensor`, but q_norm, RoPE, trace/workspace identity, and
+attention score handoff still require Tensor-backed APIs or a separately proven
+single-materialization boundary. The current first blocking stage is
+`q_norm_consumer`; no materialization point is accepted as behavior-preserving
+without before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 CPU receipts. Runtime fused Q
+execution remains disabled, and no allocation, timing, sustained-throughput,
+Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim is
+made.
 
 ## Thread Envelope
 
