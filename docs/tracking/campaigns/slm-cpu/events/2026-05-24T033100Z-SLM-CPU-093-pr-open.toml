@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T03:31:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-093"
+event = "pr_open"
+pr = 564
+head_sha = "3c67f2e5f003b3cbf690153741273d6ca38e0f04"
+previous_status = "in_progress"
+new_status = "pr_open"
+branch = "codex/slm-cpu-093-logits-fused-selection-boundary"
+actor = "codex"
+summary = "Opened PR #564 for the SLM-CPU-093 logits/output-head fused-selection blocker slice."
+notes = [
+  "The PR records that Candle Tensor::argmax and sort_last_dim can run only after TransformerModel::logits materializes a full owned logits Tensor.",
+  "The current safe greedy path can avoid full host logits Vec extraction, but it cannot fuse output-head projection with argmax/top-k through the public Candle APIs.",
+  "The artifact preserves the Qwen3 Q8_0 appliance oracle and makes no runtime optimization, allocation reduction, speedup, sustained throughput, packed-Q8 promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

@@ -6945,6 +6945,7 @@ mod tests {
         logits
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn qkv_projection_source_fixture(
         layer_idx: u64,
         projection: &str,

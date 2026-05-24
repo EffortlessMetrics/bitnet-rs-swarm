@@ -1948,11 +1948,15 @@ pub struct LogitsOutputStorageApiBoundary {
     pub reason: &'static str,
     pub next_api_hook: &'static str,
     pub exact_blocking_ops: &'static [&'static str],
+    pub fused_selection_blocking_ops: &'static [&'static str],
     pub public_api_return_type: &'static str,
     pub required_missing_api: &'static str,
     pub public_api_accepts_output_storage: bool,
     pub backend_internal_in_place_api_exposed: bool,
     pub can_fill_caller_output_storage: bool,
+    pub device_argmax_available_after_logits_tensor: bool,
+    pub topk_sort_available_after_logits_tensor: bool,
+    pub can_fuse_output_head_and_selection: bool,
 }
 
 pub const CANDLE_LOGITS_EXACT_BLOCKING_OPS: &[&str] = &[
@@ -1966,6 +1970,14 @@ pub const CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE: &str = "Result<Tensor>";
 
 pub const CANDLE_LOGITS_REQUIRED_MISSING_API: &str = "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor";
 
+pub const CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS: &[&str] = &[
+    "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+    "Tensor::matmul(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+    "Tensor::argmax(&self, dim) -> Result<Tensor> selects after full logits Tensor materialization",
+    "Tensor::sort_last_dim(&self, asc) -> Result<(Tensor, Tensor)> sorts after full logits Tensor materialization",
+    "Tensor::arg_sort_last_dim(&self, asc) -> Result<Tensor> sorts indices after full logits Tensor materialization",
+];
+
 impl LogitsOutputStorageApiBoundary {
     pub fn from_candle_logits(role: &'static str) -> Self {
         Self {
@@ -1974,11 +1986,15 @@ impl LogitsOutputStorageApiBoundary {
             reason: "TransformerModel::logits produces an owned Candle Tensor through lm_head.forward or tied-embedding Tensor::matmul plus reshape; the public APIs expose no caller-provided output-storage parameter, and host logits extraction still allocates when full logits are requested",
             next_api_hook: CANDLE_LOGITS_REQUIRED_MISSING_API,
             exact_blocking_ops: CANDLE_LOGITS_EXACT_BLOCKING_OPS,
+            fused_selection_blocking_ops: CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS,
             public_api_return_type: CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
             required_missing_api: CANDLE_LOGITS_REQUIRED_MISSING_API,
             public_api_accepts_output_storage: false,
             backend_internal_in_place_api_exposed: false,
             can_fill_caller_output_storage: false,
+            device_argmax_available_after_logits_tensor: true,
+            topk_sort_available_after_logits_tensor: true,
+            can_fuse_output_head_and_selection: false,
         }
     }
 }
@@ -4164,6 +4180,19 @@ mod tests {
                 .contains(&"Tensor::matmul(&self, &Tensor) -> Result<Tensor>")
         );
         assert!(boundary.required_missing_api.contains("caller-provided output storage"));
+        assert!(
+            boundary
+                .fused_selection_blocking_ops
+                .contains(&"Tensor::argmax(&self, dim) -> Result<Tensor> selects after full logits Tensor materialization")
+        );
+        assert!(
+            boundary
+                .fused_selection_blocking_ops
+                .contains(&"Tensor::sort_last_dim(&self, asc) -> Result<(Tensor, Tensor)> sorts after full logits Tensor materialization")
+        );
+        assert!(boundary.device_argmax_available_after_logits_tensor);
+        assert!(boundary.topk_sort_available_after_logits_tensor);
+        assert!(!boundary.can_fuse_output_head_and_selection);
         assert!(!boundary.can_fill_caller_output_storage);
     }
 
