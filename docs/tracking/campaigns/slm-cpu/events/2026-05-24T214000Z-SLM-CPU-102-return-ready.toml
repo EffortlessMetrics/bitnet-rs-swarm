@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T21:40:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-102"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 655
+head_sha = "c1dd59aaba7805d5d763bd623450b547c7d72221"
+merge_sha = "5920e87149159746270d9ebc72f3ca1e3a7249f8"
+merged_at = "2026-05-24T21:35:24Z"
+branch = "codex/slm-cpu-102-typed-attention-head-consumer-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-102 to ready after PR #655 merged the queue definition."
+notes = [
+  "PR #655 queued the typed attention-head consumer gate after SLM-CPU-101.",
+  "The next SLM-CPU-102 implementation slice remains ready and must implement that gate or record a concrete blocker before any packed-Q8 default-runtime promotion or timing/allocation claim.",
+  "The queue PR made no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]

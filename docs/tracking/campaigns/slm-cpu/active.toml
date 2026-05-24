@@ -6489,8 +6489,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-102"
-status = "pr_open"
-pr = 655
+status = "ready"
 branch = "codex/slm-cpu-102-typed-attention-head-consumer-gate"
 stackable = false
 review_mode = "codex_premerge"
