@@ -286,7 +286,7 @@ impl MultiHeadAttention {
             "v_proj",
             raw_tensors,
             dense_linear_hooks,
-            workspace.as_deref_mut(),
+            workspace,
         )?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("attention.q_proj", Some(self.layer_idx), &q)?;
