@@ -13765,6 +13765,14 @@ fn compact_qk256_device_intermediate_trace(
                 "adjusted_f32_bits": sample.adjusted_f32_bits,
                 "output": sample.output,
                 "output_bits": sample.output_bits,
+                "div_then_mul": sample.div_then_mul,
+                "div_then_mul_bits": sample.div_then_mul_bits,
+                "mul_then_div": sample.mul_then_div,
+                "mul_then_div_bits": sample.mul_then_div_bits,
+                "reciprocal_then_mul": sample.reciprocal_then_mul,
+                "reciprocal_then_mul_bits": sample.reciprocal_then_mul_bits,
+                "volatile_div_then_mul": sample.volatile_div_then_mul,
+                "volatile_div_then_mul_bits": sample.volatile_div_then_mul_bits,
             })
         })
         .collect::<Vec<_>>();

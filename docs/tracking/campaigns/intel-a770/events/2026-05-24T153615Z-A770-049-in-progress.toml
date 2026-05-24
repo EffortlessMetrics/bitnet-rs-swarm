@@ -1,0 +1,37 @@
+timestamp = "2026-05-24T15:36:15Z"
+campaign = "intel-a770"
+item = "A770-049"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-049-device-math-mode-frontier"
+actor = "codex-a770"
+base_main_sha = "ee1fe61385daefa5fd033bfc6ee9b105677b7e48"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-049 to classify selected QK256 OpenCL device expression and math-mode variants after A770-048 pinned the selected split to device output evaluation."
+notes = [
+  "A770-049 adds compact diagnostic-only device expression variant bits to the bounded QK256 debug trace.",
+  "The live focused receipt will classify whether the selected one-bit split follows default div-then-mul, optimized div-then-mul, volatile div-then-mul, reassociation, host-policy match, unmatched device context, clean replay, or missing context.",
+  "This remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-049 may classify compact selected QK256 OpenCL device math-mode evidence for the committed focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

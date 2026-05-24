@@ -121,7 +121,7 @@
     "schema_version": "1.0.0"
   },
   "artifact_kind": "strict_bitnet_a770_qk256_route_diagnostic",
-  "artifact_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
+  "artifact_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits-runs\\a770_summary_seed770024_keywords_014.json",
   "bitnet": {
     "activation_quantization": "A8",
     "execution_phase": "decode",
@@ -224,9 +224,9 @@
     }
   ],
   "latency": {
-    "cmd_to_first_ms": 23783,
-    "decode_first_ms": 23783,
-    "total_ms": 36100
+    "cmd_to_first_ms": 24026,
+    "decode_first_ms": 24026,
+    "total_ms": 36519
   },
   "loader": {
     "minimal_fallback_allowed": false,
@@ -16090,7 +16090,7 @@
                       "compiled_opencl": true,
                       "context_kind": "qk256_device_intermediate_trace",
                       "device_index": 0,
-                      "device_to_host_bytes": 224,
+                      "device_to_host_bytes": 352,
                       "diagnostic_only": true,
                       "driver_version": "32.0.101.8801",
                       "error": null,
@@ -16108,10 +16108,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": -1923,
                           "adjusted_f32_bits": 3304087552,
+                          "div_then_mul": -1.3538206815719604,
+                          "div_then_mul_bits": 3215804927,
                           "int_dot": -860,
+                          "mul_then_div": -1.353820562362671,
+                          "mul_then_div_bits": 3215804926,
                           "output": -1.3538206815719604,
                           "output_bits": 3215804927,
                           "output_index": 0,
+                          "reciprocal_then_mul": -1.3538206815719604,
+                          "reciprocal_then_mul_bits": 3215804927,
+                          "volatile_div_then_mul": -1.3538206815719604,
+                          "volatile_div_then_mul_bits": 3215804927,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16119,10 +16127,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": 9594,
                           "adjusted_f32_bits": 1175840768,
+                          "div_then_mul": 6.754318714141846,
+                          "div_then_mul_bits": 1087906657,
                           "int_dot": 10657,
+                          "mul_then_div": 6.754318714141846,
+                          "mul_then_div_bits": 1087906657,
                           "output": 6.754318714141846,
                           "output_bits": 1087906657,
                           "output_index": 1,
+                          "reciprocal_then_mul": 6.754319190979004,
+                          "reciprocal_then_mul_bits": 1087906658,
+                          "volatile_div_then_mul": 6.754318714141846,
+                          "volatile_div_then_mul_bits": 1087906657,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16130,10 +16146,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": 4785,
                           "adjusted_f32_bits": 1167427584,
+                          "div_then_mul": 3.368711233139038,
+                          "div_then_mul_bits": 1079482615,
                           "int_dot": 5848,
+                          "mul_then_div": 3.368711233139038,
+                          "mul_then_div_bits": 1079482615,
                           "output": 3.368711233139038,
                           "output_bits": 1079482615,
                           "output_index": 2,
+                          "reciprocal_then_mul": 3.368711233139038,
+                          "reciprocal_then_mul_bits": 1079482615,
+                          "volatile_div_then_mul": 3.368711233139038,
+                          "volatile_div_then_mul_bits": 1079482615,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16141,10 +16165,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": 1542,
                           "adjusted_f32_bits": 1153482752,
+                          "div_then_mul": 1.0855909585952759,
+                          "div_then_mul_bits": 1066071205,
                           "int_dot": 2605,
+                          "mul_then_div": 1.0855909585952759,
+                          "mul_then_div_bits": 1066071205,
                           "output": 1.0855909585952759,
                           "output_bits": 1066071205,
                           "output_index": 3,
+                          "reciprocal_then_mul": 1.0855909585952759,
+                          "reciprocal_then_mul_bits": 1066071205,
+                          "volatile_div_then_mul": 1.0855909585952759,
+                          "volatile_div_then_mul_bits": 1066071205,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16152,10 +16184,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": -2058,
                           "adjusted_f32_bits": 3305152512,
+                          "div_then_mul": -1.4488626718521118,
+                          "div_then_mul_bits": 3216602197,
                           "int_dot": -995,
+                          "mul_then_div": -1.4488625526428223,
+                          "mul_then_div_bits": 3216602196,
                           "output": -1.4488626718521118,
                           "output_bits": 3216602197,
                           "output_index": 4,
+                          "reciprocal_then_mul": -1.4488626718521118,
+                          "reciprocal_then_mul_bits": 3216602197,
+                          "volatile_div_then_mul": -1.4488626718521118,
+                          "volatile_div_then_mul_bits": 3216602197,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16163,10 +16203,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": 4103,
                           "adjusted_f32_bits": 1166030848,
+                          "div_then_mul": 2.888573169708252,
+                          "div_then_mul_bits": 1077468770,
                           "int_dot": 5166,
+                          "mul_then_div": 2.888573169708252,
+                          "mul_then_div_bits": 1077468770,
                           "output": 2.888573169708252,
                           "output_bits": 1077468770,
                           "output_index": 5,
+                          "reciprocal_then_mul": 2.888573169708252,
+                          "reciprocal_then_mul_bits": 1077468770,
+                          "volatile_div_then_mul": 2.888573169708252,
+                          "volatile_div_then_mul_bits": 1077468770,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16174,10 +16222,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": -1583,
                           "adjusted_f32_bits": 3301302272,
+                          "div_then_mul": -1.1144555807113647,
+                          "div_then_mul_bits": 3213796987,
                           "int_dot": -520,
+                          "mul_then_div": -1.1144555807113647,
+                          "mul_then_div_bits": 3213796987,
                           "output": -1.1144555807113647,
                           "output_bits": 3213796987,
                           "output_index": 6,
+                          "reciprocal_then_mul": -1.1144555807113647,
+                          "reciprocal_then_mul_bits": 3213796987,
+                          "volatile_div_then_mul": -1.1144555807113647,
+                          "volatile_div_then_mul_bits": 3213796987,
                           "weight_scale_bits": 1067189103
                         },
                         {
@@ -16185,10 +16241,18 @@
                           "activation_sum": 1063,
                           "adjusted_dot": 2437,
                           "adjusted_f32_bits": 1159221248,
+                          "div_then_mul": 1.7156842947006226,
+                          "div_then_mul_bits": 1071356811,
                           "int_dot": 3500,
+                          "mul_then_div": 1.7156842947006226,
+                          "mul_then_div_bits": 1071356811,
                           "output": 1.7156842947006226,
                           "output_bits": 1071356811,
                           "output_index": 7,
+                          "reciprocal_then_mul": 1.7156842947006226,
+                          "reciprocal_then_mul_bits": 1071356811,
+                          "volatile_div_then_mul": 1.7156842947006226,
+                          "volatile_div_then_mul_bits": 1071356811,
                           "weight_scale_bits": 1067189103
                         }
                       ],
@@ -23526,82 +23590,82 @@
     "decode": {
       "embed_ms": {
         "count": 15,
-        "max_ms": 0.01,
+        "max_ms": 0.011,
         "mean_ms": 0.006,
-        "min_ms": 0.005,
+        "min_ms": 0.004,
         "p50_ms": 0.006,
-        "p95_ms": 0.01,
-        "total_ms": 0.094
+        "p95_ms": 0.011,
+        "total_ms": 0.089
       },
-      "first_token_decode_ms": 874.961,
+      "first_token_decode_ms": 883.517,
       "forward_ms": {
         "count": 15,
-        "max_ms": 892.941,
-        "mean_ms": 818.871,
-        "min_ms": 777.617,
-        "p50_ms": 817.619,
-        "p95_ms": 892.941,
-        "total_ms": 12283.072
+        "max_ms": 914.977,
+        "mean_ms": 832.392,
+        "min_ms": 785.506,
+        "p50_ms": 825.113,
+        "p95_ms": 914.977,
+        "total_ms": 12485.879
       },
       "generated_tokens": 15,
       "logits_ms": {
         "count": 15,
-        "max_ms": 47.411,
-        "mean_ms": 44.329,
-        "min_ms": 40.463,
-        "p50_ms": 44.448,
-        "p95_ms": 47.411,
-        "total_ms": 664.93
+        "max_ms": 46.172,
+        "mean_ms": 43.041,
+        "min_ms": 40.319,
+        "p50_ms": 43.424,
+        "p95_ms": 46.172,
+        "total_ms": 645.62
       },
       "per_token_ms": {
         "count": 15,
-        "max_ms": 987.928,
-        "mean_ms": 879.276,
-        "min_ms": 830.826,
-        "p50_ms": 874.961,
-        "p95_ms": 987.928,
-        "total_ms": 13189.139
+        "max_ms": 970.282,
+        "mean_ms": 891.485,
+        "min_ms": 839.791,
+        "p50_ms": 883.517,
+        "p95_ms": 970.282,
+        "total_ms": 13372.275
       },
       "sample_ms": {
         "count": 15,
-        "max_ms": 0.269,
-        "mean_ms": 0.223,
-        "min_ms": 0.151,
-        "p50_ms": 0.244,
-        "p95_ms": 0.269,
-        "total_ms": 3.343
+        "max_ms": 0.26,
+        "mean_ms": 0.198,
+        "min_ms": 0.117,
+        "p50_ms": 0.212,
+        "p95_ms": 0.26,
+        "total_ms": 2.966
       },
       "steady_per_token_ms": {
         "count": 14,
-        "max_ms": 987.928,
-        "mean_ms": 879.584,
-        "min_ms": 830.826,
-        "p50_ms": 872.887,
-        "p95_ms": 987.928,
-        "total_ms": 12314.178
+        "max_ms": 970.282,
+        "mean_ms": 892.054,
+        "min_ms": 839.791,
+        "p50_ms": 882.043,
+        "p95_ms": 970.282,
+        "total_ms": 12488.758
       },
-      "steady_state_tok_s": 1.137,
+      "steady_state_tok_s": 1.121,
       "steady_state_tokens": 14,
       "token_decode_ms": {
         "count": 15,
-        "max_ms": 0.03,
+        "max_ms": 0.026,
         "mean_ms": 0.008,
         "min_ms": 0.004,
         "p50_ms": 0.007,
-        "p95_ms": 0.03,
-        "total_ms": 0.119
+        "p95_ms": 0.026,
+        "total_ms": 0.122
       },
       "warmup_tokens": 1
     },
     "id": "default",
     "kind": "steady_decode_prefill",
     "machine_context_recorded": true,
-    "model_load_ms": 3169.608,
+    "model_load_ms": 3194.284,
     "phase": "decode",
     "prompt_prefill": {
       "exercised": true,
       "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
-      "ms": 22907.86,
+      "ms": 23142.06,
       "per_token_ms": {
         "count": 0,
         "max_ms": null,
@@ -23613,9 +23677,9 @@
       },
       "tokens": 28
     },
-    "prompt_tokenize_ms": 0.9,
+    "prompt_tokenize_ms": 0.78,
     "requested": false,
-    "tokenizer_load_ms": 427.179
+    "tokenizer_load_ms": 490.418
   },
   "prompt": "Summarize in one short sentence and include the words fast and safe: Rust helps teams build reliable systems software.",
   "prompt_generation_identity": {
@@ -23760,7 +23824,7 @@
     ],
     "cpu_model": "unknown-windows-cpu",
     "decode_tokens": 15,
-    "decode_tps": 0.4155124653739612,
+    "decode_tps": 0.41074509159615546,
     "fallback_reason": null,
     "fallback_used": false,
     "loader_mode": "real_gguf",
@@ -23779,27 +23843,27 @@
   "text": "Rust enables fast and safe software development by preventing common programming errors.",
   "throughput": {
     "decoded_tokens": 15,
-    "tokens_per_second": 0.4155124653739612
+    "tokens_per_second": 0.41074509159615546
   },
-  "timestamp": "2026-05-24T14:09:05.881084800+00:00",
+  "timestamp": "2026-05-24T16:29:45.108716200+00:00",
   "timing": {
     "a770_opencl_device_to_host_bytes": 117565440,
     "a770_opencl_host_to_device_bytes": 22432212480,
     "a770_opencl_kernel_invocations": 9030,
     "cuda_kernel_time_ms": null,
-    "decode_steady_state_tok_s": 1.137,
-    "decode_total_ms": 13189.139,
+    "decode_steady_state_tok_s": 1.121,
+    "decode_total_ms": 13372.275,
     "device_to_host_bytes": null,
     "device_to_host_ms": null,
-    "first_token_decode_ms": 874.961,
-    "first_token_ms": 23783,
+    "first_token_decode_ms": 883.517,
+    "first_token_ms": 24026,
     "host_to_device_bytes": null,
     "host_to_device_ms": null,
-    "model_load_ms": 3169.608,
-    "prefill_ms": 22907.86,
-    "sampling_ms_per_token": 0.223,
-    "tokenize_ms": 0.9,
-    "tokenizer_load_ms": 427.179
+    "model_load_ms": 3194.284,
+    "prefill_ms": 23142.06,
+    "sampling_ms_per_token": 0.198,
+    "tokenize_ms": 0.78,
+    "tokenizer_load_ms": 490.418
   },
   "tokenizer": {
     "bos": 1,

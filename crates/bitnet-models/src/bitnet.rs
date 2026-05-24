@@ -169,6 +169,14 @@ pub struct ModelQk256DeviceIntermediateSampleContext {
     pub adjusted_f32_bits: u32,
     pub output_bits: u32,
     pub output: f32,
+    pub div_then_mul_bits: u32,
+    pub div_then_mul: f32,
+    pub mul_then_div_bits: u32,
+    pub mul_then_div: f32,
+    pub reciprocal_then_mul_bits: u32,
+    pub reciprocal_then_mul: f32,
+    pub volatile_div_then_mul_bits: u32,
+    pub volatile_div_then_mul: f32,
 }
 
 #[derive(Debug, Clone)]
@@ -996,6 +1004,15 @@ impl Model for BitNetModel {
                                         adjusted_f32_bits: sample.adjusted_f32_bits,
                                         output_bits: sample.output_bits,
                                         output: sample.output,
+                                        div_then_mul_bits: sample.div_then_mul_bits,
+                                        div_then_mul: sample.div_then_mul,
+                                        mul_then_div_bits: sample.mul_then_div_bits,
+                                        mul_then_div: sample.mul_then_div,
+                                        reciprocal_then_mul_bits: sample.reciprocal_then_mul_bits,
+                                        reciprocal_then_mul: sample.reciprocal_then_mul,
+                                        volatile_div_then_mul_bits: sample
+                                            .volatile_div_then_mul_bits,
+                                        volatile_div_then_mul: sample.volatile_div_then_mul,
                                     })
                                     .collect(),
                             },

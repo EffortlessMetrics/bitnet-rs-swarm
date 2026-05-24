@@ -85,17 +85,29 @@ __kernel void qk256_i2s_i8s_scaled_gemv_debug(
     const int adjusted_dot = int_dot - activation_sum;
     const float adjusted_f32 = (float)adjusted_dot;
     const float output = (adjusted_f32 / activation_scale) * weight_scale;
+    const float div_then_mul = (adjusted_f32 / activation_scale) * weight_scale;
+    const float mul_then_div = (adjusted_f32 * weight_scale) / activation_scale;
+    const float reciprocal_then_mul = adjusted_f32 * (weight_scale / activation_scale);
+    volatile float volatile_adjusted_f32 = adjusted_f32;
+    volatile float volatile_activation_scale = activation_scale;
+    volatile float volatile_weight_scale = weight_scale;
+    const float volatile_div_then_mul =
+        (volatile_adjusted_f32 / volatile_activation_scale) * volatile_weight_scale;
 
     const uint int_base = row * 3;
     int_values[int_base + 0] = int_dot;
     int_values[int_base + 1] = activation_sum;
     int_values[int_base + 2] = adjusted_dot;
 
-    const uint bit_base = row * 4;
+    const uint bit_base = row * 8;
     bit_values[bit_base + 0] = as_uint(activation_scale);
     bit_values[bit_base + 1] = as_uint(weight_scale);
     bit_values[bit_base + 2] = as_uint(adjusted_f32);
     bit_values[bit_base + 3] = as_uint(output);
+    bit_values[bit_base + 4] = as_uint(div_then_mul);
+    bit_values[bit_base + 5] = as_uint(mul_then_div);
+    bit_values[bit_base + 6] = as_uint(reciprocal_then_mul);
+    bit_values[bit_base + 7] = as_uint(volatile_div_then_mul);
 }
 "#;
 
@@ -192,6 +204,22 @@ pub struct A770OpenClQk256DebugSample {
     pub output_bits: u32,
     /// Debug kernel output expression value.
     pub output: f32,
+    /// Raw `f32` bits for device-side `(adjusted_f32 / activation_scale) * weight_scale`.
+    pub div_then_mul_bits: u32,
+    /// Device-side `(adjusted_f32 / activation_scale) * weight_scale`.
+    pub div_then_mul: f32,
+    /// Raw `f32` bits for device-side `(adjusted_f32 * weight_scale) / activation_scale`.
+    pub mul_then_div_bits: u32,
+    /// Device-side `(adjusted_f32 * weight_scale) / activation_scale`.
+    pub mul_then_div: f32,
+    /// Raw `f32` bits for device-side `adjusted_f32 * (weight_scale / activation_scale)`.
+    pub reciprocal_then_mul_bits: u32,
+    /// Device-side `adjusted_f32 * (weight_scale / activation_scale)`.
+    pub reciprocal_then_mul: f32,
+    /// Raw `f32` bits for volatile device-side div-then-mul replay.
+    pub volatile_div_then_mul_bits: u32,
+    /// Volatile device-side div-then-mul replay.
+    pub volatile_div_then_mul: f32,
 }
 
 /// Runtime result for the selected-device A770 QK256 debug kernel.
@@ -344,7 +372,7 @@ pub fn run_a770_qk256_i8s_scaled_gemv_debug(
         .map_err(gpu_err("create debug kernel"))?;
 
     let mut int_values = vec![0i32; sample_count * 3];
-    let mut bit_values = vec![0u32; sample_count * 4];
+    let mut bit_values = vec![0u32; sample_count * 8];
     let mut buf_q = unsafe {
         Buffer::<i8>::create(
             &context,
@@ -417,8 +445,12 @@ pub fn run_a770_qk256_i8s_scaled_gemv_debug(
     let samples = (0..sample_count)
         .map(|output_index| {
             let int_base = output_index * 3;
-            let bit_base = output_index * 4;
+            let bit_base = output_index * 8;
             let output_bits = bit_values[bit_base + 3];
+            let div_then_mul_bits = bit_values[bit_base + 4];
+            let mul_then_div_bits = bit_values[bit_base + 5];
+            let reciprocal_then_mul_bits = bit_values[bit_base + 6];
+            let volatile_div_then_mul_bits = bit_values[bit_base + 7];
             A770OpenClQk256DebugSample {
                 output_index,
                 int_dot: int_values[int_base],
@@ -429,6 +461,14 @@ pub fn run_a770_qk256_i8s_scaled_gemv_debug(
                 adjusted_f32_bits: bit_values[bit_base + 2],
                 output_bits,
                 output: f32::from_bits(output_bits),
+                div_then_mul_bits,
+                div_then_mul: f32::from_bits(div_then_mul_bits),
+                mul_then_div_bits,
+                mul_then_div: f32::from_bits(mul_then_div_bits),
+                reciprocal_then_mul_bits,
+                reciprocal_then_mul: f32::from_bits(reciprocal_then_mul_bits),
+                volatile_div_then_mul_bits,
+                volatile_div_then_mul: f32::from_bits(volatile_div_then_mul_bits),
             }
         })
         .collect();
