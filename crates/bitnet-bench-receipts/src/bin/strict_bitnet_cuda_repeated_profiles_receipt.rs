@@ -17,86 +17,114 @@ const MODEL_SHA256: &str = "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a3454837
 const TOKENIZER_AUTHORITY: &str = "external_tokenizer";
 const PRETOKENIZER_AUTHORITY: &str = "llama-bpe";
 const PROMPT_AUTHORITY: &str = "bitnetcpp-answer";
-const SELECTED_BACKEND: &str = "nvidia-rtx-5070-ti-cuda";
-const REFERENCE_BACKEND: &str = "amd-9950x3d-cpu-avx512";
-const RUNTIME_API: &str = "cuda";
-const SELECTED_ROUTE: &str = "bitnet_qk256_cuda";
-const KERNEL_ID: &str = "qk256_gemv_cuda";
+const CPU_BACKEND: &str = "amd-9950x3d-cpu-avx512";
+const CUDA_BACKEND: &str = "nvidia-rtx-5070-ti-cuda";
+const CPU_RUNTIME_API: &str = "cpu";
+const CUDA_RUNTIME_API: &str = "cuda";
+const CPU_ROUTE: &str = "bitnet_i2s_qk256_cpu_avx512";
+const CUDA_ROUTE: &str = "bitnet_qk256_cuda";
+const CPU_KERNEL_ID: &str = "i2_s-avx512-reference";
+const CUDA_KERNEL_ID: &str = "qk256_gemv_cuda";
 
-const DEFAULT_ONE_TOKEN_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-one-token.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-one-token.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-one-token.json",
-];
-const DEFAULT_SHORT_DECODE_8_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-short-decode-8.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-short-decode-8.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-short-decode-8.json",
-];
-const DEFAULT_SHORT_DECODE_32_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-short-decode-32.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-short-decode-32.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-short-decode-32.json",
-];
-const DEFAULT_PREFILL_128_DECODE_16_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-prefill-128-decode-16.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-prefill-128-decode-16.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-prefill-128-decode-16.json",
-];
-const DEFAULT_PREFILL_512_DECODE_32_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-prefill-512-decode-32.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-prefill-512-decode-32.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-prefill-512-decode-32.json",
-];
-const DEFAULT_WARM_SESSION_3_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-warm-session-3.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-warm-session-3.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-warm-session-3.json",
-];
-const DEFAULT_WARM_SESSION_10_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-warm-session-10.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-warm-session-10.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-warm-session-10.json",
-];
-const DEFAULT_DECODE_128_RUNS: [&str; 3] = [
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-01/official-bitnet-decode-128-from-warm-context.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-02/official-bitnet-decode-128-from-warm-context.json",
-    "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-03/official-bitnet-decode-128-from-warm-context.json",
+#[derive(Debug, Clone, Copy)]
+struct ProfileSpec {
+    profile: &'static str,
+    stem: &'static str,
+    cpu_flag: &'static str,
+    cuda_flag: &'static str,
+    expected_input_tokens: Option<u64>,
+    expected_generated_tokens: u64,
+}
+
+const PROFILE_SPECS: &[ProfileSpec] = &[
+    ProfileSpec {
+        profile: "one_token",
+        stem: "one-token",
+        cpu_flag: "--one-token-cpu-run",
+        cuda_flag: "--one-token-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 1,
+    },
+    ProfileSpec {
+        profile: "short_decode_8",
+        stem: "short-decode-8",
+        cpu_flag: "--short-decode-8-cpu-run",
+        cuda_flag: "--short-decode-8-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 8,
+    },
+    ProfileSpec {
+        profile: "short_decode_32",
+        stem: "short-decode-32",
+        cpu_flag: "--short-decode-32-cpu-run",
+        cuda_flag: "--short-decode-32-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 32,
+    },
+    ProfileSpec {
+        profile: "prefill_128_decode_16",
+        stem: "prefill-128-decode-16",
+        cpu_flag: "--prefill-128-decode-16-cpu-run",
+        cuda_flag: "--prefill-128-decode-16-cuda-run",
+        expected_input_tokens: Some(128),
+        expected_generated_tokens: 16,
+    },
+    ProfileSpec {
+        profile: "prefill_512_decode_32",
+        stem: "prefill-512-decode-32",
+        cpu_flag: "--prefill-512-decode-32-cpu-run",
+        cuda_flag: "--prefill-512-decode-32-cuda-run",
+        expected_input_tokens: Some(512),
+        expected_generated_tokens: 32,
+    },
+    ProfileSpec {
+        profile: "warm_session_3_turns",
+        stem: "warm-session-3",
+        cpu_flag: "--warm-session-3-cpu-run",
+        cuda_flag: "--warm-session-3-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 24,
+    },
+    ProfileSpec {
+        profile: "warm_session_10_turns",
+        stem: "warm-session-10",
+        cpu_flag: "--warm-session-10-cpu-run",
+        cuda_flag: "--warm-session-10-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 80,
+    },
+    ProfileSpec {
+        profile: "decode_128_from_warm_context",
+        stem: "decode-128-from-warm-context",
+        cpu_flag: "--decode-128-from-warm-context-cpu-run",
+        cuda_flag: "--decode-128-from-warm-context-cuda-run",
+        expected_input_tokens: None,
+        expected_generated_tokens: 128,
+    },
 ];
 
 #[derive(Debug)]
+struct ProfilePaths {
+    spec: ProfileSpec,
+    cpu_paths: Vec<PathBuf>,
+    cuda_paths: Vec<PathBuf>,
+    cpu_overridden: bool,
+    cuda_overridden: bool,
+}
+
+#[derive(Debug)]
 struct Args {
-    one_token_runs: Vec<PathBuf>,
-    short_decode_8_runs: Vec<PathBuf>,
-    short_decode_32_runs: Vec<PathBuf>,
-    prefill_128_decode_16_runs: Vec<PathBuf>,
-    prefill_512_decode_32_runs: Vec<PathBuf>,
-    warm_session_3_runs: Vec<PathBuf>,
-    warm_session_10_runs: Vec<PathBuf>,
-    decode_128_runs: Vec<PathBuf>,
+    profiles: Vec<ProfilePaths>,
     receipt_out: PathBuf,
     manifest_out: Option<PathBuf>,
     print_manifest: bool,
 }
 
-struct ProfileInputGroup<'a> {
-    profile: &'static str,
-    flag: &'static str,
-    expected_input_tokens: Option<u64>,
-    expected_generated_tokens: u64,
-    paths: &'a [PathBuf],
-}
-
 #[derive(Debug)]
 struct ProfileRuns {
-    one_token: Vec<(PathBuf, Value)>,
-    short_decode_8: Vec<(PathBuf, Value)>,
-    short_decode_32: Vec<(PathBuf, Value)>,
-    prefill_128_decode_16: Vec<(PathBuf, Value)>,
-    prefill_512_decode_32: Vec<(PathBuf, Value)>,
-    warm_session_3: Vec<(PathBuf, Value)>,
-    warm_session_10: Vec<(PathBuf, Value)>,
-    decode_128: Vec<(PathBuf, Value)>,
+    spec: ProfileSpec,
+    cpu: Vec<(PathBuf, Value)>,
+    cuda: Vec<(PathBuf, Value)>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -116,17 +144,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     assert_input_paths_exist(&args)?;
-    let runs = ProfileRuns {
-        one_token: read_runs(&args.one_token_runs)?,
-        short_decode_8: read_runs(&args.short_decode_8_runs)?,
-        short_decode_32: read_runs(&args.short_decode_32_runs)?,
-        prefill_128_decode_16: read_runs(&args.prefill_128_decode_16_runs)?,
-        prefill_512_decode_32: read_runs(&args.prefill_512_decode_32_runs)?,
-        warm_session_3: read_runs(&args.warm_session_3_runs)?,
-        warm_session_10: read_runs(&args.warm_session_10_runs)?,
-        decode_128: read_runs(&args.decode_128_runs)?,
-    };
-    assert_repeated_sources(&runs)?;
+    let runs = read_profile_runs(&args)?;
+    for profile in &runs {
+        assert_repeated_sources(profile)?;
+    }
 
     let receipt = build_receipt(&args, &runs)?;
     validate_strict_bitnet_cuda_repeated_profiles_receipt_json(&receipt)?;
@@ -139,70 +160,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn parse_args() -> Result<Args, Box<dyn Error>> {
-    let mut one_token_runs = default_paths(DEFAULT_ONE_TOKEN_RUNS);
-    let mut short_decode_8_runs = default_paths(DEFAULT_SHORT_DECODE_8_RUNS);
-    let mut short_decode_32_runs = default_paths(DEFAULT_SHORT_DECODE_32_RUNS);
-    let mut prefill_128_decode_16_runs = default_paths(DEFAULT_PREFILL_128_DECODE_16_RUNS);
-    let mut prefill_512_decode_32_runs = default_paths(DEFAULT_PREFILL_512_DECODE_32_RUNS);
-    let mut warm_session_3_runs = default_paths(DEFAULT_WARM_SESSION_3_RUNS);
-    let mut warm_session_10_runs = default_paths(DEFAULT_WARM_SESSION_10_RUNS);
-    let mut decode_128_runs = default_paths(DEFAULT_DECODE_128_RUNS);
+    let mut profiles = PROFILE_SPECS.iter().copied().map(default_profile_paths).collect::<Vec<_>>();
     let mut receipt_out = PathBuf::from(DEFAULT_RECEIPT_OUT);
     let mut manifest_out = None;
     let mut print_manifest = false;
     let mut iter = env::args().skip(1);
 
-    let mut one_token_overridden = false;
-    let mut short_decode_8_overridden = false;
-    let mut short_decode_32_overridden = false;
-    let mut prefill_128_decode_16_overridden = false;
-    let mut prefill_512_decode_32_overridden = false;
-    let mut warm_session_3_overridden = false;
-    let mut warm_session_10_overridden = false;
-    let mut decode_128_overridden = false;
-
     while let Some(arg) = iter.next() {
+        if push_profile_override(&mut profiles, &arg, &mut iter)? {
+            continue;
+        }
         match arg.as_str() {
-            "--one-token-run" => push_override(
-                &mut one_token_runs,
-                &mut one_token_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--short-decode-8-run" => push_override(
-                &mut short_decode_8_runs,
-                &mut short_decode_8_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--short-decode-32-run" => push_override(
-                &mut short_decode_32_runs,
-                &mut short_decode_32_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--prefill-128-decode-16-run" => push_override(
-                &mut prefill_128_decode_16_runs,
-                &mut prefill_128_decode_16_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--prefill-512-decode-32-run" => push_override(
-                &mut prefill_512_decode_32_runs,
-                &mut prefill_512_decode_32_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--warm-session-3-run" => push_override(
-                &mut warm_session_3_runs,
-                &mut warm_session_3_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--warm-session-10-run" => push_override(
-                &mut warm_session_10_runs,
-                &mut warm_session_10_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
-            "--decode-128-from-warm-context-run" => push_override(
-                &mut decode_128_runs,
-                &mut decode_128_overridden,
-                next_value(&mut iter, &arg)?,
-            ),
             "--receipt-out" => receipt_out = PathBuf::from(next_value(&mut iter, &arg)?),
             "--manifest-out" => manifest_out = Some(PathBuf::from(next_value(&mut iter, &arg)?)),
             "--print-manifest" => print_manifest = true,
@@ -214,23 +182,50 @@ fn parse_args() -> Result<Args, Box<dyn Error>> {
         }
     }
 
-    Ok(Args {
-        one_token_runs,
-        short_decode_8_runs,
-        short_decode_32_runs,
-        prefill_128_decode_16_runs,
-        prefill_512_decode_32_runs,
-        warm_session_3_runs,
-        warm_session_10_runs,
-        decode_128_runs,
-        receipt_out,
-        manifest_out,
-        print_manifest,
-    })
+    Ok(Args { profiles, receipt_out, manifest_out, print_manifest })
 }
 
-fn default_paths<const N: usize>(paths: [&str; N]) -> Vec<PathBuf> {
-    paths.into_iter().map(PathBuf::from).collect()
+fn default_profile_paths(spec: ProfileSpec) -> ProfilePaths {
+    ProfilePaths {
+        spec,
+        cpu_paths: (1..=3).map(|run| default_source_path(spec, "cpu-avx512", run)).collect(),
+        cuda_paths: (1..=3).map(|run| default_source_path(spec, "cuda", run)).collect(),
+        cpu_overridden: false,
+        cuda_overridden: false,
+    }
+}
+
+fn default_source_path(spec: ProfileSpec, backend: &str, run: usize) -> PathBuf {
+    PathBuf::from(format!(
+        "ci/hardware/windows-9950x3d-rtx5070ti/2026-05-24/bitnet-perf-005/run-{run:02}/official-bitnet-{}-{backend}.json",
+        spec.stem
+    ))
+}
+
+fn push_profile_override(
+    profiles: &mut [ProfilePaths],
+    flag: &str,
+    iter: &mut impl Iterator<Item = String>,
+) -> Result<bool, Box<dyn Error>> {
+    for profile in profiles {
+        if flag == profile.spec.cpu_flag {
+            push_override(
+                &mut profile.cpu_paths,
+                &mut profile.cpu_overridden,
+                next_value(iter, flag)?,
+            );
+            return Ok(true);
+        }
+        if flag == profile.spec.cuda_flag {
+            push_override(
+                &mut profile.cuda_paths,
+                &mut profile.cuda_overridden,
+                next_value(iter, flag)?,
+            );
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn push_override(paths: &mut Vec<PathBuf>, overridden: &mut bool, value: String) {
@@ -249,83 +244,30 @@ fn next_value(
 }
 
 fn print_help() {
+    let flags = PROFILE_SPECS
+        .iter()
+        .flat_map(|spec| [spec.cpu_flag, spec.cuda_flag])
+        .collect::<Vec<_>>()
+        .join(" PATH ... ");
     println!(
-        "Usage: strict_bitnet_cuda_repeated_profiles_receipt [--one-token-run PATH ...] [--short-decode-8-run PATH ...] [--short-decode-32-run PATH ...] [--prefill-128-decode-16-run PATH ...] [--prefill-512-decode-32-run PATH ...] [--warm-session-3-run PATH ...] [--warm-session-10-run PATH ...] [--decode-128-from-warm-context-run PATH ...] [--receipt-out PATH] [--manifest-out PATH] [--print-manifest]"
+        "Usage: strict_bitnet_cuda_repeated_profiles_receipt [{flags} PATH ...] [--receipt-out PATH] [--manifest-out PATH] [--print-manifest]"
     );
 }
 
-fn input_groups(args: &Args) -> Vec<ProfileInputGroup<'_>> {
-    vec![
-        ProfileInputGroup {
-            profile: "one_token",
-            flag: "--one-token-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 1,
-            paths: &args.one_token_runs,
-        },
-        ProfileInputGroup {
-            profile: "short_decode_8",
-            flag: "--short-decode-8-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 8,
-            paths: &args.short_decode_8_runs,
-        },
-        ProfileInputGroup {
-            profile: "short_decode_32",
-            flag: "--short-decode-32-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 32,
-            paths: &args.short_decode_32_runs,
-        },
-        ProfileInputGroup {
-            profile: "prefill_128_decode_16",
-            flag: "--prefill-128-decode-16-run",
-            expected_input_tokens: Some(128),
-            expected_generated_tokens: 16,
-            paths: &args.prefill_128_decode_16_runs,
-        },
-        ProfileInputGroup {
-            profile: "prefill_512_decode_32",
-            flag: "--prefill-512-decode-32-run",
-            expected_input_tokens: Some(512),
-            expected_generated_tokens: 32,
-            paths: &args.prefill_512_decode_32_runs,
-        },
-        ProfileInputGroup {
-            profile: "warm_session_3_turns",
-            flag: "--warm-session-3-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 24,
-            paths: &args.warm_session_3_runs,
-        },
-        ProfileInputGroup {
-            profile: "warm_session_10_turns",
-            flag: "--warm-session-10-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 80,
-            paths: &args.warm_session_10_runs,
-        },
-        ProfileInputGroup {
-            profile: "decode_128_from_warm_context",
-            flag: "--decode-128-from-warm-context-run",
-            expected_input_tokens: None,
-            expected_generated_tokens: 128,
-            paths: &args.decode_128_runs,
-        },
-    ]
-}
-
 fn source_manifest(args: &Args) -> Value {
-    let profiles = input_groups(args)
-        .into_iter()
+    let profiles = args
+        .profiles
+        .iter()
         .map(|group| {
             json!({
-                "profile": group.profile,
-                "run_flag": group.flag,
-                "min_runs": 3,
-                "expected_input_tokens": group.expected_input_tokens,
-                "expected_generated_tokens": group.expected_generated_tokens,
-                "source_paths": group.paths.iter().map(|path| path_label(path)).collect::<Vec<_>>()
+                "profile": group.spec.profile,
+                "cpu_run_flag": group.spec.cpu_flag,
+                "cuda_run_flag": group.spec.cuda_flag,
+                "min_runs_per_backend": 3,
+                "expected_input_tokens": group.spec.expected_input_tokens,
+                "expected_generated_tokens": group.spec.expected_generated_tokens,
+                "cpu_source_paths": path_labels(&group.cpu_paths),
+                "cuda_source_paths": path_labels(&group.cuda_paths)
             })
         })
         .collect::<Vec<_>>();
@@ -338,26 +280,26 @@ fn source_manifest(args: &Args) -> Value {
         "aggregate_receipt_out": path_label(&args.receipt_out),
         "machine_id": "windows-9950x3d-rtx5070ti",
         "hardware_lane": "nvidia_rtx_5070_ti_cuda",
-        "requested_backend": "nvidia-rtx-5070-ti-cuda",
-        "selected_backend": "nvidia-rtx-5070-ti-cuda",
-        "reference_backend": "amd-9950x3d-cpu-avx512",
-        "runtime_api": "cuda",
-        "selected_route": "bitnet_qk256_cuda",
-        "kernel_id": "qk256_gemv_cuda",
-        "min_runs_per_profile": 3,
+        "requested_backend": CUDA_BACKEND,
+        "selected_backend": CUDA_BACKEND,
+        "reference_backend": CPU_BACKEND,
+        "runtime_api": CUDA_RUNTIME_API,
+        "selected_route": CUDA_ROUTE,
+        "kernel_id": CUDA_KERNEL_ID,
+        "min_runs_per_backend": 3,
         "profiles": profiles,
         "model": {
-            "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
-            "file": "ggml-model-i2_s.gguf",
-            "sha256": "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162",
+            "repo": MODEL_REPO,
+            "file": MODEL_FILE,
+            "sha256": MODEL_SHA256,
             "format": "gguf",
             "architecture": "bitnet_b1_58",
             "quantization_layout": "I2_S/QK256"
         },
         "tokenizer_prompt_authority": {
-            "tokenizer_authority": "external_tokenizer",
-            "prompt_authority": "bitnetcpp-answer",
-            "prompt_template": "bitnetcpp-answer"
+            "tokenizer_authority": TOKENIZER_AUTHORITY,
+            "prompt_authority": PROMPT_AUTHORITY,
+            "prompt_template": PROMPT_AUTHORITY
         },
         "required_source_fields": [
             "/artifact_kind",
@@ -366,40 +308,55 @@ fn source_manifest(args: &Args) -> Value {
             "/model/sha256",
             "/tokenizer/source",
             "/tokenizer/pretokenizer_authority",
-            "/execution_plan/selected_route",
-            "/selected_backend",
-            "/runtime_api",
+            "/tokenizer_prompt_authority/tokenizer_authority",
+            "/tokenizer_prompt_authority/prompt_authority",
+            "/tokenizer_prompt_authority/prompt_template",
+            "/profile/id",
+            "/profile/generated_tokens",
             "/fallback_used",
             "/quality_summary/passed or /quality/garbage_filter_passed",
             "/timing/model_load_ms",
             "/timing/tokenizer_load_ms",
             "/timing/prompt_render_ms",
             "/timing/tokenize_ms",
-            "/timing/cuda_context_init_ms",
-            "/timing/weight_upload_ms",
             "/timing/prefill_ms",
             "/timing/first_token_ms",
             "/timing/decode_total_ms",
-            "/timing/steady_tok_per_s",
-            "/kernel_stats/0/kernel_id",
+            "/timing/steady_tok_per_s"
+        ],
+        "required_cuda_source_fields": [
+            "/execution_plan/selected_route=bitnet_qk256_cuda",
+            "/selected_backend=nvidia-rtx-5070-ti-cuda",
+            "/runtime_api=cuda",
+            "/timing/cuda_context_init_ms",
+            "/timing/weight_upload_ms",
+            "/kernel_stats/0/kernel_id=qk256_gemv_cuda",
             "/kernel_stats/0/kernel_time_ms",
             "/kernel_stats/0/invocations",
-            "/kernel_stats/0/fallback_invocations",
-            "/timing/host_to_device_bytes or /kernel_stats/0/host_to_device_bytes",
-            "/timing/host_to_device_ms or explicit source blocker",
-            "/timing/device_to_host_bytes or /kernel_stats/0/device_to_host_bytes",
-            "/timing/device_to_host_ms or explicit source blocker",
+            "/kernel_stats/0/fallback_invocations=0",
+            "/timing/host_to_device_bytes",
+            "/timing/host_to_device_ms",
+            "/timing/device_to_host_bytes",
+            "/timing/device_to_host_ms",
             "/cuda/memory_hwm_bytes or /cuda/vram_bytes",
             "/cuda/power_draw_watts",
             "/cuda/temperature_c"
         ],
+        "required_cpu_source_fields": [
+            "/execution_plan/selected_route=bitnet_i2s_qk256_cpu_avx512",
+            "/selected_backend=amd-9950x3d-cpu-avx512",
+            "/runtime_api=cpu",
+            "/kernel_stats/0/kernel_id=i2_s-avx512-reference or /kernel/kernel_id=i2_s-avx512-reference"
+        ],
         "strict_rejection_rules": [
-            "selected_backend must be nvidia-rtx-5070-ti-cuda",
-            "runtime_api must be cuda for accelerator receipts",
-            "selected_route must be bitnet_qk256_cuda",
-            "kernel_id must be qk256_gemv_cuda",
-            "fallback_used must be false",
-            "kernel fallback invocations must be zero",
+            "each profile requires at least three CPU AVX-512 source receipts and at least three RTX 5070 Ti CUDA source receipts",
+            "selected CUDA backend must be nvidia-rtx-5070-ti-cuda",
+            "CUDA runtime_api must be cuda",
+            "CUDA selected_route must be bitnet_qk256_cuda",
+            "CUDA kernel_id must be qk256_gemv_cuda",
+            "CPU selected backend must be amd-9950x3d-cpu-avx512",
+            "CPU selected_route must be bitnet_i2s_qk256_cpu_avx512",
+            "fallback_used must be false for both CPU and CUDA receipts",
             "dense_regular_llm_cuda receipts are rejected for this proof family",
             "generic cuda backend labels are rejected for strict RTX 5070 Ti claims"
         ],
@@ -416,27 +373,41 @@ fn source_manifest(args: &Args) -> Value {
 }
 
 fn assert_input_paths_exist(args: &Args) -> Result<(), Box<dyn Error>> {
-    let missing = input_groups(args)
-        .into_iter()
-        .flat_map(|group| {
-            group.paths.iter().filter_map(move |path| {
-                if path.is_file() {
-                    None
-                } else {
-                    Some(format!("{}: {}", group.profile, path_label(path)))
-                }
-            })
-        })
-        .collect::<Vec<_>>();
+    let mut missing = Vec::new();
+    for group in &args.profiles {
+        for path in &group.cpu_paths {
+            if !path.is_file() {
+                missing.push(format!("{} cpu: {}", group.spec.profile, path_label(path)));
+            }
+        }
+        for path in &group.cuda_paths {
+            if !path.is_file() {
+                missing.push(format!("{} cuda: {}", group.spec.profile, path_label(path)));
+            }
+        }
+    }
     if missing.is_empty() {
         return Ok(());
     }
 
     Err(format!(
-        "missing CUDA-BITNET-PERF-005 source receipts:\n  - {}\nrun with --print-manifest or --manifest-out PATH to inspect the expected capture set",
+        "missing CUDA-BITNET-PERF-005 source receipts:\n  - {}\nrun with --print-manifest or --manifest-out PATH to inspect the expected CPU/CUDA capture set",
         missing.join("\n  - ")
     )
     .into())
+}
+
+fn read_profile_runs(args: &Args) -> Result<Vec<ProfileRuns>, Box<dyn Error>> {
+    args.profiles
+        .iter()
+        .map(|group| {
+            Ok(ProfileRuns {
+                spec: group.spec,
+                cpu: read_runs(&group.cpu_paths)?,
+                cuda: read_runs(&group.cuda_paths)?,
+            })
+        })
+        .collect()
 }
 
 fn read_runs(paths: &[PathBuf]) -> Result<Vec<(PathBuf, Value)>, Box<dyn Error>> {
@@ -448,52 +419,112 @@ fn read_json(path: &Path) -> Result<Value, Box<dyn Error>> {
 }
 
 fn assert_repeated_sources(runs: &ProfileRuns) -> Result<(), Box<dyn Error>> {
-    assert_profile_sources("one_token", &runs.one_token)?;
-    assert_profile_sources("short_decode_8", &runs.short_decode_8)?;
-    assert_profile_sources("short_decode_32", &runs.short_decode_32)?;
-    assert_profile_sources("prefill_128_decode_16", &runs.prefill_128_decode_16)?;
-    assert_profile_sources("prefill_512_decode_32", &runs.prefill_512_decode_32)?;
-    assert_profile_sources("warm_session_3_turns", &runs.warm_session_3)?;
-    assert_profile_sources("warm_session_10_turns", &runs.warm_session_10)?;
-    assert_profile_sources("decode_128_from_warm_context", &runs.decode_128)?;
+    assert_backend_sources(runs.spec, &runs.cpu, BackendKind::Cpu)?;
+    assert_backend_sources(runs.spec, &runs.cuda, BackendKind::Cuda)?;
+    if runs.cpu.len() != runs.cuda.len() {
+        return Err(format!("{} CPU and CUDA run counts must match", runs.spec.profile).into());
+    }
+    for ((_, cpu), (_, cuda)) in runs.cpu.iter().zip(&runs.cuda) {
+        if rendered_prompt_hash(runs.spec.profile, cpu)?
+            != rendered_prompt_hash(runs.spec.profile, cuda)?
+        {
+            return Err(format!(
+                "{} CPU and CUDA runs must use the same rendered prompt",
+                runs.spec.profile
+            )
+            .into());
+        }
+        if generated_token_hash(cpu)? != generated_token_hash(cuda)? {
+            return Err(format!(
+                "{} CPU and CUDA runs must have matching generated token IDs",
+                runs.spec.profile
+            )
+            .into());
+        }
+    }
     Ok(())
 }
 
-fn assert_profile_sources(profile: &str, runs: &[(PathBuf, Value)]) -> Result<(), Box<dyn Error>> {
+#[derive(Clone, Copy)]
+enum BackendKind {
+    Cpu,
+    Cuda,
+}
+
+fn assert_backend_sources(
+    spec: ProfileSpec,
+    runs: &[(PathBuf, Value)],
+    backend: BackendKind,
+) -> Result<(), Box<dyn Error>> {
     if runs.len() < 3 {
-        return Err(format!("{profile} requires at least 3 source receipts").into());
+        return Err(format!(
+            "{} requires at least 3 {} source receipts",
+            spec.profile,
+            backend.label()
+        )
+        .into());
     }
     let mut paths = BTreeSet::new();
     let anchor = runs.first().ok_or("runs must not be empty")?.1.clone();
     let prompt_template = str_at(&anchor, "/tokenizer_prompt_authority/prompt_template")?;
-    let prompt_hash = rendered_prompt_hash(profile, &anchor)?;
+    let prompt_hash = rendered_prompt_hash(spec.profile, &anchor)?;
 
     for (path, receipt) in runs {
         if !paths.insert(path_label(path)) {
-            return Err(format!("{profile} source receipt paths must be unique").into());
+            return Err(format!(
+                "{} {} source receipt paths must be unique",
+                spec.profile,
+                backend.label()
+            )
+            .into());
         }
-        assert_source_receipt(profile, receipt)?;
+        assert_source_receipt(spec, receipt, backend)?;
         if str_at(receipt, "/tokenizer_prompt_authority/prompt_template")? != prompt_template {
-            return Err(format!("{profile} runs must use the same prompt template").into());
+            return Err(format!(
+                "{} {} runs must use the same prompt template",
+                spec.profile,
+                backend.label()
+            )
+            .into());
         }
-        if rendered_prompt_hash(profile, receipt)? != prompt_hash {
-            return Err(format!("{profile} runs must use the same rendered prompt hash").into());
+        if rendered_prompt_hash(spec.profile, receipt)? != prompt_hash {
+            return Err(format!(
+                "{} {} runs must use the same rendered prompt hash",
+                spec.profile,
+                backend.label()
+            )
+            .into());
         }
     }
     Ok(())
 }
 
-fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn Error>> {
+impl BackendKind {
+    fn label(self) -> &'static str {
+        match self {
+            BackendKind::Cpu => "CPU",
+            BackendKind::Cuda => "CUDA",
+        }
+    }
+}
+
+fn assert_source_receipt(
+    spec: ProfileSpec,
+    receipt: &Value,
+    backend: BackendKind,
+) -> Result<(), Box<dyn Error>> {
     let artifact_kind = str_at(receipt, "/artifact_kind")?;
     let artifact_kind_lower = artifact_kind.to_ascii_lowercase();
     if !artifact_kind_lower.contains("bitnet") {
-        return Err(format!("{profile} source receipt must be a BitNet receipt").into());
+        return Err(format!("{} source receipt must be a BitNet receipt", spec.profile).into());
     }
     if artifact_kind_lower.contains("dense") || artifact_kind_lower.contains("qwen") {
-        return Err(format!("{profile} source receipt must not be dense/Qwen evidence").into());
+        return Err(
+            format!("{} source receipt must not be dense/Qwen evidence", spec.profile).into()
+        );
     }
-    if str_at_any(receipt, &["/profile/id", "/profile/profile"])? != profile {
-        return Err(format!("{profile} source receipt profile id mismatch").into());
+    if str_at_any(receipt, &["/profile/id", "/profile/profile"])? != spec.profile {
+        return Err(format!("{} source receipt profile id mismatch", spec.profile).into());
     }
     if str_at(receipt, "/model/repo")? != MODEL_REPO {
         return Err("source receipt must use the official Microsoft BitNet repo".into());
@@ -518,17 +549,6 @@ fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn E
     }
     if str_at(receipt, "/tokenizer_prompt_authority/prompt_template")? != PROMPT_AUTHORITY {
         return Err("source receipt must use bitnetcpp-answer prompt template".into());
-    }
-    if str_at_any(receipt, &["/execution_plan/selected_backend", "/selected_backend"])?
-        != SELECTED_BACKEND
-    {
-        return Err("source receipt must select nvidia-rtx-5070-ti-cuda".into());
-    }
-    if str_at_any(receipt, &["/execution_plan/runtime_api", "/runtime_api"])? != RUNTIME_API {
-        return Err("source receipt must use CUDA runtime_api".into());
-    }
-    if str_at(receipt, "/execution_plan/selected_route")? != SELECTED_ROUTE {
-        return Err("source receipt must route bitnet_qk256_cuda".into());
     }
     if bool_at(receipt, "/fallback_used")? {
         return Err("source receipt must be fallback-free".into());
@@ -561,10 +581,12 @@ fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn E
     )? {
         return Err("source receipt quality gate must pass".into());
     }
-    if generated_tokens(profile, receipt)? != expected_generated_tokens(profile)? {
-        return Err(format!("{profile} generated token count does not match the profile").into());
+    if generated_tokens(spec.profile, receipt)? != spec.expected_generated_tokens {
+        return Err(
+            format!("{} generated token count does not match the profile", spec.profile).into()
+        );
     }
-    if let Some(expected_input_tokens) = expected_input_tokens(profile)? {
+    if let Some(expected_input_tokens) = spec.expected_input_tokens {
         let actual = u64_at_any(
             receipt,
             &[
@@ -575,7 +597,8 @@ fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn E
         )?;
         if actual != expected_input_tokens {
             return Err(format!(
-                "{profile} expected {expected_input_tokens} prompt tokens, got {actual}"
+                "{} expected {expected_input_tokens} prompt tokens, got {actual}",
+                spec.profile
             )
             .into());
         }
@@ -586,12 +609,56 @@ fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn E
         "/timing/tokenizer_load_ms",
         "/timing/prompt_render_ms",
         "/timing/tokenize_ms",
-        "/timing/cuda_context_init_ms",
-        "/timing/weight_upload_ms",
         "/timing/prefill_ms",
         "/timing/first_token_ms",
         "/timing/decode_total_ms",
         "/timing/steady_tok_per_s",
+    ] {
+        number_at(receipt, pointer)?;
+    }
+
+    match backend {
+        BackendKind::Cpu => assert_cpu_source(receipt),
+        BackendKind::Cuda => assert_cuda_source(receipt),
+    }
+}
+
+fn assert_cpu_source(receipt: &Value) -> Result<(), Box<dyn Error>> {
+    if str_at_any(receipt, &["/execution_plan/selected_backend", "/selected_backend"])?
+        != CPU_BACKEND
+    {
+        return Err("CPU source receipt must select amd-9950x3d-cpu-avx512".into());
+    }
+    if str_at_any(receipt, &["/execution_plan/runtime_api", "/runtime_api"])? != CPU_RUNTIME_API {
+        return Err("CPU source receipt must use cpu runtime_api".into());
+    }
+    if str_at(receipt, "/execution_plan/selected_route")? != CPU_ROUTE {
+        return Err("CPU source receipt must route bitnet_i2s_qk256_cpu_avx512".into());
+    }
+    if kernel_id(receipt)? != CPU_KERNEL_ID {
+        return Err("CPU source receipt must use i2_s-avx512-reference".into());
+    }
+    Ok(())
+}
+
+fn assert_cuda_source(receipt: &Value) -> Result<(), Box<dyn Error>> {
+    if str_at_any(receipt, &["/execution_plan/selected_backend", "/selected_backend"])?
+        != CUDA_BACKEND
+    {
+        return Err("CUDA source receipt must select nvidia-rtx-5070-ti-cuda".into());
+    }
+    if str_at_any(receipt, &["/execution_plan/runtime_api", "/runtime_api"])? != CUDA_RUNTIME_API {
+        return Err("CUDA source receipt must use cuda runtime_api".into());
+    }
+    if str_at(receipt, "/execution_plan/selected_route")? != CUDA_ROUTE {
+        return Err("CUDA source receipt must route bitnet_qk256_cuda".into());
+    }
+    if kernel_id(receipt)? != CUDA_KERNEL_ID {
+        return Err("CUDA source receipt must use qk256_gemv_cuda".into());
+    }
+    for pointer in [
+        "/timing/cuda_context_init_ms",
+        "/timing/weight_upload_ms",
         "/timing/host_to_device_ms",
         "/timing/device_to_host_ms",
         "/cuda/power_draw_watts",
@@ -609,31 +676,23 @@ fn assert_source_receipt(profile: &str, receipt: &Value) -> Result<(), Box<dyn E
         .and_then(Value::as_array)
         .and_then(|items| items.first())
         .ok_or("kernel_stats must contain at least one entry")?;
-    if str_at(kernel_stats, "/kernel_id")? != KERNEL_ID {
-        return Err("source receipt must use qk256_gemv_cuda".into());
+    if str_at(kernel_stats, "/kernel_id")? != CUDA_KERNEL_ID {
+        return Err("CUDA source receipt must use qk256_gemv_cuda".into());
     }
     number_at(kernel_stats, "/kernel_time_ms")?;
     u64_at_any(kernel_stats, &["/kernel_launches", "/launch_count"])?;
     u64_at(kernel_stats, "/invocations")?;
     if u64_at(kernel_stats, "/fallback_invocations")? != 0 {
-        return Err("source receipt kernel fallback_invocations must be zero".into());
+        return Err("CUDA source receipt kernel fallback_invocations must be zero".into());
     }
     Ok(())
 }
 
-fn build_receipt(args: &Args, runs: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
-    let profiles = vec![
-        profile_from_runs("one_token", &runs.one_token)?,
-        profile_from_runs("short_decode_8", &runs.short_decode_8)?,
-        profile_from_runs("short_decode_32", &runs.short_decode_32)?,
-        profile_from_runs("prefill_128_decode_16", &runs.prefill_128_decode_16)?,
-        profile_from_runs("prefill_512_decode_32", &runs.prefill_512_decode_32)?,
-        profile_from_runs("warm_session_3_turns", &runs.warm_session_3)?,
-        profile_from_runs("warm_session_10_turns", &runs.warm_session_10)?,
-        profile_from_runs("decode_128_from_warm_context", &runs.decode_128)?,
-    ];
-    let total_kernel_invocations = all_receipts(runs)
+fn build_receipt(args: &Args, runs: &[ProfileRuns]) -> Result<Value, Box<dyn Error>> {
+    let profiles = runs.iter().map(profile_from_runs).collect::<Result<Vec<_>, _>>()?;
+    let total_cuda_kernel_invocations = runs
         .iter()
+        .flat_map(|profile| profile.cuda.iter().map(|(_, receipt)| receipt))
         .map(|receipt| {
             u64_at_any(receipt, &["/timing/kernel_invocations", "/kernel_stats/0/invocations"])
         })
@@ -649,12 +708,12 @@ fn build_receipt(args: &Args, runs: &ProfileRuns) -> Result<Value, Box<dyn Error
         "machine_id": "windows-9950x3d-rtx5070ti",
         "hardware_lane": "nvidia_rtx_5070_ti_cuda",
         "timestamp_utc": timestamp_label(),
-        "requested_backend": SELECTED_BACKEND,
-        "selected_backend": SELECTED_BACKEND,
-        "reference_backend": REFERENCE_BACKEND,
-        "runtime_api": RUNTIME_API,
-        "selected_route": SELECTED_ROUTE,
-        "kernel_id": KERNEL_ID,
+        "requested_backend": CUDA_BACKEND,
+        "selected_backend": CUDA_BACKEND,
+        "reference_backend": CPU_BACKEND,
+        "runtime_api": CUDA_RUNTIME_API,
+        "selected_route": CUDA_ROUTE,
+        "kernel_id": CUDA_KERNEL_ID,
         "claim": "strict_bitnet_cuda_repeated_profiles_baseline",
         "fallback_used": false,
         "fallback_backend": null,
@@ -688,16 +747,16 @@ fn build_receipt(args: &Args, runs: &ProfileRuns) -> Result<Value, Box<dyn Error
             "pretokenizer_authority": PRETOKENIZER_AUTHORITY,
             "prompt_authority": PROMPT_AUTHORITY,
             "prompt_template": PROMPT_AUTHORITY,
-            "prompt_policy": "bitnetcpp-answer deterministic profile prompts; same tokenizer and prompt policy across repeated runs",
+            "prompt_policy": "bitnetcpp-answer deterministic profile prompts; same tokenizer and prompt policy across repeated CPU and CUDA runs",
             "deterministic_prompt": true
         },
         "execution_plan": {
             "planner_version": "cuda-planner-004",
             "model_family": "bitnet_b1_58",
             "quantization": "i2_s_qk256",
-            "selected_backend": SELECTED_BACKEND,
-            "selected_route": SELECTED_ROUTE,
-            "runtime_api": RUNTIME_API,
+            "selected_backend": CUDA_BACKEND,
+            "selected_route": CUDA_ROUTE,
+            "runtime_api": CUDA_RUNTIME_API,
             "strict_fallback_policy": "reject",
             "bitnet_packed_qk256_cuda": true,
             "dense_regular_llm_cuda": false,
@@ -705,30 +764,21 @@ fn build_receipt(args: &Args, runs: &ProfileRuns) -> Result<Value, Box<dyn Error
             "strict_cuda_ready": true,
             "speedup_claim": false,
             "full_cuda_residency_claimed": false,
-            "cuda_bitnet_qk256_ops": total_kernel_invocations,
+            "cuda_bitnet_qk256_ops": total_cuda_kernel_invocations,
             "cuda_dense_regular_llm_ops": 0,
             "cpu_fallback_ops": 0,
             "unsupported_ops": 0,
-            "total_ops": total_kernel_invocations,
-            "cuda_ops": total_kernel_invocations
+            "total_ops": total_cuda_kernel_invocations,
+            "cuda_ops": total_cuda_kernel_invocations
         },
-        "proof_inputs": {
-            "one_token": profile_input("one_token", &runs.one_token)?,
-            "short_decode_8": profile_input("short_decode_8", &runs.short_decode_8)?,
-            "short_decode_32": profile_input("short_decode_32", &runs.short_decode_32)?,
-            "prefill_128_decode_16": profile_input("prefill_128_decode_16", &runs.prefill_128_decode_16)?,
-            "prefill_512_decode_32": profile_input("prefill_512_decode_32", &runs.prefill_512_decode_32)?,
-            "warm_session_3_turns": profile_input("warm_session_3_turns", &runs.warm_session_3)?,
-            "warm_session_10_turns": profile_input("warm_session_10_turns", &runs.warm_session_10)?,
-            "decode_128_from_warm_context": profile_input("decode_128_from_warm_context", &runs.decode_128)?
-        },
+        "proof_inputs": proof_inputs(runs)?,
         "profiles": profiles,
         "comparator_summary": comparator_summary(&profiles),
         "transfer_timing": transfer_timing(),
         "hardware_context": hardware_context(runs)?,
         "cuda": cuda_context(runs)?,
         "claim_boundaries": [
-            "speedup_claim=false; repeated current-source profiles are not a speedup qualification.",
+            "speedup_claim=false; repeated current-source CPU/CUDA profiles are not a speedup qualification.",
             "benchmark_qualified_speedup=false until CUDA-BITNET-PERF-006 reviews exact profiles.",
             "full_cuda_residency_claimed=false until every required phase proves residency.",
             "server_ready_claimed=false; server smoke and readiness remain separate proof families.",
@@ -737,134 +787,197 @@ fn build_receipt(args: &Args, runs: &ProfileRuns) -> Result<Value, Box<dyn Error
     }))
 }
 
-fn profile_input(profile: &str, runs: &[(PathBuf, Value)]) -> Result<Value, Box<dyn Error>> {
-    let mut hasher = Sha256::new();
-    let mut paths = Vec::new();
-    for (path, _) in runs {
-        let digest = sha256_file(path)?;
-        hasher.update(digest.as_bytes());
-        paths.push(path_label(path));
+fn proof_inputs(runs: &[ProfileRuns]) -> Result<Value, Box<dyn Error>> {
+    let mut object = serde_json::Map::new();
+    for profile in runs {
+        object.insert(profile.spec.profile.to_owned(), profile_input(profile)?);
     }
+    Ok(Value::Object(object))
+}
+
+fn profile_input(profile: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
     Ok(json!({
-        "path": format!("profile:{profile}"),
-        "sha256": format!("{:x}", hasher.finalize()),
-        "artifact_kind": "strict_bitnet_profile_repeated_runs",
-        "runs": paths
+        "path": format!("profile:{}", profile.spec.profile),
+        "artifact_kind": "strict_bitnet_profile_repeated_comparator_runs",
+        "cpu_sha256": combined_sha256(&profile.cpu)?,
+        "cuda_sha256": combined_sha256(&profile.cuda)?,
+        "cpu_runs": profile.cpu.iter().map(|(path, _)| path_label(path)).collect::<Vec<_>>(),
+        "cuda_runs": profile.cuda.iter().map(|(path, _)| path_label(path)).collect::<Vec<_>>()
     }))
 }
 
-fn profile_from_runs(profile: &str, runs: &[(PathBuf, Value)]) -> Result<Value, Box<dyn Error>> {
-    let run_values = runs
+fn combined_sha256(runs: &[(PathBuf, Value)]) -> Result<String, Box<dyn Error>> {
+    let mut hasher = Sha256::new();
+    for (path, _) in runs {
+        hasher.update(sha256_file(path)?.as_bytes());
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+fn profile_from_runs(profile: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
+    let cpu_runs = profile
+        .cpu
         .iter()
         .enumerate()
-        .map(|(index, (path, receipt))| run_from_receipt(profile, index + 1, path, receipt))
+        .map(|(index, (path, receipt))| {
+            run_from_receipt(profile.spec, index + 1, path, receipt, BackendKind::Cpu)
+        })
         .collect::<Result<Vec<_>, _>>()?;
+    let cuda_runs = profile
+        .cuda
+        .iter()
+        .enumerate()
+        .map(|(index, (path, receipt))| {
+            run_from_receipt(profile.spec, index + 1, path, receipt, BackendKind::Cuda)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let runs = cpu_runs.iter().chain(&cuda_runs).cloned().collect::<Vec<_>>();
 
     Ok(json!({
-        "profile": profile,
+        "profile": profile.spec.profile,
         "status": "repeated_same_artifact_cpu_cuda_profile",
-        "cpu_reference_backend": REFERENCE_BACKEND,
-        "cuda_backend": SELECTED_BACKEND,
-        "runtime_api": RUNTIME_API,
-        "selected_route": SELECTED_ROUTE,
-        "kernel_id": KERNEL_ID,
-        "expected_input_tokens": expected_input_tokens(profile)?,
-        "expected_generated_tokens": expected_generated_tokens(profile)?,
-        "run_count": run_values.len(),
-        "cpu_runs": run_values.len(),
-        "cuda_runs": run_values.len(),
+        "cpu_reference_backend": CPU_BACKEND,
+        "cuda_backend": CUDA_BACKEND,
+        "runtime_api": CUDA_RUNTIME_API,
+        "selected_route": CUDA_ROUTE,
+        "kernel_id": CUDA_KERNEL_ID,
+        "expected_input_tokens": profile.spec.expected_input_tokens,
+        "expected_generated_tokens": profile.spec.expected_generated_tokens,
+        "run_count": runs.len(),
+        "cpu_runs": cpu_runs.len(),
+        "cuda_runs": cuda_runs.len(),
         "min_runs_per_backend": 3,
         "fallback_free": true,
         "same_artifact_sha": true,
         "same_tokenizer_prompt_policy": true,
         "deterministic_generation_policy": true,
-        "generated_token_ids_match": run_values.iter().all(|run| {
-            run.get("generated_token_ids_match").and_then(Value::as_bool) == Some(true)
+        "generated_token_ids_match": profile.cpu.iter().zip(&profile.cuda).all(|((_, cpu), (_, cuda))| {
+            generated_token_hash(cpu).ok() == generated_token_hash(cuda).ok()
         }),
-        "first_divergence_report": "no generated-token divergence recorded across source receipts",
+        "first_divergence_report": "no generated-token divergence recorded across paired CPU/CUDA source receipts",
         "speedup_claim": false,
         "benchmark_qualified_speedup": false,
         "bitnet_packed_i2s_qk256_proof": true,
         "dense_regular_llm_cuda_proof": false,
         "full_cuda_residency_claimed": false,
         "server_ready_claimed": false,
-        "transfer_timing_status": "host_to_device_and_device_to_host_measured_in_source_receipts",
-        "model_load_ms": number_summary(&run_values, "/timing/model_load_ms"),
-        "tokenizer_load_ms": number_summary(&run_values, "/timing/tokenizer_load_ms"),
-        "prompt_render_ms": number_summary(&run_values, "/timing/prompt_render_ms"),
-        "tokenize_ms": number_summary(&run_values, "/timing/tokenize_ms"),
-        "cuda_context_init_ms": number_summary(&run_values, "/timing/cuda_context_init_ms"),
-        "weight_upload_ms": number_summary(&run_values, "/timing/weight_upload_ms"),
-        "prefill_ms": number_summary(&run_values, "/timing/prefill_ms"),
-        "first_token_ms": number_summary(&run_values, "/timing/first_token_ms"),
-        "decode_total_ms": number_summary(&run_values, "/timing/decode_total_ms"),
-        "steady_tok_per_s": number_summary(&run_values, "/timing/steady_tok_per_s"),
-        "kernel_time_ms": number_summary(&run_values, "/timing/kernel_time_ms"),
-        "launch_count": u64_summary(&run_values, "/timing/launch_count"),
-        "host_to_device_bytes": u64_summary(&run_values, "/timing/host_to_device_bytes"),
-        "host_to_device_ms": number_summary(&run_values, "/timing/host_to_device_ms"),
-        "device_to_host_bytes": u64_summary(&run_values, "/timing/device_to_host_bytes"),
-        "device_to_host_ms": number_summary(&run_values, "/timing/device_to_host_ms"),
-        "vram_high_water_bytes": u64_summary(&run_values, "/timing/vram_high_water_bytes"),
-        "runs": run_values
+        "transfer_timing_status": "cuda_host_to_device_and_device_to_host_measured_in_source_receipts",
+        "cpu": backend_summary(&cpu_runs, CPU_BACKEND, CPU_RUNTIME_API, CPU_ROUTE, CPU_KERNEL_ID)?,
+        "cuda": backend_summary(&cuda_runs, CUDA_BACKEND, CUDA_RUNTIME_API, CUDA_ROUTE, CUDA_KERNEL_ID)?,
+        "runs": runs
     }))
 }
 
 fn run_from_receipt(
-    profile: &str,
+    spec: ProfileSpec,
     index: usize,
     path: &Path,
     receipt: &Value,
+    backend: BackendKind,
 ) -> Result<Value, Box<dyn Error>> {
-    let generated_tokens = generated_tokens(profile, receipt)?;
+    let generated_tokens = generated_tokens(spec.profile, receipt)?;
     let decode_total = number_at(receipt, "/timing/decode_total_ms")?;
     let steady_tok_per_s = number_or(
         receipt,
         "/timing/steady_tok_per_s",
         generated_tokens as f64 / (decode_total / 1000.0),
     );
+    let mut timing = json!({
+        "model_load_ms": number_at(receipt, "/timing/model_load_ms")?,
+        "tokenizer_load_ms": number_at(receipt, "/timing/tokenizer_load_ms")?,
+        "prompt_render_ms": number_at(receipt, "/timing/prompt_render_ms")?,
+        "tokenize_ms": number_at(receipt, "/timing/tokenize_ms")?,
+        "prefill_ms": number_at(receipt, "/timing/prefill_ms")?,
+        "first_token_ms": number_at(receipt, "/timing/first_token_ms")?,
+        "decode_total_ms": decode_total,
+        "steady_tok_per_s": steady_tok_per_s
+    });
+    if matches!(backend, BackendKind::Cuda) {
+        let object = timing.as_object_mut().expect("timing is object");
+        object.insert(
+            "cuda_context_init_ms".to_owned(),
+            json!(number_at(receipt, "/timing/cuda_context_init_ms")?),
+        );
+        object.insert(
+            "weight_upload_ms".to_owned(),
+            json!(number_at(receipt, "/timing/weight_upload_ms")?),
+        );
+        object.insert(
+            "kernel_time_ms".to_owned(),
+            json!(number_at_any(
+                receipt,
+                &["/timing/kernel_time_ms", "/kernel_stats/0/kernel_time_ms"]
+            )?),
+        );
+        object.insert(
+            "launch_count".to_owned(),
+            json!(u64_at_any(
+                receipt,
+                &[
+                    "/timing/launch_count",
+                    "/timing/kernel_launches",
+                    "/kernel_stats/0/kernel_launches"
+                ]
+            )?),
+        );
+        object.insert(
+            "kernel_invocations".to_owned(),
+            json!(u64_at_any(
+                receipt,
+                &["/timing/kernel_invocations", "/kernel_stats/0/invocations"]
+            )?),
+        );
+        object.insert(
+            "host_to_device_bytes".to_owned(),
+            json!(u64_at(receipt, "/timing/host_to_device_bytes")?),
+        );
+        object.insert(
+            "host_to_device_ms".to_owned(),
+            json!(number_at(receipt, "/timing/host_to_device_ms")?),
+        );
+        object.insert(
+            "device_to_host_bytes".to_owned(),
+            json!(u64_at(receipt, "/timing/device_to_host_bytes")?),
+        );
+        object.insert(
+            "device_to_host_ms".to_owned(),
+            json!(number_at(receipt, "/timing/device_to_host_ms")?),
+        );
+        object.insert(
+            "vram_high_water_bytes".to_owned(),
+            json!(u64_at_any(
+                receipt,
+                &["/timing/vram_high_water_bytes", "/cuda/memory_hwm_bytes", "/cuda/vram_bytes"]
+            )?),
+        );
+        object.insert(
+            "power_temperature_context".to_owned(),
+            json!("NVML power and temperature sampled during source receipt"),
+        );
+    }
+
     Ok(json!({
-        "run_id": format!("run-{index:02}"),
-        "profile": profile,
+        "run_id": format!("{}-run-{index:02}", backend.label().to_ascii_lowercase()),
+        "profile": spec.profile,
+        "backend": backend.backend_label(),
+        "runtime_api": backend.runtime_api(),
+        "selected_route": backend.route(),
+        "kernel_id": backend.kernel_id(),
         "source_receipt_path": path_label(path),
         "source_receipt_sha256": sha256_file(path)?,
         "source_artifact_kind": str_at(receipt, "/artifact_kind")?,
         "model_sha256": str_at(receipt, "/model/sha256")?,
         "prompt_template": str_at(receipt, "/tokenizer_prompt_authority/prompt_template")?,
-        "prompt_token_count": prompt_token_count(profile, receipt)?,
+        "prompt_token_count": prompt_token_count(spec.profile, receipt)?,
         "generation_policy": "greedy",
         "deterministic_generation": true,
-        "expected_input_tokens": expected_input_tokens(profile)?,
+        "expected_input_tokens": spec.expected_input_tokens,
         "generated_tokens": generated_tokens,
-        "generated_token_ids_sha256": string_at_any_or(
-            receipt,
-            &[
-                "/generated_token_ids_sha256",
-                "/quality_summary/generated_token_ids_sha256",
-                "/one_token_proof/generated_token_ids_sha256",
-                "/short_decode_proof/generated_token_ids_sha256",
-                "/warm_session_proof/generated_token_ids_sha256",
-                "/warm_decode_proof/generated_token_ids_sha256"
-            ],
-            "not_recorded_in_source_receipt"
-        ),
-        "generated_token_ids_match": bool_at_any(
-            receipt,
-            &[
-                "/quality_summary/generated_token_ids_match",
-                "/comparison/generated_token_ids_match",
-                "/one_token_proof/generated_token_ids_match",
-                "/short_decode_proof/generated_token_ids_match",
-                "/warm_session_proof/generated_token_ids_match",
-                "/warm_decode_proof/generated_token_ids_match"
-            ]
-        )?,
+        "generated_token_ids_sha256": generated_token_hash(receipt)?,
+        "generated_token_ids_match": true,
         "first_divergence_report": string_at_any_or(
             receipt,
-            &[
-                "/quality_summary/first_divergence_report",
-                "/comparison/first_divergence_report"
-            ],
+            &["/quality_summary/first_divergence_report", "/comparison/first_divergence_report"],
             "none"
         ),
         "top_k_evidence_recorded": bool_at_any_or(
@@ -881,11 +994,7 @@ fn run_from_receipt(
         "fallback_used": bool_at(receipt, "/fallback_used")?,
         "quality_passed": bool_at_any(
             receipt,
-            &[
-                "/quality_summary/passed",
-                "/quality_gate/passed",
-                "/quality/garbage_filter_passed"
-            ]
+            &["/quality_summary/passed", "/quality_gate/passed", "/quality/garbage_filter_passed"]
         )?,
         "speedup_claim": false,
         "benchmark_qualified_speedup": false,
@@ -893,38 +1002,115 @@ fn run_from_receipt(
         "dense_regular_llm_cuda_proof": false,
         "full_cuda_residency_claimed": false,
         "server_ready_claimed": false,
-        "timing": {
-            "model_load_ms": number_at(receipt, "/timing/model_load_ms")?,
-            "tokenizer_load_ms": number_at(receipt, "/timing/tokenizer_load_ms")?,
-            "prompt_render_ms": number_at(receipt, "/timing/prompt_render_ms")?,
-            "tokenize_ms": number_at(receipt, "/timing/tokenize_ms")?,
-            "cuda_context_init_ms": number_at(receipt, "/timing/cuda_context_init_ms")?,
-            "weight_upload_ms": number_at(receipt, "/timing/weight_upload_ms")?,
-            "prefill_ms": number_at(receipt, "/timing/prefill_ms")?,
-            "first_token_ms": number_at(receipt, "/timing/first_token_ms")?,
-            "decode_total_ms": decode_total,
-            "steady_tok_per_s": steady_tok_per_s,
-            "kernel_time_ms": number_at_any(receipt, &["/timing/kernel_time_ms", "/kernel_stats/0/kernel_time_ms"])?,
-            "launch_count": u64_at_any(receipt, &["/timing/launch_count", "/timing/kernel_launches", "/kernel_stats/0/kernel_launches"])?,
-            "kernel_invocations": u64_at_any(receipt, &["/timing/kernel_invocations", "/kernel_stats/0/invocations"])?,
-            "host_to_device_bytes": u64_at(receipt, "/timing/host_to_device_bytes")?,
-            "host_to_device_ms": number_at(receipt, "/timing/host_to_device_ms")?,
-            "device_to_host_bytes": u64_at(receipt, "/timing/device_to_host_bytes")?,
-            "device_to_host_ms": number_at(receipt, "/timing/device_to_host_ms")?,
-            "vram_high_water_bytes": u64_at_any(receipt, &["/timing/vram_high_water_bytes", "/cuda/memory_hwm_bytes", "/cuda/vram_bytes"])?,
-            "power_temperature_context": "NVML power and temperature sampled during source receipt"
-        }
+        "timing": timing
     }))
 }
 
+impl BackendKind {
+    fn backend_label(self) -> &'static str {
+        match self {
+            BackendKind::Cpu => CPU_BACKEND,
+            BackendKind::Cuda => CUDA_BACKEND,
+        }
+    }
+
+    fn runtime_api(self) -> &'static str {
+        match self {
+            BackendKind::Cpu => CPU_RUNTIME_API,
+            BackendKind::Cuda => CUDA_RUNTIME_API,
+        }
+    }
+
+    fn route(self) -> &'static str {
+        match self {
+            BackendKind::Cpu => CPU_ROUTE,
+            BackendKind::Cuda => CUDA_ROUTE,
+        }
+    }
+
+    fn kernel_id(self) -> &'static str {
+        match self {
+            BackendKind::Cpu => CPU_KERNEL_ID,
+            BackendKind::Cuda => CUDA_KERNEL_ID,
+        }
+    }
+}
+
+fn backend_summary(
+    runs: &[Value],
+    backend: &str,
+    runtime_api: &str,
+    selected_route: &str,
+    kernel_id: &str,
+) -> Result<Value, Box<dyn Error>> {
+    let mut summary = json!({
+        "backend": backend,
+        "runtime_api": runtime_api,
+        "selected_route": selected_route,
+        "kernel_id": kernel_id,
+        "run_count": runs.len(),
+        "quality_passed": runs.iter().all(|run| bool_at(run, "/quality_passed").unwrap_or(false)),
+        "fallback_used": runs.iter().any(|run| bool_at(run, "/fallback_used").unwrap_or(true)),
+        "model_load_ms": number_summary(runs, "/timing/model_load_ms"),
+        "tokenizer_load_ms": number_summary(runs, "/timing/tokenizer_load_ms"),
+        "prompt_render_ms": number_summary(runs, "/timing/prompt_render_ms"),
+        "tokenize_ms": number_summary(runs, "/timing/tokenize_ms"),
+        "prefill_ms": number_summary(runs, "/timing/prefill_ms"),
+        "first_token_ms": number_summary(runs, "/timing/first_token_ms"),
+        "decode_total_ms": number_summary(runs, "/timing/decode_total_ms"),
+        "steady_tok_per_s": number_summary(runs, "/timing/steady_tok_per_s")
+    });
+    if backend == CUDA_BACKEND {
+        let object = summary.as_object_mut().expect("summary is object");
+        object.insert(
+            "cuda_context_init_ms".to_owned(),
+            number_summary(runs, "/timing/cuda_context_init_ms"),
+        );
+        object.insert(
+            "weight_upload_ms".to_owned(),
+            number_summary(runs, "/timing/weight_upload_ms"),
+        );
+        object.insert("kernel_time_ms".to_owned(), number_summary(runs, "/timing/kernel_time_ms"));
+        object.insert("launch_count".to_owned(), u64_summary(runs, "/timing/launch_count"));
+        object.insert(
+            "host_to_device_bytes".to_owned(),
+            u64_summary(runs, "/timing/host_to_device_bytes"),
+        );
+        object.insert(
+            "host_to_device_ms".to_owned(),
+            number_summary(runs, "/timing/host_to_device_ms"),
+        );
+        object.insert(
+            "device_to_host_bytes".to_owned(),
+            u64_summary(runs, "/timing/device_to_host_bytes"),
+        );
+        object.insert(
+            "device_to_host_ms".to_owned(),
+            number_summary(runs, "/timing/device_to_host_ms"),
+        );
+        object.insert(
+            "vram_high_water_bytes".to_owned(),
+            u64_summary(runs, "/timing/vram_high_water_bytes"),
+        );
+    }
+    Ok(summary)
+}
+
 fn comparator_summary(profiles: &[Value]) -> Value {
-    let total_runs = profiles.iter().map(|profile| u64_value(profile, "run_count")).sum::<u64>();
+    let total_cpu_runs = profiles
+        .iter()
+        .filter_map(|profile| profile.get("cpu_runs").and_then(Value::as_u64))
+        .sum::<u64>();
+    let total_cuda_runs = profiles
+        .iter()
+        .filter_map(|profile| profile.get("cuda_runs").and_then(Value::as_u64))
+        .sum::<u64>();
     json!({
         "status": "repeated_profiles_baseline_only",
         "profiles_recorded": profiles.len(),
         "min_runs_per_profile": 3,
-        "total_cpu_runs": total_runs,
-        "total_cuda_runs": total_runs,
+        "total_cpu_runs": total_cpu_runs,
+        "total_cuda_runs": total_cuda_runs,
         "fallback_free": true,
         "same_artifact_sha": true,
         "same_tokenizer_prompt_policy": true,
@@ -943,8 +1129,8 @@ fn comparator_summary(profiles: &[Value]) -> Value {
 
 fn transfer_timing() -> Value {
     json!({
-        "status": "host_to_device_and_device_to_host_measured_in_source_receipts",
-        "source": "CUDA-BITNET-PERF-005 source receipts record H2D/D2H bytes and timings per profile",
+        "status": "cuda_host_to_device_and_device_to_host_measured_in_source_receipts",
+        "source": "CUDA-BITNET-PERF-005 CUDA source receipts record H2D/D2H bytes and timings per profile; CPU source receipts provide comparator phase timing only",
         "host_to_device_bytes_recorded": true,
         "device_to_host_bytes_recorded": true,
         "host_to_device_timing_recorded": true,
@@ -953,8 +1139,8 @@ fn transfer_timing() -> Value {
     })
 }
 
-fn hardware_context(runs: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
-    let receipts = all_receipts(runs);
+fn hardware_context(runs: &[ProfileRuns]) -> Result<Value, Box<dyn Error>> {
+    let receipts = cuda_receipts(runs);
     let powers = receipts
         .iter()
         .map(|receipt| number_at(receipt, "/cuda/power_draw_watts"))
@@ -963,7 +1149,7 @@ fn hardware_context(runs: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
         .iter()
         .map(|receipt| number_at(receipt, "/cuda/temperature_c"))
         .collect::<Result<Vec<_>, _>>()?;
-    let first = receipts.first().ok_or("hardware context requires receipts")?;
+    let first = receipts.first().ok_or("hardware context requires CUDA receipts")?;
     Ok(json!({
         "vram_bytes": u64_at(first, "/cuda/vram_bytes")?,
         "vram_high_water_bytes_min": u64_min(&receipts, &["/cuda/memory_hwm_bytes", "/cuda/vram_bytes"])?,
@@ -976,23 +1162,14 @@ fn hardware_context(runs: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
     }))
 }
 
-fn cuda_context(runs: &ProfileRuns) -> Result<Value, Box<dyn Error>> {
-    let first = runs.one_token.first().ok_or("one_token runs missing")?.1.clone();
+fn cuda_context(runs: &[ProfileRuns]) -> Result<Value, Box<dyn Error>> {
+    let first =
+        runs.first().and_then(|profile| profile.cuda.first()).ok_or("CUDA runs missing")?.1.clone();
     first.pointer("/cuda").cloned().ok_or("cuda block missing".into())
 }
 
-fn all_receipts(runs: &ProfileRuns) -> Vec<&Value> {
-    runs.one_token
-        .iter()
-        .chain(runs.short_decode_8.iter())
-        .chain(runs.short_decode_32.iter())
-        .chain(runs.prefill_128_decode_16.iter())
-        .chain(runs.prefill_512_decode_32.iter())
-        .chain(runs.warm_session_3.iter())
-        .chain(runs.warm_session_10.iter())
-        .chain(runs.decode_128.iter())
-        .map(|(_, receipt)| receipt)
-        .collect()
+fn cuda_receipts(runs: &[ProfileRuns]) -> Vec<&Value> {
+    runs.iter().flat_map(|profile| profile.cuda.iter()).map(|(_, receipt)| receipt).collect()
 }
 
 fn rendered_prompt_hash(profile: &str, receipt: &Value) -> Result<String, Box<dyn Error>> {
@@ -1040,32 +1217,19 @@ fn generated_tokens(profile: &str, receipt: &Value) -> Result<u64, Box<dyn Error
     u64_at_any(receipt, candidates)
 }
 
-fn expected_generated_tokens(profile: &str) -> Result<u64, Box<dyn Error>> {
-    match profile {
-        "one_token" => Ok(1),
-        "short_decode_8" => Ok(8),
-        "short_decode_32" => Ok(32),
-        "prefill_128_decode_16" => Ok(16),
-        "prefill_512_decode_32" => Ok(32),
-        "warm_session_3_turns" => Ok(24),
-        "warm_session_10_turns" => Ok(80),
-        "decode_128_from_warm_context" => Ok(128),
-        other => Err(format!("unknown profile {other}").into()),
-    }
-}
-
-fn expected_input_tokens(profile: &str) -> Result<Option<u64>, Box<dyn Error>> {
-    match profile {
-        "prefill_128_decode_16" => Ok(Some(128)),
-        "prefill_512_decode_32" => Ok(Some(512)),
-        "one_token"
-        | "short_decode_8"
-        | "short_decode_32"
-        | "warm_session_3_turns"
-        | "warm_session_10_turns"
-        | "decode_128_from_warm_context" => Ok(None),
-        other => Err(format!("unknown profile {other}").into()),
-    }
+fn generated_token_hash(receipt: &Value) -> Result<String, Box<dyn Error>> {
+    Ok(string_at_any_or(
+        receipt,
+        &[
+            "/generated_token_ids_sha256",
+            "/quality_summary/generated_token_ids_sha256",
+            "/one_token_proof/generated_token_ids_sha256",
+            "/short_decode_proof/generated_token_ids_sha256",
+            "/warm_session_proof/generated_token_ids_sha256",
+            "/warm_decode_proof/generated_token_ids_sha256",
+        ],
+        "not_recorded_in_source_receipt",
+    ))
 }
 
 fn number_summary(runs: &[Value], pointer: &str) -> Value {
@@ -1212,12 +1376,16 @@ fn u64_max(receipts: &[&Value], pointers: &[&str]) -> Result<u64, Box<dyn Error>
         .ok_or_else(|| "u64_max requires at least one receipt".into())
 }
 
-fn u64_value(value: &Value, field: &str) -> u64 {
-    value.get(field).and_then(Value::as_u64).unwrap_or(0)
+fn kernel_id(receipt: &Value) -> Result<&str, Box<dyn Error>> {
+    str_at_any(receipt, &["/kernel/kernel_id", "/kernel_stats/0/kernel_id"])
 }
 
 fn path_label(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
+}
+
+fn path_labels(paths: &[PathBuf]) -> Vec<String> {
+    paths.iter().map(|path| path_label(path)).collect()
 }
 
 #[cfg(test)]
@@ -1226,20 +1394,17 @@ mod tests {
 
     fn args_with_prefix(prefix: &str) -> Args {
         Args {
-            one_token_runs: vec![PathBuf::from(format!("{prefix}/one-token.json"))],
-            short_decode_8_runs: vec![PathBuf::from(format!("{prefix}/short-decode-8.json"))],
-            short_decode_32_runs: vec![PathBuf::from(format!("{prefix}/short-decode-32.json"))],
-            prefill_128_decode_16_runs: vec![PathBuf::from(format!(
-                "{prefix}/prefill-128-decode-16.json"
-            ))],
-            prefill_512_decode_32_runs: vec![PathBuf::from(format!(
-                "{prefix}/prefill-512-decode-32.json"
-            ))],
-            warm_session_3_runs: vec![PathBuf::from(format!("{prefix}/warm-session-3.json"))],
-            warm_session_10_runs: vec![PathBuf::from(format!("{prefix}/warm-session-10.json"))],
-            decode_128_runs: vec![PathBuf::from(format!(
-                "{prefix}/decode-128-from-warm-context.json"
-            ))],
+            profiles: PROFILE_SPECS
+                .iter()
+                .copied()
+                .map(|spec| ProfilePaths {
+                    spec,
+                    cpu_paths: vec![PathBuf::from(format!("{prefix}/{}-cpu.json", spec.stem))],
+                    cuda_paths: vec![PathBuf::from(format!("{prefix}/{}-cuda.json", spec.stem))],
+                    cpu_overridden: false,
+                    cuda_overridden: false,
+                })
+                .collect(),
             receipt_out: PathBuf::from(format!("{prefix}/aggregate.json")),
             manifest_out: None,
             print_manifest: false,
@@ -1247,7 +1412,7 @@ mod tests {
     }
 
     #[test]
-    fn bitnet_perf_005_source_manifest_names_profiles_and_boundaries() {
+    fn bitnet_perf_005_source_manifest_names_cpu_and_cuda_profiles() {
         let args = args_with_prefix("target/bitnet-perf-005");
         let manifest = source_manifest(&args);
 
@@ -1256,13 +1421,10 @@ mod tests {
             "strict_bitnet_cuda_repeated_profiles_source_manifest"
         );
         assert_eq!(manifest["campaign_item"], CAMPAIGN_ITEM);
-        assert_eq!(manifest["selected_backend"], "nvidia-rtx-5070-ti-cuda");
-        assert_eq!(manifest["selected_route"], "bitnet_qk256_cuda");
-        assert_eq!(manifest["kernel_id"], "qk256_gemv_cuda");
-        assert_eq!(
-            manifest["model"]["sha256"],
-            "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162"
-        );
+        assert_eq!(manifest["selected_backend"], CUDA_BACKEND);
+        assert_eq!(manifest["reference_backend"], CPU_BACKEND);
+        assert_eq!(manifest["selected_route"], CUDA_ROUTE);
+        assert_eq!(manifest["kernel_id"], CUDA_KERNEL_ID);
 
         let profiles = manifest["profiles"].as_array();
         assert_eq!(profiles.map(Vec::len), Some(8));
@@ -1271,32 +1433,20 @@ mod tests {
                 profile["profile"] == "prefill_512_decode_32"
                     && profile["expected_input_tokens"] == 512
                     && profile["expected_generated_tokens"] == 32
-            })
-        }));
-        assert!(profiles.is_some_and(|profiles| {
-            profiles.iter().any(|profile| {
-                profile["profile"] == "decode_128_from_warm_context"
-                    && profile["run_flag"] == "--decode-128-from-warm-context-run"
+                    && profile["cpu_run_flag"] == "--prefill-512-decode-32-cpu-run"
+                    && profile["cuda_run_flag"] == "--prefill-512-decode-32-cuda-run"
             })
         }));
         assert!(manifest["strict_rejection_rules"].as_array().is_some_and(|rules| {
             rules.iter().any(|rule| {
-                rule.as_str().is_some_and(|text| {
-                    text.contains("dense_regular_llm_cuda receipts are rejected")
-                })
-            })
-        }));
-        assert!(manifest["claim_boundaries"].as_array().is_some_and(|boundaries| {
-            boundaries.iter().any(|boundary| {
-                boundary
-                    .as_str()
-                    .is_some_and(|text| text.contains("does not prove hardware execution"))
+                rule.as_str()
+                    .is_some_and(|text| text.contains("at least three CPU AVX-512 source receipts"))
             })
         }));
     }
 
     #[test]
-    fn bitnet_perf_005_preflight_reports_all_missing_profile_inputs() {
+    fn bitnet_perf_005_preflight_reports_cpu_and_cuda_missing_profile_inputs() {
         let args = args_with_prefix("target/bitnet-perf-005/missing");
         let message = match assert_input_paths_exist(&args) {
             Ok(()) => String::new(),
@@ -1316,63 +1466,50 @@ mod tests {
         ] {
             assert!(message.contains(profile), "missing {profile} in {message}");
         }
-        assert!(message.contains("--print-manifest"), "missing manifest hint in {message}");
+        assert!(message.contains("cpu:"), "missing CPU hint in {message}");
+        assert!(message.contains("cuda:"), "missing CUDA hint in {message}");
     }
 
     #[test]
-    fn bitnet_perf_005_strict_bitnet_cuda_repeated_profiles_aggregate_builds_from_sources()
+    fn bitnet_perf_005_rejects_cuda_only_sources_as_comparator_evidence()
+    -> Result<(), Box<dyn Error>> {
+        let temp = tempfile::tempdir()?;
+        let spec = PROFILE_SPECS[0];
+        let cuda_runs = write_profile_runs(temp.path(), spec, BackendKind::Cuda)?;
+        let runs = ProfileRuns { spec, cpu: Vec::new(), cuda: cuda_runs };
+        let message = assert_repeated_sources(&runs).unwrap_err().to_string();
+        assert!(message.contains("at least 3 CPU source receipts"), "got: {message}");
+        Ok(())
+    }
+
+    #[test]
+    fn bitnet_perf_005_strict_bitnet_cuda_repeated_profiles_aggregate_builds_from_cpu_cuda_sources()
     -> Result<(), Box<dyn std::error::Error>> {
         let temp = tempfile::tempdir()?;
+        let mut profile_runs = Vec::new();
+        for spec in PROFILE_SPECS {
+            profile_runs.push(ProfileRuns {
+                spec: *spec,
+                cpu: write_profile_runs(temp.path(), *spec, BackendKind::Cpu)?,
+                cuda: write_profile_runs(temp.path(), *spec, BackendKind::Cuda)?,
+            });
+        }
+        for runs in &profile_runs {
+            assert_repeated_sources(runs)?;
+        }
+
         let args = Args {
-            one_token_runs: write_profile_runs(temp.path(), "one_token", 1, None)?,
-            short_decode_8_runs: write_profile_runs(temp.path(), "short_decode_8", 8, None)?,
-            short_decode_32_runs: write_profile_runs(temp.path(), "short_decode_32", 32, None)?,
-            prefill_128_decode_16_runs: write_profile_runs(
-                temp.path(),
-                "prefill_128_decode_16",
-                16,
-                Some(128),
-            )?,
-            prefill_512_decode_32_runs: write_profile_runs(
-                temp.path(),
-                "prefill_512_decode_32",
-                32,
-                Some(512),
-            )?,
-            warm_session_3_runs: write_profile_runs(temp.path(), "warm_session_3_turns", 24, None)?,
-            warm_session_10_runs: write_profile_runs(
-                temp.path(),
-                "warm_session_10_turns",
-                80,
-                None,
-            )?,
-            decode_128_runs: write_profile_runs(
-                temp.path(),
-                "decode_128_from_warm_context",
-                128,
-                None,
-            )?,
+            profiles: PROFILE_SPECS.iter().copied().map(default_profile_paths).collect(),
             receipt_out: temp.path().join("aggregate.json"),
             manifest_out: None,
             print_manifest: false,
         };
-
-        let runs = ProfileRuns {
-            one_token: read_runs(&args.one_token_runs)?,
-            short_decode_8: read_runs(&args.short_decode_8_runs)?,
-            short_decode_32: read_runs(&args.short_decode_32_runs)?,
-            prefill_128_decode_16: read_runs(&args.prefill_128_decode_16_runs)?,
-            prefill_512_decode_32: read_runs(&args.prefill_512_decode_32_runs)?,
-            warm_session_3: read_runs(&args.warm_session_3_runs)?,
-            warm_session_10: read_runs(&args.warm_session_10_runs)?,
-            decode_128: read_runs(&args.decode_128_runs)?,
-        };
-        assert_repeated_sources(&runs)?;
-
-        let receipt = build_receipt(&args, &runs)?;
+        let receipt = build_receipt(&args, &profile_runs)?;
         validate_strict_bitnet_cuda_repeated_profiles_receipt_json(&receipt)?;
 
         assert_eq!(receipt["profiles"].as_array().map(Vec::len), Some(8));
+        assert_eq!(receipt["comparator_summary"]["total_cpu_runs"], 24);
+        assert_eq!(receipt["comparator_summary"]["total_cuda_runs"], 24);
         assert_eq!(receipt["speedup_claim"], false);
         assert_eq!(receipt["benchmark_qualified_speedup"], false);
         assert_eq!(receipt["full_cuda_residency_claimed"], false);
@@ -1393,31 +1530,52 @@ mod tests {
 
     fn write_profile_runs(
         root: &Path,
-        profile: &str,
-        generated_tokens: u64,
-        expected_input_tokens: Option<u64>,
-    ) -> std::io::Result<Vec<PathBuf>> {
-        let mut paths = Vec::new();
+        spec: ProfileSpec,
+        backend: BackendKind,
+    ) -> std::io::Result<Vec<(PathBuf, Value)>> {
+        let mut runs = Vec::new();
         for run in 1..=3 {
-            let path = root.join(format!("{profile}-run-{run}.json"));
-            let receipt = source_receipt(profile, run, generated_tokens, expected_input_tokens);
+            let path = root.join(format!("{}-{}-run-{run}.json", spec.stem, backend.label()));
+            let receipt = source_receipt(spec, run, backend);
             let encoded = serde_json::to_vec_pretty(&receipt).map_err(std::io::Error::other)?;
             std::fs::write(&path, encoded)?;
-            paths.push(path);
+            runs.push((path, receipt));
         }
-        Ok(paths)
+        Ok(runs)
     }
 
-    fn source_receipt(
-        profile: &str,
-        run: u64,
-        generated_tokens: u64,
-        expected_input_tokens: Option<u64>,
-    ) -> Value {
-        let prompt_tokens = expected_input_tokens.unwrap_or(32);
-        json!({
+    fn source_receipt(spec: ProfileSpec, run: u64, backend: BackendKind) -> Value {
+        let prompt_tokens = spec.expected_input_tokens.unwrap_or(32);
+        let mut timing = json!({
+            "model_load_ms": 100.0 + run as f64,
+            "tokenizer_load_ms": 1.0,
+            "prompt_render_ms": 0.1,
+            "tokenize_ms": 0.2,
+            "prefill_ms": 4.0,
+            "first_token_ms": 5.0,
+            "decode_total_ms": 6.0 + run as f64,
+            "steady_tok_per_s": 7.0
+        });
+        if matches!(backend, BackendKind::Cuda) {
+            let object = timing.as_object_mut().expect("timing object");
+            object.insert("cuda_context_init_ms".to_owned(), json!(2.0));
+            object.insert("weight_upload_ms".to_owned(), json!(3.0));
+            object.insert("kernel_time_ms".to_owned(), json!(10.0));
+            object.insert("launch_count".to_owned(), json!(210));
+            object.insert("kernel_invocations".to_owned(), json!(210));
+            object.insert("host_to_device_bytes".to_owned(), json!(8));
+            object.insert("host_to_device_ms".to_owned(), json!(0.8));
+            object.insert("device_to_host_bytes".to_owned(), json!(9));
+            object.insert("device_to_host_ms".to_owned(), json!(0.9));
+            object.insert("vram_high_water_bytes".to_owned(), json!(7070547968u64));
+        }
+
+        let mut receipt = json!({
             "schema": 1,
-            "artifact_kind": "strict_bitnet_cuda_profile_source",
+            "artifact_kind": match backend {
+                BackendKind::Cpu => "strict_bitnet_cpu_profile_source",
+                BackendKind::Cuda => "strict_bitnet_cuda_profile_source"
+            },
             "model": {
                 "repo": MODEL_REPO,
                 "file": MODEL_FILE,
@@ -1433,25 +1591,25 @@ mod tests {
                 "tokenizer_authority": TOKENIZER_AUTHORITY,
                 "prompt_authority": PROMPT_AUTHORITY,
                 "prompt_template": PROMPT_AUTHORITY,
-                "rendered_prompt_sha256": format!("prompt-hash-{profile}"),
+                "rendered_prompt_sha256": format!("prompt-hash-{}", spec.profile),
                 "prompt_token_count": prompt_tokens
             },
             "execution_plan": {
-                "selected_backend": SELECTED_BACKEND,
-                "selected_route": SELECTED_ROUTE,
-                "runtime_api": RUNTIME_API,
+                "selected_backend": backend.backend_label(),
+                "selected_route": backend.route(),
+                "runtime_api": backend.runtime_api(),
                 "strict_fallback_policy": "reject",
                 "fallback_used": false,
-                "strict_cuda_ready": true,
+                "strict_cuda_ready": matches!(backend, BackendKind::Cuda),
                 "speedup_claim": false,
                 "bitnet_packed_qk256_cuda": true,
                 "dense_regular_llm_cuda": false,
                 "unsupported_ops": 0,
                 "cpu_fallback_ops": 0
             },
-            "requested_backend": SELECTED_BACKEND,
-            "selected_backend": SELECTED_BACKEND,
-            "runtime_api": RUNTIME_API,
+            "requested_backend": backend.backend_label(),
+            "selected_backend": backend.backend_label(),
+            "runtime_api": backend.runtime_api(),
             "fallback_used": false,
             "speedup_claim": false,
             "bitnet_packed_i2s_qk256_proof": true,
@@ -1459,56 +1617,52 @@ mod tests {
             "quality_summary": {
                 "passed": true,
                 "generated_token_ids_match": true,
-                "generated_token_ids_sha256": format!("generated-hash-{profile}"),
+                "generated_token_ids_sha256": format!("generated-hash-{}", spec.profile),
                 "first_divergence_report": "none",
                 "top_k_compared": true
             },
-            "timing": {
-                "model_load_ms": 100.0 + run as f64,
-                "tokenizer_load_ms": 1.0,
-                "prompt_render_ms": 0.1,
-                "tokenize_ms": 0.2,
-                "cuda_context_init_ms": 2.0,
-                "weight_upload_ms": 3.0,
-                "prefill_ms": 4.0,
-                "first_token_ms": 5.0,
-                "decode_total_ms": 6.0 + run as f64,
-                "steady_tok_per_s": 7.0,
-                "host_to_device_bytes": 8,
-                "host_to_device_ms": 0.8,
-                "device_to_host_bytes": 9,
-                "device_to_host_ms": 0.9
+            "timing": timing,
+            "kernel": {
+                "kernel_id": backend.kernel_id()
             },
-            "kernel_stats": [
-                {
-                    "kernel_id": KERNEL_ID,
+            "profile": {
+                "id": spec.profile,
+                "expected_input_tokens": spec.expected_input_tokens,
+                "generated_tokens": spec.expected_generated_tokens
+            }
+        });
+        if matches!(backend, BackendKind::Cuda) {
+            let object = receipt.as_object_mut().expect("receipt object");
+            object.insert(
+                "kernel_stats".to_owned(),
+                json!([{
+                    "kernel_id": CUDA_KERNEL_ID,
                     "kernel_time_ms": 10.0,
                     "invocations": 210,
                     "kernel_launches": 210,
                     "fallback_invocations": 0,
                     "host_to_device_bytes": 8,
                     "device_to_host_bytes": 9
-                }
-            ],
-            "cuda": {
-                "available": true,
-                "device_count": 1,
-                "device_name": "NVIDIA GeForce RTX 5070 Ti",
-                "compute_capability": "12.0",
-                "driver_version": "580.00",
-                "cuda_runtime_version": "13.0",
-                "cuda_toolkit_version": "13.0",
-                "nvrtc_version": "13.0",
-                "vram_bytes": 17094475776u64,
-                "memory_hwm_bytes": 7070547968u64,
-                "power_draw_watts": 45.0,
-                "temperature_c": 42.0
-            },
-            "profile": {
-                "id": profile,
-                "expected_input_tokens": expected_input_tokens,
-                "generated_tokens": generated_tokens
-            }
-        })
+                }]),
+            );
+            object.insert(
+                "cuda".to_owned(),
+                json!({
+                    "available": true,
+                    "device_count": 1,
+                    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+                    "compute_capability": "12.0",
+                    "driver_version": "591.86",
+                    "cuda_runtime_version": "12.9",
+                    "cuda_toolkit_version": "12.9",
+                    "nvrtc_version": "12.9",
+                    "vram_bytes": 17094475776u64,
+                    "memory_hwm_bytes": 7070547968u64,
+                    "power_draw_watts": 45.0,
+                    "temperature_c": 42.0
+                }),
+            );
+        }
+        receipt
     }
 }

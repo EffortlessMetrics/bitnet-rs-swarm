@@ -15,6 +15,12 @@ const OFFICIAL_BITNET_I2S_REPO: &str = "microsoft/bitnet-b1.58-2B-4T-gguf";
 const OFFICIAL_BITNET_I2S_FILE: &str = "ggml-model-i2_s.gguf";
 const OFFICIAL_BITNET_I2S_SHA256: &str =
     "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162";
+const OFFICIAL_BITNET_CPU_AVX512_BACKEND: &str = "amd-9950x3d-cpu-avx512";
+const OFFICIAL_BITNET_CPU_AVX512_ROUTE: &str = "bitnet_i2s_qk256_cpu_avx512";
+const OFFICIAL_BITNET_CPU_AVX512_KERNEL: &str = "i2_s-avx512-reference";
+const OFFICIAL_BITNET_CUDA_BACKEND: &str = "nvidia-rtx-5070-ti-cuda";
+const OFFICIAL_BITNET_CUDA_ROUTE: &str = "bitnet_qk256_cuda";
+const OFFICIAL_BITNET_CUDA_KERNEL: &str = "qk256_gemv_cuda";
 const QWEN3_REPEATED_COMPARATOR_PROFILES: &[&str] = &[
     "one_token",
     "short_decode_8",
@@ -2990,11 +2996,16 @@ fn validate_bitnet_repeated_profile_proof_input(
 ) -> Result<(), ReceiptError> {
     let input = require_object(proof_inputs, field)?;
     require_non_empty_string(input, "path")?;
-    require_non_empty_string(input, "sha256")?;
-    require_string_eq(input, "artifact_kind", "strict_bitnet_profile_repeated_runs")?;
-    let runs = require_array(input, "runs")?;
-    if runs.len() < 3 {
-        return Err(validation_error(format!("{field}.runs must contain at least 3 paths")));
+    require_string_eq(input, "artifact_kind", "strict_bitnet_profile_repeated_comparator_runs")?;
+    require_non_empty_string(input, "cpu_sha256")?;
+    require_non_empty_string(input, "cuda_sha256")?;
+    let cpu_runs = require_array(input, "cpu_runs")?;
+    let cuda_runs = require_array(input, "cuda_runs")?;
+    if cpu_runs.len() < 3 {
+        return Err(validation_error(format!("{field}.cpu_runs must contain at least 3 paths")));
+    }
+    if cuda_runs.len() < 3 {
+        return Err(validation_error(format!("{field}.cuda_runs must contain at least 3 paths")));
     }
     Ok(())
 }
@@ -3006,11 +3017,11 @@ fn validate_bitnet_repeated_profile(
 ) -> Result<(), ReceiptError> {
     require_string_eq(profile, "profile", expected_profile)?;
     require_string_eq(profile, "status", "repeated_same_artifact_cpu_cuda_profile")?;
-    require_string_eq(profile, "cpu_reference_backend", "amd-9950x3d-cpu-avx512")?;
-    require_string_eq(profile, "cuda_backend", "nvidia-rtx-5070-ti-cuda")?;
+    require_string_eq(profile, "cpu_reference_backend", OFFICIAL_BITNET_CPU_AVX512_BACKEND)?;
+    require_string_eq(profile, "cuda_backend", OFFICIAL_BITNET_CUDA_BACKEND)?;
     require_string_eq(profile, "runtime_api", "cuda")?;
-    require_string_eq(profile, "selected_route", "bitnet_qk256_cuda")?;
-    require_string_eq(profile, "kernel_id", "qk256_gemv_cuda")?;
+    require_string_eq(profile, "selected_route", OFFICIAL_BITNET_CUDA_ROUTE)?;
+    require_string_eq(profile, "kernel_id", OFFICIAL_BITNET_CUDA_KERNEL)?;
     if let Some(expected_input_tokens) = bitnet_expected_input_tokens(expected_profile)? {
         require_u64_eq(profile, "expected_input_tokens", expected_input_tokens)?;
     } else if !profile.get("expected_input_tokens").is_some_and(serde_json::Value::is_null) {
@@ -3019,7 +3030,7 @@ fn validate_bitnet_repeated_profile(
         )));
     }
     require_u64_eq(profile, "expected_generated_tokens", expected_generated_tokens)?;
-    require_u64_at_least(profile, "run_count", 3)?;
+    require_u64_at_least(profile, "run_count", 6)?;
     require_u64_at_least(profile, "cpu_runs", 3)?;
     require_u64_at_least(profile, "cuda_runs", 3)?;
     require_u64_at_least(profile, "min_runs_per_backend", 3)?;
@@ -3036,39 +3047,91 @@ fn validate_bitnet_repeated_profile(
     require_bool_eq(profile, "server_ready_claimed", false)?;
     require_non_empty_string(profile, "transfer_timing_status")?;
 
-    validate_dense_qwen_metric_summary(require_object(profile, "model_load_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "tokenizer_load_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "prompt_render_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "tokenize_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "cuda_context_init_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "weight_upload_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "prefill_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "first_token_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "decode_total_ms")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "steady_tok_per_s")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "kernel_time_ms")?)?;
-    validate_dense_qwen_u64_summary(require_object(profile, "launch_count")?)?;
-    validate_dense_qwen_u64_summary(require_object(profile, "host_to_device_bytes")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "host_to_device_ms")?)?;
-    validate_dense_qwen_u64_summary(require_object(profile, "device_to_host_bytes")?)?;
-    validate_dense_qwen_metric_summary(require_object(profile, "device_to_host_ms")?)?;
-    validate_dense_qwen_u64_summary(require_object(profile, "vram_high_water_bytes")?)?;
+    validate_bitnet_repeated_backend_summary(
+        require_object(profile, "cpu")?,
+        OFFICIAL_BITNET_CPU_AVX512_BACKEND,
+        "cpu",
+        OFFICIAL_BITNET_CPU_AVX512_ROUTE,
+        OFFICIAL_BITNET_CPU_AVX512_KERNEL,
+        false,
+    )?;
+    validate_bitnet_repeated_backend_summary(
+        require_object(profile, "cuda")?,
+        OFFICIAL_BITNET_CUDA_BACKEND,
+        "cuda",
+        OFFICIAL_BITNET_CUDA_ROUTE,
+        OFFICIAL_BITNET_CUDA_KERNEL,
+        true,
+    )?;
 
     let runs = require_array(profile, "runs")?;
-    if runs.len() < 3 {
+    if runs.len() < 6 {
         return Err(validation_error(format!(
-            "{expected_profile}.runs must contain at least 3 runs"
+            "{expected_profile}.runs must contain at least 3 CPU and 3 CUDA runs"
         )));
     }
     let mut paths = std::collections::BTreeSet::new();
+    let mut cpu_runs = 0;
+    let mut cuda_runs = 0;
     for run in runs {
         validate_bitnet_repeated_profile_run(run, expected_profile, expected_generated_tokens)?;
+        match require_string(run, "backend")? {
+            OFFICIAL_BITNET_CPU_AVX512_BACKEND => cpu_runs += 1,
+            OFFICIAL_BITNET_CUDA_BACKEND => cuda_runs += 1,
+            other => {
+                return Err(validation_error(format!(
+                    "{expected_profile}.runs contains unsupported backend {other}"
+                )));
+            }
+        }
         let path = require_string(run, "source_receipt_path")?;
         if !paths.insert(path.to_owned()) {
             return Err(validation_error(format!(
                 "{expected_profile}.runs source_receipt_path values must be unique"
             )));
         }
+    }
+    if cpu_runs < 3 || cuda_runs < 3 {
+        return Err(validation_error(format!(
+            "{expected_profile}.runs must include at least 3 CPU and 3 CUDA runs"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_bitnet_repeated_backend_summary(
+    summary: &serde_json::Value,
+    backend: &str,
+    runtime_api: &str,
+    selected_route: &str,
+    kernel_id: &str,
+    cuda: bool,
+) -> Result<(), ReceiptError> {
+    require_string_eq(summary, "backend", backend)?;
+    require_string_eq(summary, "runtime_api", runtime_api)?;
+    require_string_eq(summary, "selected_route", selected_route)?;
+    require_string_eq(summary, "kernel_id", kernel_id)?;
+    require_u64_at_least(summary, "run_count", 3)?;
+    require_bool_eq(summary, "quality_passed", true)?;
+    require_bool_eq(summary, "fallback_used", false)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "model_load_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "tokenizer_load_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "prompt_render_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "tokenize_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "prefill_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "first_token_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "decode_total_ms")?)?;
+    validate_dense_qwen_metric_summary(require_object(summary, "steady_tok_per_s")?)?;
+    if cuda {
+        validate_dense_qwen_metric_summary(require_object(summary, "cuda_context_init_ms")?)?;
+        validate_dense_qwen_metric_summary(require_object(summary, "weight_upload_ms")?)?;
+        validate_dense_qwen_metric_summary(require_object(summary, "kernel_time_ms")?)?;
+        validate_dense_qwen_u64_summary(require_object(summary, "launch_count")?)?;
+        validate_dense_qwen_u64_summary(require_object(summary, "host_to_device_bytes")?)?;
+        validate_dense_qwen_metric_summary(require_object(summary, "host_to_device_ms")?)?;
+        validate_dense_qwen_u64_summary(require_object(summary, "device_to_host_bytes")?)?;
+        validate_dense_qwen_metric_summary(require_object(summary, "device_to_host_ms")?)?;
+        validate_dense_qwen_u64_summary(require_object(summary, "vram_high_water_bytes")?)?;
     }
     Ok(())
 }
@@ -3080,6 +3143,24 @@ fn validate_bitnet_repeated_profile_run(
 ) -> Result<(), ReceiptError> {
     require_non_empty_string(run, "run_id")?;
     require_string_eq(run, "profile", expected_profile)?;
+    let backend = require_string(run, "backend")?;
+    match backend {
+        OFFICIAL_BITNET_CPU_AVX512_BACKEND => {
+            require_string_eq(run, "runtime_api", "cpu")?;
+            require_string_eq(run, "selected_route", OFFICIAL_BITNET_CPU_AVX512_ROUTE)?;
+            require_string_eq(run, "kernel_id", OFFICIAL_BITNET_CPU_AVX512_KERNEL)?;
+        }
+        OFFICIAL_BITNET_CUDA_BACKEND => {
+            require_string_eq(run, "runtime_api", "cuda")?;
+            require_string_eq(run, "selected_route", OFFICIAL_BITNET_CUDA_ROUTE)?;
+            require_string_eq(run, "kernel_id", OFFICIAL_BITNET_CUDA_KERNEL)?;
+        }
+        other => {
+            return Err(validation_error(format!(
+                "{expected_profile}.backend must be CPU AVX-512 or RTX 5070 Ti CUDA, got {other}"
+            )));
+        }
+    }
     require_non_empty_string(run, "source_receipt_path")?;
     require_non_empty_string(run, "source_receipt_sha256")?;
     let source_artifact_kind = require_string(run, "source_artifact_kind")?;
@@ -3120,21 +3201,23 @@ fn validate_bitnet_repeated_profile_run(
     require_non_negative_number(timing, "tokenizer_load_ms")?;
     require_non_negative_number(timing, "prompt_render_ms")?;
     require_non_negative_number(timing, "tokenize_ms")?;
-    require_non_negative_number(timing, "cuda_context_init_ms")?;
-    require_non_negative_number(timing, "weight_upload_ms")?;
     require_non_negative_number(timing, "prefill_ms")?;
     require_non_negative_number(timing, "first_token_ms")?;
     require_non_negative_number(timing, "decode_total_ms")?;
     require_non_negative_number(timing, "steady_tok_per_s")?;
-    require_non_negative_number(timing, "kernel_time_ms")?;
-    require_u64_at_least(timing, "launch_count", 1)?;
-    require_u64_at_least(timing, "kernel_invocations", 1)?;
-    require_u64_at_least(timing, "host_to_device_bytes", 1)?;
-    require_non_negative_number(timing, "host_to_device_ms")?;
-    require_u64_at_least(timing, "device_to_host_bytes", 1)?;
-    require_non_negative_number(timing, "device_to_host_ms")?;
-    require_u64_at_least(timing, "vram_high_water_bytes", 1)?;
-    require_non_empty_string(timing, "power_temperature_context")?;
+    if backend == OFFICIAL_BITNET_CUDA_BACKEND {
+        require_non_negative_number(timing, "cuda_context_init_ms")?;
+        require_non_negative_number(timing, "weight_upload_ms")?;
+        require_non_negative_number(timing, "kernel_time_ms")?;
+        require_u64_at_least(timing, "launch_count", 1)?;
+        require_u64_at_least(timing, "kernel_invocations", 1)?;
+        require_u64_at_least(timing, "host_to_device_bytes", 1)?;
+        require_non_negative_number(timing, "host_to_device_ms")?;
+        require_u64_at_least(timing, "device_to_host_bytes", 1)?;
+        require_non_negative_number(timing, "device_to_host_ms")?;
+        require_u64_at_least(timing, "vram_high_water_bytes", 1)?;
+        require_non_empty_string(timing, "power_temperature_context")?;
+    }
 
     Ok(())
 }
