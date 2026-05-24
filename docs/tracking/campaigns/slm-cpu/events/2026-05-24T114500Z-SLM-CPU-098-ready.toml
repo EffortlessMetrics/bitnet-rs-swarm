@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T11:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-098"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+actor = "codex"
+branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
+summary = "Queued the fused output consumer implementation-or-blocker gate after SLM-CPU-097."
+notes = [
+  "SLM-CPU-098 is the next concrete Kaby Lake Qwen3 Q8_0 dense CPU performance gate: prove a fused output consumer path or record the exact API, lifetime, tensor-shape, or receipt-safety blocker.",
+  "Any implementation must preserve the Qwen3 Q8_0 appliance oracle before claiming bounded allocation or timing improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "The item makes no packed-Q8 default-runtime promotion, speedup, sustained throughput, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim.",
+]
