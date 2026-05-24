@@ -1678,8 +1678,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-046"
-status = "ready"
-branch = "codex/intel-a770/A770-046-output-readback-trace"
+status = "pr_open"
+pr = 592
+head_sha = "7de026b839f625b113c5b8bf5eba8fe318b6de8c"
+branch = "codex/intel-a770/A770-046-output-readback-trace-impl"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -1690,15 +1692,14 @@ commands = [
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qk256_output_readback_trace -- --nocapture",
   "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
   "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
-  "rustfmt --edition 2024 --check crates/bitnet-cli/src/commands/answer_parity.rs crates/bitnet-qk256-dispatch/src/lib.rs crates/bitnet-kernels/src/a770_opencl_runtime.rs",
+  "rustfmt --edition 2024 --check crates/bitnet-cli/src/main.rs crates/bitnet-cli/src/commands/answer_parity.rs",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",
 ]
 allowed_paths = [
+  "crates/bitnet-cli/src/main.rs",
   "crates/bitnet-cli/src/commands/answer_parity.rs",
-  "crates/bitnet-qk256-dispatch/**",
-  "crates/bitnet-kernels/src/a770_opencl_runtime.rs",
   "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
   "docs/reports/A770_046_QK256_OUTPUT_READBACK_TRACE.md",
   "docs/tracking/campaigns/intel-a770/**",

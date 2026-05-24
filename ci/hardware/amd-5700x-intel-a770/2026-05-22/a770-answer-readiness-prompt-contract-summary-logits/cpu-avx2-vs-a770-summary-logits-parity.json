@@ -939,6 +939,18 @@
           },
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -964,6 +976,18 @@
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -988,6 +1012,18 @@
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1035,6 +1071,18 @@
           },
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -1060,6 +1108,18 @@
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1084,6 +1144,18 @@
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1125,6 +1197,18 @@
         "left": {
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -1150,6 +1234,18 @@
           "nan_count_match": true,
           "policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1179,6 +1275,18 @@
         "right": {
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -1204,6 +1312,18 @@
           "nan_count_match": true,
           "policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1222,6 +1342,107 @@
           "sha256_f32_le_match": false,
           "shape_match": true,
           "summary_available": true,
+          "value_count_match": true
+        },
+        "target_layer_idx": 0
+      }
+    ],
+    "rows_truncated": false
+  },
+  "generated_output_qk256_output_readback_trace_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_qk256_output_readback_trace_frontier_device_side_evaluation",
+    "classification_counts": {
+      "generated_output_qk256_output_readback_trace_device_side_evaluation": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices",
+    "qk256_output_readback_trace_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_qk256_output_readback_trace_device_side_evaluation",
+        "first_mismatch_index": 9,
+        "left": {
+          "a770_first_values": [
+            -1.3538206815719604,
+            6.754318714141846,
+            3.368711233139038,
+            1.085590958595276,
+            -1.4488626718521118,
+            2.888573169708252,
+            -1.1144555807113647,
+            1.7156842947006226
+          ],
+          "a770_first_values_count": 8,
+          "a770_first_values_limit": 8,
+          "device_to_host_byte_count_match": true,
+          "first_mismatch_abs_delta": 1.1920928955078125e-7,
+          "first_mismatch_index": 0,
+          "first_values_match": false,
+          "mean_abs_delta": 3.257810028689523e-10,
+          "policy_first_values": [
+            -1.353820562362671,
+            6.754318714141846,
+            3.368711233139038,
+            1.085590958595276,
+            -1.4488626718521118,
+            2.888572931289673,
+            -1.1144555807113647,
+            1.715684175491333
+          ],
+          "policy_first_values_count": 8,
+          "policy_first_values_limit": 8,
+          "rms_abs_delta": 3.9808238039285015e-8,
+          "sample_count_match": true,
+          "sha256_f32_le_match": false,
+          "shape_match": true,
+          "trace_available": true,
+          "value_count_match": true
+        },
+        "next_diagnostic": "inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices",
+        "projection": "q_proj",
+        "qk256_numeric_policy_classification": "generated_output_qk256_numeric_policy_output_casting_serialization",
+        "qk256_output_casting_classification": "generated_output_qk256_output_casting_device_value_summary_drift",
+        "qk256_output_readback_trace_context_available": true,
+        "reason": null,
+        "right": {
+          "a770_first_values": [
+            -1.3538206815719604,
+            6.754318714141846,
+            3.368711233139038,
+            1.085590958595276,
+            -1.4488626718521118,
+            2.888573169708252,
+            -1.1144555807113647,
+            1.7156842947006226
+          ],
+          "a770_first_values_count": 8,
+          "a770_first_values_limit": 8,
+          "device_to_host_byte_count_match": true,
+          "first_mismatch_abs_delta": 1.1920928955078125e-7,
+          "first_mismatch_index": 0,
+          "first_values_match": false,
+          "mean_abs_delta": 3.257810028689523e-10,
+          "policy_first_values": [
+            -1.353820562362671,
+            6.754318714141846,
+            3.368711233139038,
+            1.085590958595276,
+            -1.4488626718521118,
+            2.888572931289673,
+            -1.1144555807113647,
+            1.715684175491333
+          ],
+          "policy_first_values_count": 8,
+          "policy_first_values_limit": 8,
+          "rms_abs_delta": 3.9808238039285015e-8,
+          "sample_count_match": true,
+          "sha256_f32_le_match": false,
+          "shape_match": true,
+          "trace_available": true,
           "value_count_match": true
         },
         "target_layer_idx": 0
@@ -1269,6 +1490,18 @@
           },
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -1294,6 +1527,18 @@
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1318,6 +1563,18 @@
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1363,6 +1620,18 @@
           },
           "a770_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.3538206815719604,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888573169708252,
+              -1.1144555807113647,
+              1.7156842947006226
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.01758772264884101,
@@ -1388,6 +1657,18 @@
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -1412,6 +1693,18 @@
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
             "finite_count": 2560,
+            "first_values": [
+              -1.353820562362671,
+              6.754318714141846,
+              3.368711233139038,
+              1.085590958595276,
+              -1.4488626718521118,
+              2.888572931289673,
+              -1.1144555807113647,
+              1.715684175491333
+            ],
+            "first_values_count": 8,
+            "first_values_limit": 8,
             "infinite_count": 0,
             "max": 6.754318714141846,
             "mean": -0.017587722323060006,
@@ -2059,5 +2352,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-24T06:04:02.211291800+00:00"
+  "timestamp": "2026-05-24T09:37:15.541440300+00:00"
 }

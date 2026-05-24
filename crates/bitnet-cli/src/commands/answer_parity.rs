@@ -331,6 +331,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_output_readback_trace_frontier =
+        build_generated_output_qk256_output_readback_trace_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -437,6 +445,7 @@ fn build_answer_parity_receipt(
         "generated_output_qkv_projection_dispatch_replay_frontier": generated_output_qkv_projection_dispatch_replay_frontier,
         "generated_output_qk256_numeric_policy_frontier": generated_output_qk256_numeric_policy_frontier,
         "generated_output_qk256_output_casting_frontier": generated_output_qk256_output_casting_frontier,
+        "generated_output_qk256_output_readback_trace_frontier": generated_output_qk256_output_readback_trace_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -5353,6 +5362,68 @@ fn build_generated_output_qk256_output_casting_frontier(
     })
 }
 
+fn build_generated_output_qk256_output_readback_trace_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_output_readback_trace_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_output_readback_trace_missing_context");
+        if classification != "generated_output_qk256_output_readback_trace_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_output_readback_trace_missing_context",
+        "generated_output_qk256_output_readback_trace_output_casting",
+        "generated_output_qk256_output_readback_trace_device_side_evaluation",
+        "generated_output_qk256_output_readback_trace_host_readback_serialization",
+        "generated_output_qk256_output_readback_trace_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_output_readback_trace_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_output_readback_trace_",
+        "generated_output_qk256_output_readback_trace_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_output_readback_trace_context_available": rows.iter().any(|row| {
+            row["qk256_output_readback_trace_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_output_readback_trace_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -5839,6 +5910,113 @@ fn generated_output_qk256_output_casting_context_row(
     })
 }
 
+fn generated_output_qk256_output_readback_trace_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let casting_row = generated_output_qk256_output_casting_row(id, left_case, right_case);
+    let casting_classification = casting_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_output_casting_missing_context");
+
+    if casting_classification == "generated_output_qk256_output_casting_not_applicable" {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_output_readback_trace_not_applicable",
+            "reason": "qk256_output_casting_not_applicable",
+            "qk256_output_casting_classification": casting_row["classification"],
+        });
+    }
+    if casting_classification == "generated_output_qk256_output_casting_clean" {
+        return generated_output_qk256_output_readback_trace_context_row(
+            id,
+            "generated_output_qk256_output_readback_trace_clean",
+            Value::Null,
+            casting_row,
+            Value::Null,
+            Value::Null,
+        );
+    }
+
+    let Some(left_casting) = casting_row.get("left") else {
+        return generated_output_qk256_output_readback_trace_missing_context_row(
+            id,
+            "left_casting_summary_missing",
+            casting_row,
+        );
+    };
+    let Some(right_casting) = casting_row.get("right") else {
+        return generated_output_qk256_output_readback_trace_missing_context_row(
+            id,
+            "right_casting_summary_missing",
+            casting_row,
+        );
+    };
+
+    let left_trace = qk256_output_readback_trace_summary(left_casting);
+    let right_trace = qk256_output_readback_trace_summary(right_casting);
+    let left_classification = qk256_output_readback_trace_classification(&left_trace);
+    let right_classification = qk256_output_readback_trace_classification(&right_trace);
+    let classification =
+        qk256_output_readback_trace_pair_classification(left_classification, right_classification);
+
+    generated_output_qk256_output_readback_trace_context_row(
+        id,
+        classification,
+        if classification == "generated_output_qk256_output_readback_trace_missing_context" {
+            json!("output_readback_trace_missing")
+        } else {
+            Value::Null
+        },
+        casting_row,
+        left_trace,
+        right_trace,
+    )
+}
+
+fn generated_output_qk256_output_readback_trace_missing_context_row(
+    id: &str,
+    reason: &str,
+    casting_row: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": "generated_output_qk256_output_readback_trace_missing_context",
+        "reason": reason,
+        "qk256_output_casting_classification": casting_row["classification"],
+        "qk256_output_readback_trace_context_available": false,
+        "next_diagnostic": qk256_output_readback_trace_next_diagnostic(
+            "generated_output_qk256_output_readback_trace_missing_context",
+        ),
+    })
+}
+
+fn generated_output_qk256_output_readback_trace_context_row(
+    id: &str,
+    classification: &str,
+    reason: Value,
+    casting_row: Value,
+    left_trace: Value,
+    right_trace: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "first_mismatch_index": casting_row["first_mismatch_index"],
+        "target_layer_idx": casting_row["target_layer_idx"],
+        "projection": casting_row["projection"],
+        "qk256_numeric_policy_classification": casting_row["qk256_numeric_policy_classification"],
+        "qk256_output_casting_classification": casting_row["classification"],
+        "qk256_output_readback_trace_context_available":
+            classification != "generated_output_qk256_output_readback_trace_missing_context",
+        "left": left_trace,
+        "right": right_trace,
+        "next_diagnostic": qk256_output_readback_trace_next_diagnostic(classification),
+    })
+}
+
 fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
     let policy = &replay["opencl_policy_output"];
     let a770 = &replay["a770_output"];
@@ -5903,6 +6081,9 @@ fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
             "max": policy["max"],
             "mean": policy["mean"],
             "rms": policy["rms"],
+            "first_values_limit": policy["first_values_limit"],
+            "first_values_count": policy["first_values_count"],
+            "first_values": policy["first_values"],
         },
         "a770_output": {
             "sha256_f32_le": a770["sha256_f32_le"],
@@ -5915,6 +6096,9 @@ fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
             "max": a770["max"],
             "mean": a770["mean"],
             "rms": a770["rms"],
+            "first_values_limit": a770["first_values_limit"],
+            "first_values_count": a770["first_values_count"],
+            "first_values": a770["first_values"],
         },
         "shape_match": shape_match,
         "value_count_match": value_count_match,
@@ -5972,6 +6156,124 @@ fn qk256_output_casting_pair_classification(
         .unwrap_or("generated_output_qk256_output_casting_missing_context")
 }
 
+fn qk256_output_readback_trace_summary(casting_summary: &Value) -> Value {
+    let policy = &casting_summary["policy_output"];
+    let a770 = &casting_summary["a770_output"];
+    let policy_values = policy["first_values"].as_array();
+    let a770_values = a770["first_values"].as_array();
+    let sample_count_match = match (policy_values, a770_values) {
+        (Some(policy), Some(a770)) => Some(policy.len() == a770.len()),
+        _ => None,
+    };
+    let first_values_match = match (policy_values, a770_values) {
+        (Some(policy), Some(a770)) if policy.len() == a770.len() => {
+            Some(policy.iter().zip(a770).all(|(left, right)| {
+                match (left.as_f64(), right.as_f64()) {
+                    (Some(left), Some(right)) => left.to_bits() == right.to_bits(),
+                    _ => left == right,
+                }
+            }))
+        }
+        (Some(_), Some(_)) => Some(false),
+        _ => None,
+    };
+    let (first_mismatch_index, first_mismatch_abs_delta) =
+        qk256_first_value_mismatch(policy_values, a770_values);
+    let trace_available = [
+        sample_count_match,
+        first_values_match,
+        casting_summary["shape_match"].as_bool(),
+        casting_summary["value_count_match"].as_bool(),
+        casting_summary["device_to_host_byte_count_match"].as_bool(),
+        casting_summary["sha256_f32_le_match"].as_bool(),
+    ]
+    .iter()
+    .all(Option::is_some);
+
+    json!({
+        "trace_available": trace_available,
+        "policy_first_values_limit": policy["first_values_limit"],
+        "a770_first_values_limit": a770["first_values_limit"],
+        "policy_first_values_count": policy["first_values_count"],
+        "a770_first_values_count": a770["first_values_count"],
+        "policy_first_values": policy["first_values"],
+        "a770_first_values": a770["first_values"],
+        "sample_count_match": sample_count_match,
+        "first_values_match": first_values_match,
+        "first_mismatch_index": first_mismatch_index,
+        "first_mismatch_abs_delta": first_mismatch_abs_delta,
+        "shape_match": casting_summary["shape_match"],
+        "value_count_match": casting_summary["value_count_match"],
+        "device_to_host_byte_count_match": casting_summary["device_to_host_byte_count_match"],
+        "sha256_f32_le_match": casting_summary["sha256_f32_le_match"],
+        "mean_abs_delta": casting_summary["mean_abs_delta"],
+        "rms_abs_delta": casting_summary["rms_abs_delta"],
+    })
+}
+
+fn qk256_first_value_mismatch(
+    left: Option<&Vec<Value>>,
+    right: Option<&Vec<Value>>,
+) -> (Value, Value) {
+    let (Some(left), Some(right)) = (left, right) else {
+        return (Value::Null, Value::Null);
+    };
+    for (idx, (left_value, right_value)) in left.iter().zip(right).enumerate() {
+        if left_value != right_value {
+            let delta = match (left_value.as_f64(), right_value.as_f64()) {
+                (Some(left), Some(right)) => json!((left - right).abs()),
+                _ => Value::Null,
+            };
+            return (json!(idx), delta);
+        }
+    }
+    if left.len() != right.len() {
+        return (json!(left.len().min(right.len())), Value::Null);
+    }
+    (Value::Null, Value::Null)
+}
+
+fn qk256_output_readback_trace_classification(summary: &Value) -> &'static str {
+    if !summary["trace_available"].as_bool().unwrap_or(false) {
+        return "generated_output_qk256_output_readback_trace_missing_context";
+    }
+    if summary["shape_match"].as_bool() == Some(false)
+        || summary["value_count_match"].as_bool() == Some(false)
+        || summary["sample_count_match"].as_bool() == Some(false)
+    {
+        return "generated_output_qk256_output_readback_trace_output_casting";
+    }
+    if summary["device_to_host_byte_count_match"].as_bool() == Some(false) {
+        return "generated_output_qk256_output_readback_trace_host_readback_serialization";
+    }
+    if summary["first_values_match"].as_bool() == Some(false) {
+        return "generated_output_qk256_output_readback_trace_device_side_evaluation";
+    }
+    if summary["sha256_f32_le_match"].as_bool() == Some(false) {
+        return "generated_output_qk256_output_readback_trace_host_readback_serialization";
+    }
+    "generated_output_qk256_output_readback_trace_clean"
+}
+
+fn qk256_output_readback_trace_pair_classification(
+    left_classification: &'static str,
+    right_classification: &'static str,
+) -> &'static str {
+    let priority = [
+        "generated_output_qk256_output_readback_trace_missing_context",
+        "generated_output_qk256_output_readback_trace_output_casting",
+        "generated_output_qk256_output_readback_trace_device_side_evaluation",
+        "generated_output_qk256_output_readback_trace_host_readback_serialization",
+        "generated_output_qk256_output_readback_trace_clean",
+    ];
+    priority
+        .into_iter()
+        .find(|classification| {
+            *classification == left_classification || *classification == right_classification
+        })
+        .unwrap_or("generated_output_qk256_output_readback_trace_missing_context")
+}
+
 fn qkv_projection_dispatch_replay_available(replay: &Value) -> bool {
     replay["source_context_available"].as_bool().unwrap_or(false)
         && replay["cpu_output"]["sha256_f32_le"].as_str().is_some()
@@ -6013,6 +6315,9 @@ fn qkv_projection_dispatch_replay_tensor_summary(tensor: &Value) -> Value {
         "max": tensor["max"],
         "mean": tensor["mean"],
         "rms": tensor["rms"],
+        "first_values_limit": tensor["first_values_limit"],
+        "first_values_count": tensor["first_values_count"],
+        "first_values": tensor["first_values"],
     })
 }
 
@@ -6378,6 +6683,28 @@ fn qk256_output_casting_next_diagnostic(classification: &str) -> &'static str {
         "generated_output_qk256_output_casting_frontier_missing_context"
         | "generated_output_qk256_output_casting_missing_context" => {
             "rerun focused receipts with QK256 output summary context enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_output_readback_trace_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_output_readback_trace_frontier_device_side_evaluation"
+        | "generated_output_qk256_output_readback_trace_device_side_evaluation" => {
+            "inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices"
+        }
+        "generated_output_qk256_output_readback_trace_frontier_host_readback_serialization"
+        | "generated_output_qk256_output_readback_trace_host_readback_serialization" => {
+            "capture broader selected QK256 output samples or a bounded full readback trace"
+        }
+        "generated_output_qk256_output_readback_trace_frontier_output_casting"
+        | "generated_output_qk256_output_readback_trace_output_casting" => {
+            "inspect selected QK256 OpenCL output shape and compact sample serialization"
+        }
+        "generated_output_qk256_output_readback_trace_frontier_missing_context"
+        | "generated_output_qk256_output_readback_trace_missing_context" => {
+            "rerun focused receipts with QK256 output first-value samples enabled"
         }
         _ => "none",
     }
@@ -7430,6 +7757,9 @@ mod tests {
             "mean": 0.125,
             "sha256_f32_le": sha,
             "rms": rms,
+            "first_values_limit": 8,
+            "first_values_count": 4,
+            "first_values": [0.125, -0.25, 0.5, -0.75],
         })
     }
 
@@ -9698,6 +10028,21 @@ mod tests {
             casting_frontier["next_diagnostic"],
             "capture selected QK256 OpenCL output value samples or device readback trace"
         );
+
+        let readback_frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+        assert_eq!(
+            readback_frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_host_readback_serialization"
+        );
+        assert_eq!(
+            readback_frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_host_readback_serialization"
+        );
+        assert_eq!(readback_frontier["rows"][0]["left"]["first_values_match"], true);
+        assert_eq!(
+            readback_frontier["next_diagnostic"],
+            "capture broader selected QK256 output samples or a bounded full readback trace"
+        );
     }
 
     #[test]
@@ -9725,6 +10070,16 @@ mod tests {
         );
         assert_eq!(frontier["rows"][0]["left"]["device_to_host_bytes"], 5120);
         assert_eq!(frontier["rows"][0]["left"]["expected_device_to_host_bytes"], 10240);
+
+        let readback_frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+        assert_eq!(
+            readback_frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_host_readback_serialization"
+        );
+        assert_eq!(
+            readback_frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_host_readback_serialization"
+        );
     }
 
     #[test]
@@ -9751,6 +10106,16 @@ mod tests {
             "generated_output_qk256_output_casting_receipt_shape_serialization"
         );
         assert_eq!(frontier["rows"][0]["left"]["shape_match"], false);
+
+        let readback_frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+        assert_eq!(
+            readback_frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_output_casting"
+        );
+        assert_eq!(
+            readback_frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_output_casting"
+        );
     }
 
     #[test]
@@ -9777,6 +10142,134 @@ mod tests {
             "generated_output_qk256_output_casting_missing_context"
         );
         assert_eq!(frontier["rows"][0]["qk256_output_casting_context_available"], false);
+
+        let readback_frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+        assert_eq!(
+            readback_frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_missing_context"
+        );
+        assert_eq!(
+            readback_frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_missing_context"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_readback_trace_host_readback_serialization() {
+        let replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_host_readback_serialization"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_host_readback_serialization"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["first_values_match"], true);
+        assert_eq!(frontier["rows"][0]["left"]["sha256_f32_le_match"], false);
+        assert_eq!(
+            frontier["next_diagnostic"],
+            "capture broader selected QK256 output samples or a bounded full readback trace"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_readback_trace_output_casting() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770_output"]["shape"] = json!([1, 1, 1280]);
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_output_casting"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_output_casting"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["shape_match"], false);
+        assert_eq!(
+            frontier["next_diagnostic"],
+            "inspect selected QK256 OpenCL output shape and compact sample serialization"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_readback_trace_device_side_evaluation() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770_output"]["first_values"][1] = json!(-0.5);
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_device_side_evaluation"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_device_side_evaluation"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["first_values_match"], false);
+        assert_eq!(frontier["rows"][0]["left"]["first_mismatch_index"], 1);
+        assert_eq!(frontier["rows"][0]["left"]["first_mismatch_abs_delta"], 0.25);
+        assert_eq!(
+            frontier["next_diagnostic"],
+            "inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_readback_trace_missing_context() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770_output"]["first_values"] = Value::Null;
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_readback_trace_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_readback_trace_frontier_missing_context"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_readback_trace_missing_context"
+        );
+        assert_eq!(frontier["rows"][0]["qk256_output_readback_trace_context_available"], false);
     }
 
     #[test]

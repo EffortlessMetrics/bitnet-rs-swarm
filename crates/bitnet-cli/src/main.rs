@@ -13523,21 +13523,24 @@ fn compact_logit_source_qkv_projection_sources(
 fn compact_qkv_projection_dispatch_replay(
     replay: &bitnet_models::ModelQkvProjectionDispatchReplayContext,
 ) -> serde_json::Value {
-    let cpu_output = compact_logit_source_tensor_fingerprint(
+    let cpu_output = compact_logit_source_tensor_fingerprint_with_first_values(
         &replay.cpu_output,
         "cpu_replay_output_extract_failed",
+        8,
     );
-    let opencl_policy_output = compact_logit_source_tensor_fingerprint(
+    let opencl_policy_output = compact_logit_source_tensor_fingerprint_with_first_values(
         &replay.opencl_policy_output,
         "opencl_policy_replay_output_extract_failed",
+        8,
     );
     let a770_output = replay
         .a770_output
         .as_ref()
         .map(|output| {
-            compact_logit_source_tensor_fingerprint(
+            compact_logit_source_tensor_fingerprint_with_first_values(
                 output,
                 "a770_opencl_replay_output_extract_failed",
+                8,
             )
         })
         .unwrap_or_else(|| {
@@ -13638,6 +13641,31 @@ fn compact_logit_source_tensor_fingerprint(
 ) -> serde_json::Value {
     match tensor_to_vec(tensor) {
         Ok(values) => compact_f32_vector_fingerprint(tensor.shape(), &values),
+        Err(err) => serde_json::json!({
+            "available": false,
+            "reason": failure_reason,
+            "error": err.to_string(),
+            "shape": tensor.shape(),
+        }),
+    }
+}
+
+fn compact_logit_source_tensor_fingerprint_with_first_values(
+    tensor: &bitnet_common::ConcreteTensor,
+    failure_reason: &str,
+    value_limit: usize,
+) -> serde_json::Value {
+    match tensor_to_vec(tensor) {
+        Ok(values) => {
+            let mut fingerprint = compact_f32_vector_fingerprint(tensor.shape(), &values);
+            if let Some(object) = fingerprint.as_object_mut() {
+                let sample = values.iter().take(value_limit).copied().collect::<Vec<_>>();
+                object.insert("first_values_limit".to_string(), serde_json::json!(value_limit));
+                object.insert("first_values_count".to_string(), serde_json::json!(sample.len()));
+                object.insert("first_values".to_string(), serde_json::json!(sample));
+            }
+            fingerprint
+        }
         Err(err) => serde_json::json!({
             "available": false,
             "reason": failure_reason,
