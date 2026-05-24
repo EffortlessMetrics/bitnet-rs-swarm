@@ -8,12 +8,14 @@ pr = 646
 branch = "codex/intel-a770/A770-052-host-replay-f32-codegen-ordering"
 head_sha = "9e0e5587ecc166c78fb8db615909aac1e0e0cba2"
 merge_sha = "b49101491c8622ecc447124023e8c8d30c227670"
+merged_at = "2026-05-24T19:37:59Z"
 actor = "codex-a770"
 claim_allowed = false
 diagnostic_only = true
 summary = "Merged PR #646 for the A770-052 host replay f32 codegen-ordering diagnostic."
 notes = [
   "PR #646 records generated_output_qk256_host_replay_f32_codegen_ordering_frontier_host_expression_variants_collapsed_to_policy for the focused CPU/A770 summary-logits replay context.",
+  "A770-053 is queued to capture strict f32 barrier or host compiler codegen evidence before any production QK256 policy change.",
   "A770-052 keeps production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, and full BitNet inference claims closed.",
 ]
 
