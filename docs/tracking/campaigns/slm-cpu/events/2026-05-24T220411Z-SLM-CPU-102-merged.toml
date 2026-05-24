@@ -1,0 +1,19 @@
+timestamp = "2026-05-24T22:04:11Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-102"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 657
+branch = "codex/slm-cpu-102-typed-attention-head-consumer-implementation"
+head_sha = "ef21deefa44a6ffd867ae6d247adf39ffc9adbef"
+merge_sha = "fbf83e204151c876bf1f08917203e8b3c0530fd9"
+merged_at = "2026-05-24T22:04:11Z"
+actor = "codex-slm-cpu"
+summary = "Merged PR #657, closing SLM-CPU-102 with a typed attention-head consumer gate blocker."
+notes = [
+  "PR #657 added `dense_q8_sidecar_typed_attention_head_consumer_gate` and focused transformer tests.",
+  "The committed receipt is `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-102-typed-attention-head-consumer-gate.json`.",
+  "The gate preserves runtime fused Q execution disabled and records q_norm, RoPE, trace identity, score handoff, accumulator-order, and receipt-safety blockers.",
+  "No inference, model load, default-runtime change, packed_q8_sidecar promotion, allocation reduction claim, timing claim, sustained throughput claim, Q4/Q5 claim, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256/I2_S behavior change is made.",
+]
