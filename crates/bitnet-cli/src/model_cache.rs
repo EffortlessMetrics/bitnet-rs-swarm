@@ -4049,7 +4049,7 @@ mod tests {
         assert_eq!(dense.short_decode, "ready");
         assert_eq!(dense.warm_session, "ready");
         assert_eq!(dense.benchmark, "reviewed, speedup not accepted");
-        assert!(dense.claim_boundary.contains("do not satisfy BitNet packed I2_S/QK256"));
+        assert!(dense.claim_boundary.contains("BitNet packed I2_S/QK256 proof"));
         Ok(())
     }
 
@@ -4082,7 +4082,7 @@ mod tests {
         assert_eq!(qwen3.warm_session, "ready");
         assert_eq!(qwen3.benchmark, "reviewed, speedup not accepted");
         assert_eq!(qwen3.tier, "product_cli_ready");
-        assert!(qwen3.next_proof.contains("Qwen3 exact-profile server readiness"));
+        assert!(qwen3.next_proof.contains("Qwen3 optimization/requalification receipt"));
         assert!(qwen3.claim_boundary.contains("dense_regular_llm_cuda RTX 5070 Ti route"));
         assert!(qwen3.claim_boundary.contains("does not inherit Qwen2.5 CUDA receipts"));
         Ok(())
@@ -4206,9 +4206,11 @@ mod tests {
 
         let qwen3 = model_status_json_row_for(&value, "dense_qwen3_06b_q8_candidate")?;
         assert_eq!(qwen3["model_coverage_row"], "dense_qwen3_06b_q8_candidate");
-        assert_eq!(
-            qwen3["next_proof"],
-            "Qwen3 exact-profile server readiness is promoted only for the current-source non-streaming /v1/chat/completions RTX 5070 Ti shared-engine receipt at ci/hardware/windows-9950x3d-rtx5070ti/2026-05-19/server-strict-dense-qwen3-q8-smoke.json. Separate exact-profile performance comparator evidence is still required before any speed, benchmark-qualified, or full-residency promotion."
+        assert!(
+            qwen3["next_proof"]
+                .as_str()
+                .context("Qwen3 next_proof must be a string")?
+                .contains("Qwen3 optimization/requalification receipt")
         );
         assert_eq!(qwen3["category"], "supported");
         assert_eq!(qwen3["current_tier"], "product_cli_ready");
