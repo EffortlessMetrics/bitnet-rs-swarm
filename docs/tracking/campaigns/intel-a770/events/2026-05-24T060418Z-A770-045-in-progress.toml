@@ -1,9 +1,11 @@
-event = "in_progress"
+timestamp = "2026-05-24T06:04:18Z"
 campaign = "intel-a770"
 item = "A770-045"
+event = "in_progress"
+previous_status = "none"
+new_status = "in_progress"
 branch = "codex/intel-a770/A770-045-qk256-output-casting-frontier"
 actor = "codex-a770"
-created_at = "2026-05-24T06:04:18Z"
 base_main_sha = "1c0b0db81fbadcc16134b8f45e1ff166b8108c5d"
 claim_allowed = false
 diagnostic_only = true
