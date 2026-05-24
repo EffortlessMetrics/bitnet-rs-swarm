@@ -26,6 +26,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Runtime output tensor storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json` | Records that inner packed-Q8 matvec helpers can fill caller-owned slices, but full runtime Tensor output reuse remains blocked by public Candle owned-storage construction |
 | Fused output consumer boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-098-fused-output-consumer-boundary.json` | Classifies the exact `attention.q_proj` fused-consumer boundary as blocked by downstream Candle Tensor consumers unless a typed fused Q projection consumer owns reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics |
 | Typed fused Q consumer contract | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-099-typed-fused-q-consumer-contract.json` | Defines the design-only API and receipt-safety contract for a future exact `attention.q_proj` fused consumer while keeping runtime execution, allocation claims, and speed claims disabled |
+| Typed fused Q consumer implementation gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-100-typed-fused-q-consumer-implementation-gate.json` | Records that the exact `attention.q_proj` fused consumer remains runtime-disabled until a typed attention-head buffer/view owns reshape, q_norm, RoPE, trace identity, and score handoff semantics |
 
 All rows use:
 
@@ -44,13 +45,14 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-099 typed fused Q consumer contract.
-It does not run new inference or add a runtime optimization. It
+This refresh is current through the SLM-CPU-100 typed fused Q consumer
+implementation gate. It does not run new inference or add a runtime
+optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
-the typed fused Q projection consumer contract.
+the typed fused Q projection consumer implementation blocker.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -89,6 +91,16 @@ speed claims remain blocked until repeated before/after Qwen3 Q8_0 receipts
 preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs,
 decoded text, backend/kernel identity, dense hook identity, and
 `fallback_used=false`.
+
+SLM-CPU-100 attempted that implementation gate and kept runtime execution
+disabled. The inner packed-Q8 matvec can fill caller-owned slices, but the next
+safe work is a typed attention-head buffer/view that carries the Q projection
+through reshape, transpose, optional q_norm, RoPE, trace/workspace identity, and
+attention score handoff without constructing an intermediate returned Candle
+`Tensor`. The recorded blockers are `q_heads_tensor_semantics`,
+`q_norm_tensor_api`, `rope_tensor_api`, `trace_workspace_tensor_identity`,
+`attention_handoff_tensor_contract`, and `receipt_safety_evidence`. No
+allocation reduction, timing improvement, or default-runtime change is claimed.
 
 ## Thread Envelope
 
