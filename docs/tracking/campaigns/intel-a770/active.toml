@@ -1570,7 +1570,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-044"
-status = "in_progress"
+status = "merged"
+pr = 565
+head_sha = "0b98d256b78fd6117fa0756ec3871a9791ce786e"
+merge_sha = "303f59aa4a56705c843f3599e796caf0290e25b8"
 branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T05:06:27Z"
+campaign = "intel-a770"
+item = "A770-044"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 565
+branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
+head_sha = "0b98d256b78fd6117fa0756ec3871a9791ce786e"
+merge_sha = "303f59aa4a56705c843f3599e796caf0290e25b8"
+merged_at = "2026-05-24T05:05:44Z"
+actor = "codex-a770"
+summary = "Closed A770-044 after PR #565 merged the QK256 numeric replay policy diagnostic."
+notes = [
+  "A770-044 remains diagnostic-only and does not promote CPU/A770 parity, reference parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the selected q_proj replay drift as generated_output_qk256_numeric_policy_frontier_output_casting_serialization.",
+  "The next diagnostic is to inspect selected QK256 OpenCL output casting and receipt serialization.",
+]
