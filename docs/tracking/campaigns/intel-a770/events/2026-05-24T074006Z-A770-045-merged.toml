@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T07:40:06Z"
+campaign = "intel-a770"
+item = "A770-045"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 574
+branch = "codex/intel-a770/A770-045-qk256-output-casting-frontier"
+head_sha = "dadc32289f1b0d7c7e832882dc3fe9b44debc4fc"
+merge_sha = "fc9d2334261845cfa451c003b58bcd2f84497096"
+merged_at = "2026-05-24T07:40:06Z"
+actor = "codex-a770"
+summary = "Closed A770-045 after PR #574 merged the QK256 output casting frontier diagnostic."
+notes = [
+  "A770-045 remains diagnostic-only and does not promote CPU/A770 answer parity, reference parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the selected QK256 OpenCL output casting frontier as generated_output_qk256_output_casting_frontier_device_value_summary_drift.",
+  "The next diagnostic is to capture selected QK256 OpenCL output value samples or device readback trace.",
+]
