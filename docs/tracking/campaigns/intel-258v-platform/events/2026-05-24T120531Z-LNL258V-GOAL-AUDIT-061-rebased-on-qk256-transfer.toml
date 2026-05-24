@@ -1,0 +1,31 @@
+timestamp = "2026-05-24T12:05:31Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-061"
+event = "pr_open"
+previous_status = "pr_open"
+new_status = "pr_open"
+pr = 604
+head_sha = "1d257252caa452bf83886fee12dfc98a7b97d7a5"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-061-slimcpu097-closeout"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Rebased LNL258V-GOAL-AUDIT-061 on QK256 CUDA transfer timing #605 and extended the no-inference audit refresh."
+notes = [
+  "Main moved after QK256 CUDA transfer timing #605 landed.",
+  "The refreshed branch records #605 as adjacent QK256 CUDA transfer-accounting surface only.",
+  "The refresh keeps LNL258V-POWER-006 blocked and does not change Lunar Lake route policy, speedup, power, semantic-intake, Qwen3 Lunar Lake, or BitNet QK256/I2_S claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "LNL258V-GOAL-AUDIT-061 branch was refreshed to current swarm main through #605.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "#605 is Lunar Lake route evidence.",
+  "#605 is a shared BitNet semantic fix.",
+  "#605 makes Lunar Lake semantic-intake stale.",
+  "#605 changes BitNet QK256/I2_S behavior.",
+]

@@ -13771,19 +13771,19 @@ must_not_claim = [
 id = "LNL258V-GOAL-AUDIT-061"
 status = "pr_open"
 pr = 604
-head_sha = "efbb02f017c02af987880c80d3a821b72172d033"
+head_sha = "1d257252caa452bf83886fee12dfc98a7b97d7a5"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-061-slimcpu097-closeout"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["LNL258V-GOAL-AUDIT-060"]
-acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after SLM-CPU-097/#600, SLM-CPU-097 closeout #602, and SLM-CPU-098/#603 landed, so source_revision points at 490814f436addcd97ee3d995a41c334670ef4b31 and the audit/checklist classify those changes as adjacent SLM CPU tracker queue/closeout state only. Preserve LNL258V-POWER-006 as blocked and preserve no Lunar Lake inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, semantic-intake stale state, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim."
+acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after SLM-CPU-097/#600, SLM-CPU-097 closeout #602, SLM-CPU-098/#603, and QK256 CUDA transfer timing #605 landed, so source_revision points at dbba10d10ce258a621f68a097b7b39b0061c7cad and the audit/checklist classify those changes as adjacent SLM CPU tracker queue/closeout state or adjacent QK256 CUDA transfer-accounting surface only. Preserve LNL258V-POWER-006 as blocked and preserve no Lunar Lake inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, semantic-intake stale state, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim."
 commands = [
   "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json > $env:TEMP/lnl-excellence-audit-061.json",
   "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json > $env:TEMP/lnl-goal-artifact-checklist-061.json",
-  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String '490814f436addcd97ee3d995a41c334670ef4b31' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_603_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'SLM-CPU-098/#603' | Out-Null\"",
-  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'SLM-CPU-097-CLOSEOUT' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-POWER-006 remains blocked' | Out-Null\"",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'dbba10d10ce258a621f68a097b7b39b0061c7cad' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_605_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'QK256 CUDA transfer timing #605' | Out-Null\"",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'QK256-CUDA-TRANSFER-TIMINGS' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'SLM-CPU-097-CLOSEOUT' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-POWER-006 remains blocked' | Out-Null\"",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "cargo run --locked -p xtask --no-default-features -- campaign doctor",
@@ -13803,8 +13803,8 @@ forbidden_paths = [
   "models/**",
 ]
 may_claim = [
-  "The Lunar Lake audit and checklist are refreshed to current swarm main through SLM-CPU-097/#600, closeout #602, and SLM-CPU-098/#603.",
-  "#600/#602/#603 are recorded as adjacent SLM CPU tracker queue/closeout state only, not Lunar Lake route evidence.",
+  "The Lunar Lake audit and checklist are refreshed to current swarm main through SLM-CPU-097/#600, closeout #602, SLM-CPU-098/#603, and QK256 CUDA transfer timing #605.",
+  "#600/#602/#603 are recorded as adjacent SLM CPU tracker queue/closeout state only, and #605 is recorded as adjacent QK256 CUDA transfer-accounting surface only; none is Lunar Lake route evidence.",
   "The refreshed audit/checklist keep LNL258V-POWER-006 as the active blocker for real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
 ]
 must_not_claim = [
@@ -13820,6 +13820,10 @@ must_not_claim = [
   "SLM-CPU-097 is Lunar Lake route evidence.",
   "SLM-CPU-097 is a shared BitNet semantic fix.",
   "SLM-CPU-097 makes Lunar Lake semantic-intake stale.",
+  "#605 is Lunar Lake route evidence.",
+  "#605 is a shared BitNet semantic fix.",
+  "#605 makes Lunar Lake semantic-intake stale.",
+  "#605 changes BitNet QK256/I2_S behavior.",
   "Qwen3 is promoted for Lunar Lake.",
   "Full BitNet accelerator inference is proven.",
   "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
