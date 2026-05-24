@@ -893,67 +893,72 @@ fn run_from_receipt(
         "steady_tok_per_s": steady_tok_per_s
     });
     if matches!(backend, BackendKind::Cuda) {
-        let object = timing.as_object_mut().expect("timing is object");
-        object.insert(
-            "cuda_context_init_ms".to_owned(),
-            json!(number_at(receipt, "/timing/cuda_context_init_ms")?),
-        );
-        object.insert(
-            "weight_upload_ms".to_owned(),
-            json!(number_at(receipt, "/timing/weight_upload_ms")?),
-        );
-        object.insert(
-            "kernel_time_ms".to_owned(),
-            json!(number_at_any(
-                receipt,
-                &["/timing/kernel_time_ms", "/kernel_stats/0/kernel_time_ms"]
-            )?),
-        );
-        object.insert(
-            "launch_count".to_owned(),
-            json!(u64_at_any(
-                receipt,
-                &[
-                    "/timing/launch_count",
-                    "/timing/kernel_launches",
-                    "/kernel_stats/0/kernel_launches"
-                ]
-            )?),
-        );
-        object.insert(
-            "kernel_invocations".to_owned(),
-            json!(u64_at_any(
-                receipt,
-                &["/timing/kernel_invocations", "/kernel_stats/0/invocations"]
-            )?),
-        );
-        object.insert(
-            "host_to_device_bytes".to_owned(),
-            json!(u64_at(receipt, "/timing/host_to_device_bytes")?),
-        );
-        object.insert(
-            "host_to_device_ms".to_owned(),
-            json!(number_at(receipt, "/timing/host_to_device_ms")?),
-        );
-        object.insert(
-            "device_to_host_bytes".to_owned(),
-            json!(u64_at(receipt, "/timing/device_to_host_bytes")?),
-        );
-        object.insert(
-            "device_to_host_ms".to_owned(),
-            json!(number_at(receipt, "/timing/device_to_host_ms")?),
-        );
-        object.insert(
-            "vram_high_water_bytes".to_owned(),
-            json!(u64_at_any(
-                receipt,
-                &["/timing/vram_high_water_bytes", "/cuda/memory_hwm_bytes", "/cuda/vram_bytes"]
-            )?),
-        );
-        object.insert(
-            "power_temperature_context".to_owned(),
-            json!("NVML power and temperature sampled during source receipt"),
-        );
+        if let Some(object) = timing.as_object_mut() {
+            object.insert(
+                "cuda_context_init_ms".to_owned(),
+                json!(number_at(receipt, "/timing/cuda_context_init_ms")?),
+            );
+            object.insert(
+                "weight_upload_ms".to_owned(),
+                json!(number_at(receipt, "/timing/weight_upload_ms")?),
+            );
+            object.insert(
+                "kernel_time_ms".to_owned(),
+                json!(number_at_any(
+                    receipt,
+                    &["/timing/kernel_time_ms", "/kernel_stats/0/kernel_time_ms"]
+                )?),
+            );
+            object.insert(
+                "launch_count".to_owned(),
+                json!(u64_at_any(
+                    receipt,
+                    &[
+                        "/timing/launch_count",
+                        "/timing/kernel_launches",
+                        "/kernel_stats/0/kernel_launches"
+                    ]
+                )?),
+            );
+            object.insert(
+                "kernel_invocations".to_owned(),
+                json!(u64_at_any(
+                    receipt,
+                    &["/timing/kernel_invocations", "/kernel_stats/0/invocations"]
+                )?),
+            );
+            object.insert(
+                "host_to_device_bytes".to_owned(),
+                json!(u64_at(receipt, "/timing/host_to_device_bytes")?),
+            );
+            object.insert(
+                "host_to_device_ms".to_owned(),
+                json!(number_at(receipt, "/timing/host_to_device_ms")?),
+            );
+            object.insert(
+                "device_to_host_bytes".to_owned(),
+                json!(u64_at(receipt, "/timing/device_to_host_bytes")?),
+            );
+            object.insert(
+                "device_to_host_ms".to_owned(),
+                json!(number_at(receipt, "/timing/device_to_host_ms")?),
+            );
+            object.insert(
+                "vram_high_water_bytes".to_owned(),
+                json!(u64_at_any(
+                    receipt,
+                    &[
+                        "/timing/vram_high_water_bytes",
+                        "/cuda/memory_hwm_bytes",
+                        "/cuda/vram_bytes"
+                    ]
+                )?),
+            );
+            object.insert(
+                "power_temperature_context".to_owned(),
+                json!("NVML power and temperature sampled during source receipt"),
+            );
+        }
     }
 
     Ok(json!({
@@ -1061,37 +1066,41 @@ fn backend_summary(
         "steady_tok_per_s": number_summary(runs, "/timing/steady_tok_per_s")
     });
     if backend == CUDA_BACKEND {
-        let object = summary.as_object_mut().expect("summary is object");
-        object.insert(
-            "cuda_context_init_ms".to_owned(),
-            number_summary(runs, "/timing/cuda_context_init_ms"),
-        );
-        object.insert(
-            "weight_upload_ms".to_owned(),
-            number_summary(runs, "/timing/weight_upload_ms"),
-        );
-        object.insert("kernel_time_ms".to_owned(), number_summary(runs, "/timing/kernel_time_ms"));
-        object.insert("launch_count".to_owned(), u64_summary(runs, "/timing/launch_count"));
-        object.insert(
-            "host_to_device_bytes".to_owned(),
-            u64_summary(runs, "/timing/host_to_device_bytes"),
-        );
-        object.insert(
-            "host_to_device_ms".to_owned(),
-            number_summary(runs, "/timing/host_to_device_ms"),
-        );
-        object.insert(
-            "device_to_host_bytes".to_owned(),
-            u64_summary(runs, "/timing/device_to_host_bytes"),
-        );
-        object.insert(
-            "device_to_host_ms".to_owned(),
-            number_summary(runs, "/timing/device_to_host_ms"),
-        );
-        object.insert(
-            "vram_high_water_bytes".to_owned(),
-            u64_summary(runs, "/timing/vram_high_water_bytes"),
-        );
+        if let Some(object) = summary.as_object_mut() {
+            object.insert(
+                "cuda_context_init_ms".to_owned(),
+                number_summary(runs, "/timing/cuda_context_init_ms"),
+            );
+            object.insert(
+                "weight_upload_ms".to_owned(),
+                number_summary(runs, "/timing/weight_upload_ms"),
+            );
+            object.insert(
+                "kernel_time_ms".to_owned(),
+                number_summary(runs, "/timing/kernel_time_ms"),
+            );
+            object.insert("launch_count".to_owned(), u64_summary(runs, "/timing/launch_count"));
+            object.insert(
+                "host_to_device_bytes".to_owned(),
+                u64_summary(runs, "/timing/host_to_device_bytes"),
+            );
+            object.insert(
+                "host_to_device_ms".to_owned(),
+                number_summary(runs, "/timing/host_to_device_ms"),
+            );
+            object.insert(
+                "device_to_host_bytes".to_owned(),
+                u64_summary(runs, "/timing/device_to_host_bytes"),
+            );
+            object.insert(
+                "device_to_host_ms".to_owned(),
+                number_summary(runs, "/timing/device_to_host_ms"),
+            );
+            object.insert(
+                "vram_high_water_bytes".to_owned(),
+                u64_summary(runs, "/timing/vram_high_water_bytes"),
+            );
+        }
     }
     Ok(summary)
 }
@@ -1557,17 +1566,18 @@ mod tests {
             "steady_tok_per_s": 7.0
         });
         if matches!(backend, BackendKind::Cuda) {
-            let object = timing.as_object_mut().expect("timing object");
-            object.insert("cuda_context_init_ms".to_owned(), json!(2.0));
-            object.insert("weight_upload_ms".to_owned(), json!(3.0));
-            object.insert("kernel_time_ms".to_owned(), json!(10.0));
-            object.insert("launch_count".to_owned(), json!(210));
-            object.insert("kernel_invocations".to_owned(), json!(210));
-            object.insert("host_to_device_bytes".to_owned(), json!(8));
-            object.insert("host_to_device_ms".to_owned(), json!(0.8));
-            object.insert("device_to_host_bytes".to_owned(), json!(9));
-            object.insert("device_to_host_ms".to_owned(), json!(0.9));
-            object.insert("vram_high_water_bytes".to_owned(), json!(7070547968u64));
+            if let Some(object) = timing.as_object_mut() {
+                object.insert("cuda_context_init_ms".to_owned(), json!(2.0));
+                object.insert("weight_upload_ms".to_owned(), json!(3.0));
+                object.insert("kernel_time_ms".to_owned(), json!(10.0));
+                object.insert("launch_count".to_owned(), json!(210));
+                object.insert("kernel_invocations".to_owned(), json!(210));
+                object.insert("host_to_device_bytes".to_owned(), json!(8));
+                object.insert("host_to_device_ms".to_owned(), json!(0.8));
+                object.insert("device_to_host_bytes".to_owned(), json!(9));
+                object.insert("device_to_host_ms".to_owned(), json!(0.9));
+                object.insert("vram_high_water_bytes".to_owned(), json!(7070547968u64));
+            }
         }
 
         let mut receipt = json!({
@@ -1632,36 +1642,37 @@ mod tests {
             }
         });
         if matches!(backend, BackendKind::Cuda) {
-            let object = receipt.as_object_mut().expect("receipt object");
-            object.insert(
-                "kernel_stats".to_owned(),
-                json!([{
-                    "kernel_id": CUDA_KERNEL_ID,
-                    "kernel_time_ms": 10.0,
-                    "invocations": 210,
-                    "kernel_launches": 210,
-                    "fallback_invocations": 0,
-                    "host_to_device_bytes": 8,
-                    "device_to_host_bytes": 9
-                }]),
-            );
-            object.insert(
-                "cuda".to_owned(),
-                json!({
-                    "available": true,
-                    "device_count": 1,
-                    "device_name": "NVIDIA GeForce RTX 5070 Ti",
-                    "compute_capability": "12.0",
-                    "driver_version": "591.86",
-                    "cuda_runtime_version": "12.9",
-                    "cuda_toolkit_version": "12.9",
-                    "nvrtc_version": "12.9",
-                    "vram_bytes": 17094475776u64,
-                    "memory_hwm_bytes": 7070547968u64,
-                    "power_draw_watts": 45.0,
-                    "temperature_c": 42.0
-                }),
-            );
+            if let Some(object) = receipt.as_object_mut() {
+                object.insert(
+                    "kernel_stats".to_owned(),
+                    json!([{
+                        "kernel_id": CUDA_KERNEL_ID,
+                        "kernel_time_ms": 10.0,
+                        "invocations": 210,
+                        "kernel_launches": 210,
+                        "fallback_invocations": 0,
+                        "host_to_device_bytes": 8,
+                        "device_to_host_bytes": 9
+                    }]),
+                );
+                object.insert(
+                    "cuda".to_owned(),
+                    json!({
+                        "available": true,
+                        "device_count": 1,
+                        "device_name": "NVIDIA GeForce RTX 5070 Ti",
+                        "compute_capability": "12.0",
+                        "driver_version": "591.86",
+                        "cuda_runtime_version": "12.9",
+                        "cuda_toolkit_version": "12.9",
+                        "nvrtc_version": "12.9",
+                        "vram_bytes": 17094475776u64,
+                        "memory_hwm_bytes": 7070547968u64,
+                        "power_draw_watts": 45.0,
+                        "temperature_c": 42.0
+                    }),
+                );
+            }
         }
         receipt
     }
