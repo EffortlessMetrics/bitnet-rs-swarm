@@ -1,0 +1,17 @@
+timestamp = "2026-05-24T11:35:29Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-097"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 600
+head_sha = "48dc804d19bfc77bb92c3ba017799df304306512"
+merge_sha = "029aefabb7f68cdb037bf7743a7511c7b4c020f5"
+branch = "codex/slm-cpu-097-fused-output-consumer-gate"
+actor = "codex"
+summary = "Merged PR #600, recording the fused output consumer gate queue."
+notes = [
+  "PR #600 queued the next Kaby Lake Qwen3 Q8_0 dense CPU performance gate after SLM-CPU-096 classified full runtime output Tensor reuse as blocked by public Candle owned-storage construction.",
+  "The merged slice is tracker and dashboard scope only; the future implementation slice must either prove a fused output consumer path with behavior-preserving Qwen3 Q8_0 receipts, or emit a machine-checkable safety blocker.",
+  "The closeout preserves no packed-Q8 default-runtime promotion, no speedup, no sustained-throughput, no Q4/Q5, no server, no GPU/NPU/OpenVINO/UHD 620, no Qwen3.5, and no BitNet QK256 claims.",
+]

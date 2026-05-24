@@ -6209,8 +6209,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-097"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-097-fused-output-consumer-gate"
+pr = 600
+head_sha = "48dc804d19bfc77bb92c3ba017799df304306512"
+merge_sha = "029aefabb7f68cdb037bf7743a7511c7b4c020f5"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
