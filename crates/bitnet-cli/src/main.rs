@@ -5537,9 +5537,17 @@ async fn run_simple_generation(
                 "host_to_device_bytes": cuda_runtime_stats
                     .as_ref()
                     .map(|stats| stats.host_to_device_bytes),
+                "host_to_device_ms": cuda_runtime_stats
+                    .as_ref()
+                    .and_then(|stats| stats.host_to_device_ms)
+                    .map(rounded_ms),
                 "device_to_host_bytes": cuda_runtime_stats
                     .as_ref()
                     .map(|stats| stats.device_to_host_bytes),
+                "device_to_host_ms": cuda_runtime_stats
+                    .as_ref()
+                    .and_then(|stats| stats.device_to_host_ms)
+                    .map(rounded_ms),
                 "a770_opencl_host_to_device_bytes": a770_opencl_runtime_stats
                     .as_ref()
                     .map(|stats| stats.host_to_device_bytes),
@@ -5998,9 +6006,17 @@ async fn run_simple_generation(
                     "host_to_device_bytes": cuda_runtime_stats
                         .as_ref()
                         .map(|stats| stats.host_to_device_bytes),
+                    "host_to_device_ms": cuda_runtime_stats
+                        .as_ref()
+                        .and_then(|stats| stats.host_to_device_ms)
+                        .map(rounded_ms),
                     "device_to_host_bytes": cuda_runtime_stats
                         .as_ref()
                         .map(|stats| stats.device_to_host_bytes),
+                    "device_to_host_ms": cuda_runtime_stats
+                        .as_ref()
+                        .and_then(|stats| stats.device_to_host_ms)
+                        .map(rounded_ms),
                     "decode_step_ms": timing_samples_json(&decode_step_ms),
                     "embed_ms": timing_samples_json(&embed_step_ms),
                     "forward_ms": timing_samples_json(&forward_step_ms),
@@ -7439,7 +7455,9 @@ async fn run_cuda_warm_session(
                 "sampling_ms_per_token": sampling_ms_per_token.map(rounded_ms),
                 "cuda_kernel_time_ms": runtime_stats_delta.kernel_time_ms.map(rounded_ms),
                 "host_to_device_bytes": runtime_stats_delta.host_to_device_bytes,
+                "host_to_device_ms": runtime_stats_delta.host_to_device_ms.map(rounded_ms),
                 "device_to_host_bytes": runtime_stats_delta.device_to_host_bytes,
+                "device_to_host_ms": runtime_stats_delta.device_to_host_ms.map(rounded_ms),
                 "total_ms": rounded_ms(prompt_total_ms),
                 "embed_ms": timing_samples_json(&embed_step_ms),
                 "forward_ms": timing_samples_json(&forward_step_ms),
@@ -7677,7 +7695,9 @@ async fn run_cuda_warm_session(
             "weight_upload_timing_source": "not_separately_measured; upload-once weight residency is verified by qk256 weight-handle counters",
             "cuda_kernel_time_ms": total_runtime_stats.kernel_time_ms.map(rounded_ms),
             "host_to_device_bytes": total_runtime_stats.host_to_device_bytes,
+            "host_to_device_ms": total_runtime_stats.host_to_device_ms.map(rounded_ms),
             "device_to_host_bytes": total_runtime_stats.device_to_host_bytes,
+            "device_to_host_ms": total_runtime_stats.device_to_host_ms.map(rounded_ms),
             "total_session_ms": rounded_ms(total_session_ms),
         },
         "speed": speed_summary,
@@ -7885,9 +7905,25 @@ fn qk256_cuda_runtime_stats_delta(
         host_to_device_bytes: after
             .host_to_device_bytes
             .saturating_sub(before.host_to_device_bytes),
+        host_to_device_ms: match (before.host_to_device_ms, after.host_to_device_ms) {
+            (Some(before), Some(after)) => Some((after - before).max(0.0)),
+            (None, Some(after)) => Some(after),
+            _ => None,
+        },
+        host_to_device_time_samples: after
+            .host_to_device_time_samples
+            .saturating_sub(before.host_to_device_time_samples),
         device_to_host_bytes: after
             .device_to_host_bytes
             .saturating_sub(before.device_to_host_bytes),
+        device_to_host_ms: match (before.device_to_host_ms, after.device_to_host_ms) {
+            (Some(before), Some(after)) => Some((after - before).max(0.0)),
+            (None, Some(after)) => Some(after),
+            _ => None,
+        },
+        device_to_host_time_samples: after
+            .device_to_host_time_samples
+            .saturating_sub(before.device_to_host_time_samples),
         kernel_time_ms: match (before.kernel_time_ms, after.kernel_time_ms) {
             (Some(before), Some(after)) => Some((after - before).max(0.0)),
             (None, Some(after)) => Some(after),
@@ -7909,8 +7945,26 @@ fn qk256_kernel_stats_receipt(
             .map(|stats| stats.host_to_device_bytes)
             .map(serde_json::Value::from)
             .unwrap_or(serde_json::Value::Null),
+        "host_to_device_ms": runtime_stats
+            .and_then(|stats| stats.host_to_device_ms)
+            .map(rounded_ms)
+            .map(serde_json::Value::from)
+            .unwrap_or(serde_json::Value::Null),
+        "host_to_device_time_samples": runtime_stats
+            .map(|stats| stats.host_to_device_time_samples)
+            .map(serde_json::Value::from)
+            .unwrap_or(serde_json::Value::Null),
         "device_to_host_bytes": runtime_stats
             .map(|stats| stats.device_to_host_bytes)
+            .map(serde_json::Value::from)
+            .unwrap_or(serde_json::Value::Null),
+        "device_to_host_ms": runtime_stats
+            .and_then(|stats| stats.device_to_host_ms)
+            .map(rounded_ms)
+            .map(serde_json::Value::from)
+            .unwrap_or(serde_json::Value::Null),
+        "device_to_host_time_samples": runtime_stats
+            .map(|stats| stats.device_to_host_time_samples)
             .map(serde_json::Value::from)
             .unwrap_or(serde_json::Value::Null),
         "kernel_launches": coverage.bitnet_linear_layers_on_cuda,
@@ -8180,6 +8234,9 @@ fn cuda_execution_residency_receipt(
         if kv_cache_device == "cuda" { "cuda_resident" } else { "cpu_resident" };
     let transfer_bytes_measured = runtime_stats
         .is_some_and(|stats| stats.host_to_device_bytes > 0 || stats.device_to_host_bytes > 0);
+    let transfer_time_measured = runtime_stats.is_some_and(|stats| {
+        stats.host_to_device_ms.is_some() || stats.device_to_host_ms.is_some()
+    });
     let kernel_time_measured = runtime_stats.is_some_and(|stats| stats.kernel_time_ms.is_some());
     let mut non_resident_or_unmeasured_phases = vec![
         "token_embeddings",
@@ -8196,6 +8253,9 @@ fn cuda_execution_residency_receipt(
     ];
     if !transfer_bytes_measured {
         non_resident_or_unmeasured_phases.push("host_device_transfer_bytes");
+    }
+    if !transfer_time_measured {
+        non_resident_or_unmeasured_phases.push("host_device_transfer_ms");
     }
     if !kernel_time_measured {
         non_resident_or_unmeasured_phases.push("kernel_time_ms");
@@ -8277,7 +8337,7 @@ fn cuda_execution_residency_receipt(
             },
         },
         "host_device_transfer_accounting": {
-            "status": if transfer_bytes_measured || kernel_time_measured {
+            "status": if transfer_bytes_measured || transfer_time_measured || kernel_time_measured {
                 "qk256_measured"
             } else {
                 "not_measured"
@@ -8286,8 +8346,26 @@ fn cuda_execution_residency_receipt(
                 .map(|stats| stats.host_to_device_bytes)
                 .map(serde_json::Value::from)
                 .unwrap_or(serde_json::Value::Null),
+            "host_to_device_ms": runtime_stats
+                .and_then(|stats| stats.host_to_device_ms)
+                .map(rounded_ms)
+                .map(serde_json::Value::from)
+                .unwrap_or(serde_json::Value::Null),
+            "host_to_device_time_samples": runtime_stats
+                .map(|stats| stats.host_to_device_time_samples)
+                .map(serde_json::Value::from)
+                .unwrap_or(serde_json::Value::Null),
             "device_to_host_bytes": runtime_stats
                 .map(|stats| stats.device_to_host_bytes)
+                .map(serde_json::Value::from)
+                .unwrap_or(serde_json::Value::Null),
+            "device_to_host_ms": runtime_stats
+                .and_then(|stats| stats.device_to_host_ms)
+                .map(rounded_ms)
+                .map(serde_json::Value::from)
+                .unwrap_or(serde_json::Value::Null),
+            "device_to_host_time_samples": runtime_stats
+                .map(|stats| stats.device_to_host_time_samples)
                 .map(serde_json::Value::from)
                 .unwrap_or(serde_json::Value::Null),
             "kernel_time_ms": runtime_stats
@@ -8299,8 +8377,8 @@ fn cuda_execution_residency_receipt(
                 .map(|stats| stats.kernel_time_samples)
                 .map(serde_json::Value::from)
                 .unwrap_or(serde_json::Value::Null),
-            "note": if transfer_bytes_measured || kernel_time_measured {
-                "QK256 activation/output transfer bytes and CUDA event kernel time are measured for the routed QK256 GEMV path only; full transformer residency and transfer timing remain separate claims."
+            "note": if transfer_bytes_measured || transfer_time_measured || kernel_time_measured {
+                "QK256 activation/output transfer bytes, transfer API timing, and CUDA event kernel time are measured for the routed QK256 GEMV path only; full transformer residency and broad transfer timing remain separate claims."
             } else {
                 "QK256 routing and weight-handle residency are recorded; per-phase transfer bytes and kernel timings require a later benchmark/instrumentation gate."
             },
@@ -8314,6 +8392,7 @@ fn cuda_execution_residency_receipt(
             "kv_cache_cuda_residency_claimed": kv_cache_device == "cuda",
             "qk256_kernel_timing_claimed": kernel_time_measured,
             "qk256_transfer_byte_accounting_claimed": transfer_bytes_measured,
+            "qk256_transfer_timing_claimed": transfer_time_measured,
             "transfer_timing_claimed": false,
             "speedup_claim": false,
         },
@@ -15092,7 +15171,11 @@ mod tests {
         };
         let runtime_stats = bitnet_qk256_dispatch::Qk256CudaRuntimeStats {
             host_to_device_bytes: 4096,
+            host_to_device_ms: Some(0.3749),
+            host_to_device_time_samples: 4,
             device_to_host_bytes: 2048,
+            device_to_host_ms: Some(0.1875),
+            device_to_host_time_samples: 4,
             kernel_time_ms: Some(1.23456),
             kernel_time_samples: 4,
         };
@@ -15103,7 +15186,11 @@ mod tests {
         assert_eq!(receipt[0]["invocations"], 4);
         assert_eq!(receipt[0]["fallback_invocations"], 0);
         assert_eq!(receipt[0]["host_to_device_bytes"], 4096);
+        assert_eq!(receipt[0]["host_to_device_ms"], 0.375);
+        assert_eq!(receipt[0]["host_to_device_time_samples"], 4);
         assert_eq!(receipt[0]["device_to_host_bytes"], 2048);
+        assert_eq!(receipt[0]["device_to_host_ms"], 0.188);
+        assert_eq!(receipt[0]["device_to_host_time_samples"], 4);
         assert_eq!(receipt[0]["kernel_time_ms"], 1.235);
         assert_eq!(receipt[0]["kernel_time_samples"], 4);
     }
@@ -15253,7 +15340,11 @@ mod tests {
         };
         let runtime_stats = bitnet_qk256_dispatch::Qk256CudaRuntimeStats {
             host_to_device_bytes: 4096,
+            host_to_device_ms: Some(0.375),
+            host_to_device_time_samples: 4,
             device_to_host_bytes: 2048,
+            device_to_host_ms: Some(0.188),
+            device_to_host_time_samples: 4,
             kernel_time_ms: Some(1.25),
             kernel_time_samples: 4,
         };
@@ -15272,10 +15363,15 @@ mod tests {
 
         assert_eq!(receipt["host_device_transfer_accounting"]["status"], "qk256_measured");
         assert_eq!(receipt["host_device_transfer_accounting"]["host_to_device_bytes"], 4096);
+        assert_eq!(receipt["host_device_transfer_accounting"]["host_to_device_ms"], 0.375);
+        assert_eq!(receipt["host_device_transfer_accounting"]["host_to_device_time_samples"], 4);
         assert_eq!(receipt["host_device_transfer_accounting"]["device_to_host_bytes"], 2048);
+        assert_eq!(receipt["host_device_transfer_accounting"]["device_to_host_ms"], 0.188);
+        assert_eq!(receipt["host_device_transfer_accounting"]["device_to_host_time_samples"], 4);
         assert_eq!(receipt["host_device_transfer_accounting"]["kernel_time_ms"], 1.25);
         assert_eq!(receipt["claim_boundary"]["qk256_kernel_timing_claimed"], true);
         assert_eq!(receipt["claim_boundary"]["qk256_transfer_byte_accounting_claimed"], true);
+        assert_eq!(receipt["claim_boundary"]["qk256_transfer_timing_claimed"], true);
         assert_eq!(receipt["claim_boundary"]["transfer_timing_claimed"], false);
         assert!(
             !receipt["unresident_or_unmeasured_phases"]
