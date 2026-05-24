@@ -137,7 +137,11 @@ pub struct TimingExplanation {
     pub steady_decode_tok_s: Option<f64>,
     pub kernel_time_ms: Option<f64>,
     pub host_to_device_bytes: Option<u64>,
+    pub host_to_device_ms: Option<f64>,
+    pub host_to_device_time_samples: Option<u64>,
     pub device_to_host_bytes: Option<u64>,
+    pub device_to_host_ms: Option<f64>,
+    pub device_to_host_time_samples: Option<u64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, PartialEq)]
@@ -486,6 +490,30 @@ fn timing_explanation(receipt: &Value) -> TimingExplanation {
                 )
             })
             .or_else(|| sum_kernel_u64(receipt, "host_to_device_bytes")),
+        host_to_device_ms: f64_at(receipt, &["timing", "host_to_device_ms"])
+            .or_else(|| {
+                f64_at(
+                    receipt,
+                    &[
+                        "cuda_execution_residency",
+                        "host_device_transfer_accounting",
+                        "host_to_device_ms",
+                    ],
+                )
+            })
+            .or_else(|| sum_kernel_f64(receipt, "host_to_device_ms")),
+        host_to_device_time_samples: u64_at(receipt, &["timing", "host_to_device_time_samples"])
+            .or_else(|| {
+                u64_at(
+                    receipt,
+                    &[
+                        "cuda_execution_residency",
+                        "host_device_transfer_accounting",
+                        "host_to_device_time_samples",
+                    ],
+                )
+            })
+            .or_else(|| sum_kernel_u64(receipt, "host_to_device_time_samples")),
         device_to_host_bytes: u64_at(receipt, &["timing", "device_to_host_bytes"])
             .or_else(|| u64_at(receipt, &["benchmark", "cuda_median_device_to_host_bytes"]))
             .or_else(|| {
@@ -499,6 +527,30 @@ fn timing_explanation(receipt: &Value) -> TimingExplanation {
                 )
             })
             .or_else(|| sum_kernel_u64(receipt, "device_to_host_bytes")),
+        device_to_host_ms: f64_at(receipt, &["timing", "device_to_host_ms"])
+            .or_else(|| {
+                f64_at(
+                    receipt,
+                    &[
+                        "cuda_execution_residency",
+                        "host_device_transfer_accounting",
+                        "device_to_host_ms",
+                    ],
+                )
+            })
+            .or_else(|| sum_kernel_f64(receipt, "device_to_host_ms")),
+        device_to_host_time_samples: u64_at(receipt, &["timing", "device_to_host_time_samples"])
+            .or_else(|| {
+                u64_at(
+                    receipt,
+                    &[
+                        "cuda_execution_residency",
+                        "host_device_transfer_accounting",
+                        "device_to_host_time_samples",
+                    ],
+                )
+            })
+            .or_else(|| sum_kernel_u64(receipt, "device_to_host_time_samples")),
     }
 }
 
@@ -1358,19 +1410,33 @@ pub fn compact_proof_lines(explanation: &ReceiptExplanation) -> Vec<String> {
         lines.push(format!("  kernel time: {kernel_time_ms:.3} ms"));
     }
     if explanation.timing.host_to_device_bytes.is_some()
+        || explanation.timing.host_to_device_ms.is_some()
         || explanation.timing.device_to_host_bytes.is_some()
+        || explanation.timing.device_to_host_ms.is_some()
     {
-        let h2d = explanation
+        let h2d_bytes = explanation
             .timing
             .host_to_device_bytes
             .map(|value| value.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        let d2h = explanation
+        let d2h_bytes = explanation
             .timing
             .device_to_host_bytes
             .map(|value| value.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        lines.push(format!("  transfers: h2d={h2d} bytes d2h={d2h} bytes"));
+        let h2d_ms = explanation
+            .timing
+            .host_to_device_ms
+            .map(|value| format!("{value:.3} ms"))
+            .unwrap_or_else(|| "unknown ms".to_string());
+        let d2h_ms = explanation
+            .timing
+            .device_to_host_ms
+            .map(|value| format!("{value:.3} ms"))
+            .unwrap_or_else(|| "unknown ms".to_string());
+        lines.push(format!(
+            "  transfers: h2d={h2d_bytes} bytes/{h2d_ms} d2h={d2h_bytes} bytes/{d2h_ms}"
+        ));
     }
     if let Some(full_residency) = explanation.residency.full_cuda_residency_claimed {
         lines.push(format!("  full cuda residency: {full_residency}"));
@@ -1484,7 +1550,17 @@ fn print_receipt_explanation(explanation: &ReceiptExplanation) {
         print_f64_indented("steady_decode_tok_s", explanation.timing.steady_decode_tok_s);
         print_f64_indented("kernel_time_ms", explanation.timing.kernel_time_ms);
         print_u64_indented("host_to_device_bytes", explanation.timing.host_to_device_bytes);
+        print_f64_indented("host_to_device_ms", explanation.timing.host_to_device_ms);
+        print_u64_indented(
+            "host_to_device_time_samples",
+            explanation.timing.host_to_device_time_samples,
+        );
         print_u64_indented("device_to_host_bytes", explanation.timing.device_to_host_bytes);
+        print_f64_indented("device_to_host_ms", explanation.timing.device_to_host_ms);
+        print_u64_indented(
+            "device_to_host_time_samples",
+            explanation.timing.device_to_host_time_samples,
+        );
     }
 
     if has_residency(&explanation.residency) {
@@ -1719,7 +1795,11 @@ fn has_timing(timing: &TimingExplanation) -> bool {
         || timing.steady_decode_tok_s.is_some()
         || timing.kernel_time_ms.is_some()
         || timing.host_to_device_bytes.is_some()
+        || timing.host_to_device_ms.is_some()
+        || timing.host_to_device_time_samples.is_some()
         || timing.device_to_host_bytes.is_some()
+        || timing.device_to_host_ms.is_some()
+        || timing.device_to_host_time_samples.is_some()
 }
 
 fn has_residency(residency: &ResidencyExplanation) -> bool {
@@ -2098,7 +2178,11 @@ mod tests {
                     "kernel_id": "dense_f16_gemm_cuda",
                     "kernel_time_ms": 1.25,
                     "host_to_device_bytes": 40,
-                    "device_to_host_bytes": 24
+                    "host_to_device_ms": 0.125,
+                    "host_to_device_time_samples": 1,
+                    "device_to_host_bytes": 24,
+                    "device_to_host_ms": 0.075,
+                    "device_to_host_time_samples": 1
                 }
             ],
             "parity": {
@@ -2128,6 +2212,11 @@ mod tests {
         assert_eq!(explanation.quality.parity_passed, Some(true));
         assert_eq!(explanation.timing.kernel_time_ms, Some(1.25));
         assert_eq!(explanation.timing.host_to_device_bytes, Some(40));
+        assert_eq!(explanation.timing.host_to_device_ms, Some(0.125));
+        assert_eq!(explanation.timing.host_to_device_time_samples, Some(1));
+        assert_eq!(explanation.timing.device_to_host_bytes, Some(24));
+        assert_eq!(explanation.timing.device_to_host_ms, Some(0.075));
+        assert_eq!(explanation.timing.device_to_host_time_samples, Some(1));
         assert_eq!(explanation.claim_limits.speedup_claim, Some(false));
         assert_eq!(explanation.claim_limits.dense_gguf_inference_claimed, Some(false));
         assert_eq!(explanation.claim_limits.bitnet_packed_i2s_qk256_proof, Some(false));
@@ -2168,7 +2257,9 @@ mod tests {
             "timing": {
                 "cuda_kernel_time_ms": 2.5,
                 "host_to_device_bytes": 4096,
-                "device_to_host_bytes": 2048
+                "host_to_device_ms": 0.375,
+                "device_to_host_bytes": 2048,
+                "device_to_host_ms": 0.188
             },
             "cuda_execution_residency": {
                 "weight_residency": {
@@ -2192,12 +2283,19 @@ mod tests {
         assert_eq!(explanation.quality.answer_quality_passed, Some(true));
         assert_eq!(explanation.residency.weights_uploaded_once, Some(true));
         assert_eq!(explanation.timing.kernel_time_ms, Some(2.5));
+        assert_eq!(explanation.timing.host_to_device_ms, Some(0.375));
+        assert_eq!(explanation.timing.device_to_host_ms, Some(0.188));
         assert!(lines.contains(&"  route: bitnet_qk256_cuda".to_string()));
         assert!(lines.contains(&"  backend: nvidia-rtx-5070-ti-cuda".to_string()));
         assert!(lines.contains(&"  kernel: qk256_gemv_cuda".to_string()));
         assert!(lines.contains(&"  fallback: false".to_string()));
         assert!(lines.contains(&"  quality: true".to_string()));
         assert!(lines.contains(&"  weights: uploaded once".to_string()));
+        assert!(
+            lines.contains(
+                &"  transfers: h2d=4096 bytes/0.375 ms d2h=2048 bytes/0.188 ms".to_string()
+            )
+        );
         assert!(lines.contains(&"  speed claim: false".to_string()));
     }
 

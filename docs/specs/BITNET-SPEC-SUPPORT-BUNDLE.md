@@ -139,6 +139,11 @@ fallback, CUDA failure, or successful CUDA proof.
 
 `latest_receipt` must preserve the full explanation shape defined by
 [BITNET-SPEC-RECEIPT-EXPLAIN-SCHEMA](BITNET-SPEC-RECEIPT-EXPLAIN-SCHEMA.md).
+That includes normalized CUDA transfer byte counts, transfer milliseconds, and
+transfer timing sample counts when the explained receipt provides them. The
+support bundle must expose those fields as receipt explanation evidence only;
+it must not use them to infer speedup, throughput qualification, server
+readiness, or full residency.
 
 The embedded objects are intentionally redundant with `summary`. `summary`
 helps issue triage; embedded objects preserve audit detail.
