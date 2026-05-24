@@ -393,7 +393,11 @@ pub struct ServerSharedEngineKernelStats {
     pub fallback_invocations: u64,
     pub cpu_fallback_invocations: u64,
     pub host_to_device_bytes: Option<u64>,
+    pub host_to_device_ms: Option<f64>,
+    pub host_to_device_time_samples: Option<u64>,
     pub device_to_host_bytes: Option<u64>,
+    pub device_to_host_ms: Option<f64>,
+    pub device_to_host_time_samples: Option<u64>,
     pub kernel_launches: u64,
     pub kernel_time_ms: Option<f64>,
     pub kernel_time_samples: Option<u64>,
@@ -1193,13 +1197,27 @@ fn qk256_cuda_runtime_stats_delta(
     let before_ms = before.kernel_time_ms.unwrap_or(0.0);
     let after_ms = after.kernel_time_ms.unwrap_or(0.0);
     let kernel_time_samples = after.kernel_time_samples.saturating_sub(before.kernel_time_samples);
+    let before_host_to_device_ms = before.host_to_device_ms.unwrap_or(0.0);
+    let after_host_to_device_ms = after.host_to_device_ms.unwrap_or(0.0);
+    let host_to_device_time_samples =
+        after.host_to_device_time_samples.saturating_sub(before.host_to_device_time_samples);
+    let before_device_to_host_ms = before.device_to_host_ms.unwrap_or(0.0);
+    let after_device_to_host_ms = after.device_to_host_ms.unwrap_or(0.0);
+    let device_to_host_time_samples =
+        after.device_to_host_time_samples.saturating_sub(before.device_to_host_time_samples);
     bitnet_qk256_dispatch::Qk256CudaRuntimeStats {
         host_to_device_bytes: after
             .host_to_device_bytes
             .saturating_sub(before.host_to_device_bytes),
+        host_to_device_ms: (host_to_device_time_samples > 0)
+            .then_some((after_host_to_device_ms - before_host_to_device_ms).max(0.0)),
+        host_to_device_time_samples,
         device_to_host_bytes: after
             .device_to_host_bytes
             .saturating_sub(before.device_to_host_bytes),
+        device_to_host_ms: (device_to_host_time_samples > 0)
+            .then_some((after_device_to_host_ms - before_device_to_host_ms).max(0.0)),
+        device_to_host_time_samples,
         kernel_time_ms: (kernel_time_samples > 0).then_some((after_ms - before_ms).max(0.0)),
         kernel_time_samples,
     }
@@ -1378,8 +1396,12 @@ fn server_receipt_qk256_kernel_stats(
         cpu_fallback_invocations: evidence.coverage.bitnet_linear_layers_cpu_fallback,
         host_to_device_bytes: (evidence.runtime_stats.host_to_device_bytes > 0)
             .then_some(evidence.runtime_stats.host_to_device_bytes),
+        host_to_device_ms: evidence.runtime_stats.host_to_device_ms,
+        host_to_device_time_samples: Some(evidence.runtime_stats.host_to_device_time_samples),
         device_to_host_bytes: (evidence.runtime_stats.device_to_host_bytes > 0)
             .then_some(evidence.runtime_stats.device_to_host_bytes),
+        device_to_host_ms: evidence.runtime_stats.device_to_host_ms,
+        device_to_host_time_samples: Some(evidence.runtime_stats.device_to_host_time_samples),
         kernel_launches: evidence.coverage.bitnet_linear_layers_on_cuda,
         kernel_time_ms: evidence.runtime_stats.kernel_time_ms,
         kernel_time_samples: Some(evidence.runtime_stats.kernel_time_samples),
@@ -2859,7 +2881,11 @@ mod tests {
             },
             runtime_stats: bitnet_qk256_dispatch::Qk256CudaRuntimeStats {
                 host_to_device_bytes: 1024,
+                host_to_device_ms: Some(0.75),
+                host_to_device_time_samples: 3,
                 device_to_host_bytes: 2048,
+                device_to_host_ms: Some(0.25),
+                device_to_host_time_samples: 3,
                 kernel_time_ms: Some(12.5),
                 kernel_time_samples: 420,
             },
@@ -2909,6 +2935,10 @@ mod tests {
             assert_eq!(stats[0].invocations, 420);
             assert_eq!(stats[0].fallback_invocations, 0);
             assert_eq!(stats[0].cpu_fallback_invocations, 0);
+            assert_eq!(stats[0].host_to_device_ms, Some(0.75));
+            assert_eq!(stats[0].host_to_device_time_samples, Some(3));
+            assert_eq!(stats[0].device_to_host_ms, Some(0.25));
+            assert_eq!(stats[0].device_to_host_time_samples, Some(3));
         }
         Ok(())
     }

@@ -55,6 +55,10 @@ static A770_OPENCL_KERNEL_INVOCATIONS: AtomicU64 = AtomicU64::new(0);
 static A770_OPENCL_LAST_DEVICE: Mutex<Option<A770OpenClRuntimeDevice>> = Mutex::new(None);
 static CUDA_QK256_HOST_TO_DEVICE_BYTES: AtomicU64 = AtomicU64::new(0);
 static CUDA_QK256_DEVICE_TO_HOST_BYTES: AtomicU64 = AtomicU64::new(0);
+static CUDA_QK256_HOST_TO_DEVICE_MICROS: AtomicU64 = AtomicU64::new(0);
+static CUDA_QK256_HOST_TO_DEVICE_TIME_SAMPLES: AtomicU64 = AtomicU64::new(0);
+static CUDA_QK256_DEVICE_TO_HOST_MICROS: AtomicU64 = AtomicU64::new(0);
+static CUDA_QK256_DEVICE_TO_HOST_TIME_SAMPLES: AtomicU64 = AtomicU64::new(0);
 static CUDA_QK256_KERNEL_TIME_MICROS: AtomicU64 = AtomicU64::new(0);
 static CUDA_QK256_KERNEL_TIME_SAMPLES: AtomicU64 = AtomicU64::new(0);
 static QK256_F32_SCALAR_GEMV_INVOCATIONS: AtomicU64 = AtomicU64::new(0);
@@ -220,8 +224,16 @@ pub struct Qk256CudaWeightResidency {
 pub struct Qk256CudaRuntimeStats {
     /// Host-to-device activation bytes copied for QK256 CUDA GEMV calls.
     pub host_to_device_bytes: u64,
+    /// Aggregate host-to-device activation copy time for QK256 CUDA GEMV calls.
+    pub host_to_device_ms: Option<f64>,
+    /// Number of host-to-device copy timing samples.
+    pub host_to_device_time_samples: u64,
     /// Device-to-host output bytes copied for QK256 CUDA GEMV calls.
     pub device_to_host_bytes: u64,
+    /// Aggregate device-to-host output copy time for QK256 CUDA GEMV calls.
+    pub device_to_host_ms: Option<f64>,
+    /// Number of device-to-host copy timing samples.
+    pub device_to_host_time_samples: u64,
     /// Aggregate measured CUDA event time for QK256 kernel launches, in milliseconds.
     pub kernel_time_ms: Option<f64>,
     /// Number of kernel launches with a measured CUDA event time.
@@ -374,6 +386,10 @@ pub fn reset_qk256_dispatch_coverage() {
     }
     CUDA_QK256_HOST_TO_DEVICE_BYTES.store(0, Ordering::Relaxed);
     CUDA_QK256_DEVICE_TO_HOST_BYTES.store(0, Ordering::Relaxed);
+    CUDA_QK256_HOST_TO_DEVICE_MICROS.store(0, Ordering::Relaxed);
+    CUDA_QK256_HOST_TO_DEVICE_TIME_SAMPLES.store(0, Ordering::Relaxed);
+    CUDA_QK256_DEVICE_TO_HOST_MICROS.store(0, Ordering::Relaxed);
+    CUDA_QK256_DEVICE_TO_HOST_TIME_SAMPLES.store(0, Ordering::Relaxed);
     CUDA_QK256_KERNEL_TIME_MICROS.store(0, Ordering::Relaxed);
     CUDA_QK256_KERNEL_TIME_SAMPLES.store(0, Ordering::Relaxed);
     QK256_F32_SCALAR_GEMV_INVOCATIONS.store(0, Ordering::Relaxed);
@@ -395,9 +411,19 @@ pub fn qk256_cuda_weight_residency() -> Option<Qk256CudaWeightResidency> {
 pub fn qk256_cuda_runtime_stats() -> Qk256CudaRuntimeStats {
     let samples = CUDA_QK256_KERNEL_TIME_SAMPLES.load(Ordering::Relaxed);
     let kernel_time_micros = CUDA_QK256_KERNEL_TIME_MICROS.load(Ordering::Relaxed);
+    let host_to_device_samples = CUDA_QK256_HOST_TO_DEVICE_TIME_SAMPLES.load(Ordering::Relaxed);
+    let host_to_device_micros = CUDA_QK256_HOST_TO_DEVICE_MICROS.load(Ordering::Relaxed);
+    let device_to_host_samples = CUDA_QK256_DEVICE_TO_HOST_TIME_SAMPLES.load(Ordering::Relaxed);
+    let device_to_host_micros = CUDA_QK256_DEVICE_TO_HOST_MICROS.load(Ordering::Relaxed);
     Qk256CudaRuntimeStats {
         host_to_device_bytes: CUDA_QK256_HOST_TO_DEVICE_BYTES.load(Ordering::Relaxed),
+        host_to_device_ms: (host_to_device_samples > 0)
+            .then(|| host_to_device_micros as f64 / 1000.0),
+        host_to_device_time_samples: host_to_device_samples,
         device_to_host_bytes: CUDA_QK256_DEVICE_TO_HOST_BYTES.load(Ordering::Relaxed),
+        device_to_host_ms: (device_to_host_samples > 0)
+            .then(|| device_to_host_micros as f64 / 1000.0),
+        device_to_host_time_samples: device_to_host_samples,
         kernel_time_ms: (samples > 0).then(|| kernel_time_micros as f64 / 1000.0),
         kernel_time_samples: samples,
     }
@@ -1178,6 +1204,18 @@ fn tensor_from_flat_output(
 fn record_cuda_qk256_runtime_stats(stats: &bitnet_kernels::cuda::CudaBitnetKernelInvocationStats) {
     CUDA_QK256_HOST_TO_DEVICE_BYTES.fetch_add(stats.host_to_device_bytes, Ordering::Relaxed);
     CUDA_QK256_DEVICE_TO_HOST_BYTES.fetch_add(stats.device_to_host_bytes, Ordering::Relaxed);
+    if let Some(host_to_device_ms) = stats.host_to_device_ms {
+        let micros = (host_to_device_ms.max(0.0) * 1000.0).round() as u64;
+        CUDA_QK256_HOST_TO_DEVICE_MICROS.fetch_add(micros, Ordering::Relaxed);
+        CUDA_QK256_HOST_TO_DEVICE_TIME_SAMPLES
+            .fetch_add(stats.host_to_device_time_samples.max(1), Ordering::Relaxed);
+    }
+    if let Some(device_to_host_ms) = stats.device_to_host_ms {
+        let micros = (device_to_host_ms.max(0.0) * 1000.0).round() as u64;
+        CUDA_QK256_DEVICE_TO_HOST_MICROS.fetch_add(micros, Ordering::Relaxed);
+        CUDA_QK256_DEVICE_TO_HOST_TIME_SAMPLES
+            .fetch_add(stats.device_to_host_time_samples.max(1), Ordering::Relaxed);
+    }
     if let Some(kernel_time_ms) = stats.kernel_time_ms {
         let micros = (kernel_time_ms.max(0.0) * 1000.0).round() as u64;
         CUDA_QK256_KERNEL_TIME_MICROS.fetch_add(micros, Ordering::Relaxed);

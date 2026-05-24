@@ -12,6 +12,8 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "cuda")]
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "cuda")]
+use std::time::Instant;
 
 #[cfg(feature = "cuda")]
 use super::qk256_gemv::{CUDA_QK256_GEMV_KERNEL_ID, CUDA_QK256_GEMV_KERNEL_SRC, Qk256GemvConfig};
@@ -380,8 +382,16 @@ pub struct CudaBitnetKernelInvocationStats {
     pub fallback_invocations: u64,
     /// Host-to-device activation bytes for primitive calls.
     pub host_to_device_bytes: u64,
+    /// Measured host-to-device activation copy time in milliseconds.
+    pub host_to_device_ms: Option<f64>,
+    /// Number of host-to-device copy timing samples.
+    pub host_to_device_time_samples: u64,
     /// Device-to-host output bytes for primitive calls.
     pub device_to_host_bytes: u64,
+    /// Measured device-to-host output copy time in milliseconds.
+    pub device_to_host_ms: Option<f64>,
+    /// Number of device-to-host copy timing samples.
+    pub device_to_host_time_samples: u64,
     /// CUDA kernel launches.
     pub kernel_launches: u64,
     /// Optional measured kernel time in milliseconds.
@@ -400,7 +410,11 @@ impl CudaBitnetKernelInvocationStats {
             invocations: 0,
             fallback_invocations: 0,
             host_to_device_bytes: 0,
+            host_to_device_ms: None,
+            host_to_device_time_samples: 0,
             device_to_host_bytes: 0,
+            device_to_host_ms: None,
+            device_to_host_time_samples: 0,
             kernel_launches: 0,
             kernel_time_ms: None,
             weights_uploaded_once: false,
@@ -430,6 +444,8 @@ impl CudaBitnetKernelInvocationStats {
         &mut self,
         host_to_device_bytes: u64,
         device_to_host_bytes: u64,
+        host_to_device_ms: Option<f64>,
+        device_to_host_ms: Option<f64>,
         kernel_time_ms: Option<f64>,
         weights_uploaded_once: bool,
         per_token_weight_upload: bool,
@@ -439,6 +455,16 @@ impl CudaBitnetKernelInvocationStats {
         self.kernel_launches += 1;
         self.host_to_device_bytes += host_to_device_bytes;
         self.device_to_host_bytes += device_to_host_bytes;
+        if let Some(host_to_device_ms) = host_to_device_ms {
+            self.host_to_device_ms =
+                Some(self.host_to_device_ms.unwrap_or(0.0) + host_to_device_ms.max(0.0));
+            self.host_to_device_time_samples += 1;
+        }
+        if let Some(device_to_host_ms) = device_to_host_ms {
+            self.device_to_host_ms =
+                Some(self.device_to_host_ms.unwrap_or(0.0) + device_to_host_ms.max(0.0));
+            self.device_to_host_time_samples += 1;
+        }
         if let Some(kernel_time_ms) = kernel_time_ms {
             self.kernel_time_ms =
                 Some(self.kernel_time_ms.unwrap_or(0.0) + kernel_time_ms.max(0.0));
@@ -452,6 +478,14 @@ impl Default for CudaBitnetKernelInvocationStats {
     fn default() -> Self {
         Self::new(CUDA_BITNET_I2S_GEMV_KERNEL_ID)
     }
+}
+
+#[cfg(feature = "cuda")]
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Qk256CudaInvocationTiming {
+    kernel_time_ms: Option<f64>,
+    host_to_device_ms: Option<f64>,
+    device_to_host_ms: Option<f64>,
 }
 
 /// Reusable CUDA BitNet linear backend surface.
@@ -975,7 +1009,7 @@ impl CudaBitnetContext {
         activation: &[f32],
         output: &mut [f32],
         config: &Qk256GemvConfig,
-    ) -> Result<Option<f64>> {
+    ) -> Result<Qk256CudaInvocationTiming> {
         self.ensure_qk256_gemv_function()?;
 
         let stream = self.stream.as_ref().ok_or_else(|| KernelError::DeviceUnavailable {
@@ -995,10 +1029,12 @@ impl CudaBitnetContext {
 
         let input_len = checked_mul(config.seq_len, config.k, "QK256 activation")?;
         let output_len = checked_mul(config.seq_len, config.n_out, "QK256 output")?;
+        let host_to_device_start = Instant::now();
         let activation_dev =
             stream.memcpy_stod(&activation[..input_len]).map_err(|err| KernelError::GpuError {
                 reason: format!("failed to copy CUDA QK256 GEMV activation to device: {err:?}"),
             })?;
+        let host_to_device_ms = host_to_device_start.elapsed().as_secs_f64() * 1000.0;
         let mut output_dev: CudaSlice<f32> =
             stream.alloc_zeros(output_len).map_err(|err| KernelError::GpuError {
                 reason: format!("failed to allocate CUDA QK256 GEMV output: {err:?}"),
@@ -1062,12 +1098,18 @@ impl CudaBitnetContext {
             reason: format!("failed to synchronize CUDA QK256 GEMV kernel: {err:?}"),
         })?;
 
+        let device_to_host_start = Instant::now();
         let output_host: Vec<f32> =
             stream.memcpy_dtov(&output_dev).map_err(|err| KernelError::GpuError {
                 reason: format!("failed to copy CUDA QK256 GEMV output to host: {err:?}"),
             })?;
+        let device_to_host_ms = device_to_host_start.elapsed().as_secs_f64() * 1000.0;
         output[..output_len].copy_from_slice(&output_host[..output_len]);
-        Ok(Some(kernel_time_ms))
+        Ok(Qk256CudaInvocationTiming {
+            kernel_time_ms: Some(kernel_time_ms),
+            host_to_device_ms: Some(host_to_device_ms),
+            device_to_host_ms: Some(device_to_host_ms),
+        })
     }
 }
 
@@ -1270,7 +1312,7 @@ impl CudaBitnetLinearBackend for CudaBitnetContext {
         {
             let mut config = Qk256GemvConfig::for_shape(seq_len, output_features, input_features)?;
             config.bitnet_i8s_weight_scale = bitnet_i8s_weight_scale;
-            let kernel_time_ms = self.launch_qk256_gemv_cuda(
+            let timing = self.launch_qk256_gemv_cuda(
                 weights,
                 &activation[..activation_len],
                 output,
@@ -1283,7 +1325,9 @@ impl CudaBitnetLinearBackend for CudaBitnetContext {
                 u64::try_from(output_bytes).map_err(|_| KernelError::InvalidArguments {
                     reason: "QK256 output byte count exceeds receipt counter range".to_string(),
                 })?,
-                kernel_time_ms,
+                timing.host_to_device_ms,
+                timing.device_to_host_ms,
+                timing.kernel_time_ms,
                 weights.uploaded_once,
                 self.stats.per_token_weight_uploads > 0,
             );
@@ -1857,15 +1901,19 @@ mod tests {
     fn qk256_invocation_stats_accumulate_transfer_bytes_and_event_time() {
         let mut stats = CudaBitnetKernelInvocationStats::new(CUDA_QK256_GEMV_KERNEL_ID);
 
-        stats.record_qk256_gemv(1024, 512, Some(0.25), true, false);
-        stats.record_qk256_gemv(2048, 1024, Some(0.5), true, false);
+        stats.record_qk256_gemv(1024, 512, Some(0.125), Some(0.0625), Some(0.25), true, false);
+        stats.record_qk256_gemv(2048, 1024, Some(0.25), Some(0.125), Some(0.5), true, false);
 
         assert_eq!(stats.kernel_id, CUDA_QK256_GEMV_KERNEL_ID);
         assert_eq!(stats.invocations, 2);
         assert_eq!(stats.kernel_launches, 2);
         assert_eq!(stats.fallback_invocations, 0);
         assert_eq!(stats.host_to_device_bytes, 3072);
+        assert_eq!(stats.host_to_device_ms, Some(0.375));
+        assert_eq!(stats.host_to_device_time_samples, 2);
         assert_eq!(stats.device_to_host_bytes, 1536);
+        assert_eq!(stats.device_to_host_ms, Some(0.1875));
+        assert_eq!(stats.device_to_host_time_samples, 2);
         assert_eq!(stats.kernel_time_ms, Some(0.75));
         assert!(stats.weights_uploaded_once);
         assert!(!stats.per_token_weight_upload);
