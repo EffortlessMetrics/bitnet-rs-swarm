@@ -1786,3 +1786,44 @@ quality, generated IDs, and decoded text. The timing classification is bounded
 to this host, model, corpus, 4-thread setting, and exact-tensor opt-in sidecar.
 It does not enable packed-Q8 by default, generalize beyond the exact Q
 projection tensor, or claim sustained throughput.
+
+## SLM-CPU-100 Typed Fused Q Consumer Implementation Gate
+
+SLM-CPU-100 attempts the implementation gate defined by SLM-CPU-099 and records
+the current blocker rather than enabling a speculative runtime path. The inner
+packed-Q8 matvec helpers can already write into caller-owned output slices, but
+the exact `layers.0.attention.q_proj.weight` consumer still requires Candle
+`Tensor` semantics immediately after projection:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-100-typed-fused-q-consumer-implementation-gate.json
+exact_tensor = layers.0.attention.q_proj.weight
+role = attention.q_proj.typed_fused_consumer_implementation_gate
+status = blocked_runtime_disabled
+runtime_execution_enabled = false
+default_runtime_changed = false
+```
+
+The machine-checkable blockers are:
+
+```text
+q_heads_tensor_semantics
+q_norm_tensor_api
+rope_tensor_api
+trace_workspace_tensor_identity
+attention_handoff_tensor_contract
+receipt_safety_evidence
+```
+
+The next safe slice is a typed attention-head buffer/view that can carry the Q
+projection through reshape, transpose, optional q_norm, RoPE, trace/workspace
+identity, and score handoff without constructing an intermediate returned
+Candle `Tensor`. Runtime execution still requires before/after Qwen3 Q8_0
+receipts proving identical model SHA, strict GGUF tokenizer authority, prompt
+IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense
+hook identity, and `fallback_used=false`.
+
+This slice does not change the default runtime, promote `packed_q8_sidecar`,
+prove allocation reduction, claim speedup, claim sustained 8250U throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256/I2_S paths.

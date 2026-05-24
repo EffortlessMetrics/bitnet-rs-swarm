@@ -20,6 +20,7 @@ use bitnet_transformer::{
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
+    dense_q8_sidecar_typed_fused_q_projection_implementation_gate,
 };
 use candle_core::{DType, Device, Tensor};
 use candle_nn::{LayerNorm, Linear, VarBuilder};
@@ -671,6 +672,60 @@ fn dense_q8_sidecar_fused_q_projection_contract_requires_behavior_receipts() {
         );
     }
     assert!(contract.receipt.gate.contains("before_after_receipts"));
+}
+
+#[test]
+fn dense_q8_sidecar_typed_fused_q_projection_gate_blocks_runtime_execution() {
+    let gate = dense_q8_sidecar_typed_fused_q_projection_implementation_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.typed_fused_consumer_implementation_gate");
+    assert_eq!(gate.status, "blocked_runtime_disabled");
+    assert_eq!(gate.source_contract_status, "contract_defined_runtime_disabled");
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert!(!gate.attempted_runtime_implementation);
+    assert!(gate.can_own_packed_q8_matvec_output_slice);
+    assert!(!gate.can_preserve_downstream_tensor_semantics_without_intermediate_tensor);
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+}
+
+#[test]
+fn dense_q8_sidecar_typed_fused_q_projection_gate_names_exact_blockers() {
+    let gate = dense_q8_sidecar_typed_fused_q_projection_implementation_gate();
+    let blockers: Vec<_> = gate.blockers.iter().map(|blocker| blocker.blocker).collect();
+
+    assert_eq!(
+        blockers,
+        vec![
+            "q_heads_tensor_semantics",
+            "q_norm_tensor_api",
+            "rope_tensor_api",
+            "trace_workspace_tensor_identity",
+            "attention_handoff_tensor_contract",
+            "receipt_safety_evidence",
+        ]
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("LayerNorm::forward"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("RotaryEmbedding::apply"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("prepare_attention_scores"))
+    );
+    assert!(gate.receipt_gate.required_before_runtime_execution);
+    assert!(gate.receipt_gate.required_before_allocation_claim);
+    assert!(gate.next_required_slice.contains("typed attention-head buffer"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
