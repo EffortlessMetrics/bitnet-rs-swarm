@@ -1503,6 +1503,71 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "A770-043"
+status = "pr_open"
+pr = 552
+head_sha = "871d04f74b48187015b79743ad29566cf0d3654f"
+branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-042"]
+acceptance = "Add diagnostic-only selected QKV projection CPU versus A770 dispatch replay using identical materialized inputs and raw QK256 metadata, classifying whether the selected projection drift is missing context, replay capture/runtime mismatch, CPU/A770 output drift, clean, or still unpinned, without changing runtime math, kernels, dispatch policy, answer scoring, sampling, or promoting CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qkv_projection_dispatch_replay -- --nocapture",
+  "cargo check --locked -p bitnet-qk256-dispatch --no-default-features --features opencl",
+  "cargo check --locked -p bitnet-transformer --no-default-features --features cpu,opencl",
+  "cargo check --locked -p bitnet-models --no-default-features --features cpu,opencl",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo build --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl --release",
+  "pwsh -NoProfile -Command \"$env:BITNET_LOGIT_SOURCE_CONTEXT_STEPS='9'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY='1'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY_LAYER='0'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY_PROJECTION='q_proj'; target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device cpu --cpu-kernel avx2 --threads 8 --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --per-prompt-timeout-seconds 300\"",
+  "pwsh -NoProfile -Command \"$env:BITNET_LOGIT_SOURCE_CONTEXT_STEPS='9'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY='1'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY_LAYER='0'; $env:BITNET_QKV_PROJECTION_DISPATCH_REPLAY_PROJECTION='q_proj'; target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --per-prompt-timeout-seconds 300\"",
+  "target/release/bitnet.exe answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json -Raw | ConvertFrom-Json | Out-Null; Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "rustfmt --edition 2024 --check crates/bitnet-qk256-dispatch/src/lib.rs crates/bitnet-transformer/src/lib.rs crates/bitnet-transformer/src/attention_forward.rs crates/bitnet-models/src/bitnet.rs crates/bitnet-cli/src/main.rs crates/bitnet-cli/src/commands/answer_parity.rs",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-qk256-dispatch/src/lib.rs",
+  "crates/bitnet-transformer/src/lib.rs",
+  "crates/bitnet-transformer/src/attention_forward.rs",
+  "crates/bitnet-models/src/bitnet.rs",
+  "crates/bitnet-cli/src/main.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_043_QKV_PROJECTION_DISPATCH_REPLAY.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+]
+may_claim = [
+  "The focused summary first mismatch now carries a diagnostic selected QKV projection CPU versus A770 dispatch replay receipt.",
+  "The replay uses identical materialized projection input and raw QK256 metadata when the focused source context is available.",
+  "The committed focused receipt classifies the selected QKV dispatch replay frontier without changing runtime dispatch policy.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
 id = "A770-021"
 status = "merged"
 pr = 278

@@ -8,12 +8,14 @@
 use super::BitNetError;
 use super::{
     DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention,
-    TransformerA770OpenClRuntimeDelta, TransformerForwardWorkspace,
-    TransformerQk256CpuHotPathDelta, TransformerQk256DispatchDelta,
+    TransformerA770OpenClRuntimeDelta, TransformerA770OpenClRuntimeDevice,
+    TransformerForwardWorkspace, TransformerQk256CpuHotPathDelta, TransformerQk256DispatchDelta,
+    TransformerQkvProjectionDispatchReplayA770Stats,
+    TransformerQkvProjectionDispatchReplayCpuStats, TransformerQkvProjectionDispatchReplayTensors,
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
-    debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled, qwen_trace_layer_enabled,
-    qwen_trace_number, qwen_trace_tensor, trace_rms_enabled,
+    debug_rope_enabled, qk256_inline_scale, qwen_trace_event, qwen_trace_events_enabled,
+    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, trace_rms_enabled,
 };
 use bitnet_common::Result;
 use candle_core::{DType, Module, Tensor};
@@ -308,7 +310,8 @@ impl MultiHeadAttention {
         let qk256_key =
             format!("layers.{}.attention.{}.weight.qk256_qs", self.layer_idx, proj_name);
         let tensor_name = format!("layers.{}.attention.{}.weight", self.layer_idx, proj_name);
-        let qk256_raw_tensor_present = raw_tensors.contains_key(&qk256_key);
+        let qk256_raw_tensor = raw_tensors.get(&qk256_key);
+        let qk256_raw_tensor_present = qk256_raw_tensor.is_some();
         let source_input = workspace.as_ref().map(|_| input.clone());
         let dispatch_before = bitnet_qk256_dispatch::qk256_dispatch_coverage();
         let cpu_hot_path_before = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
@@ -321,6 +324,26 @@ impl MultiHeadAttention {
             let dispatch_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();
             let cpu_hot_path_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
             let a770_runtime_after = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
+            let (dispatch_replay, dispatch_replay_error) =
+                if qkv_projection_dispatch_replay_enabled(self.layer_idx, proj_name) {
+                    match qk256_raw_tensor {
+                        Some(qk256_tensor) => match qk256_inline_scale(raw_tensors, &qk256_key)
+                            .and_then(|inline_scale| {
+                                bitnet_qk256_dispatch::replay_qk256_cpu_vs_a770_with_scale(
+                                    &source_input,
+                                    qk256_tensor,
+                                    &qk256_key,
+                                    inline_scale,
+                                )
+                            }) {
+                            Ok(replay) => (Some(transformer_dispatch_replay_tensors(replay)), None),
+                            Err(err) => (None, Some(err.to_string())),
+                        },
+                        None => (None, Some(format!("qk256 raw tensor {qk256_key} missing"))),
+                    }
+                } else {
+                    (None, None)
+                };
             workspace.record_qkv_projection_source_tensors(TransformerQkvProjectionSourceTensors {
                 layer_idx: self.layer_idx,
                 projection: proj_name.to_string(),
@@ -341,6 +364,8 @@ impl MultiHeadAttention {
                     &a770_runtime_before,
                     &a770_runtime_after,
                 ),
+                dispatch_replay,
+                dispatch_replay_error,
             });
         }
 
@@ -748,6 +773,65 @@ fn qwen_attention_trace_event(enabled: bool, stage: &str, fields_json: impl FnOn
 
 fn qwen_attention_elapsed_ms(start: Instant) -> String {
     qwen_trace_number(start.elapsed().as_secs_f64() * 1000.0)
+}
+
+fn qkv_projection_dispatch_replay_enabled(layer_idx: usize, projection: &str) -> bool {
+    if !env_truthy("BITNET_QKV_PROJECTION_DISPATCH_REPLAY") {
+        return false;
+    }
+    if let Ok(layer) = std::env::var("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_LAYER")
+        && layer.parse::<usize>().ok() != Some(layer_idx)
+    {
+        return false;
+    }
+    if let Ok(filter) = std::env::var("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_PROJECTION")
+        && filter != projection
+    {
+        return false;
+    }
+    true
+}
+
+fn env_truthy(name: &str) -> bool {
+    std::env::var(name)
+        .map(|value| matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+        .unwrap_or(false)
+}
+
+fn transformer_dispatch_replay_tensors(
+    replay: bitnet_qk256_dispatch::Qk256CpuA770DispatchReplay,
+) -> TransformerQkvProjectionDispatchReplayTensors {
+    TransformerQkvProjectionDispatchReplayTensors {
+        input_rows: replay.input_rows,
+        output_rows: replay.output_rows,
+        cols: replay.cols,
+        row_stride_bytes: replay.row_stride_bytes,
+        inline_scale: replay.inline_scale,
+        cpu_output: replay.cpu_output,
+        a770_output: replay.a770_output,
+        cpu: TransformerQkvProjectionDispatchReplayCpuStats {
+            scalar_invocations: replay.cpu.scalar_invocations,
+            execution_path: replay.cpu.execution_path.to_string(),
+        },
+        a770: TransformerQkvProjectionDispatchReplayA770Stats {
+            compiled_opencl: replay.a770.compiled_opencl,
+            attempted: replay.a770.attempted,
+            success: replay.a770.success,
+            host_to_device_bytes: replay.a770.host_to_device_bytes,
+            device_to_host_bytes: replay.a770.device_to_host_bytes,
+            kernel_invocations: replay.a770.kernel_invocations,
+            last_device: replay.a770.last_device.map(|device| TransformerA770OpenClRuntimeDevice {
+                platform_index: device.platform_index,
+                device_index: device.device_index,
+                platform_name: device.platform_name,
+                runtime_device: device.runtime_device,
+                vendor: device.vendor,
+                driver_version: device.driver_version,
+            }),
+            error: replay.a770.error,
+            execution_path: replay.a770.execution_path.to_string(),
+        },
+    }
 }
 
 fn qk256_dispatch_delta_for_projection(
