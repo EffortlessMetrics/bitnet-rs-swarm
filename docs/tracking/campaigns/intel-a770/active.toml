@@ -1976,7 +1976,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-051"
-status = "ready"
+status = "pr_open"
+pr = 643
+head_sha = "31bedb4175dc3f794f13dfb0d16f42e1532c9794"
 branch = "codex/intel-a770/A770-051-host-div-mul-expression-order"
 stackable = false
 review_mode = "codex_premerge"
