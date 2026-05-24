@@ -13659,6 +13659,10 @@ fn compact_qkv_projection_dispatch_replay(
             .device_expression_trace
             .as_ref()
             .map(compact_qk256_device_expression_trace),
+        "device_intermediate_trace": replay
+            .device_intermediate_trace
+            .as_ref()
+            .map(compact_qk256_device_intermediate_trace),
         "cpu_a770_output_sha256_match": cpu_a770_sha256_match,
         "cpu_opencl_policy_output_sha256_match": cpu_opencl_policy_sha256_match,
         "opencl_policy_a770_output_sha256_match": opencl_policy_a770_sha256_match,
@@ -13740,6 +13744,52 @@ fn compact_qk256_device_expression_trace(
         "input_row_index": trace.input_row_index,
         "sample_limit": trace.sample_limit,
         "sample_count": trace.sample_count,
+        "samples": samples,
+    })
+}
+
+fn compact_qk256_device_intermediate_trace(
+    trace: &bitnet_models::ModelQk256DeviceIntermediateTraceContext,
+) -> serde_json::Value {
+    let samples = trace
+        .samples
+        .iter()
+        .map(|sample| {
+            serde_json::json!({
+                "output_index": sample.output_index,
+                "int_dot": sample.int_dot,
+                "activation_sum": sample.activation_sum,
+                "adjusted_dot": sample.adjusted_dot,
+                "activation_scale_bits": sample.activation_scale_bits,
+                "weight_scale_bits": sample.weight_scale_bits,
+                "adjusted_f32_bits": sample.adjusted_f32_bits,
+                "output": sample.output,
+                "output_bits": sample.output_bits,
+            })
+        })
+        .collect::<Vec<_>>();
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "qk256_device_intermediate_trace",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "compiled_opencl": trace.compiled_opencl,
+        "attempted": trace.attempted,
+        "success": trace.success,
+        "error": trace.error,
+        "input_row_index": trace.input_row_index,
+        "sample_limit": trace.sample_limit,
+        "sample_count": trace.sample_count,
+        "platform_index": trace.platform_index,
+        "device_index": trace.device_index,
+        "platform_name": trace.platform_name,
+        "runtime_device": trace.runtime_device,
+        "vendor": trace.vendor,
+        "driver_version": trace.driver_version,
+        "host_to_device_bytes": trace.host_to_device_bytes,
+        "device_to_host_bytes": trace.device_to_host_bytes,
+        "kernel_invocations": trace.kernel_invocations,
         "samples": samples,
     })
 }
