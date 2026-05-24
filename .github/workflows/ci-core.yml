@@ -11,43 +11,6 @@ name: CI (Core)
 # (rationale for the well-below-$1-per-PR target and the verification ladder).
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      # Rust code and build files - always trigger core checks
-      - 'crates/**'
-      - 'crossval/**'
-      - 'tests/**'
-      - 'tools/bitnet-task/**'
-      - 'xtask/**'
-      - 'fuzz/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - 'Makefile'
-
-      # Documentation, policy, and receipts handled by no-Rust fast paths
-      - 'docs/**'
-      - '*.md'
-      - 'README*'
-      - 'CHANGELOG*'
-      - 'CONTRIBUTING*'
-      - 'SECURITY*'
-      - 'COMPATIBILITY*'
-      - 'THIRD_PARTY*'
-      - 'ci/hardware/**'
-      - 'policy/**'
-
-      # CI/Codex campaign definitions
-      - '.codex/campaigns/**'
-
-      # Workflow files - core and related CI workflows
-      - '.github/workflows/ci-core.yml'
-      - '.github/workflows/pr-plan.yml'
-      - '.github/workflows/coverage.yml'
-
-      # CI configuration - codecov config affects verification signal
-      - 'codecov.yml'
   push:
     branches: [ main ]
     paths:
