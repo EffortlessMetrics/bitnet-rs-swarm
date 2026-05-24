@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T23:27:44Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-067"
+event = "in_progress"
+previous_status = "blocked"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-067-post-a770054"
+actor = "codex"
+summary = "Started the no-inference Lunar Lake audit/checklist refresh after current-main adjacent A770-054 and SLM-CPU-102/103 changes."
+notes = [
+  "Refreshes the audit/checklist source_revision to 8eb35daa76f2572df8c440e8e8d2c9fe01b2dabd.",
+  "Records LNL258V-GOAL-AUDIT-066/#652 and closeout #653 as Lunar Lake audit/tracker state only.",
+  "Records A770-054 #654/#658/#660/#662 as adjacent A770 diagnostic/tracker state only.",
+  "Records SLM-CPU-102/103 #655/#656/#657/#659/#661 as adjacent SLM CPU tracker/gate state only.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
