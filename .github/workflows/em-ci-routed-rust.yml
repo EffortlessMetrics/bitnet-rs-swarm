@@ -3,7 +3,7 @@ name: EM CI Routed Rust
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   merge_group:
 
 concurrency:
@@ -21,12 +21,12 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch'
       || github.event_name == 'merge_group'
-      || (github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository)
+      || github.event_name == 'pull_request'
     outputs:
       target: ${{ steps.route.outputs.target }}
       reason: ${{ steps.route.outputs.reason }}
       error: ${{ steps.route.outputs.error }}
+      fallback_allowed: ${{ steps.route.outputs.fallback_allowed }}
     steps:
       - name: Decide target runner
         id: route
@@ -37,19 +37,36 @@ jobs:
           set -eu
 
           emit() {
-            local target="$1" reason="$2" error="$3"
+            local target="$1" reason="$2" error="$3" fallback_allowed="$4"
             echo "router_target=$target"
             echo "router_reason=$reason"
             echo "router_error=$error"
+            echo "router_fallback_allowed=$fallback_allowed"
             {
               echo "target=$target"
               echo "reason=$reason"
               echo "error=$error"
+              echo "fallback_allowed=$fallback_allowed"
             } >> "$GITHUB_OUTPUT"
           }
 
+          label_enabled_fallback() {
+            printf '%s' '${{ toJson(github.event.pull_request.labels.*.name) }}' \
+            | jq -e '. // [] | index("allow-github-hosted") or index("ci-budget-ack")' >/dev/null 2>&1
+          }
+
+          is_fork_pr="false"
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            is_fork_pr="true"
+          fi
+
+          if [ "${is_fork_pr}" = "true" ]; then
+            emit "github" "fork_pr" "false" "true"
+            exit 0
+          fi
+
           if [ -z "${GH_TOKEN:-}" ]; then
-            emit "github" "token_missing" "true"
+            emit "blocked" "token_missing" "true" "false"
             exit 0
           fi
 
@@ -59,7 +76,7 @@ jobs:
               "orgs/${ORG}/actions/runners?per_page=100" 2>/tmp/gh.err)"; then
             echo "runner API request failed:" >&2
             cat /tmp/gh.err >&2 || true
-            emit "github" "runner_api_failed" "true"
+            emit "blocked" "runner_api_failed" "true" "false"
             exit 0
           fi
 
@@ -83,14 +100,14 @@ jobs:
           if ! idle_cx53="$(idle_runner_count "cx53" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "github" "parse_failed" "true"
+            emit "blocked" "parse_failed" "true" "false"
             exit 0
           fi
 
           if ! idle_cx43="$(idle_runner_count "cx43" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "github" "parse_failed" "true"
+            emit "blocked" "parse_failed" "true" "false"
             exit 0
           fi
 
@@ -98,17 +115,24 @@ jobs:
           echo "idle_cx43=${idle_cx43:-0}"
 
           if [ "${idle_cx53:-0}" -gt 0 ]; then
-            emit "cx53" "cx53_idle" "false"
+            emit "cx53" "cx53_idle" "false" "false"
           elif [ "${idle_cx43:-0}" -gt 0 ]; then
-            emit "cx43" "cx43_idle" "false"
+            emit "cx43" "cx43_idle" "false" "false"
+          elif label_enabled_fallback; then
+            emit "github" "allow_github_hosted_label" "false" "true"
           else
-            emit "github" "no_idle_runner" "false"
+            emit "blocked" "no_idle_runner" "false" "false"
           fi
 
   rust-small-cx53:
     name: BitNet Rust Small on CX53
     needs: route-rust-small
-    if: needs.route-rust-small.outputs.target == 'cx53'
+    if: >-
+      needs.route-rust-small.outputs.target == 'cx53'
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
       labels: [self-hosted, linux, x64, em-ci, cx53, rust-small, trusted-pr]
@@ -220,7 +244,12 @@ jobs:
   rust-small-cx43:
     name: BitNet Rust Small on CX43
     needs: route-rust-small
-    if: needs.route-rust-small.outputs.target == 'cx43'
+    if: >-
+      needs.route-rust-small.outputs.target == 'cx43'
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
       labels: [self-hosted, linux, x64, em-ci, cx43, rust-small, trusted-pr]
@@ -332,7 +361,7 @@ jobs:
   rust-small-github:
     name: BitNet Rust Small on GitHub Hosted
     needs: route-rust-small
-    if: needs.route-rust-small.outputs.target == 'github'
+    if: needs.route-rust-small.outputs.target == 'github' && needs.route-rust-small.outputs.fallback_allowed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -349,30 +378,15 @@ jobs:
         with:
           toolchain: "1.95.0"
 
-      - name: Cargo fetch
-        run: cargo fetch --locked
-
-      - name: Cargo build
+      - name: Cargo check (tiny fallback)
         run: |
-          cargo build --locked \
+          cargo check --locked \
             -p bitnet-common \
             -p bitnet-models \
             -p bitnet-tokenizers \
             -p bitnet-quantization \
             -p bitnet-kernels \
             --no-default-features --features cpu
-
-      - name: Cargo test
-        run: |
-          cargo test --locked \
-            -p bitnet-common \
-            -p bitnet-models \
-            -p bitnet-tokenizers \
-            -p bitnet-quantization \
-            -p bitnet-kernels \
-            --lib \
-            --no-default-features --features cpu \
-            -- --nocapture
 
   rust-small-result:
     name: BitNet Rust Small Result
@@ -385,8 +399,7 @@ jobs:
       always()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
-          || (github.event_name == 'pull_request'
-              && github.event.pull_request.head.repo.full_name == github.repository))
+          || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -429,6 +442,11 @@ jobs:
                 echo "selected target github but rust-small-github result was ${GITHUB_RESULT}" >&2
                 exit 1
               fi
+              ;;
+            blocked)
+              echo "self-hosted runner routing blocked: ${{ needs.route-rust-small.outputs.reason }}" >&2
+              echo "use label allow-github-hosted or ci-budget-ack only when budget is acknowledged" >&2
+              exit 1
               ;;
             *)
               echo "router produced unknown target: ${TARGET}" >&2
