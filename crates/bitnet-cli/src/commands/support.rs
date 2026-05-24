@@ -2,7 +2,7 @@
 
 use crate::model_cache::{self, ModelStatusDashboard};
 
-use super::receipts::{self, ReceiptExplanation};
+use super::receipts::{self, ReceiptExplanation, TimingExplanation};
 use anyhow::Result;
 use clap::{Args, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -78,6 +78,7 @@ struct SupportBundleSummary {
     dense_regular_llm_cuda_proof: Option<bool>,
     next_proof: Option<String>,
     claim_boundary: Option<String>,
+    timing: TimingExplanation,
     receipt_path: String,
 }
 
@@ -180,6 +181,7 @@ fn support_summary(
         dense_regular_llm_cuda_proof: receipt.dense_regular_llm_cuda_proof,
         next_proof,
         claim_boundary: receipt.model_coverage.claim_boundary.clone(),
+        timing: receipt.timing.clone(),
         receipt_path: receipt.path.clone(),
     }
 }
@@ -304,7 +306,53 @@ fn print_support_bundle_text(bundle: &SupportBundle) {
         println!("  fallback_used: {fallback}");
     }
     println!("  quality_gate: {}", bundle.summary.quality_gate);
+    print_support_timing(&bundle.summary.timing);
     println!("  binary: {} {}", bundle.binary.name, bundle.binary.crate_version);
+}
+
+fn print_support_timing(timing: &TimingExplanation) {
+    if !support_timing_has_data(timing) {
+        return;
+    }
+
+    println!("  timing:");
+    print_support_f64("total_ms", timing.total_ms);
+    print_support_f64("first_token_ms", timing.first_token_ms);
+    print_support_f64("decode_total_ms", timing.decode_total_ms);
+    print_support_f64("steady_decode_tok_s", timing.steady_decode_tok_s);
+    print_support_f64("kernel_time_ms", timing.kernel_time_ms);
+    print_support_u64("host_to_device_bytes", timing.host_to_device_bytes);
+    print_support_f64("host_to_device_ms", timing.host_to_device_ms);
+    print_support_u64("host_to_device_time_samples", timing.host_to_device_time_samples);
+    print_support_u64("device_to_host_bytes", timing.device_to_host_bytes);
+    print_support_f64("device_to_host_ms", timing.device_to_host_ms);
+    print_support_u64("device_to_host_time_samples", timing.device_to_host_time_samples);
+}
+
+fn support_timing_has_data(timing: &TimingExplanation) -> bool {
+    timing.total_ms.is_some()
+        || timing.first_token_ms.is_some()
+        || timing.decode_total_ms.is_some()
+        || timing.steady_decode_tok_s.is_some()
+        || timing.kernel_time_ms.is_some()
+        || timing.host_to_device_bytes.is_some()
+        || timing.host_to_device_ms.is_some()
+        || timing.host_to_device_time_samples.is_some()
+        || timing.device_to_host_bytes.is_some()
+        || timing.device_to_host_ms.is_some()
+        || timing.device_to_host_time_samples.is_some()
+}
+
+fn print_support_f64(label: &str, value: Option<f64>) {
+    if let Some(value) = value {
+        println!("    {label}: {value}");
+    }
+}
+
+fn print_support_u64(label: &str, value: Option<u64>) {
+    if let Some(value) = value {
+        println!("    {label}: {value}");
+    }
 }
 
 fn string_at_any(value: &Value, paths: &[&[&str]]) -> Option<String> {
@@ -845,6 +893,15 @@ mod tests {
                     "dense_regular_llm_cuda_claimed": false,
                     "speedup_claim": false,
                     "full_cuda_residency_claimed": false
+                },
+                "timing": {
+                    "cuda_kernel_time_ms": 2.5,
+                    "host_to_device_bytes": 4096,
+                    "host_to_device_ms": 0.375,
+                    "host_to_device_time_samples": 1,
+                    "device_to_host_bytes": 2048,
+                    "device_to_host_ms": 0.188,
+                    "device_to_host_time_samples": 1
                 }
             }),
         )?;
@@ -878,6 +935,21 @@ mod tests {
         assert_eq!(value["latest_receipt"]["model_coverage_row"], "bitnet_official_2b_i2s_qk256");
         assert_eq!(value["latest_receipt"]["bitnet_packed_i2s_qk256_proof"], true);
         assert_eq!(value["latest_receipt"]["dense_regular_llm_cuda_proof"], false);
+        assert_eq!(value["summary"]["timing"]["kernel_time_ms"], json!(2.5));
+        assert_eq!(value["summary"]["timing"]["host_to_device_bytes"], json!(4096));
+        assert_eq!(value["summary"]["timing"]["host_to_device_ms"], json!(0.375));
+        assert_eq!(value["summary"]["timing"]["host_to_device_time_samples"], json!(1));
+        assert_eq!(value["summary"]["timing"]["device_to_host_bytes"], json!(2048));
+        assert_eq!(value["summary"]["timing"]["device_to_host_ms"], json!(0.188));
+        assert_eq!(value["summary"]["timing"]["device_to_host_time_samples"], json!(1));
+        assert_eq!(
+            value["summary"]["timing"]["host_to_device_ms"],
+            value["latest_receipt"]["timing"]["host_to_device_ms"]
+        );
+        assert_eq!(
+            value["summary"]["timing"]["device_to_host_ms"],
+            value["latest_receipt"]["timing"]["device_to_host_ms"]
+        );
         Ok(())
     }
 
