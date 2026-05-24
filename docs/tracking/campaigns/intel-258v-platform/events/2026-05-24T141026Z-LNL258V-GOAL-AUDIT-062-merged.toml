@@ -1,0 +1,36 @@
+timestamp = "2026-05-24T14:10:26Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-062"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 622
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-062-post-slmcpu099"
+head_sha = "db37b619f1d2af64847fcfc663b845b44ee6c9e7"
+merge_sha = "7268d872a88f5c06d45721d5912f87d25ab2f42a"
+merged_at = "2026-05-24T14:10:26Z"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Closed LNL258V-GOAL-AUDIT-062 after PR #622 merged the no-inference Lunar Lake audit/checklist refresh."
+notes = [
+  "PR #622 refreshed audit/checklist source_revision to 805f399ab7eed5bb4b971ccb7231aa2e793b9522.",
+  "PR #622 classified #608/#609/#610/#611/#612/#613/#614/#615/#617/#618 as adjacent SLM CPU tracker/contract, adjacent A770 diagnostic/tracker, support-command, CI, or documentation state only.",
+  "The PR used the allow-github-hosted routed-CI fallback after the first Rust-small route was blocked by no_idle_runner; the normalized BitNet Rust Small Result passed on the fallback run.",
+  "LNL258V-POWER-006 remains blocked and no Lunar Lake inference, route promotion, speedup, power advantage, semantic stale state, or BitNet QK256/I2_S behavior claim changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "LNL258V-GOAL-AUDIT-062 refreshed Lunar Lake audit/checklist source_revision through current swarm main at PR #622.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake model was loaded.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "A speedup or power advantage is proven.",
+  "A770-047 or SLM-CPU-099 is Lunar Lake route evidence.",
+  "A770-047 or SLM-CPU-099 is a shared BitNet semantic fix.",
+  "Lunar Lake semantic-intake is stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]
