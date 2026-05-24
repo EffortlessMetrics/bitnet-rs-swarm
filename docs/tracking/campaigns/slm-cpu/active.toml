@@ -5993,13 +5993,16 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-093"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-093-logits-fused-selection-boundary"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["SLM-CPU-092"]
+pr = 564
+head_sha = "b60db8fe6ddd7b558879ff02f805c1c768e39be6"
+merge_sha = "749a2f3532e4bca311fed76d8d98a6afaa2e8b38"
 acceptance = "Implement or conclusively block the actual logits/output-head fused-selection implementation slice after the SLM-CPU-092 tracker queue closeout. A valid slice must either add a behavior-preserving output-head/token-selection path that avoids one owned logits tensor or full host logits extraction boundary, or emit a machine-checkable blocker naming the exact Candle Tensor, output-head, accumulator-order, or top-k/argmax API limitation that prevents doing so safely. Any runtime change must preserve the established Qwen3 Q8_0 appliance oracle before claiming even bounded allocation improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false. The slice must not promote packed_q8_sidecar, claim speedup without before/after receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
 commands = [
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session_aggregate_allocation_audit",
