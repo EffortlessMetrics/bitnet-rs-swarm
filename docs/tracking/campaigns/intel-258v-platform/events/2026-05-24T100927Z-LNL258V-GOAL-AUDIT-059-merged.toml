@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T10:09:27Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-059"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-lunar-lake"
+pr = 590
+head_sha = "07b0ba1d18035ef44b9ec55960a6d614d8b8fe9a"
+merge_sha = "d22772fb1352c714bdaaea825a8b3441930a6bb0"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-059-post-058-closeout"
+summary = "Closed LNL258V-GOAL-AUDIT-059 after PR #590 merged the no-inference Lunar Lake audit/checklist refresh."
+notes = [
+  "PR #590 refreshed audit/checklist source_revision to 57a180d0fbc66475df5340aba2947de211f5032f and classified #585 as adjacent A770 tracker queue state, #587 as Lunar Lake audit correction state, #586 as Lunar Lake tracker closeout state, #588 as repository review documentation, #589 as adjacent SLM CPU blocker state, and #591 as adjacent SLM CPU tracker closeout state only.",
+  "#585, #588, #589, and #591 remain not Lunar Lake route evidence, not shared BitNet semantic fixes, and not Lunar Lake semantic-intake stale triggers.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+  "No Lunar Lake inference, model load, fallback change, route promotion, speedup, power-advantage, battery-mode evidence, measured-temperature, native accelerator proof, broad quality claim, semantic-intake stale state, Qwen3 promotion, full BitNet accelerator inference, or BitNet QK256/I2_S behavior change is claimed.",
+]
