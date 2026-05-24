@@ -2093,7 +2093,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-053"
-status = "in_progress"
+status = "pr_open"
+pr = 649
+head_sha = "175d1fc2560a20d6646d1f4fdffcb5c80eafe89c"
 branch = "codex/intel-a770/A770-053-strict-f32-barrier-evidence"
 stackable = false
 review_mode = "codex_premerge"
