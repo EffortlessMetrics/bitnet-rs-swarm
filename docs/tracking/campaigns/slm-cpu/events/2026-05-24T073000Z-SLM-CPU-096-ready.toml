@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T07:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-096"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-096-runtime-output-tensor-storage-gate"
+actor = "codex"
+summary = "Queue the Candle-compatible runtime output Tensor storage gate after SLM-CPU-095."
+notes = [
+  "SLM-CPU-095 proved behavior-preserving inner packed Q8_0 matvec helpers can fill caller-owned output slices, but full runtime output Tensor reuse remains blocked by Candle Tensor::from_vec owned-storage construction.",
+  "The next slice must either adopt a behavior-preserving Tensor construction path for reusable caller-owned packed-Q8 output storage or record the exact Candle/API/lifetime blocker.",
+  "No packed-Q8 default promotion, speedup claim, sustained-throughput claim, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 work is claimed.",
+]
