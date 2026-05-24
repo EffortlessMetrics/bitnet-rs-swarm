@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T10:02:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-059"
+event = "pr_open"
+previous_status = "pr_open"
+new_status = "pr_open"
+actor = "codex-lunar-lake"
+pr = 590
+head_sha = "PENDING_HEAD_SHA"
+base_sha = "57a180d0f34517d682bcf816992b85e75a65243c"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-059-post-058-closeout"
+summary = "Rebased PR #590 on current main after SLM-CPU-096 closeout #591 and classified #591 as adjacent SLM CPU tracker closeout state only."
+notes = [
+  "#591 is adjacent SLM CPU tracker closeout state only and does not add Lunar Lake route evidence.",
+  "#589 remains adjacent SLM CPU runtime output tensor storage blocker state only.",
+  "#585 remains adjacent A770 tracker queue state only; #587 remains Lunar Lake audit correction state only; #586 remains Lunar Lake tracker closeout state only; #588 remains repository review documentation only.",
+  "LNL258V-POWER-006 remains blocked.",
+]

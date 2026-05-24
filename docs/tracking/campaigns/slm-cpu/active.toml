@@ -6156,9 +6156,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-096"
-status = "pr_open"
+status = "merged"
 pr = 589
-head_sha = "47d6ca8bb92a12869c812f3525f9c898df8e5f3c"
+head_sha = "8e196da7347b89575643b732f818e9175136def4"
+merge_sha = "e3d350069d008cfbb23643b04d4c486c2bfaddca"
 branch = "codex/slm-cpu-096-runtime-output-tensor-storage-gate"
 stackable = false
 review_mode = "codex_premerge"
