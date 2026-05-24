@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T15:37:44Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-064"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 629
+head_sha = "46f3dbe2d27b22845fe6cac43ce1d4bd117b7e97"
+merge_sha = "54669a178889a004314ee3c2986ab08b61689f3a"
+merged_at = "2026-05-24T15:37:44Z"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-064-post-slmcpu100-ready"
+actor = "codex"
+summary = "Merged PR #629 for the no-inference Lunar Lake audit refresh after adjacent SLM-CPU-100 and A770 state changes."
+notes = [
+  "PR #629 refreshed the Lunar Lake audit/checklist source_revision to ee1fe61385daefa5fd033bfc6ee9b105677b7e48.",
+  "The refresh classified #625 as adjacent SLM CPU tracker state only and #624/#628 as adjacent A770 diagnostic/tracker state only.",
+  "The refresh preserved LNL258V-POWER-006 as blocked and made no inference, route-promotion, speedup, power-advantage, battery-mode, measured-temperature, native accelerator, broad quality, runtime fused Q projection, packed-Q8 default, Qwen3 Lunar Lake, CPU/A770 parity, strict A770 readiness, full BitNet accelerator inference, or BitNet QK256/I2_S behavior claim.",
+]
