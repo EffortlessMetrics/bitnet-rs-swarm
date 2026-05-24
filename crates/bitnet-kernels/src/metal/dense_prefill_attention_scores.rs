@@ -88,9 +88,9 @@ pub async fn run_dense_prefill_attention_scores(
 ) -> Result<DensePrefillAttentionScoresMetalOutput, DensePrefillAttentionScoresMetalError> {
     use wgpu::util::DeviceExt;
 
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::METAL,
-        ..Default::default()
+        ..wgpu::InstanceDescriptor::new_without_display_handle()
     });
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -99,7 +99,7 @@ pub async fn run_dense_prefill_attention_scores(
             force_fallback_adapter: false,
         })
         .await
-        .ok_or(DensePrefillAttentionScoresMetalError::AdapterUnavailable {
+        .map_err(|_| DensePrefillAttentionScoresMetalError::AdapterUnavailable {
             phase: DENSE_METAL_PREFILL_ATTENTION_SCORES_KERNEL_ID,
         })?;
 
@@ -110,11 +110,9 @@ pub async fn run_dense_prefill_attention_scores(
         });
     }
 
-    let (device, queue) = adapter
-        .request_device(&wgpu::DeviceDescriptor::default(), None)
-        .await
-        .map_err(|error| DensePrefillAttentionScoresMetalError::DeviceCreation {
-            message: error.to_string(),
+    let (device, queue) =
+        adapter.request_device(&wgpu::DeviceDescriptor::default()).await.map_err(|error| {
+            DensePrefillAttentionScoresMetalError::DeviceCreation { message: error.to_string() }
         })?;
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -176,8 +174,8 @@ pub async fn run_dense_prefill_attention_scores(
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("tiny_metal_dense_prefill_attention_scores_pipeline_layout"),
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
     let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some("tiny_metal_dense_prefill_attention_scores_pipeline"),
@@ -209,7 +207,9 @@ pub async fn run_dense_prefill_attention_scores(
     slice.map_async(wgpu::MapMode::Read, move |result| {
         let _ = tx.send(result);
     });
-    device.poll(wgpu::Maintain::Wait);
+    device.poll(wgpu::PollType::wait_indefinitely()).map_err(|error| {
+        DensePrefillAttentionScoresMetalError::OutputReadback { message: error.to_string() }
+    })?;
     rx.recv()
         .map_err(|error| DensePrefillAttentionScoresMetalError::OutputReadback {
             message: error.to_string(),

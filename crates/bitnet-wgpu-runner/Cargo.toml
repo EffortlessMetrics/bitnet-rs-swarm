@@ -7,7 +7,7 @@ description = "Kernel execution runner for wgpu compute pipelines"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-wgpu = { version = "24", features = ["vulkan-portability"] }
+wgpu = { version = "29", features = ["vulkan-portability"] }
 bytemuck = { version = "1", features = ["derive"] }
 thiserror = "2"
 tracing = "0.1"

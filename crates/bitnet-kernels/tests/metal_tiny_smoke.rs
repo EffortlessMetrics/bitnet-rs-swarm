@@ -949,9 +949,9 @@ mod live_metal {
 
     fn run_tiny_add_smoke(lhs: &[f32], rhs: &[f32]) -> Result<MetalSmokeOutput, Box<dyn Error>> {
         pollster::block_on(async move {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -971,7 +971,7 @@ mod live_metal {
             }
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor::default(), None)
+                .request_device(&wgpu::DeviceDescriptor::default())
                 .await
                 .map_err(|error| io_error(format!("failed to create Metal device: {error}")))?;
 
@@ -1029,8 +1029,8 @@ mod live_metal {
 
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("tiny_metal_add_pipeline_layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
             let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("tiny_metal_add_pipeline"),
@@ -1062,7 +1062,7 @@ mod live_metal {
             slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
             rx.recv()
                 .map_err(|error| io_error(format!("failed to receive Metal map result: {error}")))?
                 .map_err(|error| io_error(format!("failed to map Metal smoke output: {error}")))?;
@@ -1082,9 +1082,9 @@ mod live_metal {
         proof_label: &str,
     ) -> Result<MetalI2sParityOutput, Box<dyn Error>> {
         pollster::block_on(async move {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -1104,7 +1104,7 @@ mod live_metal {
             }
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor::default(), None)
+                .request_device(&wgpu::DeviceDescriptor::default())
                 .await
                 .map_err(|error| io_error(format!("failed to create Metal device: {error}")))?;
 
@@ -1186,8 +1186,8 @@ mod live_metal {
 
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("tiny_metal_i2s_pipeline_layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
             let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("tiny_metal_i2s_pipeline"),
@@ -1223,7 +1223,7 @@ mod live_metal {
             slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
             rx.recv()
                 .map_err(|error| io_error(format!("failed to receive Metal map result: {error}")))?
                 .map_err(|error| io_error(format!("failed to map Metal I2_S output: {error}")))?;
@@ -1241,9 +1241,9 @@ mod live_metal {
         fixture: &DenseMetalPrefillLinearFixture,
     ) -> Result<MetalI2sParityOutput, Box<dyn Error>> {
         pollster::block_on(async move {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -1267,7 +1267,7 @@ mod live_metal {
             }
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor::default(), None)
+                .request_device(&wgpu::DeviceDescriptor::default())
                 .await
                 .map_err(|error| io_error(format!("failed to create Metal device: {error}")))?;
 
@@ -1346,8 +1346,8 @@ mod live_metal {
 
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("tiny_metal_dense_prefill_linear_pipeline_layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
             let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("tiny_metal_dense_prefill_linear_pipeline"),
@@ -1383,7 +1383,7 @@ mod live_metal {
             slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
             rx.recv()
                 .map_err(|error| io_error(format!("failed to receive Metal map result: {error}")))?
                 .map_err(|error| {
@@ -1481,9 +1481,9 @@ mod live_metal {
         fixture: &I2sMetalProjectionResidualFixture,
     ) -> Result<MetalI2sParityOutput, Box<dyn Error>> {
         pollster::block_on(async move {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -1505,7 +1505,7 @@ mod live_metal {
             }
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor::default(), None)
+                .request_device(&wgpu::DeviceDescriptor::default())
                 .await
                 .map_err(|error| io_error(format!("failed to create Metal device: {error}")))?;
 
@@ -1597,8 +1597,8 @@ mod live_metal {
 
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("tiny_metal_i2s_projection_residual_pipeline_layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
             let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("tiny_metal_i2s_projection_residual_pipeline"),
@@ -1634,7 +1634,7 @@ mod live_metal {
             slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            device.poll(wgpu::Maintain::Wait);
+            let _ = device.poll(wgpu::PollType::wait_indefinitely());
             rx.recv()
                 .map_err(|error| io_error(format!("failed to receive Metal map result: {error}")))?
                 .map_err(|error| {
@@ -1659,9 +1659,9 @@ mod live_metal {
         cpu_reference: Duration,
     ) -> Result<MetalBenchmarkOutput, Box<dyn Error>> {
         pollster::block_on(async move {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -1681,7 +1681,7 @@ mod live_metal {
             }
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor::default(), None)
+                .request_device(&wgpu::DeviceDescriptor::default())
                 .await
                 .map_err(|error| io_error(format!("failed to create Metal device: {error}")))?;
 
@@ -1702,8 +1702,8 @@ mod live_metal {
                 });
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("tiny_metal_add_benchmark_pipeline_layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
             let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some("tiny_metal_add_benchmark_pipeline"),
@@ -1825,7 +1825,7 @@ mod live_metal {
         slice.map_async(wgpu::MapMode::Read, move |result| {
             tx.send(result).unwrap();
         });
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
         rx.recv()
             .map_err(|error| io_error(format!("failed to receive Metal map result: {error}")))?
             .map_err(|error| io_error(format!("failed to map Metal benchmark output: {error}")))?;

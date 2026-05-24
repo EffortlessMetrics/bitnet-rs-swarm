@@ -82,7 +82,7 @@ impl GpuBuffer {
         slice.map_async(wgpu::MapMode::Read, move |result| {
             let _ = tx.send(result);
         });
-        device.device().poll(wgpu::Maintain::Wait);
+        device.device().poll(wgpu::PollType::wait_indefinitely()).map_err(WgpuError::mapping)?;
 
         rx.recv().map_err(WgpuError::mapping)?.map_err(WgpuError::mapping)?;
 
