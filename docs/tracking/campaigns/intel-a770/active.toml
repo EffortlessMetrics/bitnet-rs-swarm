@@ -1732,7 +1732,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-047"
-status = "in_progress"
+status = "pr_open"
 branch = "codex/intel-a770/A770-047-device-expression-frontier"
 stackable = false
 review_mode = "codex_premerge"
