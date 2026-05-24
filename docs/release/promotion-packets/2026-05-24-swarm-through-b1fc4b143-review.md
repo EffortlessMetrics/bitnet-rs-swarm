@@ -1,0 +1,1013 @@
+# Swarm To Source Promotion Packet
+
+Promotion id: ef6eec8a6f95-to-b1fc4b143369
+Source repo: EffortlessMetrics/bitnet-rs-swarm (main)
+Target repo: EffortlessMetrics/BitNet-rs (main)
+Swarm range: `origin/main..swarm/main`
+Resolved range: `ef6eec8a6f95a54138fd69617235347944d2caae`..`b1fc4b143369bd418545741bdd6d04b1473e7a76`
+
+## Packet Status
+
+Status: review checkpoint, not source approval.
+Created: 2026-05-24
+Boundary status: `ok`
+Source open PRs at generation: `0`
+Swarm open PRs at generation: `0`
+Source commits missing from swarm: `0`
+Swarm commits missing from source: `198`
+
+This packet makes the current swarm-to-source delta reviewable after the swarm
+queue reached zero open PRs. It does not open a source promotion by itself and
+does not approve release, publish, signing, hardware, model, quality,
+performance, residency, server-readiness, or user-facing support claims.
+
+## Included Swarm PRs
+
+- `#371`
+- `#374`
+- `#377`
+- `#379`
+- `#380`
+- `#381`
+- `#382`
+- `#383`
+- `#384`
+- `#385`
+- `#386`
+- `#387`
+- `#388`
+- `#390`
+- `#391`
+- `#392`
+- `#393`
+- `#394`
+- `#395`
+- `#396`
+- `#397`
+- `#398`
+- `#399`
+- `#400`
+- `#401`
+- `#402`
+- `#403`
+- `#404`
+- `#406`
+- `#407`
+- `#408`
+- `#409`
+- `#410`
+- `#412`
+- `#413`
+- `#414`
+- `#415`
+- `#416`
+- `#417`
+- `#418`
+- `#419`
+- `#420`
+- `#421`
+- `#423`
+- `#424`
+- `#425`
+- `#428`
+- `#429`
+- `#430`
+- `#431`
+- `#432`
+- `#433`
+- `#435`
+- `#436`
+- `#437`
+- `#438`
+- `#439`
+- `#440`
+- `#441`
+- `#442`
+- `#443`
+- `#444`
+- `#446`
+- `#447`
+- `#448`
+- `#450`
+- `#451`
+- `#452`
+- `#453`
+- `#454`
+- `#455`
+- `#456`
+- `#458`
+- `#459`
+- `#460`
+- `#461`
+- `#462`
+- `#463`
+- `#464`
+- `#466`
+- `#470`
+- `#471`
+- `#472`
+- `#473`
+- `#474`
+- `#476`
+- `#477`
+- `#478`
+- `#480`
+- `#481`
+- `#483`
+- `#484`
+- `#487`
+- `#488`
+- `#489`
+- `#491`
+- `#493`
+- `#494`
+- `#495`
+- `#496`
+- `#497`
+- `#498`
+- `#499`
+- `#500`
+- `#501`
+- `#502`
+- `#503`
+- `#504`
+- `#505`
+- `#506`
+- `#507`
+- `#508`
+- `#509`
+- `#510`
+- `#511`
+- `#512`
+- `#513`
+- `#514`
+- `#515`
+- `#516`
+- `#517`
+- `#518`
+- `#519`
+- `#520`
+- `#521`
+- `#523`
+- `#524`
+- `#525`
+- `#526`
+- `#528`
+- `#529`
+- `#530`
+- `#531`
+- `#532`
+- `#533`
+- `#534`
+- `#535`
+- `#536`
+- `#537`
+- `#538`
+- `#539`
+- `#540`
+- `#542`
+- `#543`
+- `#544`
+- `#545`
+- `#546`
+- `#547`
+- `#548`
+- `#550`
+- `#551`
+- `#552`
+- `#553`
+- `#555`
+- `#556`
+- `#557`
+- `#558`
+- `#559`
+- `#560`
+- `#561`
+- `#562`
+- `#563`
+- `#564`
+- `#566`
+- `#567`
+- `#568`
+- `#569`
+- `#570`
+- `#571`
+- `#572`
+- `#573`
+- `#574`
+- `#575`
+- `#576`
+- `#577`
+- `#578`
+- `#579`
+- `#580`
+- `#581`
+- `#582`
+- `#583`
+- `#584`
+- `#585`
+- `#586`
+- `#587`
+- `#6200`
+
+## Included Swarm SHAs
+
+- `061f3555f827 docs(handoffs): record swarm post-529 checkpoint (#530)`
+- `0651df10e855 build(deps): bump jsonwebtoken from 10.3.0 to 10.4.0 (#548)`
+- `068a8752db08 ci-core: cancel superseded PR workflow runs (#560)`
+- `0768cd31926e docs(a770): repair A770-032 campaign summary status (#423)`
+- `0d9a0f645aa1 docs(tracking): queue SLM-CPU-092 logits selection gate (#535)`
+- `0e6db7619b34 xtask: tighten lane-check list parsing (#481)`
+- `0ed4a6b7706a LNL258V-GOAL-AUDIT-048: refresh audit after A770-039 (#504)`
+- `100151a32b5b docs(tracking): close A770-042 (#534)`
+- `107409f014e2 feat(slm-cpu): classify SLM-CPU-083 model forward output boundary (#393)`
+- `116d821329a0 docs(qwen3): align source-capture frontier plan (#384)`
+- `12dcdbc1a3c3 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-034 post-381 state (#382)`
+- `12eb68ee7c85 diag(a770): repair readiness prompt contract (#371)`
+- `1480cdf77819 docs(tracking): close A770-041 after PR 517 (#523)`
+- `1828d7904dc7 diag(a770): replay QKV projection dispatch policy (#552)`
+- `189207975c37 docs(a770): close A770-035 (#466)`
+- `18e77fc77ee7 docs(slm): repair SLM-CPU-090 ready state (#477)`
+- `1ac629faeec3 diag(a770): replay QKV projection source frontier (#532)`
+- `1add69b7483b docs(cuda): align support issue bundle fields (#558)`
+- `1bb101c1faeb docs(a770): close A770-030 (#392)`
+- `1c0b0db81fba docs(a770): close A770-044 (#571)`
+- `1c99e05ed8bc docs(tracking): repair campaign event metadata (#436)`
+- `1d37ed237410 fix(lunar-lake): block BitNet reference asks explicitly (#576)`
+- `1f3ff677b61a docs(cuda): correct CUDA-MODEL-018 closeout head SHA (#519)`
+- `2074439df759 Merge pull request #379 from EffortlessMetrics/sync/source-main-after-6200`
+- `218e63434652 docs(handoffs): record post-502 swarm checkpoint (#503)`
+- `21fa2ec877bc docs(lunar-lake): close audit 043 with post-452 repair (#455)`
+- `22fc06868ae2 docs(lunar-lake): close LNL258V-GOAL-AUDIT-034 (#386)`
+- `236771e8b13c build(deps): bump docker/setup-buildx-action from 3.10.0 to 4.1.0 (#543)`
+- `266654c4621d docs(lunar-lake): close out LNL258V-GOAL-AUDIT-036 (#407)`
+- `278f9d92d141 LNL258V-POWER-013 low-power energy proxy validity (#509)`
+- `27e28ead07bc docs(lunar-lake): close out LNL258V-GOAL-AUDIT-038 (#419)`
+- `2a3566e0112b docs(tracking): refresh Lunar Lake audit after #529 (#531)`
+- `2c1f10c2c29c docs(lunar-lake): refresh goal audit after PR 415 (#416)`
+- `2c213812beed docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-055 after closeout 563 (#566)`
+- `303f59aa4a56 diag(a770): classify QK256 numeric replay policy`
+- `32593cf1554b Close LNL258V-POWER-013 (#512)`
+- `32afbe490290 perf(slm): SLM-CPU-095 packed q8 matvec output scratch boundary (#577)`
+- `32cca5961a3e CUDA-BITNET-PERF-005: build strict BitNet repeated profile receipts (#525)`
+- `333bb94f226e LNL258V-POWER-014: surface low power energy proxy validity (#516)`
+- `3918571479e9 docs(lunar-lake): refresh goal audit after SLM-CPU-085 (#413)`
+- `3a41ed32efe4 docs(a770): close A770-045 (#583)`
+- `3a54754fc173 docs(lunar-lake): refresh audit after A770-033 closeout (#446)`
+- `3d5df7280394 docs(tracking): close SLM-CPU-092 (#540)`
+- `3fd49ecbd249 docs(slm-cpu): queue SLM-CPU-083 allocation target (#383)`
+- `40e357f20078 feat(cuda): add qwen3 warm-session run 3 receipt`
+- `40eec18fb687 docs: add swarm development roadmap and tracking index (#539)`
+- `4216ec465361 docs(lunar-lake): close LNL258V-ASK-008 (#578)`
+- `44a380b21ecb docs(tracker): refresh SLM dashboards (#397)`
+- `467e83dfda30 docs(a770): close A770-043 (#557)`
+- `47e3d6579179 feat(slm-cpu): add model forward output slot (#399)`
+- `49b6e0f93428 docs(lunar-lake): close LNL258V-GOAL-AUDIT-044 (#462)`
+- `4b34310b2c4a docs(slm-cpu): close out SLM-CPU-084 (#402)`
+- `4b9f191a5c9b bench(cuda): add BitNet perf profile manifest (#521)`
+- `4ead145443b8 docs(a770): close out A770-032 (#420)`
+- `53b908867874 feat(cuda): add qwen3 repeated comparator aggregate (#506)`
+- `550a9ba4d65a docs(slm-cpu): queue SLM-CPU-087 residual block output gate (#437)`
+- `559bf087e50b docs(tracking): close CUDA-MODEL-018 and LNL258V-POWER-014 (#518)`
+- `57bb768df3c9 docs(lunar-lake): close out LNL258V-GOAL-AUDIT-035 (#400)`
+- `5835f6427107 diag(a770): record summary logit context frontier (#388)`
+- `59474d267b61 docs(a770): close A770-037 (#489)`
+- `5a620f56c158 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-057 after ASK-008 closeout (#580)`
+- `5c8875a67200 build(deps): align OpenTelemetry stack to 0.32 (#556)`
+- `5f7909a649db LNL258V-GOAL-AUDIT-046: close tracker after PR 493 (#494)`
+- `609566448d00 build(deps): bump rand from 0.9.2 to 0.10.1 (#551)`
+- `631959fead5a docs(handoffs): record swarm post-534 checkpoint (#537)`
+- `63f6f70469e5 docs(lunar-lake): close LNL258V-GOAL-AUDIT-054 (#563)`
+- `64a52ae794f2 docs(slm-cpu): queue SLM-CPU-088 (#450)`
+- `64e6c9233b29 docs(lunar-lake): refresh goal audit after SLM-CPU-086 (#432)`
+- `66524d74ef7a docs(lunar-lake): refresh audit after A770-030 (#395)`
+- `69d4da1fdcb9 diag(a770): replay layer 0 attention output source frontier (#517)`
+- `6a400789b6ba feat(cuda): complete qwen3 short-decode-32 source set`
+- `6a89c333d4e1 build(deps): bump docker/build-push-action from 7.1.0 to 7.2.0 (#544)`
+- `6a987646e358 feat(cuda): add qwen3 decode-128 run 1 receipt`
+- `6dbbba804705 docs(slm-cpu): repair SLM-CPU-086 ready state (#417)`
+- `6ff3afa639e8 docs(handoffs): record swarm post-450 checkpoint (#451)`
+- `706304841407 docs(slm-cpu): queue SLM-CPU-085 (#404)`
+- `72061c727913 feat(cuda): capture second qwen3 short-decode source receipt (#447)`
+- `749a2f3532e4 docs(slm): classify SLM-CPU-093 logits fused selection boundary (#564)`
+- `75cb05cd7f24 diag(a770): add earlier block source frontier (#500)`
+- `76c98126e977 A770-038: close tracker after PR 495 (#497)`
+- `7804bac94385 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-043 after SLM CPU queue (#453)`
+- `784dc0330316 LNL258V-GOAL-AUDIT-047: refresh audit after A770-038 (#498)`
+- `792b245fc302 build(deps): bump docker/login-action from 4.1.0 to 4.2.0 (#545)`
+- `7a7c334131b5 docs(a770): close A770-029 (#380)`
+- `7bfd9491c1e3 docs(a770): restore A770-029 closeout ordering (#385)`
+- `7dc230df006c diag(a770): classify summary argmax source frontier (#398)`
+- `7ee49c423734 Merge branch 'main' into sync/source-main-after-6200`
+- `800628c8a2fc docs(nvidia): complete qwen3 one-token source set (#412)`
+- `83518a7ec85b docs(slm): close SLM-CPU-089 (#473)`
+- `83585d5939c9 docs(a770): close A770-036 (#480)`
+- `83705a5711aa feat(cuda): add qwen3 warm-session run 2 receipt`
+- `84249f103a85 LNL258V-GOAL-AUDIT-047: close tracker after PR 498 (#499)`
+- `8599350425b9 docs(slm): queue SLM-CPU-096 runtime output storage gate (#581)`
+- `8769c8d87b91 docs(a770): queue A770-046 output readback trace (#585)`
+- `8aad6892d9a7 docs(tracking): close LNL258V-GOAL-AUDIT-050`
+- `8b785dd2bc80 docs(tracking): refresh Lunar Lake audit after A770-042 (#536)`
+- `8bb462c16d4f diag(a770): add transformer block source stack frontier (#508)`
+- `8ef1614f3175 docs(a770): mark A770-034 merged in campaign summary (#458)`
+- `8f437571fffb docs(lunar-lake): close out audit 041 (#441)`
+- `93bfd2a774d3 test(transformer): cover SLM-CPU-086 layernorm metadata (#429)`
+- `959f5240216b diag(slm-cpu): SLM-CPU-086 final norm output storage gate (#425)`
+- `96047cba632b xtask: require proof metadata in lane check (#476)`
+- `975a20237c3e docs(pr): update MSRV guidance (#443)`
+- `978b192484a2 LNL258V-GOAL-AUDIT-048: close tracker after merge (#505)`
+- `98503c2f64a5 feat(cuda): complete qwen3 short-decode source set (#452)`
+- `9933d6eed73e diag(a770): add A770-035 final block source frontier (#463)`
+- `9aeb60b6b540 docs(slm-cpu): repair SLM-CPU-086 campaign summary (#430)`
+- `9db8b558f9d1 docs(lunar-lake): refresh goal audit after tracker metadata repair (#438)`
+- `9f80b18c3c8c diag(a770): A770-033 hidden-state source frontier (#439)`
+- `9fd155a60469 docs(lunar-lake): refresh audit after A770-037 (#493)`
+- `a1c75ad288aa docs(tracking): queue SLM-CPU-093 fused selection implementation (#559)`
+- `a335c64197f0 docs(slm-cpu): close SLM-CPU-087 (#444)`
+- `a3e5a98395ad docs(slm-cpu): capture SLM-CPU-082 repeated packed q8 receipts (#374)`
+- `a4c24d681772 docs(repo): finalize swarm development authority (#431)`
+- `a591d4a8f19f feat(cli): expose product readiness in support bundles (#555)`
+- `a679c1f0e448 docs(slm): sync SLM-CPU-093 merged state (#569)`
+- `a6887ef9cdc3 diag(a770): add penultimate block source frontier (#478)`
+- `a72511867200 docs(lunar-lake): close GOAL-AUDIT-045 (#472)`
+- `a74dcd085338 ci: emergency slim default PR lanes and explicit routed-CI fallback policy (#562)`
+- `a944766a6730 diag(a770): A770-034 model-forward source frontier (#454)`
+- `a9be4b3c9fbf diag(a770): add pre-antepenultimate block source frontier (#495)`
+- `ab9a106135e7 sync: merge BitNet-rs source promotion #6200 into swarm`
+- `abcfbbd96859 docs(slm-cpu): queue SLM-CPU-084 target (#396)`
+- `acc69d4247ec docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-058 after closeout (#584)`
+- `ad7ec2895c4f docs: add hard CI-efficiency compatibility invariants for Codex (#567)`
+- `ae0c82c8a39d build(deps): bump actions/setup-node from 4.4.0 to 6.4.0 (#546)`
+- `af11085b5113 diag(a770): A770-032 internal logit source context (#418)`
+- `afa96e2589f0 SLM-CPU-091: close tracker after PR 507 (#510)`
+- `b1fc4b143369 docs(lunar-lake): close LNL258V-GOAL-AUDIT-058 (#586)`
+- `b20aef210150 xtask(repo-boundary): add lane metadata checker (#387)`
+- `b2b6b78c1560 feat(cuda): add qwen3 short-decode-32 source receipt (#460)`
+- `b38ba412c292 fix(a770): record final block ffn output source`
+- `b43f47729a95 docs(lunar-lake): refresh migration inventory cutoff (#484)`
+- `b5e0d2c46158 docs(slm-cpu): close out SLM-CPU-085 (#410)`
+- `b61ae37eb35a docs(slm): queue logits output boundary (#491)`
+- `b68d722465b7 docs(a770): close A770-040 (#513)`
+- `b9080d5be1f8 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-036 (#406)`
+- `bb341f5ed9af docs(tracking): close LNL258V-GOAL-AUDIT-053 (#538)`
+- `bb6ba7f359c3 build(deps): bump fastrand from 2.3.0 to 2.4.1 (#550)`
+- `bd30a5507986 xtask(repo-boundary): report checkout role (#496)`
+- `bd801748db47 docs(lunar-lake): LNL258V-GOAL-AUDIT-044 refresh audit (#461)`
+- `bda1f3566a93 docs(tracking): close LNL258V-GOAL-AUDIT-052 (#533)`
+- `be5a06fe93a4 docs(lunar-lake): refresh audit after A770-035 (#470)`
+- `bf2013dec3a1 docs(lunar-lake): close LNL258V-GOAL-AUDIT-057 (#582)`
+- `bf3733505ff7 docs(slm): record exact residual-add storage blocker (#483)`
+- `c1050aa483ba perf(slm): SLM-CPU-088 residual block output boundary (#459)`
+- `c2c998dcd7a6 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-056 after ci guidance (#570)`
+- `c302f87d17e0 build(deps): bump peter-evans/create-pull-request from 7.0.11 to 8.1.1 (#542)`
+- `c3b9bf969ab2 docs(lunar-lake): correct GOAL-AUDIT-058 post-A770 closeout (#587)`
+- `c4992d971957 SLM-CPU-091: classify logits output boundary (#507)`
+- `c5a3a54e6989 docs(lunar-lake): close LNL258V-GOAL-AUDIT-056 (#573)`
+- `c69ffb24e220 test(cuda): remove no-panic debt from repeated profile tests (#528)`
+- `c6a60490756f docs(tracking): LNL258V-GOAL-AUDIT-051 post-A770/CUDA refresh (#526)`
+- `c78e4ac7bcad docs(a770): close A770-033 (#442)`
+- `c97e5451d478 docs(lunar-lake): close goal audit 042 (#448)`
+- `c9d804cb3fd4 docs(slm): queue SLM-CPU-094 packed q8 scratch gate (#572)`
+- `ca0cfefdf1cb docs(slm-cpu): close out SLM-CPU-083 (#394)`
+- `ca92466f2627 docs(lunar-lake): refresh LNL258V-GOAL-AUDIT-054 after A770-043 (#561)`
+- `cab6d1b69f95 docs(handoffs): record swarm post-523 checkpoint (#524)`
+- `cb7a58636f49 docs(nvidia): block Qwen3 source-capture item (#391)`
+- `ccd639e26af4 docs(slm): close SLM-CPU-089 and queue 090 (#474)`
+- `d2d6aa7ba13d docs(slm): close SLM-CPU-088 (#464)`
+- `d4bceb9b880b A770-039: close tracker after PR 500 (#502)`
+- `d5ad9a6b36c2 docs(slm-cpu): queue SLM-CPU-086 final norm gate (#414)`
+- `d60b3834c218 feat(cuda): add qwen3 warm-session source receipt`
+- `d6969f5cad5a docs(slm-cpu): close SLM-CPU-082 after #374 (#377)`
+- `d6d50a3f28b6 docs(tracking): LNL258V-GOAL-AUDIT-050 post-POWER-014 audit refresh (#520)`
+- `d737b01b866e docs(slm-cpu): close out SLM-CPU-086 (#428)`
+- `d7a6ad8f1ffd build(deps): bump filetime from 0.2.27 to 0.2.29 (#547)`
+- `d91cef01f3c2 docs(tracking): return queued SLM item to ready (#390)`
+- `dc3e2784f8d9 docs(lunar-lake): repair audit source revision after CUDA receipt (#408)`
+- `e10f3b190e0d feat(slm-cpu): classify SLM-CPU-085 output storage blockers (#409)`
+- `e2a4ddbcfe28 docs(tracking): refresh dashboards after A770-029 closeout (#381)`
+- `e2bdcf05b585 docs(a770): close out A770-031 (#401)`
+- `e448c31d4527 docs(slm): close SLM-CPU-094 tracker gate (#575)`
+- `e49e768f9e70 docs(handoffs): record post-462 swarm checkpoint`
+- `e5f28c991de6 docs(slm): queue SLM-CPU-089 residual-add storage gate (#471)`
+- `e62da4de7cb9 docs(lunar-lake): close out LNL258V-GOAL-AUDIT-039 (#424)`
+- `e6c467dd1307 diag(a770): add antepenultimate block source frontier (#488)`
+- `e93199017411 docs(a770): close A770-034 (#456)`
+- `eba421a87468 docs(tracking): close LNL258V-GOAL-AUDIT-051 (#529)`
+- `ebefe2192048 docs(lunar-lake): refresh goal audit after A770-032 (#421)`
+- `ec107d497871 docs(lunar-lake): close out LNL258V-GOAL-AUDIT-037 (#415)`
+- `ec92f7efd2b4 feat(cuda): capture qwen3 short-decode source receipt (#440)`
+- `ecd533bdc816 feat(cuda): add qwen3 short-decode-32 run 02 receipt`
+- `f06af55c0b94 docs(handoffs): record post467 swarm checkpoint`
+- `f1a1b7ade8d5 docs(lunar-lake): close LNL258V-GOAL-AUDIT-049 (#515)`
+- `f3618599cf37 docs(rocm): close out ROCM-DOCS-000 (#435)`
+- `f8049eb5bbd6 build(deps): bump wgpu from 24.0.5 to 29.0.3 (#553)`
+- `f81700369c78 docs(slm): close SLM-CPU-090 tracker (#487)`
+- `f8f887bd2eda feat(cuda): add qwen3 decode-128 run 2 receipt (#501)`
+- `f998197b5e05 docs(nvidia): record Qwen3 one-token source receipt (#403)`
+- `f9d17091fd7a docs(lunar-lake): close LNL258V-GOAL-AUDIT-055 (#568)`
+- `fc9d23342618 diag(a770): report A770-045 QK256 output casting frontier (#574)`
+- `fd068addc15c docs(lunar-lake): close out LNL258V-GOAL-AUDIT-040 (#433)`
+- `fd85faaf7ff5 LNL258V-GOAL-AUDIT-049: refresh audit after POWER-013 (#514)`
+- `fdcb3643ff9a CUDA-MODEL-018: review Qwen3 benchmark qualification (#511)`
+- `ff07fc2e5941 docs(slm): close SLM-CPU-095 tracker gate (#579)`
+
+## Source Impact
+
+- `campaign_or_generated_tracking`
+- `release_review_required`
+- `runtime_or_product_code`
+- `workflow_change`
+- `workspace_manifest_or_lockfile`
+- `xtask_or_policy_control_plane`
+
+## Changed Files
+
+- `.github/ISSUE_TEMPLATE/cuda-support.yml`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/badge-endpoints.yml`
+- `.github/workflows/cache-bitnet-cpp.yml`
+- `.github/workflows/ci-actuals.yml`
+- `.github/workflows/ci-core.yml`
+- `.github/workflows/docs-automation.yml`
+- `.github/workflows/em-ci-routed-rust.yml`
+- `.github/workflows/gpu-ci-matrix.yml`
+- `.github/workflows/release.yml`
+- `.github/workflows/rust-ci-image.yml`
+- `AGENTS.md`
+- `Cargo.lock`
+- `Cargo.toml`
+- `README.md`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits-runs/a770_summary_seed770024_keywords_014.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits-runs/a770_summary_seed770024_keywords_014.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_classify_seed770024_negative_011.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_classify_seed770024_positive_010.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_context_seed770024_password_019.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_extract_seed770024_code_009.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_extract_seed770024_owner_008.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_fact_seed770024_capital_018.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_json_seed770024_status_017.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_math_seed770024_add_001.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_math_seed770024_mul_003.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_math_seed770024_sub_002.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_numeric_seed770024_half_004.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_repeat_seed770024_phrase_007.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_required_seed770024_ready_013.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_sort_seed770024_words_012.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_summary_seed770024_keywords_014.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_table_seed770024_code_006.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_table_seed770024_color_005.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_unknown_seed770024_unknown_020.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_yes_no_seed770024_false_016.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract-runs/a770_yes_no_seed770024_true_015.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/a770-opencl-answer-readiness-prompt-contract.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_classify_seed770024_negative_011.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_classify_seed770024_positive_010.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_context_seed770024_password_019.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_extract_seed770024_code_009.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_extract_seed770024_owner_008.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_fact_seed770024_capital_018.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_json_seed770024_status_017.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_math_seed770024_add_001.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_math_seed770024_mul_003.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_math_seed770024_sub_002.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_numeric_seed770024_half_004.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_repeat_seed770024_phrase_007.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_required_seed770024_ready_013.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_sort_seed770024_words_012.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_summary_seed770024_keywords_014.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_table_seed770024_code_006.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_table_seed770024_color_005.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_unknown_seed770024_unknown_020.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_yes_no_seed770024_false_016.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract-runs/a770_yes_no_seed770024_true_015.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-answer-readiness-prompt-contract.json`
+- `ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract/cpu-avx2-vs-a770-answer-readiness-prompt-contract-parity.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-low-power-battery-plan.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-low-power-energy-proxy.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-comparison.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-readiness.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-power-profile-evidence.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-regression-bundle-v2.json`
+- `ci/hardware/intel-258v/MIGRATION_MANIFEST.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/qwen3-0_6b-repeated-comparator.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-decode-128-from-warm-context-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-one-token-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-short-decode-32-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-short-decode-8-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-01/qwen3-0_6b-warm-session-3-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-decode-128-from-warm-context-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-one-token-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-short-decode-32-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-short-decode-8-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-02/qwen3-0_6b-warm-session-3-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-decode-128-from-warm-context-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-one-token-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-short-decode-32-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-short-decode-8-cuda.json`
+- `ci/hardware/windows-9950x3d-rtx5070ti/2026-05-23/qwen3-perf-017/run-03/qwen3-0_6b-warm-session-3-cuda.json`
+- `ci/model-artifacts/model-coverage-matrix.toml`
+- `ci/quality/a770-bitnet-answer-readiness-corpus.yaml`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-01.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-02.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-baseline-run-03.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-01.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-02.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/01-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/02-answer-yes-or-no-is-water-wet.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/03-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/04-repeat-exactly-red-blue-green.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/05-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03-prompts/06-capital-of-france.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-candidate-run-03.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-081-repeated-packed-q8-timing-classification.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-088-residual-block-output-boundary.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-093-logits-fused-selection-boundary.json`
+- `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-095-packed-q8-matvec-output-scratch.json`
+- `crates/bitnet-bench-receipts/src/bin/strict_bitnet_cuda_repeated_profiles_receipt.rs`
+- `crates/bitnet-bench-receipts/src/lib.rs`
+- `crates/bitnet-bench-receipts/src/validation.rs`
+- `crates/bitnet-cli-sampling-core/Cargo.toml`
+- `crates/bitnet-cli-sampling-core/src/lib.rs`
+- `crates/bitnet-cli/src/allocation_audit.rs`
+- `crates/bitnet-cli/src/commands/answer_parity.rs`
+- `crates/bitnet-cli/src/commands/dense_gguf_linear_parity/mod.rs`
+- `crates/bitnet-cli/src/commands/lunar_lake.rs`
+- `crates/bitnet-cli/src/commands/support.rs`
+- `crates/bitnet-cli/src/mac.rs`
+- `crates/bitnet-cli/src/main.rs`
+- `crates/bitnet-cli/src/model_cache.rs`
+- `crates/bitnet-device-probe/Cargo.toml`
+- `crates/bitnet-device-probe/src/wgpu_probe.rs`
+- `crates/bitnet-inference/Cargo.toml`
+- `crates/bitnet-inference/src/generation/deterministic.rs`
+- `crates/bitnet-inference/src/generation/sampling.rs`
+- `crates/bitnet-inference/tests/qk256_fast_path.rs`
+- `crates/bitnet-kernels/Cargo.toml`
+- `crates/bitnet-kernels/src/cpu/x86.rs`
+- `crates/bitnet-kernels/src/cpu/x86_qk256_property_tests.rs`
+- `crates/bitnet-kernels/src/metal/dense_prefill_attention_scores.rs`
+- `crates/bitnet-kernels/src/metal/dense_prefill_qkv.rs`
+- `crates/bitnet-kernels/tests/metal_compute_pipeline_tests.rs`
+- `crates/bitnet-kernels/tests/metal_compute_validation_tests.rs`
+- `crates/bitnet-kernels/tests/metal_device_integration_tests.rs`
+- `crates/bitnet-kernels/tests/metal_embedding_shader_tests.rs`
+- `crates/bitnet-kernels/tests/metal_layernorm_shader_tests.rs`
+- `crates/bitnet-kernels/tests/metal_matmul_shader_tests.rs`
+- `crates/bitnet-kernels/tests/metal_normalization_shader_tests.rs`
+- `crates/bitnet-kernels/tests/metal_performance_tests.rs`
+- `crates/bitnet-kernels/tests/metal_rope_shader_tests.rs`
+- `crates/bitnet-kernels/tests/metal_shader_library_tests.rs`
+- `crates/bitnet-kernels/tests/metal_tiny_smoke.rs`
+- `crates/bitnet-kernels/tests/proptest_wave32.rs`
+- `crates/bitnet-models/Cargo.toml`
+- `crates/bitnet-models/src/bitnet.rs`
+- `crates/bitnet-models/src/minimal.rs`
+- `crates/bitnet-models/tests/iq2s_tests.rs`
+- `crates/bitnet-models/tests/qk256_avx2_correctness.rs`
+- `crates/bitnet-models/tests/qk256_property_tests.rs`
+- `crates/bitnet-qk256-dispatch/src/lib.rs`
+- `crates/bitnet-quantization/Cargo.toml`
+- `crates/bitnet-quantization/src/i2s_qk256_avx2.rs`
+- `crates/bitnet-quantization/tests/integration_tests.rs`
+- `crates/bitnet-sampling/Cargo.toml`
+- `crates/bitnet-sampling/src/lib.rs`
+- `crates/bitnet-sampling/src/strategies.rs`
+- `crates/bitnet-sampling/tests/snapshots/snapshot_wave12__mirostat_reset.snap`
+- `crates/bitnet-sampling/tests/snapshots/snapshot_wave12__mirostat_sampler_debug.snap`
+- `crates/bitnet-server/Cargo.toml`
+- `crates/bitnet-transformer/src/attention_forward.rs`
+- `crates/bitnet-transformer/src/lib.rs`
+- `crates/bitnet-transformer/tests/transformer_model_tests.rs`
+- `crates/bitnet-transformer/tests/transformer_tests.rs`
+- `crates/bitnet-wgpu-runner/Cargo.toml`
+- `crates/bitnet-wgpu-runner/src/error.rs`
+- `crates/bitnet-wgpu-runner/src/runner.rs`
+- `crates/bitnet-wgpu/Cargo.toml`
+- `crates/bitnet-wgpu/src/buffer.rs`
+- `crates/bitnet-wgpu/src/device.rs`
+- `crates/bitnet-wgpu/src/pipeline.rs`
+- `crossval/Cargo.toml`
+- `crossval/tests/qk256_crossval.rs`
+- `docs/development/SWARM_DEVELOPMENT_AUTHORITY.md`
+- `docs/handoffs/2026-05-23-swarm-post450-checkpoint.md`
+- `docs/handoffs/2026-05-23-swarm-post462-checkpoint.md`
+- `docs/handoffs/2026-05-23-swarm-post467-checkpoint.md`
+- `docs/handoffs/2026-05-23-swarm-post502-checkpoint.md`
+- `docs/handoffs/2026-05-23-swarm-post523-checkpoint.md`
+- `docs/handoffs/2026-05-23-swarm-post529-checkpoint.md`
+- `docs/handoffs/2026-05-24-swarm-post534-checkpoint.md`
+- `docs/migrations/lunar-lake-from-bitnet-rs.md`
+- `docs/release/PROMOTE_TO_BITNET_RS.md`
+- `docs/reports/A770_029_READINESS_PROMPT_CONTRACT.md`
+- `docs/reports/A770_030_SUMMARY_LOGIT_CONTEXT.md`
+- `docs/reports/A770_031_SUMMARY_ARGMAX_SOURCE.md`
+- `docs/reports/A770_032_INTERNAL_LOGIT_SOURCE_CONTEXT.md`
+- `docs/reports/A770_033_HIDDEN_STATE_SOURCE_FRONTIER.md`
+- `docs/reports/A770_034_MODEL_FORWARD_SOURCE_FRONTIER.md`
+- `docs/reports/A770_035_FINAL_BLOCK_SOURCE_FRONTIER.md`
+- `docs/reports/A770_036_PENULTIMATE_BLOCK_SOURCE_FRONTIER.md`
+- `docs/reports/A770_037_ANTEPENULTIMATE_BLOCK_SOURCE_FRONTIER.md`
+- `docs/reports/A770_038_PRE_ANTEPENULTIMATE_BLOCK_SOURCE_FRONTIER.md`
+- `docs/reports/A770_039_EARLIER_BLOCK_SOURCE_FRONTIER.md`
+- `docs/reports/A770_040_TRANSFORMER_BLOCK_SOURCE_STACK_FRONTIER.md`
+- `docs/reports/A770_041_LAYER0_ATTENTION_OUTPUT_SOURCE_FRONTIER.md`
+- `docs/reports/A770_042_QKV_PROJECTION_SOURCE_FRONTIER.md`
+- `docs/reports/A770_043_QKV_PROJECTION_DISPATCH_REPLAY.md`
+- `docs/reports/A770_044_QK256_NUMERIC_POLICY.md`
+- `docs/reports/A770_045_QK256_OUTPUT_CASTING_FRONTIER.md`
+- `docs/reports/CUDA_BITNET_PERF_005_PROFILE_MANIFEST.md`
+- `docs/reports/CUDA_MODEL_017AA_QWEN3_REPEATED_COMPARATOR_AGGREGATE.md`
+- `docs/reports/CUDA_MODEL_017N_QWEN3_ONE_TOKEN_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017O_QWEN3_ONE_TOKEN_SOURCE_SET.md`
+- `docs/reports/CUDA_MODEL_017P_QWEN3_SHORT_DECODE_8_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017Q_QWEN3_SHORT_DECODE_8_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017R_QWEN3_SHORT_DECODE_8_SOURCE_SET.md`
+- `docs/reports/CUDA_MODEL_017S_QWEN3_SHORT_DECODE_32_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017T_QWEN3_SHORT_DECODE_32_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017U_QWEN3_SHORT_DECODE_32_SOURCE_SET.md`
+- `docs/reports/CUDA_MODEL_017V_QWEN3_WARM_SESSION_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017W_QWEN3_WARM_SESSION_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017X_QWEN3_WARM_SESSION_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017Y_QWEN3_DECODE128_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_017Z_QWEN3_DECODE128_SOURCE_RECEIPT.md`
+- `docs/reports/CUDA_MODEL_018_QWEN3_EXACT_PROFILE_BENCHMARK_REVIEW.md`
+- `docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md`
+- `docs/specs/BITNET-SPEC-CUDA-SUPPORT-ISSUE.md`
+- `docs/specs/BITNET-SPEC-SUPPORT-BUNDLE.md`
+- `docs/status/CUDA_CAPABILITY_MATRIX.md`
+- `docs/tracking/LANE_OWNERSHIP.md`
+- `docs/tracking/README.md`
+- `docs/tracking/SWARM_DEVELOPMENT_ROADMAP.md`
+- `docs/tracking/TRACKER_MODEL.md`
+- `docs/tracking/campaigns/amd-rocm/CAMPAIGN.md`
+- `docs/tracking/campaigns/amd-rocm/active.toml`
+- `docs/tracking/campaigns/amd-rocm/events/2026-05-23T062300Z-ROCM-DOCS-000-merged.toml`
+- `docs/tracking/campaigns/amd-rocm/generated/status.md`
+- `docs/tracking/campaigns/intel-258v-platform/active.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-12T174339Z-CPU258V-030-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-13T101100Z-CPU-BITNET-REF-001-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-13T105800Z-CPU-BITNET-PERF-001-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-16T235200Z-LNL258V-DURABLE-003-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-21T011500Z-LNL258V-GOAL-AUDIT-014-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-22T220000Z-LNL258V-GOAL-AUDIT-034-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-22T220300Z-LNL258V-GOAL-AUDIT-034-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-22T221430Z-LNL258V-GOAL-AUDIT-034-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T000700Z-LNL258V-GOAL-AUDIT-035-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T001200Z-LNL258V-GOAL-AUDIT-035-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T010115Z-LNL258V-GOAL-AUDIT-035-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T020030Z-LNL258V-GOAL-AUDIT-036-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T020740Z-LNL258V-GOAL-AUDIT-036-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T022633Z-LNL258V-GOAL-AUDIT-036-branch-refresh.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T023019Z-LNL258V-GOAL-AUDIT-036-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T032622Z-LNL258V-GOAL-AUDIT-037-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T034205Z-LNL258V-GOAL-AUDIT-037-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T040003Z-LNL258V-GOAL-AUDIT-038-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T041246Z-LNL258V-GOAL-AUDIT-038-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T045605Z-LNL258V-GOAL-AUDIT-039-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T050321Z-LNL258V-GOAL-AUDIT-039-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T055000Z-LNL258V-GOAL-AUDIT-040-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T055155Z-LNL258V-GOAL-AUDIT-040-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T061600Z-LNL258V-GOAL-AUDIT-040-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T063628Z-LNL258V-GOAL-AUDIT-041-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T064000Z-LNL258V-GOAL-AUDIT-041-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T071625Z-LNL258V-GOAL-AUDIT-041-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T080800Z-LNL258V-GOAL-AUDIT-042-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T081200Z-LNL258V-GOAL-AUDIT-042-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T084341Z-LNL258V-GOAL-AUDIT-042-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T090609Z-LNL258V-GOAL-AUDIT-043-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T091108Z-LNL258V-GOAL-AUDIT-043-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T093137Z-LNL258V-GOAL-AUDIT-043-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T103730Z-LNL258V-GOAL-AUDIT-044-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T104247Z-LNL258V-GOAL-AUDIT-044-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T105347Z-LNL258V-GOAL-AUDIT-044-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T130500Z-LNL258V-GOAL-AUDIT-045-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T131000Z-LNL258V-GOAL-AUDIT-045-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T131724Z-LNL258V-GOAL-AUDIT-045-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T163500Z-LNL258V-GOAL-AUDIT-046-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T164000Z-LNL258V-GOAL-AUDIT-046-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T164418Z-LNL258V-GOAL-AUDIT-046-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T173822Z-LNL258V-GOAL-AUDIT-047-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T174322Z-LNL258V-GOAL-AUDIT-047-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T175520Z-LNL258V-GOAL-AUDIT-047-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T184522Z-LNL258V-GOAL-AUDIT-048-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T185221Z-LNL258V-GOAL-AUDIT-048-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T185841Z-LNL258V-GOAL-AUDIT-048-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T192500Z-LNL258V-POWER-013-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T193000Z-LNL258V-POWER-013-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T195447Z-LNL258V-POWER-013-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T203000Z-LNL258V-GOAL-AUDIT-049-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T203500Z-LNL258V-GOAL-AUDIT-049-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T204156Z-LNL258V-GOAL-AUDIT-049-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T205800Z-LNL258V-POWER-014-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T210200Z-LNL258V-POWER-014-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T211628Z-LNL258V-POWER-014-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T213526Z-LNL258V-GOAL-AUDIT-050-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T214109Z-LNL258V-GOAL-AUDIT-050-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T215842Z-LNL258V-GOAL-AUDIT-050-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T225044Z-LNL258V-GOAL-AUDIT-051-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T225354Z-LNL258V-GOAL-AUDIT-051-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T230925Z-LNL258V-GOAL-AUDIT-051-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T232700Z-LNL258V-GOAL-AUDIT-052-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T233300Z-LNL258V-GOAL-AUDIT-052-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T234300Z-LNL258V-GOAL-AUDIT-052-main-refresh.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-23T235727Z-LNL258V-GOAL-AUDIT-052-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T004208Z-LNL258V-GOAL-AUDIT-053-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T004540Z-LNL258V-GOAL-AUDIT-053-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T010140Z-LNL258V-GOAL-AUDIT-053-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T023530Z-LNL258V-GOAL-AUDIT-054-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T024000Z-LNL258V-GOAL-AUDIT-054-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T030130Z-LNL258V-GOAL-AUDIT-054-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T035543Z-LNL258V-GOAL-AUDIT-055-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T035816Z-LNL258V-GOAL-AUDIT-055-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T040334Z-LNL258V-GOAL-AUDIT-055-rebased.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T041434Z-LNL258V-GOAL-AUDIT-055-rebased-on-slimcpu093.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T042049Z-LNL258V-GOAL-AUDIT-055-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T044655Z-LNL258V-GOAL-AUDIT-056-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T045029Z-LNL258V-GOAL-AUDIT-056-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T045530Z-LNL258V-GOAL-AUDIT-056-rebased-on-rand.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T051129Z-LNL258V-GOAL-AUDIT-056-rebased-on-a770044.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T051535Z-LNL258V-GOAL-AUDIT-056-rebased-on-docker-login-action.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T051906Z-LNL258V-GOAL-AUDIT-056-rebased-on-slmcpu093-sync.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T053207Z-LNL258V-GOAL-AUDIT-056-rebased-on-setup-node.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T053842Z-LNL258V-GOAL-AUDIT-056-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T070211Z-LNL258V-ASK-008-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T073504Z-LNL258V-GOAL-AUDIT-057-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T073832Z-LNL258V-GOAL-AUDIT-057-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T080514Z-LNL258V-GOAL-AUDIT-057-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T082450Z-LNL258V-GOAL-AUDIT-058-in-progress.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T082823Z-LNL258V-GOAL-AUDIT-058-pr-open.toml`
+- `docs/tracking/campaigns/intel-258v-platform/events/2026-05-24T085200Z-LNL258V-GOAL-AUDIT-058-merged.toml`
+- `docs/tracking/campaigns/intel-258v-platform/generated/status.md`
+- `docs/tracking/campaigns/intel-a770/CAMPAIGN.md`
+- `docs/tracking/campaigns/intel-a770/active.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T192843Z-A770-029-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T202816Z-A770-029-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T212941Z-A770-029-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T220015Z-A770-030-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T223600Z-A770-030-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-22T235143Z-A770-030-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T001751Z-A770-031-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T004540Z-A770-031-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T012504Z-A770-031-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T033745Z-A770-032-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T041345Z-A770-032-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T044527Z-A770-032-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T053859Z-A770-033-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T064408Z-A770-033-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T073023Z-A770-033-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T084139Z-A770-034-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T091942Z-A770-034-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T100626Z-A770-034-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T110748Z-A770-035-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T121122Z-A770-035-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T123418Z-A770-035-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T133629Z-A770-036-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T141306Z-A770-036-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T143348Z-A770-036-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T151529Z-A770-037-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T154050Z-A770-037-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T161539Z-A770-037-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T164906Z-A770-038-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T170231Z-A770-038-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T172537Z-A770-038-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T175603Z-A770-039-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T180434Z-A770-039-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T183311Z-A770-039-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T190537Z-A770-040-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T191436Z-A770-040-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T195541Z-A770-040-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T210438Z-A770-041-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T211242Z-A770-041-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T223646Z-A770-041-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-23T230558Z-A770-042-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T003049Z-A770-042-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T005837Z-A770-043-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T014247Z-A770-043-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T020802Z-A770-043-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T021036Z-A770-044-ready.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T025826Z-A770-044-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T050627Z-A770-044-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T060418Z-A770-045-in-progress.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T061942Z-A770-045-pr-open.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T074006Z-A770-045-merged.toml`
+- `docs/tracking/campaigns/intel-a770/events/2026-05-24T083903Z-A770-046-ready.toml`
+- `docs/tracking/campaigns/intel-a770/generated/status.md`
+- `docs/tracking/campaigns/nvidia-5070ti/active.toml`
+- `docs/tracking/campaigns/nvidia-5070ti/events/2026-05-22T222900Z-CUDA-MODEL-017-source-capture-blocked.toml`
+- `docs/tracking/campaigns/nvidia-5070ti/events/2026-05-23T183900Z-CUDA-MODEL-017-merged.toml`
+- `docs/tracking/campaigns/nvidia-5070ti/events/2026-05-23T194200Z-CUDA-MODEL-018-pr-open.toml`
+- `docs/tracking/campaigns/nvidia-5070ti/events/2026-05-23T210149Z-CUDA-MODEL-018-merged.toml`
+- `docs/tracking/campaigns/nvidia-5070ti/generated/status.md`
+- `docs/tracking/campaigns/slm-cpu/CAMPAIGN.md`
+- `docs/tracking/campaigns/slm-cpu/active.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-17T084248Z-SLM-CPU-023-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T204202Z-SLM-CPU-082-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T204950Z-SLM-CPU-082-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T212000Z-SLM-CPU-082-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T220610Z-SLM-CPU-083-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T221000Z-SLM-CPU-083-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T230500Z-SLM-CPU-083-ready-after-queue.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-22T232600Z-SLM-CPU-083-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T000705Z-SLM-CPU-083-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T001000Z-SLM-CPU-084-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T005835Z-SLM-CPU-084-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T014146Z-SLM-CPU-084-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T014610Z-SLM-CPU-085-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T025033Z-SLM-CPU-085-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T030155Z-SLM-CPU-085-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T030823Z-SLM-CPU-085-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T032950Z-SLM-CPU-086-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T050605Z-SLM-CPU-086-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T051759Z-SLM-CPU-086-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T053009Z-SLM-CPU-086-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T062912Z-SLM-CPU-087-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T064130Z-SLM-CPU-087-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T070108Z-SLM-CPU-087-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T085417Z-SLM-CPU-088-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T101500Z-SLM-CPU-088-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T114539Z-SLM-CPU-088-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T131500Z-SLM-CPU-089-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T132400Z-SLM-CPU-089-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T132943Z-SLM-CPU-089-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T135200Z-SLM-CPU-090-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T140200Z-SLM-CPU-090-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T140300Z-SLM-CPU-090-closeout.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T150000Z-SLM-CPU-090-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T151500Z-SLM-CPU-090-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T153033Z-SLM-CPU-090-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T160000Z-SLM-CPU-091-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T191000Z-SLM-CPU-091-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T192000Z-SLM-CPU-091-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-23T192842Z-SLM-CPU-091-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T003331Z-SLM-CPU-092-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T003900Z-SLM-CPU-092-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T013105Z-SLM-CPU-092-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T023600Z-SLM-CPU-093-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T032000Z-SLM-CPU-093-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T033100Z-SLM-CPU-093-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T040955Z-SLM-CPU-093-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T052616Z-SLM-CPU-094-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T053716Z-SLM-CPU-094-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T060518Z-SLM-CPU-094-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T064200Z-SLM-CPU-095-in-progress.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T070300Z-SLM-CPU-095-pr-open.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T072152Z-SLM-CPU-095-merged.toml`
+- `docs/tracking/campaigns/slm-cpu/events/2026-05-24T073000Z-SLM-CPU-096-ready.toml`
+- `docs/tracking/campaigns/slm-cpu/generated/status.md`
+- `docs/tracking/codex-web-pr-ledger.md`
+- `docs/tracking/generated/blocked-items.md`
+- `docs/tracking/generated/global-dashboard.md`
+- `docs/tracking/generated/lane-dashboard.md`
+- `docs/tutorials/cuda-receipt-triage.md`
+- `examples/advanced/enhanced_error_demo.rs`
+- `examples/enhanced_error_demo.rs`
+- `examples/integrations/candle_interop.rs`
+- `examples/integrations/tracing_observability.rs`
+- `plans/native-rust-inference/dense-qwen3.md`
+- `tests/Cargo.toml`
+- `tests/common/test_utilities.rs`
+- `xtask/src/lane_check.rs`
+- `xtask/src/main.rs`
+- `xtask/src/repo_boundary.rs`
+
+## Touched Crates
+
+- `bitnet-bench-receipts`
+- `bitnet-cli`
+- `bitnet-cli-sampling-core`
+- `bitnet-device-probe`
+- `bitnet-inference`
+- `bitnet-kernels`
+- `bitnet-models`
+- `bitnet-qk256-dispatch`
+- `bitnet-quantization`
+- `bitnet-sampling`
+- `bitnet-server`
+- `bitnet-transformer`
+- `bitnet-wgpu`
+- `bitnet-wgpu-runner`
+- `xtask`
+
+## Campaigns Touched
+
+- `amd-rocm`
+- `intel-258v-platform`
+- `intel-a770`
+- `nvidia-5070ti`
+- `slm-cpu`
+
+## Policy Files Touched
+
+- none detected
+
+## Generated Dashboard Status
+
+Generated dashboard paths changed; run `cargo run --locked -p xtask --no-default-features -- campaign generate --check` before promotion.
+
+- `docs/tracking/campaigns/amd-rocm/generated/status.md`
+- `docs/tracking/campaigns/intel-258v-platform/generated/status.md`
+- `docs/tracking/campaigns/intel-a770/generated/status.md`
+- `docs/tracking/campaigns/nvidia-5070ti/generated/status.md`
+- `docs/tracking/campaigns/slm-cpu/generated/status.md`
+- `docs/tracking/generated/blocked-items.md`
+- `docs/tracking/generated/global-dashboard.md`
+- `docs/tracking/generated/lane-dashboard.md`
+
+## Proof Commands
+
+- `git diff --check origin/main..swarm/main`
+- `cargo run --locked -p xtask --no-default-features -- repo-boundary status --source-ref origin/main --swarm-ref swarm/main --format json`
+- `cargo run --locked -p xtask --no-default-features -- promote-to-source --from origin/main --to swarm/main --out docs/release/promotion-packets/2026-05-24-swarm-through-b1fc4b143-review.md`
+- `gh api 'repos/EffortlessMetrics/BitNet-rs/pulls?state=open&per_page=100' --jq 'length'`
+- `gh api 'repos/EffortlessMetrics/bitnet-rs-swarm/pulls?state=open&per_page=100' --jq 'length'`
+- Before an actual source promotion PR merges, rerun the source-side promotion
+  proof from a side-by-side `EffortlessMetrics/BitNet-rs` checkout and include
+  the source PR check results. This packet is the swarm-side range and boundary
+  checkpoint only.
+
+## Receipts
+
+- No claim-grade receipt is accepted by this packet. The range includes
+  campaign events, receipt-support work, diagnostics, and tracker closeouts, but
+  source review must name exact receipt/report paths for any claim it chooses to
+  promote.
+- The generated `Changed Files`, `Campaigns Touched`, and `Generated Dashboard
+  Status` sections identify the campaign surfaces that need source-review
+  sampling before promotion.
+- If a future source PR promotes a hardware/model/quality/performance/server
+  claim from this range, add the exact receipt paths and claim ledgers to that
+  source PR. Otherwise keep those claims explicitly unpromoted.
+
+## Claim Boundary
+
+This generated packet does not promote hardware, model, quality, speed, residency, server-readiness, release, publish, or signing claims by itself. Promote only claims with explicit receipts and source-review acceptance.
+
+## What This Does Not Claim
+
+- No dense CUDA proof is treated as BitNet QK256 CUDA proof.
+- No BitNet QK256 CUDA proof is treated as dense SLM CUDA proof.
+- No Qwen2.5 proof is treated as Qwen3 proof.
+- No generic CUDA proof is treated as strict device proof.
+- No AVX detection is treated as execution, parity, or speedup proof.
+- No server smoke is treated as broad server readiness.
+- No speedup is claimed outside an exact profile.
+
+## Release/Publish/Signing Impact
+
+Release-sensitive workflow review required. Do not promote publish/signing behavior unless explicitly approved.
+
+- `.github/workflows/release.yml`
+
+## Excluded Swarm Work
+
+- No open swarm PRs existed at packet generation time.
+- Any swarm commits or PRs after `b1fc4b143369bd418545741bdd6d04b1473e7a76`
+  are excluded from this packet.
+- Local-only branches and unmerged diagnostic branches are excluded.
+- Release, publish, signing, deployment, secrets-heavy workflow behavior, and
+  branch-protection changes are excluded unless a separate source-owned release
+  review explicitly includes them.
+- Diagnostic-only A770, CUDA, Lunar Lake, SLM CPU, model, server, speed,
+  residency, and quality evidence remains diagnostic unless the source
+  promotion PR supplies exact receipts and source-review acceptance.
+
+## Rollback
+
+- Revert the source promotion merge commit, or revert the explicit promoted commits if an approved fast-forward/direct update was used.
+- Preserve the swarm history; do not hard-reset or squash the history import/promotion path.
