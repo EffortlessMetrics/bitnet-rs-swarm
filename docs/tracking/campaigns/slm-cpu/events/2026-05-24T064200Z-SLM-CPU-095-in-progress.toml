@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T06:42:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-095"
+event = "in_progress"
+previous_status = "none"
+new_status = "in_progress"
+branch = "codex/slm-cpu-095-packed-q8-matvec-scratch"
+actor = "codex"
+summary = "Started the packed Q8_0 sidecar matvec output-scratch boundary slice."
+notes = [
+  "SLM-CPU-094 queued the opt-in exact-tensor packed Q8_0 sidecar output-scratch boundary after SLM-CPU-093 blocked logits/output-head fused selection at Candle owned Tensor materialization.",
+  "This slice may add behavior-preserving inner matvec caller-output-slice helpers, but must record whether full runtime Tensor output reuse remains blocked by Candle owned Tensor construction.",
+  "No speedup, sidecar default-promotion, sustained-throughput, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
