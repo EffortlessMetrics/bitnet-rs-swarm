@@ -13441,9 +13441,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GOAL-AUDIT-056"
-status = "pr_open"
+status = "merged"
 pr = 570
-head_sha = "5675f6ed19e2f3483d0e75e8b0085732836b6ffb"
+head_sha = "4249d364a94731122550c7ee72debab3cef29af0"
+merge_sha = "c2c998dcd7a62c6445249069d9c914b6a8a8b15b"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-056-post-ci-invariants-closeout"
 stackable = false
 review_mode = "codex_premerge"
