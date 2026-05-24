@@ -2035,9 +2035,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-052"
-status = "pr_open"
+status = "merged"
 pr = 646
-head_sha = "4253b3e12e8878f8cfb9eb413e3abfa87049607b"
+head_sha = "9e0e5587ecc166c78fb8db615909aac1e0e0cba2"
+merge_sha = "b49101491c8622ecc447124023e8c8d30c227670"
+merged_at = "2026-05-24T19:37:59Z"
 branch = "codex/intel-a770/A770-052-host-replay-f32-codegen-ordering"
 stackable = false
 review_mode = "codex_premerge"
