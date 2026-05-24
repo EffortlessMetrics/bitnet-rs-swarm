@@ -1570,7 +1570,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-044"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
 stackable = false
 review_mode = "codex_premerge"
