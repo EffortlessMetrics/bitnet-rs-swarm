@@ -1853,7 +1853,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-049"
-status = "in_progress"
+status = "merged"
+pr = 634
+head_sha = "b061f7381076e487f1d65473c7587f4aea3cf334"
+merge_sha = "c052f1fbccb99db6bbcafa73db0d4168247f6717"
+merged_at = "2026-05-24T17:02:07Z"
 branch = "codex/intel-a770/A770-049-device-math-mode-frontier"
 stackable = false
 review_mode = "codex_premerge"
@@ -1892,6 +1896,63 @@ forbidden_paths = [
 may_claim = [
   "The selected QK256 OpenCL device math-mode frontier is classified for the committed focused CPU/A770 replay context.",
   "The diagnostic records compact selected output sample evidence needed to route the remaining one-bit split to device-side default div-then-mul, optimized div-then-mul, volatile replay, reassociation, host-policy match, unmatched, clean, or missing-context buckets.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-050"
+status = "ready"
+branch = "codex/intel-a770/A770-050-host-device-div-mul-replay"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-049"]
+acceptance = "Use the committed A770-049 QK256 device math-mode frontier to compare host replay f32 div/mul rounding against selected A770 OpenCL device div/mul behavior, classifying host replay mismatch, device default div-then-mul, device optimized div-then-mul, volatile/reassociation, host-policy match, unmatched, clean, or missing context without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qk256_host_device_div_mul -- --nocapture",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "rustfmt --edition 2024 --check crates/bitnet-kernels/src/a770_opencl_runtime.rs crates/bitnet-qk256-dispatch/src/lib.rs crates/bitnet-transformer/src/lib.rs crates/bitnet-transformer/src/attention_forward.rs crates/bitnet-models/src/bitnet.rs crates/bitnet-cli/src/main.rs crates/bitnet-cli/src/commands/answer_parity.rs",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-kernels/src/a770_opencl_runtime.rs",
+  "crates/bitnet-qk256-dispatch/src/lib.rs",
+  "crates/bitnet-transformer/src/lib.rs",
+  "crates/bitnet-transformer/src/attention_forward.rs",
+  "crates/bitnet-models/src/bitnet.rs",
+  "crates/bitnet-cli/src/main.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_050_QK256_HOST_DEVICE_DIV_MUL_REPLAY.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+]
+may_claim = [
+  "A770-050 may classify compact host replay f32 div/mul versus selected A770 OpenCL device div/mul behavior for the committed focused CPU/A770 replay context.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
