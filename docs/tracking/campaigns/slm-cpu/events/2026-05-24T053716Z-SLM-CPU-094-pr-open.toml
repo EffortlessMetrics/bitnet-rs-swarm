@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T05:37:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-094"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 572
+head_sha = "17ac1e9dcf728fd63a83c864194a40ca85031b3a"
+branch = "codex/slm-cpu-094-packed-q8-output-scratch"
+actor = "codex"
+summary = "Opened PR #572 for SLM-CPU-094."
+notes = [
+  "PR #572 queues the next bounded dense-CPU performance gate after SLM-CPU-093.",
+  "The PR is tracker/docs only and does not modify runtime code, promote packed_q8_sidecar, or claim speedup.",
+]

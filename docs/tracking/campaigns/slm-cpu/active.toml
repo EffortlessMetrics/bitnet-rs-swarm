@@ -6049,3 +6049,53 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-094"
+status = "pr_open"
+pr = 572
+head_sha = "17ac1e9dcf728fd63a83c864194a40ca85031b3a"
+branch = "codex/slm-cpu-094-packed-q8-output-scratch"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-093"]
+acceptance = "Queue the next Kaby Lake Qwen3 Q8_0 dense-CPU performance slice after SLM-CPU-093 blocked logits/output-head fused selection at Candle owned tensor materialization. The implementation target is the opt-in exact-tensor packed Q8_0 sidecar matvec output-scratch boundary: a valid slice may add a behavior-preserving caller-owned output/scratch buffer for the packed sidecar path, or emit a machine-checkable blocker naming why scratch reuse cannot be safely attached. Any runtime change must preserve the Qwen3 Q8_0 appliance behavior oracle before claiming even bounded allocation improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false. The slice must not promote packed_q8_sidecar to the default runtime, claim speedup without before/after repeated receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "runtime code",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-094 is the next tracker gate after SLM-CPU-093 blocked logits/output-head fused selection at the Candle owned Tensor boundary.",
+  "The next target is the opt-in packed Q8_0 sidecar output-scratch boundary, not default runtime promotion.",
+  "Any future allocation or timing improvement remains gated by Qwen3 Q8_0 before/after behavior receipts.",
+]
+must_not_claim = [
+  "SLM-CPU-094 implements runtime output-scratch reuse by itself.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "End-to-end speedup is proven without before/after repeated receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
