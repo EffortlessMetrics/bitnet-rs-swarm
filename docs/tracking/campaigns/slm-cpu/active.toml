@@ -6052,9 +6052,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-094"
-status = "pr_open"
+status = "merged"
 pr = 572
-head_sha = "17ac1e9dcf728fd63a83c864194a40ca85031b3a"
+head_sha = "c3ba0feabfcff8c322426c2cb6082afd90ad700d"
+merge_sha = "c9d804cb3fd4430e96ff3512cbed8906697d2ff8"
 branch = "codex/slm-cpu-094-packed-q8-output-scratch"
 stackable = false
 review_mode = "codex_premerge"
