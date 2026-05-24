@@ -7,6 +7,8 @@ pub enum RunnerError {
     AdapterNotFound,
     /// Failed to obtain a wgpu device.
     DeviceRequest(wgpu::RequestDeviceError),
+    /// Failed while waiting for queued GPU work.
+    DevicePoll(wgpu::PollError),
     /// Shader compilation failed.
     ShaderCompilation(String),
     /// Buffer mapping failed.
@@ -22,6 +24,7 @@ impl fmt::Display for RunnerError {
         match self {
             Self::AdapterNotFound => write!(f, "no suitable wgpu adapter found"),
             Self::DeviceRequest(e) => write!(f, "wgpu device request failed: {e}"),
+            Self::DevicePoll(e) => write!(f, "wgpu device poll failed: {e}"),
             Self::ShaderCompilation(msg) => write!(f, "shader compilation failed: {msg}"),
             Self::BufferMap(e) => write!(f, "buffer mapping failed: {e}"),
             Self::InvalidDimensions { expected, actual, name } => {
@@ -36,6 +39,7 @@ impl std::error::Error for RunnerError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::DeviceRequest(e) => Some(e),
+            Self::DevicePoll(e) => Some(e),
             Self::BufferMap(e) => Some(e),
             _ => None,
         }
@@ -45,6 +49,12 @@ impl std::error::Error for RunnerError {
 impl From<wgpu::RequestDeviceError> for RunnerError {
     fn from(e: wgpu::RequestDeviceError) -> Self {
         Self::DeviceRequest(e)
+    }
+}
+
+impl From<wgpu::PollError> for RunnerError {
+    fn from(e: wgpu::PollError) -> Self {
+        Self::DevicePoll(e)
     }
 }
 

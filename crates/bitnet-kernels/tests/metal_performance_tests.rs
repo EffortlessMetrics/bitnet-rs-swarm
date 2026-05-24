@@ -33,9 +33,9 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
 /// Request a Metal-backed wgpu device. Returns `None` when Metal is unavailable.
 fn setup_metal() -> Option<(wgpu::Device, wgpu::Queue)> {
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::METAL,
-        ..Default::default()
+        ..wgpu::InstanceDescriptor::new_without_display_handle()
     });
     let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
         power_preference: wgpu::PowerPreference::HighPerformance,
@@ -110,7 +110,7 @@ fn run_doubling(
     slice.map_async(wgpu::MapMode::Read, move |result| {
         tx.send(result).ok();
     });
-    device.poll(wgpu::Maintain::Wait);
+    let _ = device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
 
     let data = slice.get_mapped_range();
@@ -208,7 +208,7 @@ fn test_metal_buffer_transfer_bandwidth() {
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
     });
     queue.submit(std::iter::empty());
-    device.poll(wgpu::Maintain::Wait);
+    let _ = device.poll(wgpu::PollType::wait_indefinitely());
     let upload_elapsed = upload_start.elapsed();
 
     // --- Download ---
@@ -229,7 +229,7 @@ fn test_metal_buffer_transfer_bandwidth() {
     slice.map_async(wgpu::MapMode::Read, move |r| {
         tx.send(r).ok();
     });
-    device.poll(wgpu::Maintain::Wait);
+    let _ = device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().unwrap().unwrap();
     let download_elapsed = download_start.elapsed();
 
@@ -307,7 +307,7 @@ fn test_metal_concurrent_dispatches() {
         slice.map_async(wgpu::MapMode::Read, move |r| {
             tx.send(r).ok();
         });
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
         rx.recv().unwrap().unwrap();
 
         let data = slice.get_mapped_range();
@@ -393,7 +393,7 @@ fn test_metal_memory_pressure() {
         });
 
         // Poll to surface any out-of-memory errors asynchronously.
-        device.poll(wgpu::Maintain::Wait);
+        let _ = device.poll(wgpu::PollType::wait_indefinitely());
 
         // wgpu may surface OOM as a device-lost or validation error on the
         // next submit. We keep the buffer if the device is still healthy.
@@ -408,5 +408,5 @@ fn test_metal_memory_pressure() {
 
     // Clean-up: drop all buffers to release GPU memory.
     drop(buffers);
-    device.poll(wgpu::Maintain::Wait);
+    let _ = device.poll(wgpu::PollType::wait_indefinitely());
 }

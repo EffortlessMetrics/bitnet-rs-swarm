@@ -44,9 +44,9 @@ struct MetalContext {
 
 fn create_metal_context() -> MetalContext {
     pollster::block_on(async {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::METAL,
-            ..Default::default()
+            ..wgpu::InstanceDescriptor::new_without_display_handle()
         });
 
         let adapter = instance
@@ -59,7 +59,7 @@ fn create_metal_context() -> MetalContext {
             .expect("No Metal adapter found — is this running on Apple Silicon?");
 
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default(), None)
+            .request_device(&wgpu::DeviceDescriptor::default())
             .await
             .expect("Failed to create wgpu device on Metal adapter");
 
@@ -287,8 +287,8 @@ fn run_layer_norm_gpu(
 
     let pl = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("ln_pl"),
-        bind_group_layouts: &[&bgl],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bgl)],
+        immediate_size: 0,
     });
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some("ln_pipeline"),
@@ -388,8 +388,8 @@ fn run_rms_norm_gpu(
 
     let pl = ctx.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("rms_pl"),
-        bind_group_layouts: &[&bgl],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bgl)],
+        immediate_size: 0,
     });
     let pipeline = ctx.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some("rms_pipeline"),
@@ -465,7 +465,7 @@ fn read_back_f32(ctx: &MetalContext, staging: &wgpu::Buffer, count: usize) -> Ve
         slice.map_async(wgpu::MapMode::Read, move |r| {
             tx.send(r).unwrap();
         });
-        ctx.device.poll(wgpu::Maintain::Wait);
+        let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
         rx.recv().unwrap().unwrap();
         let data = slice.get_mapped_range();
         let out: Vec<f32> = bytemuck::cast_slice::<u8, f32>(&data)[..count].to_vec();
