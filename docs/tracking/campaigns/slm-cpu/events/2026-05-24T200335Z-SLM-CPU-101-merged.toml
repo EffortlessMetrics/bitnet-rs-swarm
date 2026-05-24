@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T20:03:35Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-101"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 644
+branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
+head_sha = "c0a21eae2bf486557e30a24aef93d838962bb2a2"
+merge_sha = "444b2167256c357c0e188efc02930c0b7a5bbaa1"
+merged_at = "2026-05-24T20:03:35Z"
+actor = "codex"
+summary = "Closed SLM-CPU-101 after PR #644 merged the typed attention-head view gate."
+notes = [
+  "PR #644 defines the runtime-disabled typed attention-head view contract for the post-SLM-CPU-100 packed Q8 path.",
+  "The merged slice records downstream stage coverage and machine-checkable blockers for q_norm, RoPE, trace identity, score handoff, and receipt safety.",
+  "No runtime fused Q execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim changed.",
+]
