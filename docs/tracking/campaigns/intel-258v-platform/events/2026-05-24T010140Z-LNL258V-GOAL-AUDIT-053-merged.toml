@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T01:01:40Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-053"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex-lunar-lake"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-053-post-a770042"
+pr = 536
+head_sha = "7a8d530ed2d8e6a90c940c115514f618e07c58f7"
+merge_sha = "8b785dd2bc80e967a601c6598048f0aa0802a95a"
+merged_at = "2026-05-24T00:58:21Z"
+summary = "Closed LNL258V-GOAL-AUDIT-053 after PR #536 merged the no-inference Lunar Lake audit/checklist refresh."
+notes = [
+  "The merged audit/checklist refresh records A770-042/#532 and closeout #534 as adjacent A770 QKV projection source-frontier diagnostic/tracker state only.",
+  "A770-042 remains not a shared BitNet semantic fix, not a Lunar Lake semantic-intake stale trigger, and not Lunar Lake route evidence.",
+  "LNL258V-POWER-006 remains blocked; no inference, model load, route-promotion, speedup, power-advantage, battery-mode evidence, measured-temperature, native accelerator proof, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim is made.",
+]
