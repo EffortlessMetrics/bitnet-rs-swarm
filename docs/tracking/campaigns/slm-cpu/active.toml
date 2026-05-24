@@ -5934,7 +5934,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-092"
-status = "ready"
+status = "pr_open"
+pr = 535
 branch = "codex/slm-cpu-092-logits-fused-selection-gate"
 stackable = false
 review_mode = "codex_premerge"
