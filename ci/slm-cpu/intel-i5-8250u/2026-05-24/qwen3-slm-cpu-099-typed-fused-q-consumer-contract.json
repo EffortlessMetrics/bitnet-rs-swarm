@@ -1,0 +1,122 @@
+{
+  "artifact_kind": "slm_cpu_typed_fused_q_projection_consumer_contract",
+  "work_item": "SLM-CPU-099",
+  "created_utc": "2026-05-24T13:45:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "input_evidence": {
+    "previous_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-098-fused-output-consumer-boundary.json",
+    "slm_cpu_098_status": "blocked_by_downstream_candle_tensor_consumers",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "sidecar_inner_matvec_accepts_output_slice": true,
+    "runtime_entrypoint_still_returns_candle_tensor": true
+  },
+  "contract": {
+    "role": "attention.q_proj.typed_fused_consumer_contract",
+    "status": "contract_defined_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "owns_packed_q8_matvec_output_slice": true,
+    "intermediate_returned_candle_tensor_allowed": false,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "shape": {
+      "input_rank": 3,
+      "projected_rank": 3,
+      "attention_heads_rank": 4,
+      "projected_shape": "[batch, seq, n_heads * head_dim]",
+      "attention_heads_shape": "[batch, n_heads, seq, head_dim]",
+      "head_handoff_shape": "AttentionHeads.q"
+    },
+    "stages": [
+      {
+        "stage": "packed_q8_matvec_output_slice",
+        "consumes": "DenseLinearPackedQ8Payload plus input rows",
+        "produces": "&mut [f32] q projection rows",
+        "optional": false
+      },
+      {
+        "stage": "q_proj_reshape",
+        "consumes": "[batch, seq, n_heads * head_dim]",
+        "produces": "[batch, seq, n_heads, head_dim]",
+        "optional": false
+      },
+      {
+        "stage": "q_proj_transpose",
+        "consumes": "[batch, seq, n_heads, head_dim]",
+        "produces": "[batch, n_heads, seq, head_dim]",
+        "optional": false
+      },
+      {
+        "stage": "optional_q_norm",
+        "consumes": "[batch, n_heads, seq, head_dim]",
+        "produces": "[batch, n_heads, seq, head_dim]",
+        "optional": true
+      },
+      {
+        "stage": "q_rope",
+        "consumes": "[batch, n_heads, seq, head_dim] plus position",
+        "produces": "[batch, n_heads, seq, head_dim]",
+        "optional": false
+      },
+      {
+        "stage": "trace_workspace_identity",
+        "consumes": "projection, heads, q_norm, q_rope identity",
+        "produces": "trace/workspace source identity",
+        "optional": false
+      },
+      {
+        "stage": "attention_head_handoff",
+        "consumes": "[batch, n_heads, seq, head_dim]",
+        "produces": "AttentionHeads.q-compatible handoff before scores",
+        "optional": false
+      }
+    ],
+    "required_missing_implementation": "behavior-preserving fused Q projection consumer implementation plus before/after Qwen3 Q8_0 receipts"
+  },
+  "receipt_safety_contract": {
+    "required_before_runtime_execution": true,
+    "required_before_allocation_claim": true,
+    "required_before_speedup_claim": true,
+    "gate": "repeated_qwen3_q8_before_after_receipts_with_identical_generated_ids_text_backend_dense_hook_and_fallback_false",
+    "required_fields": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity",
+      "fallback_used=false"
+    ]
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_fused_q_projection_contract_is_design_only",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_fused_q_projection_contract_covers_q_downstream_stages",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_fused_q_projection_contract_requires_behavior_receipts"
+  ],
+  "result": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "fused_consumer_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
