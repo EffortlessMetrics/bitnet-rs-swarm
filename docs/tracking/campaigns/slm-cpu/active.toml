@@ -6431,9 +6431,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-101"
-status = "pr_open"
+status = "merged"
 pr = 644
 head_sha = "48e7c6e490762b7ddf55cc0d1ea6d0539b7e558f"
+merge_sha = "444b2167256c357c0e188efc02930c0b7a5bbaa1"
+merged_at = "2026-05-24T20:03:35Z"
 branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
 stackable = false
 review_mode = "codex_premerge"
