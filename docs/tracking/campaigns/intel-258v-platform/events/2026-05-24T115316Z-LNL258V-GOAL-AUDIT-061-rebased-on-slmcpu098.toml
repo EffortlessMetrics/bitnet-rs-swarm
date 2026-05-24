@@ -1,0 +1,31 @@
+timestamp = "2026-05-24T11:53:16Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-061"
+event = "pr_open"
+previous_status = "pr_open"
+new_status = "pr_open"
+pr = 604
+head_sha = "efbb02f017c02af987880c80d3a821b72172d033"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-061-slimcpu097-closeout"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Rebased LNL258V-GOAL-AUDIT-061 on SLM-CPU-098/#603 and extended the no-inference audit refresh."
+notes = [
+  "Main moved after SLM-CPU-098/#603 landed.",
+  "The refreshed branch now records #603 as adjacent SLM CPU tracker queue state only.",
+  "The refresh keeps LNL258V-POWER-006 blocked and does not change route policy, speedup, power, semantic-intake, Qwen3 Lunar Lake, or BitNet QK256/I2_S claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "LNL258V-GOAL-AUDIT-061 branch was refreshed to current swarm main through #603.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "SLM-CPU-098 is Lunar Lake route evidence.",
+  "SLM-CPU-098 is a shared BitNet semantic fix.",
+  "SLM-CPU-098 makes Lunar Lake semantic-intake stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]
