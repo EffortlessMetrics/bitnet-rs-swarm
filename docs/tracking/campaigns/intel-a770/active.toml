@@ -1504,7 +1504,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-043"
-status = "in_progress"
+status = "pr_open"
+pr = 552
+head_sha = "871d04f74b48187015b79743ad29566cf0d3654f"
 branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
 stackable = false
 review_mode = "codex_premerge"
