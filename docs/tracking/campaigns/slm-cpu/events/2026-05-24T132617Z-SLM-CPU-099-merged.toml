@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T13:26:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 613
+head_sha = "3ec5a0a027f08d5abcb7755d9d5511eff058af3d"
+merge_sha = "53bc4b85f2123d3d519bec4803ca88b0a3e8dd3c"
+merged_at = "2026-05-24T13:26:17Z"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
+actor = "codex"
+summary = "Closed SLM-CPU-099 after PR #613 queued the typed fused Q projection consumer contract gate."
+notes = [
+  "PR #613 queued the typed fused Q projection consumer contract/design gate after SLM-CPU-098 identified downstream Candle Tensor consumers as the next blocker.",
+  "The closeout records that SLM-CPU-099 is tracker-only and does not enable runtime fused Q projection execution.",
+  "No packed-Q8 default-runtime promotion, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim changed.",
+]
