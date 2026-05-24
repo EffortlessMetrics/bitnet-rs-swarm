@@ -43,9 +43,9 @@
         "selected_kernel": "a770_opencl_qk256_i2s_i8s_scaled_dispatch_candidate"
       },
       "latency": {
-        "cmd_to_first_ms": 27051,
-        "decode_first_ms": 27051,
-        "total_ms": 41025
+        "cmd_to_first_ms": 26646,
+        "decode_first_ms": 26646,
+        "total_ms": 40350
       },
       "loader": {
         "mode": "real_gguf"
@@ -15655,6 +15655,77 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": {
+                        "a770": {
+                          "attempted": true,
+                          "compiled_opencl": true,
+                          "device_to_host_bytes": 10240,
+                          "error": null,
+                          "execution_path": "a770_opencl_qk256_i2s_i8s_scaled_replay",
+                          "host_to_device_bytes": 1640960,
+                          "kernel_invocations": 1,
+                          "last_device": {
+                            "device_index": 0,
+                            "driver_version": "32.0.101.8801",
+                            "platform_index": 0,
+                            "platform_name": "Intel(R) OpenCL Graphics",
+                            "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+                            "vendor": "Intel(R) Corporation"
+                          },
+                          "success": true
+                        },
+                        "a770_output": {
+                          "available": true,
+                          "finite_count": 2560,
+                          "infinite_count": 0,
+                          "max": 6.754318714141846,
+                          "mean": -0.01758772264884101,
+                          "min": -5.372337818145752,
+                          "nan_count": 0,
+                          "rms": 1.1568787818792203,
+                          "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+                          "shape": [
+                            1,
+                            1,
+                            2560
+                          ],
+                          "value_count": 2560
+                        },
+                        "claim_allowed": false,
+                        "cols": 2560,
+                        "context_kind": "decode_step_qkv_projection_dispatch_replay",
+                        "cpu": {
+                          "execution_path": "cpu_qk256_i2s_i8s_scaled_scalar_replay",
+                          "scalar_invocations": 1
+                        },
+                        "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
+                        "cpu_a770_output_sha256_match": false,
+                        "cpu_output": {
+                          "available": true,
+                          "finite_count": 2560,
+                          "infinite_count": 0,
+                          "max": 6.754318714141846,
+                          "mean": -0.017587722323060006,
+                          "min": -5.372337818145752,
+                          "nan_count": 0,
+                          "rms": 1.1568787420709823,
+                          "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+                          "shape": [
+                            1,
+                            1,
+                            2560
+                          ],
+                          "value_count": 2560
+                        },
+                        "diagnostic_only": true,
+                        "inline_scale": 1.2188547849655151,
+                        "input_rows": 1,
+                        "output_rows": 2560,
+                        "row_stride_bytes": 640,
+                        "schema_version": "1.0.0",
+                        "source_context_available": true
+                      },
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -15726,6 +15797,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -15797,6 +15870,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -15868,6 +15943,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -15939,6 +16016,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16010,6 +16089,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16081,6 +16162,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16152,6 +16235,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16223,6 +16308,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16294,6 +16381,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16365,6 +16454,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16436,6 +16527,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16507,6 +16600,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16578,6 +16673,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16649,6 +16746,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16720,6 +16819,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16791,6 +16892,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16862,6 +16965,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -16933,6 +17038,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17004,6 +17111,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17075,6 +17184,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17146,6 +17257,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17217,6 +17330,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17288,6 +17403,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17359,6 +17476,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17430,6 +17549,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17501,6 +17622,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17572,6 +17695,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17643,6 +17768,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17714,6 +17841,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17785,6 +17914,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17856,6 +17987,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17927,6 +18060,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -17998,6 +18133,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18069,6 +18206,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18140,6 +18279,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18211,6 +18352,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18282,6 +18425,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18353,6 +18498,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18424,6 +18571,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18495,6 +18644,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18566,6 +18717,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18637,6 +18790,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18708,6 +18863,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18779,6 +18936,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18850,6 +19009,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18921,6 +19082,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -18992,6 +19155,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19063,6 +19228,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19134,6 +19301,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19205,6 +19374,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19276,6 +19447,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19347,6 +19520,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19418,6 +19593,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19489,6 +19666,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19560,6 +19739,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19631,6 +19812,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19702,6 +19885,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19773,6 +19958,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19844,6 +20031,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19915,6 +20104,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -19986,6 +20177,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20057,6 +20250,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20128,6 +20323,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20199,6 +20396,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20270,6 +20469,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20341,6 +20542,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20412,6 +20615,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20483,6 +20688,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20554,6 +20761,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20625,6 +20834,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20696,6 +20907,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20767,6 +20980,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20838,6 +21053,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20909,6 +21126,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -20980,6 +21199,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21051,6 +21272,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21122,6 +21345,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21193,6 +21418,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21264,6 +21491,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21335,6 +21564,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21406,6 +21637,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21477,6 +21710,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21548,6 +21783,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21619,6 +21856,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21690,6 +21929,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21761,6 +22002,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21832,6 +22075,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21903,6 +22148,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -21974,6 +22221,8 @@
                         "execution_claim": "a770_opencl_qk256_contribution",
                         "unsupported_ops": []
                       },
+                      "dispatch_replay": null,
+                      "dispatch_replay_error": null,
                       "input": {
                         "available": true,
                         "finite_count": 2560,
@@ -22817,24 +23066,24 @@
       "task_family": "constrained_summary",
       "throughput": {
         "decoded_tokens": 15,
-        "tokens_per_second": 0.3656307129798903
+        "tokens_per_second": 0.3717472118959107
       },
       "timing": {
         "a770_opencl_device_to_host_bytes": 117565440,
         "a770_opencl_host_to_device_bytes": 22432212480,
         "a770_opencl_kernel_invocations": 9030,
         "cuda_kernel_time_ms": null,
-        "decode_steady_state_tok_s": 1.002,
-        "decode_total_ms": 14929.721,
+        "decode_steady_state_tok_s": 1.022,
+        "decode_total_ms": 14663.262,
         "device_to_host_bytes": null,
-        "first_token_decode_ms": 960.257,
-        "first_token_ms": 27051,
+        "first_token_decode_ms": 963.026,
+        "first_token_ms": 26646,
         "host_to_device_bytes": null,
-        "model_load_ms": 3365.196,
-        "prefill_ms": 26090.932,
-        "sampling_ms_per_token": 0.202,
-        "tokenize_ms": 1.031,
-        "tokenizer_load_ms": 536.743
+        "model_load_ms": 3287.967,
+        "prefill_ms": 25682.835,
+        "sampling_ms_per_token": 0.207,
+        "tokenize_ms": 1.129,
+        "tokenizer_load_ms": 536.373
       },
       "token_ids": {
         "generated": [
@@ -23369,7 +23618,7 @@
       "total": 1
     }
   },
-  "timestamp": "2026-05-23T23:22:00.077700500+00:00",
+  "timestamp": "2026-05-24T01:16:11.529081800+00:00",
   "tokenizer": {
     "authority": {
       "ggml_pre": "llama-bpe",

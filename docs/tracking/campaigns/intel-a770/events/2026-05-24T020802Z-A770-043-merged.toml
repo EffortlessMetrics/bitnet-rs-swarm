@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T02:08:02Z"
+campaign = "intel-a770"
+item = "A770-043"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 552
+branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
+head_sha = "66c5fd7ea905543e65490ccf2dccaa6e28655861"
+merge_sha = "1828d7904dc7643fe77b99a158cbd31e0d402565"
+merged_at = "2026-05-24T01:54:04Z"
+actor = "codex-a770"
+summary = "Closed A770-043 after PR #552 merged the QKV projection dispatch replay diagnostic."
+notes = [
+  "A770-043 remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged focused receipt classifies the selected layer-0 q_proj replay frontier as CPU scalar versus A770 OpenCL output drift with stable replay context.",
+  "The next diagnostic is to inspect selected QK256 CPU scalar versus A770 OpenCL GEMV numeric policy.",
+]
