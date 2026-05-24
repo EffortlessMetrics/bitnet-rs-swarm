@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T17:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-100"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 631
+head_sha = "84737cb36915ab67d61803ae1dfa63916edecbb4"
+branch = "codex/slm-cpu-100-typed-fused-q-consumer-implementation-gate"
+actor = "codex"
+summary = "Opened PR #631 for the typed fused Q projection consumer implementation gate."
+notes = [
+  "PR #631 records a precise blocker for the SLM-CPU-100 implementation gate rather than enabling speculative fused Q projection runtime execution.",
+  "The blocker names the q_heads tensor semantics, q_norm Tensor API, RoPE Tensor API, trace/workspace Tensor identity, attention handoff Tensor contract, and required Qwen3 Q8_0 receipt evidence that prevent safe execution today.",
+  "The PR makes no default runtime change, packed-Q8 sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]

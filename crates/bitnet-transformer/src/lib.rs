@@ -2160,6 +2160,33 @@ pub struct DenseQ8SidecarFusedQProjectionConsumerContract {
     pub required_missing_implementation: &'static str,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+    pub blocker: &'static str,
+    pub category: &'static str,
+    pub exact_api_or_surface: &'static str,
+    pub required_before_runtime_execution: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedFusedQProjectionImplementationGate {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub source_contract_status: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub attempted_runtime_implementation: bool,
+    pub can_own_packed_q8_matvec_output_slice: bool,
+    pub can_preserve_downstream_tensor_semantics_without_intermediate_tensor: bool,
+    pub runtime_execution_enabled: bool,
+    pub default_runtime_changed: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub blockers: &'static [DenseQ8SidecarTypedFusedQProjectionImplementationBlocker],
+    pub receipt_gate: DenseQ8SidecarFusedQProjectionReceiptContract,
+    pub next_required_slice: &'static str,
+}
+
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
     "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
     "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
@@ -2243,6 +2270,46 @@ pub const DENSE_Q8_SIDECAR_FUSED_Q_PROJECTION_RECEIPT_FIELDS: &[&str] = &[
     "fallback_used=false",
 ];
 
+pub const DENSE_Q8_SIDECAR_TYPED_FUSED_Q_PROJECTION_IMPLEMENTATION_BLOCKERS:
+    &[DenseQ8SidecarTypedFusedQProjectionImplementationBlocker] = &[
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "q_heads_tensor_semantics",
+        category: "tensor-layout",
+        exact_api_or_surface: "MultiHeadAttention::reshape_qkv_heads returns AttentionHeads { q: Tensor, k: Tensor, v: Tensor } after Tensor::reshape and Tensor::transpose",
+        required_before_runtime_execution: "Introduce a typed AttentionHeads buffer/view that preserves [batch, heads, seq, head_dim] layout and can feed all downstream attention stages without first constructing an intermediate returned Candle Tensor.",
+    },
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "q_norm_tensor_api",
+        category: "API",
+        exact_api_or_surface: "candle_nn::LayerNorm::forward(&Tensor) -> Result<Tensor> in MultiHeadAttention::apply_qk_norms",
+        required_before_runtime_execution: "Add a behavior-equivalent q_norm path for the typed Q-head buffer, or prove that materializing only at the q_norm boundary preserves the SLM-CPU-099 no-intermediate-Candle-Tensor contract.",
+    },
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "rope_tensor_api",
+        category: "API",
+        exact_api_or_surface: "RotaryEmbedding::apply(&Tensor, position) -> Result<Tensor>",
+        required_before_runtime_execution: "Add a typed Q-head RoPE application that matches the existing split-layout RoPE tables, position handling, device/dtype behavior, and trace summaries before attention scores.",
+    },
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "trace_workspace_tensor_identity",
+        category: "lifetime",
+        exact_api_or_surface: "TransformerAttentionOutputSourceTensors stores q_projection, q_heads, q_norm, and q_rope as Candle Tensor values",
+        required_before_runtime_execution: "Define how typed fused Q buffers are represented in checkpoint traces and workspace source-tensor receipts without losing the current diagnostic identity or requiring a returned intermediate Tensor.",
+    },
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "attention_handoff_tensor_contract",
+        category: "API",
+        exact_api_or_surface: "prepare_attention_scores consumes q as &Tensor and uses Tensor matmul/transpose/dtype operations",
+        required_before_runtime_execution: "Either extend the typed Q buffer through score computation or provide an explicitly proven single materialization point after q_norm/RoPE that does not claim SLM-CPU-099 fused-consumer completion.",
+    },
+    DenseQ8SidecarTypedFusedQProjectionImplementationBlocker {
+        blocker: "receipt_safety_evidence",
+        category: "receipt-safety",
+        exact_api_or_surface: "SLM-CPU-099 receipt gate requires repeated Qwen3 Q8_0 before/after receipts with identical IDs/text/backend/dense-hook/fallback=false",
+        required_before_runtime_execution: "Capture behavior-preserving before/after Qwen3 Q8_0 appliance receipts before enabling any runtime-adjacent fused Q consumer path or claiming allocation/timing improvement.",
+    },
+];
+
 pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumerBoundary {
     DenseQ8SidecarFusedConsumerBoundary {
         role: "attention.q_proj.fused_output_consumer",
@@ -2290,6 +2357,28 @@ pub fn dense_q8_sidecar_fused_q_projection_consumer_contract()
         speedup_claim: false,
         default_runtime_changed: false,
         required_missing_implementation: "behavior-preserving fused Q projection consumer implementation plus before/after Qwen3 Q8_0 receipts",
+    }
+}
+
+pub fn dense_q8_sidecar_typed_fused_q_projection_implementation_gate()
+-> DenseQ8SidecarTypedFusedQProjectionImplementationGate {
+    let contract = dense_q8_sidecar_fused_q_projection_consumer_contract();
+    DenseQ8SidecarTypedFusedQProjectionImplementationGate {
+        role: "attention.q_proj.typed_fused_consumer_implementation_gate",
+        status: "blocked_runtime_disabled",
+        source_contract_status: contract.status,
+        exact_tensor_name: contract.exact_tensor_name,
+        exact_tensor_role: contract.exact_tensor_role,
+        attempted_runtime_implementation: false,
+        can_own_packed_q8_matvec_output_slice: true,
+        can_preserve_downstream_tensor_semantics_without_intermediate_tensor: false,
+        runtime_execution_enabled: false,
+        default_runtime_changed: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        blockers: DENSE_Q8_SIDECAR_TYPED_FUSED_Q_PROJECTION_IMPLEMENTATION_BLOCKERS,
+        receipt_gate: contract.receipt,
+        next_required_slice: "typed attention-head buffer/view plus q_norm/RoPE/trace/score-consumer API, followed by behavior-preserving Qwen3 Q8_0 before/after receipts",
     }
 }
 
