@@ -1765,6 +1765,7 @@ pub struct TransformerQkvProjectionDispatchReplayTensors {
     pub opencl_policy_output: Tensor,
     pub a770_output: Option<Tensor>,
     pub device_expression_trace: Option<TransformerQk256DeviceExpressionTrace>,
+    pub device_intermediate_trace: Option<TransformerQk256DeviceIntermediateTrace>,
     pub cpu: TransformerQkvProjectionDispatchReplayCpuStats,
     pub a770: TransformerQkvProjectionDispatchReplayA770Stats,
 }
@@ -1791,6 +1792,40 @@ pub struct TransformerQk256DeviceExpressionSample {
     pub mul_then_div: f32,
     pub reciprocal_then_mul: f32,
     pub f64_div_then_mul_cast: f32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransformerQk256DeviceIntermediateTrace {
+    pub compiled_opencl: bool,
+    pub attempted: bool,
+    pub success: bool,
+    pub error: Option<String>,
+    pub input_row_index: usize,
+    pub sample_limit: usize,
+    pub sample_count: usize,
+    pub platform_index: Option<usize>,
+    pub device_index: Option<usize>,
+    pub platform_name: Option<String>,
+    pub runtime_device: Option<String>,
+    pub vendor: Option<String>,
+    pub driver_version: Option<String>,
+    pub host_to_device_bytes: usize,
+    pub device_to_host_bytes: usize,
+    pub kernel_invocations: usize,
+    pub samples: Vec<TransformerQk256DeviceIntermediateSample>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransformerQk256DeviceIntermediateSample {
+    pub output_index: usize,
+    pub int_dot: i32,
+    pub activation_sum: i32,
+    pub adjusted_dot: i32,
+    pub activation_scale_bits: u32,
+    pub weight_scale_bits: u32,
+    pub adjusted_f32_bits: u32,
+    pub output_bits: u32,
+    pub output: f32,
 }
 
 #[derive(Debug, Clone)]

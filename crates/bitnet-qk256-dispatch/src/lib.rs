@@ -8,7 +8,8 @@
 use bitnet_common::{BitNetError, Result};
 #[cfg(feature = "opencl")]
 use bitnet_kernels::a770_opencl_runtime::{
-    A770OpenClQk256ScaledGemv, run_a770_qk256_i8s_scaled_gemv,
+    A770OpenClQk256ScaledGemv, A770OpenClQk256ScaledGemvDebug, run_a770_qk256_i8s_scaled_gemv,
+    run_a770_qk256_i8s_scaled_gemv_debug,
 };
 #[cfg(feature = "cuda")]
 use bitnet_kernels::cuda::{
@@ -130,6 +131,8 @@ pub struct Qk256CpuA770DispatchReplay {
     pub a770_output: Option<Tensor>,
     /// Compact diagnostic trace for sampled host-side output expression variants.
     pub device_expression_trace: Option<Qk256DeviceExpressionTrace>,
+    /// Compact selected-device debug-kernel trace for sampled intermediates.
+    pub device_intermediate_trace: Option<Qk256DeviceIntermediateTrace>,
     /// CPU replay stats.
     pub cpu: Qk256CpuDispatchReplayStats,
     /// A770 replay stats.
@@ -176,6 +179,68 @@ pub struct Qk256DeviceExpressionSample {
     pub reciprocal_then_mul: f32,
     /// f64 diagnostic expression rounded back to f32.
     pub f64_div_then_mul_cast: f32,
+}
+
+/// Compact diagnostic trace from a bounded selected-device debug kernel.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Qk256DeviceIntermediateTrace {
+    /// True when the crate was built with the OpenCL debug dependency.
+    pub compiled_opencl: bool,
+    /// True when the debug kernel was attempted.
+    pub attempted: bool,
+    /// True when sampled intermediates were captured successfully.
+    pub success: bool,
+    /// Error string when the debug capture failed.
+    pub error: Option<String>,
+    /// Materialized input row index used for the samples.
+    pub input_row_index: usize,
+    /// Maximum number of output rows requested.
+    pub sample_limit: usize,
+    /// Number of output rows sampled.
+    pub sample_count: usize,
+    /// OpenCL platform index selected for execution.
+    pub platform_index: Option<usize>,
+    /// OpenCL device index selected for execution.
+    pub device_index: Option<usize>,
+    /// OpenCL platform name.
+    pub platform_name: Option<String>,
+    /// Selected OpenCL device name.
+    pub runtime_device: Option<String>,
+    /// Selected OpenCL device vendor.
+    pub vendor: Option<String>,
+    /// Selected OpenCL driver version.
+    pub driver_version: Option<String>,
+    /// Host-to-device bytes uploaded by the debug capture.
+    pub host_to_device_bytes: usize,
+    /// Device-to-host bytes read by the debug capture.
+    pub device_to_host_bytes: usize,
+    /// Number of debug-kernel invocations.
+    pub kernel_invocations: usize,
+    /// Sampled device-side intermediate rows.
+    pub samples: Vec<Qk256DeviceIntermediateSample>,
+}
+
+/// Device-side intermediate values for one selected QK256 output row.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Qk256DeviceIntermediateSample {
+    /// Output row index within the projection matrix.
+    pub output_index: usize,
+    /// Integer dot product before activation-sum correction.
+    pub int_dot: i32,
+    /// Sum of the prequantized I8_S activation row as seen by the device.
+    pub activation_sum: i32,
+    /// `int_dot - activation_sum` as seen by the device.
+    pub adjusted_dot: i32,
+    /// Raw `f32` bits for the activation scale as seen by the device.
+    pub activation_scale_bits: u32,
+    /// Raw `f32` bits for the weight scale as seen by the device.
+    pub weight_scale_bits: u32,
+    /// Raw `f32` bits for `(float)adjusted_dot`.
+    pub adjusted_f32_bits: u32,
+    /// Raw `f32` bits for the debug kernel output expression.
+    pub output_bits: u32,
+    /// Debug kernel output expression value.
+    pub output: f32,
 }
 
 /// Diagnostic CPU replay stats for one QK256 projection.
@@ -657,6 +722,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
     let mut opencl_policy_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
     let mut cpu_scalar_invocations = 0u64;
     let mut device_expression_trace = None;
+    let mut device_intermediate_trace = None;
 
     for (input_row_index, input_row) in prepared.input_rows.iter().enumerate() {
         let mut output_row = vec![0.0f32; prepared.layout.rows];
@@ -704,6 +770,18 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
                 input_row_index,
                 8,
             )?);
+            device_intermediate_trace = Some(qk256_device_intermediate_trace_for_row(
+                &prepared.flat_bytes,
+                &q,
+                prepared.layout.rows,
+                prepared.layout.cols,
+                prepared.layout.row_stride_bytes,
+                activation_sum,
+                activation_scale,
+                weight_scale,
+                input_row_index,
+                8,
+            ));
         }
     }
 
@@ -722,12 +800,128 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         opencl_policy_output,
         a770_output,
         device_expression_trace,
+        device_intermediate_trace,
         cpu: Qk256CpuDispatchReplayStats {
             scalar_invocations: cpu_scalar_invocations,
             execution_path: "cpu_qk256_i2s_i8s_scaled_scalar_replay",
         },
         a770,
     })
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(feature = "opencl")]
+fn qk256_device_intermediate_trace_for_row(
+    qs_data: &[u8],
+    q: &[i8],
+    rows: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+    activation_sum: i32,
+    activation_scale: f32,
+    weight_scale: f32,
+    input_row_index: usize,
+    sample_limit: usize,
+) -> Qk256DeviceIntermediateTrace {
+    match run_a770_qk256_i8s_scaled_gemv_debug(A770OpenClQk256ScaledGemvDebug {
+        activations_i8: q,
+        packed_qk256: qs_data,
+        rows,
+        cols,
+        row_stride_bytes,
+        activation_sum,
+        activation_scale,
+        weight_scale,
+        sample_limit,
+    }) {
+        Ok(result) => Qk256DeviceIntermediateTrace {
+            compiled_opencl: true,
+            attempted: true,
+            success: true,
+            error: None,
+            input_row_index,
+            sample_limit,
+            sample_count: result.samples.len(),
+            platform_index: Some(result.platform_index),
+            device_index: Some(result.device_index),
+            platform_name: Some(result.platform_name),
+            runtime_device: Some(result.runtime_device),
+            vendor: Some(result.vendor),
+            driver_version: Some(result.driver_version),
+            host_to_device_bytes: result.host_to_device_bytes,
+            device_to_host_bytes: result.device_to_host_bytes,
+            kernel_invocations: result.kernel_invocations,
+            samples: result
+                .samples
+                .into_iter()
+                .map(|sample| Qk256DeviceIntermediateSample {
+                    output_index: sample.output_index,
+                    int_dot: sample.int_dot,
+                    activation_sum: sample.activation_sum,
+                    adjusted_dot: sample.adjusted_dot,
+                    activation_scale_bits: sample.activation_scale_bits,
+                    weight_scale_bits: sample.weight_scale_bits,
+                    adjusted_f32_bits: sample.adjusted_f32_bits,
+                    output_bits: sample.output_bits,
+                    output: sample.output,
+                })
+                .collect(),
+        },
+        Err(err) => Qk256DeviceIntermediateTrace {
+            compiled_opencl: true,
+            attempted: true,
+            success: false,
+            error: Some(err.to_string()),
+            input_row_index,
+            sample_limit,
+            sample_count: 0,
+            platform_index: None,
+            device_index: None,
+            platform_name: None,
+            runtime_device: None,
+            vendor: None,
+            driver_version: None,
+            host_to_device_bytes: 0,
+            device_to_host_bytes: 0,
+            kernel_invocations: 0,
+            samples: Vec::new(),
+        },
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(not(feature = "opencl"))]
+fn qk256_device_intermediate_trace_for_row(
+    _qs_data: &[u8],
+    _q: &[i8],
+    _rows: usize,
+    _cols: usize,
+    _row_stride_bytes: usize,
+    _activation_sum: i32,
+    _activation_scale: f32,
+    _weight_scale: f32,
+    input_row_index: usize,
+    sample_limit: usize,
+) -> Qk256DeviceIntermediateTrace {
+    Qk256DeviceIntermediateTrace {
+        compiled_opencl: false,
+        attempted: false,
+        success: false,
+        error: Some("bitnet-qk256-dispatch was built without the opencl feature".to_string()),
+        input_row_index,
+        sample_limit,
+        sample_count: 0,
+        platform_index: None,
+        device_index: None,
+        platform_name: None,
+        runtime_device: None,
+        vendor: None,
+        driver_version: None,
+        host_to_device_bytes: 0,
+        device_to_host_bytes: 0,
+        kernel_invocations: 0,
+        samples: Vec::new(),
+    }
 }
 
 fn gemv_qk256_opencl_linear_i8s_scaled(

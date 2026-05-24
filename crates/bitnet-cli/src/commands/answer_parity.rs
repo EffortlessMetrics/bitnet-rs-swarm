@@ -347,6 +347,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_device_intermediate_frontier =
+        build_generated_output_qk256_device_intermediate_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -455,6 +463,7 @@ fn build_answer_parity_receipt(
         "generated_output_qk256_output_casting_frontier": generated_output_qk256_output_casting_frontier,
         "generated_output_qk256_output_readback_trace_frontier": generated_output_qk256_output_readback_trace_frontier,
         "generated_output_qk256_device_expression_frontier": generated_output_qk256_device_expression_frontier,
+        "generated_output_qk256_device_intermediate_frontier": generated_output_qk256_device_intermediate_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -5497,6 +5506,71 @@ fn build_generated_output_qk256_device_expression_frontier(
     })
 }
 
+fn build_generated_output_qk256_device_intermediate_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_device_intermediate_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_device_intermediate_missing_context");
+        if classification != "generated_output_qk256_device_intermediate_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_device_intermediate_missing_context",
+        "generated_output_qk256_device_intermediate_int_dot_drift",
+        "generated_output_qk256_device_intermediate_activation_or_adjusted_dot_drift",
+        "generated_output_qk256_device_intermediate_scalar_bits_drift",
+        "generated_output_qk256_device_intermediate_debug_output_unmatched",
+        "generated_output_qk256_device_intermediate_debug_output_matches_policy",
+        "generated_output_qk256_device_intermediate_debug_output_matches_readback",
+        "generated_output_qk256_device_intermediate_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_device_intermediate_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_device_intermediate_",
+        "generated_output_qk256_device_intermediate_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_device_intermediate_context_available": rows.iter().any(|row| {
+            row["qk256_device_intermediate_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_device_intermediate_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -6313,6 +6387,225 @@ fn qk256_device_expression_side_summary(readback_summary: &Value) -> Value {
         "reciprocal_then_mul_bits": sample["reciprocal_then_mul_bits"],
         "f64_div_then_mul_cast": sample["f64_div_then_mul_cast"],
         "f64_div_then_mul_cast_bits": sample["f64_div_then_mul_cast_bits"],
+        "device_intermediate_trace": readback_summary["device_intermediate_trace"],
+    })
+}
+
+fn generated_output_qk256_device_intermediate_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let expression_row = generated_output_qk256_device_expression_row(id, left_case, right_case);
+    let expression_classification = expression_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_device_expression_missing_context");
+    if expression_classification == "generated_output_qk256_device_expression_not_applicable" {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_device_intermediate_not_applicable",
+            "reason": "device_expression_not_applicable",
+            "qk256_device_expression_classification": expression_row["classification"],
+        });
+    }
+    if expression_classification == "generated_output_qk256_device_expression_clean" {
+        return generated_output_qk256_device_intermediate_context_row(
+            id,
+            "generated_output_qk256_device_intermediate_clean",
+            "device_expression_clean",
+            expression_row,
+            json!({"classification": "generated_output_qk256_device_intermediate_clean"}),
+            json!({"classification": "generated_output_qk256_device_intermediate_clean"}),
+        );
+    }
+    if expression_classification
+        != "generated_output_qk256_device_expression_unmatched_device_value"
+    {
+        return generated_output_qk256_device_intermediate_context_row(
+            id,
+            "generated_output_qk256_device_intermediate_missing_context",
+            "device_expression_did_not_route_to_unmatched_device_value",
+            expression_row,
+            Value::Null,
+            Value::Null,
+        );
+    }
+
+    let left = qk256_device_intermediate_side_summary(&expression_row["left"]);
+    let right = qk256_device_intermediate_side_summary(&expression_row["right"]);
+    let left_classification = left["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_device_intermediate_missing_context");
+    let right_classification = right["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_device_intermediate_missing_context");
+    let classification =
+        qk256_device_intermediate_pair_classification(left_classification, right_classification);
+
+    generated_output_qk256_device_intermediate_context_row(
+        id,
+        classification,
+        "device_intermediate_debug_kernel_compared",
+        expression_row,
+        left,
+        right,
+    )
+}
+
+fn generated_output_qk256_device_intermediate_context_row(
+    id: &str,
+    classification: &str,
+    reason: &str,
+    expression_row: Value,
+    left: Value,
+    right: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "qk256_device_expression_classification": expression_row["classification"],
+        "qk256_device_intermediate_context_available":
+            classification != "generated_output_qk256_device_intermediate_missing_context",
+        "first_mismatch_index": expression_row["first_mismatch_index"],
+        "target_layer_idx": expression_row["target_layer_idx"],
+        "projection": expression_row["projection"],
+        "left": left,
+        "right": right,
+        "next_diagnostic": qk256_device_intermediate_next_diagnostic(classification),
+    })
+}
+
+fn qk256_device_intermediate_side_summary(expression_side: &Value) -> Value {
+    let expression_classification = expression_side["classification"].as_str().unwrap_or("");
+    if expression_classification == "generated_output_qk256_device_expression_clean" {
+        return json!({
+            "classification": "generated_output_qk256_device_intermediate_clean",
+            "reason": "device_expression_clean",
+            "qk256_device_intermediate_context_available": true,
+        });
+    }
+
+    let Some(first_mismatch_index) = expression_side["first_mismatch_index"].as_u64() else {
+        return json!({
+            "classification": "generated_output_qk256_device_intermediate_missing_context",
+            "reason": "first_mismatch_index_missing",
+            "qk256_device_intermediate_context_available": false,
+        });
+    };
+    let trace = &expression_side["device_intermediate_trace"];
+    if trace["success"].as_bool() != Some(true) {
+        return json!({
+            "classification": "generated_output_qk256_device_intermediate_missing_context",
+            "reason": "device_intermediate_trace_missing_or_failed",
+            "error": trace["error"],
+            "compiled_opencl": trace["compiled_opencl"],
+            "attempted": trace["attempted"],
+            "qk256_device_intermediate_context_available": false,
+            "first_mismatch_index": first_mismatch_index,
+        });
+    }
+    let Some(samples) = trace["samples"].as_array() else {
+        return json!({
+            "classification": "generated_output_qk256_device_intermediate_missing_context",
+            "reason": "device_intermediate_samples_missing",
+            "qk256_device_intermediate_context_available": false,
+            "first_mismatch_index": first_mismatch_index,
+        });
+    };
+    let Some(sample) =
+        samples.iter().find(|sample| sample["output_index"].as_u64() == Some(first_mismatch_index))
+    else {
+        return json!({
+            "classification": "generated_output_qk256_device_intermediate_missing_context",
+            "reason": "device_intermediate_sample_missing_for_first_mismatch_index",
+            "qk256_device_intermediate_context_available": false,
+            "first_mismatch_index": first_mismatch_index,
+            "sample_count": trace["sample_count"],
+            "sample_limit": trace["sample_limit"],
+        });
+    };
+
+    let host_int_dot = expression_side["int_dot"].as_i64();
+    let host_activation_sum = expression_side["activation_sum"].as_i64();
+    let host_adjusted_dot = expression_side["adjusted_dot"].as_i64();
+    let host_activation_scale_bits = expression_side["activation_scale_bits"].as_u64();
+    let host_weight_scale_bits = expression_side["weight_scale_bits"].as_u64();
+    let device_int_dot = sample["int_dot"].as_i64();
+    let device_activation_sum = sample["activation_sum"].as_i64();
+    let device_adjusted_dot = sample["adjusted_dot"].as_i64();
+    let device_activation_scale_bits = sample["activation_scale_bits"].as_u64();
+    let device_weight_scale_bits = sample["weight_scale_bits"].as_u64();
+    let device_output_bits = sample["output_bits"].as_u64();
+    let a770_bits = expression_side["a770_first_value_bits"].as_u64();
+    let policy_bits = expression_side["policy_first_value_bits"].as_u64();
+
+    let classification = if host_int_dot.is_some()
+        && device_int_dot.is_some()
+        && host_int_dot != device_int_dot
+    {
+        "generated_output_qk256_device_intermediate_int_dot_drift"
+    } else if (host_activation_sum.is_some()
+        && device_activation_sum.is_some()
+        && host_activation_sum != device_activation_sum)
+        || (host_adjusted_dot.is_some()
+            && device_adjusted_dot.is_some()
+            && host_adjusted_dot != device_adjusted_dot)
+    {
+        "generated_output_qk256_device_intermediate_activation_or_adjusted_dot_drift"
+    } else if (host_activation_scale_bits.is_some()
+        && device_activation_scale_bits.is_some()
+        && host_activation_scale_bits != device_activation_scale_bits)
+        || (host_weight_scale_bits.is_some()
+            && device_weight_scale_bits.is_some()
+            && host_weight_scale_bits != device_weight_scale_bits)
+    {
+        "generated_output_qk256_device_intermediate_scalar_bits_drift"
+    } else if device_output_bits.is_some() && a770_bits.is_some() && device_output_bits == a770_bits
+    {
+        "generated_output_qk256_device_intermediate_debug_output_matches_readback"
+    } else if device_output_bits.is_some()
+        && policy_bits.is_some()
+        && device_output_bits == policy_bits
+    {
+        "generated_output_qk256_device_intermediate_debug_output_matches_policy"
+    } else {
+        "generated_output_qk256_device_intermediate_debug_output_unmatched"
+    };
+
+    json!({
+        "classification": classification,
+        "reason": "device_intermediate_sample_compared",
+        "qk256_device_intermediate_context_available": true,
+        "first_mismatch_index": first_mismatch_index,
+        "output_index": sample["output_index"],
+        "host_int_dot": expression_side["int_dot"],
+        "device_int_dot": sample["int_dot"],
+        "host_activation_sum": expression_side["activation_sum"],
+        "device_activation_sum": sample["activation_sum"],
+        "host_adjusted_dot": expression_side["adjusted_dot"],
+        "device_adjusted_dot": sample["adjusted_dot"],
+        "host_activation_scale_bits": expression_side["activation_scale_bits"],
+        "device_activation_scale_bits": sample["activation_scale_bits"],
+        "host_weight_scale_bits": expression_side["weight_scale_bits"],
+        "device_weight_scale_bits": sample["weight_scale_bits"],
+        "device_adjusted_f32_bits": sample["adjusted_f32_bits"],
+        "device_output": sample["output"],
+        "device_output_bits": sample["output_bits"],
+        "a770_first_value": expression_side["a770_first_value"],
+        "a770_first_value_bits": expression_side["a770_first_value_bits"],
+        "policy_first_value": expression_side["policy_first_value"],
+        "policy_first_value_bits": expression_side["policy_first_value_bits"],
+        "debug_output_matches_readback": device_output_bits.is_some()
+            && a770_bits.is_some()
+            && device_output_bits == a770_bits,
+        "debug_output_matches_policy": device_output_bits.is_some()
+            && policy_bits.is_some()
+            && device_output_bits == policy_bits,
+        "sample_count": trace["sample_count"],
+        "sample_limit": trace["sample_limit"],
+        "runtime_device": trace["runtime_device"],
+        "driver_version": trace["driver_version"],
     })
 }
 
@@ -6356,6 +6649,28 @@ fn qk256_device_expression_pair_classification(
             *classification == left_classification || *classification == right_classification
         })
         .unwrap_or("generated_output_qk256_device_expression_missing_context")
+}
+
+fn qk256_device_intermediate_pair_classification(
+    left_classification: &str,
+    right_classification: &str,
+) -> &'static str {
+    let priority = [
+        "generated_output_qk256_device_intermediate_missing_context",
+        "generated_output_qk256_device_intermediate_int_dot_drift",
+        "generated_output_qk256_device_intermediate_activation_or_adjusted_dot_drift",
+        "generated_output_qk256_device_intermediate_scalar_bits_drift",
+        "generated_output_qk256_device_intermediate_debug_output_unmatched",
+        "generated_output_qk256_device_intermediate_debug_output_matches_policy",
+        "generated_output_qk256_device_intermediate_debug_output_matches_readback",
+        "generated_output_qk256_device_intermediate_clean",
+    ];
+    priority
+        .into_iter()
+        .find(|classification| {
+            *classification == left_classification || *classification == right_classification
+        })
+        .unwrap_or("generated_output_qk256_device_intermediate_missing_context")
 }
 
 fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
@@ -6442,6 +6757,7 @@ fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
             "first_values": a770["first_values"],
         },
         "device_expression_trace": replay["device_expression_trace"],
+        "device_intermediate_trace": replay["device_intermediate_trace"],
         "shape_match": shape_match,
         "value_count_match": value_count_match,
         "finite_count_match": finite_count_match,
@@ -6551,6 +6867,7 @@ fn qk256_output_readback_trace_summary(casting_summary: &Value) -> Value {
         "mean_abs_delta": casting_summary["mean_abs_delta"],
         "rms_abs_delta": casting_summary["rms_abs_delta"],
         "device_expression_trace": casting_summary["device_expression_trace"],
+        "device_intermediate_trace": casting_summary["device_intermediate_trace"],
     })
 }
 
@@ -6635,6 +6952,7 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "opencl_policy_output": qkv_projection_dispatch_replay_tensor_summary(&replay["opencl_policy_output"]),
         "a770_output": qkv_projection_dispatch_replay_tensor_summary(&replay["a770_output"]),
         "device_expression_trace": replay["device_expression_trace"],
+        "device_intermediate_trace": replay["device_intermediate_trace"],
         "cpu_a770_output_sha256_match": replay["cpu_a770_output_sha256_match"],
         "cpu_opencl_policy_output_sha256_match": replay["cpu_opencl_policy_output_sha256_match"],
         "opencl_policy_a770_output_sha256_match": replay["opencl_policy_a770_output_sha256_match"],
@@ -7077,6 +7395,38 @@ fn qk256_device_expression_next_diagnostic(classification: &str) -> &'static str
         "generated_output_qk256_device_expression_frontier_missing_context"
         | "generated_output_qk256_device_expression_missing_context" => {
             "rerun focused receipts with QK256 device expression trace enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_device_intermediate_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_device_intermediate_frontier_debug_output_matches_readback"
+        | "generated_output_qk256_device_intermediate_debug_output_matches_readback" => {
+            "pin the OpenCL device expression or compiler math-mode policy that produces the selected one-bit split"
+        }
+        "generated_output_qk256_device_intermediate_frontier_debug_output_matches_policy"
+        | "generated_output_qk256_device_intermediate_debug_output_matches_policy" => {
+            "compare production QK256 kernel and debug-kernel source or command-queue readback behavior"
+        }
+        "generated_output_qk256_device_intermediate_frontier_int_dot_drift"
+        | "generated_output_qk256_device_intermediate_int_dot_drift" => {
+            "inspect selected QK256 packed-byte decode and activation upload on device"
+        }
+        "generated_output_qk256_device_intermediate_frontier_activation_or_adjusted_dot_drift"
+        | "generated_output_qk256_device_intermediate_activation_or_adjusted_dot_drift"
+        | "generated_output_qk256_device_intermediate_frontier_scalar_bits_drift"
+        | "generated_output_qk256_device_intermediate_scalar_bits_drift" => {
+            "inspect selected activation quantization scalar upload and integer correction inputs"
+        }
+        "generated_output_qk256_device_intermediate_frontier_debug_output_unmatched"
+        | "generated_output_qk256_device_intermediate_debug_output_unmatched" => {
+            "capture production-kernel and debug-kernel output bits side by side for the selected row"
+        }
+        "generated_output_qk256_device_intermediate_frontier_missing_context"
+        | "generated_output_qk256_device_intermediate_missing_context" => {
+            "rerun focused receipts with the bounded QK256 device-intermediate debug trace enabled"
         }
         _ => "none",
     }
@@ -8161,6 +8511,53 @@ mod tests {
         replay["opencl_policy_output"]["first_values"][1] = json!(policy_value);
         replay["a770_output"]["first_values"][1] = json!(a770_value);
         replay["device_expression_trace"] = trace;
+        replay
+    }
+
+    fn qk256_device_intermediate_trace_fixture(
+        output_index: u64,
+        output: f32,
+        int_dot: i64,
+        activation_sum: i64,
+        adjusted_dot: i64,
+    ) -> Value {
+        json!({
+            "schema_version": "1.0.0",
+            "context_kind": "qk256_device_intermediate_trace",
+            "diagnostic_only": true,
+            "claim_allowed": false,
+            "compiled_opencl": true,
+            "attempted": true,
+            "success": true,
+            "error": null,
+            "input_row_index": 0,
+            "sample_limit": 8,
+            "sample_count": 1,
+            "platform_index": 0,
+            "device_index": 0,
+            "platform_name": "Intel OpenCL",
+            "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+            "vendor": "Intel",
+            "driver_version": "test",
+            "host_to_device_bytes": 1024,
+            "device_to_host_bytes": 28,
+            "kernel_invocations": 1,
+            "samples": [{
+                "output_index": output_index,
+                "int_dot": int_dot,
+                "activation_sum": activation_sum,
+                "adjusted_dot": adjusted_dot,
+                "activation_scale_bits": 2.0f32.to_bits(),
+                "weight_scale_bits": 0.25f32.to_bits(),
+                "adjusted_f32_bits": (adjusted_dot as f32).to_bits(),
+                "output": output,
+                "output_bits": output.to_bits(),
+            }],
+        })
+    }
+
+    fn with_qk256_device_intermediate_trace(mut replay: Value, trace: Value) -> Value {
+        replay["device_intermediate_trace"] = trace;
         replay
     }
 
@@ -10781,6 +11178,77 @@ mod tests {
             "generated_output_qk256_device_expression_frontier_unmatched_device_value"
         );
         assert_eq!(frontier["rows"][0]["left"]["matched_expression"], Value::Null);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_device_intermediate_debug_output_matches_readback() {
+        let expression_trace = qk256_device_expression_trace_fixture(1, -0.25, -0.5, -0.75, -1.0);
+        let intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 101, 5, 96);
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_device_intermediate_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_device_intermediate_frontier_debug_output_matches_readback"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_device_intermediate_debug_output_matches_readback"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["debug_output_matches_readback"], true);
+        assert_eq!(
+            frontier["next_diagnostic"],
+            "pin the OpenCL device expression or compiler math-mode policy that produces the selected one-bit split"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_device_intermediate_int_dot_drift() {
+        let expression_trace = qk256_device_expression_trace_fixture(1, -0.25, -0.5, -0.75, -1.0);
+        let intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 102, 5, 97);
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_device_intermediate_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_device_intermediate_frontier_int_dot_drift"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["host_int_dot"], 101);
+        assert_eq!(frontier["rows"][0]["left"]["device_int_dot"], 102);
     }
 
     #[test]

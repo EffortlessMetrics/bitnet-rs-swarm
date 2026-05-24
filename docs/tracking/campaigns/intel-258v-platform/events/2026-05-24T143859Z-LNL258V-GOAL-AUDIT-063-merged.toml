@@ -1,0 +1,36 @@
+timestamp = "2026-05-24T14:38:59Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-063"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 626
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-063-post-slmcpu100"
+head_sha = "2572f900f6e37544500b9c4c25f594093a1dbd90"
+merge_sha = "a58bf44e99d63b7c187df7958a1540e19be2001e"
+merged_at = "2026-05-24T14:38:59Z"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Merged PR #626, closing the no-inference Lunar Lake audit/checklist refresh through SLM-CPU-100 tracker queue and LNL258V-GOAL-AUDIT-062 closeout."
+notes = [
+  "PR #626 refreshed audit/checklist source_revision to 2e33b75c4a844c4cd1be61623a26eefe98c89e42.",
+  "The merged refresh classified #621 as adjacent SLM CPU tracker state only and #623 as Lunar Lake tracker closeout state only.",
+  "The hosted routed Rust-small rerun produced the normalized green result after the allow-github-hosted label was applied.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
+
+[claim_boundary]
+may_claim = [
+  "PR #626 merged and refreshed Lunar Lake audit/checklist freshness through current swarm main.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake model was loaded.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "A speedup or power advantage is proven.",
+  "SLM-CPU-100 is Lunar Lake route evidence.",
+  "SLM-CPU-100 is a shared BitNet semantic fix.",
+  "Lunar Lake semantic-intake is stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]

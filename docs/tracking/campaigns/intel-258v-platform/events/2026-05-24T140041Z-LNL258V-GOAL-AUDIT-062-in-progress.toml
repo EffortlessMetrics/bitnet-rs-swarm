@@ -1,0 +1,31 @@
+timestamp = "2026-05-24T14:00:41Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-062"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-062-post-slmcpu099"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Started the no-inference Lunar Lake audit/checklist refresh after adjacent current-main changes through SLM-CPU-099 closeout."
+notes = [
+  "Refreshes the audit/checklist source_revision to 805f399ab7eed5bb4b971ccb7231aa2e793b9522.",
+  "Classifies #608/#609/#610/#611/#612/#613/#614/#615/#617/#618 as adjacent SLM CPU tracker/contract, adjacent A770 diagnostic/tracker, support-command, CI, or documentation state only.",
+  "LNL258V-POWER-006 remains blocked because the machine is still on AC power and lacks real battery-mode low_power evidence.",
+]
+
+[claim_boundary]
+may_claim = [
+  "LNL258V-GOAL-AUDIT-062 refreshes Lunar Lake audit/checklist freshness through current swarm main.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake model was loaded.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "A speedup or power advantage is proven.",
+  "A770-047 or SLM-CPU-099 is Lunar Lake route evidence.",
+  "A770-047 or SLM-CPU-099 is a shared BitNet semantic fix.",
+  "Lunar Lake semantic-intake is stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]

@@ -85,9 +85,9 @@
     "layout": "gguf_packed_i2_s"
   },
   "latency": {
-    "cmd_to_first_ms": 54095,
-    "decode_first_ms": 54095,
-    "total_ms": 86902
+    "cmd_to_first_ms": 54305,
+    "decode_first_ms": 54305,
+    "total_ms": 88051
   },
   "loader": {
     "minimal_fallback_allowed": false,
@@ -15945,6 +15945,118 @@
                       ],
                       "schema_version": "1.0.0"
                     },
+                    "device_intermediate_trace": {
+                      "attempted": true,
+                      "claim_allowed": false,
+                      "compiled_opencl": true,
+                      "context_kind": "qk256_device_intermediate_trace",
+                      "device_index": 0,
+                      "device_to_host_bytes": 224,
+                      "diagnostic_only": true,
+                      "driver_version": "32.0.101.8801",
+                      "error": null,
+                      "host_to_device_bytes": 1640960,
+                      "input_row_index": 0,
+                      "kernel_invocations": 1,
+                      "platform_index": 0,
+                      "platform_name": "Intel(R) OpenCL Graphics",
+                      "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+                      "sample_count": 8,
+                      "sample_limit": 8,
+                      "samples": [
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": -1923,
+                          "adjusted_f32_bits": 3304087552,
+                          "int_dot": -860,
+                          "output": -1.3538206815719604,
+                          "output_bits": 3215804927,
+                          "output_index": 0,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": 9594,
+                          "adjusted_f32_bits": 1175840768,
+                          "int_dot": 10657,
+                          "output": 6.754318714141846,
+                          "output_bits": 1087906657,
+                          "output_index": 1,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": 4785,
+                          "adjusted_f32_bits": 1167427584,
+                          "int_dot": 5848,
+                          "output": 3.368711233139038,
+                          "output_bits": 1079482615,
+                          "output_index": 2,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": 1542,
+                          "adjusted_f32_bits": 1153482752,
+                          "int_dot": 2605,
+                          "output": 1.0855909585952759,
+                          "output_bits": 1066071205,
+                          "output_index": 3,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": -2058,
+                          "adjusted_f32_bits": 3305152512,
+                          "int_dot": -995,
+                          "output": -1.4488626718521118,
+                          "output_bits": 3216602197,
+                          "output_index": 4,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": 4103,
+                          "adjusted_f32_bits": 1166030848,
+                          "int_dot": 5166,
+                          "output": 2.888573169708252,
+                          "output_bits": 1077468770,
+                          "output_index": 5,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": -1583,
+                          "adjusted_f32_bits": 3301302272,
+                          "int_dot": -520,
+                          "output": -1.1144555807113647,
+                          "output_bits": 3213796987,
+                          "output_index": 6,
+                          "weight_scale_bits": 1067189103
+                        },
+                        {
+                          "activation_scale_bits": 1155033426,
+                          "activation_sum": 1063,
+                          "adjusted_dot": 2437,
+                          "adjusted_f32_bits": 1159221248,
+                          "int_dot": 3500,
+                          "output": 1.7156842947006226,
+                          "output_bits": 1071356811,
+                          "output_index": 7,
+                          "weight_scale_bits": 1067189103
+                        }
+                      ],
+                      "schema_version": "1.0.0",
+                      "success": true,
+                      "vendor": "Intel(R) Corporation"
+                    },
                     "diagnostic_only": true,
                     "inline_scale": 1.2188547849655151,
                     "input_rows": 1,
@@ -23539,82 +23651,82 @@
     "decode": {
       "embed_ms": {
         "count": 18,
-        "max_ms": 0.013,
+        "max_ms": 0.016,
         "mean_ms": 0.006,
-        "min_ms": 0.005,
+        "min_ms": 0.004,
         "p50_ms": 0.006,
-        "p95_ms": 0.013,
-        "total_ms": 0.115
+        "p95_ms": 0.016,
+        "total_ms": 0.114
       },
-      "first_token_decode_ms": 1760.276,
+      "first_token_decode_ms": 1902.887,
       "forward_ms": {
         "count": 18,
-        "max_ms": 2057.733,
-        "mean_ms": 1859.887,
-        "min_ms": 1565.149,
-        "p50_ms": 1882.015,
-        "p95_ms": 2057.733,
-        "total_ms": 33477.972
+        "max_ms": 2930.46,
+        "mean_ms": 1918.885,
+        "min_ms": 1629.818,
+        "p50_ms": 1842.063,
+        "p95_ms": 2930.46,
+        "total_ms": 34539.937
       },
       "generated_tokens": 18,
       "logits_ms": {
         "count": 18,
-        "max_ms": 48.172,
-        "mean_ms": 44.12,
-        "min_ms": 40.652,
-        "p50_ms": 43.669,
-        "p95_ms": 48.172,
-        "total_ms": 794.162
+        "max_ms": 52.756,
+        "mean_ms": 45.463,
+        "min_ms": 42.949,
+        "p50_ms": 44.362,
+        "p95_ms": 52.756,
+        "total_ms": 818.329
       },
       "per_token_ms": {
         "count": 18,
-        "max_ms": 2171.539,
-        "mean_ms": 1920.218,
-        "min_ms": 1620.491,
-        "p50_ms": 1941.362,
-        "p95_ms": 2171.539,
-        "total_ms": 34563.932
+        "max_ms": 3039.999,
+        "mean_ms": 1980.3,
+        "min_ms": 1695.57,
+        "p50_ms": 1902.887,
+        "p95_ms": 3039.999,
+        "total_ms": 35645.406
       },
       "sample_ms": {
         "count": 18,
-        "max_ms": 0.469,
-        "mean_ms": 0.295,
-        "min_ms": 0.143,
-        "p50_ms": 0.247,
-        "p95_ms": 0.469,
-        "total_ms": 5.314
+        "max_ms": 0.362,
+        "mean_ms": 0.236,
+        "min_ms": 0.161,
+        "p50_ms": 0.219,
+        "p95_ms": 0.362,
+        "total_ms": 4.25
       },
       "steady_per_token_ms": {
         "count": 17,
-        "max_ms": 2171.539,
-        "mean_ms": 1929.627,
-        "min_ms": 1620.491,
-        "p50_ms": 1960.908,
-        "p95_ms": 2171.539,
-        "total_ms": 32803.656
+        "max_ms": 3039.999,
+        "mean_ms": 1984.854,
+        "min_ms": 1695.57,
+        "p50_ms": 1974.243,
+        "p95_ms": 3039.999,
+        "total_ms": 33742.519
       },
-      "steady_state_tok_s": 0.518,
+      "steady_state_tok_s": 0.504,
       "steady_state_tokens": 17,
       "token_decode_ms": {
         "count": 18,
-        "max_ms": 0.039,
+        "max_ms": 0.036,
         "mean_ms": 0.008,
         "min_ms": 0.004,
         "p50_ms": 0.006,
-        "p95_ms": 0.039,
-        "total_ms": 0.148
+        "p95_ms": 0.036,
+        "total_ms": 0.143
       },
       "warmup_tokens": 1
     },
     "id": "default",
     "kind": "steady_decode_prefill",
     "machine_context_recorded": true,
-    "model_load_ms": 3394.958,
+    "model_load_ms": 3374.475,
     "phase": "decode",
     "prompt_prefill": {
       "exercised": true,
       "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
-      "ms": 52334.644,
+      "ms": 52401.853,
       "per_token_ms": {
         "count": 0,
         "max_ms": null,
@@ -23626,9 +23738,9 @@
       },
       "tokens": 28
     },
-    "prompt_tokenize_ms": 0.917,
+    "prompt_tokenize_ms": 0.899,
     "requested": false,
-    "tokenizer_load_ms": 518.12
+    "tokenizer_load_ms": 471.44
   },
   "prompt": "Summarize in one short sentence and include the words fast and safe: Rust helps teams build reliable systems software.",
   "prompt_generation_identity": {
@@ -23769,7 +23881,7 @@
     ],
     "cpu_model": "unknown-windows-cpu",
     "decode_tokens": 18,
-    "decode_tps": 0.20712987042875883,
+    "decode_tps": 0.20442697981851427,
     "fallback_reason": null,
     "fallback_used": false,
     "loader_mode": "real_gguf",
@@ -23788,25 +23900,27 @@
   "text": "Rust enables fast and safe software development by eliminating null pointer exceptions and memory leaks.",
   "throughput": {
     "decoded_tokens": 18,
-    "tokens_per_second": 0.20712987042875883
+    "tokens_per_second": 0.20442697981851427
   },
-  "timestamp": "2026-05-24T11:48:18.354702200+00:00",
+  "timestamp": "2026-05-24T14:08:07.581254800+00:00",
   "timing": {
     "a770_opencl_device_to_host_bytes": null,
     "a770_opencl_host_to_device_bytes": null,
     "a770_opencl_kernel_invocations": null,
     "cuda_kernel_time_ms": null,
-    "decode_steady_state_tok_s": 0.518,
-    "decode_total_ms": 34563.932,
+    "decode_steady_state_tok_s": 0.504,
+    "decode_total_ms": 35645.406,
     "device_to_host_bytes": null,
-    "first_token_decode_ms": 1760.276,
-    "first_token_ms": 54095,
+    "device_to_host_ms": null,
+    "first_token_decode_ms": 1902.887,
+    "first_token_ms": 54305,
     "host_to_device_bytes": null,
-    "model_load_ms": 3394.958,
-    "prefill_ms": 52334.644,
-    "sampling_ms_per_token": 0.295,
-    "tokenize_ms": 0.917,
-    "tokenizer_load_ms": 518.12
+    "host_to_device_ms": null,
+    "model_load_ms": 3374.475,
+    "prefill_ms": 52401.853,
+    "sampling_ms_per_token": 0.236,
+    "tokenize_ms": 0.899,
+    "tokenizer_load_ms": 471.44
   },
   "tokenizer": {
     "bos": 1,
