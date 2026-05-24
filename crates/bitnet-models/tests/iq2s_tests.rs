@@ -217,7 +217,7 @@ mod iq2s_parity_tests {
     #[test]
     fn test_ffi_vs_rust_parity() {
         // Generate test data with random values
-        use rand::{Rng, SeedableRng};
+        use rand::{RngExt, SeedableRng};
         let mut rng = rand::rngs::StdRng::seed_from_u64(42);
 
         // Use dynamic block size based on backend
@@ -258,7 +258,7 @@ mod iq2s_parity_tests {
 
     #[test]
     fn test_partial_block_parity() {
-        use rand::{Rng, SeedableRng};
+        use rand::{RngExt, SeedableRng};
         let mut rng = rand::rngs::StdRng::seed_from_u64(123);
 
         let block_bytes = Iq2sBackend::Rust.block_bytes();
