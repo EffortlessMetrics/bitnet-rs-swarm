@@ -13316,9 +13316,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GOAL-AUDIT-054"
-status = "pr_open"
+status = "merged"
 pr = 561
-head_sha = "852bfab983ebf0c50a93410f2e50ab8807a29323"
+head_sha = "85ae5de72d630d363b04690d8a1c743d8c16849e"
+merge_sha = "ca92466f26271c17a8892011a4c932564e03df69"
 branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-054-post-a770043"
 stackable = false
 review_mode = "codex_premerge"
@@ -13371,6 +13372,67 @@ must_not_claim = [
   "A770-043 proves CPU/A770 parity.",
   "A770-043 proves strict A770 readiness.",
   "A770-043 proves trusted partial acceleration.",
+  "Qwen3 is promoted for Lunar Lake.",
+  "Full BitNet accelerator inference is proven.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
+id = "LNL258V-GOAL-AUDIT-055"
+status = "merged"
+pr = 566
+head_sha = "59332eb4572a34b04ecef9fbd69859a960f43b00"
+merge_sha = "2c213812beed1ca91e4bcc66599e45db00215f1e"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-055-post-closeout563"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-GOAL-AUDIT-054"]
+acceptance = "Refresh the no-inference Lunar Lake excellence audit and goal artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-054/#561, closeout #563, adjacent SLM-CPU-093 tracker queue #559, docker/build-push-action workflow dependency bump #544, CI superseded-run cancellation #560, emergency slim routed-CI fallback policy #562, and adjacent SLM-CPU-093 logits/output-head fused-selection blocker #564, so source_revision points at 749a2f3532e4bca311fed76d8d98a6afaa2e8b38 and the audit/checklist classify those changes as audit/tracker, adjacent SLM CPU tracker/boundary, workflow dependency, or control-plane hygiene/policy state only. Preserve LNL258V-POWER-006 as blocked and preserve no Lunar Lake inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, semantic-intake stale state, Qwen3 Lunar Lake promotion, CPU/A770 parity promotion, strict A770 readiness, trusted partial acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json > $env:TEMP/lnl-excellence-audit-055.json",
+  "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json > $env:TEMP/lnl-goal-artifact-checklist-055.json",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String '749a2f3532e4bca311fed76d8d98a6afaa2e8b38' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_563_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-GOAL-AUDIT-054-CLOSEOUT' | Out-Null\"",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'SLM-CPU-093-LOGITS-FUSED-SELECTION-BOUNDARY' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'LNL258V-POWER-006 as the active blocker' | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json",
+  "ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "scripts/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+]
+may_claim = [
+  "The Lunar Lake audit and checklist are refreshed to current swarm main through LNL258V-GOAL-AUDIT-054/#561, closeout #563, adjacent SLM-CPU-093 queue #559 and boundary #564, workflow dependency #544, CI workflow hygiene #560, and CI fallback policy #562.",
+  "#561/#563 are recorded as Lunar Lake audit/checklist and tracker closeout state only.",
+  "#559 is adjacent SLM CPU tracker queue state only, #564 is adjacent SLM CPU logits/output-head blocker evidence only, #544 is workflow dependency maintenance only, #560 is CI workflow control-plane hygiene only, and #562 is CI control-plane fallback policy only.",
+  "The refreshed audit/checklist keep LNL258V-POWER-006 as the active blocker for real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A model was loaded by this audit refresh.",
+  "Lunar Lake fallback behavior changed.",
+  "A Lunar Lake route was promoted.",
+  "OpenVINO GPU or NPU speedup is newly claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "Battery-mode low_power evidence is available.",
+  "Measured temperature evidence is available.",
+  "Native OpenCL or native NPU execution is proven for Lunar Lake.",
+  "SLM-CPU-093 is Lunar Lake route evidence.",
+  "CI workflow changes alter Lunar Lake route evidence.",
+  "A shared BitNet semantic fix made Lunar Lake semantic-intake stale.",
   "Qwen3 is promoted for Lunar Lake.",
   "Full BitNet accelerator inference is proven.",
   "Dense SLM receipts prove BitNet QK256/I2_S behavior.",

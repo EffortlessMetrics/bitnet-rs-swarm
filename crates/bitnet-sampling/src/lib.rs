@@ -18,7 +18,7 @@ pub use strategies::{
 
 use anyhow::Result;
 use bitnet_probability::{renormalize_in_place, sample_categorical};
-use rand::{Rng, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use tracing::debug;
 
