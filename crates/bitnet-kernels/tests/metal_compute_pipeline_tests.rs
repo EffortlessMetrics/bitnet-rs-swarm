@@ -38,9 +38,9 @@ fn create_metal_device() -> Option<(wgpu::Device, wgpu::Queue)> {
     #[cfg(target_arch = "aarch64")]
     {
         pollster::block_on(async {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::METAL,
-                ..Default::default()
+                ..wgpu::InstanceDescriptor::new_without_display_handle()
             });
 
             let adapter = instance
@@ -52,7 +52,7 @@ fn create_metal_device() -> Option<(wgpu::Device, wgpu::Queue)> {
                 .await?;
 
             let (device, queue) =
-                adapter.request_device(&wgpu::DeviceDescriptor::default(), None).await.ok()?;
+                adapter.request_device(&wgpu::DeviceDescriptor::default()).await.ok()?;
 
             Some((device, queue))
         })

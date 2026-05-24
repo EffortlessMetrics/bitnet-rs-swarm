@@ -37,8 +37,8 @@ impl ComputePipeline {
         let pipeline_layout =
             device.device().create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("bitnet-pipeline-layout"),
-                bind_group_layouts: &[&bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&bind_group_layout)],
+                immediate_size: 0,
             });
 
         let inner = device.device().create_compute_pipeline(&wgpu::ComputePipelineDescriptor {

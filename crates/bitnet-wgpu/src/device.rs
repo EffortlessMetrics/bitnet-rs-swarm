@@ -65,9 +65,9 @@ pub struct WgpuDevice {
 impl WgpuDevice {
     /// Create a new device asynchronously.
     pub async fn new(config: &WgpuDeviceConfig) -> Result<Self, WgpuError> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: config.backend_bits,
-            ..Default::default()
+            ..wgpu::InstanceDescriptor::new_without_display_handle()
         });
 
         let adapter = instance
@@ -77,18 +77,15 @@ impl WgpuDevice {
                 compatible_surface: None,
             })
             .await
-            .ok_or_else(|| WgpuError::device("no suitable GPU adapter found"))?;
+            .map_err(WgpuError::device)?;
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("bitnet-wgpu"),
-                    required_features: config.required_features,
-                    required_limits: config.required_limits.clone(),
-                    ..Default::default()
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("bitnet-wgpu"),
+                required_features: config.required_features,
+                required_limits: config.required_limits.clone(),
+                ..Default::default()
+            })
             .await
             .map_err(WgpuError::device)?;
 
