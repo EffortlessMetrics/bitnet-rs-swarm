@@ -1731,6 +1731,61 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "A770-047"
+status = "in_progress"
+branch = "codex/intel-a770/A770-047-device-expression-frontier"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-046"]
+acceptance = "Use the committed A770-046 QK256 output readback trace frontier to inspect selected QK256 OpenCL device-side output expression and f32 casting at sampled indices, classifying div-then-mul, multiply-then-divide, reciprocal multiply, f64-cast replay, unmatched device value, clean replay, or missing context, without changing runtime math, kernels, dispatch policy, answer scoring, sampling, or promoting CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qk256_device_expression -- --nocapture",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "rustfmt --edition 2024 --check crates/bitnet-qk256-dispatch/src/lib.rs crates/bitnet-transformer/src/lib.rs crates/bitnet-transformer/src/attention_forward.rs crates/bitnet-models/src/bitnet.rs crates/bitnet-cli/src/main.rs crates/bitnet-cli/src/commands/answer_parity.rs",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/src/main.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "crates/bitnet-models/src/bitnet.rs",
+  "crates/bitnet-qk256-dispatch/src/lib.rs",
+  "crates/bitnet-transformer/src/attention_forward.rs",
+  "crates/bitnet-transformer/src/lib.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_047_QK256_DEVICE_EXPRESSION_FRONTIER.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+]
+may_claim = [
+  "The selected QK256 OpenCL device-expression frontier is classified for the committed A770-046 focused replay context.",
+  "The diagnostic records compact selected output sample evidence needed to route the remaining split to expression reassociation, f32/f64 casting, unmatched device-side evaluation, clean replay, or missing context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
 id = "A770-021"
 status = "merged"
 pr = 278

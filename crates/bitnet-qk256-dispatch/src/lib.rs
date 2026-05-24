@@ -128,10 +128,54 @@ pub struct Qk256CpuA770DispatchReplay {
     pub opencl_policy_output: Tensor,
     /// A770 OpenCL replay output tensor when the replay ran successfully.
     pub a770_output: Option<Tensor>,
+    /// Compact diagnostic trace for sampled host-side output expression variants.
+    pub device_expression_trace: Option<Qk256DeviceExpressionTrace>,
     /// CPU replay stats.
     pub cpu: Qk256CpuDispatchReplayStats,
     /// A770 replay stats.
     pub a770: Qk256A770DispatchReplayStats,
+}
+
+/// Compact diagnostic trace for selected QK256 output expression policy.
+#[derive(Debug, Clone)]
+pub struct Qk256DeviceExpressionTrace {
+    /// Materialized input row index used for the samples.
+    pub input_row_index: usize,
+    /// Maximum number of output rows sampled.
+    pub sample_limit: usize,
+    /// Number of output rows sampled.
+    pub sample_count: usize,
+    /// Sampled output expression rows.
+    pub samples: Vec<Qk256DeviceExpressionSample>,
+}
+
+/// Host-side variants for one selected QK256 output row.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Qk256DeviceExpressionSample {
+    /// Output row index within the projection matrix.
+    pub output_index: usize,
+    /// Integer dot product before activation-sum correction.
+    pub int_dot: i32,
+    /// Sum of the prequantized I8_S activation row.
+    pub activation_sum: i32,
+    /// `int_dot - activation_sum`.
+    pub adjusted_dot: i32,
+    /// I8_S activation scale.
+    pub activation_scale: f32,
+    /// Raw `f32` bits for the activation scale.
+    pub activation_scale_bits: u32,
+    /// BitNet inline weight scale.
+    pub weight_scale: f32,
+    /// Raw `f32` bits for the weight scale.
+    pub weight_scale_bits: u32,
+    /// Host policy expression: `((adjusted as f32) / activation_scale) * weight_scale`.
+    pub div_then_mul: f32,
+    /// Reassociated expression: `((adjusted as f32) * weight_scale) / activation_scale`.
+    pub mul_then_div: f32,
+    /// Reassociated expression: `(adjusted as f32) * (weight_scale / activation_scale)`.
+    pub reciprocal_then_mul: f32,
+    /// f64 diagnostic expression rounded back to f32.
+    pub f64_div_then_mul_cast: f32,
 }
 
 /// Diagnostic CPU replay stats for one QK256 projection.
@@ -612,8 +656,9 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
     let mut cpu_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
     let mut opencl_policy_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
     let mut cpu_scalar_invocations = 0u64;
+    let mut device_expression_trace = None;
 
-    for input_row in &prepared.input_rows {
+    for (input_row_index, input_row) in prepared.input_rows.iter().enumerate() {
         let mut output_row = vec![0.0f32; prepared.layout.rows];
         gemv_qk256_bitnet_i8s_scaled(
             &prepared.flat_bytes,
@@ -643,6 +688,23 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
             weight_scale,
         )?;
         opencl_policy_flat.extend_from_slice(&opencl_policy_row);
+
+        if device_expression_trace.is_none() {
+            let (q, activation_scale, activation_sum) =
+                quantize_row_i8_s_activation(input_row, prepared.layout.cols);
+            device_expression_trace = Some(qk256_device_expression_trace_for_row(
+                &prepared.flat_bytes,
+                &q,
+                prepared.layout.rows,
+                prepared.layout.cols,
+                prepared.layout.row_stride_bytes,
+                activation_sum,
+                activation_scale,
+                weight_scale,
+                input_row_index,
+                8,
+            )?);
+        }
     }
 
     let cpu_output = tensor_from_flat_output(cpu_flat, &prepared.shape, &prepared.layout, input)?;
@@ -659,6 +721,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         cpu_output,
         opencl_policy_output,
         a770_output,
+        device_expression_trace,
         cpu: Qk256CpuDispatchReplayStats {
             scalar_invocations: cpu_scalar_invocations,
             execution_path: "cpu_qk256_i2s_i8s_scaled_scalar_replay",
@@ -720,6 +783,100 @@ fn gemv_qk256_opencl_linear_i8s_scaled(
     }
 
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn qk256_device_expression_trace_for_row(
+    qs_data: &[u8],
+    q: &[i8],
+    rows: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+    activation_sum: i32,
+    activation_scale: f32,
+    weight_scale: f32,
+    input_row_index: usize,
+    sample_limit: usize,
+) -> Result<Qk256DeviceExpressionTrace> {
+    let expected_total = rows.checked_mul(row_stride_bytes).ok_or_else(|| {
+        BitNetError::Validation("OpenCL expression trace packed length overflow".to_string())
+    })?;
+    if qs_data.len() < expected_total {
+        return Err(BitNetError::Validation(format!(
+            "OpenCL expression trace data too short: {} < {}",
+            qs_data.len(),
+            expected_total
+        )));
+    }
+    if q.len() < cols {
+        return Err(BitNetError::Validation(format!(
+            "OpenCL expression trace activation length {} < cols {}",
+            q.len(),
+            cols
+        )));
+    }
+
+    let mut samples = Vec::with_capacity(sample_limit.min(rows));
+    for output_index in 0..rows.min(sample_limit) {
+        let int_dot =
+            qk256_opencl_int_dot_for_row(qs_data, q, output_index, cols, row_stride_bytes)?;
+        let adjusted_dot = int_dot - activation_sum;
+        let adjusted_f32 = adjusted_dot as f32;
+        let div_then_mul = (adjusted_f32 / activation_scale) * weight_scale;
+        let mul_then_div = (adjusted_f32 * weight_scale) / activation_scale;
+        let reciprocal_then_mul = adjusted_f32 * (weight_scale / activation_scale);
+        let f64_div_then_mul_cast =
+            ((adjusted_dot as f64 / activation_scale as f64) * weight_scale as f64) as f32;
+        samples.push(Qk256DeviceExpressionSample {
+            output_index,
+            int_dot,
+            activation_sum,
+            adjusted_dot,
+            activation_scale,
+            activation_scale_bits: activation_scale.to_bits(),
+            weight_scale,
+            weight_scale_bits: weight_scale.to_bits(),
+            div_then_mul,
+            mul_then_div,
+            reciprocal_then_mul,
+            f64_div_then_mul_cast,
+        });
+    }
+
+    Ok(Qk256DeviceExpressionTrace {
+        input_row_index,
+        sample_limit,
+        sample_count: samples.len(),
+        samples,
+    })
+}
+
+fn qk256_opencl_int_dot_for_row(
+    qs_data: &[u8],
+    q: &[i8],
+    row: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+) -> Result<i32> {
+    let row_base = row * row_stride_bytes;
+    let mut int_dot = 0i32;
+    for (col, &q_value) in q.iter().enumerate().take(cols) {
+        let block = col / 256;
+        let offset = col - block * 256;
+        let chunk = offset / 128;
+        let lane = (offset - chunk * 128) / 32;
+        let gp = offset & 31;
+        let byte_index = row_base + block * 64 + chunk * 32 + gp;
+        let packed = qs_data.get(byte_index).copied().ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "OpenCL expression trace byte index {byte_index} out of range {}",
+                qs_data.len()
+            ))
+        })?;
+        let code = ((packed >> (6 - lane * 2)) & 0x03) as i32;
+        int_dot += code * q_value as i32;
+    }
+    Ok(int_dot)
 }
 
 #[cfg(feature = "opencl")]
