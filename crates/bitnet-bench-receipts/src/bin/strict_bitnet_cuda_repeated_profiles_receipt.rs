@@ -893,7 +893,9 @@ fn run_from_receipt(
         "steady_tok_per_s": steady_tok_per_s
     });
     if matches!(backend, BackendKind::Cuda) {
-        let object = timing.as_object_mut().ok_or("timing must be an object")?;
+        let object = timing
+            .as_object_mut()
+            .ok_or_else(|| std::io::Error::other("timing is not an object"))?;
         object.insert(
             "cuda_context_init_ms".to_owned(),
             json!(number_at(receipt, "/timing/cuda_context_init_ms")?),
@@ -1061,7 +1063,9 @@ fn backend_summary(
         "steady_tok_per_s": number_summary(runs, "/timing/steady_tok_per_s")
     });
     if backend == CUDA_BACKEND {
-        let object = summary.as_object_mut().ok_or("summary must be an object")?;
+        let object = summary
+            .as_object_mut()
+            .ok_or_else(|| std::io::Error::other("summary is not an object"))?;
         object.insert(
             "cuda_context_init_ms".to_owned(),
             number_summary(runs, "/timing/cuda_context_init_ms"),
