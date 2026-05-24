@@ -1,18 +1,18 @@
 # Swarm Development Roadmap
 
-Status: active  
-Owner: swarm orchestrators  
-Created: 2026-05-24  
-Linked proposal: n/a  
-Linked specs: `docs/tracking/LANE_OWNERSHIP.md`, `docs/specs/BITNET-SPEC-PR-QUEUE-DISPOSITION.md`, `docs/specs/BITNET-SPEC-GENERATED-TRACKING.md`  
-Linked ADRs: `docs/adr/BITNET-ADR-0006-pr-closure-creates-backlog.md`  
-Linked plan: n/a  
-Linked issues: n/a  
-Linked PRs: n/a  
-Support-tier impact: none  
+Status: active
+Owner: swarm orchestrators
+Created: 2026-05-24
+Linked proposal: n/a
+Linked specs: `docs/tracking/LANE_OWNERSHIP.md`, `docs/specs/BITNET-SPEC-PR-QUEUE-DISPOSITION.md`, `docs/specs/BITNET-SPEC-GENERATED-TRACKING.md`
+Linked ADRs: `docs/adr/BITNET-ADR-0006-pr-closure-creates-backlog.md`
+Linked plan: n/a
+Linked issues: n/a
+Linked PRs: n/a
+Support-tier impact: none
 Policy impact: none
 
-Scope: `EffortlessMetrics/bitnet-rs-swarm` development only.  
+Scope: `EffortlessMetrics/bitnet-rs-swarm` development only.
 Out of scope: release, publish, signing, source-repo support claims, broad public support declarations.
 
 ## Purpose
