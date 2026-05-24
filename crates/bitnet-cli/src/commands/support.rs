@@ -65,6 +65,7 @@ struct SupportBundle {
 struct SupportBundleSummary {
     model_coverage_row: Option<String>,
     current_tier: Option<String>,
+    product_cli_ready: Option<bool>,
     selected_backend: Option<String>,
     selected_route: Option<String>,
     fallback_used: Option<bool>,
@@ -166,6 +167,7 @@ fn support_summary(
     SupportBundleSummary {
         model_coverage_row: receipt.model_coverage_row.clone(),
         current_tier: receipt.current_tier.clone(),
+        product_cli_ready: receipt.product_cli_ready,
         selected_backend: receipt.selected_backend.clone(),
         selected_route: receipt.selected_route.clone(),
         fallback_used: receipt.fallback_used,
@@ -322,7 +324,7 @@ mod tests {
     use super::*;
     use anyhow::Context;
     use clap::Parser;
-    use serde_json::json;
+    use serde_json::{Value, json};
     use std::fs;
 
     #[derive(Parser, Debug)]
@@ -409,6 +411,118 @@ mod tests {
         })
     }
 
+    struct ExpectedSupportSurface<'a> {
+        model_coverage_row: &'a str,
+        current_tier: &'a str,
+        selected_backend: &'a str,
+        selected_route: Option<&'a str>,
+        summary_fallback_used: bool,
+        model_status_fallback_used: Option<bool>,
+        product_cli_ready: bool,
+        server_ready: bool,
+        server_ready_scope: Option<&'a str>,
+        speedup_claim: bool,
+        full_residency_claim: bool,
+        bitnet_packed_i2s_qk256_proof: bool,
+        dense_regular_llm_cuda_proof: bool,
+    }
+
+    fn assert_optional_string(value: &Value, expected: Option<&str>, context: &str) -> Result<()> {
+        if let Some(expected) = expected {
+            assert_eq!(value, expected, "{context}");
+        } else {
+            assert!(value.is_null(), "{context}");
+        }
+        Ok(())
+    }
+
+    fn assert_optional_bool(value: &Value, expected: Option<bool>, context: &str) -> Result<()> {
+        if let Some(expected) = expected {
+            assert_eq!(value, expected, "{context}");
+        } else {
+            assert!(value.is_null(), "{context}");
+        }
+        Ok(())
+    }
+
+    fn assert_support_surface_contract(
+        value: &Value,
+        expected: ExpectedSupportSurface<'_>,
+    ) -> Result<()> {
+        let summary = &value["summary"];
+        let latest_receipt = &value["latest_receipt"];
+        let models = value["model_status"]["models"]
+            .as_array()
+            .context("support bundle model_status.models must be an array")?;
+        let model_status = models
+            .iter()
+            .find(|model| model["model_coverage_row"] == expected.model_coverage_row)
+            .with_context(|| {
+                format!("support bundle model_status row `{}` missing", expected.model_coverage_row)
+            })?;
+
+        for surface in [summary, latest_receipt] {
+            assert_eq!(surface["model_coverage_row"], expected.model_coverage_row);
+            assert_eq!(surface["current_tier"], expected.current_tier);
+            assert_eq!(surface["selected_backend"], expected.selected_backend);
+            assert_optional_string(
+                &surface["selected_route"],
+                expected.selected_route,
+                "selected_route must match receipt/support summary contract",
+            )?;
+            assert_eq!(surface["fallback_used"], expected.summary_fallback_used);
+            assert_eq!(surface["product_cli_ready"], expected.product_cli_ready);
+            assert_eq!(surface["server_ready"], expected.server_ready);
+            assert_optional_string(
+                &surface["server_ready_scope"],
+                expected.server_ready_scope,
+                "server_ready_scope must match receipt/support summary contract",
+            )?;
+            assert_eq!(surface["speedup_claim"], expected.speedup_claim);
+            assert_eq!(surface["full_residency_claim"], expected.full_residency_claim);
+            assert_eq!(
+                surface["bitnet_packed_i2s_qk256_proof"],
+                expected.bitnet_packed_i2s_qk256_proof
+            );
+            assert_eq!(
+                surface["dense_regular_llm_cuda_proof"],
+                expected.dense_regular_llm_cuda_proof
+            );
+        }
+
+        assert_eq!(model_status["model_coverage_row"], expected.model_coverage_row);
+        assert_eq!(model_status["current_tier"], expected.current_tier);
+        assert_eq!(model_status["selected_backend"], expected.selected_backend);
+        assert_optional_string(
+            &model_status["selected_route"],
+            expected.selected_route,
+            "selected_route must match model status contract",
+        )?;
+        assert_optional_bool(
+            &model_status["fallback_used"],
+            expected.model_status_fallback_used,
+            "model status fallback_used must preserve unknown versus false semantics",
+        )?;
+        assert_eq!(model_status["product_cli_ready"], expected.product_cli_ready);
+        assert_eq!(model_status["server_ready"], expected.server_ready);
+        assert_optional_string(
+            &model_status["server_ready_scope"],
+            expected.server_ready_scope,
+            "server_ready_scope must match model status contract",
+        )?;
+        assert_eq!(model_status["speedup_claim"], expected.speedup_claim);
+        assert_eq!(model_status["full_residency_claim"], expected.full_residency_claim);
+        assert_eq!(
+            model_status["bitnet_packed_i2s_qk256_proof"],
+            expected.bitnet_packed_i2s_qk256_proof
+        );
+        assert_eq!(
+            model_status["dense_regular_llm_cuda_proof"],
+            expected.dense_regular_llm_cuda_proof
+        );
+        Ok(())
+    }
+
     #[test]
     fn support_bundle_accepts_latest_device_and_format_json() -> Result<()> {
         let parsed = SupportActionParser::try_parse_from([
@@ -425,6 +539,184 @@ mod tests {
         assert!(latest);
         assert_eq!(device, "nvidia-rtx-5070-ti-cuda");
         assert_eq!(format, SupportBundleFormat::Json);
+        Ok(())
+    }
+
+    #[test]
+    fn support_bundle_schema_contract_aligns_status_receipt_and_summary_rows() -> Result<()> {
+        let cases = [
+            (
+                "bitnet-i2s-qk256-receipt.json",
+                json!({
+                    "artifact_kind": "bitnet_cuda_answer",
+                    "model": {
+                        "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
+                        "file": "ggml-model-i2_s.gguf"
+                    },
+                    "backend": {
+                        "selected_backend": "nvidia-rtx-5070-ti-cuda",
+                        "runtime_api": "cuda",
+                        "fallback_used": false
+                    },
+                    "execution_plan": {
+                        "selected_route": "bitnet_qk256_cuda",
+                        "model_family": "bitnet_b1_58",
+                        "requested_backend": "nvidia-rtx-5070-ti-cuda",
+                        "speedup_claim": false
+                    },
+                    "claim_boundary": {
+                        "bitnet_packed_i2s_qk256_proof": true,
+                        "dense_regular_llm_cuda_claimed": false,
+                        "speedup_claim": false,
+                        "full_cuda_residency_claimed": false
+                    }
+                }),
+                ExpectedSupportSurface {
+                    model_coverage_row: "bitnet_official_2b_i2s_qk256",
+                    current_tier: "product_cli_ready",
+                    selected_backend: "nvidia-rtx-5070-ti-cuda",
+                    selected_route: Some("bitnet_qk256_cuda"),
+                    summary_fallback_used: false,
+                    model_status_fallback_used: Some(false),
+                    product_cli_ready: true,
+                    server_ready: false,
+                    server_ready_scope: None,
+                    speedup_claim: false,
+                    full_residency_claim: false,
+                    bitnet_packed_i2s_qk256_proof: true,
+                    dense_regular_llm_cuda_proof: false,
+                },
+            ),
+            (
+                "qwen25-dense-cuda-receipt.json",
+                json!({
+                    "artifact_kind": "dense_gguf_qwen_chat_strict_cuda_proof",
+                    "model": {
+                        "id": "qwen2.5-0.5b-instruct-q8_0"
+                    },
+                    "backend": {
+                        "selected_backend": "nvidia-rtx-5070-ti-cuda",
+                        "runtime_api": "cuda",
+                        "fallback_used": false
+                    },
+                    "execution_plan": {
+                        "selected_route": "dense_regular_llm_cuda",
+                        "model_family": "qwen",
+                        "requested_backend": "nvidia-rtx-5070-ti-cuda",
+                        "speedup_claim": false
+                    },
+                    "claim_boundary": {
+                        "bitnet_packed_i2s_qk256_proof": false,
+                        "dense_regular_llm_cuda_claimed": true,
+                        "speedup_claim": false,
+                        "full_cuda_residency_claimed": false
+                    }
+                }),
+                ExpectedSupportSurface {
+                    model_coverage_row: "dense_qwen25_05b_q8_cuda",
+                    current_tier: "product_cli_ready",
+                    selected_backend: "nvidia-rtx-5070-ti-cuda",
+                    selected_route: Some("dense_regular_llm_cuda"),
+                    summary_fallback_used: false,
+                    model_status_fallback_used: Some(false),
+                    product_cli_ready: true,
+                    server_ready: true,
+                    server_ready_scope: Some("exact_profile"),
+                    speedup_claim: false,
+                    full_residency_claim: false,
+                    bitnet_packed_i2s_qk256_proof: false,
+                    dense_regular_llm_cuda_proof: true,
+                },
+            ),
+            (
+                "qwen3-dense-cuda-receipt.json",
+                json!({
+                    "artifact_kind": "dense_gguf_qwen_chat_strict_cuda_proof",
+                    "model": {
+                        "id": "qwen3-0.6b-instruct-q8_0",
+                        "file": "Qwen3-0.6B-Q8_0.gguf",
+                        "architecture": "qwen3"
+                    },
+                    "backend": {
+                        "selected_backend": "nvidia-rtx-5070-ti-cuda",
+                        "runtime_api": "cuda",
+                        "fallback_used": false
+                    },
+                    "execution_plan": {
+                        "selected_route": "dense_regular_llm_cuda",
+                        "model_family": "qwen",
+                        "requested_backend": "nvidia-rtx-5070-ti-cuda",
+                        "speedup_claim": false
+                    },
+                    "claim_boundary": {
+                        "bitnet_packed_i2s_qk256_proof": false,
+                        "dense_regular_llm_cuda_claimed": true,
+                        "speedup_claim": false,
+                        "full_cuda_residency_claimed": false
+                    }
+                }),
+                ExpectedSupportSurface {
+                    model_coverage_row: "dense_qwen3_06b_q8_candidate",
+                    current_tier: "product_cli_ready",
+                    selected_backend: "nvidia-rtx-5070-ti-cuda",
+                    selected_route: Some("dense_regular_llm_cuda"),
+                    summary_fallback_used: false,
+                    model_status_fallback_used: Some(false),
+                    product_cli_ready: true,
+                    server_ready: true,
+                    server_ready_scope: Some("exact_profile"),
+                    speedup_claim: false,
+                    full_residency_claim: false,
+                    bitnet_packed_i2s_qk256_proof: false,
+                    dense_regular_llm_cuda_proof: true,
+                },
+            ),
+            (
+                "smollm2-comparator-blocker.json",
+                json!({
+                    "artifact_kind": "smollm2_same_prompt_comparator_blocker",
+                    "model_coverage_row": "dense_smollm2_360m_candidate",
+                    "model": {
+                        "id": "smollm2-360m-instruct",
+                        "architecture": "smollm2"
+                    },
+                    "selected_backend": "nvidia-rtx-5070-ti-cuda",
+                    "fallback_used": false,
+                    "quality_gate": {
+                        "passed": false,
+                        "blocker": "same-prompt comparator required"
+                    },
+                    "claim_boundary": {
+                        "bitnet_packed_i2s_qk256_proof": false,
+                        "dense_regular_llm_cuda_claimed": false,
+                        "server_ready_claimed": false,
+                        "speedup_claim": false,
+                        "full_cuda_residency_claimed": false
+                    }
+                }),
+                ExpectedSupportSurface {
+                    model_coverage_row: "dense_smollm2_360m_candidate",
+                    current_tier: "structurally_valid",
+                    selected_backend: "nvidia-rtx-5070-ti-cuda",
+                    selected_route: None,
+                    summary_fallback_used: false,
+                    model_status_fallback_used: None,
+                    product_cli_ready: false,
+                    server_ready: false,
+                    server_ready_scope: None,
+                    speedup_claim: false,
+                    full_residency_claim: false,
+                    bitnet_packed_i2s_qk256_proof: false,
+                    dense_regular_llm_cuda_proof: false,
+                },
+            ),
+        ];
+
+        for (receipt_name, receipt, expected) in cases {
+            let value = support_bundle_value_for_receipt(receipt_name, receipt)?;
+            assert_support_surface_contract(&value, expected)?;
+        }
+
         Ok(())
     }
 
@@ -641,7 +933,7 @@ mod tests {
             value["summary"]["next_proof"]
                 .as_str()
                 .context("Qwen3 support summary next_proof must be a string")?
-                .contains("hardware aggregate receipt")
+                .contains("optimization/requalification receipt")
         );
         let claim_boundary = value["summary"]["claim_boundary"]
             .as_str()
@@ -870,10 +1162,17 @@ mod tests {
             .context("support-bundle placeholder must be a string")?;
         for required_fragment in [
             "\"kind\": \"bitnet_support_bundle\"",
+            "\"current_tier\":",
+            "\"product_cli_ready\":",
             "\"selected_backend\": \"nvidia-rtx-5070-ti-cuda\"",
             "\"selected_route\":",
             "\"fallback_used\": false",
+            "\"server_ready\":",
+            "\"server_ready_scope\":",
             "\"speedup_claim\": false",
+            "\"full_residency_claim\":",
+            "\"bitnet_packed_i2s_qk256_proof\":",
+            "\"dense_regular_llm_cuda_proof\":",
             "\"claim_boundary\":",
         ] {
             assert!(
@@ -897,7 +1196,10 @@ mod tests {
         for required_boundary in [
             "selected backend is `nvidia-rtx-5070-ti-cuda`, not generic `cuda`",
             "`fallback_used=false`",
+            "`product_cli_ready=true`",
+            "`server_ready_scope`",
             "`speedup_claim=false`",
+            "`full_residency_claim=false`",
             "Qwen2.5 exact-profile server readiness is not being treated as broad dense GGUF server readiness",
             "Dense CUDA proof is not being treated as BitNet I2_S/QK256 proof",
             "Qwen2.5 evidence is not being treated as Qwen3 evidence",
