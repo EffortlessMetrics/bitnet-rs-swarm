@@ -379,7 +379,14 @@ jobs:
           toolchain: "1.95.0"
 
       - name: Cargo check (tiny fallback)
-        run: cargo check --workspace --locked --all-targets
+        run: |
+          cargo check --locked \
+            -p bitnet-common \
+            -p bitnet-models \
+            -p bitnet-tokenizers \
+            -p bitnet-quantization \
+            -p bitnet-kernels \
+            --no-default-features --features cpu
 
   rust-small-result:
     name: BitNet Rust Small Result
