@@ -1,0 +1,31 @@
+timestamp = "2026-05-24T06:19:42Z"
+campaign = "intel-a770"
+item = "A770-045"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 574
+head_sha = "7ae299d8e277e0265256b938bc6c5352d18b22d3"
+branch = "codex/intel-a770/A770-045-qk256-output-casting-frontier"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened A770-045 to classify compact selected QK256 OpenCL output casting, readback byte-count, and value-summary drift after A770-044 routed the numeric-policy split to output casting/serialization."
+
+[claim_boundary]
+may_claim = [
+  "A770-045 may classify compact selected QK256 OpenCL output shape, readback byte count, and summary-delta evidence.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

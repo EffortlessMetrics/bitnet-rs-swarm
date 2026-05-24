@@ -938,8 +938,20 @@
             "success": true
           },
           "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787818792203,
-            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "cols": 2560,
           "cpu": {
@@ -951,8 +963,20 @@
           "cpu_opencl_policy_output_rms_abs_delta": 0.0,
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
@@ -963,8 +987,20 @@
           "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "output_rows": 2560,
           "row_stride_bytes": 640
@@ -998,8 +1034,20 @@
             "success": true
           },
           "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787818792203,
-            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "cols": 2560,
           "cpu": {
@@ -1011,8 +1059,20 @@
           "cpu_opencl_policy_output_rms_abs_delta": 0.0,
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
@@ -1023,11 +1083,146 @@
           "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "output_rows": 2560,
           "row_stride_bytes": 640
+        },
+        "target_layer_idx": 0
+      }
+    ],
+    "rows_truncated": false
+  },
+  "generated_output_qk256_output_casting_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_qk256_output_casting_frontier_device_value_summary_drift",
+    "classification_counts": {
+      "generated_output_qk256_output_casting_device_value_summary_drift": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "capture selected QK256 OpenCL output value samples or device readback trace",
+    "qk256_output_casting_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_qk256_output_casting_device_value_summary_drift",
+        "first_mismatch_index": 9,
+        "left": {
+          "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
+            "rms": 1.1568787818792203,
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
+          },
+          "device_to_host_byte_count_match": true,
+          "device_to_host_bytes": 10240,
+          "expected_device_to_host_bytes": 10240,
+          "finite_count_match": true,
+          "infinite_count_match": true,
+          "max_abs_delta": 0.0,
+          "mean_abs_delta": 3.257810028689523e-10,
+          "min_abs_delta": 0.0,
+          "nan_count_match": true,
+          "policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
+          },
+          "rms_abs_delta": 3.9808238039285015e-8,
+          "sha256_f32_le_match": false,
+          "shape_match": true,
+          "summary_available": true,
+          "value_count_match": true
+        },
+        "next_diagnostic": "capture selected QK256 OpenCL output value samples or device readback trace",
+        "projection": "q_proj",
+        "qk256_numeric_policy_classification": "generated_output_qk256_numeric_policy_output_casting_serialization",
+        "qk256_output_casting_context_available": true,
+        "qkv_projection_dispatch_replay_classification": "generated_output_qkv_projection_dispatch_replay_cpu_a770_output_drift",
+        "reason": null,
+        "right": {
+          "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
+            "rms": 1.1568787818792203,
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
+          },
+          "device_to_host_byte_count_match": true,
+          "device_to_host_bytes": 10240,
+          "expected_device_to_host_bytes": 10240,
+          "finite_count_match": true,
+          "infinite_count_match": true,
+          "max_abs_delta": 0.0,
+          "mean_abs_delta": 3.257810028689523e-10,
+          "min_abs_delta": 0.0,
+          "nan_count_match": true,
+          "policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
+            "rms": 1.1568787420709823,
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
+          },
+          "rms_abs_delta": 3.9808238039285015e-8,
+          "sha256_f32_le_match": false,
+          "shape_match": true,
+          "summary_available": true,
+          "value_count_match": true
         },
         "target_layer_idx": 0
       }
@@ -1073,8 +1268,20 @@
             "success": true
           },
           "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787818792203,
-            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "cols": 2560,
           "cpu": {
@@ -1086,8 +1293,20 @@
           "cpu_opencl_policy_output_rms_abs_delta": 0.0,
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
@@ -1098,8 +1317,20 @@
           "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "output_rows": 2560,
           "row_stride_bytes": 640
@@ -1131,8 +1362,20 @@
             "success": true
           },
           "a770_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.01758772264884101,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787818792203,
-            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc"
+            "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "cols": 2560,
           "cpu": {
@@ -1144,8 +1387,20 @@
           "cpu_opencl_policy_output_rms_abs_delta": 0.0,
           "cpu_opencl_policy_output_sha256_match": true,
           "cpu_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "inline_scale": 1.2188547849655151,
           "input_rows": 1,
@@ -1156,8 +1411,20 @@
           "opencl_policy_a770_output_rms_abs_delta": 3.980823781724041e-8,
           "opencl_policy_a770_output_sha256_match": false,
           "opencl_policy_output": {
+            "finite_count": 2560,
+            "infinite_count": 0,
+            "max": 6.754318714141846,
+            "mean": -0.017587722323060006,
+            "min": -5.372337818145752,
+            "nan_count": 0,
             "rms": 1.1568787420709823,
-            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af"
+            "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+            "shape": [
+              1,
+              1,
+              2560
+            ],
+            "value_count": 2560
           },
           "output_rows": 2560,
           "row_stride_bytes": 640
@@ -1350,9 +1617,9 @@
   },
   "inputs": {
     "left_label": "amd-5700x-cpu-avx2",
-    "left_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits.json",
+    "left_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json",
     "right_label": "intel-a770-opencl",
-    "right_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits.json"
+    "right_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json"
   },
   "kernel": {
     "left_label": "amd-5700x-cpu-avx2",
@@ -1792,5 +2059,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-24T02:57:59.450489400+00:00"
+  "timestamp": "2026-05-24T06:04:02.211291800+00:00"
 }

@@ -534,6 +534,7 @@
 | intel-a770 | A770-042 | A770-041 | merged |
 | intel-a770 | A770-043 | A770-042 | merged |
 | intel-a770 | A770-044 | A770-043 | merged |
+| intel-a770 | A770-045 | A770-044 | pr_open |
 | intel-a770 | A770-021 | A770-020 | merged |
 | intel-a770 | A770-022 | A770-021 | merged |
 | intel-a770 | A770-023 | A770-022 | merged |
