@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T00:30:49Z"
+campaign = "intel-a770"
+item = "A770-042"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 532
+branch = "codex/intel-a770/A770-042-qkv-projection-source"
+head_sha = "87bbc150fa2ad5c1adf57d5c16418cee7d902452"
+merge_sha = "1ac629faeec386c36664ff2d7b030de0686430a7"
+merged_at = "2026-05-24T00:27:07Z"
+actor = "codex-a770"
+summary = "Closed A770-042 after PR #532 merged the QKV projection source frontier diagnostic."
+notes = [
+  "A770-042 remains diagnostic-only and does not promote CPU/A770 parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged focused receipt classifies the selected layer-0 projection drift at the QKV projection source boundary.",
+  "The diagnostic adds compact QKV projection source fingerprints and dispatch deltas without changing runtime math, kernels, dispatch policy, answer scoring, sampling, or claim boundaries.",
+]

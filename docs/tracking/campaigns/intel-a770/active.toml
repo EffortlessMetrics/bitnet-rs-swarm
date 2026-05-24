@@ -1440,7 +1440,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-042"
-status = "in_progress"
+status = "merged"
+pr = 532
+head_sha = "87bbc150fa2ad5c1adf57d5c16418cee7d902452"
+merge_sha = "1ac629faeec386c36664ff2d7b030de0686430a7"
 branch = "codex/intel-a770/A770-042-qkv-projection-source"
 stackable = false
 review_mode = "codex_premerge"
