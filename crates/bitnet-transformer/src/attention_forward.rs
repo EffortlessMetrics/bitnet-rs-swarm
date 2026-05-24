@@ -7,11 +7,13 @@
 #[cfg(feature = "trace")]
 use super::BitNetError;
 use super::{
-    DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention, TransformerForwardWorkspace,
-    attention_f16_dot_input, attention_score_key_input, dbg_finite, dbg_stats, debug_attn_enabled,
-    debug_attn_scale_enabled, debug_gqa_enabled, debug_rope_enabled, qwen_trace_event,
-    qwen_trace_events_enabled, qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor,
-    trace_rms_enabled,
+    DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention,
+    TransformerA770OpenClRuntimeDelta, TransformerForwardWorkspace,
+    TransformerQk256CpuHotPathDelta, TransformerQk256DispatchDelta,
+    TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
+    dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
+    debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled, qwen_trace_layer_enabled,
+    qwen_trace_number, qwen_trace_tensor, trace_rms_enabled,
 };
 use bitnet_common::Result;
 use candle_core::{DType, Module, Tensor};
@@ -63,7 +65,8 @@ impl MultiHeadAttention {
         qwen_attention_trace_event(trace_attention, "attention.qkv_projection_start", || {
             format!("\"layer\":{}", self.layer_idx)
         });
-        let projections = self.project_qkv(x, raw_tensors, dense_linear_hooks)?;
+        let projections =
+            self.project_qkv(x, raw_tensors, dense_linear_hooks, workspace.as_deref_mut())?;
         let q_projection_for_source = projections.q.clone();
         let k_projection_for_source = projections.k.clone();
         let v_projection_for_source = projections.v.clone();
@@ -254,21 +257,94 @@ impl MultiHeadAttention {
         x: &Tensor,
         raw_tensors: &std::collections::HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        mut workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<QkvProjections> {
         // PATCH 3: Project to Q, K, V separately (NOT fused QKV)
         // This is the correct implementation - separate projections ensure proper shape handling
         // Q: [B, T, hidden] -> [B, T, n_heads * head_dim] -> [B, n_heads, T, head_dim]
         // K: [B, T, hidden] -> [B, T, n_kv_heads * head_dim] -> [B, n_kv_heads, T, head_dim]
         // V: [B, T, hidden] -> [B, T, n_kv_heads * head_dim] -> [B, n_kv_heads, T, head_dim]
-        let q = self.apply_linear(x, &self.q_proj, "q_proj", raw_tensors, dense_linear_hooks)?;
-        let k = self.apply_linear(x, &self.k_proj, "k_proj", raw_tensors, dense_linear_hooks)?;
-        let v = self.apply_linear(x, &self.v_proj, "v_proj", raw_tensors, dense_linear_hooks)?;
+        let q = self.apply_linear_with_qkv_projection_source(
+            x,
+            &self.q_proj,
+            "q_proj",
+            raw_tensors,
+            dense_linear_hooks,
+            workspace.as_deref_mut(),
+        )?;
+        let k = self.apply_linear_with_qkv_projection_source(
+            x,
+            &self.k_proj,
+            "k_proj",
+            raw_tensors,
+            dense_linear_hooks,
+            workspace.as_deref_mut(),
+        )?;
+        let v = self.apply_linear_with_qkv_projection_source(
+            x,
+            &self.v_proj,
+            "v_proj",
+            raw_tensors,
+            dense_linear_hooks,
+            workspace,
+        )?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("attention.q_proj", Some(self.layer_idx), &q)?;
             qwen_trace_tensor("attention.k_proj", Some(self.layer_idx), &k)?;
             qwen_trace_tensor("attention.v_proj", Some(self.layer_idx), &v)?;
         }
         Ok(QkvProjections { q, k, v })
+    }
+
+    fn apply_linear_with_qkv_projection_source(
+        &self,
+        input: &Tensor,
+        linear: &candle_nn::Linear,
+        proj_name: &str,
+        raw_tensors: &std::collections::HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        workspace: Option<&mut TransformerForwardWorkspace>,
+    ) -> Result<Tensor> {
+        let qk256_key =
+            format!("layers.{}.attention.{}.weight.qk256_qs", self.layer_idx, proj_name);
+        let tensor_name = format!("layers.{}.attention.{}.weight", self.layer_idx, proj_name);
+        let qk256_raw_tensor_present = raw_tensors.contains_key(&qk256_key);
+        let source_input = workspace.as_ref().map(|_| input.clone());
+        let dispatch_before = bitnet_qk256_dispatch::qk256_dispatch_coverage();
+        let cpu_hot_path_before = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
+        let a770_runtime_before = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
+
+        let output =
+            self.apply_linear(input, linear, proj_name, raw_tensors, dense_linear_hooks)?;
+
+        if let (Some(workspace), Some(source_input)) = (workspace, source_input) {
+            let dispatch_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();
+            let cpu_hot_path_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
+            let a770_runtime_after = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
+            workspace.record_qkv_projection_source_tensors(TransformerQkvProjectionSourceTensors {
+                layer_idx: self.layer_idx,
+                projection: proj_name.to_string(),
+                tensor_name,
+                qk256_key,
+                qk256_raw_tensor_present,
+                input: source_input,
+                output: output.clone(),
+                dispatch_delta: qk256_dispatch_delta_for_projection(
+                    &dispatch_before,
+                    &dispatch_after,
+                ),
+                cpu_hot_path_delta: qk256_cpu_hot_path_delta_for_projection(
+                    &cpu_hot_path_before,
+                    &cpu_hot_path_after,
+                ),
+                a770_opencl_runtime_delta: qk256_a770_runtime_delta_for_projection(
+                    &a770_runtime_before,
+                    &a770_runtime_after,
+                ),
+            });
+        }
+
+        Ok(output)
     }
 
     fn trace_projection_rms_once(&self, projections: &QkvProjections) -> Result<()> {
@@ -672,4 +748,91 @@ fn qwen_attention_trace_event(enabled: bool, stage: &str, fields_json: impl FnOn
 
 fn qwen_attention_elapsed_ms(start: Instant) -> String {
     qwen_trace_number(start.elapsed().as_secs_f64() * 1000.0)
+}
+
+fn qk256_dispatch_delta_for_projection(
+    before: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+    after: &bitnet_qk256_dispatch::Qk256DispatchCoverageCounters,
+) -> TransformerQk256DispatchDelta {
+    let unsupported_before =
+        before.unsupported_ops.iter().cloned().collect::<std::collections::BTreeSet<_>>();
+    let unsupported_after =
+        after.unsupported_ops.iter().cloned().collect::<std::collections::BTreeSet<_>>();
+    let bitnet_linear_layers_total =
+        after.bitnet_linear_layers_total.saturating_sub(before.bitnet_linear_layers_total);
+    let bitnet_linear_layers_on_cuda =
+        after.bitnet_linear_layers_on_cuda.saturating_sub(before.bitnet_linear_layers_on_cuda);
+    let bitnet_linear_layers_on_a770_opencl = after
+        .bitnet_linear_layers_on_a770_opencl
+        .saturating_sub(before.bitnet_linear_layers_on_a770_opencl);
+    let bitnet_linear_layers_cpu_fallback = after
+        .bitnet_linear_layers_cpu_fallback
+        .saturating_sub(before.bitnet_linear_layers_cpu_fallback);
+    let execution_claim = if bitnet_linear_layers_on_a770_opencl > 0 {
+        "a770_opencl_qk256_contribution"
+    } else if bitnet_linear_layers_on_cuda > 0 {
+        "cuda_qk256_contribution"
+    } else if bitnet_linear_layers_cpu_fallback > 0 {
+        "cpu_fallback"
+    } else if bitnet_linear_layers_total > 0 {
+        "cpu_qk256_reference"
+    } else {
+        "dense_f32_candle_linear"
+    };
+
+    TransformerQk256DispatchDelta {
+        bitnet_linear_layers_total,
+        bitnet_linear_layers_on_cuda,
+        bitnet_linear_layers_on_a770_opencl,
+        bitnet_linear_layers_cpu_fallback,
+        unsupported_ops: unsupported_after.difference(&unsupported_before).cloned().collect(),
+        execution_claim: execution_claim.to_string(),
+    }
+}
+
+fn qk256_cpu_hot_path_delta_for_projection(
+    before: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+    after: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+) -> TransformerQk256CpuHotPathDelta {
+    TransformerQk256CpuHotPathDelta {
+        qk256_f32_scalar_gemv_invocations: after
+            .qk256_f32_scalar_gemv_invocations
+            .saturating_sub(before.qk256_f32_scalar_gemv_invocations),
+        qk256_f32_avx2_gemv_invocations: after
+            .qk256_f32_avx2_gemv_invocations
+            .saturating_sub(before.qk256_f32_avx2_gemv_invocations),
+        qk256_i8s_scaled_scalar_invocations: after
+            .qk256_i8s_scaled_scalar_invocations
+            .saturating_sub(before.qk256_i8s_scaled_scalar_invocations),
+        qk256_i8s_scaled_avx2_invocations: after
+            .qk256_i8s_scaled_avx2_invocations
+            .saturating_sub(before.qk256_i8s_scaled_avx2_invocations),
+        qk256_flat_bytes_extracted_count: after
+            .qk256_flat_bytes_extracted_count
+            .saturating_sub(before.qk256_flat_bytes_extracted_count),
+        input_rows_materialized_count: after
+            .input_rows_materialized_count
+            .saturating_sub(before.input_rows_materialized_count),
+        output_rows_allocated_count: after
+            .output_rows_allocated_count
+            .saturating_sub(before.output_rows_allocated_count),
+        requested_kernel: after.requested_kernel.clone(),
+        selected_kernel: after.selected_kernel.clone(),
+        qk256_execution_path: after.qk256_execution_path.to_string(),
+    }
+}
+
+fn qk256_a770_runtime_delta_for_projection(
+    before: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+    after: &bitnet_qk256_dispatch::Qk256A770OpenClRuntimeStats,
+) -> TransformerA770OpenClRuntimeDelta {
+    TransformerA770OpenClRuntimeDelta {
+        host_to_device_bytes: after
+            .host_to_device_bytes
+            .saturating_sub(before.host_to_device_bytes),
+        device_to_host_bytes: after
+            .device_to_host_bytes
+            .saturating_sub(before.device_to_host_bytes),
+        kernel_invocations: after.kernel_invocations.saturating_sub(before.kernel_invocations),
+    }
 }

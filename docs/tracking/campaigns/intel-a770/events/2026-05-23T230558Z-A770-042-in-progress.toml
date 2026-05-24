@@ -1,0 +1,13 @@
+timestamp = "2026-05-23T23:05:58Z"
+campaign = "intel-a770"
+item = "A770-042"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-042-qkv-projection-source"
+summary = "Started A770-042 QKV projection source frontier after A770-041 localized the focused summary mismatch to layer-0 q_projection drift."
+notes = [
+  "A770-042 adds compact per-projection input/output fingerprints plus QK256 dispatch, CPU hot-path, and A770 OpenCL runtime deltas for the selected layer Q/K/V projection source.",
+  "The slice remains diagnostic-only and does not change runtime math, kernels, dispatch policy, answer scoring, sampling, or claim boundaries.",
+]
