@@ -13495,6 +13495,11 @@ fn compact_logit_source_qkv_projection_sources(
                     "device_to_host_bytes": source.a770_opencl_runtime_delta.device_to_host_bytes,
                     "kernel_invocations": source.a770_opencl_runtime_delta.kernel_invocations,
                 },
+                "dispatch_replay": source
+                    .dispatch_replay
+                    .as_ref()
+                    .map(compact_qkv_projection_dispatch_replay),
+                "dispatch_replay_error": source.dispatch_replay_error,
                 "source_context_available": source_context_available,
             })
         })
@@ -13513,6 +13518,91 @@ fn compact_logit_source_qkv_projection_sources(
         "source_context_available": source_context_available,
         "sources": sources,
     })
+}
+
+fn compact_qkv_projection_dispatch_replay(
+    replay: &bitnet_models::ModelQkvProjectionDispatchReplayContext,
+) -> serde_json::Value {
+    let cpu_output = compact_logit_source_tensor_fingerprint(
+        &replay.cpu_output,
+        "cpu_replay_output_extract_failed",
+    );
+    let a770_output = replay
+        .a770_output
+        .as_ref()
+        .map(|output| {
+            compact_logit_source_tensor_fingerprint(
+                output,
+                "a770_opencl_replay_output_extract_failed",
+            )
+        })
+        .unwrap_or_else(|| {
+            serde_json::json!({
+                "available": false,
+                "reason": replay
+                    .a770
+                    .error
+                    .as_deref()
+                    .unwrap_or("a770_opencl_replay_output_missing"),
+            })
+        });
+    let cpu_available = cpu_output["available"].as_bool().unwrap_or(false)
+        && cpu_output["sha256_f32_le"].as_str().is_some();
+    let a770_available = a770_output["available"].as_bool().unwrap_or(false)
+        && a770_output["sha256_f32_le"].as_str().is_some();
+    let cpu_a770_sha256_match = optional_json_sha_eq(&cpu_output, &a770_output);
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_qkv_projection_dispatch_replay",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "input_rows": replay.input_rows,
+        "output_rows": replay.output_rows,
+        "cols": replay.cols,
+        "row_stride_bytes": replay.row_stride_bytes,
+        "inline_scale": replay.inline_scale,
+        "cpu_output": cpu_output,
+        "a770_output": a770_output,
+        "cpu_a770_output_sha256_match": cpu_a770_sha256_match,
+        "cpu_a770_output_rms_abs_delta": compact_number_abs_delta(
+            &cpu_output["rms"],
+            &a770_output["rms"],
+        ),
+        "cpu": {
+            "scalar_invocations": replay.cpu.scalar_invocations,
+            "execution_path": replay.cpu.execution_path,
+        },
+        "a770": {
+            "compiled_opencl": replay.a770.compiled_opencl,
+            "attempted": replay.a770.attempted,
+            "success": replay.a770.success,
+            "host_to_device_bytes": replay.a770.host_to_device_bytes,
+            "device_to_host_bytes": replay.a770.device_to_host_bytes,
+            "kernel_invocations": replay.a770.kernel_invocations,
+            "last_device": replay.a770.last_device.as_ref().map(|device| serde_json::json!({
+                "platform_index": device.platform_index,
+                "device_index": device.device_index,
+                "platform_name": device.platform_name,
+                "runtime_device": device.runtime_device,
+                "vendor": device.vendor,
+                "driver_version": device.driver_version,
+            })),
+            "error": replay.a770.error,
+            "execution_path": replay.a770.execution_path,
+        },
+        "source_context_available": cpu_available && a770_available,
+    })
+}
+
+fn compact_number_abs_delta(
+    left: &serde_json::Value,
+    right: &serde_json::Value,
+) -> serde_json::Value {
+    match (left.as_f64(), right.as_f64()) {
+        (Some(left), Some(right)) => serde_json::json!((left - right).abs()),
+        _ => serde_json::Value::Null,
+    }
 }
 
 fn optional_json_sha_eq(left: &serde_json::Value, right: &serde_json::Value) -> Option<bool> {

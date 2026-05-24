@@ -1717,6 +1717,48 @@ pub struct TransformerA770OpenClRuntimeDelta {
 }
 
 #[derive(Debug, Clone)]
+pub struct TransformerQkvProjectionDispatchReplayTensors {
+    pub input_rows: usize,
+    pub output_rows: usize,
+    pub cols: usize,
+    pub row_stride_bytes: usize,
+    pub inline_scale: Option<f32>,
+    pub cpu_output: Tensor,
+    pub a770_output: Option<Tensor>,
+    pub cpu: TransformerQkvProjectionDispatchReplayCpuStats,
+    pub a770: TransformerQkvProjectionDispatchReplayA770Stats,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQkvProjectionDispatchReplayCpuStats {
+    pub scalar_invocations: u64,
+    pub execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerQkvProjectionDispatchReplayA770Stats {
+    pub compiled_opencl: bool,
+    pub attempted: bool,
+    pub success: bool,
+    pub host_to_device_bytes: u64,
+    pub device_to_host_bytes: u64,
+    pub kernel_invocations: u64,
+    pub last_device: Option<TransformerA770OpenClRuntimeDevice>,
+    pub error: Option<String>,
+    pub execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformerA770OpenClRuntimeDevice {
+    pub platform_index: usize,
+    pub device_index: usize,
+    pub platform_name: String,
+    pub runtime_device: String,
+    pub vendor: String,
+    pub driver_version: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct TransformerQkvProjectionSourceTensors {
     pub layer_idx: usize,
     pub projection: String,
@@ -1728,6 +1770,8 @@ pub struct TransformerQkvProjectionSourceTensors {
     pub dispatch_delta: TransformerQk256DispatchDelta,
     pub cpu_hot_path_delta: TransformerQk256CpuHotPathDelta,
     pub a770_opencl_runtime_delta: TransformerA770OpenClRuntimeDelta,
+    pub dispatch_replay: Option<TransformerQkvProjectionDispatchReplayTensors>,
+    pub dispatch_replay_error: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

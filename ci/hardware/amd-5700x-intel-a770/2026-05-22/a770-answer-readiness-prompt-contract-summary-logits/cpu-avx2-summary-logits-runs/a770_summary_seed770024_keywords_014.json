@@ -85,9 +85,9 @@
     "layout": "gguf_packed_i2_s"
   },
   "latency": {
-    "cmd_to_first_ms": 54082,
-    "decode_first_ms": 54082,
-    "total_ms": 86852
+    "cmd_to_first_ms": 56095,
+    "decode_first_ms": 56095,
+    "total_ms": 89838
   },
   "loader": {
     "minimal_fallback_allowed": false,
@@ -15702,6 +15702,77 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": {
+                    "a770": {
+                      "attempted": true,
+                      "compiled_opencl": true,
+                      "device_to_host_bytes": 10240,
+                      "error": null,
+                      "execution_path": "a770_opencl_qk256_i2s_i8s_scaled_replay",
+                      "host_to_device_bytes": 1640960,
+                      "kernel_invocations": 1,
+                      "last_device": {
+                        "device_index": 0,
+                        "driver_version": "32.0.101.8801",
+                        "platform_index": 0,
+                        "platform_name": "Intel(R) OpenCL Graphics",
+                        "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+                        "vendor": "Intel(R) Corporation"
+                      },
+                      "success": true
+                    },
+                    "a770_output": {
+                      "available": true,
+                      "finite_count": 2560,
+                      "infinite_count": 0,
+                      "max": 6.754318714141846,
+                      "mean": -0.01758772264884101,
+                      "min": -5.372337818145752,
+                      "nan_count": 0,
+                      "rms": 1.1568787818792203,
+                      "sha256_f32_le": "bc4936be3842690077acd428ab0a82c4f32e6989ecd083c66c697e9273bdf9cc",
+                      "shape": [
+                        1,
+                        1,
+                        2560
+                      ],
+                      "value_count": 2560
+                    },
+                    "claim_allowed": false,
+                    "cols": 2560,
+                    "context_kind": "decode_step_qkv_projection_dispatch_replay",
+                    "cpu": {
+                      "execution_path": "cpu_qk256_i2s_i8s_scaled_scalar_replay",
+                      "scalar_invocations": 1
+                    },
+                    "cpu_a770_output_rms_abs_delta": 3.980823781724041e-8,
+                    "cpu_a770_output_sha256_match": false,
+                    "cpu_output": {
+                      "available": true,
+                      "finite_count": 2560,
+                      "infinite_count": 0,
+                      "max": 6.754318714141846,
+                      "mean": -0.017587722323060006,
+                      "min": -5.372337818145752,
+                      "nan_count": 0,
+                      "rms": 1.1568787420709825,
+                      "sha256_f32_le": "4f13d049fef9a223c4049a1c45128ec6a070acc27d6741a9b8a0c3d6ebada7af",
+                      "shape": [
+                        1,
+                        1,
+                        2560
+                      ],
+                      "value_count": 2560
+                    },
+                    "diagnostic_only": true,
+                    "inline_scale": 1.2188547849655151,
+                    "input_rows": 1,
+                    "output_rows": 2560,
+                    "row_stride_bytes": 640,
+                    "schema_version": "1.0.0",
+                    "source_context_available": true
+                  },
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -15773,6 +15844,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -15844,6 +15917,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -15915,6 +15990,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -15986,6 +16063,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16057,6 +16136,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16128,6 +16209,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16199,6 +16282,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16270,6 +16355,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16341,6 +16428,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16412,6 +16501,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16483,6 +16574,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16554,6 +16647,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16625,6 +16720,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16696,6 +16793,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16767,6 +16866,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16838,6 +16939,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16909,6 +17012,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -16980,6 +17085,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17051,6 +17158,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17122,6 +17231,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17193,6 +17304,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17264,6 +17377,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17335,6 +17450,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17406,6 +17523,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17477,6 +17596,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17548,6 +17669,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17619,6 +17742,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17690,6 +17815,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17761,6 +17888,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17832,6 +17961,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17903,6 +18034,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -17974,6 +18107,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18045,6 +18180,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18116,6 +18253,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18187,6 +18326,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18258,6 +18399,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18329,6 +18472,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18400,6 +18545,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18471,6 +18618,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18542,6 +18691,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18613,6 +18764,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18684,6 +18837,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18755,6 +18910,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18826,6 +18983,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18897,6 +19056,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -18968,6 +19129,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19039,6 +19202,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19110,6 +19275,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19181,6 +19348,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19252,6 +19421,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19323,6 +19494,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19394,6 +19567,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19465,6 +19640,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19536,6 +19713,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19607,6 +19786,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19678,6 +19859,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19749,6 +19932,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19820,6 +20005,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19891,6 +20078,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -19962,6 +20151,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20033,6 +20224,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20104,6 +20297,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20175,6 +20370,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20246,6 +20443,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20317,6 +20516,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20388,6 +20589,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20459,6 +20662,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20530,6 +20735,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20601,6 +20808,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20672,6 +20881,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20743,6 +20954,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20814,6 +21027,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20885,6 +21100,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -20956,6 +21173,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21027,6 +21246,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21098,6 +21319,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21169,6 +21392,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21240,6 +21465,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21311,6 +21538,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21382,6 +21611,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21453,6 +21684,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21524,6 +21757,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21595,6 +21830,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21666,6 +21903,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21737,6 +21976,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21808,6 +22049,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21879,6 +22122,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -21950,6 +22195,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -22021,6 +22268,8 @@
                     "execution_claim": "cpu_qk256_reference",
                     "unsupported_ops": []
                   },
+                  "dispatch_replay": null,
+                  "dispatch_replay_error": null,
                   "input": {
                     "available": true,
                     "finite_count": 2560,
@@ -23076,80 +23325,80 @@
         "count": 18,
         "max_ms": 0.007,
         "mean_ms": 0.006,
-        "min_ms": 0.005,
+        "min_ms": 0.004,
         "p50_ms": 0.006,
         "p95_ms": 0.007,
-        "total_ms": 0.104
+        "total_ms": 0.106
       },
-      "first_token_decode_ms": 2050.101,
+      "first_token_decode_ms": 1950.149,
       "forward_ms": {
         "count": 18,
-        "max_ms": 2028.353,
-        "mean_ms": 1873.071,
-        "min_ms": 1608.946,
-        "p50_ms": 1909.04,
-        "p95_ms": 2028.353,
-        "total_ms": 33715.282
+        "max_ms": 2213.404,
+        "mean_ms": 1922.997,
+        "min_ms": 1601.256,
+        "p50_ms": 1911.592,
+        "p95_ms": 2213.404,
+        "total_ms": 34613.944
       },
       "generated_tokens": 18,
       "logits_ms": {
         "count": 18,
-        "max_ms": 53.15,
-        "mean_ms": 44.547,
-        "min_ms": 42.373,
-        "p50_ms": 43.546,
-        "p95_ms": 53.15,
-        "total_ms": 801.847
+        "max_ms": 47.438,
+        "mean_ms": 44.054,
+        "min_ms": 40.644,
+        "p50_ms": 43.756,
+        "p95_ms": 47.438,
+        "total_ms": 792.971
       },
       "per_token_ms": {
         "count": 18,
-        "max_ms": 2087.302,
-        "mean_ms": 1934.201,
-        "min_ms": 1664.788,
-        "p50_ms": 1964.251,
-        "p95_ms": 2087.302,
-        "total_ms": 34815.619
+        "max_ms": 2308.733,
+        "mean_ms": 1982.718,
+        "min_ms": 1661.304,
+        "p50_ms": 1965.004,
+        "p95_ms": 2308.733,
+        "total_ms": 35688.916
       },
       "sample_ms": {
         "count": 18,
-        "max_ms": 0.391,
-        "mean_ms": 0.227,
-        "min_ms": 0.141,
+        "max_ms": 0.364,
+        "mean_ms": 0.223,
+        "min_ms": 0.143,
         "p50_ms": 0.227,
-        "p95_ms": 0.391,
-        "total_ms": 4.087
+        "p95_ms": 0.364,
+        "total_ms": 4.023
       },
       "steady_per_token_ms": {
         "count": 17,
-        "max_ms": 2087.302,
-        "mean_ms": 1927.383,
-        "min_ms": 1664.788,
-        "p50_ms": 1964.251,
-        "p95_ms": 2087.302,
-        "total_ms": 32765.519
+        "max_ms": 2308.733,
+        "mean_ms": 1984.633,
+        "min_ms": 1661.304,
+        "p50_ms": 2004.944,
+        "p95_ms": 2308.733,
+        "total_ms": 33738.767
       },
-      "steady_state_tok_s": 0.519,
+      "steady_state_tok_s": 0.504,
       "steady_state_tokens": 17,
       "token_decode_ms": {
         "count": 18,
-        "max_ms": 0.035,
+        "max_ms": 0.032,
         "mean_ms": 0.008,
-        "min_ms": 0.005,
-        "p50_ms": 0.006,
-        "p95_ms": 0.035,
-        "total_ms": 0.145
+        "min_ms": 0.004,
+        "p50_ms": 0.007,
+        "p95_ms": 0.032,
+        "total_ms": 0.14
       },
       "warmup_tokens": 1
     },
     "id": "default",
     "kind": "steady_decode_prefill",
     "machine_context_recorded": true,
-    "model_load_ms": 3481.48,
+    "model_load_ms": 3370.396,
     "phase": "decode",
     "prompt_prefill": {
       "exercised": true,
       "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
-      "ms": 52032.119,
+      "ms": 54145.012,
       "per_token_ms": {
         "count": 0,
         "max_ms": null,
@@ -23161,9 +23410,9 @@
       },
       "tokens": 28
     },
-    "prompt_tokenize_ms": 1.051,
+    "prompt_tokenize_ms": 1.144,
     "requested": false,
-    "tokenizer_load_ms": 531.902
+    "tokenizer_load_ms": 545.411
   },
   "prompt": "Summarize in one short sentence and include the words fast and safe: Rust helps teams build reliable systems software.",
   "prompt_generation_identity": {
@@ -23304,7 +23553,7 @@
     ],
     "cpu_model": "unknown-windows-cpu",
     "decode_tokens": 18,
-    "decode_tps": 0.20724911343434807,
+    "decode_tps": 0.20036064916850332,
     "fallback_reason": null,
     "fallback_used": false,
     "loader_mode": "real_gguf",
@@ -23323,25 +23572,25 @@
   "text": "Rust enables fast and safe software development by eliminating null pointer exceptions and memory leaks.",
   "throughput": {
     "decoded_tokens": 18,
-    "tokens_per_second": 0.20724911343434807
+    "tokens_per_second": 0.20036064916850332
   },
-  "timestamp": "2026-05-23T23:21:05.718151200+00:00",
+  "timestamp": "2026-05-24T01:15:16.964418+00:00",
   "timing": {
     "a770_opencl_device_to_host_bytes": null,
     "a770_opencl_host_to_device_bytes": null,
     "a770_opencl_kernel_invocations": null,
     "cuda_kernel_time_ms": null,
-    "decode_steady_state_tok_s": 0.519,
-    "decode_total_ms": 34815.619,
+    "decode_steady_state_tok_s": 0.504,
+    "decode_total_ms": 35688.916,
     "device_to_host_bytes": null,
-    "first_token_decode_ms": 2050.101,
-    "first_token_ms": 54082,
+    "first_token_decode_ms": 1950.149,
+    "first_token_ms": 56095,
     "host_to_device_bytes": null,
-    "model_load_ms": 3481.48,
-    "prefill_ms": 52032.119,
-    "sampling_ms_per_token": 0.227,
-    "tokenize_ms": 1.051,
-    "tokenizer_load_ms": 531.902
+    "model_load_ms": 3370.396,
+    "prefill_ms": 54145.012,
+    "sampling_ms_per_token": 0.223,
+    "tokenize_ms": 1.144,
+    "tokenizer_load_ms": 545.411
   },
   "tokenizer": {
     "bos": 1,

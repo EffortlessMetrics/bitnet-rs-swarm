@@ -1,0 +1,13 @@
+timestamp = "2026-05-24T00:58:37Z"
+campaign = "intel-a770"
+item = "A770-043"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
+summary = "Started A770-043 QKV projection dispatch replay after A770-042 localized the focused summary mismatch to CPU versus A770 QKV dispatch path drift."
+notes = [
+  "A770-043 adds diagnostic-only selected QKV projection CPU versus A770 dispatch replay using identical materialized input and raw QK256 metadata when focused source context is available.",
+  "The slice classifies missing context, runtime/replay capture mismatch, CPU/A770 output drift, or clean replay without changing runtime math, kernels, dispatch policy, answer scoring, sampling, or claim boundaries.",
+]

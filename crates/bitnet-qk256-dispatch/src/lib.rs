@@ -101,6 +101,66 @@ pub struct Qk256A770OpenClRuntimeStats {
     pub last_device: Option<A770OpenClRuntimeDevice>,
 }
 
+/// Diagnostic CPU-vs-A770 replay for one QK256 projection under identical inputs.
+///
+/// This is not the production dispatch entry point. It avoids the global dispatch
+/// counters and is intended only for focused receipts that need to compare the
+/// CPU scalar oracle and the selected-device A770 OpenCL candidate on the same
+/// materialized input row(s).
+#[derive(Debug, Clone)]
+pub struct Qk256CpuA770DispatchReplay {
+    /// Number of materialized input rows replayed.
+    pub input_rows: usize,
+    /// Number of output rows per input row.
+    pub output_rows: usize,
+    /// Number of input columns.
+    pub cols: usize,
+    /// Packed QK256 byte stride for each output row.
+    pub row_stride_bytes: usize,
+    /// Inline BitNet.cpp weight scale used by the scaled I2_S x I8_S policy.
+    pub inline_scale: Option<f32>,
+    /// CPU scalar replay output tensor.
+    pub cpu_output: Tensor,
+    /// A770 OpenCL replay output tensor when the replay ran successfully.
+    pub a770_output: Option<Tensor>,
+    /// CPU replay stats.
+    pub cpu: Qk256CpuDispatchReplayStats,
+    /// A770 replay stats.
+    pub a770: Qk256A770DispatchReplayStats,
+}
+
+/// Diagnostic CPU replay stats for one QK256 projection.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qk256CpuDispatchReplayStats {
+    /// Number of CPU scalar GEMV invocations in the replay.
+    pub scalar_invocations: u64,
+    /// Diagnostic execution path.
+    pub execution_path: &'static str,
+}
+
+/// Diagnostic A770 replay stats for one QK256 projection.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qk256A770DispatchReplayStats {
+    /// True when this crate was compiled with the OpenCL replay dependency.
+    pub compiled_opencl: bool,
+    /// True when the replay attempted selected-device A770 OpenCL execution.
+    pub attempted: bool,
+    /// True when every replay row ran successfully on A770 OpenCL.
+    pub success: bool,
+    /// Host-to-device bytes copied by the diagnostic replay.
+    pub host_to_device_bytes: u64,
+    /// Device-to-host bytes copied by the diagnostic replay.
+    pub device_to_host_bytes: u64,
+    /// OpenCL kernel invocations in the diagnostic replay.
+    pub kernel_invocations: u64,
+    /// Last selected OpenCL device observed by the diagnostic replay.
+    pub last_device: Option<A770OpenClRuntimeDevice>,
+    /// Replay error when A770 execution was unavailable or failed.
+    pub error: Option<String>,
+    /// Diagnostic execution path.
+    pub execution_path: &'static str,
+}
+
 /// Selected OpenCL device identity observed by A770 QK256 dispatch.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct A770OpenClRuntimeDevice {
@@ -496,6 +556,74 @@ pub fn forward_qk256_with_scale(
     forward_qk256_cpu(input, qk256_tensor, weight_name, inline_scale)
 }
 
+/// Replay one scaled QK256 projection with the CPU scalar oracle and, when
+/// available, the selected-device A770 OpenCL candidate.
+///
+/// The replay is diagnostic-only: it does not increment the global dispatch,
+/// CPU hot-path, or A770 runtime counters used by production receipts.
+pub fn replay_qk256_cpu_vs_a770_with_scale(
+    input: &Tensor,
+    qk256_tensor: &Tensor,
+    weight_name: &str,
+    inline_scale: Option<f32>,
+) -> Result<Qk256CpuA770DispatchReplay> {
+    use bitnet_quantization::i2s_qk256::gemv_qk256_bitnet_i8s_scaled;
+
+    let weight_scale = inline_scale.ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "QK256 dispatch replay requires an inline BitNet scale for {weight_name}"
+        ))
+    })?;
+    if !weight_scale.is_finite() {
+        return Err(BitNetError::Validation(format!(
+            "QK256 dispatch replay inline scale is not finite for {weight_name}: {weight_scale}"
+        )));
+    }
+
+    let prepared = prepare_qk256_forward_untracked(input, qk256_tensor, weight_name)?;
+    let output_row_count = prepared.shape.batch_size * prepared.shape.seq_len;
+    let mut cpu_flat = Vec::with_capacity(output_row_count * prepared.layout.rows);
+    let mut cpu_scalar_invocations = 0u64;
+
+    for input_row in &prepared.input_rows {
+        let mut output_row = vec![0.0f32; prepared.layout.rows];
+        gemv_qk256_bitnet_i8s_scaled(
+            &prepared.flat_bytes,
+            input_row,
+            &mut output_row,
+            prepared.layout.rows,
+            prepared.layout.cols,
+            prepared.layout.row_stride_bytes,
+            weight_scale,
+        )
+        .map_err(|err| {
+            BitNetError::Validation(format!(
+                "QK256 CPU dispatch replay failed for {weight_name}: {err}"
+            ))
+        })?;
+        cpu_scalar_invocations += 1;
+        cpu_flat.extend_from_slice(&output_row);
+    }
+
+    let cpu_output = tensor_from_flat_output(cpu_flat, &prepared.shape, &prepared.layout, input)?;
+    let (a770_output, a770) = replay_qk256_a770_opencl_untracked(&prepared, input, weight_scale);
+
+    Ok(Qk256CpuA770DispatchReplay {
+        input_rows: output_row_count,
+        output_rows: prepared.layout.rows,
+        cols: prepared.layout.cols,
+        row_stride_bytes: prepared.layout.row_stride_bytes,
+        inline_scale,
+        cpu_output,
+        a770_output,
+        cpu: Qk256CpuDispatchReplayStats {
+            scalar_invocations: cpu_scalar_invocations,
+            execution_path: "cpu_qk256_i2s_i8s_scaled_scalar_replay",
+        },
+        a770,
+    })
+}
+
 #[cfg(feature = "opencl")]
 fn forward_qk256_a770_opencl(
     input: &Tensor,
@@ -551,6 +679,93 @@ fn forward_qk256_a770_opencl(
     }
 
     tensor_from_flat_output(output_rows, &prepared.shape, &prepared.layout, input)
+}
+
+#[cfg(feature = "opencl")]
+fn replay_qk256_a770_opencl_untracked(
+    prepared: &PreparedQk256Forward,
+    input: &Tensor,
+    weight_scale: f32,
+) -> (Option<Tensor>, Qk256A770DispatchReplayStats) {
+    let mut output_rows = Vec::with_capacity(prepared.input_rows.len() * prepared.layout.rows);
+    let mut stats = Qk256A770DispatchReplayStats {
+        compiled_opencl: true,
+        attempted: true,
+        success: false,
+        host_to_device_bytes: 0,
+        device_to_host_bytes: 0,
+        kernel_invocations: 0,
+        last_device: None,
+        error: None,
+        execution_path: "a770_opencl_qk256_i2s_i8s_scaled_replay",
+    };
+
+    for input_row in &prepared.input_rows {
+        let (q, activation_scale, activation_sum) =
+            quantize_row_i8_s_activation(input_row, prepared.layout.cols);
+        let result = match run_a770_qk256_i8s_scaled_gemv(A770OpenClQk256ScaledGemv {
+            activations_i8: &q,
+            packed_qk256: &prepared.flat_bytes,
+            rows: prepared.layout.rows,
+            cols: prepared.layout.cols,
+            row_stride_bytes: prepared.layout.row_stride_bytes,
+            activation_sum,
+            activation_scale,
+            weight_scale,
+        }) {
+            Ok(result) => result,
+            Err(err) => {
+                stats.error = Some(err.to_string());
+                return (None, stats);
+            }
+        };
+
+        stats.host_to_device_bytes += result.host_to_device_bytes as u64;
+        stats.device_to_host_bytes += result.device_to_host_bytes as u64;
+        stats.kernel_invocations += result.kernel_invocations as u64;
+        stats.last_device = Some(A770OpenClRuntimeDevice {
+            platform_index: result.platform_index,
+            device_index: result.device_index,
+            platform_name: result.platform_name,
+            runtime_device: result.runtime_device,
+            vendor: result.vendor,
+            driver_version: result.driver_version,
+        });
+        output_rows.extend_from_slice(&result.output);
+    }
+
+    let output =
+        match tensor_from_flat_output(output_rows, &prepared.shape, &prepared.layout, input) {
+            Ok(output) => output,
+            Err(err) => {
+                stats.error = Some(err.to_string());
+                return (None, stats);
+            }
+        };
+    stats.success = true;
+    (Some(output), stats)
+}
+
+#[cfg(not(feature = "opencl"))]
+fn replay_qk256_a770_opencl_untracked(
+    _prepared: &PreparedQk256Forward,
+    _input: &Tensor,
+    _weight_scale: f32,
+) -> (Option<Tensor>, Qk256A770DispatchReplayStats) {
+    (
+        None,
+        Qk256A770DispatchReplayStats {
+            compiled_opencl: false,
+            attempted: false,
+            success: false,
+            host_to_device_bytes: 0,
+            device_to_host_bytes: 0,
+            kernel_invocations: 0,
+            last_device: None,
+            error: Some("bitnet-qk256-dispatch was built without the opencl feature".to_string()),
+            execution_path: "a770_opencl_qk256_i2s_i8s_scaled_replay_unavailable",
+        },
+    )
 }
 
 #[cfg(feature = "opencl")]
@@ -781,8 +996,31 @@ fn prepare_qk256_forward(
     qk256_tensor: &Tensor,
     weight_name: &str,
 ) -> Result<PreparedQk256Forward> {
-    let prepared = prepare_qk256_activation(input, qk256_tensor, weight_name)?;
-    let flat_bytes = extract_qk256_flat_bytes(qk256_tensor, &prepared.layout, weight_name)?;
+    prepare_qk256_forward_with_tracking(input, qk256_tensor, weight_name, true)
+}
+
+fn prepare_qk256_forward_untracked(
+    input: &Tensor,
+    qk256_tensor: &Tensor,
+    weight_name: &str,
+) -> Result<PreparedQk256Forward> {
+    prepare_qk256_forward_with_tracking(input, qk256_tensor, weight_name, false)
+}
+
+fn prepare_qk256_forward_with_tracking(
+    input: &Tensor,
+    qk256_tensor: &Tensor,
+    weight_name: &str,
+    track_counters: bool,
+) -> Result<PreparedQk256Forward> {
+    let prepared =
+        prepare_qk256_activation_with_tracking(input, qk256_tensor, weight_name, track_counters)?;
+    let flat_bytes = extract_qk256_flat_bytes_with_tracking(
+        qk256_tensor,
+        &prepared.layout,
+        weight_name,
+        track_counters,
+    )?;
 
     Ok(PreparedQk256Forward {
         layout: prepared.layout,
@@ -792,10 +1030,11 @@ fn prepare_qk256_forward(
     })
 }
 
-fn prepare_qk256_activation(
+fn prepare_qk256_activation_with_tracking(
     input: &Tensor,
     qk256_tensor: &Tensor,
     weight_name: &str,
+    track_counters: bool,
 ) -> Result<PreparedQk256Activation> {
     let qk256_dims = qk256_tensor.dims();
     let layout = parse_qk256_layout(weight_name, qk256_dims)
@@ -819,15 +1058,18 @@ fn prepare_qk256_activation(
             weight_name, e
         ))
     })?;
-    QK256_INPUT_ROWS_MATERIALIZED_COUNT.fetch_add(input_rows.len() as u64, Ordering::Relaxed);
+    if track_counters {
+        QK256_INPUT_ROWS_MATERIALIZED_COUNT.fetch_add(input_rows.len() as u64, Ordering::Relaxed);
+    }
 
     Ok(PreparedQk256Activation { layout, shape, input_rows })
 }
 
-fn extract_qk256_flat_bytes(
+fn extract_qk256_flat_bytes_with_tracking(
     qk256_tensor: &Tensor,
     layout: &Qk256Layout,
     weight_name: &str,
+    track_counters: bool,
 ) -> Result<Vec<u8>> {
     let bytes_2d = qk256_tensor.to_vec2::<u8>().map_err(|e| {
         BitNetError::Validation(format!("Failed to extract QK256 bytes for {}: {}", weight_name, e))
@@ -836,7 +1078,9 @@ fn extract_qk256_flat_bytes(
     for row in bytes_2d {
         flat_bytes.extend_from_slice(&row);
     }
-    QK256_FLAT_BYTES_EXTRACTED_COUNT.fetch_add(1, Ordering::Relaxed);
+    if track_counters {
+        QK256_FLAT_BYTES_EXTRACTED_COUNT.fetch_add(1, Ordering::Relaxed);
+    }
     Ok(flat_bytes)
 }
 
