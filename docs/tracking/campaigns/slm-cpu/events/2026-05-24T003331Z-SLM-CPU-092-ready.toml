@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T00:33:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-092"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-092-logits-fused-selection-gate"
+actor = "codex"
+summary = "Queued the next Kaby Lake Qwen3 Q8_0 logits/output-head fused-selection gate after SLM-CPU-091."
+notes = [
+  "SLM-CPU-091 classified the remaining model.logits / output-head boundary as Candle-owned logits Tensor output plus optional host logits extraction.",
+  "SLM-CPU-092 is scoped to either a behavior-preserving fused output-head/token-selection path or a machine-checkable blocker naming the exact Candle Tensor, output-head, or accumulator-order limitation.",
+  "Any runtime change remains gated by the Qwen3 Q8_0 appliance oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "The item does not claim allocation reduction, speedup, sustained throughput, packed-Q8 default promotion, Q4/Q5 support, server inference, GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes.",
+]
