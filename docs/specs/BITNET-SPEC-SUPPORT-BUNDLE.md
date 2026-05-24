@@ -91,12 +91,18 @@ bitnet_packed_i2s_qk256_proof
 dense_regular_llm_cuda_proof
 next_proof
 claim_boundary
+timing
 receipt_path
 ```
 
 `summary.claim_boundary` must carry the structured model-status or receipt
 claim boundary when available. If no structured boundary is available, it may be
 `null`; it must not be replaced by a broad support claim.
+
+`summary.timing` must mirror the normalized `latest_receipt.timing` object so
+issue triage can see CUDA phase and transfer evidence without digging into the
+full embedded receipt. These fields are evidence only; they must not infer or
+promote speedup, throughput qualification, server readiness, or full residency.
 
 ## Binary Identity
 
