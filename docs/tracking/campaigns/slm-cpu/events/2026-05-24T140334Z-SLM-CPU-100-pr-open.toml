@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T14:03:34Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-100"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 621
+head_sha = "7fa92b8b761e84f6c0e8ebd9ea356fc6d85d5668"
+branch = "codex/slm-cpu-100-typed-fused-q-consumer-implementation-gate"
+actor = "codex"
+summary = "Opened PR #621 for the typed fused Q projection consumer implementation-or-blocker gate."
+notes = [
+  "PR #621 queues the implementation-or-blocker gate after SLM-CPU-099 defined the typed fused Q projection consumer contract.",
+  "A valid follow-up slice must either implement the exact `layers.0.attention.q_proj.weight` fused Q consumer under the Qwen3 Q8_0 behavior oracle or emit a concrete blocker naming the remaining API, lifetime, tensor-layout, accumulator-order, or receipt-safety gap.",
+  "The PR is tracker scope only and makes no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
