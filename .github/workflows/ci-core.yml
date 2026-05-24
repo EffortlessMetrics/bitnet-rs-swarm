@@ -78,9 +78,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Core PR jobs compile and may feed cache state. Do not cancel an already
-  # started run near completion; reject irrelevant work before it starts.
-  cancel-in-progress: false
+  # Cancel superseded PR runs to reduce queue time and runner spend while still
+  # preserving full history for main-branch pushes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
