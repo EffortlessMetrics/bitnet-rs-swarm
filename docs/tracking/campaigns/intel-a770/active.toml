@@ -1791,9 +1791,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-048"
-status = "pr_open"
+status = "merged"
 pr = 624
-head_sha = "20eb40b371a2f9e24d17ae4e1ba423fb98783ee4"
+head_sha = "fdf3791cb79181d5f066c350c63b99bc00f53aa3"
+merge_sha = "4df3ef080cda27752701dcae461e721db8da3703"
+merged_at = "2026-05-24T15:13:51Z"
 branch = "codex/intel-a770/A770-048-device-intermediate-debug"
 stackable = false
 review_mode = "codex_premerge"
