@@ -1,0 +1,33 @@
+timestamp = "2026-05-24T11:23:17Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-060"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 599
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-060-post-a770046"
+head_sha = "53b98a019598e9b6a48a3c6a949978f8232e87d3"
+merge_sha = "16f5e8f7f66878d0a0f50044667ead0c8329c8ac"
+merged_at = "2026-05-24T11:23:17Z"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Closed LNL258V-GOAL-AUDIT-060 after PR #599 merged the no-inference audit/checklist refresh."
+notes = [
+  "The merged audit/checklist records #594/#595/#596 as adjacent shared receipt-builder policy hardening only.",
+  "The merged audit/checklist records A770-046/#592 and closeout #598 as adjacent A770 diagnostic/tracker state only.",
+  "LNL258V-POWER-006 remains blocked and no Lunar Lake inference, route promotion, speedup, power advantage, semantic stale state, or BitNet behavior claim changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "LNL258V-GOAL-AUDIT-060 refreshed the Lunar Lake audit/checklist source_revision through current swarm main at PR #599.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "A770-046 is Lunar Lake route evidence.",
+  "A770-046 is a shared BitNet semantic fix.",
+  "A770-046 makes Lunar Lake semantic-intake stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]
