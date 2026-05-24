@@ -1,0 +1,37 @@
+timestamp = "2026-05-24T19:40:38Z"
+campaign = "intel-a770"
+item = "A770-052"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 647
+branch = "codex/intel-a770/A770-052-host-replay-f32-codegen-ordering"
+head_sha = "bf2a29d0ddbcf9287c35feedde007929a0134d97"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #647 for the A770-052 host replay f32 codegen-ordering diagnostic."
+notes = [
+  "PR #647 records generated_output_qk256_host_replay_f32_codegen_ordering_frontier_explicit_f32_rounding_gap for the focused CPU/A770 summary-logits replay context.",
+  "The PR remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-052 may classify compact host replay f32 codegen and operation-order evidence for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
