@@ -98,6 +98,48 @@ pub struct ModelA770OpenClRuntimeDeltaContext {
 }
 
 #[derive(Debug, Clone)]
+pub struct ModelQkvProjectionDispatchReplayContext {
+    pub input_rows: usize,
+    pub output_rows: usize,
+    pub cols: usize,
+    pub row_stride_bytes: usize,
+    pub inline_scale: Option<f32>,
+    pub cpu_output: ConcreteTensor,
+    pub a770_output: Option<ConcreteTensor>,
+    pub cpu: ModelQkvProjectionDispatchReplayCpuContext,
+    pub a770: ModelQkvProjectionDispatchReplayA770Context,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQkvProjectionDispatchReplayCpuContext {
+    pub scalar_invocations: u64,
+    pub execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelQkvProjectionDispatchReplayA770Context {
+    pub compiled_opencl: bool,
+    pub attempted: bool,
+    pub success: bool,
+    pub host_to_device_bytes: u64,
+    pub device_to_host_bytes: u64,
+    pub kernel_invocations: u64,
+    pub last_device: Option<ModelA770OpenClRuntimeDeviceContext>,
+    pub error: Option<String>,
+    pub execution_path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelA770OpenClRuntimeDeviceContext {
+    pub platform_index: usize,
+    pub device_index: usize,
+    pub platform_name: String,
+    pub runtime_device: String,
+    pub vendor: String,
+    pub driver_version: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct ModelQkvProjectionSourceContext {
     pub layer_idx: usize,
     pub projection: String,
@@ -109,6 +151,8 @@ pub struct ModelQkvProjectionSourceContext {
     pub dispatch_delta: ModelQk256DispatchDeltaContext,
     pub cpu_hot_path_delta: ModelQk256CpuHotPathDeltaContext,
     pub a770_opencl_runtime_delta: ModelA770OpenClRuntimeDeltaContext,
+    pub dispatch_replay: Option<ModelQkvProjectionDispatchReplayContext>,
+    pub dispatch_replay_error: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -821,6 +865,45 @@ impl Model for BitNetModel {
                     device_to_host_bytes: source.a770_opencl_runtime_delta.device_to_host_bytes,
                     kernel_invocations: source.a770_opencl_runtime_delta.kernel_invocations,
                 },
+                dispatch_replay: source.dispatch_replay.as_ref().map(|replay| {
+                    ModelQkvProjectionDispatchReplayContext {
+                        input_rows: replay.input_rows,
+                        output_rows: replay.output_rows,
+                        cols: replay.cols,
+                        row_stride_bytes: replay.row_stride_bytes,
+                        inline_scale: replay.inline_scale,
+                        cpu_output: self.candle_to_concrete(replay.cpu_output.clone()),
+                        a770_output: replay
+                            .a770_output
+                            .clone()
+                            .map(|tensor| self.candle_to_concrete(tensor)),
+                        cpu: ModelQkvProjectionDispatchReplayCpuContext {
+                            scalar_invocations: replay.cpu.scalar_invocations,
+                            execution_path: replay.cpu.execution_path.clone(),
+                        },
+                        a770: ModelQkvProjectionDispatchReplayA770Context {
+                            compiled_opencl: replay.a770.compiled_opencl,
+                            attempted: replay.a770.attempted,
+                            success: replay.a770.success,
+                            host_to_device_bytes: replay.a770.host_to_device_bytes,
+                            device_to_host_bytes: replay.a770.device_to_host_bytes,
+                            kernel_invocations: replay.a770.kernel_invocations,
+                            last_device: replay.a770.last_device.as_ref().map(|device| {
+                                ModelA770OpenClRuntimeDeviceContext {
+                                    platform_index: device.platform_index,
+                                    device_index: device.device_index,
+                                    platform_name: device.platform_name.clone(),
+                                    runtime_device: device.runtime_device.clone(),
+                                    vendor: device.vendor.clone(),
+                                    driver_version: device.driver_version.clone(),
+                                }
+                            }),
+                            error: replay.a770.error.clone(),
+                            execution_path: replay.a770.execution_path.clone(),
+                        },
+                    }
+                }),
+                dispatch_replay_error: source.dispatch_replay_error.clone(),
             })
             .collect();
         let source_context =

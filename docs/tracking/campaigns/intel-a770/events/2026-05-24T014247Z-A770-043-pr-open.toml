@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T01:42:47Z"
+campaign = "intel-a770"
+item = "A770-043"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-043-qkv-dispatch-replay"
+pr = 552
+head_sha = "871d04f74b48187015b79743ad29566cf0d3654f"
+summary = "Opened PR #552 for the QKV projection dispatch replay diagnostic."
+notes = [
+  "The live focused receipt classifies the selected layer-0 q_proj replay frontier as CPU scalar versus A770 OpenCL output drift with stable replay context.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, reference parity, strict answer readiness, broad A770 quality, official QK256 production semantics, selected attention, resident KV, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]

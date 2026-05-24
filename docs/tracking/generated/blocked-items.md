@@ -528,6 +528,7 @@
 | intel-a770 | A770-040 | A770-039 | merged |
 | intel-a770 | A770-041 | A770-040 | merged |
 | intel-a770 | A770-042 | A770-041 | merged |
+| intel-a770 | A770-043 | A770-042 | pr_open |
 | intel-a770 | A770-021 | A770-020 | merged |
 | intel-a770 | A770-022 | A770-021 | merged |
 | intel-a770 | A770-023 | A770-022 | merged |
@@ -807,7 +808,7 @@
 | slm-cpu | SLM-CPU-089 | SLM-CPU-088 | merged |
 | slm-cpu | SLM-CPU-090 | SLM-CPU-089 | merged |
 | slm-cpu | SLM-CPU-091 | SLM-CPU-090 | merged |
-| slm-cpu | SLM-CPU-092 | SLM-CPU-091 | pr_open |
+| slm-cpu | SLM-CPU-092 | SLM-CPU-091 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |
