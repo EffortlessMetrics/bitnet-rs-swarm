@@ -20,6 +20,7 @@ use bitnet_transformer::{
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
+    dense_q8_sidecar_typed_attention_head_view_gate,
     dense_q8_sidecar_typed_fused_q_projection_implementation_gate,
 };
 use candle_core::{DType, Device, Tensor};
@@ -726,6 +727,94 @@ fn dense_q8_sidecar_typed_fused_q_projection_gate_names_exact_blockers() {
     assert!(gate.receipt_gate.required_before_runtime_execution);
     assert!(gate.receipt_gate.required_before_allocation_claim);
     assert!(gate.next_required_slice.contains("typed attention-head buffer"));
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_view_gate_is_design_only() {
+    let source = dense_q8_sidecar_typed_fused_q_projection_implementation_gate();
+    let gate = dense_q8_sidecar_typed_attention_head_view_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.typed_attention_head_view_gate");
+    assert_eq!(gate.status, "contract_defined_runtime_disabled");
+    assert_eq!(gate.source_gate_status, source.status);
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert!(gate.can_represent_q_heads_without_candle_tensor);
+    assert!(!gate.can_feed_current_attention_score_api_without_materialization);
+    assert_eq!(gate.selected_materialization_point, None);
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_view_gate_covers_downstream_stages() {
+    let gate = dense_q8_sidecar_typed_attention_head_view_gate();
+    let stages: Vec<_> = gate.stages.iter().map(|stage| stage.stage).collect();
+
+    assert_eq!(
+        stages,
+        vec![
+            "q_projection_output_slice",
+            "logical_head_view",
+            "optional_q_norm_handoff",
+            "q_rope_handoff",
+            "trace_workspace_identity",
+            "attention_score_handoff",
+        ]
+    );
+    assert_eq!(gate.layout.projected_rank, 3);
+    assert_eq!(gate.layout.attention_heads_rank, 4);
+    assert_eq!(gate.layout.projected_shape, "[batch, seq, n_heads * head_dim]");
+    assert_eq!(gate.layout.attention_heads_shape, "[batch, n_heads, seq, head_dim]");
+    assert!(
+        gate.stages
+            .iter()
+            .find(|stage| stage.stage == "logical_head_view")
+            .is_some_and(|stage| !stage.candle_tensor_semantics_required_today)
+    );
+    assert!(
+        gate.stages
+            .iter()
+            .find(|stage| stage.stage == "optional_q_norm_handoff")
+            .is_some_and(|stage| stage.optional && stage.candle_tensor_semantics_required_today)
+    );
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_view_gate_names_runtime_blockers() {
+    let gate = dense_q8_sidecar_typed_attention_head_view_gate();
+    let blockers: Vec<_> = gate.blockers.iter().map(|blocker| blocker.blocker).collect();
+
+    assert_eq!(
+        blockers,
+        vec![
+            "q_norm_requires_tensor_or_typed_norm",
+            "rope_requires_tensor_or_typed_rope",
+            "trace_source_identity_requires_tensor_mapping",
+            "attention_scores_require_tensor_or_typed_score_path",
+            "receipt_safety_evidence",
+        ]
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("LayerNorm::forward"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("RotaryEmbedding::apply"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("prepare_attention_scores"))
+    );
+    assert!(gate.receipt_gate.required_before_runtime_execution);
+    assert!(gate.receipt_gate.required_before_allocation_claim);
+    assert!(gate.next_required_slice.contains("typed q_norm/RoPE"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────

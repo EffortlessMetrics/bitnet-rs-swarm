@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T18:47:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-101"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 644
+branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
+head_sha = "48e7c6e490762b7ddf55cc0d1ea6d0539b7e558f"
+actor = "codex"
+summary = "Opened PR #644 with the SLM-CPU-101 typed attention-head view gate."
+notes = [
+  "The PR defines the runtime-disabled typed Q-head view contract for the exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` packed-Q8 boundary.",
+  "The slice records q_norm, RoPE, trace identity, score handoff, and receipt-safety blockers before any runtime fused Q execution can be enabled.",
+  "The PR makes no runtime fused Q execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]

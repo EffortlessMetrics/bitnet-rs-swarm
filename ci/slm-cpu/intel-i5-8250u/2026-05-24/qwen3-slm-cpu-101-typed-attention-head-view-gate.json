@@ -1,0 +1,164 @@
+{
+  "artifact_kind": "slm_cpu_typed_attention_head_view_gate",
+  "work_item": "SLM-CPU-101",
+  "created_utc": "2026-05-24T18:45:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "input_evidence": {
+    "previous_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-100-typed-fused-q-consumer-implementation-gate.json",
+    "slm_cpu_100_status": "blocked_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "can_own_packed_q8_matvec_output_slice": true,
+    "next_required_slice": "typed attention-head buffer/view plus q_norm/RoPE/trace/score-consumer API"
+  },
+  "typed_attention_head_view_gate": {
+    "role": "attention.q_proj.typed_attention_head_view_gate",
+    "status": "contract_defined_runtime_disabled",
+    "source_gate_status": "blocked_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "can_represent_q_heads_without_candle_tensor": true,
+    "can_feed_current_attention_score_api_without_materialization": false,
+    "selected_materialization_point": null,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "layout": {
+      "projected_rank": 3,
+      "attention_heads_rank": 4,
+      "projected_shape": "[batch, seq, n_heads * head_dim]",
+      "attention_heads_shape": "[batch, n_heads, seq, head_dim]",
+      "logical_storage_order": "projection-row-major-with-head-major-logical-view",
+      "head_stride_contract": "head index splits the final projection dimension before logical seq/head_dim addressing"
+    },
+    "stages": [
+      {
+        "stage": "q_projection_output_slice",
+        "consumes": "&mut [f32] rows from the exact packed-Q8 q_proj matvec",
+        "produces": "logical [batch, seq, n_heads * head_dim] projection view",
+        "storage_or_view_contract": "contiguous row-major projection rows owned by the fused Q consumer workspace",
+        "candle_tensor_semantics_required_today": false,
+        "optional": false
+      },
+      {
+        "stage": "logical_head_view",
+        "consumes": "[batch, seq, n_heads * head_dim] projection view",
+        "produces": "[batch, n_heads, seq, head_dim] logical Q-head view",
+        "storage_or_view_contract": "head-major logical strides over the same projection storage without a returned intermediate Candle Tensor",
+        "candle_tensor_semantics_required_today": false,
+        "optional": false
+      },
+      {
+        "stage": "optional_q_norm_handoff",
+        "consumes": "[batch, n_heads, seq, head_dim] logical Q-head view",
+        "produces": "q_norm-compatible typed buffer or explicit materialization blocker",
+        "storage_or_view_contract": "must preserve Qwen per-head q_norm semantics before RoPE",
+        "candle_tensor_semantics_required_today": true,
+        "optional": true
+      },
+      {
+        "stage": "q_rope_handoff",
+        "consumes": "q_norm output or logical Q-head view plus position",
+        "produces": "RoPE-compatible typed Q-head buffer or explicit materialization blocker",
+        "storage_or_view_contract": "must preserve split-layout RoPE position, dtype, and trace summaries",
+        "candle_tensor_semantics_required_today": true,
+        "optional": false
+      },
+      {
+        "stage": "trace_workspace_identity",
+        "consumes": "projection, logical heads, optional q_norm, and q_rope typed identities",
+        "produces": "checkpoint trace/workspace source identity without losing diagnostic surfaces",
+        "storage_or_view_contract": "must map to the current TransformerAttentionOutputSourceTensors receipt fields or explicitly block",
+        "candle_tensor_semantics_required_today": true,
+        "optional": false
+      },
+      {
+        "stage": "attention_score_handoff",
+        "consumes": "typed Q-head buffer after q_norm/RoPE",
+        "produces": "prepare_attention_scores-compatible Q input or explicit materialization blocker",
+        "storage_or_view_contract": "must preserve [batch, heads, seq, head_dim] score semantics and GQA interaction",
+        "candle_tensor_semantics_required_today": true,
+        "optional": false
+      }
+    ],
+    "blockers": [
+      {
+        "blocker": "q_norm_requires_tensor_or_typed_norm",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::apply_qk_norms calls candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+        "required_before_runtime_execution": "Add a behavior-equivalent typed q_norm over the logical Q-head buffer or record an explicit single-materialization point before q_norm with Qwen3 Q8_0 before/after receipts."
+      },
+      {
+        "blocker": "rope_requires_tensor_or_typed_rope",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::apply_rotary_embeddings calls RotaryEmbedding::apply(&Tensor, position)",
+        "required_before_runtime_execution": "Add a typed RoPE path for the logical Q-head buffer that preserves split-layout tables, position indexing, dtype behavior, and trace summaries."
+      },
+      {
+        "blocker": "trace_source_identity_requires_tensor_mapping",
+        "category": "receipt-safety",
+        "exact_api_or_surface": "TransformerAttentionOutputSourceTensors currently stores q_projection, q_heads, q_norm, and q_rope as Candle Tensor values",
+        "required_before_runtime_execution": "Define typed trace fingerprints for the Q projection/head/norm/RoPE surfaces without weakening checkpoint comparability or receipt provenance."
+      },
+      {
+        "blocker": "attention_scores_require_tensor_or_typed_score_path",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::prepare_attention_scores consumes q as &Tensor and uses Tensor matmul/transpose/dtype operations",
+        "required_before_runtime_execution": "Either extend the typed Q-head buffer through attention score computation or prove a single materialization point after RoPE that preserves generated IDs and dense-hook identity."
+      },
+      {
+        "blocker": "receipt_safety_evidence",
+        "category": "receipt-safety",
+        "exact_api_or_surface": "Runtime-adjacent fused Q execution requires repeated Qwen3 Q8_0 before/after appliance receipts",
+        "required_before_runtime_execution": "Capture repeated before/after receipts proving identical model SHA, strict tokenizer authority, prompt IDs, generated IDs, decoded text, backend/kernel identity, dense-hook identity, and fallback_used=false."
+      }
+    ],
+    "next_required_slice": "typed q_norm/RoPE or explicit single-materialization score-handoff boundary plus repeated behavior-preserving Qwen3 Q8_0 receipts"
+  },
+  "receipt_safety_contract": {
+    "required_before_runtime_execution": true,
+    "required_before_allocation_claim": true,
+    "required_before_speedup_claim": true,
+    "gate": "repeated_qwen3_q8_before_after_receipts_with_identical_generated_ids_text_backend_dense_hook_and_fallback_false",
+    "required_fields": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity",
+      "fallback_used=false"
+    ]
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_attention_head_view_gate_is_design_only",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_attention_head_view_gate_covers_downstream_stages",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_attention_head_view_gate_names_runtime_blockers"
+  ],
+  "result": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "fused_consumer_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

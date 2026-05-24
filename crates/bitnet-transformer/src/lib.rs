@@ -2195,6 +2195,55 @@ pub struct DenseQ8SidecarTypedFusedQProjectionImplementationGate {
     pub next_required_slice: &'static str,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadViewStageContract {
+    pub stage: &'static str,
+    pub consumes: &'static str,
+    pub produces: &'static str,
+    pub storage_or_view_contract: &'static str,
+    pub candle_tensor_semantics_required_today: bool,
+    pub optional: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadViewLayoutContract {
+    pub projected_rank: usize,
+    pub attention_heads_rank: usize,
+    pub projected_shape: &'static str,
+    pub attention_heads_shape: &'static str,
+    pub logical_storage_order: &'static str,
+    pub head_stride_contract: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadViewBlocker {
+    pub blocker: &'static str,
+    pub category: &'static str,
+    pub exact_api_or_surface: &'static str,
+    pub required_before_runtime_execution: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarTypedAttentionHeadViewGate {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub source_gate_status: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub layout: DenseQ8SidecarTypedAttentionHeadViewLayoutContract,
+    pub stages: &'static [DenseQ8SidecarTypedAttentionHeadViewStageContract],
+    pub blockers: &'static [DenseQ8SidecarTypedAttentionHeadViewBlocker],
+    pub receipt_gate: DenseQ8SidecarFusedQProjectionReceiptContract,
+    pub can_represent_q_heads_without_candle_tensor: bool,
+    pub can_feed_current_attention_score_api_without_materialization: bool,
+    pub selected_materialization_point: Option<&'static str>,
+    pub runtime_execution_enabled: bool,
+    pub default_runtime_changed: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub next_required_slice: &'static str,
+}
+
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
     "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
     "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
@@ -2318,6 +2367,92 @@ pub const DENSE_Q8_SIDECAR_TYPED_FUSED_Q_PROJECTION_IMPLEMENTATION_BLOCKERS:
     },
 ];
 
+pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_VIEW_STAGES:
+    &[DenseQ8SidecarTypedAttentionHeadViewStageContract] = &[
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "q_projection_output_slice",
+        consumes: "&mut [f32] rows from the exact packed-Q8 q_proj matvec",
+        produces: "logical [batch, seq, n_heads * head_dim] projection view",
+        storage_or_view_contract: "contiguous row-major projection rows owned by the fused Q consumer workspace",
+        candle_tensor_semantics_required_today: false,
+        optional: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "logical_head_view",
+        consumes: "[batch, seq, n_heads * head_dim] projection view",
+        produces: "[batch, n_heads, seq, head_dim] logical Q-head view",
+        storage_or_view_contract: "head-major logical strides over the same projection storage without a returned intermediate Candle Tensor",
+        candle_tensor_semantics_required_today: false,
+        optional: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "optional_q_norm_handoff",
+        consumes: "[batch, n_heads, seq, head_dim] logical Q-head view",
+        produces: "q_norm-compatible typed buffer or explicit materialization blocker",
+        storage_or_view_contract: "must preserve Qwen per-head q_norm semantics before RoPE",
+        candle_tensor_semantics_required_today: true,
+        optional: true,
+    },
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "q_rope_handoff",
+        consumes: "q_norm output or logical Q-head view plus position",
+        produces: "RoPE-compatible typed Q-head buffer or explicit materialization blocker",
+        storage_or_view_contract: "must preserve split-layout RoPE position, dtype, and trace summaries",
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "trace_workspace_identity",
+        consumes: "projection, logical heads, optional q_norm, and q_rope typed identities",
+        produces: "checkpoint trace/workspace source identity without losing diagnostic surfaces",
+        storage_or_view_contract: "must map to the current TransformerAttentionOutputSourceTensors receipt fields or explicitly block",
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+    DenseQ8SidecarTypedAttentionHeadViewStageContract {
+        stage: "attention_score_handoff",
+        consumes: "typed Q-head buffer after q_norm/RoPE",
+        produces: "prepare_attention_scores-compatible Q input or explicit materialization blocker",
+        storage_or_view_contract: "must preserve [batch, heads, seq, head_dim] score semantics and GQA interaction",
+        candle_tensor_semantics_required_today: true,
+        optional: false,
+    },
+];
+
+pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_VIEW_BLOCKERS:
+    &[DenseQ8SidecarTypedAttentionHeadViewBlocker] = &[
+    DenseQ8SidecarTypedAttentionHeadViewBlocker {
+        blocker: "q_norm_requires_tensor_or_typed_norm",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::apply_qk_norms calls candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+        required_before_runtime_execution: "Add a behavior-equivalent typed q_norm over the logical Q-head buffer or record an explicit single-materialization point before q_norm with Qwen3 Q8_0 before/after receipts.",
+    },
+    DenseQ8SidecarTypedAttentionHeadViewBlocker {
+        blocker: "rope_requires_tensor_or_typed_rope",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::apply_rotary_embeddings calls RotaryEmbedding::apply(&Tensor, position)",
+        required_before_runtime_execution: "Add a typed RoPE path for the logical Q-head buffer that preserves split-layout tables, position indexing, dtype behavior, and trace summaries.",
+    },
+    DenseQ8SidecarTypedAttentionHeadViewBlocker {
+        blocker: "trace_source_identity_requires_tensor_mapping",
+        category: "receipt-safety",
+        exact_api_or_surface: "TransformerAttentionOutputSourceTensors currently stores q_projection, q_heads, q_norm, and q_rope as Candle Tensor values",
+        required_before_runtime_execution: "Define typed trace fingerprints for the Q projection/head/norm/RoPE surfaces without weakening checkpoint comparability or receipt provenance.",
+    },
+    DenseQ8SidecarTypedAttentionHeadViewBlocker {
+        blocker: "attention_scores_require_tensor_or_typed_score_path",
+        category: "API",
+        exact_api_or_surface: "MultiHeadAttention::prepare_attention_scores consumes q as &Tensor and uses Tensor matmul/transpose/dtype operations",
+        required_before_runtime_execution: "Either extend the typed Q-head buffer through attention score computation or prove a single materialization point after RoPE that preserves generated IDs and dense-hook identity.",
+    },
+    DenseQ8SidecarTypedAttentionHeadViewBlocker {
+        blocker: "receipt_safety_evidence",
+        category: "receipt-safety",
+        exact_api_or_surface: "Runtime-adjacent fused Q execution requires repeated Qwen3 Q8_0 before/after appliance receipts",
+        required_before_runtime_execution: "Capture repeated before/after receipts proving identical model SHA, strict tokenizer authority, prompt IDs, generated IDs, decoded text, backend/kernel identity, dense-hook identity, and fallback_used=false.",
+    },
+];
+
 pub fn dense_q8_sidecar_fused_consumer_boundary() -> DenseQ8SidecarFusedConsumerBoundary {
     DenseQ8SidecarFusedConsumerBoundary {
         role: "attention.q_proj.fused_output_consumer",
@@ -2387,6 +2522,37 @@ pub fn dense_q8_sidecar_typed_fused_q_projection_implementation_gate()
         blockers: DENSE_Q8_SIDECAR_TYPED_FUSED_Q_PROJECTION_IMPLEMENTATION_BLOCKERS,
         receipt_gate: contract.receipt,
         next_required_slice: "typed attention-head buffer/view plus q_norm/RoPE/trace/score-consumer API, followed by behavior-preserving Qwen3 Q8_0 before/after receipts",
+    }
+}
+
+pub fn dense_q8_sidecar_typed_attention_head_view_gate() -> DenseQ8SidecarTypedAttentionHeadViewGate
+{
+    let source = dense_q8_sidecar_typed_fused_q_projection_implementation_gate();
+    DenseQ8SidecarTypedAttentionHeadViewGate {
+        role: "attention.q_proj.typed_attention_head_view_gate",
+        status: "contract_defined_runtime_disabled",
+        source_gate_status: source.status,
+        exact_tensor_name: source.exact_tensor_name,
+        exact_tensor_role: source.exact_tensor_role,
+        layout: DenseQ8SidecarTypedAttentionHeadViewLayoutContract {
+            projected_rank: 3,
+            attention_heads_rank: 4,
+            projected_shape: "[batch, seq, n_heads * head_dim]",
+            attention_heads_shape: "[batch, n_heads, seq, head_dim]",
+            logical_storage_order: "projection-row-major-with-head-major-logical-view",
+            head_stride_contract: "head index splits the final projection dimension before logical seq/head_dim addressing",
+        },
+        stages: DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_VIEW_STAGES,
+        blockers: DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_VIEW_BLOCKERS,
+        receipt_gate: source.receipt_gate,
+        can_represent_q_heads_without_candle_tensor: true,
+        can_feed_current_attention_score_api_without_materialization: false,
+        selected_materialization_point: None,
+        runtime_execution_enabled: false,
+        default_runtime_changed: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        next_required_slice: "typed q_norm/RoPE or explicit single-materialization score-handoff boundary plus repeated behavior-preserving Qwen3 Q8_0 receipts",
     }
 }
 
