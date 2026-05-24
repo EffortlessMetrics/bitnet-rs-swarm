@@ -1,0 +1,39 @@
+timestamp = "2026-05-24T15:14:13Z"
+campaign = "intel-a770"
+item = "A770-048"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 624
+branch = "codex/intel-a770/A770-048-device-intermediate-debug"
+head_sha = "fdf3791cb79181d5f066c350c63b99bc00f53aa3"
+merge_sha = "4df3ef080cda27752701dcae461e721db8da3703"
+merged_at = "2026-05-24T15:13:51Z"
+actor = "codex-a770"
+claim_allowed = false
+summary = "Closed A770-048 after PR #624 merged the QK256 device-intermediate frontier diagnostic."
+notes = [
+  "The merged diagnostic classifies the selected QK256 OpenCL device-intermediate frontier as generated_output_qk256_device_intermediate_frontier_debug_output_matches_readback.",
+  "The bounded debug kernel matches the A770 readback while the host policy replay remains one f32 bit away; integer dot, activation sum, adjusted dot, and scale-bit inputs match between host and device.",
+  "No production QK256 dispatch policy, runtime math, answer scoring, sampling, model loading, fallback policy, CPU/A770 parity, answer readiness, speedup, residency, trusted acceleration, full BitNet inference, or production QK256 semantics claim changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-048 classified the selected QK256 device-intermediate frontier for the focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
