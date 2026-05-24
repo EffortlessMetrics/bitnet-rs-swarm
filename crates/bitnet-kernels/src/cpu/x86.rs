@@ -1136,7 +1136,7 @@ mod tests {
         const QK256_PACKED_BYTES: usize = 64;
         let num_blocks = 4;
 
-        use rand::{Rng, SeedableRng};
+        use rand::{RngExt, SeedableRng};
         use rand_chacha::ChaCha8Rng;
         let mut rng = ChaCha8Rng::seed_from_u64(42);
 

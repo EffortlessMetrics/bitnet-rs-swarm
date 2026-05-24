@@ -55,7 +55,7 @@ console = "0.16.1"  # For colored error messages in token parity
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["html_reports"] }
 tempfile = "3.23.0"
-rand = "0.9.2"
+rand = "0.10.1"
 bitnet-tokenizers = { path = "../crates/bitnet-tokenizers", version = "0.2.1-dev" }
 half = "2.7.1"
 serial_test = "3.2.0"

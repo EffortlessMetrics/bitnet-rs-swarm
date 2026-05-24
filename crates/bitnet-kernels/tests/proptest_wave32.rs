@@ -26,7 +26,7 @@ proptest! {
         seed in 0u64..10000,
     ) {
         use rand::SeedableRng;
-        use rand::Rng;
+use rand::RngExt;
         let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
         let input: Vec<f32> = (0..len).map(|_| rng.random_range(-10.0f32..10.0)).collect();
         let output = batched_softmax(&input, 1, len).unwrap();
@@ -212,7 +212,7 @@ proptest! {
         seed in 0u64..10000,
     ) {
         use rand::SeedableRng;
-        use rand::Rng;
+use rand::RngExt;
         let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(seed);
         let input: Vec<f32> = (0..batch * seq_len).map(|_| rng.random_range(-10.0f32..10.0)).collect();
         let output = batched_softmax(&input, batch, seq_len).unwrap();

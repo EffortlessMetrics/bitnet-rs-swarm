@@ -38,7 +38,7 @@ fn test_avx2_dequantize_qk256_property_block_counts() {
         return;
     }
 
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     let mut rng = ChaCha8Rng::seed_from_u64(12345);
 
@@ -117,7 +117,7 @@ fn test_avx2_dequantize_qk256_property_scale_ranges() {
     const QK256_PACKED_BYTES: usize = 64;
     const NUM_BLOCKS: usize = 4;
 
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     let mut rng = ChaCha8Rng::seed_from_u64(54321);
 
@@ -241,7 +241,7 @@ fn test_avx2_dequantize_qk256_property_alignment() {
     const QK256_PACKED_BYTES: usize = 64;
     const NUM_BLOCKS: usize = 3;
 
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     let mut rng = ChaCha8Rng::seed_from_u64(99999);
 

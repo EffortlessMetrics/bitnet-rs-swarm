@@ -6,7 +6,7 @@
 use anyhow::{Context, Result};
 use bitnet_common::{BitNetTensor, Tensor};
 use candle_core::Tensor as CandleTensor;
-use rand::{Rng, RngCore};
+use rand::{Rng, RngExt};
 
 const REPETITION_HISTORY_TARGET_LEN: usize = 1_000;
 const REPETITION_HISTORY_DRAIN_THRESHOLD: usize = REPETITION_HISTORY_TARGET_LEN * 2;
@@ -52,7 +52,7 @@ impl SamplingStrategy {
     }
 
     /// Sample next token from logits distribution
-    pub async fn sample<R: RngCore>(
+    pub async fn sample<R: Rng>(
         &mut self,
         logits: &BitNetTensor,
         rng: &mut R,
@@ -187,7 +187,7 @@ impl SamplingStrategy {
     }
 
     /// Sample from multinomial distribution
-    async fn multinomial_sample<R: RngCore>(
+    async fn multinomial_sample<R: Rng>(
         &self,
         probabilities: &CandleTensor,
         rng: &mut R,

@@ -30,7 +30,7 @@ use bitnet_models::quant::i2s_qk256::{
     QK256_BLOCK, QK256_PACKED_BYTES, code_to_f32, gemv_qk256_row,
 };
 use bitnet_models::quant::i2s_qk256_avx2::gemv_qk256_avx2;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
 /// Tolerance for floating-point comparison
