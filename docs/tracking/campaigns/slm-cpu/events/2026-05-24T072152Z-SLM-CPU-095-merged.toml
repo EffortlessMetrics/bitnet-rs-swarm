@@ -1,0 +1,13 @@
+timestamp = "2026-05-24T07:21:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-095"
+event = "merged"
+actor = "codex"
+pr = 577
+head_sha = "d36745955f73702a17c27c914ead4c019a0ac09c"
+merge_sha = "32afbe490290f7ceb34b639d9f66139fb6b729cc"
+branch = "codex/slm-cpu-095-packed-q8-matvec-scratch"
+summary = "Merged the packed Q8_0 sidecar matvec output-scratch boundary slice. The inner matvec supports caller-owned output slices, while full runtime Tensor output reuse remains blocked by Candle Tensor::from_vec ownership."
+notes = [
+  "Closeout only; no packed-Q8 default promotion, speedup claim, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 work.",
+]
