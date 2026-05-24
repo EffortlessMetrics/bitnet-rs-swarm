@@ -270,7 +270,7 @@ impl MultiHeadAttention {
             "q_proj",
             raw_tensors,
             dense_linear_hooks,
-            workspace.as_deref_mut(),
+            &mut workspace,
         )?;
         let k = self.apply_linear_with_qkv_projection_source(
             x,
@@ -278,7 +278,7 @@ impl MultiHeadAttention {
             "k_proj",
             raw_tensors,
             dense_linear_hooks,
-            workspace.as_deref_mut(),
+            &mut workspace,
         )?;
         let v = self.apply_linear_with_qkv_projection_source(
             x,
@@ -286,7 +286,7 @@ impl MultiHeadAttention {
             "v_proj",
             raw_tensors,
             dense_linear_hooks,
-            workspace,
+            &mut workspace,
         )?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("attention.q_proj", Some(self.layer_idx), &q)?;
@@ -303,7 +303,7 @@ impl MultiHeadAttention {
         proj_name: &str,
         raw_tensors: &std::collections::HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
-        workspace: Option<&mut TransformerForwardWorkspace>,
+        workspace: &mut Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
         let qk256_key =
             format!("layers.{}.attention.{}.weight.qk256_qs", self.layer_idx, proj_name);
@@ -317,7 +317,7 @@ impl MultiHeadAttention {
         let output =
             self.apply_linear(input, linear, proj_name, raw_tensors, dense_linear_hooks)?;
 
-        if let (Some(workspace), Some(source_input)) = (workspace, source_input) {
+        if let (Some(workspace), Some(source_input)) = (workspace.as_mut(), source_input) {
             let dispatch_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();
             let cpu_hot_path_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
             let a770_runtime_after = bitnet_qk256_dispatch::qk256_a770_opencl_runtime_stats();
