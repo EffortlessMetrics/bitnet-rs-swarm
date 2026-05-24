@@ -1,0 +1,35 @@
+timestamp = "2026-05-24T19:37:05Z"
+campaign = "intel-a770"
+item = "A770-052"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-052-host-replay-f32-codegen-ordering"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-052 to inspect host replay f32 codegen and operation ordering after A770-051 classified the selected host expression-order frontier."
+notes = [
+  "A770-052 adds a compact host replay f32 codegen-ordering frontier to the focused CPU/A770 answer-parity receipt using the committed A770-051 host expression-order evidence.",
+  "The slice remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-052 may classify compact host replay f32 codegen and operation-order evidence for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
