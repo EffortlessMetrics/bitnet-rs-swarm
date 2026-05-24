@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T23:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-103"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 661
+head_sha = "41cf774ab6d4e0c4547b9fc240ec1fab535fa238"
+merge_sha = "78a96a70148b32ae5d98bf6357aea0f5b5c893a6"
+merged_at = "2026-05-24T22:45:24Z"
+branch = "codex/slm-cpu-103-typed-qnorm-consumer-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-103 to ready after PR #661 merged the queue definition."
+notes = [
+  "PR #661 queued the typed q_norm/RoPE consumer gate after SLM-CPU-102.",
+  "The next SLM-CPU-103 implementation slice remains ready and must define a typed q_norm/RoPE consumer or record a concrete blocker before any packed-Q8 default-runtime promotion or timing/allocation claim.",
+  "The queue PR made no runtime fused Q execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
