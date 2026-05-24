@@ -91,6 +91,8 @@ const AUTO_NPU_WARM_RESIDENT_ASK_RECEIPT: &str =
 const ANSWER_CORPUS_V2: &str = "ci/quality/lunar-lake-answer-corpus-v2.yaml";
 const REGRESSION_V2_SURFACE_ID: &str = "lunar_lake_regression_v2";
 pub const DEFAULT_ASK_ROUTE: &str = "dense_slm_default_cpu";
+const BITNET_REFERENCE_ROUTE: &str = "bitnet_reference_cpu";
+const BITNET_STRICT_WORKLOAD: &str = "bitnet_strict";
 
 const REQUIRED_CORPUS_V2_PROFILES: &[&str] = &[
     "regression_tiny",
@@ -10929,11 +10931,15 @@ pub fn load_operator_ask_route(
         .iter()
         .find(|route| route.route_id == route_id)
         .with_context(|| format!("operator route `{route_id}` not found"))?;
-    if !matches!(
-        route.workload.as_str(),
-        "ask" | "dense_slm_acceleration_candidate" | "dense_slm_static_graph_candidate"
-    ) {
-        bail!("Lunar Lake ask route has unexpected workload `{}`", route.workload);
+    if let Some(error) = non_executable_operator_ask_route_error(route) {
+        bail!("{error}");
+    }
+    if !is_lunar_lake_ask_executable_workload(&route.workload) {
+        bail!(
+            "Lunar Lake ask route `{}` has unsupported workload `{}`; executable ask workloads are ask, dense_slm_acceleration_candidate, and dense_slm_static_graph_candidate",
+            route.route_id,
+            route.workload
+        );
     }
     validate_lunar_lake_ask_route_runtime(route)?;
     if route.fallback_policy != "strict_no_fallback" {
@@ -10985,6 +10991,34 @@ fn validate_lunar_lake_ask_route_runtime(route: &OperatorRoute) -> Result<()> {
             route.selected_kernel_or_runtime
         ),
     }
+}
+
+fn is_lunar_lake_ask_executable_workload(workload: &str) -> bool {
+    matches!(
+        workload,
+        "ask" | "dense_slm_acceleration_candidate" | "dense_slm_static_graph_candidate"
+    )
+}
+
+fn non_executable_operator_ask_route_error(route: &OperatorRoute) -> Option<String> {
+    (route.route_id == BITNET_REFERENCE_ROUTE || route.workload == BITNET_STRICT_WORKLOAD).then(|| {
+        format!(
+            "Lunar Lake route `{}` is BitNet strict-reference evidence, not an executable `bitnet lunar-lake ask` route; dense SLM ask execution must not stand in for BitNet QK256/I2_S proof",
+            route.route_id
+        )
+    })
+}
+
+fn non_executable_promoted_ask_route_error(
+    route: &RoutePromotion,
+    profile_id: &str,
+) -> Option<String> {
+    (route.route_id == BITNET_REFERENCE_ROUTE).then(|| {
+        format!(
+            "profile `{profile_id}` promotes `{}` as BitNet strict-reference evidence, but `bitnet lunar-lake ask` executes only dense SLM ask routes; keep BitNet QK256/I2_S proof on BitNet-specific CPU reference receipts",
+            route.route_id
+        )
+    })
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -11118,6 +11152,9 @@ pub fn resolve_operator_ask_route_selection(
     };
     let promotion = route_promotion(&ledger, selected_route_id)?;
     validate_auto_selected_promotion(promotion, profile_id)?;
+    if let Some(error) = non_executable_promoted_ask_route_error(promotion, profile_id) {
+        bail!("{error}");
+    }
     let profile_guard = if let Some(route_profile_comparison) = route_profile_comparison {
         Some(validate_ask_route_profile_guard(
             root,
@@ -11180,7 +11217,39 @@ pub fn explain_blocked_operator_ask_route_selection(
         .iter()
         .find(|profile| profile.profile_id == profile_id)
         .with_context(|| format!("auto route profile `{profile_id}` not found in ledger"))?;
-    if profile.promoted_route.is_some() {
+    if let Some(selected_route_id) = profile.promoted_route.as_deref() {
+        if let Some(promotion) =
+            ledger.routes.iter().find(|route| route.route_id == selected_route_id)
+        {
+            if let Some(route_reason) =
+                non_executable_promoted_ask_route_error(promotion, &profile.profile_id)
+            {
+                let (why_not_cpu, why_not_gpu, why_not_npu) =
+                    route_selection_explanations(&ledger, profile, "");
+                let route_profile_comparison = route_profile_comparison
+                    .map(|path| path_string(&resolve_receipt_path(root, path)));
+                return Ok(Some(BlockedOperatorAskRouteSelection {
+                    requested_device,
+                    requested_route,
+                    profile_id: profile.profile_id.clone(),
+                    route_selection_status: "blocked".to_string(),
+                    promotion_status: "promoted_reference_route_not_ask_executable".to_string(),
+                    selection_source: "promotion_ledger_auto_blocked".to_string(),
+                    route_reason,
+                    candidate_routes: profile.candidate_routes.clone(),
+                    why_not_cpu,
+                    why_not_gpu,
+                    why_not_npu,
+                    operator_runbook: blocked_operator_ask_runbook(&profile.profile_id)
+                        .map(str::to_string),
+                    next_required_evidence: blocked_operator_ask_next_required_evidence(
+                        &profile.profile_id,
+                    ),
+                    promotion_ledger: Some(path_string(&ledger_path)),
+                    route_profile_comparison,
+                }));
+            }
+        }
         return Ok(None);
     }
 
@@ -11224,6 +11293,10 @@ pub fn blocked_operator_ask_next_required_evidence(profile_id: &str) -> Vec<Stri
             "rerun telemetry-context --require-battery on battery power before collecting low_power route samples".to_string(),
             "collect before/after battery-mode telemetry around the CPU/GPU/NPU low_power route matrix".to_string(),
             "rebuild the low_power energy proxy, power-profile evidence, strict regression, and operator comparison before any promotion decision".to_string(),
+        ],
+        "bitnet_strict_reference" => vec![
+            "use BitNet-specific CPU reference, parity, generated-token, logit, and I2_S timing receipts for BitNet strict-reference proof".to_string(),
+            "do not use dense SLM ask execution as BitNet QK256/I2_S evidence".to_string(),
         ],
         _ => Vec::new(),
     }
@@ -21901,6 +21974,81 @@ mod tests {
                 .iter()
                 .any(|item| item.contains("telemetry-context --require-battery"))
         );
+        Ok(())
+    }
+
+    #[test]
+    fn auto_ask_bitnet_reference_profile_blocks_as_evidence_only() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_auto_ask_selection_artifacts(temp.path())?;
+
+        let err = resolve_operator_ask_route_selection(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Some(Path::new(ROUTE_PROFILE_COMPARISON)),
+            "auto",
+            "auto",
+            "bitnet_strict_reference",
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(
+            err.contains("profile `bitnet_strict_reference` promotes `bitnet_reference_cpu`"),
+            "got: {err}"
+        );
+        assert!(err.contains("executes only dense SLM ask routes"), "got: {err}");
+        assert!(err.contains("BitNet QK256/I2_S proof"), "got: {err}");
+
+        let blocked = explain_blocked_operator_ask_route_selection(
+            temp.path(),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Some(Path::new(ROUTE_PROFILE_COMPARISON)),
+            "auto",
+            "auto",
+            "bitnet_strict_reference",
+        )?
+        .context("missing blocked BitNet reference explanation")?;
+        assert_eq!(blocked.route_selection_status, "blocked");
+        assert_eq!(blocked.promotion_status, "promoted_reference_route_not_ask_executable");
+        assert!(blocked.route_reason.contains("BitNet strict-reference evidence"));
+        assert!(
+            blocked
+                .next_required_evidence
+                .iter()
+                .any(|item| item.contains("BitNet-specific CPU reference"))
+        );
+        assert!(
+            blocked.why_not_cpu.iter().any(|reason| {
+                reason.contains("route is not promoted for profile `bitnet_strict_reference`")
+            }),
+            "{:?}",
+            blocked.why_not_cpu
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn direct_ask_rejects_bitnet_reference_route_as_evidence_only() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_auto_ask_selection_artifacts(temp.path())?;
+
+        let err = resolve_operator_ask_route_selection(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Some(Path::new(ROUTE_PROFILE_COMPARISON)),
+            "bitnet_reference_cpu",
+            "cpu",
+            "bitnet_strict_reference",
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(err.contains("BitNet strict-reference evidence"), "got: {err}");
+        assert!(err.contains("not an executable `bitnet lunar-lake ask` route"), "got: {err}");
+        assert!(err.contains("dense SLM ask execution must not stand in"), "got: {err}");
         Ok(())
     }
 
