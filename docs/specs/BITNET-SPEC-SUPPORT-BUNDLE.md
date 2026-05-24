@@ -78,6 +78,7 @@ renaming fields requires a schema-version bump.
 ```text
 model_coverage_row
 current_tier
+product_cli_ready
 selected_backend
 selected_route
 fallback_used
