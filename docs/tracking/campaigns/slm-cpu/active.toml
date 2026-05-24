@@ -6209,7 +6209,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-097"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-097-fused-output-consumer-gate"
 stackable = false
 review_mode = "codex_premerge"
