@@ -1,0 +1,38 @@
+timestamp = "2026-05-24T23:23:21Z"
+campaign = "intel-a770"
+item = "A770-055"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen-contract"
+actor = "codex-a770"
+base_main_sha = "8eb35daa76f2572df8c440e8e8d2c9fe01b2dabd"
+claim_allowed = false
+diagnostic_only = true
+summary = "Queued A770-055 to capture compiler-level strict-f32 barrier codegen context after A770-054."
+notes = [
+  "A770-054 classified the selected QK256 host compiler strict-f32 barrier frontier as generated_output_qk256_host_compiler_strict_f32_barrier_frontier_host_compiler_codegen_collapse.",
+  "A770-054 still reported production_policy_change_justified=false and did not change production QK256 dispatch.",
+  "A770-055 is scoped to compiler-level strict-f32 barrier codegen context before any production QK256 policy change.",
+  "This item remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-055 may capture compact compiler-level strict-f32 barrier codegen context for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
