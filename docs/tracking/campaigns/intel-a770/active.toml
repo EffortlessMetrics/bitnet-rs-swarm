@@ -2093,9 +2093,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-053"
-status = "pr_open"
+status = "merged"
 pr = 649
-head_sha = "175d1fc2560a20d6646d1f4fdffcb5c80eafe89c"
+head_sha = "1907cc8e48da454b76f84b495081ef58f42c31b2"
+merge_sha = "7198ee93a95eeb25a1bd5835da330e8e39eb78e1"
+merged_at = "2026-05-24T20:11:51Z"
 branch = "codex/intel-a770/A770-053-strict-f32-barrier-evidence"
 stackable = false
 review_mode = "codex_premerge"
