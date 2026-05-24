@@ -1440,7 +1440,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-042"
-status = "in_progress"
+status = "pr_open"
+pr = 532
+head_sha = "80cdc5e289a53abab57fb33f360bf958c9ae613c"
 branch = "codex/intel-a770/A770-042-qkv-projection-source"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T00:06:00Z"
+campaign = "intel-a770"
+item = "A770-042"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex"
+branch = "codex/intel-a770/A770-042-qkv-projection-source"
+pr = 532
+head_sha = "80cdc5e289a53abab57fb33f360bf958c9ae613c"
+summary = "Refreshed PR #532 onto current swarm main and fixed the core Clippy reborrow warning without changing diagnostic math."
+notes = [
+  "Merged current swarm main after #531 so the A770-042 branch is no longer dirty.",
+  "Resolved generated dashboard conflicts by running campaign generate.",
+  "Kept A770-042 diagnostic-only: no CPU/A770 parity, reference parity, residency, speedup, trusted-partial acceleration, or full BitNet inference claim is promoted.",
+]
