@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T08:39:03Z"
+campaign = "intel-a770"
+item = "A770-046"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-046-output-readback-trace"
+actor = "codex-a770"
+summary = "Queued the next A770 diagnostic after A770-045 classified selected QK256 OpenCL output casting as device value-summary drift."
+notes = [
+  "A770-045 classified the selected QK256 OpenCL output casting frontier as generated_output_qk256_output_casting_frontier_device_value_summary_drift.",
+  "A770-046 is scoped to capture compact selected QK256 OpenCL output value samples or a device readback trace and classify whether the remaining split is device-side evaluation, output casting, host readback serialization, clean replay, or missing context.",
+  "The item does not change runtime math, kernels, dispatch policy, answer scoring, or sampling.",
+  "The item does not promote CPU/A770 parity, reference parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
