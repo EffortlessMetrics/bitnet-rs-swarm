@@ -1,0 +1,29 @@
+timestamp = "2026-05-24T11:13:07Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-060"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-060-post-a770046"
+actor = "codex-lunar-lake"
+claim_allowed = false
+summary = "Started a no-inference Lunar Lake audit refresh after A770-046 implementation and closeout landed."
+notes = [
+  "The refresh classifies #594/#595/#596 as adjacent shared receipt-builder policy hardening only.",
+  "The refresh classifies A770-046/#592 and closeout #598 as adjacent A770 diagnostic/tracker state only.",
+  "LNL258V-POWER-006 remains blocked because the machine is still on AC power and lacks real battery-mode low_power evidence.",
+]
+
+[claim_boundary]
+may_claim = [
+  "The Lunar Lake audit/checklist refresh records current swarm main through A770-046 closeout #598.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run.",
+  "A Lunar Lake route was promoted.",
+  "Battery-mode low_power evidence is available.",
+  "A770-046 is Lunar Lake route evidence.",
+  "A770-046 is a shared BitNet semantic fix.",
+  "A770-046 makes Lunar Lake semantic-intake stale.",
+  "BitNet QK256/I2_S behavior changed.",
+]
