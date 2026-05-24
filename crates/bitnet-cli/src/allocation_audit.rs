@@ -9,9 +9,10 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use bitnet_transformer::{
-    CANDLE_LOGITS_EXACT_BLOCKING_OPS, CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
-    CANDLE_LOGITS_REQUIRED_MISSING_API, CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
-    CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE, CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+    CANDLE_LOGITS_EXACT_BLOCKING_OPS, CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS,
+    CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE, CANDLE_LOGITS_REQUIRED_MISSING_API,
+    CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS, CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
+    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
 };
 
 static ALLOCATION_AUDIT_ENABLED: AtomicBool = AtomicBool::new(false);
@@ -365,11 +366,20 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "tied_embedding_matmul_involved": true,
                 "host_logits_extraction_involved_when_requested": true,
                 "exact_blocking_ops": CANDLE_LOGITS_EXACT_BLOCKING_OPS,
+                "fused_selection_blocking_ops": CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS,
                 "public_api_return_type": CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE,
                 "required_missing_api": CANDLE_LOGITS_REQUIRED_MISSING_API,
                 "public_api_accepts_output_storage": false,
                 "backend_internal_in_place_api_exposed": false,
                 "can_fill_caller_output_storage": false,
+                "device_argmax_available_after_logits_tensor": true,
+                "topk_sort_available_after_logits_tensor": true,
+                "can_fuse_output_head_and_selection": false,
+                "selection_boundary": {
+                    "current_safe_path": "deterministic no-penalty greedy can call Tensor::argmax after TransformerModel::logits has already produced an owned full logits Tensor",
+                    "topk_diagnostic_path": "Tensor::sort_last_dim / Tensor::arg_sort_last_dim can reduce host transfer for top-k diagnostics only after full logits Tensor materialization",
+                    "remaining_blocker": "no public Candle output-head projection API fuses lm_head matmul with argmax/top-k or writes into caller-provided output storage"
+                },
                 "prior_cleanup_preserved": [
                     "SLM-CPU-024 greedy no-penalty sampler fast path avoids sampler logits scratch copying",
                     "SLM-CPU-025 deterministic no-penalty steps use direct tensor argmax where exact",
@@ -707,6 +717,13 @@ mod tests {
         assert_eq!(boundary["status"], "logits_output_storage_blocked_by_candle_tensor_ops");
         assert_eq!(boundary["public_api_accepts_output_storage"], false);
         assert_eq!(boundary["can_fill_caller_output_storage"], false);
+        assert_eq!(boundary["device_argmax_available_after_logits_tensor"], true);
+        assert_eq!(boundary["topk_sort_available_after_logits_tensor"], true);
+        assert_eq!(boundary["can_fuse_output_head_and_selection"], false);
+        assert_eq!(
+            boundary["selection_boundary"]["remaining_blocker"],
+            "no public Candle output-head projection API fuses lm_head matmul with argmax/top-k or writes into caller-provided output storage"
+        );
         assert_eq!(boundary["required_missing_api"], CANDLE_LOGITS_REQUIRED_MISSING_API);
     }
 }

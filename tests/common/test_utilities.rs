@@ -240,9 +240,9 @@ impl TestUtilities {
             }
             DataPattern::Sequential => (0..size).map(|i| (i % 256) as u8).collect(),
             DataPattern::Random(seed) => {
-                use rand::{Rng, SeedableRng};
+                use rand::{RngExt, SeedableRng};
                 let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-                (0..size).map(|_| rng.gen()).collect()
+                (0..size).map(|_| rng.random()).collect()
             }
         }
     }

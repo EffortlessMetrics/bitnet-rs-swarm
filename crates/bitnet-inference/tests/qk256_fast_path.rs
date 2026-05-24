@@ -35,7 +35,7 @@ use bitnet_common::Result;
 fn test_qk256_dequant_correctness() {
     use bitnet_kernels::KernelProvider;
     use bitnet_kernels::cpu::x86::Avx2Kernel;
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     let kernel = Avx2Kernel;
     if !kernel.is_available() {
@@ -125,7 +125,7 @@ fn test_qk256_deterministic_inference() -> Result<()> {
         eprintln!("Skipping deterministic test: AVX2 not available");
         return Ok(());
     }
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     let mut rng = ChaCha8Rng::seed_from_u64(999999);
     const QK256_PACKED_BYTES: usize = 64;

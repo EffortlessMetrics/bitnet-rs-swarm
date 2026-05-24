@@ -159,10 +159,10 @@ fn simulate_bitnet_inference(input: Box<dyn Tensor>) -> Result<Box<dyn Tensor>> 
     let output_shape = vec![batch_size, vocab_size];
 
     // Generate random logits for demonstration
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
+    use rand::RngExt;
+    let mut rng = rand::rng();
     let logits: Vec<f32> = (0..batch_size * vocab_size)
-        .map(|_| rng.gen_range(-5.0..5.0))
+        .map(|_| rng.random_range(-5.0..5.0))
         .collect();
 
     Ok(Box::new(BitNetTensorWrapper {

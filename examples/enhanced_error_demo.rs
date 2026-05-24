@@ -330,7 +330,7 @@ mod mock_testing {
         }
 
         pub fn create_error_report(&self) -> ErrorReport {
-            use rand::{RngCore, SeedableRng};
+            use rand::{Rng, SeedableRng};
             let mut rng = rand::rngs::StdRng::seed_from_u64(0xB17_0E7);
             ErrorReport {
                 error_id: format!("ERR-{:08X}", rng.next_u32()),

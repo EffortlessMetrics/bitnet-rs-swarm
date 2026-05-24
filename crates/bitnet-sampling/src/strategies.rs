@@ -9,7 +9,7 @@ use bitnet_logits::{
     apply_min_p, apply_temperature, apply_top_k, apply_top_p, apply_typical, argmax,
     softmax_in_place,
 };
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::fmt;
 use tracing::debug;

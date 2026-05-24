@@ -4,7 +4,7 @@
 //! from GGUF files or generate deterministic dummy weights for testing.
 
 use anyhow::{Context, Result};
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::path::Path;
 

@@ -1,0 +1,85 @@
+{
+  "artifact_kind": "slm_cpu_fused_selection_boundary",
+  "work_item": "SLM-CPU-093",
+  "created_utc": "2026-05-24T03:20:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "behavior_oracle": {
+    "source": "established Qwen3 Q8_0 Kaby appliance receipts",
+    "must_preserve": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "scope": "logits/output-head fused token selection",
+  "classification": {
+    "status": "fused_selection_blocked_by_candle_output_head_materialization",
+    "current_boundary": "TransformerModel::logits materializes an owned full logits Tensor before argmax or top-k selection can run",
+    "operation_family": "candle output-head projection plus token selection",
+    "operation_detail": "lm_head.forward_or_tied_embedding_matmul_then_argmax_or_sort",
+    "lm_head_forward_involved": true,
+    "tied_embedding_matmul_involved": true,
+    "device_argmax_available_after_logits_tensor": true,
+    "topk_sort_available_after_logits_tensor": true,
+    "can_fuse_output_head_and_selection": false,
+    "exact_blocking_ops": [
+      "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::matmul(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::reshape(&self, shape) -> Result<Tensor>",
+      "Tensor::to_vec1::<f32>(&self) -> Result<Vec<f32>> when host logits extraction is requested"
+    ],
+    "fused_selection_blocking_ops": [
+      "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+      "Tensor::matmul(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+      "Tensor::argmax(&self, dim) -> Result<Tensor> selects after full logits Tensor materialization",
+      "Tensor::sort_last_dim(&self, asc) -> Result<(Tensor, Tensor)> sorts after full logits Tensor materialization",
+      "Tensor::arg_sort_last_dim(&self, asc) -> Result<Tensor> sorts indices after full logits Tensor materialization"
+    ],
+    "public_api_return_type": "Result<Tensor>",
+    "public_api_accepts_output_storage": false,
+    "backend_internal_in_place_api_exposed": false,
+    "can_fill_caller_output_storage": false,
+    "required_missing_api": "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor"
+  },
+  "prior_cleanup_preserved": [
+    "SLM-CPU-024 greedy no-penalty sampler fast path avoids sampler logits scratch copying",
+    "SLM-CPU-025 deterministic no-penalty steps use direct tensor argmax where exact",
+    "SLM-CPU-026 reuses host logits scratch for default repetition-penalty decode steps",
+    "SLM-CPU-091 classifies the remaining model.logits owned Tensor boundary"
+  ],
+  "result": {
+    "runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "packed_q8_sidecar_promoted": false,
+    "full_host_logits_vec_required_for_greedy_no_penalty": false,
+    "owned_full_logits_tensor_still_required": true,
+    "next_safe_change": "add or adopt a behavior-preserving output-head projection API that fuses matmul with argmax/top-k or writes logits into caller-provided storage, then prove Qwen3 Q8_0 before/after behavior-equivalent receipts"
+  },
+  "claim_boundary": {
+    "no_sustained_throughput_claim": true,
+    "no_broad_answer_quality_claim": true,
+    "no_q4_q5_runtime_support_claim": true,
+    "no_server_claim": true,
+    "no_gpu_npu_openvino_uhd620_claim": true,
+    "no_qwen35_claim": true,
+    "no_bitnet_qk256_claim": true
+  }
+}
