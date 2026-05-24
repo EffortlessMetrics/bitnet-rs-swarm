@@ -118,6 +118,13 @@ execution remains disabled, and no allocation, timing, sustained-throughput,
 Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim is
 made.
 
+SLM-CPU-103 is queued as the next typed q_norm/RoPE consumer gate. It should
+either define a behavior-preserving typed q_norm/RoPE consumer or record the
+exact Tensor API, lifetime, layout, accumulator-order, trace identity,
+score-handoff, or receipt-safety blocker that still prevents safe fused consumer
+execution. It remains bound to the same Qwen3 Q8_0 and Qwen2.5 Q8_0 behavior
+oracles before any allocation or timing claim.
+
 ## Thread Envelope
 
 The thread envelope is a bounded single-run comparison. Generated IDs are stable

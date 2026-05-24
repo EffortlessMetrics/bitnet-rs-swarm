@@ -1,0 +1,15 @@
+timestamp = "2026-05-24T22:32:12Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-103"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 661
+branch = "codex/slm-cpu-103-typed-qnorm-consumer-gate"
+head_sha = "cf32b42beffaa0af8015affc1f9762f843c8abe3"
+actor = "codex"
+summary = "Opened PR #661 to queue SLM-CPU-103 as the typed q_norm/RoPE consumer gate."
+notes = [
+  "The PR is tracker and dashboard scoped.",
+  "Runtime fused Q execution remains disabled and no allocation or timing claim is made.",
+]
