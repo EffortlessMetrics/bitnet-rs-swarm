@@ -25,6 +25,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Logits/output-head boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json` | Classifies the remaining `model.logits` / output-head boundary as owned Candle Tensor output plus optional host extraction, without claiming a runtime optimization |
 | Runtime output tensor storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json` | Records that inner packed-Q8 matvec helpers can fill caller-owned slices, but full runtime Tensor output reuse remains blocked by public Candle owned-storage construction |
 | Fused output consumer boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-098-fused-output-consumer-boundary.json` | Classifies the exact `attention.q_proj` fused-consumer boundary as blocked by downstream Candle Tensor consumers unless a typed fused Q projection consumer owns reshape, q_norm, RoPE, trace/workspace identity, and attention-head handoff semantics |
+| Typed fused Q consumer contract | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-099-typed-fused-q-consumer-contract.json` | Defines the design-only API and receipt-safety contract for a future exact `attention.q_proj` fused consumer while keeping runtime execution, allocation claims, and speed claims disabled |
 
 All rows use:
 
@@ -43,12 +44,13 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-096 runtime output Tensor storage
-gate. It does not run new inference or add a runtime optimization. It
+This refresh is current through the SLM-CPU-099 typed fused Q consumer contract.
+It does not run new inference or add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
-logits/output-head boundary, and the packed-Q8 caller-output-slice helper gate.
+logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
+the typed fused Q projection consumer contract.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -76,6 +78,17 @@ RoPE, trace/workspace identity, and attention-head handoff. A future improvement
 must design a typed fused Q projection consumer for those semantics before
 claiming allocation or timing improvement, and remains before/after receipt gated
 by the same Qwen3 Q8_0 behavior oracle.
+
+SLM-CPU-099 defines that contract as a machine-checkable, design-only surface.
+The exact tensor remains `layers.0.attention.q_proj.weight`, and the contract
+requires a future fused consumer to own the packed-Q8 matvec output slice,
+q-projection reshape, transpose, optional q_norm, RoPE, trace/workspace identity,
+and attention-head handoff. Runtime fused consumer execution remains disabled,
+intermediate returned Candle Tensor avoidance is not active, and allocation or
+speed claims remain blocked until repeated before/after Qwen3 Q8_0 receipts
+preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs,
+decoded text, backend/kernel identity, dense hook identity, and
+`fallback_used=false`.
 
 ## Thread Envelope
 
@@ -1686,6 +1699,42 @@ This slice does not change the default runtime, promote `packed_q8_sidecar`,
 claim allocation improvement, claim speedup, claim sustained 8250U throughput,
 broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
 or BitNet QK256/I2_S paths.
+
+## SLM-CPU-099 Typed Fused Q Consumer Contract
+
+SLM-CPU-099 follows the SLM-CPU-098 fused-consumer boundary classification. It
+does not implement a fused runtime path. It defines the narrow contract a future
+implementation must satisfy before it may avoid the returned Candle `Tensor` at
+the exact Q projection boundary:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-099-typed-fused-q-consumer-contract.json
+exact_tensor = layers.0.attention.q_proj.weight
+role = attention.q_proj.typed_fused_consumer_contract
+status = contract_defined_runtime_disabled
+runtime_execution_enabled = false
+intermediate_returned_candle_tensor_allowed = false
+```
+
+The contract orders the required downstream stages:
+
+```text
+packed_q8_matvec_output_slice
+q_proj_reshape
+q_proj_transpose
+optional_q_norm
+q_rope
+trace_workspace_identity
+attention_head_handoff
+```
+
+Any later runtime implementation remains gated by repeated before/after receipts
+that preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated
+IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and
+`fallback_used=false`. This slice does not change the default runtime, promote
+`packed_q8_sidecar`, prove allocation reduction, claim speedup, claim sustained
+8250U throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO,
+UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
 ## SLM-CPU-081 Repeated Timing Gate
 
