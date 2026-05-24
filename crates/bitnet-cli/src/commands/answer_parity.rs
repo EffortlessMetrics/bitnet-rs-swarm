@@ -323,6 +323,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_output_casting_frontier =
+        build_generated_output_qk256_output_casting_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -428,6 +436,7 @@ fn build_answer_parity_receipt(
         "generated_output_qkv_projection_source_frontier": generated_output_qkv_projection_source_frontier,
         "generated_output_qkv_projection_dispatch_replay_frontier": generated_output_qkv_projection_dispatch_replay_frontier,
         "generated_output_qk256_numeric_policy_frontier": generated_output_qk256_numeric_policy_frontier,
+        "generated_output_qk256_output_casting_frontier": generated_output_qk256_output_casting_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -5282,6 +5291,68 @@ fn build_generated_output_qk256_numeric_policy_frontier(
     })
 }
 
+fn build_generated_output_qk256_output_casting_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_output_casting_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_output_casting_missing_context");
+        if classification != "generated_output_qk256_output_casting_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_output_casting_missing_context",
+        "generated_output_qk256_output_casting_receipt_shape_serialization",
+        "generated_output_qk256_output_casting_readback_byte_count",
+        "generated_output_qk256_output_casting_device_value_summary_drift",
+        "generated_output_qk256_output_casting_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_output_casting_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_output_casting_",
+        "generated_output_qk256_output_casting_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_output_casting_context_available": rows.iter().any(|row| {
+            row["qk256_output_casting_context_available"].as_bool().unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_output_casting_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -5649,6 +5720,258 @@ fn generated_output_qk256_numeric_policy_context_row(
     })
 }
 
+fn generated_output_qk256_output_casting_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let numeric_row = generated_output_qk256_numeric_policy_row(id, left_case, right_case);
+    let numeric_classification = numeric_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_numeric_policy_missing_context");
+
+    if numeric_classification == "generated_output_qk256_numeric_policy_not_applicable" {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_output_casting_not_applicable",
+            "reason": "qk256_numeric_policy_not_applicable",
+            "qk256_numeric_policy_classification": numeric_row["classification"],
+        });
+    }
+    if numeric_classification == "generated_output_qk256_numeric_policy_clean" {
+        return generated_output_qk256_output_casting_context_row(
+            id,
+            "generated_output_qk256_output_casting_clean",
+            Value::Null,
+            numeric_row,
+        );
+    }
+    if numeric_classification
+        != "generated_output_qk256_numeric_policy_output_casting_serialization"
+    {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_output_casting_not_applicable",
+            "reason": "qk256_numeric_policy_not_output_casting_serialization",
+            "qk256_numeric_policy_classification": numeric_row["classification"],
+        });
+    }
+
+    let Some(left_replay) = numeric_row.get("left_replay") else {
+        return generated_output_qk256_output_casting_missing_context_row(
+            id,
+            "left_replay_missing",
+            numeric_row,
+        );
+    };
+    let Some(right_replay) = numeric_row.get("right_replay") else {
+        return generated_output_qk256_output_casting_missing_context_row(
+            id,
+            "right_replay_missing",
+            numeric_row,
+        );
+    };
+
+    let left_summary = qk256_output_casting_replay_summary(left_replay);
+    let right_summary = qk256_output_casting_replay_summary(right_replay);
+
+    let left_classification = qk256_output_casting_replay_classification(&left_summary);
+    let right_classification = qk256_output_casting_replay_classification(&right_summary);
+    let classification =
+        qk256_output_casting_pair_classification(left_classification, right_classification);
+
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": if classification == "generated_output_qk256_output_casting_missing_context" {
+            json!("output_casting_summary_missing")
+        } else {
+            Value::Null
+        },
+        "first_mismatch_index": numeric_row["first_mismatch_index"],
+        "target_layer_idx": numeric_row["target_layer_idx"],
+        "projection": numeric_row["projection"],
+        "qkv_projection_dispatch_replay_classification": numeric_row["qkv_projection_dispatch_replay_classification"],
+        "qk256_numeric_policy_classification": numeric_row["classification"],
+        "qk256_output_casting_context_available":
+            classification != "generated_output_qk256_output_casting_missing_context",
+        "left": left_summary,
+        "right": right_summary,
+        "next_diagnostic": qk256_output_casting_next_diagnostic(classification),
+    })
+}
+
+fn generated_output_qk256_output_casting_missing_context_row(
+    id: &str,
+    reason: &str,
+    numeric_row: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": "generated_output_qk256_output_casting_missing_context",
+        "reason": reason,
+        "qk256_numeric_policy_classification": numeric_row["classification"],
+        "qk256_output_casting_context_available": false,
+        "left_replay": numeric_row["left_replay"],
+        "right_replay": numeric_row["right_replay"],
+        "next_diagnostic": qk256_output_casting_next_diagnostic(
+            "generated_output_qk256_output_casting_missing_context",
+        ),
+    })
+}
+
+fn generated_output_qk256_output_casting_context_row(
+    id: &str,
+    classification: &str,
+    reason: Value,
+    numeric_row: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "first_mismatch_index": numeric_row["first_mismatch_index"],
+        "target_layer_idx": numeric_row["target_layer_idx"],
+        "projection": numeric_row["projection"],
+        "qk256_numeric_policy_classification": numeric_row["classification"],
+        "qk256_output_casting_context_available": true,
+        "next_diagnostic": qk256_output_casting_next_diagnostic(classification),
+    })
+}
+
+fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
+    let policy = &replay["opencl_policy_output"];
+    let a770 = &replay["a770_output"];
+    let policy_value_count = policy["value_count"].as_u64();
+    let a770_value_count = a770["value_count"].as_u64();
+    let device_to_host_bytes = replay["a770"]["device_to_host_bytes"].as_u64();
+    let expected_device_to_host_bytes = a770_value_count.map(|count| count.saturating_mul(4));
+    let device_to_host_byte_count_match =
+        match (device_to_host_bytes, expected_device_to_host_bytes) {
+            (Some(actual), Some(expected)) => Some(actual == expected),
+            _ => None,
+        };
+    let shape_match = match (policy["shape"].as_array(), a770["shape"].as_array()) {
+        (Some(policy_shape), Some(a770_shape)) => Some(policy_shape == a770_shape),
+        _ => None,
+    };
+    let value_count_match = match (policy_value_count, a770_value_count) {
+        (Some(policy_count), Some(a770_count)) => Some(policy_count == a770_count),
+        _ => None,
+    };
+    let finite_count_match = match (policy["finite_count"].as_u64(), a770["finite_count"].as_u64())
+    {
+        (Some(policy_count), Some(a770_count)) => Some(policy_count == a770_count),
+        _ => None,
+    };
+    let nan_count_match = match (policy["nan_count"].as_u64(), a770["nan_count"].as_u64()) {
+        (Some(policy_count), Some(a770_count)) => Some(policy_count == a770_count),
+        _ => None,
+    };
+    let infinite_count_match =
+        match (policy["infinite_count"].as_u64(), a770["infinite_count"].as_u64()) {
+            (Some(policy_count), Some(a770_count)) => Some(policy_count == a770_count),
+            _ => None,
+        };
+    let sha_match = optional_json_sha_eq(policy, a770);
+    let min_abs_delta = number_abs_delta(&policy["min"], &a770["min"]);
+    let max_abs_delta = number_abs_delta(&policy["max"], &a770["max"]);
+    let mean_abs_delta = number_abs_delta(&policy["mean"], &a770["mean"]);
+    let rms_abs_delta = number_abs_delta(&policy["rms"], &a770["rms"]);
+    let summary_available = [
+        shape_match,
+        value_count_match,
+        finite_count_match,
+        nan_count_match,
+        infinite_count_match,
+        sha_match,
+        device_to_host_byte_count_match,
+    ]
+    .iter()
+    .all(Option::is_some);
+
+    json!({
+        "summary_available": summary_available,
+        "policy_output": {
+            "sha256_f32_le": policy["sha256_f32_le"],
+            "shape": policy["shape"],
+            "value_count": policy["value_count"],
+            "finite_count": policy["finite_count"],
+            "nan_count": policy["nan_count"],
+            "infinite_count": policy["infinite_count"],
+            "min": policy["min"],
+            "max": policy["max"],
+            "mean": policy["mean"],
+            "rms": policy["rms"],
+        },
+        "a770_output": {
+            "sha256_f32_le": a770["sha256_f32_le"],
+            "shape": a770["shape"],
+            "value_count": a770["value_count"],
+            "finite_count": a770["finite_count"],
+            "nan_count": a770["nan_count"],
+            "infinite_count": a770["infinite_count"],
+            "min": a770["min"],
+            "max": a770["max"],
+            "mean": a770["mean"],
+            "rms": a770["rms"],
+        },
+        "shape_match": shape_match,
+        "value_count_match": value_count_match,
+        "finite_count_match": finite_count_match,
+        "nan_count_match": nan_count_match,
+        "infinite_count_match": infinite_count_match,
+        "device_to_host_bytes": device_to_host_bytes,
+        "expected_device_to_host_bytes": expected_device_to_host_bytes,
+        "device_to_host_byte_count_match": device_to_host_byte_count_match,
+        "sha256_f32_le_match": sha_match,
+        "min_abs_delta": min_abs_delta,
+        "max_abs_delta": max_abs_delta,
+        "mean_abs_delta": mean_abs_delta,
+        "rms_abs_delta": rms_abs_delta,
+    })
+}
+
+fn qk256_output_casting_replay_classification(summary: &Value) -> &'static str {
+    if !summary["summary_available"].as_bool().unwrap_or(false) {
+        return "generated_output_qk256_output_casting_missing_context";
+    }
+    if summary["shape_match"].as_bool() == Some(false)
+        || summary["value_count_match"].as_bool() == Some(false)
+        || summary["finite_count_match"].as_bool() == Some(false)
+        || summary["nan_count_match"].as_bool() == Some(false)
+        || summary["infinite_count_match"].as_bool() == Some(false)
+    {
+        return "generated_output_qk256_output_casting_receipt_shape_serialization";
+    }
+    if summary["device_to_host_byte_count_match"].as_bool() == Some(false) {
+        return "generated_output_qk256_output_casting_readback_byte_count";
+    }
+    if summary["sha256_f32_le_match"].as_bool() == Some(false) {
+        return "generated_output_qk256_output_casting_device_value_summary_drift";
+    }
+    "generated_output_qk256_output_casting_clean"
+}
+
+fn qk256_output_casting_pair_classification(
+    left_classification: &'static str,
+    right_classification: &'static str,
+) -> &'static str {
+    let priority = [
+        "generated_output_qk256_output_casting_missing_context",
+        "generated_output_qk256_output_casting_receipt_shape_serialization",
+        "generated_output_qk256_output_casting_readback_byte_count",
+        "generated_output_qk256_output_casting_device_value_summary_drift",
+        "generated_output_qk256_output_casting_clean",
+    ];
+    priority
+        .into_iter()
+        .find(|classification| {
+            *classification == left_classification || *classification == right_classification
+        })
+        .unwrap_or("generated_output_qk256_output_casting_missing_context")
+}
+
 fn qkv_projection_dispatch_replay_available(replay: &Value) -> bool {
     replay["source_context_available"].as_bool().unwrap_or(false)
         && replay["cpu_output"]["sha256_f32_le"].as_str().is_some()
@@ -5663,18 +5986,9 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "cols": replay["cols"],
         "row_stride_bytes": replay["row_stride_bytes"],
         "inline_scale": replay["inline_scale"],
-        "cpu_output": {
-            "sha256_f32_le": replay["cpu_output"]["sha256_f32_le"],
-            "rms": replay["cpu_output"]["rms"],
-        },
-        "opencl_policy_output": {
-            "sha256_f32_le": replay["opencl_policy_output"]["sha256_f32_le"],
-            "rms": replay["opencl_policy_output"]["rms"],
-        },
-        "a770_output": {
-            "sha256_f32_le": replay["a770_output"]["sha256_f32_le"],
-            "rms": replay["a770_output"]["rms"],
-        },
+        "cpu_output": qkv_projection_dispatch_replay_tensor_summary(&replay["cpu_output"]),
+        "opencl_policy_output": qkv_projection_dispatch_replay_tensor_summary(&replay["opencl_policy_output"]),
+        "a770_output": qkv_projection_dispatch_replay_tensor_summary(&replay["a770_output"]),
         "cpu_a770_output_sha256_match": replay["cpu_a770_output_sha256_match"],
         "cpu_opencl_policy_output_sha256_match": replay["cpu_opencl_policy_output_sha256_match"],
         "opencl_policy_a770_output_sha256_match": replay["opencl_policy_a770_output_sha256_match"],
@@ -5684,6 +5998,21 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "numeric_policy": replay["numeric_policy"],
         "cpu": replay["cpu"],
         "a770": replay["a770"],
+    })
+}
+
+fn qkv_projection_dispatch_replay_tensor_summary(tensor: &Value) -> Value {
+    json!({
+        "sha256_f32_le": tensor["sha256_f32_le"],
+        "shape": tensor["shape"],
+        "value_count": tensor["value_count"],
+        "finite_count": tensor["finite_count"],
+        "nan_count": tensor["nan_count"],
+        "infinite_count": tensor["infinite_count"],
+        "min": tensor["min"],
+        "max": tensor["max"],
+        "mean": tensor["mean"],
+        "rms": tensor["rms"],
     })
 }
 
@@ -6027,6 +6356,28 @@ fn qk256_numeric_policy_next_diagnostic(classification: &str) -> &'static str {
         "generated_output_qk256_numeric_policy_frontier_missing_context"
         | "generated_output_qk256_numeric_policy_missing_context" => {
             "rerun focused receipts with QK256 numeric policy replay context enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_output_casting_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_output_casting_frontier_device_value_summary_drift"
+        | "generated_output_qk256_output_casting_device_value_summary_drift" => {
+            "capture selected QK256 OpenCL output value samples or device readback trace"
+        }
+        "generated_output_qk256_output_casting_frontier_readback_byte_count"
+        | "generated_output_qk256_output_casting_readback_byte_count" => {
+            "inspect selected QK256 OpenCL device-to-host byte count and output row shape"
+        }
+        "generated_output_qk256_output_casting_frontier_receipt_shape_serialization"
+        | "generated_output_qk256_output_casting_receipt_shape_serialization" => {
+            "inspect selected QK256 OpenCL output shape and receipt serialization"
+        }
+        "generated_output_qk256_output_casting_frontier_missing_context"
+        | "generated_output_qk256_output_casting_missing_context" => {
+            "rerun focused receipts with QK256 output summary context enabled"
         }
         _ => "none",
     }
@@ -7027,9 +7378,9 @@ mod tests {
             "cols": 2560,
             "row_stride_bytes": 640,
             "inline_scale": 0.25,
-            "cpu_output": final_block_tensor_fixture(cpu_sha, cpu_rms),
-            "opencl_policy_output": final_block_tensor_fixture(opencl_policy_sha, opencl_policy_rms),
-            "a770_output": final_block_tensor_fixture(a770_sha, a770_rms),
+            "cpu_output": qkv_replay_tensor_fixture(cpu_sha, cpu_rms),
+            "opencl_policy_output": qkv_replay_tensor_fixture(opencl_policy_sha, opencl_policy_rms),
+            "a770_output": qkv_replay_tensor_fixture(a770_sha, a770_rms),
             "cpu_a770_output_sha256_match": cpu_sha == a770_sha,
             "cpu_opencl_policy_output_sha256_match": cpu_sha == opencl_policy_sha,
             "opencl_policy_a770_output_sha256_match": opencl_policy_sha == a770_sha,
@@ -7066,6 +7417,22 @@ mod tests {
         })
     }
 
+    fn qkv_replay_tensor_fixture(sha: &str, rms: f64) -> Value {
+        json!({
+            "available": true,
+            "shape": [1, 1, 2560],
+            "value_count": 2560,
+            "finite_count": 2560,
+            "nan_count": 0,
+            "infinite_count": 0,
+            "min": -5.0,
+            "max": 6.0,
+            "mean": 0.125,
+            "sha256_f32_le": sha,
+            "rms": rms,
+        })
+    }
+
     fn with_qkv_projection_dispatch_replay(
         mut source: Value,
         cpu_sha: &str,
@@ -7098,6 +7465,96 @@ mod tests {
         );
         source["dispatch_replay_error"] = Value::Null;
         source
+    }
+
+    fn with_qkv_projection_dispatch_replay_value(mut source: Value, replay: Value) -> Value {
+        source["dispatch_replay"] = replay;
+        source["dispatch_replay_error"] = Value::Null;
+        source
+    }
+
+    fn qk256_output_casting_report(left_replay: Value, right_replay: Value) -> Value {
+        let left_source = attention_output_source_fixture(0, 1.0);
+        let mut right_source = attention_output_source_fixture(0, 1.5);
+        right_source["q_projection"] = final_block_tensor_fixture("a770-replay-output", 1.5);
+
+        let scalar_logits = with_qkv_projection_sources(
+            with_attention_output_sources(
+                with_transformer_block_source_stack(
+                    logits_first_mismatch_margin_left_with_model_forward_source(
+                        "left-hidden",
+                        "same-forward",
+                        "left-hidden",
+                        "same-prior-layer",
+                        "same-forward",
+                    ),
+                    vec![transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "left-layer0-attention",
+                        "left-layer0-residual",
+                        "left-layer0-ffn",
+                        "left-layer0-output",
+                        1.0,
+                    )],
+                ),
+                vec![left_source],
+            ),
+            vec![with_qkv_projection_dispatch_replay_value(
+                qkv_projection_source_fixture(
+                    0,
+                    "q_proj",
+                    "same-projection-input",
+                    "cpu-replay-output",
+                    "cpu_qk256_reference",
+                    0,
+                    1,
+                    0,
+                    1.0,
+                ),
+                left_replay,
+            )],
+        );
+        let a770_logits = with_qkv_projection_sources(
+            with_attention_output_sources(
+                with_transformer_block_source_stack(
+                    logits_first_mismatch_margin_right_with_model_forward_source(
+                        "right-hidden",
+                        "same-forward",
+                        "right-hidden",
+                        "same-prior-layer",
+                        "same-forward",
+                    ),
+                    vec![transformer_block_source_fixture(
+                        0,
+                        "same-layer0-input",
+                        "right-layer0-attention",
+                        "right-layer0-residual",
+                        "right-layer0-ffn",
+                        "right-layer0-output",
+                        1.5,
+                    )],
+                ),
+                vec![right_source],
+            ),
+            vec![with_qkv_projection_dispatch_replay_value(
+                qkv_projection_source_fixture(
+                    0,
+                    "q_proj",
+                    "same-projection-input",
+                    "a770-replay-output",
+                    "a770_opencl_qk256_contribution",
+                    1,
+                    0,
+                    1,
+                    1.5,
+                ),
+                right_replay,
+            )],
+        );
+        let scalar = receipt("i2_s-avx2-reference", &[4, 5, 6], "4 5 6", scalar_logits);
+        let a770 = a770_receipt(&[4, 5, 7], "4 5 7", a770_logits);
+        build_generic_report(&scalar, &a770)
     }
 
     fn with_qkv_projection_sources(mut logits: Value, sources: Vec<Value>) -> Value {
@@ -9224,6 +9681,102 @@ mod tests {
         );
         assert_eq!(frontier["rows"][0]["left_cpu_opencl_policy_output_match"], true);
         assert_eq!(frontier["rows"][0]["right_opencl_policy_a770_output_match"], false);
+
+        let casting_frontier = &report["generated_output_qk256_output_casting_frontier"];
+        assert_eq!(
+            casting_frontier["classification"],
+            "generated_output_qk256_output_casting_frontier_device_value_summary_drift"
+        );
+        assert_eq!(
+            casting_frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_casting_device_value_summary_drift"
+        );
+        assert_eq!(casting_frontier["rows"][0]["left"]["shape_match"], true);
+        assert_eq!(casting_frontier["rows"][0]["left"]["device_to_host_byte_count_match"], true);
+        assert_eq!(casting_frontier["rows"][0]["left"]["sha256_f32_le_match"], false);
+        assert_eq!(
+            casting_frontier["next_diagnostic"],
+            "capture selected QK256 OpenCL output value samples or device readback trace"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_casting_readback_byte_count() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770"]["device_to_host_bytes"] = json!(5120);
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_casting_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_casting_frontier_readback_byte_count"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_casting_readback_byte_count"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["device_to_host_bytes"], 5120);
+        assert_eq!(frontier["rows"][0]["left"]["expected_device_to_host_bytes"], 10240);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_casting_shape_serialization() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770_output"]["shape"] = json!([1, 1, 1280]);
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_casting_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_casting_frontier_receipt_shape_serialization"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_casting_receipt_shape_serialization"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["shape_match"], false);
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_output_casting_missing_context() {
+        let mut replay = qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+            "cpu-replay-output",
+            "a770-replay-output",
+            "cpu-replay-output",
+            1.0,
+            1.5,
+            1.0,
+        );
+        replay["a770_output"]["value_count"] = Value::Null;
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_output_casting_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_output_casting_frontier_missing_context"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_output_casting_missing_context"
+        );
+        assert_eq!(frontier["rows"][0]["qk256_output_casting_context_available"], false);
     }
 
     #[test]

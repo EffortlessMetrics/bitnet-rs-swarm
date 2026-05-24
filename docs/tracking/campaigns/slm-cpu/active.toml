@@ -6103,9 +6103,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-095"
-status = "pr_open"
+status = "merged"
 pr = 577
-head_sha = "a747c282202b2d82152fb53ccb9f209c3c3915a4"
+head_sha = "d36745955f73702a17c27c914ead4c019a0ac09c"
+merge_sha = "32afbe490290f7ceb34b639d9f66139fb6b729cc"
 branch = "codex/slm-cpu-095-packed-q8-matvec-scratch"
 stackable = false
 review_mode = "codex_premerge"
