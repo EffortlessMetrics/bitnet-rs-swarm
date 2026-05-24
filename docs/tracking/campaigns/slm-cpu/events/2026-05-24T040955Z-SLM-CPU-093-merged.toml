@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T04:09:55Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-093"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 564
+head_sha = "b60db8fe6ddd7b558879ff02f805c1c768e39be6"
+merge_sha = "749a2f3532e4bca311fed76d8d98a6afaa2e8b38"
+branch = "codex/slm-cpu-093-logits-fused-selection-boundary"
+actor = "codex"
+summary = "Closed SLM-CPU-093 after PR #564 merged."
+notes = [
+  "PR #564 emitted a machine-checkable blocker artifact showing the logits/output-head fused-selection path remains blocked by Candle output-head materialization before argmax or top-k selection.",
+  "The slice did not change runtime behavior, reduce allocation, claim speedup, promote packed-Q8 sidecar compute, claim sustained throughput, broaden Q4/Q5 support, touch server/GPU/NPU/OpenVINO/UHD 620/Qwen3.5 paths, or modify BitNet QK256 kernels.",
+]

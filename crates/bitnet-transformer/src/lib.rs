@@ -1724,6 +1724,7 @@ pub struct TransformerQkvProjectionDispatchReplayTensors {
     pub row_stride_bytes: usize,
     pub inline_scale: Option<f32>,
     pub cpu_output: Tensor,
+    pub opencl_policy_output: Tensor,
     pub a770_output: Option<Tensor>,
     pub cpu: TransformerQkvProjectionDispatchReplayCpuStats,
     pub a770: TransformerQkvProjectionDispatchReplayA770Stats,
