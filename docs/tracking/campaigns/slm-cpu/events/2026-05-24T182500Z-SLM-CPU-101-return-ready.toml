@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T18:25:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-101"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 638
+head_sha = "7efbe8007790b35bb3ffe59a69167ace2e2d1511"
+merge_sha = "927417207e8aeb9ab506d0add366623efc609c9a"
+merged_at = "2026-05-24T18:17:12Z"
+branch = "codex/slm-cpu-101-typed-attention-head-view-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-101 to ready after PR #638 merged the queue/dashboard refresh."
+notes = [
+  "PR #638 refreshed the Kaby Lake SLM CPU performance dashboard through SLM-CPU-100 and queued SLM-CPU-101 as the next typed attention-head buffer/view gate.",
+  "The next SLM-CPU-101 implementation slice remains ready and must define the typed attention-head buffer/view contract or record a concrete blocker before any runtime fused Q projection execution.",
+  "The queue PR made no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
