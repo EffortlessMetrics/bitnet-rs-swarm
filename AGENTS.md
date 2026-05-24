@@ -189,3 +189,115 @@ Human involvement is required only for true blockers:
 Older runbook language that routes ordinary commit, push, PR creation, CI
 repair, PR branch refresh, merge, or tracker closeout to manual intervention is
 superseded by the campaign work item policy above.
+
+## CI Efficiency Hard Compatibility Invariants (EffortlessMetrics)
+
+When a task asks Codex to "make CI cheaper" or "improve CI efficiency", these
+invariants are mandatory compatibility constraints, not optional heuristics.
+
+### 1) Heavy/core workflow concurrency semantics
+
+For heavy/core Rust CI workflows, do **not** set:
+
+```yaml
+cancel-in-progress: true
+```
+
+Required default for heavy/core PR workflows:
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+```
+
+Target behavior is **single active run + single pending replacement slot**:
+
+- active run continues to completion;
+- a newer queued run replaces any older pending run;
+- the active run is not canceled.
+
+Do not submit "efficiency" PRs that cancel in-progress heavy/core Rust runs
+unless repository policy explicitly marks that workflow as safe-to-cancel.
+
+### 2) Change classification must not route metadata through Rust CI
+
+Do not classify all file changes as Rust input. Metadata/control-plane changes
+must route to docs/policy/light paths unless mixed with true Rust/build/test
+changes. Typical no-Rust classes include:
+
+- `docs/**`, markdown-only changes, `README*`, `CHANGELOG*`, `SECURITY*`,
+  `CONTRIBUTING*`;
+- `policy/**`, `plans/**`, `badges/**`, `AGENTS.md`;
+- `.github/CODEOWNERS`, `.github/dependabot.yml`,
+  `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/**`;
+- `.codex/campaigns/**`, `docs/tracking/**`;
+- `ci/hardware/**` receipt-only updates;
+- `.rails/**`, `.uselesskey/**`.
+
+Workflow edits are special: `.github/workflows/**` must not be routed as
+docs-light; route them to a minimal hosted workflow-validation/safety lane.
+
+### 3) Default PR routing policy
+
+Default PR routing order:
+
+1. classify changes;
+2. choose the cheapest truthful lane.
+
+Expected outcomes:
+
+- docs/control-plane-only -> no Rust compile;
+- workflow-only -> hosted YAML/workflow validation only;
+- Rust/build/test changes -> Rust-small lane;
+- hardware/GPU/receipt-only -> syntax/receipt validation only;
+- unknown or mixed -> Rust-small (not full CI).
+
+Full CI should require explicit triggers (label/manual dispatch/main push/release/schedule/merge queue) per repository policy.
+
+### 4) Hosted fallback constraints
+
+Do not silently replace self-hosted Rust-small with a full GitHub-hosted
+equivalent when runners are unavailable.
+
+- Fork PRs may use a tiny hosted safe lane.
+- Missing runner readiness, token failures, or no idle runner must not
+  auto-trigger a 75-120 minute hosted equivalent.
+- Expensive hosted fallback must be explicitly opted into by labels/inputs such
+  as `full-ci`, `allow-github-hosted`, or `ci-budget-ack`.
+
+### 5) Artifact upload discipline
+
+Do not always-upload large receipts/JUnit/log artifacts on default PR paths
+unless required by branch protection/merge policy.
+
+- Prefer upload-on-failure.
+- Keep retention short (typically 3-7 days).
+- Keep policy-required receipts small, and avoid artifact upload for
+  docs/control-plane-only paths where possible.
+
+### 6) Required validation for CI-only efficiency PRs
+
+Every CI-efficiency PR must include evidence for:
+
+- `git diff --check`;
+- YAML parse/validation for every edited workflow;
+- classification dry-run or unit-style coverage for:
+  - docs-only,
+  - `.rails/**`,
+  - `.uselesskey/**`,
+  - workflow-only change,
+  - Rust file change,
+  - mixed docs + Rust;
+- confirmation that heavy/core workflow concurrency semantics did not regress
+  from no-cancel active-run behavior unless intentionally documented.
+
+### 7) Reviewer rejection checks (must-pass)
+
+Reviewers should reject CI-efficiency PRs that fail to clearly answer:
+
+1. Does heavy/core CI preserve `cancel-in-progress: false` semantics?
+2. Do metadata/control-plane-only edits avoid Rust CI?
+3. Are workflow-file edits kept out of docs-light routing?
+4. Does the change avoid silent expensive hosted fallback?
+5. Does it reduce real billable work rather than shifting cost?
