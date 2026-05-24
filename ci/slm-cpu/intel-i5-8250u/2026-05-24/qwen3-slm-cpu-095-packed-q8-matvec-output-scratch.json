@@ -1,0 +1,61 @@
+{
+  "artifact_kind": "slm_cpu_packed_q8_matvec_output_scratch_boundary",
+  "work_item": "SLM-CPU-095",
+  "created_utc": "2026-05-24T06:42:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "behavior_oracle": {
+    "source": "established Qwen3 Q8_0 Kaby appliance receipts",
+    "must_preserve": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "scope": "opt-in exact-tensor packed Q8_0 sidecar matvec output scratch",
+  "classification": {
+    "status": "inner_matvec_output_slice_supported_runtime_tensor_reuse_still_blocked",
+    "implemented_inner_helpers": [
+      "dense_q8_sidecar_matvec_block_aligned_into",
+      "dense_q8_sidecar_matvec_generic_into"
+    ],
+    "inner_helpers_accept_caller_output_slice": true,
+    "inner_helpers_materialize_candle_tensor": false,
+    "runtime_entrypoint_still_returns_candle_tensor": true,
+    "runtime_output_tensor_construction_op": "Tensor::from_vec(output, output_shape, input.device())",
+    "runtime_output_storage_reused_across_tensor_construction": false,
+    "runtime_reuse_blocker": "Candle Tensor::from_vec consumes an owned Vec and does not expose a behavior-preserving API that wraps reusable caller-owned output storage for the returned Tensor.",
+    "next_safe_change": "add or adopt a Candle-compatible output Tensor construction path that can preserve reusable caller-owned storage, or keep the packed sidecar output-scratch reuse scoped to the inner matvec helper until before/after Qwen3 Q8_0 receipts prove behavior equivalence."
+  },
+  "tests": [
+    "dense_q8_sidecar_block_aligned_matvec_fills_caller_output_slice",
+    "dense_q8_sidecar_generic_matvec_fills_caller_output_slice"
+  ],
+  "result": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
