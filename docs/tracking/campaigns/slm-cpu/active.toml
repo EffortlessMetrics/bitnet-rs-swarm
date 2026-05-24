@@ -6376,9 +6376,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-100"
-status = "pr_open"
-pr = 621
-head_sha = "7fa92b8b761e84f6c0e8ebd9ea356fc6d85d5668"
+status = "ready"
 branch = "codex/slm-cpu-100-typed-fused-q-consumer-implementation-gate"
 stackable = false
 review_mode = "codex_premerge"
