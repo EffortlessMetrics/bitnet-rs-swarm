@@ -1678,9 +1678,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-046"
-status = "pr_open"
+status = "merged"
 pr = 592
-head_sha = "7de026b839f625b113c5b8bf5eba8fe318b6de8c"
+head_sha = "0442d136e1ad978a06a49b5b239a0c6baa64086e"
+merge_sha = "4eb128f71a915e3b3f76d2a4a848e5b525c801c3"
 branch = "codex/intel-a770/A770-046-output-readback-trace-impl"
 stackable = false
 review_mode = "codex_premerge"
