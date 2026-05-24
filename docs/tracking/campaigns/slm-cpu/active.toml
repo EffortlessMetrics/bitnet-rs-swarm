@@ -6315,3 +6315,57 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-099"
+status = "pr_open"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-098"]
+acceptance = "Queue the typed fused Q projection consumer contract after SLM-CPU-098 classified the exact `layers.0.attention.q_proj.weight` packed-Q8 fused-consumer boundary as blocked by downstream Candle Tensor consumers. A valid slice must define the narrow API and receipt-safety contract needed for a future behavior-preserving fused Q projection consumer to own packed-Q8 matvec output slices, q_proj reshape/transpose, optional q_norm, RoPE application, trace/workspace identity, and attention-head handoff without materializing an intermediate returned Candle Tensor. This item is a design/contract gate only: it may add machine-checkable boundary structs, tests, artifacts, and dashboard/tracker documentation, but it must not enable runtime fused consumer execution or claim allocation/timing improvement. Any future implementation remains gated by repeated Qwen3 Q8_0 before/after receipts proving identical model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "runtime fused Q projection execution",
+  "packed_q8_sidecar default-runtime promotion",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-098 identified the downstream Candle Tensor consumer boundary that blocks safe fused output consumer execution today.",
+  "SLM-CPU-099 may define the typed fused Q projection consumer API and receipt-safety contract needed before a later implementation slice.",
+  "Any allocation or timing improvement remains unclaimed until behavior-preserving repeated Qwen3 Q8_0 before/after receipts exist.",
+]
+must_not_claim = [
+  "A fused Q projection consumer executes in production.",
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]

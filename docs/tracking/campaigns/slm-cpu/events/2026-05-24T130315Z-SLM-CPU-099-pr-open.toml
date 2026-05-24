@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T13:03:15Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-099"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 613
+head_sha = "46d5d3d4c926413993d1e73ac357eae4f8534677"
+branch = "codex/slm-cpu-099-typed-fused-q-consumer-gate"
+actor = "codex"
+summary = "Opened PR #613 for the typed fused Q projection consumer contract gate."
+notes = [
+  "PR #613 queues the next Kaby Lake Qwen3 Q8_0 dense CPU performance gate after SLM-CPU-098 classified the fused-consumer boundary as blocked by downstream Candle Tensor consumers.",
+  "The PR is tracker scope only and requires a future implementation slice to define the typed fused Q projection consumer contract before any runtime fused consumer execution.",
+  "The PR makes no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
