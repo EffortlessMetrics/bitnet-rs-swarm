@@ -1,0 +1,39 @@
+timestamp = "2026-05-24T11:04:04Z"
+campaign = "intel-a770"
+item = "A770-046"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 592
+branch = "codex/intel-a770/A770-046-output-readback-trace-impl"
+head_sha = "0442d136e1ad978a06a49b5b239a0c6baa64086e"
+merge_sha = "4eb128f71a915e3b3f76d2a4a848e5b525c801c3"
+merged_at = "2026-05-24T11:04:04Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Closed A770-046 after PR #592 merged the QK256 output readback trace diagnostic."
+notes = [
+  "A770-046 remains diagnostic-only and does not promote CPU/A770 answer parity, reference parity, strict A770 answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+  "The merged receipt classifies the selected QK256 OpenCL output sample/readback frontier for the committed A770-045 focused replay context.",
+  "The diagnostic preserves the claim boundary: no runtime math, kernel, dispatch policy, answer scoring, or sampling behavior changed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "The selected QK256 OpenCL output sample/readback trace is classified for the committed A770-045 focused replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
