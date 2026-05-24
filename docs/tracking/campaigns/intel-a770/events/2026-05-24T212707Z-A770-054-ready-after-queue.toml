@@ -1,20 +1,20 @@
-timestamp = "2026-05-24T21:02:49Z"
+timestamp = "2026-05-24T21:27:07Z"
 campaign = "intel-a770"
 item = "A770-054"
 event = "closeout"
-previous_status = "ready"
+previous_status = "pr_open"
 new_status = "ready"
 branch = "codex/intel-a770/A770-054-host-compiler-strict-f32-barrier"
-head_sha = "5e275b841873ead501ab4917e9eaaac71312ab31"
+head_sha = "b63ce6b11f8568898ad6f6ed2c5ecfa84699d35c"
+merge_sha = "2d89a360c5e7179e10339b387873f3a4f5a53854"
 actor = "codex-a770"
-base_main_sha = "d23b535733b01637268e33a0ae4bb83e174b4d63"
 claim_allowed = false
 diagnostic_only = true
-summary = "Opened queue-authority PR #654 to queue A770-054 as the next A770 diagnostic item."
+summary = "Merged queue-authority PR #654 and returned A770-054 to ready for the implementation PR."
 notes = [
-  "PR #654 is tracker authority only and queues A770-054 after A770-053.",
-  "The PR regenerates campaign and global dashboards so intel-a770 points at the A770-054 ready work item.",
-  "This remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+  "PR #654 queued A770-054 and refreshed generated campaign surfaces, but it was not the A770-054 implementation PR.",
+  "A770-054 remains ready so the implementation PR can capture host compiler strict-f32 barrier codegen context from current main.",
+  "This correction is tracker-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
 ]
 
 [claim_boundary]

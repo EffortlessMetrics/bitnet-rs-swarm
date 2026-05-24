@@ -2867,9 +2867,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-054"
-status = "pr_open"
-pr = 654
-head_sha = "5e275b841873ead501ab4917e9eaaac71312ab31"
+status = "ready"
 branch = "codex/intel-a770/A770-054-host-compiler-strict-f32-barrier"
 stackable = false
 review_mode = "codex_premerge"
