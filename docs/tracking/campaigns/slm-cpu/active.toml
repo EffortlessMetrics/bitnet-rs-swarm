@@ -6489,9 +6489,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-102"
-status = "pr_open"
+status = "merged"
 pr = 657
-head_sha = "a36f1c955f6fe0def385e968a20b32f9c5d8aa0b"
+head_sha = "ef21deefa44a6ffd867ae6d247adf39ffc9adbef"
+merge_sha = "fbf83e204151c876bf1f08917203e8b3c0530fd9"
+merged_at = "2026-05-24T22:04:11Z"
 branch = "codex/slm-cpu-102-typed-attention-head-consumer-implementation"
 stackable = false
 review_mode = "codex_premerge"
