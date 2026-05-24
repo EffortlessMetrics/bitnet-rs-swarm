@@ -20,6 +20,7 @@ use bitnet_transformer::{
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
+    dense_q8_sidecar_typed_attention_head_consumer_gate,
     dense_q8_sidecar_typed_attention_head_view_gate,
     dense_q8_sidecar_typed_fused_q_projection_implementation_gate,
 };
@@ -815,6 +816,92 @@ fn dense_q8_sidecar_typed_attention_head_view_gate_names_runtime_blockers() {
     assert!(gate.receipt_gate.required_before_runtime_execution);
     assert!(gate.receipt_gate.required_before_allocation_claim);
     assert!(gate.next_required_slice.contains("typed q_norm/RoPE"));
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_consumer_gate_blocks_runtime_execution() {
+    let source = dense_q8_sidecar_typed_attention_head_view_gate();
+    let gate = dense_q8_sidecar_typed_attention_head_consumer_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.typed_attention_head_consumer_gate");
+    assert_eq!(gate.status, "blocked_runtime_disabled");
+    assert_eq!(gate.source_gate_status, source.status);
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert!(gate.can_consume_projection_output_slice);
+    assert!(gate.can_apply_logical_head_view_without_candle_tensor);
+    assert!(!gate.can_apply_q_norm_without_candle_tensor);
+    assert!(!gate.can_apply_rope_without_candle_tensor);
+    assert!(!gate.can_feed_attention_scores_without_candle_tensor);
+    assert_eq!(gate.first_blocking_stage, "q_norm_consumer");
+    assert_eq!(gate.accepted_single_materialization_point, None);
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_consumer_gate_names_handoff_blockers() {
+    let gate = dense_q8_sidecar_typed_attention_head_consumer_gate();
+    let stages: Vec<_> = gate.stages.iter().map(|stage| stage.stage).collect();
+    let blockers: Vec<_> = gate.blockers.iter().map(|blocker| blocker.blocker).collect();
+
+    assert_eq!(
+        stages,
+        vec![
+            "projection_slice_ingress",
+            "logical_head_view_ingress",
+            "q_norm_consumer",
+            "rope_consumer",
+            "trace_identity_consumer",
+            "attention_score_consumer",
+            "receipt_safety_gate",
+        ]
+    );
+    assert_eq!(
+        blockers,
+        vec![
+            "q_norm_typed_consumer_absent",
+            "rope_typed_consumer_absent",
+            "trace_identity_typed_receipt_gap",
+            "attention_score_typed_path_absent",
+            "accumulator_order_unproven",
+            "receipt_safety_evidence",
+        ]
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("LayerNorm::forward"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("RotaryEmbedding::apply"))
+    );
+    assert!(
+        gate.blockers
+            .iter()
+            .any(|blocker| blocker.exact_api_or_surface.contains("prepare_attention_scores"))
+    );
+    assert!(gate.blockers.iter().any(|blocker| blocker.category == "accumulator-order"));
+}
+
+#[test]
+fn dense_q8_sidecar_typed_attention_head_consumer_gate_keeps_receipt_gate_strict() {
+    let gate = dense_q8_sidecar_typed_attention_head_consumer_gate();
+
+    assert!(gate.receipt_gate.required_before_runtime_execution);
+    assert!(gate.receipt_gate.required_before_allocation_claim);
+    assert!(gate.receipt_gate.required_before_speedup_claim);
+    assert!(gate.receipt_gate.gate.contains("repeated_qwen3_q8_before_after_receipts"));
+    assert!(gate.receipt_gate.required_fields.contains(&"fallback_used=false"));
+    assert!(
+        gate.candidate_materialization_points
+            .contains(&"after_q_rope_before_attention_scores_candle_tensor_boundary")
+    );
+    assert!(gate.next_required_slice.contains("strict Qwen3/Qwen2.5 CPU receipts"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
