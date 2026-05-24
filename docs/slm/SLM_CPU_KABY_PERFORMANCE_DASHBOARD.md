@@ -23,6 +23,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Post-bridge packed-Q8 counter classification | `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-077-post-bridge-counter-classification.json` | Records real i5-8250U sidecar instrumentation counters and identifies `packed_matvec_compute` as the dominant exact-tensor sidecar cost |
 | Post-aligned packed-Q8 matvec classification | `ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-079-post-aligned-matvec-classification.json` | Preserves the Qwen3 behavior oracle while recording a bounded counter-level `packed_matvec_ns` reduction against the SLM-CPU-077 sidecar oracle |
 | Logits/output-head boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-23/qwen3-slm-cpu-091-logits-output-boundary.json` | Classifies the remaining `model.logits` / output-head boundary as owned Candle Tensor output plus optional host extraction, without claiming a runtime optimization |
+| Runtime output tensor storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json` | Records that inner packed-Q8 matvec helpers can fill caller-owned slices, but full runtime Tensor output reuse remains blocked by public Candle owned-storage construction |
 
 All rows use:
 
@@ -41,11 +42,12 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-090 and the queued SLM-CPU-091 next
-target. It does not run new inference or add a runtime optimization. It
+This refresh is current through the SLM-CPU-096 runtime output Tensor storage
+gate. It does not run new inference or add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
-packed-Q8 matvec artifact, and the residual-add output-storage blocker.
+packed-Q8 matvec artifact, the residual-add output-storage blocker, the
+logits/output-head boundary, and the packed-Q8 caller-output-slice helper gate.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -57,7 +59,8 @@ The current performance targets are:
 1. Allocation/layout work around `prompt_prefill.forward` and `model.forward`,
    anchored by the SLM-CPU-035 prefill attribution receipt.
 2. Exact-tensor packed-Q8 matvec compute work, anchored by the SLM-CPU-077
-   counter pack and SLM-CPU-079 post-aligned counter classification.
+   counter pack, SLM-CPU-079 post-aligned counter classification, and
+   SLM-CPU-096's runtime Tensor storage blocker.
 
 Both targets remain gated by the Qwen3 Q8_0 behavior oracle: model SHA, strict
 GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU
@@ -1643,6 +1646,36 @@ This preserves the earlier sampler/logits-scratch cleanup while making the
 remaining owned-output surface explicit. It does not alter generated IDs,
 decoded text, tokenizer authority, backend identity, dense hook identity,
 packed-Q8 selection, or thread defaults.
+
+## SLM-CPU-096 Runtime Output Tensor Storage Gate
+
+SLM-CPU-096 follows the SLM-CPU-095 caller-output-slice helper gate. The inner
+packed-Q8 matvec helpers can fill caller-provided `&mut [f32]` output slices,
+but the full runtime still has to return a Candle `Tensor` to preserve the
+existing dense-linear interface:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-096-runtime-output-tensor-storage-gate.json
+previous_artifact = ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-095-packed-q8-matvec-output-scratch.json
+current_runtime_construction = Tensor::from_vec(output, output_shape, input.device())
+public_alternative_reviewed = Tensor::from_storage(Storage::Cpu(CpuStorage::F32(output)), output_shape, input.device())
+classification.status = blocked_by_candle_owned_storage_api
+runtime_storage_reuse_supported = false
+safe_runtime_change_available_now = false
+```
+
+Both reviewed public construction paths transfer owned `Vec<f32>` storage into
+the returned Candle `Tensor`. That preserves returned-tensor semantics, but it
+does not let the packed-Q8 runtime keep reusable caller-owned output storage
+alive after Tensor construction. The next safe direction is either a Candle API
+with explicit caller-owned output-storage lifetime semantics, or a fused
+consumer path that avoids returning a Candle Tensor at this boundary and proves
+Qwen3 Q8_0 behavior equivalence with before/after receipts.
+
+This slice does not change the default runtime, promote `packed_q8_sidecar`,
+claim allocation improvement, claim speedup, claim sustained 8250U throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256/I2_S paths.
 
 ## SLM-CPU-081 Repeated Timing Gate
 
