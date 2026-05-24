@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T18:00:00Z"
+campaign = "intel-a770"
+item = "A770-050"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+branch = "codex/intel-a770/A770-050-host-device-div-mul-replay"
+pr = 639
+head_sha = "a3d9abef31002b78e827ea86fa6a008e1dddc685"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #639 for the host/device div-mul replay diagnostic."
+notes = [
+  "The PR adds generated_output_qk256_host_device_div_mul_frontier to the focused answer-parity receipt.",
+  "The live focused receipt classifies the selected row as generated_output_qk256_host_device_div_mul_frontier_host_replay_mismatch with device_behavior=default_div_then_mul.",
+  "The PR remains diagnostic-only and does not promote CPU/A770 parity, reference parity, strict answer readiness, broad A770 quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]

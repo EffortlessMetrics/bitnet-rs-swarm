@@ -1,0 +1,37 @@
+timestamp = "2026-05-24T17:53:05Z"
+campaign = "intel-a770"
+item = "A770-050"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-050-host-device-div-mul-replay"
+actor = "codex-a770"
+base_main_sha = "91c27c7b3"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-050 to compare compact host replay f32 div/mul rounding against selected A770 OpenCL device div/mul behavior after A770-049 pinned the selected math-mode frontier."
+notes = [
+  "A770-050 adds a derived host/device div-mul frontier to the focused answer-parity receipt using the committed host expression replay and selected device math-mode bits.",
+  "The refreshed focused receipt classifies the selected row as generated_output_qk256_host_device_div_mul_frontier_host_replay_mismatch.",
+  "This remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-050 may classify compact host replay f32 div/mul versus selected A770 OpenCL device div/mul behavior for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
