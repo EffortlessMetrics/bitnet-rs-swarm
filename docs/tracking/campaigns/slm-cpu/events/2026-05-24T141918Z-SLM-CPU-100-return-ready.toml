@@ -1,0 +1,18 @@
+timestamp = "2026-05-24T14:19:18Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-100"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 621
+head_sha = "7b3388b27b874e4989a5887d4b4395b7746257a4"
+merge_sha = "a5863adad951a58410c5dc235f285785e449c93e"
+merged_at = "2026-05-24T14:18:41Z"
+branch = "codex/slm-cpu-100-typed-fused-q-consumer-implementation-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-100 to ready after PR #621 merged the queue definition."
+notes = [
+  "PR #621 queued the typed fused Q projection consumer implementation-or-blocker gate after SLM-CPU-099.",
+  "The next SLM-CPU-100 implementation slice remains ready and must implement the exact fused Q consumer or record a concrete blocker before any runtime fused Q projection execution.",
+  "The queue PR made no runtime fused Q projection execution, packed-Q8 default-runtime promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 support claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim.",
+]
