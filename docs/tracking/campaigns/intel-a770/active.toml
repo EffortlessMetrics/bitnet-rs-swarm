@@ -2093,7 +2093,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-053"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-053-strict-f32-barrier-evidence"
 stackable = false
 review_mode = "codex_premerge"
