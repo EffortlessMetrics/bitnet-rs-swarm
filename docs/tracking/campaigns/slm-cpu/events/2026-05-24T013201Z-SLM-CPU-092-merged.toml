@@ -1,0 +1,16 @@
+timestamp = "2026-05-24T01:32:01Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-092"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 535
+head_sha = "c847ad3894821ee80fd6e17d6606dfe87201823c"
+merge_sha = "0d9a0f645aa1e0ce1e8011f12100ae81dbdc7dab"
+branch = "codex/slm-cpu-092-logits-fused-selection-gate"
+actor = "codex"
+summary = "Closed SLM-CPU-092 after PR #535 merged."
+notes = [
+  "PR #535 queued the next Kaby Lake Qwen3 Q8_0 logits/output-head fused-selection gate as tracker/control-plane state.",
+  "The merged slice does not implement the runtime fused-selection path, solve the Candle-owned logits Tensor boundary, promote packed-Q8, prove speedup, prove sustained throughput, broaden Q4/Q5 support, involve server/GPU/NPU/OpenVINO/UHD 620 execution, add Qwen3.5 support, or modify BitNet QK256/I2_S kernels.",
+]

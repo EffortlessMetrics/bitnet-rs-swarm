@@ -5934,8 +5934,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-092"
-status = "pr_open"
+status = "merged"
 pr = 535
+head_sha = "c847ad3894821ee80fd6e17d6606dfe87201823c"
+merge_sha = "0d9a0f645aa1e0ce1e8011f12100ae81dbdc7dab"
 branch = "codex/slm-cpu-092-logits-fused-selection-gate"
 stackable = false
 review_mode = "codex_premerge"
