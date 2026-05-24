@@ -1,0 +1,14 @@
+timestamp = "2026-05-23T22:50:44Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-051"
+event = "in_progress"
+previous_status = "proposed"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-051-post-a770041-cuda005"
+summary = "Started no-inference Lunar Lake audit/checklist refresh after CUDA-BITNET-PERF-005, A770-041, and A770-041 closeout."
+notes = [
+  "Refresh scope is audit/checklist/tracker metadata only after CUDA-BITNET-PERF-005/#521, A770-041/#517, and A770-041 closeout #523 reached swarm main.",
+  "The slice records those changes as adjacent CUDA/A770 support, diagnostic, and tracker state only.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry and valid energy-proxy evidence.",
+]
