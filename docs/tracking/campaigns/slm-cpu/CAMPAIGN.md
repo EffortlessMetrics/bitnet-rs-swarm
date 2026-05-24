@@ -138,7 +138,9 @@ Make the Intel i5-8250U a strict CPU proof host for small dense transformer GGUF
 | SLM-CPU-083 | merged | #393 classified the `model.forward.output` owned-output boundary through `TransformerForwardWorkspace` alongside the existing `feed_forward.down_proj.output` surface, preserving behavior and making no speedup, sidecar promotion, server, accelerator, Qwen3.5, or BitNet QK256 claim. |
 | SLM-CPU-094 | merged | #572 queued the next bounded dense-CPU performance gate after SLM-CPU-093: opt-in packed Q8_0 sidecar output-scratch reuse or an exact blocker, preserving the Qwen3 Q8_0 appliance behavior oracle and making no runtime, speedup, default-promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim. |
 | SLM-CPU-095 | merged | #577 added behavior-preserving inner packed Q8_0 sidecar matvec helpers that fill caller-owned output slices, and recorded that full runtime Tensor output reuse remains blocked by Candle `Tensor::from_vec` owned-storage construction. |
-| SLM-CPU-096 | ready | Queue the next Candle-compatible runtime output-storage gate after SLM-CPU-095: either adopt a behavior-preserving Tensor construction path for reusable caller-owned packed-Q8 output storage, or record an exact API blocker, without speedup, default-promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claims. |
+| SLM-CPU-096 | merged | #589 recorded that public Candle Tensor construction preserves returned Tensor semantics but transfers owned output storage into Candle, so reusable caller-owned packed-Q8 runtime output storage remains blocked. |
+| SLM-CPU-097 | merged | #600 queued the next fused output consumer gate after SLM-CPU-096, preserving the no speedup, default-promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim boundary. |
+| SLM-CPU-098 | ready | Prove a behavior-preserving fused output consumer path or record an exact fused-consumer API/lifetime/tensor-shape/receipt-safety blocker, with Qwen3 Q8_0 appliance receipts required before any bounded allocation or timing improvement claim. |
 
 ## Review Policy
 
