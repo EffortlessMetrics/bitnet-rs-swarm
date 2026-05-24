@@ -21,8 +21,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch'
       || github.event_name == 'merge_group'
-      || (github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository)
+      || github.event_name == 'pull_request'
     outputs:
       target: ${{ steps.route.outputs.target }}
       reason: ${{ steps.route.outputs.reason }}
@@ -59,6 +58,11 @@ jobs:
           is_fork_pr="false"
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
             is_fork_pr="true"
+          fi
+
+          if [ "${is_fork_pr}" = "true" ]; then
+            emit "github" "fork_pr" "false" "true"
+            exit 0
           fi
 
           if [ -z "${GH_TOKEN:-}" ]; then
@@ -114,8 +118,6 @@ jobs:
             emit "cx53" "cx53_idle" "false" "false"
           elif [ "${idle_cx43:-0}" -gt 0 ]; then
             emit "cx43" "cx43_idle" "false" "false"
-          elif [ "${is_fork_pr}" = "true" ]; then
-            emit "github" "fork_pr" "false" "true"
           elif label_enabled_fallback; then
             emit "github" "allow_github_hosted_label" "false" "true"
           else
@@ -125,7 +127,12 @@ jobs:
   rust-small-cx53:
     name: BitNet Rust Small on CX53
     needs: route-rust-small
-    if: needs.route-rust-small.outputs.target == 'cx53'
+    if: >-
+      needs.route-rust-small.outputs.target == 'cx53'
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
       labels: [self-hosted, linux, x64, em-ci, cx53, rust-small, trusted-pr]
@@ -237,7 +244,12 @@ jobs:
   rust-small-cx43:
     name: BitNet Rust Small on CX43
     needs: route-rust-small
-    if: needs.route-rust-small.outputs.target == 'cx43'
+    if: >-
+      needs.route-rust-small.outputs.target == 'cx43'
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
       labels: [self-hosted, linux, x64, em-ci, cx43, rust-small, trusted-pr]
@@ -380,8 +392,7 @@ jobs:
       always()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
-          || (github.event_name == 'pull_request'
-              && github.event.pull_request.head.repo.full_name == github.repository))
+          || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
