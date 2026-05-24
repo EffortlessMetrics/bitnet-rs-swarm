@@ -1,0 +1,17 @@
+timestamp = "2026-05-24T08:28:23Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-058"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-lunar-lake"
+pr = 584
+head_sha = "39eaed9048257498e4ad192158cb3904c308a265"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-058-post-057-closeout"
+summary = "Opened PR #584 for the no-inference Lunar Lake audit/checklist refresh after LNL258V-GOAL-AUDIT-057 closeout."
+notes = [
+  "PR #584 refreshes audit/checklist source_revision to bf2013dec3a1e72c58de15da6f04706a893bffab.",
+  "#580 and #582 remain classified as Lunar Lake audit/checklist and tracker closeout state only.",
+  "#581 remains classified as adjacent SLM CPU runtime output storage gate tracker queue state only, not Lunar Lake route evidence, not a shared BitNet semantic fix, and not a Lunar Lake semantic-intake stale trigger.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
