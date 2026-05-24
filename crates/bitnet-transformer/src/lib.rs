@@ -1826,6 +1826,14 @@ pub struct TransformerQk256DeviceIntermediateSample {
     pub adjusted_f32_bits: u32,
     pub output_bits: u32,
     pub output: f32,
+    pub div_then_mul_bits: u32,
+    pub div_then_mul: f32,
+    pub mul_then_div_bits: u32,
+    pub mul_then_div: f32,
+    pub reciprocal_then_mul_bits: u32,
+    pub reciprocal_then_mul: f32,
+    pub volatile_div_then_mul_bits: u32,
+    pub volatile_div_then_mul: f32,
 }
 
 #[derive(Debug, Clone)]

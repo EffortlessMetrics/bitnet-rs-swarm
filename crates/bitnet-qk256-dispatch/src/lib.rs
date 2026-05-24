@@ -241,6 +241,22 @@ pub struct Qk256DeviceIntermediateSample {
     pub output_bits: u32,
     /// Debug kernel output expression value.
     pub output: f32,
+    /// Raw `f32` bits for device-side `(adjusted_f32 / activation_scale) * weight_scale`.
+    pub div_then_mul_bits: u32,
+    /// Device-side `(adjusted_f32 / activation_scale) * weight_scale`.
+    pub div_then_mul: f32,
+    /// Raw `f32` bits for device-side `(adjusted_f32 * weight_scale) / activation_scale`.
+    pub mul_then_div_bits: u32,
+    /// Device-side `(adjusted_f32 * weight_scale) / activation_scale`.
+    pub mul_then_div: f32,
+    /// Raw `f32` bits for device-side `adjusted_f32 * (weight_scale / activation_scale)`.
+    pub reciprocal_then_mul_bits: u32,
+    /// Device-side `adjusted_f32 * (weight_scale / activation_scale)`.
+    pub reciprocal_then_mul: f32,
+    /// Raw `f32` bits for volatile device-side div-then-mul replay.
+    pub volatile_div_then_mul_bits: u32,
+    /// Volatile device-side div-then-mul replay.
+    pub volatile_div_then_mul: f32,
 }
 
 /// Diagnostic CPU replay stats for one QK256 projection.
@@ -864,6 +880,14 @@ fn qk256_device_intermediate_trace_for_row(
                     adjusted_f32_bits: sample.adjusted_f32_bits,
                     output_bits: sample.output_bits,
                     output: sample.output,
+                    div_then_mul_bits: sample.div_then_mul_bits,
+                    div_then_mul: sample.div_then_mul,
+                    mul_then_div_bits: sample.mul_then_div_bits,
+                    mul_then_div: sample.mul_then_div,
+                    reciprocal_then_mul_bits: sample.reciprocal_then_mul_bits,
+                    reciprocal_then_mul: sample.reciprocal_then_mul,
+                    volatile_div_then_mul_bits: sample.volatile_div_then_mul_bits,
+                    volatile_div_then_mul: sample.volatile_div_then_mul,
                 })
                 .collect(),
         },
