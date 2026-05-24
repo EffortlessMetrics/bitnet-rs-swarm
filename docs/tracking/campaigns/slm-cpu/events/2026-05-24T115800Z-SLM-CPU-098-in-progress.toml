@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T11:58:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-098"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/slm-cpu-098-fused-output-consumer-boundary"
+summary = "Started the fused output consumer boundary classification slice."
+notes = [
+  "The slice records that the exact packed-Q8 inner matvec output slice is not enough to avoid Candle Tensor materialization because the selected q_proj output feeds reshape, transpose, q_norm, RoPE, trace/workspace identity, and attention-head handoff consumers.",
+  "The implementation adds a machine-checkable transformer boundary and i5-8250U artifact while preserving the Qwen3 Q8_0 behavior oracle as the gate before any future allocation or timing claim.",
+  "No runtime optimization, packed-Q8 default promotion, speedup, sustained throughput, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim is made.",
+]
