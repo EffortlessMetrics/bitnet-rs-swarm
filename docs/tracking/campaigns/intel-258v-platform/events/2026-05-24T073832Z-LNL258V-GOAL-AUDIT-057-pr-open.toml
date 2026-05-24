@@ -1,0 +1,20 @@
+timestamp = "2026-05-24T07:38:32Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-057"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+actor = "codex-lunar-lake"
+pr = 580
+head_sha = "59b09b4c6bd78cb4a3ca86a22d9c9b9a537edf16"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-057-post-ask008-closeout"
+summary = "Opened PR #580 for the no-inference Lunar Lake audit/checklist refresh after LNL258V-ASK-008 closeout reached current swarm main."
+notes = [
+  "PR #580 refreshes audit/checklist source_revision to fc9d2334261845cfa451c003b58bcd2f84497096 after rebasing on A770-045/#574 and SLM-CPU-095 closeout #579.",
+  "#576 remains classified as BitNet strict-reference ask blocked-path hardening only, preserving new_inference_executed=false and fallback_used=false.",
+  "#577 remains classified as adjacent SLM CPU implementation-boundary state only.",
+  "#579 remains classified as adjacent SLM CPU tracker closeout state only.",
+  "#574 remains classified as adjacent A770 QK256 output-casting frontier diagnostic state only, not a shared BitNet semantic fix, not a Lunar Lake semantic-intake stale trigger, and not Lunar Lake route evidence.",
+  "#553 remains classified as dependency maintenance only.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
