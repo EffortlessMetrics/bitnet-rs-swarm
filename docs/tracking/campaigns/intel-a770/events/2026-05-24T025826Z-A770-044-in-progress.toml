@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T02:58:26Z"
+campaign = "intel-a770"
+item = "A770-044"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-044-qk256-numeric-policy"
+actor = "codex-a770"
+summary = "Started the selected QK256 CPU scalar versus A770 OpenCL numeric-policy diagnostic."
+notes = [
+  "A770-044 adds host-side OpenCL-expression replay output beside the existing CPU scalar and A770 OpenCL replay outputs.",
+  "The refreshed focused receipt classifies the selected frontier as generated_output_qk256_numeric_policy_frontier_output_casting_serialization.",
+  "The slice remains diagnostic-only and does not change runtime math, kernels, dispatch policy, answer scoring, sampling, or any A770 quality, residency, speed, trusted-partial acceleration, or full-inference claim.",
+]
