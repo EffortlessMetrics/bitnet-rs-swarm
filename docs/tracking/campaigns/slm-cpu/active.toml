@@ -6206,3 +6206,53 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-097"
+status = "pr_open"
+branch = "codex/slm-cpu-097-fused-output-consumer-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-096"]
+acceptance = "Queue the next Kaby Lake Qwen3 Q8_0 dense-CPU performance gate after SLM-CPU-096 classified full runtime output Tensor reuse as blocked by public Candle owned-storage construction. A valid slice must either design and prove a fused output consumer path that avoids returning a reusable-storage-hostile Candle Tensor at the packed-Q8 exact-tensor boundary, or emit a machine-checkable blocker explaining why the next fused-consumer boundary is unsafe. Any runtime-adjacent implementation must preserve the established Qwen3 Q8_0 appliance oracle before claiming even bounded allocation or timing improvement: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false. The slice must not promote packed_q8_sidecar to the default runtime, claim speedup without before/after repeated receipts, claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-096 proved full runtime output Tensor storage reuse remains blocked by public Candle owned-storage construction.",
+  "SLM-CPU-097 is the next gate for a fused output consumer path or an exact fused-consumer safety blocker.",
+  "Any allocation or timing improvement remains gated by Qwen3 Q8_0 before/after behavior receipts.",
+]
+must_not_claim = [
+  "The packed-Q8 sidecar is promoted to the default runtime.",
+  "A fused output consumer path is safe without behavior-preserving before/after Qwen3 Q8_0 receipts.",
+  "End-to-end speedup is proven without before/after repeated receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]

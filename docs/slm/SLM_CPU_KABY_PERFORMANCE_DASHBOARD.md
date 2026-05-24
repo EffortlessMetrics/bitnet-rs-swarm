@@ -67,6 +67,14 @@ GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU
 backend/kernel identity, dense hook identity where applicable, and
 `fallback_used=false`.
 
+SLM-CPU-097 is queued as the next gate after SLM-CPU-096. It must not claim a
+runtime optimization by routing around Candle owned storage implicitly. A valid
+slice either proves a fused output consumer path that avoids returning a
+reusable-storage-hostile Candle Tensor at the packed-Q8 exact-tensor boundary,
+or records a machine-checkable blocker explaining why that boundary is unsafe.
+Any implementation remains before/after receipt gated by the same Qwen3 Q8_0
+behavior oracle before claiming allocation or timing improvement.
+
 ## Thread Envelope
 
 The thread envelope is a bounded single-run comparison. Generated IDs are stable

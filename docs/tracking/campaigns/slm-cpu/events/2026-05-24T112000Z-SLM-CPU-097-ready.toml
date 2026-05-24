@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T11:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-097"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+actor = "codex"
+branch = "codex/slm-cpu-097-fused-output-consumer-gate"
+summary = "Queued the next Kaby Lake Qwen3 Q8_0 performance gate after SLM-CPU-096 classified full runtime output Tensor reuse as blocked by public Candle owned-storage construction."
+notes = [
+  "The next slice must either prove a fused output consumer path that avoids returning a reusable-storage-hostile Candle Tensor at the packed-Q8 exact-tensor boundary, or emit a machine-checkable safety blocker.",
+  "Any runtime-adjacent change remains gated by the established Qwen3 Q8_0 behavior oracle: model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "The item makes no packed-Q8 promotion, speedup, sustained throughput, Q4/Q5, server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 claim.",
+]
