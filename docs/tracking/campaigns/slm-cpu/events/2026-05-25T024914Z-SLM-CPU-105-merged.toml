@@ -1,0 +1,19 @@
+timestamp = "2026-05-25T02:49:14Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-105"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 677
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+head_sha = "c7e8b54131e372df577b1773219a491ed6d75b00"
+merge_sha = "0bc0b9e0abb36f4c9c030089f4e914d1b061cf32"
+merged_at = "2026-05-25T02:49:14Z"
+actor = "codex-slm-cpu"
+summary = "Merged PR #677, closing SLM-CPU-105 with a q_norm input proof blocker gate."
+notes = [
+  "PR #677 added `dense_q8_sidecar_q_norm_input_proof_gate` and focused transformer tests.",
+  "The committed receipt is `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-105-qnorm-input-proof-gate.json`.",
+  "The gate records the selected `q_norm_input_candle_tensor_boundary` remains blocked by missing runtime hook, before/after receipt pairs, comparator, tensor identity, and accumulator-order proof.",
+  "No new inference run, packed_q8_sidecar default-runtime promotion, allocation reduction claim, speedup claim, sustained 8250U throughput claim, Q4/Q5 runtime claim, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256/I2_S behavior change is made.",
+]
