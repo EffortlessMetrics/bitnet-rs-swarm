@@ -1,0 +1,84 @@
+{
+  "campaign": "intel-a770",
+  "work_item": "A770-059",
+  "proof_family": "a770_opencl_qk256_production_policy_impact_frontier",
+  "proof_stage": "diagnostic_production_policy_impact_classified",
+  "requested_backend": "intel-arc-a770",
+  "selected_backend": "intel-arc-a770-opencl",
+  "runtime_api": "opencl",
+  "classification": "a770_qk256_production_policy_impact_frontier_requires_production_kernel_disassembly_replay_context",
+  "source_receipts": {
+    "focused_qk256_replay": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json",
+    "compiler_disassembly": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-compiler-disassembly-evidence.json",
+    "strict_f32_disassembly": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-strict-f32-disassembly-frontier.json"
+  },
+  "focused_case": {
+    "case_id": "a770_summary_seed770024_keywords_014",
+    "first_mismatch_index": 9,
+    "target_layer_idx": 0,
+    "projection": "q_proj",
+    "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+    "driver_version": "32.0.101.8801"
+  },
+  "upstream_classifications": {
+    "qk256_device_expression": "generated_output_qk256_device_expression_unmatched_device_value",
+    "qk256_device_math_mode": "generated_output_qk256_device_math_mode_default_div_then_mul",
+    "qk256_host_device_div_mul": "generated_output_qk256_host_device_div_mul_host_replay_mismatch",
+    "qk256_host_div_mul_expression_order": "generated_output_qk256_host_div_mul_expression_order_host_expression_order_mismatch",
+    "qk256_host_replay_f32_codegen_ordering": "generated_output_qk256_host_replay_f32_codegen_ordering_host_expression_variants_collapsed_to_policy",
+    "qk256_strict_f32_barrier_evidence": "generated_output_qk256_strict_f32_barrier_evidence_strict_f32_barrier_matches_selected_device_output",
+    "qk256_host_compiler_strict_f32_barrier": "generated_output_qk256_host_compiler_strict_f32_barrier_host_compiler_codegen_collapse",
+    "qk256_compiler_strict_f32_codegen": "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+    "strict_f32_disassembly_frontier": "a770_qk256_strict_f32_disassembly_frontier_barrier_preserving_f32_sequence"
+  },
+  "selected_bits": {
+    "policy_first_value_bits": 3215804926,
+    "host_div_then_mul_bits": 3215804926,
+    "device_output_bits": 3215804927,
+    "device_div_then_mul_bits": 3215804927,
+    "device_mul_then_div_bits": 3215804926
+  },
+  "context": {
+    "debug_kernel_name": "qk256_i2s_i8s_scaled_gemv_debug",
+    "production_kernel_name": "qk256_i2s_i8s_scaled_gemv",
+    "debug_kernel_disassembly_available": true,
+    "debug_kernel_barrier_sequence_preserved": true,
+    "production_kernel_disassembly_available": false,
+    "production_kernel_replay_context_available": false,
+    "focused_qk256_replay_context_available": true,
+    "strict_f32_barrier_bits_compared": true,
+    "opencl_frontend_device_codegen_matches_selected_output": true,
+    "host_compiler_elides_explicit_f32_barrier": true,
+    "host_compiler_preserves_explicit_f32_barrier": false,
+    "host_variants_collapse_to_policy": true,
+    "production_kernel_impact_available_in_focused_replay": true,
+    "production_policy_change_justified": false
+  },
+  "decision": {
+    "production_qk256_policy_change": false,
+    "runtime_math_change": false,
+    "reason": "A770-058 proves the diagnostic debug kernel lowers to a barrier-preserving f32 sequence, and the focused QK256 replay still marks production_policy_change_justified=false. Because the committed disassembly is for qk256_i2s_i8s_scaled_gemv_debug and no production-kernel disassembly or production-kernel replay context is committed, A770-059 routes the next boundary to production-kernel disassembly/replay instead of changing production QK256 policy."
+  },
+  "fallback_used": false,
+  "cpu_fallback_allowed": false,
+  "bitnet_inference": false,
+  "qk256_decode": false,
+  "production_qk256_policy_change": false,
+  "claim_allowed": false,
+  "diagnostic_only": true,
+  "performance_claim": false,
+  "full_residency_claim": false,
+  "next_diagnostic": "capture production-kernel disassembly or production-kernel replay context before any production QK256 policy change",
+  "must_not_claim": [
+    "CPU/A770 answer parity is proven",
+    "Reference parity is proven",
+    "Strict A770 answer readiness is proven",
+    "Broad A770 answer quality is proven",
+    "Official BitNet QK256 production semantics are proven",
+    "Production QK256 dispatch policy changed",
+    "BitNet inference works on A770",
+    "A770 trusted partial acceleration is claim-grade",
+    "Full A770 residency is proven",
+    "A770 performance speedup is proven"
+  ]
+}

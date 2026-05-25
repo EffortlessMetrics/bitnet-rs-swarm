@@ -1,0 +1,16 @@
+campaign = "intel-a770"
+item = "A770-059"
+event = "in_progress"
+timestamp = "2026-05-25T08:52:15Z"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-059-production-policy-impact-frontier"
+base_sha = "b2e6ac5efdbd0d3aa5cbcd53ea2f1bcfb7cf5ed7"
+head_sha = "b2e6ac5efdbd0d3aa5cbcd53ea2f1bcfb7cf5ed7"
+claim_allowed = false
+diagnostic_only = true
+
+notes = [
+  "Started diagnostic-only production-policy impact frontier from merged A770-058/current main.",
+  "Scope remains limited to the committed A770-058 disassembly receipt, focused QK256 replay receipt context, compact report, and campaign tracking.",
+  "No production QK256 dispatch, runtime math, answer scoring, sampling, CPU/A770 parity, answer readiness, quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is promoted.",
+]
