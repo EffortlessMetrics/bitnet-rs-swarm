@@ -41,6 +41,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen3 q_norm fingerprint artifact | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-113-qnorm-fingerprint-artifact.json` | Captures a real i5-8250U Qwen3 Q8_0 `attention.q_norm_input` f32-le SHA256 artifact with strict GGUF tokenizer authority, `cpu-rust`, `fallback_used=false`, and no tensor contents or performance claim |
 | q_norm fingerprint receipt-pair review | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-114-qnorm-fingerprint-receipt-pair.json` | Compares the Qwen3 q_norm fingerprint artifact against the existing before/after receipt-pair evidence and records the exact Qwen2.5 blocker: Qwen3 has a real q_norm fingerprint, but the before/after warm-session receipts do not carry f32-le tensor fingerprints, and the accepted Qwen2.5 Q8_0 artifact has no q_norm-input stage to fingerprint |
 | q_norm proof next boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-115-qnorm-proof-next-boundary.json` | Resolves the Qwen3-only q_norm-input blocker by selecting the shared `attention.q_proj_output_pre_optional_qnorm` boundary that exists before Qwen3's optional q_norm and also exists on Qwen2.5 Q8_0 |
+| shared q_proj output hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-116-qproj-output-pre-qnorm-hook-gate.json` | Defines the fail-closed receipt/comparator contract for the shared pre-q_norm Q projection output boundary and blocks runtime evidence until an implementation-capable slice adds the diagnostic hook |
 
 All rows use:
 
@@ -59,14 +60,16 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-115 q_norm proof next-boundary
-selection. It records the opt-in trace-only f32-le tensor fingerprint surface for
-the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
-that boundary fail-closed because the before/after warm-session receipts still do
-not carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has
-no q_norm-input stage to fingerprint. SLM-CPU-115 therefore selects the shared
+This refresh is current through the SLM-CPU-116 shared q_proj-output hook gate.
+It records the opt-in trace-only f32-le tensor fingerprint surface for the
+selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps that
+boundary fail-closed because the before/after warm-session receipts still do not
+carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has no
+q_norm-input stage to fingerprint. SLM-CPU-115 therefore selects the shared
 `attention.q_proj_output_pre_optional_qnorm` boundary as the next evidence target
-for Qwen3 Q8_0 and Qwen2.5 Q8_0 rather than overstating q_norm coverage. It does
+for Qwen3 Q8_0 and Qwen2.5 Q8_0 rather than overstating q_norm coverage.
+SLM-CPU-116 defines the fail-closed receipt/comparator contract for that shared
+boundary and blocks runtime evidence until the diagnostic hook exists. It does
 not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
@@ -76,7 +79,8 @@ the typed fused Q projection consumer, attention-head view, attention-head
 consumer, q_norm/RoPE consumer blockers, and the selected q_norm-input
 materialization boundary plus its proof blocker, comparator contract,
 runtime-disabled hook/tensor-identity surface, fingerprint-only diagnostic trace,
-receipt-pair review blocker, and cross-family next-boundary selection.
+receipt-pair review blocker, cross-family next-boundary selection, and shared
+q_proj-output hook gate.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -226,6 +230,17 @@ the new boundary still requires Qwen3 and Qwen2.5 before/after receipts with
 matching model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text,
 CPU backend/kernel identity, dense hook identity, f32-le tensor fingerprints, and
 `fallback_used=false`.
+
+SLM-CPU-116 keeps that selected shared boundary fail-closed. The current trace
+surface can fingerprint Qwen3 `attention.q_norm_input`, but it cannot yet expose
+`attention.q_proj_output_pre_optional_qnorm` for both Qwen3 and Qwen2.5. The new
+gate defines the required runtime-disabled hook identity, strict receipt fields,
+and comparator fail conditions, then records the exact blockers:
+`runtime_disabled_trace_hook_missing`, `warm_session_receipt_field_missing`,
+`comparator_boundary_variant_missing`, and `qwen25_artifact_pair_missing`.
+Runtime execution remains unchanged, `eager_f32_candle` remains the default, and
+no allocation, timing, throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet
+QK256 claim is made.
 
 ## Thread Envelope
 
