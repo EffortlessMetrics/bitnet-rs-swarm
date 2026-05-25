@@ -1,0 +1,40 @@
+timestamp = "2026-05-25T05:20:26Z"
+campaign = "intel-a770"
+item = "A770-058"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-058-strict-f32-disassembly-frontier"
+actor = "codex-a770"
+base_main_sha = "78074c005048db2e46280b6bd6b1644d41ee9d3f"
+claim_allowed = false
+diagnostic_only = true
+summary = "Queued A770-058 to inspect the lowered strict-f32 barrier operation sequence in the committed A770-057 OpenCL compiler assembly evidence."
+notes = [
+  "A770-057 captured selected-device Intel Arc A770 OpenCL compiler disassembly metadata for the diagnostic QK256 debug kernel.",
+  "A770-058 consumes the committed kernel assembly and classifies whether the lowered sequence preserves a strict-f32 barrier, appears collapsed or reassociated, is unrecognized, is clean, or is missing context.",
+  "This item remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-058 may classify the lowered strict-f32 barrier operation sequence in the committed selected-device OpenCL debug-kernel assembly.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

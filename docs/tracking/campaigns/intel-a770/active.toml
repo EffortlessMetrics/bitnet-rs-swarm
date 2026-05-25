@@ -3110,3 +3110,61 @@ must_not_claim = [
   "Performance speedup is proven.",
   "A770 trusted partial acceleration is claim-grade.",
 ]
+
+[[work_item]]
+id = "A770-058"
+status = "ready"
+branch = "codex/intel-a770/A770-058-strict-f32-disassembly-frontier"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-057"]
+acceptance = "Use the committed A770-057 selected-device OpenCL compiler disassembly evidence to inspect the lowered strict-f32 barrier operation sequence for the diagnostic QK256 debug kernel, classifying whether the assembly shows a barrier-preserving f32 sequence, compiler/runtime reassociation or collapse, an unrecognized lowered sequence, clean context, or missing context without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "rustfmt --edition 2024 --check crates/bitnet-kernels/src/bin/a770_opencl_strict_f32_disassembly_frontier.rs",
+  "cargo check --locked -p bitnet-kernels --no-default-features --bin a770-opencl-strict-f32-disassembly-frontier",
+  "cargo test --locked -p bitnet-kernels --no-default-features --bin a770-opencl-strict-f32-disassembly-frontier -- --nocapture",
+  "cargo run --locked -p bitnet-kernels --no-default-features --bin a770-opencl-strict-f32-disassembly-frontier -- --asm ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-compiler-disassembly/ocloc-dump/.text.qk256_i2s_i8s_scaled_gemv_debug.asm --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-strict-f32-disassembly-frontier.json",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-strict-f32-disassembly-frontier.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-kernels/src/bin/a770_opencl_strict_f32_disassembly_frontier.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-strict-f32-disassembly-frontier.json",
+  "docs/reports/A770_058_STRICT_F32_DISASSEMBLY_FRONTIER.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-058 may classify the lowered strict-f32 barrier operation sequence in the committed selected-device OpenCL debug-kernel assembly.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
