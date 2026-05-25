@@ -1,0 +1,46 @@
+timestamp = "2026-05-25T11:08:03Z"
+campaign = "intel-a770"
+item = "A770-060"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 706
+branch = "codex/intel-a770/A770-060-production-kernel-disassembly-evidence"
+head_sha = "88b44aee244b6567b7106e5389a5a7de26bd231a"
+merge_sha = "44cf94dab2644fea5035e72619687564b20d7303"
+merged_at = "2026-05-25T10:59:31Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #706, closing the A770-060 production-kernel disassembly evidence slice and queueing A770-061."
+notes = [
+  "PR #706 captured selected-device production-kernel binary and ocloc disassembly evidence for qk256_i2s_i8s_scaled_gemv.",
+  "The committed receipt classifies as a770_qk256_production_kernel_disassembly_evidence_captured.",
+  "A770-060 records fallback_used=false, cpu_fallback_allowed=false, bitnet_inference=false, qk256_decode=false, production_qk256_policy_change=false, claim_allowed=false, and diagnostic_only=true.",
+  "The next diagnostic is to inspect the lowered production-kernel operation sequence and tie it back to focused replay context before any production QK256 policy change.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-060 captured selected-device production-kernel disassembly evidence for qk256_i2s_i8s_scaled_gemv.",
+  "A770-061 may classify the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
