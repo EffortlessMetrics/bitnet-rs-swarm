@@ -3113,8 +3113,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-058"
-status = "pr_open"
+status = "merged"
 pr = 693
+head_sha = "471041e135406546c9ce4752b13c5530badd7ca2"
+merge_sha = "a65364fdd6f798d09455c435d4b4d3661c395637"
 branch = "codex/intel-a770/A770-058-strict-f32-disassembly-impl"
 stackable = false
 review_mode = "codex_premerge"
@@ -3150,6 +3152,58 @@ forbidden_paths = [
 ]
 may_claim = [
   "A770-058 may classify the lowered strict-f32 barrier operation sequence in the committed selected-device OpenCL debug-kernel assembly.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-059"
+status = "ready"
+branch = "codex/intel-a770/A770-059-production-policy-impact-frontier"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-058"]
+acceptance = "Use the committed A770-058 strict-f32 disassembly frontier and existing focused QK256 replay receipts to classify whether the barrier-preserving lowered strict-f32 sequence has bounded production-policy impact, still requires production-kernel disassembly/replay context, remains production-policy-change-not-justified, is clean, or is missing context, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+]
+forbidden_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-059 may classify the diagnostic production-policy impact frontier for the committed strict-f32 disassembly context.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
