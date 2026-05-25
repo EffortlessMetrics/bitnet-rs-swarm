@@ -3409,9 +3409,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-063"
-status = "pr_open"
+status = "merged"
 pr = 731
-head_sha = "df975a185349068474a38ec35c0e81d6b12224db"
+head_sha = "0ccc264a91a35a6551cd01e3ebd10e6bcfb494bc"
+merge_sha = "ae040f6f8dc0832ce6845e8d318a31dbaa650de3"
+merged_at = "2026-05-25T19:13:02Z"
 branch = "codex/intel-a770/A770-063-focused-production-operands"
 stackable = false
 review_mode = "codex_premerge"
