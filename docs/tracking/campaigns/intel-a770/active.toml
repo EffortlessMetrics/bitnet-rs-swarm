@@ -1853,7 +1853,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-056"
-status = "ready"
+status = "pr_open"
+pr = 680
+head_sha = "f0b33b7e53eaf7fb1c74210fe8ccf830102e05e8"
 branch = "codex/intel-a770/A770-056-opencl-compiler-binary-evidence"
 stackable = false
 review_mode = "codex_premerge"
