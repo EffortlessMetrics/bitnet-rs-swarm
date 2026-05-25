@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T08:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-108"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-108-qnorm-qwen3-receipt-pair"
+pr = 697
+head_sha = "efc2895e70c01ecbb2b41206eaa7e977473b7ef9"
+summary = "Opened PR #697 to record the Qwen3 q_norm-input before/after receipt-pair blocker."
+notes = [
+  "The committed artifact is `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-108-qnorm-input-qwen3-receipt-pair-blocker.json`.",
+  "The verified Qwen3 Q8_0 model is present locally with SHA256 `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`.",
+  "Receipt-pair collection remains fail-closed because the current warm-session receipt writer records dense_q8_hook_selection but does not emit `dense_q8_hook.q_norm_input_tensor_identity`.",
+  "No before/after receipts are fabricated, no runtime default changes, packed_q8_sidecar remains disabled, and no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
