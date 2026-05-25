@@ -3113,8 +3113,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-058"
-status = "ready"
-branch = "codex/intel-a770/A770-058-strict-f32-disassembly-frontier"
+status = "pr_open"
+pr = 693
+branch = "codex/intel-a770/A770-058-strict-f32-disassembly-impl"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

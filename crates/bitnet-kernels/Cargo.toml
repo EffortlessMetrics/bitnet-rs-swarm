@@ -163,6 +163,10 @@ name = "a770-opencl-disassembly-evidence"
 path = "src/bin/a770_opencl_disassembly_evidence.rs"
 required-features = ["opencl"]
 
+[[bin]]
+name = "a770-opencl-strict-f32-disassembly-frontier"
+path = "src/bin/a770_opencl_strict_f32_disassembly_frontier.rs"
+
 [[test]]
 name = "cpu_scalar_parity"
 path = "tests/cpu_scalar_parity.rs"

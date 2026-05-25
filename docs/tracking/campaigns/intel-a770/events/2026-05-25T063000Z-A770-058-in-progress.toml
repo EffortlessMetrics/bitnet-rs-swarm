@@ -1,0 +1,15 @@
+campaign = "intel-a770"
+item = "A770-058"
+event = "in_progress"
+timestamp = "2026-05-25T06:30:00Z"
+actor = "codex-a770"
+branch = "codex/intel-a770/A770-058-strict-f32-disassembly-impl"
+base_sha = "232979f8da220b09438240a839d1097c0253986c"
+head_sha = "232979f8da220b09438240a839d1097c0253986c"
+claim_allowed = false
+diagnostic_only = true
+
+notes = [
+  "Started diagnostic-only strict-f32 disassembly frontier implementation from merged #690/current main.",
+  "Scope remains limited to the committed A770-057 assembly parser, compact receipt, report, and campaign tracking; no production QK256 dispatch, answer, quality, residency, or speed claim is promoted.",
+]
