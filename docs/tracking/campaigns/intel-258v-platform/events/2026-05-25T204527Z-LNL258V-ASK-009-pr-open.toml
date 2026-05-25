@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T20:45:27Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-ASK-009"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 743
+branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
+head_sha = "0a970c7f3f2fa67cd8481e2fac7b8bbb8a301453"
+actor = "codex"
+summary = "Opened PR #743 for the Lunar Lake OpenVINO operator-ask Python discovery fix."
+notes = [
+  "The PR makes the OpenVINO operator ask helper discover target/lunar-lake-openvino-venv/Scripts/python.exe when BITNET_LUNAR_LAKE_OPENVINO_PYTHON and .venv are absent.",
+  "Local validation verified ask_normal auto without BITNET_LUNAR_LAKE_OPENVINO_PYTHON selected the profile-promoted OpenVINO GPU route with fallback_used=false and a bounded answer-gate pass.",
+  "The change is limited to helper Python discovery and preserves no route promotion, speedup, power-advantage, native accelerator, broad quality, model behavior, or BitNet QK256/I2_S behavior-change claim.",
+]

@@ -1,0 +1,14 @@
+timestamp = "2026-05-25T20:32:56Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-ASK-009"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
+actor = "codex"
+summary = "Started LNL258V-ASK-009 to make Lunar Lake OpenVINO operator ask discover the prepared target-local OpenVINO Python venv."
+notes = [
+  "A current ask_normal auto ask first failed when plain Python lacked openvino_genai.",
+  "The checkout has target/lunar-lake-openvino-venv/Scripts/python.exe with openvino_genai available.",
+  "The fix is limited to helper Python discovery and does not change route promotion, model behavior, speedup, power, native accelerator, broad quality, or BitNet QK256/I2_S claims.",
+]

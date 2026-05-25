@@ -11296,7 +11296,7 @@ fn run_openvino_lunar_lake_operator_ask(ctx: OpenVINOOperatorAskContext<'_>) -> 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
-            "OpenVINO operator ask helper failed with status {} using Python {}. Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino_genai> when the checkout-local .venv is not prepared.\nstdout:\n{}\nstderr:\n{}",
+            "OpenVINO operator ask helper failed with status {} using Python {}. Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino_genai> when no checkout-local OpenVINO Python is prepared.\nstdout:\n{}\nstderr:\n{}",
             output.status,
             python.display(),
             stdout.trim(),
@@ -11326,11 +11326,29 @@ fn openvino_operator_python() -> std::path::PathBuf {
 fn openvino_operator_python_with_override(
     python_override: Option<std::ffi::OsString>,
 ) -> std::path::PathBuf {
+    let candidates = vec![
+        std::path::PathBuf::from(".venv").join("Scripts").join("python.exe"),
+        std::path::PathBuf::from("target")
+            .join("lunar-lake-openvino-venv")
+            .join("Scripts")
+            .join("python.exe"),
+    ];
+    openvino_operator_python_with_override_and_candidates(python_override, &candidates)
+}
+
+#[cfg(feature = "full-cli")]
+fn openvino_operator_python_with_override_and_candidates(
+    python_override: Option<std::ffi::OsString>,
+    candidates: &[std::path::PathBuf],
+) -> std::path::PathBuf {
     if let Some(path) = non_empty_env_path(python_override) {
         return path;
     }
-    let venv_python = std::path::PathBuf::from(".venv").join("Scripts").join("python.exe");
-    if venv_python.exists() { venv_python } else { std::path::PathBuf::from("python") }
+    candidates
+        .iter()
+        .find(|path| path.exists())
+        .cloned()
+        .unwrap_or_else(|| std::path::PathBuf::from("python"))
 }
 
 #[cfg(feature = "full-cli")]
@@ -16116,6 +16134,30 @@ mod tests {
             openvino_operator_python_with_override(Some(override_python.clone().into_os_string()));
 
         assert_eq!(resolved, override_python);
+    }
+
+    #[cfg(feature = "full-cli")]
+    #[test]
+    fn lunar_lake_openvino_operator_python_uses_target_venv_candidate() -> Result<()> {
+        let temp_dir = tempfile::tempdir().context("temp dir")?;
+        let missing_dot_venv = temp_dir.path().join(".venv").join("Scripts").join("python.exe");
+        let target_venv = temp_dir
+            .path()
+            .join("target")
+            .join("lunar-lake-openvino-venv")
+            .join("Scripts")
+            .join("python.exe");
+        std::fs::create_dir_all(target_venv.parent().context("target venv parent")?)
+            .context("create target venv parent")?;
+        std::fs::write(&target_venv, b"").context("create target venv python placeholder")?;
+
+        let resolved = openvino_operator_python_with_override_and_candidates(
+            None,
+            &[missing_dot_venv, target_venv.clone()],
+        );
+
+        assert_eq!(resolved, target_venv);
+        Ok(())
     }
 
     #[cfg(feature = "full-cli")]
