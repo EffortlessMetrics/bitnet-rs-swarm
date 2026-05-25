@@ -1,0 +1,33 @@
+timestamp = "2026-05-25T12:19:13Z"
+campaign = "intel-a770"
+item = "A770-061"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 714
+branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
+head_sha = "4494f891eab2ee3b5d3cc88206a26f62aada325b"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #714 for A770-061 production lowered operation sequence classification."
+notes = [
+  "The PR adds a diagnostic receipt classifying the selected-device production qk256_i2s_i8s_scaled_gemv assembly as requiring production replay instrumentation.",
+  "The PR leaves production QK256 dispatch, runtime math, answer scoring, sampling, CPU/A770 parity, answer readiness, quality, residency, speed, trusted partial acceleration, and full BitNet inference claims unchanged.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-061 may classify the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch changed.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

@@ -3293,7 +3293,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-061"
-status = "ready"
+status = "pr_open"
+pr = 714
+head_sha = "4494f891eab2ee3b5d3cc88206a26f62aada325b"
 branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
 stackable = false
 review_mode = "codex_premerge"

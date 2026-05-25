@@ -1,0 +1,31 @@
+timestamp = "2026-05-25T12:14:27Z"
+campaign = "intel-a770"
+item = "A770-061"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-061 to classify the committed production-kernel lowered operation sequence without changing production QK256 policy."
+notes = [
+  "The work consumes the A770-060 production-kernel disassembly evidence and the focused QK256 replay context.",
+  "The item remains diagnostic-only and cannot promote CPU/A770 parity, answer readiness, quality, residency, speed, trusted partial acceleration, or full BitNet inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-061 may classify the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch changed.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
