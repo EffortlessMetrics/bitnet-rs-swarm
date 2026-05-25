@@ -284,6 +284,8 @@ pub struct A770OpenClQk256CompilerBinaryEvidence {
     pub binary_fnv1a64: Vec<String>,
     /// Short hex previews of each OpenCL program binary.
     pub binary_prefix_hex: Vec<String>,
+    /// Driver-returned OpenCL program binaries.
+    pub binaries: Vec<Vec<u8>>,
     /// Number of source bytes compiled.
     pub source_bytes: usize,
     /// Deterministic FNV-1a hash of the OpenCL C source.
@@ -596,6 +598,7 @@ pub fn capture_a770_qk256_debug_compiler_binary_evidence()
         binary_sizes,
         binary_fnv1a64,
         binary_prefix_hex,
+        binaries,
         source_bytes: QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.len(),
         source_fnv1a64: fnv1a64_hex(QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.as_bytes()),
         strict_f32_barrier_source_present,

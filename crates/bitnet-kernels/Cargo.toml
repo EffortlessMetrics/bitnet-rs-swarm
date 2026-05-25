@@ -158,6 +158,11 @@ name = "a770-opencl-compiler-evidence"
 path = "src/bin/a770_opencl_compiler_evidence.rs"
 required-features = ["opencl"]
 
+[[bin]]
+name = "a770-opencl-disassembly-evidence"
+path = "src/bin/a770_opencl_disassembly_evidence.rs"
+required-features = ["opencl"]
+
 [[test]]
 name = "cpu_scalar_parity"
 path = "tests/cpu_scalar_parity.rs"
