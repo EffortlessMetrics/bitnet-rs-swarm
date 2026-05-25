@@ -1,0 +1,25 @@
+timestamp = "2026-05-25T15:53:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-112"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 723
+branch = "codex/slm-cpu-112-qnorm-fingerprint-diagnostic-capture"
+head_sha = "4fae771feaa5ad35d8a3e03d2809ca98f1eb8703"
+merge_sha = "01935ab69a829b925f3be1727a9a372eaaa6c24d"
+merged_at = "2026-05-25T15:51:18Z"
+summary = "Merged PR #723, adding the opt-in q_norm-input fingerprint diagnostic capture path."
+notes = [
+  "PR #723 adds a fingerprint-only `qwen_trace_tensor_fingerprint` path for `attention.q_norm_input` at layer 0, scoped to `layers.0.attention.q_proj.weight` and `q_norm_input_candle_tensor_boundary`.",
+  "The trace record emits shape, dtype, source dtype, source tensor, boundary, f32-le SHA256, and `contents_dumped=false` without sample values.",
+  "The default production runtime remains `eager_f32_candle`; packed_q8_sidecar remains disabled by default.",
+  "No allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-113"
+status = "ready"
+branch = "codex/slm-cpu-113-qnorm-fingerprint-artifact"
+summary = "Capture or precisely block a real i5-8250U Qwen3 Q8_0 q_norm-input fingerprint artifact using the new opt-in diagnostic trace path."
