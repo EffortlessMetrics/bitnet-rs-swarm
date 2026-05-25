@@ -20,6 +20,7 @@ use bitnet_transformer::{
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
+    dense_q8_sidecar_q_norm_input_proof_gate,
     dense_q8_sidecar_q_norm_materialization_boundary_gate,
     dense_q8_sidecar_typed_attention_head_consumer_gate,
     dense_q8_sidecar_typed_attention_head_view_gate,
@@ -1065,6 +1066,81 @@ fn dense_q8_sidecar_q_norm_materialization_boundary_keeps_runtime_disabled() {
     assert!(gate.receipt_gate.required_before_speedup_claim);
     assert!(gate.receipt_gate.required_fields.contains(&"fallback_used=false"));
     assert!(gate.next_required_slice.contains("before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts"));
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_proof_gate_blocks_without_receipts() {
+    let source = dense_q8_sidecar_q_norm_materialization_boundary_gate();
+    let gate = dense_q8_sidecar_q_norm_input_proof_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.q_norm_input_materialization_proof_gate");
+    assert_eq!(gate.status, "blocked_missing_runtime_hook_and_before_after_receipts");
+    assert_eq!(gate.source_boundary_status, source.status);
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert_eq!(gate.selected_materialization_boundary, "q_norm_input_candle_tensor_boundary");
+    assert!(!gate.proof_ready);
+    assert!(gate.missing_runtime_hook);
+    assert!(gate.missing_receipt_field);
+    assert!(gate.missing_comparator);
+    assert!(gate.tensor_identity_unrecorded);
+    assert!(gate.accumulator_order_unproven);
+    assert!(gate.artifact_gap);
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_proof_gate_names_required_receipt_pairs() {
+    let gate = dense_q8_sidecar_q_norm_input_proof_gate();
+
+    assert_eq!(gate.required_receipts.len(), 2);
+    assert!(gate.required_receipts.iter().any(|receipt| {
+        receipt.model_id == "qwen3-0.6b-q8_0"
+            && receipt.model_architecture == "qwen3"
+            && receipt.required_fields.contains(&"generated_ids")
+            && receipt.required_fields.contains(&"fallback_used=false")
+    }));
+    assert!(gate.required_receipts.iter().any(|receipt| {
+        receipt.model_id == "qwen2.5-0.5b-instruct-q8_0"
+            && receipt.model_architecture == "qwen2"
+            && receipt.required_fields.contains(&"dense_hook identity")
+            && receipt.required_fields.contains(&"selected_backend=cpu-rust")
+    }));
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_proof_gate_names_precise_blockers() {
+    let gate = dense_q8_sidecar_q_norm_input_proof_gate();
+
+    for blocker in [
+        "q_norm_input_runtime_hook_missing",
+        "qwen3_q8_before_after_receipts_missing",
+        "qwen25_q8_before_after_receipts_missing",
+        "q_norm_input_receipt_comparator_missing",
+        "q_norm_input_tensor_identity_unrecorded",
+        "accumulator_order_unproven",
+    ] {
+        assert!(
+            gate.blockers.iter().any(|candidate| candidate.blocker == blocker),
+            "missing blocker {blocker}"
+        );
+    }
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_proof_gate_keeps_claim_boundary() {
+    let gate = dense_q8_sidecar_q_norm_input_proof_gate();
+
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.packed_q8_sidecar_default_enabled);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+    assert!(!gate.sustained_throughput_claim);
+    assert!(!gate.q4_q5_runtime_claim);
+    assert!(!gate.server_or_accelerator_claim);
+    assert!(!gate.qwen35_claim);
+    assert!(!gate.bitnet_qk256_claim);
+    assert!(gate.next_required_slice.contains("fail-closed comparator"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
