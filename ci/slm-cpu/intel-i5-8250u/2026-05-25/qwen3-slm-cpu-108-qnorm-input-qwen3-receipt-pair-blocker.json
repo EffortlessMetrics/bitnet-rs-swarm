@@ -1,0 +1,115 @@
+{
+  "artifact_kind": "slm_cpu_qnorm_input_qwen3_receipt_pair_blocker",
+  "work_item": "SLM-CPU-108",
+  "created_utc": "2026-05-25T08:22:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-input-runtime-hook-gate.json",
+  "model_artifact": {
+    "path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "sha256_verified_locally": true,
+    "quant_format": "Q8_0",
+    "architecture": "qwen3"
+  },
+  "selected_boundary": {
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "gguf_tensor_name": "blk.0.attn_q.weight",
+    "exact_tensor_role": "AttentionQ",
+    "materialization_boundary": "q_norm_input_candle_tensor_boundary",
+    "runtime_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+    "after_receipt_field": "dense_q8_hook.q_norm_input_tensor_identity"
+  },
+  "local_evidence": {
+    "verified_model_present": true,
+    "receipt_path_checked": "crates/bitnet-cli/src/main.rs::handle_slm_warm_session_command",
+    "warm_session_records_dense_q8_hook_selection": true,
+    "warm_session_records_q_norm_input_tensor_identity": false,
+    "code_search": {
+      "command": "rg -n \"q_norm_input_tensor_identity|q_norm_input\\\\.boundary|q_norm_input_tensor|q_norm_input_boundary\" crates/bitnet-cli/src crates/bitnet-models/src crates/bitnet-transformer/src",
+      "result": "q_norm_input tensor identity fields currently exist only in bitnet-transformer gate/comparator contracts; bitnet-cli warm-session receipts do not emit dense_q8_hook.q_norm_input_tensor_identity"
+    }
+  },
+  "attempted_receipt_pair": {
+    "before_receipt": null,
+    "after_receipt": null,
+    "not_collected_reason": "The verified Qwen3 Q8_0 model exists locally, but the current warm-session receipt writer cannot emit the required q_norm_input tensor identity field. Running before/after receipts now would produce incomplete artifacts that must fail the SLM-CPU-106 comparator contract.",
+    "fabricated_receipts": false
+  },
+  "required_for_collection": [
+    "Thread the runtime-disabled q_norm-input hook identity into the Qwen3 warm-session receipt path.",
+    "Emit dense_q8_hook.q_norm_input_tensor_identity in the after receipt with boundary, source tensor, source stage, shape, dtype, dense-hook identity, and f32-le tensor fingerprint.",
+    "Emit or preserve the matching baseline identity surface needed by the SLM-CPU-106 comparator.",
+    "Only then run before/after Qwen3 Q8_0 strict CPU receipts and compare generated IDs, decoded text, model SHA, tokenizer authority, selected CPU backend/kernel identity, dense hook identity, q_norm input identity, and fallback_used=false."
+  ],
+  "remaining_blockers": [
+    {
+      "blocker": "warm_session_q_norm_input_tensor_identity_field_missing",
+      "category": "receipt-field-gap",
+      "exact_api_or_surface": "crates/bitnet-cli/src/main.rs warm-session receipt construction records dense_q8_hook_selection but does not emit dense_q8_hook.q_norm_input_tensor_identity.",
+      "required_before_proof": "Add the q_norm-input tensor identity field to the receipt path before collecting SLM-CPU-108 Qwen3 before/after receipts."
+    },
+    {
+      "blocker": "qwen3_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No complete Qwen3 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary.",
+      "required_before_proof": "Collect the pair only after the receipt writer emits the required q_norm_input identity field."
+    },
+    {
+      "blocker": "qwen25_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No Qwen2.5 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary.",
+      "required_before_proof": "Keep the second-model gate open until Qwen3 receipt collection is mechanically complete."
+    },
+    {
+      "blocker": "accumulator_order_unproven",
+      "category": "accumulator-order",
+      "exact_api_or_surface": "Packed-Q8 sidecar q_proj accumulation feeding q_norm_input may differ from eager_f32_candle before Candle LayerNorm consumes the materialized Tensor.",
+      "required_before_proof": "Record generated-ID/text equivalence and focused numerical evidence before claiming behavior preservation or timing improvement."
+    }
+  ],
+  "result": {
+    "proof_ready": false,
+    "qwen3_model_verified": true,
+    "qwen3_receipt_pair_collected": false,
+    "receipt_pair_blocked": true,
+    "missing_model": false,
+    "missing_receipt_field": true,
+    "missing_q_norm_input_tensor_identity": true,
+    "missing_generated_token_evidence": true,
+    "fallback_used": null,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "validation": {
+    "model_hash_command": "Get-FileHash models\\\\slm\\\\Qwen3-0.6B-Q8_0.gguf -Algorithm SHA256",
+    "model_hash_observed": "9465E63A22ADD5354D9BB4B99E90117043C7124007664907259BD16D043BB031",
+    "tracker_commands_required": [
+      "cargo run -p xtask --no-default-features -- campaign generate",
+      "cargo run -p xtask --no-default-features -- campaign doctor",
+      "git diff --check"
+    ]
+  },
+  "claim_boundary": {
+    "new_inference_run": false,
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
