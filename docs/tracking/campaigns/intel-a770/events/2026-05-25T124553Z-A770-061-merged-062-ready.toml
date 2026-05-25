@@ -1,0 +1,48 @@
+timestamp = "2026-05-25T12:45:53Z"
+campaign = "intel-a770"
+item = "A770-061"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 714
+branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
+head_sha = "2c23c2242ccb0f91ff9483a8b0be54f59e7d8dfd"
+merge_sha = "49783c04ec0bcb57e70589cdb127e494887582f8"
+merged_at = "2026-05-25T12:45:53Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #714 with the A770-061 production lowered QK256 operation-sequence classification and advanced A770-062 for production replay instrumentation."
+notes = [
+  "PR #714 classified the selected-device production lowered qk256_i2s_i8s_scaled_gemv sequence as requiring production replay instrumentation before treating the sequence as semantics-clean.",
+  "The diagnostic records QK256 byte loads, unpack shift/mask, integer dot accumulation, adjusted-dot subtraction, guarded reciprocal/multiply final scaling, and output stores in the production assembly evidence.",
+  "The artifact records no direct final-scale div instruction and keeps the classification bounded to static lowered-operation evidence.",
+  "A770-062 is ready for production replay instrumentation covering adjusted_dot, activation_scale, weight_scale, reciprocal-path intermediates, final scaled value bits, and output store bits.",
+  "No production QK256 dispatch, runtime math, answer scoring, sampling, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-061 classified the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
+  "A770-062 may capture diagnostic production replay instrumentation for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Runtime math changed.",
+  "Answer scoring or sampling changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
