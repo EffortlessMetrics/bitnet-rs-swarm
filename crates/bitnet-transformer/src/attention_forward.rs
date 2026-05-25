@@ -8,17 +8,19 @@
 use super::BitNetError;
 use super::{
     DenseLinearRuntimeHookRegistry, LayerKVCache, MultiHeadAttention,
-    TransformerA770OpenClRuntimeDelta, TransformerA770OpenClRuntimeDevice,
-    TransformerForwardWorkspace, TransformerQk256CpuHotPathDelta,
-    TransformerQk256DeviceExpressionSample, TransformerQk256DeviceExpressionTrace,
-    TransformerQk256DeviceIntermediateSample, TransformerQk256DeviceIntermediateTrace,
-    TransformerQk256DispatchDelta, TransformerQkvProjectionDispatchReplayA770Stats,
+    QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+    QwenTraceDenseHookIdentity, TransformerA770OpenClRuntimeDelta,
+    TransformerA770OpenClRuntimeDevice, TransformerForwardWorkspace,
+    TransformerQk256CpuHotPathDelta, TransformerQk256DeviceExpressionSample,
+    TransformerQk256DeviceExpressionTrace, TransformerQk256DeviceIntermediateSample,
+    TransformerQk256DeviceIntermediateTrace, TransformerQk256DispatchDelta,
+    TransformerQkvProjectionDispatchReplayA770Stats,
     TransformerQkvProjectionDispatchReplayCpuStats, TransformerQkvProjectionDispatchReplayTensors,
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
     debug_rope_enabled, qk256_inline_scale, qwen_trace_event, qwen_trace_events_enabled,
     qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
-    trace_rms_enabled,
+    qwen_trace_tensor_fingerprint_with_dense_hook, trace_rms_enabled,
 };
 use bitnet_common::Result;
 use candle_core::{DType, Module, Tensor};
@@ -72,6 +74,7 @@ impl MultiHeadAttention {
         });
         let projections =
             self.project_qkv(x, raw_tensors, dense_linear_hooks, workspace.as_deref_mut())?;
+        self.trace_qproj_output_pre_optional_qnorm(&projections.q)?;
         let q_projection_for_source = projections.q.clone();
         let k_projection_for_source = projections.k.clone();
         let v_projection_for_source = projections.v.clone();
@@ -418,6 +421,28 @@ impl MultiHeadAttention {
             )
             .map_err(BitNetError::from)?;
         }
+        Ok(())
+    }
+
+    fn trace_qproj_output_pre_optional_qnorm(&self, q_proj_out: &Tensor) -> Result<()> {
+        let source_tensor = format!("layers.{}.attention.q_proj.weight", self.layer_idx);
+        let gguf_tensor = format!("blk.{}.attn_q.weight", self.layer_idx);
+        let dense_hook_identity = format!(
+            "{}:{}:runtime_disabled",
+            source_tensor, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY
+        );
+        qwen_trace_tensor_fingerprint_with_dense_hook(
+            QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+            Some(self.layer_idx),
+            q_proj_out,
+            &source_tensor,
+            QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY,
+            QwenTraceDenseHookIdentity {
+                dense_hook_identity: &dense_hook_identity,
+                gguf_tensor: &gguf_tensor,
+                runtime_disabled: true,
+            },
+        )?;
         Ok(())
     }
 

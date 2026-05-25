@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_pre_qnorm_hook",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-117",
+  "status": "runtime_disabled_hook_surface_implemented",
+  "review_date": "2026-05-25",
+  "claim": "SLM-CPU-117 adds the opt-in runtime-disabled attention.q_proj_output_pre_optional_qnorm trace fingerprint hook and fail-closed comparator artifact surface without promoting packed_q8_sidecar or making allocation, timing, answer-quality, or throughput claims.",
+  "source_boundary": {
+    "selected_by": "SLM-CPU-115",
+    "gated_by": "SLM-CPU-116",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight"
+  },
+  "runtime_hook": {
+    "default_enabled": false,
+    "activation": [
+      "BITNET_QWEN_TRACE_JSONL or BITNET_QWEN_TRACE=1",
+      "BITNET_QWEN_TRACE_ACTIVE=1",
+      "BITNET_QWEN_TRACE_LAYER=<layer>"
+    ],
+    "emitted_kind": "qwen_trace_tensor_fingerprint",
+    "emitted_fields": [
+      "stage",
+      "layer",
+      "dtype",
+      "source_dtype",
+      "dims",
+      "len",
+      "source_tensor",
+      "gguf_tensor",
+      "boundary",
+      "dense_hook_identity",
+      "runtime_disabled",
+      "tensor_fingerprint_sha256_f32_le",
+      "contents_dumped"
+    ],
+    "contents_dumped": false,
+    "full_tensor_contents_dumped": false,
+    "runtime_disabled": true
+  },
+  "comparator_surface": {
+    "artifact_kind": "slm_qproj_output_pre_qnorm_hook_compare",
+    "fail_closed": true,
+    "requires_dense_hook": true,
+    "required_boundary": "attention_q_proj_output_pre_optional_qnorm",
+    "required_stage": "attention.q_proj_output_pre_optional_qnorm",
+    "requires_tensor_fingerprint_sha256_f32_le": true,
+    "requires_checkpoint_stage": "attention.q_proj_output_pre_optional_qnorm"
+  },
+  "proof_status": {
+    "qwen3_q8_real_artifact_pair_present": false,
+    "qwen25_q8_real_artifact_pair_present": false,
+    "behavior_proven": false,
+    "ready_for_packed_q8_promotion": false,
+    "next_required_evidence": "Capture Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs carrying this dense hook identity and matching f32-le fingerprints before any allocation or timing claim."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
