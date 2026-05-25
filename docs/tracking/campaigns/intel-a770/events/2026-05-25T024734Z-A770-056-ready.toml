@@ -1,0 +1,41 @@
+timestamp = "2026-05-25T02:47:34Z"
+campaign = "intel-a770"
+item = "A770-056"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-056-opencl-compiler-binary-evidence"
+actor = "codex-a770"
+base_main_sha = "f57a93a6c93369b64eb264b9437b42f3b834183f"
+claim_allowed = false
+diagnostic_only = true
+summary = "Queued A770-056 to capture selected-device OpenCL compiler program-binary evidence for the diagnostic QK256 debug kernel after A770-055."
+notes = [
+  "A770-055 classified the focused strict-f32 codegen frontier as host compiler eliding/collapsing the explicit f32 barrier while OpenCL frontend/device codegen matched the selected A770 output bit.",
+  "A770-056 is scoped to OpenCL program-build and binary metadata for the diagnostic QK256 debug kernel.",
+  "This item captures driver-exposed binary size/hash/prefix and source-context evidence only; it does not include vendor disassembly yet.",
+  "This item remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-056 may capture selected-device OpenCL compiler program-binary metadata for the diagnostic QK256 debug kernel.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

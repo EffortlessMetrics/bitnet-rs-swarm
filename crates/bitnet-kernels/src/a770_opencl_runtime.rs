@@ -12,7 +12,10 @@ use opencl3::device::{CL_DEVICE_TYPE_GPU, Device};
 use opencl3::kernel::{ExecuteKernel, Kernel};
 use opencl3::memory::{Buffer, CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, ClMem};
 use opencl3::platform::get_platforms;
-use opencl3::program::Program;
+use opencl3::program::{
+    CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT, CL_PROGRAM_BINARY_TYPE_EXECUTABLE,
+    CL_PROGRAM_BINARY_TYPE_LIBRARY, CL_PROGRAM_BINARY_TYPE_NONE, Program,
+};
 use opencl3::types::CL_BLOCKING;
 use std::fmt::Display;
 
@@ -245,6 +248,54 @@ pub struct A770OpenClQk256ScaledGemvDebugResult {
     pub device_to_host_bytes: usize,
     /// Number of OpenCL kernel invocations.
     pub kernel_invocations: usize,
+}
+
+/// Compiled-program evidence for the selected-device A770 QK256 debug kernel.
+///
+/// This records OpenCL compiler/build artifacts only. It is not a production
+/// dispatch path and does not prove BitNet inference or QK256 policy readiness.
+#[derive(Debug, Clone, PartialEq)]
+pub struct A770OpenClQk256CompilerBinaryEvidence {
+    /// OpenCL platform index selected for compilation.
+    pub platform_index: usize,
+    /// OpenCL device index selected for compilation.
+    pub device_index: usize,
+    /// OpenCL platform name.
+    pub platform_name: String,
+    /// Selected OpenCL device name.
+    pub runtime_device: String,
+    /// Selected OpenCL device vendor.
+    pub vendor: String,
+    /// Selected OpenCL driver version.
+    pub driver_version: String,
+    /// OpenCL program build options reported by the driver.
+    pub build_options: String,
+    /// OpenCL program build log reported by the driver.
+    pub build_log: String,
+    /// OpenCL binary type reported for the selected device.
+    pub binary_type: String,
+    /// Kernel names reported by the compiled program.
+    pub kernel_names: String,
+    /// Number of devices attached to the compiled program.
+    pub program_device_count: usize,
+    /// Binary sizes reported by OpenCL.
+    pub binary_sizes: Vec<usize>,
+    /// Deterministic FNV-1a hashes of each OpenCL program binary.
+    pub binary_fnv1a64: Vec<String>,
+    /// Short hex previews of each OpenCL program binary.
+    pub binary_prefix_hex: Vec<String>,
+    /// Number of source bytes compiled.
+    pub source_bytes: usize,
+    /// Deterministic FNV-1a hash of the OpenCL C source.
+    pub source_fnv1a64: String,
+    /// Whether the source contains the volatile strict-f32 replay expression.
+    pub strict_f32_barrier_source_present: bool,
+    /// Whether the driver exposed any non-empty compiled program binary.
+    pub program_binary_captured: bool,
+    /// Whether this receipt includes real disassembly text.
+    pub disassembly_captured: bool,
+    /// Compact classification for the captured compiler evidence.
+    pub classification: String,
 }
 
 /// Run grouped QK256 I2_S x prequantized I8_S scaled GEMV on the selected A770.
@@ -488,6 +539,72 @@ pub fn run_a770_qk256_i8s_scaled_gemv_debug(
     })
 }
 
+/// Capture OpenCL compiler/build evidence for the selected-device A770 QK256
+/// debug kernel.
+///
+/// The OpenCL program binary is driver-specific and is recorded through size,
+/// stable hash, and prefix only. This does not disassemble the binary and must
+/// not be used as a production QK256 policy change by itself.
+pub fn capture_a770_qk256_debug_compiler_binary_evidence()
+-> Result<A770OpenClQk256CompilerBinaryEvidence> {
+    let selected = find_a770_device()?;
+    let context = Context::from_device(&selected.device).map_err(gpu_err("create context"))?;
+    let program =
+        Program::create_and_build_from_source(&context, QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC, "")
+            .map_err(gpu_err("build qk256_i2s_i8s_scaled_gemv_debug evidence program"))?;
+
+    let device_id = selected.device.id();
+    let build_options = program.get_build_options(device_id).unwrap_or_default();
+    let build_log = program.get_build_log(device_id).unwrap_or_default();
+    let binary_type = program
+        .get_build_binary_type(device_id)
+        .map(binary_type_name)
+        .unwrap_or("unknown")
+        .to_owned();
+    let kernel_names = program.kernel_names().to_owned();
+    let program_device_count = program.get_num_devices().unwrap_or(0) as usize;
+    let binary_sizes =
+        program.get_binary_sizes().unwrap_or_default().into_iter().collect::<Vec<_>>();
+    let binaries = program.get_binaries().unwrap_or_default();
+    let binary_fnv1a64 = binaries.iter().map(|binary| fnv1a64_hex(binary)).collect::<Vec<_>>();
+    let binary_prefix_hex =
+        binaries.iter().map(|binary| hex_prefix(binary, 32)).collect::<Vec<_>>();
+    let program_binary_captured = binaries.iter().any(|binary| !binary.is_empty());
+    let strict_f32_barrier_source_present = QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC
+        .contains("volatile_div_then_mul")
+        && QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.contains("volatile float");
+    let disassembly_captured = false;
+    let classification = compiler_binary_evidence_classification(
+        program_binary_captured,
+        disassembly_captured,
+        strict_f32_barrier_source_present,
+    )
+    .to_owned();
+
+    Ok(A770OpenClQk256CompilerBinaryEvidence {
+        platform_index: selected.platform_index,
+        device_index: selected.device_index,
+        platform_name: selected.platform_name,
+        runtime_device: selected.device_name,
+        vendor: selected.vendor,
+        driver_version: selected.driver_version,
+        build_options,
+        build_log,
+        binary_type,
+        kernel_names,
+        program_device_count,
+        binary_sizes,
+        binary_fnv1a64,
+        binary_prefix_hex,
+        source_bytes: QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.len(),
+        source_fnv1a64: fnv1a64_hex(QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.as_bytes()),
+        strict_f32_barrier_source_present,
+        program_binary_captured,
+        disassembly_captured,
+        classification,
+    })
+}
+
 fn validate_request(request: &A770OpenClQk256ScaledGemv<'_>) -> Result<()> {
     if request.rows == 0 || request.cols == 0 {
         return Err(KernelError::InvalidArguments {
@@ -610,6 +727,56 @@ fn gpu_err<E: Display>(context: &'static str) -> impl FnOnce(E) -> KernelError {
     move |err| KernelError::GpuError { reason: format!("A770 OpenCL {context}: {err}") }
 }
 
+fn binary_type_name(binary_type: u32) -> &'static str {
+    match binary_type {
+        CL_PROGRAM_BINARY_TYPE_NONE => "none",
+        CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT => "compiled_object",
+        CL_PROGRAM_BINARY_TYPE_LIBRARY => "library",
+        CL_PROGRAM_BINARY_TYPE_EXECUTABLE => "executable",
+        _ => "unknown",
+    }
+}
+
+fn compiler_binary_evidence_classification(
+    program_binary_captured: bool,
+    disassembly_captured: bool,
+    strict_f32_barrier_source_present: bool,
+) -> &'static str {
+    match (program_binary_captured, disassembly_captured, strict_f32_barrier_source_present) {
+        (false, _, _) => "a770_qk256_opencl_compiler_binary_evidence_missing_program_binary",
+        (true, false, false) => {
+            "a770_qk256_opencl_compiler_binary_evidence_missing_strict_f32_source_context"
+        }
+        (true, false, true) => {
+            "a770_qk256_opencl_compiler_binary_evidence_program_binary_captured_disassembly_missing"
+        }
+        (true, true, true) => {
+            "a770_qk256_opencl_compiler_binary_evidence_program_binary_and_disassembly_captured"
+        }
+        (true, true, false) => {
+            "a770_qk256_opencl_compiler_binary_evidence_disassembly_captured_missing_strict_f32_source_context"
+        }
+    }
+}
+
+fn fnv1a64_hex(bytes: &[u8]) -> String {
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("{hash:016x}")
+}
+
+fn hex_prefix(bytes: &[u8], limit: usize) -> String {
+    let mut out = String::new();
+    for byte in bytes.iter().take(limit) {
+        use std::fmt::Write as _;
+        let _ = write!(out, "{byte:02x}");
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -671,5 +838,27 @@ mod tests {
             sample_limit: 0,
         };
         assert!(run_a770_qk256_i8s_scaled_gemv_debug(req).is_err());
+    }
+
+    #[test]
+    fn compiler_binary_evidence_classifies_binary_without_disassembly() {
+        assert_eq!(
+            compiler_binary_evidence_classification(true, false, true),
+            "a770_qk256_opencl_compiler_binary_evidence_program_binary_captured_disassembly_missing"
+        );
+    }
+
+    #[test]
+    fn compiler_binary_evidence_classifies_missing_binary() {
+        assert_eq!(
+            compiler_binary_evidence_classification(false, false, true),
+            "a770_qk256_opencl_compiler_binary_evidence_missing_program_binary"
+        );
+    }
+
+    #[test]
+    fn deterministic_fnv_and_hex_prefix_are_stable() {
+        assert_eq!(fnv1a64_hex(b""), "cbf29ce484222325");
+        assert_eq!(hex_prefix(&[0xab, 0xcd, 0xef], 2), "abcd");
     }
 }
