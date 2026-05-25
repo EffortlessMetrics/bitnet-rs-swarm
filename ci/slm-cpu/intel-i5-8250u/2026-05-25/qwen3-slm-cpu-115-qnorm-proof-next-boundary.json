@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qnorm_proof_next_boundary",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-115",
+  "status": "boundary_selected",
+  "review_date": "2026-05-25",
+  "claim": "SLM-CPU-115 resolves the SLM-CPU-114 q_norm-input proof blocker by selecting a comparable Qwen-family boundary that exists on both Qwen3 Q8_0 and Qwen2.5 Q8_0 before any allocation, timing, or packed-Q8 default-runtime claim.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof host",
+    "claim_boundary": "correctness and bounded Kaby evidence only; no sustained throughput claim"
+  },
+  "source_blocker": {
+    "path": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-114-qnorm-fingerprint-receipt-pair.json",
+    "classification": "qwen3_boundary_identity_supported_but_pair_fingerprint_missing",
+    "qwen3_status": "real q_norm_input fingerprint exists, but before/after warm-session receipts do not carry f32-le tensor fingerprints",
+    "qwen25_status": "accepted Qwen2.5 Q8_0 sanity artifact has no q_norm_input stage under the current q_norm-only trace hook"
+  },
+  "rejected_boundary": {
+    "id": "q_norm_input_candle_tensor_boundary",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "reason": "This boundary is Qwen3-specific on the current artifacts because Qwen2.5 does not materialize an attn_q_norm/attn_k_norm stage. Keeping it as the cross-family proof boundary would overclaim Qwen2.5 coverage."
+  },
+  "selected_boundary": {
+    "id": "attention_q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "description": "The dense attention q_proj linear output after the canonical Q projection and before any architecture-specific optional q_norm/k_norm, RoPE, trace/workspace identity, or attention-score handoff.",
+    "why_comparable": [
+      "Qwen3 Q8_0 and Qwen2.5 Q8_0 both have the dense attention q_proj tensor.",
+      "The boundary is before the optional Qwen3 q_norm stage that is absent in the accepted Qwen2.5 artifact.",
+      "The boundary remains close to the packed-Q8 sidecar candidate while avoiding a Qwen3-only proof surface."
+    ],
+    "required_shape_fields": [
+      "batch",
+      "sequence_position",
+      "hidden_size",
+      "num_attention_heads",
+      "head_dim"
+    ],
+    "required_fingerprint_order": "logical f32 little-endian q_proj output before q_norm/RoPE, with shape and source tensor recorded",
+    "contents_dumped": false
+  },
+  "proof_requirements_before_runtime_promotion": {
+    "qwen3_q8_receipt_pair_required": true,
+    "qwen25_q8_receipt_pair_required": true,
+    "before_after_tensor_fingerprint_equality_required": true,
+    "model_sha256_identical": true,
+    "tokenizer_authority_identical": true,
+    "prompt_ids_identical": true,
+    "generated_ids_identical": true,
+    "decoded_text_identical": true,
+    "selected_backend_kernel_identity_preserved": true,
+    "dense_hook_identity_preserved": true,
+    "fallback_used": false,
+    "default_runtime": "eager_f32_candle",
+    "packed_q8_sidecar_default_enabled": false
+  },
+  "next_required_slice": {
+    "id": "SLM-CPU-116",
+    "summary": "Add a runtime-disabled diagnostic hook and fail-closed receipt/comparator surface for the shared attention.q_proj_output_pre_optional_qnorm boundary on Qwen3 Q8_0 and Qwen2.5 Q8_0, or record the exact Tensor API or trace-safety blocker."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

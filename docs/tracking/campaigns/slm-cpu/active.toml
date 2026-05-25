@@ -7096,7 +7096,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-115"
-status = "ready"
+status = "pr_open"
+pr = 740
+head_sha = "0567dee4c44ac967f126bb1217c207d8d7db2e8e"
 branch = "codex/slm-cpu-115-qnorm-proof-next-boundary"
 stackable = false
 review_mode = "codex_premerge"
