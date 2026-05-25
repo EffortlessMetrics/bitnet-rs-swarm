@@ -14660,6 +14660,64 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "LNL258V-ASK-009"
+status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-ASK-006"]
+acceptance = "Make the Lunar Lake OpenVINO GenAI operator-ask path discover the prepared checkout-local target/lunar-lake-openvino-venv/Scripts/python.exe fallback after BITNET_LUNAR_LAKE_OPENVINO_PYTHON and .venv, so profile-promoted OpenVINO auto asks do not fail back to plain Python when the target venv exists. Verify the ask_normal auto route without an env override selects the profile-promoted OpenVINO GPU route with fallback_used=false and a bounded answer gate pass. Preserve no route-promotion, speedup, power-advantage, native accelerator, broad quality, model behavior, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "rustfmt --check --config skip_children=true --edition 2024 crates/bitnet-cli/src/main.rs",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet tests::lunar_lake_openvino_operator_python_prefers_env_override -- --exact --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet tests::lunar_lake_openvino_operator_python_uses_target_venv_candidate -- --exact --nocapture",
+  "cargo build --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet",
+  "powershell -NoProfile -Command \"Remove-Item Env:\\BITNET_LUNAR_LAKE_OPENVINO_PYTHON -ErrorAction SilentlyContinue; target\\debug\\bitnet.exe lunar-lake ask --artifact-root ci\\hardware\\intel-258v\\2026-05-08 --device auto --route auto --profile ask_normal --question 'What is 2+2? Answer with just the number.' --max-new-tokens 4 --expect-contains 4 --json-out $env:TEMP\\lnl-ask-normal-auto-after-python-fallback.json\"",
+  "powershell -NoProfile -Command \"$env:CMAKE_GENERATOR='Ninja'; cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform\"",
+  "powershell -NoProfile -Command \"$env:CMAKE_GENERATOR='Ninja'; cargo run --locked -p xtask --no-default-features -- campaign generate --check\"",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/src/main.rs",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "scripts/**",
+  "ci/hardware/intel-258v/2026-05-08/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-tokenizers/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-qk256-layout-core/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-server/**",
+]
+may_claim = [
+  "The Lunar Lake OpenVINO operator ask helper can discover target/lunar-lake-openvino-venv/Scripts/python.exe when no env override or .venv exists.",
+  "A local ask_normal auto ask without BITNET_LUNAR_LAKE_OPENVINO_PYTHON selected the profile-promoted OpenVINO GPU route and passed the bounded answer gate.",
+  "The fix changes local helper Python discovery only.",
+]
+must_not_claim = [
+  "A Lunar Lake route was newly promoted.",
+  "OpenVINO GPU or NPU speedup is newly claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "Battery-mode low_power evidence is available.",
+  "Native OpenCL or native NPU execution is proven for Lunar Lake.",
+  "Broad dense SLM quality is proven.",
+  "Model output behavior changed.",
+  "Full BitNet accelerator inference is proven.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
 id = "LNL258V-POWER-006"
 status = "blocked"
 branch = "codex/lunar-lake/LNL258V-POWER-006-battery-low-power-evidence"
