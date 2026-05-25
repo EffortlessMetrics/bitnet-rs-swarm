@@ -1,0 +1,25 @@
+timestamp = "2026-05-25T07:21:22Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-107"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 692
+branch = "codex/slm-cpu-107-qnorm-runtime-hook-impl"
+head_sha = "9c7695f876093010a9eece984f8ca235e4eaad73"
+merge_sha = "0e6f61e37e60ad81e2ec2eb90ebf36f909f655ad"
+merged_at = "2026-05-25T07:21:22Z"
+actor = "codex"
+summary = "Merged PR #692, closing SLM-CPU-107 with the runtime-disabled q_norm-input hook and receipt tensor-identity surface."
+notes = [
+  "PR #692 records `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-input-runtime-hook-gate.json` as the runtime-disabled q_norm_input hook gate for the exact Qwen3 Q8_0 layers.0.attention.q_proj.weight packed-Q8 sidecar path.",
+  "The hook gate burns down the runtime-hook and tensor-identity-surface blockers, while proof remains blocked on Qwen3 and Qwen2.5 before-after strict CPU receipt pairs plus accumulator-order evidence.",
+  "SLM-CPU-108 is ready to collect or precisely block the Qwen3 Q8_0 before-after strict CPU receipt pair for the selected q_norm_input boundary.",
+  "No new inference, default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-108"
+status = "ready"
+branch = "codex/slm-cpu-108-qnorm-qwen3-receipt-pair"
+summary = "Collect or precisely block the Qwen3 Q8_0 before-after strict CPU receipt pair for the selected q_norm_input boundary."
