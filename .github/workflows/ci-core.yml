@@ -11,6 +11,32 @@ name: CI (Core)
 # (rationale for the well-below-$1-per-PR target and the verification ladder).
 
 on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'crates/**'
+      - 'crossval/**'
+      - 'tests/**'
+      - 'tools/bitnet-task/**'
+      - 'xtask/**'
+      - 'docs/**'
+      - '*.md'
+      - 'README*'
+      - 'CHANGELOG*'
+      - 'CONTRIBUTING*'
+      - 'SECURITY*'
+      - 'COMPATIBILITY*'
+      - 'THIRD_PARTY*'
+      - 'ci/hardware/**'
+      - 'policy/**'
+      - '.codex/campaigns/**'
+      - 'fuzz/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+      - 'Makefile'
+      - '.github/workflows/ci-core.yml'
+      - '.github/workflows/pr-plan.yml'
   push:
     branches: [ main ]
     paths:
