@@ -1,0 +1,25 @@
+timestamp = "2026-05-25T09:12:10Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-108"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 697
+branch = "codex/slm-cpu-108-qnorm-qwen3-receipt-pair"
+head_sha = "742d2b7a9c3b58938e17ddc9c5a4555f2070c373"
+merge_sha = "dfe15045117e0119a69c835a48c68a3ae7148bae"
+merged_at = "2026-05-25T09:12:10Z"
+summary = "Merged the SLM-CPU-108 q_norm_input Qwen3 receipt-pair blocker artifact. The Qwen3 model SHA is verified locally, but Qwen3 before/after strict CPU receipt-pair collection is machine-blocked because warm-session receipts do not yet emit the required q_norm_input tensor identity field. No runtime, allocation, timing, sustained-throughput, Q4/Q5, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made."
+notes = [
+  "PR #697 records `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-108-qnorm-input-qwen3-receipt-pair-blocker.json` as the fail-closed SLM-CPU-108 blocker artifact.",
+  "The verified Qwen3 Q8_0 model is present locally with SHA256 `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`.",
+  "Receipt-pair collection remains blocked because warm-session receipts record dense_q8_hook_selection but do not emit `dense_q8_hook.q_norm_input_tensor_identity`.",
+  "No before/after receipts are fabricated, no runtime default changes, packed_q8_sidecar remains disabled, and no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-109"
+status = "ready"
+branch = "codex/slm-cpu-109-warm-session-qnorm-identity"
+summary = "Add or precisely block the missing warm-session q_norm_input tensor identity receipt field before attempting the Qwen3 before/after receipt pair again."
