@@ -14858,9 +14858,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-015"
-status = "pr_open"
+status = "merged"
 pr = 732
-head_sha = "3ccfb32279748f35e536fad778634215fe050da5"
+head_sha = "05ef112c75a589899f1de20b0b6517458f758042"
+merge_sha = "e10449c548996b14a26d411ab83a72ab91cc20cd"
+merged_at = "2026-05-25T17:56:03Z"
 branch = "codex/lunar-lake/LNL258V-POWER-015-battery-status-preflight"
 stackable = false
 review_mode = "codex_premerge"
