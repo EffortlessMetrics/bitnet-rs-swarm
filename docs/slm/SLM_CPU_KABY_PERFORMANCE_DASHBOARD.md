@@ -36,6 +36,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_norm input runtime-disabled hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-input-runtime-hook-gate.json` | Defines the runtime-disabled hook identity and q_norm-input tensor-identity receipt surface for the selected boundary while keeping proof blocked on Qwen3/Qwen2.5 before/after receipts and accumulator-order evidence |
 | Qwen3 q_norm input receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-108-qnorm-input-qwen3-receipt-pair-blocker.json` | Verifies the Qwen3 Q8_0 model is present but blocks receipt-pair collection because warm-session receipts do not yet emit `dense_q8_hook.q_norm_input_tensor_identity` |
 | Qwen3 q_norm input receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-qnorm-receipt-pair-validation.json` | Collects the Qwen3 Q8_0 before/after strict CPU warm-session receipt pair after the identity field landed; generated IDs and decoded text match, but tensor fingerprint capture and Qwen2.5 coverage remain blocked, so no allocation, timing, throughput, or default-runtime claim is made |
+| Qwen3 q_norm tensor fingerprint blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-111-qnorm-tensor-fingerprint-blocker.json` | Precisely blocks f32-le q_norm-input tensor fingerprint capture because the warm-session receipt boundary receives metadata but not the materialized Candle Tensor or a receipt-safe host f32-le slice |
 
 All rows use:
 
