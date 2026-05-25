@@ -3230,7 +3230,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-060"
-status = "in_progress"
+status = "merged"
+pr = 706
+head_sha = "88b44aee244b6567b7106e5389a5a7de26bd231a"
+merge_sha = "44cf94dab2644fea5035e72619687564b20d7303"
+merged_at = "2026-05-25T10:59:31Z"
 branch = "codex/intel-a770/A770-060-production-kernel-disassembly-evidence"
 stackable = false
 review_mode = "codex_premerge"
@@ -3267,6 +3271,60 @@ forbidden_paths = [
 ]
 may_claim = [
   "A770-060 may capture or classify diagnostic production-kernel disassembly/replay context for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-061"
+status = "ready"
+branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-060"]
+acceptance = "Use the committed A770-060 production-kernel disassembly and focused replay context to inspect the lowered qk256_i2s_i8s_scaled_gemv operation sequence, classifying whether the production sequence preserves the expected QK256 scaling/math policy, requires replay instrumentation, remains missing context, or is clean, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+  "crates/bitnet-kernels/src/a770_opencl_runtime.rs",
+  "crates/bitnet-kernels/src/bin/**",
+]
+forbidden_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-061 may classify the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
