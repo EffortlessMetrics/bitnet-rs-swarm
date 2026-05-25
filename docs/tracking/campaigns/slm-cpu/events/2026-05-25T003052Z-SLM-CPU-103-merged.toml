@@ -1,0 +1,19 @@
+timestamp = "2026-05-25T00:30:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-103"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 666
+branch = "codex/slm-cpu-103-typed-qnorm-rope-consumer-gate"
+head_sha = "4aef8fca97f13605c12f4bcf4ae0179bb876630d"
+merge_sha = "26f4f8527882cb062112a0d7fe0743c7508dba57"
+merged_at = "2026-05-25T00:30:52Z"
+actor = "codex-slm-cpu"
+summary = "Merged PR #666, closing SLM-CPU-103 with the typed q_norm/RoPE consumer gate blocker."
+notes = [
+  "PR #666 added `dense_q8_sidecar_typed_q_norm_rope_consumer_gate` and focused transformer tests.",
+  "The committed receipt is `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-103-typed-qnorm-rope-consumer-gate.json`.",
+  "The gate records typed q_norm, typed RoPE, trace identity, score handoff, single-materialization-boundary, accumulator-order, and receipt-safety blockers.",
+  "No runtime fused Q execution, packed_q8_sidecar default-runtime promotion, allocation reduction claim, timing claim, sustained throughput claim, Q4/Q5 runtime claim, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256/I2_S behavior change is made.",
+]
