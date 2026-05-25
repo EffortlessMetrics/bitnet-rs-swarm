@@ -6600,8 +6600,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-106"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-106-qnorm-input-receipt-comparator"
+pr = 681
+head_sha = "0c17f6361acc5a5a3faadeee6cb0f0f144321f93"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
