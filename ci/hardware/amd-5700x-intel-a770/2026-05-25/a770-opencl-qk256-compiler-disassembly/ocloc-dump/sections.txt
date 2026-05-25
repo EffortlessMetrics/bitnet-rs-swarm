@@ -1,0 +1,9 @@
+ElfType 64b
+Section name, Section type
+.text.qk256_i2s_i8s_scaled_gemv_debug, 1
+.symtab, 2
+.spv, 4278190089
+.note.intelgt.metrics, 7
+.rel.text.qk256_i2s_i8s_scaled_gemv_debug, 9
+.ze_info, 4278190097
+.note.intelgt.compat, 7
