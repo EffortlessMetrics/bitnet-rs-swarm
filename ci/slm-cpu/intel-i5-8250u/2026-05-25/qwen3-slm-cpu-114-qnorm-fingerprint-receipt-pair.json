@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qnorm_fingerprint_receipt_pair_review",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-114",
+  "status": "blocked_exact",
+  "review_date": "2026-05-25",
+  "claim": "The SLM-CPU-113 Qwen3 q_norm_input fingerprint is real evidence for the selected boundary, but it is not yet a full before/after receipt-pair proof and Qwen2.5 cannot supply a matching q_norm_input fingerprint artifact on the current exact model path.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof host",
+    "claim_boundary": "correctness and bounded Kaby evidence only; no sustained throughput claim"
+  },
+  "qwen3_fingerprint_artifact": {
+    "path": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-113-qnorm-fingerprint-artifact.json",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "model_file": "Qwen3-0.6B-Q8_0.gguf",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0",
+    "tokenizer_source": "gguf_metadata",
+    "tokenizer_strict": true,
+    "selected_backend": "cpu-rust",
+    "selected_kernel": "dense-qwen-cpu-reference",
+    "fallback_used": false,
+    "prompt_template": "qwen",
+    "qwen_no_think": true,
+    "prompt_ids": [
+      151644, 8948, 198, 2610, 525, 264, 10950, 17847, 13, 151645,
+      198, 151644, 872, 198, 3838, 374, 220, 17, 10, 17, 30, 21806,
+      448, 1172, 279, 1372, 13, 151645, 198, 151644, 77091, 198,
+      151667, 271, 151668, 271
+    ],
+    "generated_ids": [17],
+    "decoded_text": "2",
+    "q_norm_input": {
+      "stage": "attention.q_norm_input",
+      "layer": 0,
+      "shape": [1, 16, 1, 128],
+      "len": 2048,
+      "dtype": "f32",
+      "source_dtype": "F32",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "gguf_tensor": "blk.0.attn_q.weight",
+      "boundary": "q_norm_input_candle_tensor_boundary",
+      "tensor_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "contents_dumped": false
+    }
+  },
+  "qwen3_receipt_pair_review": {
+    "validation_path": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-qnorm-receipt-pair-validation.json",
+    "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-before-warm-session.json",
+    "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-after-warm-session.json",
+    "behavior_equivalence_passed": true,
+    "before_selected_path": "eager_f32_candle",
+    "after_selected_path": "packed_q8_sidecar",
+    "after_selected_tensor": "layers.0.attention.q_proj.weight",
+    "q_norm_input_boundary_preserved": true,
+    "q_norm_input_identity_object_equal": true,
+    "receipt_pair_tensor_fingerprint_available": false,
+    "receipt_pair_tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+    "fingerprint_artifact_prompt_matches_receipt_pair_corpus": false,
+    "fingerprint_artifact_can_be_used_as_full_pair_proof": false,
+    "classification": "qwen3_boundary_identity_supported_but_pair_fingerprint_missing",
+    "blocker": "The existing Qwen3 before/after warm-session receipt pair proves behavior and q_norm-input identity preservation, but neither receipt carries the f32-le q_norm_input tensor fingerprint. The SLM-CPU-113 diagnostic fingerprint is a single-run first-token artifact for a different prompt, so it cannot by itself prove before/after tensor equality across the warm-session receipt pair."
+  },
+  "qwen25_review": {
+    "model_verify_path": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-model-verify.json",
+    "sanity_receipt_path": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-second-model-sanity.json",
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "architecture": "qwen2",
+    "quant_format": "Q8_0",
+    "tokenizer_source": "gguf_metadata",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "positive_second_model_sanity": true,
+    "q_norm_input_fingerprint_artifact_available": false,
+    "classification": "qwen25_qnorm_fingerprint_not_applicable_on_current_exact_artifact",
+    "blocker": "The current q_norm fingerprint trace is emitted only when the transformer layer has a q_norm module. The accepted Qwen2.5 0.5B Q8_0 second-model sanity artifact is qwen2 and does not provide the Qwen3 attn_q_norm/attn_k_norm tensor path required for an attention.q_norm_input fingerprint artifact. Treating Qwen2.5 as q_norm-covered would overstate the boundary proof."
+  },
+  "proof_readiness": {
+    "qwen3_fingerprint_captured": true,
+    "qwen3_before_after_receipt_pair_exists": true,
+    "qwen3_before_after_behavior_equivalence_passed": true,
+    "qwen3_before_after_tensor_fingerprint_equality_proven": false,
+    "qwen25_positive_second_model_sanity_exists": true,
+    "qwen25_qnorm_input_fingerprint_captured": false,
+    "materialization_boundary_fully_proven": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "next_required_slice": {
+    "id": "SLM-CPU-115",
+    "summary": "Either add before/after receipt-pair fingerprint capture for the exact Qwen3 q_norm_input boundary, or choose a Qwen2-family comparable boundary that exists on both Qwen3 and Qwen2.5 before any packed-Q8 default-runtime or timing/allocation claim."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

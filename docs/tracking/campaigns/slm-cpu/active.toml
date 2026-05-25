@@ -7043,7 +7043,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-114"
-status = "ready"
+status = "pr_open"
+pr = 730
+head_sha = "459b0a04ad6bf35073b512bd68f1a8798876ffdc"
 branch = "codex/slm-cpu-114-qnorm-fingerprint-receipt-pair"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T17:13:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-114"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 730
+head_sha = "459b0a04ad6bf35073b512bd68f1a8798876ffdc"
+branch = "codex/slm-cpu-114-qnorm-fingerprint-receipt-pair"
+actor = "codex"
+summary = "Opened PR #730 to compare the Qwen3 q_norm_input fingerprint artifact against before/after strict CPU receipt-pair evidence and record the exact Qwen2.5 Q8_0 blocker."
+notes = [
+  "The artifact preserves the real SLM-CPU-113 Qwen3 q_norm_input f32-le fingerprint evidence.",
+  "The existing Qwen3 before/after warm-session receipt pair preserves behavior and q_norm-input identity but does not carry f32-le tensor fingerprints, so it is not a full pair-fingerprint proof.",
+  "Qwen2.5 Q8_0 has positive second-model sanity evidence, but the accepted qwen2 artifact has no q_norm-input stage to fingerprint under the current trace hook.",
+  "The slice keeps eager_f32_candle as the default runtime and makes no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
