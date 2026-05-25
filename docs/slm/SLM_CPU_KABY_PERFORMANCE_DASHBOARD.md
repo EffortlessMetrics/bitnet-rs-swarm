@@ -52,8 +52,8 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-106 q_norm input receipt comparator
-gate.
+This refresh is current through the SLM-CPU-107 q_norm input runtime-disabled
+hook gate.
 It does not run new inference or add a runtime
 optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
@@ -62,7 +62,8 @@ packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
 the typed fused Q projection consumer, attention-head view, attention-head
 consumer, q_norm/RoPE consumer blockers, and the selected q_norm-input
-materialization boundary plus its proof blocker and comparator contract.
+materialization boundary plus its proof blocker, comparator contract, and
+runtime-disabled hook/tensor-identity surface.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
