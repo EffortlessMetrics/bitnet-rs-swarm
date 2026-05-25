@@ -7096,9 +7096,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-115"
-status = "pr_open"
+status = "merged"
 pr = 740
 head_sha = "0567dee4c44ac967f126bb1217c207d8d7db2e8e"
+merge_sha = "c57341c19d16c310f1545fa8bf16433e90961d6a"
+merged_at = "2026-05-25T20:29:43Z"
 branch = "codex/slm-cpu-115-qnorm-proof-next-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -7136,6 +7138,55 @@ may_claim = [
 ]
 must_not_claim = [
   "The q_norm-input materialization boundary is fully behavior-proven without before/after f32-le tensor fingerprint equality or an accepted comparable boundary.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-116"
+status = "ready"
+branch = "codex/slm-cpu-116-qproj-output-pre-qnorm-hook"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-115"]
+acceptance = "Add or precisely block a runtime-disabled diagnostic hook and fail-closed receipt/comparator surface for the shared Qwen-family `attention.q_proj_output_pre_optional_qnorm` boundary selected by SLM-CPU-115. A valid slice must cover the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 artifacts, preserve identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, boundary label, source tensor identity, f32-le tensor fingerprint availability or exact blocker, and fallback_used=false before any allocation or timing claim. It must keep eager_f32_candle as the default runtime and must not claim sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-115 selected `attention.q_proj_output_pre_optional_qnorm` as the next shared Qwen-family proof boundary because the prior q_norm-input boundary was Qwen3-specific on the current artifacts.",
+  "SLM-CPU-116 may add or precisely block the diagnostic hook, receipt identity, comparator, and f32-le fingerprint surface for that shared boundary.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven without Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
