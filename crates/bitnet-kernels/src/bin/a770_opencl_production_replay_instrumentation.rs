@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             weight_scale: fixture.weight_scale,
             sample_limit: SAMPLE_LIMIT,
         })?;
-    let receipt = receipt_to_json(&fixture, &replay);
+    let receipt = receipt_to_json(&fixture, &replay)?;
     if let Some(parent) = args.receipt.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -155,7 +155,10 @@ fn host_int_dot(activations_i8: &[i8], packed_qk256: &[u8], row: usize) -> i32 {
         .sum()
 }
 
-fn receipt_to_json(fixture: &Fixture, replay: &A770OpenClQk256ProductionReplayResult) -> String {
+fn receipt_to_json(
+    fixture: &Fixture,
+    replay: &A770OpenClQk256ProductionReplayResult,
+) -> Result<String, Box<dyn Error>> {
     let all_store_match_replay =
         replay.samples.iter().all(|sample| sample.output_store_matches_replay_output);
     let all_store_match_final =
@@ -168,7 +171,7 @@ fn receipt_to_json(fixture: &Fixture, replay: &A770OpenClQk256ProductionReplayRe
         "a770_qk256_production_replay_instrumentation_output_store_differs_from_replay"
     };
 
-    format!(
+    Ok(format!(
         concat!(
             "{{\n",
             "  \"campaign\": \"intel-a770\",\n",
@@ -261,31 +264,36 @@ fn receipt_to_json(fixture: &Fixture, replay: &A770OpenClQk256ProductionReplayRe
         fixture.weight_scale.to_bits(),
         fixture.activations_i8.len(),
         fixture.packed_qk256.len(),
-        samples_json(&replay.samples, &fixture.host_rows),
+        samples_json(&replay.samples, &fixture.host_rows)?,
         all_store_match_replay,
         all_store_match_final,
         replay.host_to_device_bytes,
         replay.device_to_host_bytes,
         replay.kernel_invocations
-    )
+    ))
 }
 
 fn samples_json(
     samples: &[A770OpenClQk256ProductionReplaySample],
     host_rows: &[HostRow],
-) -> String {
+) -> Result<String, Box<dyn Error>> {
     let rows = samples
         .iter()
         .map(|sample| {
             let host = host_rows
                 .iter()
                 .find(|row| row.output_index == sample.output_index)
-                .expect("sample row has host row");
+                .ok_or_else(|| {
+                    io_error(format!(
+                        "missing host row for sample output_index {}",
+                        sample.output_index
+                    ))
+                })?;
             let production_matches_host_div_then_mul =
                 sample.production_output_bits == host.div_then_mul_bits;
             let production_matches_host_reciprocal_final =
                 sample.production_output_bits == host.reciprocal_path_final_bits;
-            format!(
+            Ok(format!(
                 concat!(
                     "{{",
                     "\"output_index\":{},",
@@ -336,11 +344,11 @@ fn samples_json(
                 sample.output_store_matches_final_scaled_value,
                 production_matches_host_div_then_mul,
                 production_matches_host_reciprocal_final
-            )
+            ))
         })
-        .collect::<Vec<_>>()
+        .collect::<Result<Vec<_>, Box<dyn Error>>>()?
         .join(",\n    ");
-    format!("[\n    {rows}\n  ]")
+    Ok(format!("[\n    {rows}\n  ]"))
 }
 
 fn json_escape(value: &str) -> String {
