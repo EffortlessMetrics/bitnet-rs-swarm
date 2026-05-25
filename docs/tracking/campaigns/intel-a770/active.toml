@@ -2925,11 +2925,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-055"
-status = "merged"
-pr = 664
-head_sha = "eba128385e40d0d905313dce1bb8f73768eb1240"
-merge_sha = "9de41cd8bfb52803b1be97e144faa1874f9ff3a8"
-branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen-contract"
+status = "ready"
+branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -2958,7 +2955,7 @@ forbidden_paths = [
   "crates/bitnet-transformer/**",
   "crates/bitnet-models/**",
   "crates/bitnet-qk256-dispatch/**",
-  "crates/bitnet-kenels/**",
+  "crates/bitnet-kernels/**",
   "crates/bitnet-cli/src/commands/answer_corpus.rs",
 ]
 may_claim = [
