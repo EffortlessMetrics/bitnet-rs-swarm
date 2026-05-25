@@ -1,0 +1,15 @@
+timestamp = "2026-05-25T00:35:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-104"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-104-qnorm-materialization-boundary"
+actor = "codex-slm-cpu"
+summary = "Queued SLM-CPU-104 to resolve the typed q_norm/RoPE blocker into the next safe kernel contract or single materialization boundary."
+notes = [
+  "SLM-CPU-103 records that the logical Q-head view is representable, but q_norm, RoPE, trace identity, score handoff, accumulator order, materialization choice, and receipt safety still block runtime execution.",
+  "SLM-CPU-104 must choose a precise typed q_norm/RoPE contract or one explicit Candle materialization boundary before attention scores.",
+  "Any later allocation or timing claim remains gated by Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts preserving model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false.",
+  "No runtime fused Q execution, packed_q8_sidecar default-runtime promotion, allocation reduction claim, speedup claim, sustained 8250U throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]

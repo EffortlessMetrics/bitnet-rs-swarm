@@ -6545,10 +6545,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-103"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-103-typed-qnorm-rope-consumer-gate"
 pr = 666
-head_sha = "8f871433ff83e51719a705ac5449ab61489232b1"
+head_sha = "4aef8fca97f13605c12f4bcf4ae0179bb876630d"
+merge_sha = "26f4f8527882cb062112a0d7fe0743c7508dba57"
+merged_at = "2026-05-25T00:30:52Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -6585,6 +6587,57 @@ may_claim = [
   "SLM-CPU-102 classified the typed attention-head consumer boundary and identified q_norm/RoPE/trace/score handoff as the next blockers.",
   "SLM-CPU-103 may define a typed q_norm/RoPE consumer or record the concrete blocker that still prevents safe fused consumer execution.",
   "Any allocation or timing improvement remains gated by behavior-preserving before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts.",
+]
+must_not_claim = [
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-104"
+status = "ready"
+branch = "codex/slm-cpu-104-qnorm-materialization-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-103"]
+acceptance = "Resolve the post-SLM-CPU-103 typed q_norm/RoPE blocker into one precise next boundary for the exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` packed-Q8 sidecar path: either define a behavior-preserving typed q_norm kernel contract, define a behavior-preserving typed RoPE kernel contract, or select exactly one Candle materialization boundary (`q_norm_input`, `after_q_norm_before_rope`, or `after_q_rope_before_attention_scores`) with the required Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipt gates. The slice must name the accepted boundary or remaining blocker, preserve eager F32 default runtime, and make no allocation, timing, sustained-throughput, Q4/Q5, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-104 may choose the next typed q_norm/RoPE kernel contract or one explicit materialization boundary after SLM-CPU-103.",
+  "SLM-CPU-104 may define the before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipt gates required before any later allocation or timing claim.",
 ]
 must_not_claim = [
   "The packed-Q8 sidecar is promoted to default runtime.",

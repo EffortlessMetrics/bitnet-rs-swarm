@@ -140,7 +140,13 @@ Make the Intel i5-8250U a strict CPU proof host for small dense transformer GGUF
 | SLM-CPU-095 | merged | #577 added behavior-preserving inner packed Q8_0 sidecar matvec helpers that fill caller-owned output slices, and recorded that full runtime Tensor output reuse remains blocked by Candle `Tensor::from_vec` owned-storage construction. |
 | SLM-CPU-096 | merged | #589 recorded that public Candle Tensor construction preserves returned Tensor semantics but transfers owned output storage into Candle, so reusable caller-owned packed-Q8 runtime output storage remains blocked. |
 | SLM-CPU-097 | merged | #600 queued the next fused output consumer gate after SLM-CPU-096, preserving the no speedup, default-promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 claim boundary. |
-| SLM-CPU-098 | ready | Prove a behavior-preserving fused output consumer path or record an exact fused-consumer API/lifetime/tensor-shape/receipt-safety blocker, with Qwen3 Q8_0 appliance receipts required before any bounded allocation or timing improvement claim. |
+| SLM-CPU-098 | merged | #606 classified the fused output consumer boundary for the exact Qwen3 Q8_0 q_proj sidecar path and kept runtime execution disabled behind downstream Tensor consumer blockers. |
+| SLM-CPU-099 | merged | #617 defined the typed fused Q projection consumer contract as a design-only surface with runtime execution and allocation/timing claims disabled. |
+| SLM-CPU-100 | merged | #631 recorded the typed fused Q consumer implementation gate blocker for the exact q_proj sidecar path. |
+| SLM-CPU-101 | merged | #644 defined the runtime-disabled typed attention-head view gate for the post-SLM-CPU-100 packed Q8 path. |
+| SLM-CPU-102 | merged | #657 classified the typed attention-head consumer boundary and kept q_norm/RoPE/trace/score handoff blocked pending typed kernels or a proven materialization boundary. |
+| SLM-CPU-103 | merged | #666 recorded the typed q_norm/RoPE consumer gate blocker for the exact Qwen3 Q8_0 q_proj sidecar path. |
+| SLM-CPU-104 | ready | Resolve the typed q_norm/RoPE blocker into either a typed q_norm/RoPE kernel contract or exactly one proven Candle materialization boundary before attention scores, with Qwen3/Qwen2.5 before/after receipt gates before any allocation or timing claim. |
 
 ## Review Policy
 
