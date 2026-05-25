@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qnorm_fingerprint_artifact",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-113",
+  "status": "captured",
+  "capture_date": "2026-05-25",
+  "host": {
+    "id": "intel-i5-8250u",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+    "arch": "x86_64",
+    "features": ["avx2", "avx", "fma", "sse4.2", "sse2"],
+    "threads": 4
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "family": "qwen",
+    "quant_format": "Q8_0",
+    "loader_mode": "real_gguf",
+    "output_head_tensor": "tied_token_embeddings"
+  },
+  "tokenizer": {
+    "source": "gguf_metadata",
+    "origin": "embedded",
+    "strict": true,
+    "bos": 151643,
+    "eos": 151645,
+    "pretokenizer_authority": "present"
+  },
+  "execution": {
+    "requested_backend": "cpu",
+    "selected_backend": "cpu-rust",
+    "runtime_api": "cpu",
+    "selected_kernel": "dense-qwen-cpu-reference",
+    "fallback_used": false,
+    "fallback_reason": null,
+    "prompt_template": "qwen",
+    "qwen_no_think": true,
+    "temperature": 0.0,
+    "greedy": true,
+    "deterministic": true,
+    "max_new_tokens": 1,
+    "prompt_tokens": 36,
+    "generated_tokens": 1,
+    "prompt_ids": [
+      151644, 8948, 198, 2610, 525, 264, 10950, 17847, 13, 151645,
+      198, 151644, 872, 198, 3838, 374, 220, 17, 10, 17, 30, 21806,
+      448, 1172, 279, 1372, 13, 151645, 198, 151644, 77091, 198,
+      151667, 271, 151668, 271
+    ],
+    "generated_ids": [17],
+    "decoded_text": "2",
+    "quality_claim": false
+  },
+  "q_norm_input_fingerprint": {
+    "jsonl_kind": "qwen_trace_tensor_fingerprint",
+    "stage": "attention.q_norm_input",
+    "step": 0,
+    "layer": 0,
+    "dtype": "f32",
+    "source_dtype": "F32",
+    "shape": [1, 16, 1, 128],
+    "len": 2048,
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "boundary": "q_norm_input_candle_tensor_boundary",
+    "tensor_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+    "contents_dumped": false,
+    "sample_values_dumped": false
+  },
+  "topk_step0": [
+    {"token_id": 17, "logit": 38.65624237060547},
+    {"token_id": 16, "logit": 22.016942977905273},
+    {"token_id": 18, "logit": 21.51620101928711},
+    {"token_id": 15, "logit": 21.244047164916992},
+    {"token_id": 19, "logit": 21.148361206054688},
+    {"token_id": 3, "logit": 20.49118995666504},
+    {"token_id": 23, "logit": 20.08434295654297},
+    {"token_id": 16141, "logit": 20.06549072265625},
+    {"token_id": 785, "logit": 19.726980209350586},
+    {"token_id": 20, "logit": 19.018735885620117}
+  ],
+  "timing": {
+    "cmd_to_first_ms": 97783,
+    "decode_first_ms": 97783,
+    "total_ms": 97790
+  },
+  "capture_command": {
+    "binary": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli",
+    "args": [
+      "--device", "cpu", "run",
+      "--model", "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "--prompt-template", "qwen",
+      "--no-think",
+      "--prompt", "What is 2+2? Answer with only the number.",
+      "--max-new-tokens", "1",
+      "--temperature", "0.0",
+      "--greedy",
+      "--deterministic",
+      "--threads", "4",
+      "--strict-loader",
+      "--strict-tokenizer",
+      "--logits-dump-steps", "1",
+      "--logits-topk", "10",
+      "--assert-greedy",
+      "--qwen-trace-layer", "0",
+      "--profile-id", "slm-cpu-113-qnorm-fingerprint"
+    ],
+    "env": {
+      "BITNET_STRICT_MODE": "1",
+      "BITNET_DISABLE_MINIMAL_LOADER": "1",
+      "RAYON_NUM_THREADS": "4"
+    }
+  },
+  "claim_boundary": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "next_required_slice": "Compare this Qwen3 Q8_0 q_norm_input fingerprint against a before/after strict CPU receipt pair and add the corresponding Qwen2.5 Q8_0 fingerprint artifact before any packed-Q8 sidecar runtime promotion."
+}
