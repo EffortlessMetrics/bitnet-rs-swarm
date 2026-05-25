@@ -1,0 +1,24 @@
+timestamp = "2026-05-25T17:28:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-114"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-114-qnorm-fingerprint-receipt-pair"
+pr = 730
+head_sha = "224bf7d1d5e7bd7e9f13f36c4c1656dd42845edc"
+merge_sha = "baf857aa821a233c2aa3439c6dee3738e6bf3a79"
+summary = "Merged PR #730 with the q_norm fingerprint receipt-pair review and exact Qwen2.5 blocker."
+notes = [
+  "The SLM-CPU-113 Qwen3 q_norm_input f32-le fingerprint is preserved as real evidence for the selected boundary.",
+  "The existing Qwen3 before/after warm-session receipt pair preserves behavior and q_norm-input identity but does not carry f32-le tensor fingerprints, so the pair does not prove fingerprint equality.",
+  "The accepted Qwen2.5 Q8_0 second-model artifact has no q_norm-input stage to fingerprint under the current hook, so treating it as q_norm-covered would overclaim.",
+  "The default runtime remains eager_f32_candle; packed_q8_sidecar remains unpromoted; no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-115"
+status = "ready"
+branch = "codex/slm-cpu-115-qnorm-proof-next-boundary"
+summary = "Add before/after receipt-pair f32-le q_norm_input fingerprint capture for Qwen3 or choose a comparable Qwen-family boundary shared by Qwen3 and Qwen2.5 before any packed-Q8 runtime promotion or timing/allocation claim."
