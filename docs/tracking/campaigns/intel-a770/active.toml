@@ -3115,7 +3115,6 @@ must_not_claim = [
 id = "A770-058"
 status = "pr_open"
 pr = 693
-head_sha = "27d63f6d01cd99feedf7138f2a7f5e237dc79a94"
 branch = "codex/intel-a770/A770-058-strict-f32-disassembly-impl"
 stackable = false
 review_mode = "codex_premerge"
