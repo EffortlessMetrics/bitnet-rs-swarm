@@ -6545,7 +6545,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-105"
-status = "ready"
+status = "pr_open"
+pr = 677
+head_sha = "80b45d18d4e456c19ab043b51f1992d20addd687"
 branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
 stackable = false
 review_mode = "codex_premerge"
