@@ -1,0 +1,39 @@
+timestamp = "2026-05-25T00:52:18Z"
+campaign = "intel-a770"
+item = "A770-055"
+event = "closeout"
+previous_status = "merged"
+new_status = "ready"
+pr = 668
+branch = "codex/intel-a770/A770-055-closeout"
+head_sha = "288d027422523d57ea7b1c1e6e1bb71a7fc206db"
+merge_sha = "684d5474f2254415069dd63d9b9003b72f470b63"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Returned A770-055 to ready after #664/#668 only queued and tracker-closed the diagnostic definition."
+notes = [
+  "PR #664 queued the A770-055 compiler-level strict-f32 barrier codegen diagnostic after A770-054; it did not add the diagnostic report or implementation.",
+  "PR #668 recorded the queue closeout, but the actual A770-055 diagnostic remains future work because docs/reports/A770_055_COMPILER_STRICT_F32_CODEGEN.md and the qk256_compiler_strict_f32_codegen test are not present.",
+  "A770-055 remains diagnostic-only and must not change production QK256 dispatch, answer scoring, sampling, runtime math, or any A770 readiness/residency/speed claim.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-055 is ready to capture compact compiler-level strict-f32 barrier codegen context for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
