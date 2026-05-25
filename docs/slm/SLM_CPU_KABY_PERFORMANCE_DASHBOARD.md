@@ -35,6 +35,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_norm input receipt comparator | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json` | Defines the fail-closed before/after receipt identity comparator for the selected `q_norm_input_candle_tensor_boundary`, burning down the comparator blocker while keeping runtime execution, proof readiness, and allocation/timing claims disabled |
 | q_norm input runtime-disabled hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-input-runtime-hook-gate.json` | Defines the runtime-disabled hook identity and q_norm-input tensor-identity receipt surface for the selected boundary while keeping proof blocked on Qwen3/Qwen2.5 before/after receipts and accumulator-order evidence |
 | Qwen3 q_norm input receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-108-qnorm-input-qwen3-receipt-pair-blocker.json` | Verifies the Qwen3 Q8_0 model is present but blocks receipt-pair collection because warm-session receipts do not yet emit `dense_q8_hook.q_norm_input_tensor_identity` |
+| Qwen3 q_norm input receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-qnorm-receipt-pair-validation.json` | Collects the Qwen3 Q8_0 before/after strict CPU warm-session receipt pair after the identity field landed; generated IDs and decoded text match, but tensor fingerprint capture and Qwen2.5 coverage remain blocked, so no allocation, timing, throughput, or default-runtime claim is made |
 
 All rows use:
 
@@ -53,10 +54,9 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-107 q_norm input runtime-disabled
-hook gate.
-It does not run new inference or add a runtime
-optimization. It
+This refresh is current through the SLM-CPU-110 Qwen3 q_norm input receipt
+pair. It records new Qwen3 Q8_0 warm-session inference receipts, but it does
+not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
@@ -178,14 +178,27 @@ execution remains disabled, the default runtime remains `eager_f32_candle`, and
 proof still requires Qwen3 Q8_0 plus Qwen2.5 Q8_0 before/after strict CPU
 receipts that pass the comparator before any allocation or timing claim.
 
-SLM-CPU-108 verifies the local Qwen3 Q8_0 model SHA but does not collect an
-incomplete receipt pair. The current warm-session receipt writer records
-`dense_q8_hook_selection`, but it does not yet emit
-`dense_q8_hook.q_norm_input_tensor_identity`. That field is required by the
-SLM-CPU-106 comparator and the SLM-CPU-107 hook gate, so Qwen3 before/after
-receipt collection remains fail-closed until the receipt path can carry the
-q_norm-input boundary, tensor identity, dense-hook identity, and f32-le tensor
-fingerprint.
+SLM-CPU-108 verified the local Qwen3 Q8_0 model SHA but did not collect an
+incomplete receipt pair because the warm-session receipt writer still lacked
+`dense_q8_hook.q_norm_input_tensor_identity`.
+
+SLM-CPU-109 added that missing warm-session receipt field while keeping the
+receipt fail-closed: `proof_ready=false`, the q_norm-input tensor fingerprint is
+explicitly unavailable, the default runtime remains `eager_f32_candle`, and the
+packed-Q8 sidecar remains disabled by default.
+
+SLM-CPU-110 collects the first Qwen3 Q8_0 before/after strict CPU receipt pair
+after that field landed. The before receipt uses `eager_f32_candle`; the after
+receipt selects the exact `layers.0.attention.q_proj.weight`
+`packed_q8_sidecar` candidate. Both receipts preserve the model SHA, strict
+GGUF tokenizer authority, CPU backend, `fallback_used=false`, prompt IDs,
+generated IDs, decoded text, and the q_norm-input identity object. This is a
+behavior-preservation receipt pair for Qwen3 only. It is not a full
+materialization-boundary proof because the f32-le q_norm-input tensor
+fingerprint is still not captured, Qwen2.5 coverage is still missing, and
+accumulator-order equivalence remains unproven. It makes no allocation
+reduction, timing improvement, sustained-throughput, default-runtime, Q4/Q5,
+server, accelerator, Qwen3.5, or BitNet QK256 claim.
 
 ## Thread Envelope
 

@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qwen3_q8_qnorm_receipt_pair_validation",
+  "tracking_item": "SLM-CPU-110",
+  "timestamp": "2026-05-25T11:05:43Z",
+  "claim": "Qwen3 Q8_0 strict CPU before/after receipt pair collected for packed-Q8 sidecar q_norm input identity surface; behavior IDs/text are identical, but this is not an allocation, timing, throughput, or full tensor-fingerprint proof.",
+  "before_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session.json",
+  "after_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session.json",
+  "model": {
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0",
+    "same_sha": true
+  },
+  "tokenizer": {
+    "before_source": "gguf_metadata",
+    "after_source": "gguf_metadata",
+    "before_strict": true,
+    "after_strict": true,
+    "authority_preserved": true
+  },
+  "backend": {
+    "before_selected_backend": "cpu-rust",
+    "after_selected_backend": "cpu-rust",
+    "before_runtime_api": "cpu",
+    "after_runtime_api": "cpu",
+    "before_fallback_used": false,
+    "after_fallback_used": false,
+    "cpu_backend_preserved": true,
+    "fallback_false_preserved": true
+  },
+  "dense_q8_hook_selection": {
+    "before_selected_path": "eager_f32_candle",
+    "before_selected_kernel": "dense-f32-candle-linear",
+    "after_selected_path": "packed_q8_sidecar",
+    "after_selected_kernel": "dense-q8-sidecar-linear",
+    "after_runtime_compute_enabled": true,
+    "after_selected_tensor": "layers.0.attention.q_proj.weight",
+    "packed_candidate_selected": true,
+    "eager_baseline_preserved": true
+  },
+  "q_norm_input_tensor_identity": {
+    "before": {
+      "boundary": "q_norm_input_candle_tensor_boundary",
+      "dense_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "dtype": "f32",
+      "identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "required_identity_fields": [
+        "q_norm_input.boundary=q_norm_input_candle_tensor_boundary",
+        "q_norm_input.source_tensor=layers.0.attention.q_proj.weight",
+        "q_norm_input.source_stage=attention.q_proj.reshape_q_heads",
+        "q_norm_input.shape",
+        "q_norm_input.dtype",
+        "q_norm_input.dense_hook_identity",
+        "q_norm_input.tensor_fingerprint_sha256_f32_le"
+      ],
+      "shape": null,
+      "source_stage": "attention.q_proj.reshape_q_heads",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "tensor_fingerprint_sha256_f32_le": null,
+      "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+      "tensor_identity_surface_defined": true
+    },
+    "after": {
+      "boundary": "q_norm_input_candle_tensor_boundary",
+      "dense_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "dtype": "f32",
+      "identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "required_identity_fields": [
+        "q_norm_input.boundary=q_norm_input_candle_tensor_boundary",
+        "q_norm_input.source_tensor=layers.0.attention.q_proj.weight",
+        "q_norm_input.source_stage=attention.q_proj.reshape_q_heads",
+        "q_norm_input.shape",
+        "q_norm_input.dtype",
+        "q_norm_input.dense_hook_identity",
+        "q_norm_input.tensor_fingerprint_sha256_f32_le"
+      ],
+      "shape": null,
+      "source_stage": "attention.q_proj.reshape_q_heads",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "tensor_fingerprint_sha256_f32_le": null,
+      "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+      "tensor_identity_surface_defined": true
+    },
+    "identity_object_equal": true,
+    "tensor_fingerprint_available": false,
+    "tensor_fingerprint_status": "not_captured_by_warm_session_receipt"
+  },
+  "prompt_pairs": [
+    {
+      "index": 0,
+      "case_id": "bounded_yes_no_water",
+      "repeat_index": 0,
+      "prompt": "Answer yes or no: is water wet?",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\01-answer-yes-or-no-is-water-wet.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\01-answer-yes-or-no-is-water-wet.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "8cc8c15968e209a2712fe87c1536989493b58c383d55b2e042158c41ad12b88f",
+      "generated_ids_sha256": "cc5577b9811129bdd08994f50d50d7c662d1f4557a480109acb8c9bc1ade644a",
+      "decoded_text_sha256": "f848147cf15bfdc066b59119b0c65420e02e79828b49e89e867345a43a0fe698",
+      "generated_ids": [
+        9454,
+        11,
+        3015,
+        374,
+        6509,
+        14401,
+        13,
+        151645
+      ],
+      "decoded_text": "Yes, water is considered wet."
+    },
+    {
+      "index": 1,
+      "case_id": "bounded_yes_no_water",
+      "repeat_index": 1,
+      "prompt": "Answer yes or no: is water wet?",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\02-answer-yes-or-no-is-water-wet.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\02-answer-yes-or-no-is-water-wet.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "8cc8c15968e209a2712fe87c1536989493b58c383d55b2e042158c41ad12b88f",
+      "generated_ids_sha256": "cc5577b9811129bdd08994f50d50d7c662d1f4557a480109acb8c9bc1ade644a",
+      "decoded_text_sha256": "f848147cf15bfdc066b59119b0c65420e02e79828b49e89e867345a43a0fe698",
+      "generated_ids": [
+        9454,
+        11,
+        3015,
+        374,
+        6509,
+        14401,
+        13,
+        151645
+      ],
+      "decoded_text": "Yes, water is considered wet."
+    },
+    {
+      "index": 2,
+      "case_id": "bounded_repeat_colors",
+      "repeat_index": 0,
+      "prompt": "Repeat exactly: red blue green",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\03-repeat-exactly-red-blue-green.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\03-repeat-exactly-red-blue-green.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "369d93bec62b52e9caa2347da60f6b17db23a964ab233f047cf6e6248db4c27f",
+      "generated_ids_sha256": "c44c08c4297c63b3123b358fb38119a161350a9258d5705ce23a99da91b4c750",
+      "decoded_text_sha256": "9d84505c105ff84f535c016c43ddae026f14cb30670c0d25f2d90b95c23c1f8a",
+      "generated_ids": [
+        6033,
+        11,
+        6303,
+        11,
+        6176,
+        13,
+        151645
+      ],
+      "decoded_text": "Red, blue, green."
+    },
+    {
+      "index": 3,
+      "case_id": "bounded_repeat_colors",
+      "repeat_index": 1,
+      "prompt": "Repeat exactly: red blue green",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\04-repeat-exactly-red-blue-green.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\04-repeat-exactly-red-blue-green.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "369d93bec62b52e9caa2347da60f6b17db23a964ab233f047cf6e6248db4c27f",
+      "generated_ids_sha256": "c44c08c4297c63b3123b358fb38119a161350a9258d5705ce23a99da91b4c750",
+      "decoded_text_sha256": "9d84505c105ff84f535c016c43ddae026f14cb30670c0d25f2d90b95c23c1f8a",
+      "generated_ids": [
+        6033,
+        11,
+        6303,
+        11,
+        6176,
+        13,
+        151645
+      ],
+      "decoded_text": "Red, blue, green."
+    },
+    {
+      "index": 4,
+      "case_id": "bounded_capital_france",
+      "repeat_index": 0,
+      "prompt": "Capital of France:",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\05-capital-of-france.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\05-capital-of-france.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "1248daad1899dcb0690e2f4e21aebbe43df2c8e46c43c6bb0d2a1dadd8769711",
+      "generated_ids_sha256": "732370e99739e7ecb13eec46d1fca9a751bf4aac3d603fa452a1ae940f8f3606",
+      "decoded_text_sha256": "1a8e3dc24fe4055a6e44dd458e42b443add1f91778723445dc21ada906e220c7",
+      "generated_ids": [
+        785,
+        6722,
+        315,
+        9625,
+        374,
+        3070,
+        59604,
+        334
+      ],
+      "decoded_text": "The capital of France is **Paris**"
+    },
+    {
+      "index": 5,
+      "case_id": "bounded_capital_france",
+      "repeat_index": 1,
+      "prompt": "Capital of France:",
+      "before_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-before-warm-session-prompts\\06-capital-of-france.json",
+      "after_prompt_receipt": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-25\\qwen3-slm-cpu-110-after-warm-session-prompts\\06-capital-of-france.json",
+      "prompt_ids_equal": true,
+      "generated_ids_equal": true,
+      "decoded_text_equal": true,
+      "prompt_ids_sha256": "1248daad1899dcb0690e2f4e21aebbe43df2c8e46c43c6bb0d2a1dadd8769711",
+      "generated_ids_sha256": "732370e99739e7ecb13eec46d1fca9a751bf4aac3d603fa452a1ae940f8f3606",
+      "decoded_text_sha256": "1a8e3dc24fe4055a6e44dd458e42b443add1f91778723445dc21ada906e220c7",
+      "generated_ids": [
+        785,
+        6722,
+        315,
+        9625,
+        374,
+        3070,
+        59604,
+        334
+      ],
+      "decoded_text": "The capital of France is **Paris**"
+    }
+  ],
+  "behavior_equivalence": {
+    "prompt_ids_equal": true,
+    "generated_ids_equal": true,
+    "decoded_text_equal": true,
+    "passed": true
+  },
+  "proof_readiness": {
+    "qwen3_receipt_pair_collected": true,
+    "qwen3_behavior_preservation_passed": true,
+    "q_norm_identity_surface_present": true,
+    "q_norm_tensor_fingerprint_captured": false,
+    "qwen25_receipt_pair_collected": false,
+    "materialization_boundary_fully_proven": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "speedup_claim": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime_changed": false
+  },
+  "remaining_blockers": [
+    "q_norm_input_tensor_fingerprint_not_captured",
+    "qwen2_5_q8_before_after_receipts_missing",
+    "accumulator_order_unproven",
+    "no_allocation_or_timing_claim_until_full_proof_gates_pass"
+  ],
+  "forbidden_claims_preserved": {
+    "no_server_or_accelerator_claim": true,
+    "no_gpu_npu_openvino_uhd620_claim": true,
+    "no_qwen35_claim": true,
+    "no_bitnet_qk256_claim": true,
+    "no_q4_q5_runtime_support_claim": true
+  }
+}
