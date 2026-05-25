@@ -56,9 +56,10 @@ Lunar Lake semantic-intake stale triggers, and not Lunar Lake route evidence.
 
 Current swarm main also contains later adjacent work after that Lunar Lake audit
 cutoff: SLM-CPU-109 q_norm hook-identity receipt field #703 and tracker
-closeout #707. Those changes are adjacent SLM CPU state only and do not change
-Lunar Lake route policy, promotion status, inference evidence, power claims, or
-BitNet behavior.
+closeout #707, plus A770-060 production-kernel disassembly evidence #706. Those
+changes are adjacent SLM CPU state or adjacent A770 diagnostic state only and do
+not change Lunar Lake route policy, promotion status, inference evidence, power
+claims, or BitNet behavior.
 
 ## Carried State
 

@@ -60,6 +60,10 @@
       {
         "pr": 707,
         "summary": "SLM-CPU-109 tracker closeout and SLM-CPU-110 queueing; adjacent SLM CPU tracker state only."
+      },
+      {
+        "pr": 706,
+        "summary": "A770-060 production-kernel disassembly evidence; adjacent A770 diagnostic state only and not Lunar Lake route evidence or a BitNet semantic-intake stale trigger."
       }
     ]
   },
