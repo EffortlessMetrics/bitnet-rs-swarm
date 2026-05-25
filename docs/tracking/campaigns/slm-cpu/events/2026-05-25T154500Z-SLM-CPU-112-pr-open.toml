@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T15:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-112"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-112-qnorm-fingerprint-diagnostic-capture"
+pr = 723
+head_sha = "8212eb9a181e2adbd2be94635eaace969ba97ba9"
+summary = "Opened PR #723 with an opt-in q_norm-input fingerprint diagnostic capture path."
+notes = [
+  "The trace-only path records `attention.q_norm_input` shape, dtype, source tensor, materialization boundary, and f32-le SHA256 for the exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` boundary.",
+  "The fingerprint record is opt-in through the existing Qwen trace controls and does not dump tensor contents or sample values.",
+  "The default production runtime remains `eager_f32_candle`; packed_q8_sidecar remains disabled by default.",
+  "No allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]

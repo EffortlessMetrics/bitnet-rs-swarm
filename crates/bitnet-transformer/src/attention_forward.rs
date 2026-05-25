@@ -17,7 +17,8 @@ use super::{
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
     debug_rope_enabled, qk256_inline_scale, qwen_trace_event, qwen_trace_events_enabled,
-    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, trace_rms_enabled,
+    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
+    trace_rms_enabled,
 };
 use bitnet_common::Result;
 use candle_core::{DType, Module, Tensor};
@@ -451,6 +452,15 @@ impl MultiHeadAttention {
 
     fn apply_qk_norms(&self, heads: AttentionHeads) -> Result<AttentionHeads> {
         let q = if let Some(norm) = &self.q_norm {
+            if self.layer_idx == 0 {
+                qwen_trace_tensor_fingerprint(
+                    "attention.q_norm_input",
+                    Some(self.layer_idx),
+                    &heads.q,
+                    "layers.0.attention.q_proj.weight",
+                    "q_norm_input_candle_tensor_boundary",
+                )?;
+            }
             let normalized = norm.forward(&heads.q)?;
             if qwen_trace_layer_enabled(self.layer_idx) {
                 qwen_trace_tensor("attention.q_norm", Some(self.layer_idx), &normalized)?;
