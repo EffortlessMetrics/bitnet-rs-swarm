@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T22:08:30Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-117"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 749
+head_sha = "5f4a704833377131e28693226ebb4b4c4546ea40"
+branch = "codex/slm-cpu-117-qproj-output-pre-qnorm-hook"
+actor = "codex"
+summary = "Opened PR #749 for the shared q_proj-output pre-q_norm diagnostic hook and comparator surface."
+notes = [
+  "The transformer now emits the opt-in runtime-disabled attention.q_proj_output_pre_optional_qnorm fingerprint when Qwen tracing is explicitly active.",
+  "The reference comparator now has a fail-closed slm_qproj_output_pre_qnorm_hook_compare artifact kind requiring dense hook identity, boundary, source tensor, shape, dtype, and f32-le fingerprint.",
+  "The default runtime remains eager_f32_candle; packed_q8_sidecar remains unpromoted; no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
