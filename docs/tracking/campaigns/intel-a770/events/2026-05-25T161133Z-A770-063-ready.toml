@@ -1,0 +1,41 @@
+timestamp = "2026-05-25T16:11:33Z"
+campaign = "intel-a770"
+item = "A770-063"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-063-focused-production-operands"
+actor = "codex-a770"
+base_main_sha = "bf3d5fddb465c17e91b036bbb24699b20dc0c6ab"
+claim_allowed = false
+diagnostic_only = true
+summary = "Queued A770-063 to capture focused production QK256 operand context for the committed generated-output first mismatch after A770-062 proved the replay instrumentation path on a diagnostic fixture."
+notes = [
+  "A770-062 captured production replay instrumentation for qk256_i2s_i8s_scaled_gemv on the selected A770, but the receipt explicitly used a diagnostic minimal fixture.",
+  "The committed A770-062 receipt records focused_first_mismatch_operands_available=false for a770_summary_seed770024_keywords_014.",
+  "A770-063 is scoped to focused production operands for the first generated-output mismatch and to replaying those operands through the production instrumentation path before any production QK256 policy change.",
+  "This item remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-063 may capture focused diagnostic production operand and replay context for the committed generated-output first mismatch.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
