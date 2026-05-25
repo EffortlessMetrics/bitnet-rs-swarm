@@ -8627,6 +8627,7 @@ async fn run_slm_warm_session(
     })?;
     let config = loaded_model.config().clone();
     let dense_q8_hook_selection = loaded_model.dense_q8_hook_selection_receipt();
+    let dense_q8_hook_receipt = slm_warm_session_dense_q8_hook_receipt(&dense_q8_hook_selection);
     let model: Arc<dyn Model> = Arc::from(loaded_model);
     let model_load_ms = elapsed_ms(model_load_start);
     let loader_mode = detect_loader_mode_for_path(&model_path, is_hf_directory);
@@ -9173,6 +9174,7 @@ async fn run_slm_warm_session(
                 "kernel_id": selected_kernel.as_str(),
             },
             "dense_q8_hook_selection": dense_q8_hook_selection.clone(),
+            "dense_q8_hook": dense_q8_hook_receipt.clone(),
             "execution": {
                 "phase": "warm_session_decode",
                 "prompt_tokens": prompt_token_count,
@@ -9510,6 +9512,7 @@ async fn run_slm_warm_session(
             "fallback_reason": backend_identity.fallback_reason.as_deref(),
         },
         "dense_q8_hook_selection": dense_q8_hook_selection,
+        "dense_q8_hook": dense_q8_hook_receipt,
         "dense_q8_sidecar_instrumentation": dense_q8_sidecar_instrumentation,
         "cpu": {
             "model": cpu_model.as_str(),
@@ -10594,6 +10597,96 @@ fn slm_warm_session_determinism_receipt(
         "passed": checked && passed,
         "repeated_prompt_groups": groups.len(),
         "groups": groups,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_dense_q8_hook_receipt(
+    dense_q8_hook_selection: &serde_json::Value,
+) -> serde_json::Value {
+    let gate = bitnet_transformer::dense_q8_sidecar_q_norm_input_runtime_hook_gate();
+    let selected_path = dense_q8_hook_selection
+        .get("selected_path")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("eager_f32_candle");
+    let selected_kernel = dense_q8_hook_selection
+        .get("selected_kernel")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("dense-f32-candle-linear");
+    let selected_tensor = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("tensor_name"))
+        .and_then(serde_json::Value::as_str)
+        .or_else(|| {
+            dense_q8_hook_selection
+                .get("example_boundary")
+                .and_then(|boundary| boundary.get("tensor_name"))
+                .and_then(serde_json::Value::as_str)
+        })
+        .unwrap_or(gate.exact_tensor_name);
+    let tensor_identity = format!(
+        "{}:{}:{}",
+        gate.exact_tensor_name, gate.selected_materialization_boundary, gate.hook_identity
+    );
+    let required_receipts: Vec<_> = gate
+        .required_receipts
+        .iter()
+        .map(|receipt| {
+            serde_json::json!({
+                "model_id": receipt.model_id,
+                "model_architecture": receipt.model_architecture,
+                "quant_format": receipt.quant_format,
+                "required_before_receipt": receipt.required_before_receipt,
+                "required_after_receipt": receipt.required_after_receipt,
+                "required_fields": receipt.required_fields,
+            })
+        })
+        .collect();
+
+    serde_json::json!({
+        "schema": 1,
+        "artifact_kind": "dense_q8_hook_receipt_identity",
+        "tracking_item": "SLM-CPU-109",
+        "selected_path": selected_path,
+        "selected_kernel": selected_kernel,
+        "selected_tensor": selected_tensor,
+        "q_norm_input_boundary": gate.selected_materialization_boundary,
+        "q_norm_input_tensor_identity": {
+            "identity": tensor_identity,
+            "boundary": gate.selected_materialization_boundary,
+            "source_tensor": gate.exact_tensor_name,
+            "source_stage": "attention.q_proj.reshape_q_heads",
+            "shape": serde_json::Value::Null,
+            "dtype": "f32",
+            "dense_hook_identity": gate.hook_identity,
+            "tensor_fingerprint_sha256_f32_le": serde_json::Value::Null,
+            "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+            "tensor_identity_surface_defined": gate.tensor_identity_surface_defined,
+            "required_identity_fields": gate.tensor_identity_fields,
+        },
+        "runtime_compute_enabled": gate.hook_runtime_enabled,
+        "default_runtime_changed": !gate.preserves_eager_f32_default,
+        "packed_q8_sidecar_default_enabled": gate.packed_q8_sidecar_default_enabled,
+        "after_receipt_field": gate.after_receipt_field,
+        "required_receipts": required_receipts,
+        "remaining_blockers": [
+            "q_norm_input_tensor_fingerprint_not_captured",
+            "qwen3_q8_before_after_receipts_missing",
+            "qwen25_q8_before_after_receipts_missing",
+            "accumulator_order_unproven",
+        ],
+        "proof_ready": false,
+        "speedup_claim": false,
+        "claim_boundary": {
+            "no_runtime_promotion": true,
+            "no_allocation_reduction_claim": true,
+            "no_timing_improvement_claim": true,
+            "no_sustained_throughput_claim": true,
+            "no_q4_q5_runtime_support": true,
+            "no_server_or_accelerator_claim": true,
+            "no_qwen35_claim": true,
+            "no_bitnet_qk256_claim": true,
+        },
     })
 }
 
@@ -14656,6 +14749,45 @@ mod tests {
         assert_eq!(determinism["passed"], false);
         assert_eq!(determinism["groups"][0]["stable_generated_token_ids"], false);
         assert_eq!(determinism["groups"][0]["stable_text"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_dense_q8_hook_receipt_records_qnorm_identity_field() {
+        let selection = serde_json::json!({
+            "selected_path": "eager_f32_candle",
+            "selected_kernel": "dense-f32-candle-linear",
+            "payload_bearing_boundary": {
+                "tensor_name": "layers.0.attention.q_proj.weight",
+            },
+        });
+
+        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+
+        assert_eq!(receipt["tracking_item"], "SLM-CPU-109");
+        assert_eq!(receipt["selected_path"], "eager_f32_candle");
+        assert_eq!(receipt["runtime_compute_enabled"], false);
+        assert_eq!(receipt["packed_q8_sidecar_default_enabled"], false);
+        assert_eq!(receipt["after_receipt_field"], "dense_q8_hook.q_norm_input_tensor_identity");
+        assert_eq!(
+            receipt["q_norm_input_tensor_identity"]["boundary"],
+            "q_norm_input_candle_tensor_boundary"
+        );
+        assert_eq!(
+            receipt["q_norm_input_tensor_identity"]["source_tensor"],
+            "layers.0.attention.q_proj.weight"
+        );
+        assert_eq!(
+            receipt["q_norm_input_tensor_identity"]["dense_hook_identity"],
+            "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled"
+        );
+        assert_eq!(
+            receipt["q_norm_input_tensor_identity"]["tensor_fingerprint_status"],
+            "not_captured_by_warm_session_receipt"
+        );
+        assert_eq!(receipt["proof_ready"], false);
+        assert_eq!(receipt["speedup_claim"], false);
+        assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
     }
 
     #[test]
