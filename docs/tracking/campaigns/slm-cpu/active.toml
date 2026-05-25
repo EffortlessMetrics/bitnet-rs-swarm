@@ -7150,7 +7150,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-116"
-status = "ready"
+status = "pr_open"
+pr = 742
+head_sha = "9cfe1fc94a5e45665707a7901b17f5a4840ddb90"
 branch = "codex/slm-cpu-116-qproj-output-pre-qnorm-hook"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_pre_qnorm_hook_gate",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-116",
+  "status": "blocked_runtime_hook_required",
+  "review_date": "2026-05-25",
+  "claim": "SLM-CPU-116 defines the fail-closed receipt/comparator contract for the shared Qwen-family attention.q_proj_output_pre_optional_qnorm boundary and blocks runtime evidence until an implementation-capable slice adds the diagnostic hook.",
+  "source_boundary": {
+    "path": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-115-qnorm-proof-next-boundary.json",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "selected_because": "The boundary exists before Qwen3 optional q_norm/k_norm and also exists on Qwen2.5 Q8_0."
+  },
+  "current_surface_review": {
+    "qwen3_qnorm_trace_exists": true,
+    "qwen3_qnorm_trace_stage": "attention.q_norm_input",
+    "shared_qproj_output_trace_exists": false,
+    "shared_qproj_output_receipt_field_exists": false,
+    "shared_qproj_output_comparator_exists": false,
+    "qwen25_qnorm_trace_applicable": false,
+    "classification": "shared_boundary_selected_but_runtime_disabled_hook_missing"
+  },
+  "required_runtime_disabled_hook": {
+    "hook_identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "must_capture": [
+      "boundary label",
+      "source tensor logical name",
+      "GGUF tensor name where available",
+      "model family and architecture",
+      "quant format",
+      "shape before optional q_norm/k_norm and RoPE",
+      "logical dtype",
+      "selected CPU backend/kernel identity",
+      "dense hook identity",
+      "f32-le tensor fingerprint or exact host-extraction blocker"
+    ],
+    "must_not_capture": [
+      "full tensor contents",
+      "model weights",
+      "tokenizer contents beyond existing strict provenance",
+      "any accelerator evidence"
+    ]
+  },
+  "receipt_comparator_contract": {
+    "fail_closed": true,
+    "required_before_after_fields": [
+      "model.sha256",
+      "model.architecture",
+      "model.quant_format",
+      "tokenizer.source",
+      "tokenizer.strict",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend",
+      "selected_kernel",
+      "fallback_used",
+      "dense_hook.identity",
+      "dense_hook.boundary",
+      "dense_hook.source_tensor",
+      "dense_hook.stage",
+      "dense_hook.shape",
+      "dense_hook.dtype",
+      "dense_hook.tensor_fingerprint_sha256_f32_le"
+    ],
+    "must_fail_on": [
+      "fallback_used=true",
+      "model SHA mismatch",
+      "tokenizer authority mismatch",
+      "prompt ID mismatch",
+      "generated ID mismatch",
+      "decoded text mismatch",
+      "selected backend or kernel mismatch",
+      "wrong boundary label",
+      "missing dense hook identity",
+      "missing source tensor identity",
+      "missing f32-le fingerprint when proof_ready=true"
+    ],
+    "qwen3_required": true,
+    "qwen25_required": true
+  },
+  "exact_blockers": [
+    {
+      "id": "runtime_disabled_trace_hook_missing",
+      "surface": "transformer attention q_proj output before optional q_norm/k_norm",
+      "details": "The current opt-in trace fingerprint surface records Qwen3 attention.q_norm_input only. It does not expose the shared q_proj output before optional q_norm/k_norm for both Qwen3 and Qwen2.5."
+    },
+    {
+      "id": "warm_session_receipt_field_missing",
+      "surface": "strict CPU warm-session receipt dense hook identity",
+      "details": "Warm-session receipts do not yet carry attention.q_proj_output_pre_optional_qnorm boundary identity, shape, dtype, source tensor, or f32-le fingerprint."
+    },
+    {
+      "id": "comparator_boundary_variant_missing",
+      "surface": "fail-closed before/after receipt comparator",
+      "details": "The existing q_norm-input comparator is scoped to q_norm_input_candle_tensor_boundary and must not be reused for the shared pre-q_norm boundary without an explicit boundary label and field set."
+    },
+    {
+      "id": "qwen25_artifact_pair_missing",
+      "surface": "Qwen2.5 Q8_0 before/after strict CPU receipt pair",
+      "details": "The accepted Qwen2.5 artifact proves second-model sanity, but there is no before/after receipt pair carrying the selected shared boundary identity and fingerprint."
+    }
+  ],
+  "proof_ready": false,
+  "default_runtime": "eager_f32_candle",
+  "packed_q8_sidecar_default_enabled": false,
+  "next_required_slice": {
+    "id": "SLM-CPU-117",
+    "summary": "Add the runtime-disabled attention.q_proj_output_pre_optional_qnorm diagnostic hook plus fail-closed receipt/comparator fields for Qwen3 Q8_0 and Qwen2.5 Q8_0, or record the exact Tensor API or lifetime blocker from the implementation surface."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

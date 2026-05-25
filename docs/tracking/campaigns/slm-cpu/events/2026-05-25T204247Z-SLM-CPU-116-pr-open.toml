@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T20:42:47Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-116"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 742
+head_sha = "9cfe1fc94a5e45665707a7901b17f5a4840ddb90"
+branch = "codex/slm-cpu-116-qproj-output-pre-qnorm-hook"
+actor = "codex"
+summary = "Opened PR #742 to define the shared q_proj-output hook gate and block runtime evidence until the diagnostic hook exists."
+notes = [
+  "The artifact defines the fail-closed receipt/comparator contract for attention.q_proj_output_pre_optional_qnorm.",
+  "The slice records exact blockers instead of claiming the runtime-disabled hook exists: missing trace hook, missing warm-session receipt field, missing comparator boundary variant, and missing Qwen2.5 before/after artifact pair.",
+  "The default runtime remains eager_f32_candle; packed_q8_sidecar remains unpromoted; no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
