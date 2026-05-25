@@ -1,0 +1,158 @@
+{
+  "artifact_kind": "slm_cpu_qnorm_input_runtime_hook_gate",
+  "work_item": "SLM-CPU-107",
+  "created_utc": "2026-05-25T06:09:33Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json",
+  "selected_boundary": {
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "materialization_boundary": "q_norm_input_candle_tensor_boundary",
+    "source_boundary_status": "boundary_selected_runtime_disabled",
+    "proof_status": "blocked_before_after_receipts_missing_runtime_hook_defined"
+  },
+  "runtime_disabled_hook": {
+    "role": "attention.q_proj.q_norm_input_runtime_disabled_hook_gate",
+    "status": "runtime_disabled_hook_and_tensor_identity_surface_defined",
+    "source_comparator_status": "comparator_contract_defined_proof_blocked_on_runtime_hook_and_receipts",
+    "hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+    "hook_scope": "exact Qwen3 Q8_0 layers.0.attention.q_proj.weight packed-Q8 sidecar path only",
+    "hook_runtime_enabled": false,
+    "hook_default_enabled": false,
+    "preserves_eager_f32_default": true,
+    "packed_q8_sidecar_default_enabled": false
+  },
+  "receipt_tensor_identity_surface": {
+    "surface_defined": true,
+    "after_receipt_field": "dense_q8_hook.q_norm_input_tensor_identity",
+    "required_fields": [
+      "q_norm_input.boundary=q_norm_input_candle_tensor_boundary",
+      "q_norm_input.source_tensor=layers.0.attention.q_proj.weight",
+      "q_norm_input.source_stage=attention.q_proj.reshape_q_heads",
+      "q_norm_input.shape",
+      "q_norm_input.dtype",
+      "q_norm_input.dense_hook_identity",
+      "q_norm_input.tensor_fingerprint_sha256_f32_le"
+    ],
+    "fail_closed_rules": {
+      "missing_field": true,
+      "identity_mismatch": true,
+      "fallback_used": true,
+      "non_cpu_backend": true,
+      "non_strict_tokenizer": true,
+      "wrong_q_norm_input_boundary": true
+    }
+  },
+  "required_receipt_pairs": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "model_architecture": "qwen3",
+      "quant_format": "Q8_0",
+      "before_receipt_required": true,
+      "after_receipt_required": true,
+      "required_fields": [
+        "model.sha256",
+        "tokenizer.source=gguf_metadata",
+        "tokenizer.strict=true",
+        "prompt_ids",
+        "generated_ids",
+        "decoded_text",
+        "selected_backend=cpu-rust",
+        "selected_kernel identity",
+        "dense_hook identity",
+        "q_norm_input tensor identity",
+        "fallback_used=false"
+      ]
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_architecture": "qwen2",
+      "quant_format": "Q8_0",
+      "before_receipt_required": true,
+      "after_receipt_required": true,
+      "required_fields": [
+        "model.sha256",
+        "tokenizer.source=gguf_metadata",
+        "tokenizer.strict=true",
+        "prompt_ids",
+        "generated_ids",
+        "decoded_text",
+        "selected_backend=cpu-rust",
+        "selected_kernel identity",
+        "dense_hook identity",
+        "q_norm_input tensor identity",
+        "fallback_used=false"
+      ]
+    }
+  ],
+  "remaining_blockers": [
+    {
+      "blocker": "qwen3_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No Qwen3 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary with the runtime-disabled hook identity and q_norm_input tensor identity field.",
+      "required_before_proof": "Collect before and after receipts that preserve generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_norm_input tensor identity, and fallback_used=false."
+    },
+    {
+      "blocker": "qwen25_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No Qwen2.5 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary with the runtime-disabled hook identity and q_norm_input tensor identity field.",
+      "required_before_proof": "Collect the same comparator-checked receipt pair for Qwen2.5 before treating the boundary as proven."
+    },
+    {
+      "blocker": "accumulator_order_unproven",
+      "category": "accumulator-order",
+      "exact_api_or_surface": "Packed-Q8 sidecar q_proj accumulation feeding q_norm_input may differ from the eager_f32_candle path before Candle LayerNorm consumes the materialized Tensor.",
+      "required_before_proof": "Record generated-ID/text equivalence and focused numerical evidence before claiming behavior preservation or any allocation/timing improvement."
+    }
+  ],
+  "result": {
+    "proof_ready": false,
+    "runtime_disabled_hook_defined": true,
+    "tensor_identity_surface_defined": true,
+    "missing_runtime_hook": false,
+    "missing_receipt_field": false,
+    "missing_comparator": false,
+    "comparator_contract_defined": true,
+    "tensor_identity_unrecorded": false,
+    "accumulator_order_unproven": true,
+    "artifact_gap": true,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_runtime_hook_gate_defines_disabled_hook",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_runtime_hook_gate_names_tensor_identity_surface",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_blocks_without_receipts",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_names_precise_blockers",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_keeps_claim_boundary"
+  ],
+  "next_required_evidence": [
+    "Collect Qwen3 Q8_0 before/after strict CPU receipts that include dense_q8_hook.q_norm_input_tensor_identity.",
+    "Collect Qwen2.5 Q8_0 before/after strict CPU receipts that include dense_q8_hook.q_norm_input_tensor_identity.",
+    "Run the fail-closed q_norm-input comparator across both model families before claiming behavior preservation.",
+    "Keep packed_q8_sidecar execution disabled until both receipt pairs pass."
+  ],
+  "claim_boundary": {
+    "new_inference_run": false,
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
