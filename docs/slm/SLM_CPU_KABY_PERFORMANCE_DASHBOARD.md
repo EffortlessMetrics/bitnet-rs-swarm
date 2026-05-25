@@ -34,6 +34,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_norm input proof gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-105-qnorm-input-proof-gate.json` | Blocks proof of the selected `q_norm_input_candle_tensor_boundary` until a runtime-disabled hook, Qwen3 and Qwen2.5 before/after strict CPU receipt pairs, a fail-closed comparator, q_norm input tensor identity, and accumulator-order evidence exist |
 | q_norm input receipt comparator | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json` | Defines the fail-closed before/after receipt identity comparator for the selected `q_norm_input_candle_tensor_boundary`, burning down the comparator blocker while keeping runtime execution, proof readiness, and allocation/timing claims disabled |
 | q_norm input runtime-disabled hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-input-runtime-hook-gate.json` | Defines the runtime-disabled hook identity and q_norm-input tensor-identity receipt surface for the selected boundary while keeping proof blocked on Qwen3/Qwen2.5 before/after receipts and accumulator-order evidence |
+| Qwen3 q_norm input receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-108-qnorm-input-qwen3-receipt-pair-blocker.json` | Verifies the Qwen3 Q8_0 model is present but blocks receipt-pair collection because warm-session receipts do not yet emit `dense_q8_hook.q_norm_input_tensor_identity` |
 
 All rows use:
 
@@ -176,6 +177,15 @@ dtype, dense-hook identity, and f32-le tensor fingerprint. Packed-Q8 sidecar
 execution remains disabled, the default runtime remains `eager_f32_candle`, and
 proof still requires Qwen3 Q8_0 plus Qwen2.5 Q8_0 before/after strict CPU
 receipts that pass the comparator before any allocation or timing claim.
+
+SLM-CPU-108 verifies the local Qwen3 Q8_0 model SHA but does not collect an
+incomplete receipt pair. The current warm-session receipt writer records
+`dense_q8_hook_selection`, but it does not yet emit
+`dense_q8_hook.q_norm_input_tensor_identity`. That field is required by the
+SLM-CPU-106 comparator and the SLM-CPU-107 hook gate, so Qwen3 before/after
+receipt collection remains fail-closed until the receipt path can carry the
+q_norm-input boundary, tensor identity, dense-hook identity, and f32-le tensor
+fingerprint.
 
 ## Thread Envelope
 
