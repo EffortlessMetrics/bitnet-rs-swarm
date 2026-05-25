@@ -900,6 +900,109 @@
     ],
     "rows_truncated": false
   },
+  "generated_output_qk256_compiler_strict_f32_codegen_frontier": {
+    "case_count": 1,
+    "classification": "generated_output_qk256_compiler_strict_f32_codegen_frontier_host_compiler_elides_explicit_f32_barrier",
+    "classification_counts": {
+      "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier": 1
+    },
+    "left_label": "amd-5700x-cpu-avx2",
+    "next_diagnostic": "capture compiler/disassembly evidence for explicit f32 barrier elision before any production QK256 policy change",
+    "qk256_compiler_strict_f32_codegen_context_available": true,
+    "right_label": "intel-a770-opencl",
+    "row_limit": 16,
+    "rows": [
+      {
+        "case_id": "a770_summary_seed770024_keywords_014",
+        "classification": "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+        "first_mismatch_index": 9,
+        "left": {
+          "any_host_variant_matches_selected_output": false,
+          "classification": "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+          "compiler_codegen_bits_compared": true,
+          "device_div_then_mul_bits": 3215804927,
+          "device_div_then_mul_matches_selected_output": true,
+          "device_mul_then_div_bits": 3215804926,
+          "device_output_bits": 3215804927,
+          "driver_version": "32.0.101.8801",
+          "explicit_f32_barrier_codegen_match": true,
+          "first_mismatch_index": 0,
+          "host_compiler_codegen_collapse": true,
+          "host_compiler_elides_explicit_f32_barrier": true,
+          "host_compiler_preserves_explicit_f32_barrier": false,
+          "host_div_then_mul_bits": 3215804926,
+          "host_div_then_mul_matches_selected_output": false,
+          "host_variants_collapse_to_policy": true,
+          "opencl_frontend_codegen_split": false,
+          "opencl_frontend_device_codegen_matches_selected_output": true,
+          "output_index": 0,
+          "production_kernel_impact_available": true,
+          "production_policy_change_justified": false,
+          "qk256_compiler_strict_f32_codegen_context_available": true,
+          "qk256_device_expression_classification": "generated_output_qk256_device_expression_unmatched_device_value",
+          "qk256_device_math_mode_classification": "generated_output_qk256_device_math_mode_default_div_then_mul",
+          "qk256_host_compiler_strict_f32_barrier_classification": "generated_output_qk256_host_compiler_strict_f32_barrier_host_compiler_codegen_collapse",
+          "qk256_host_device_div_mul_classification": "generated_output_qk256_host_device_div_mul_host_replay_mismatch",
+          "qk256_host_div_mul_expression_order_classification": "generated_output_qk256_host_div_mul_expression_order_host_expression_order_mismatch",
+          "qk256_host_replay_f32_codegen_ordering_classification": "generated_output_qk256_host_replay_f32_codegen_ordering_host_expression_variants_collapsed_to_policy",
+          "qk256_strict_f32_barrier_evidence_classification": "generated_output_qk256_strict_f32_barrier_evidence_strict_f32_barrier_matches_selected_device_output",
+          "reason": "compiler_strict_f32_codegen_compared",
+          "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+          "strict_f32_barrier_bits_compared": true,
+          "strict_f32_barrier_source": "selected_opencl_device_div_then_mul"
+        },
+        "next_diagnostic": "capture compiler/disassembly evidence for explicit f32 barrier elision before any production QK256 policy change",
+        "projection": "q_proj",
+        "qk256_compiler_strict_f32_codegen_context_available": true,
+        "qk256_device_expression_classification": "generated_output_qk256_device_expression_unmatched_device_value",
+        "qk256_device_intermediate_classification": "generated_output_qk256_device_intermediate_debug_output_matches_readback",
+        "qk256_device_math_mode_classification": "generated_output_qk256_device_math_mode_default_div_then_mul",
+        "qk256_host_compiler_strict_f32_barrier_classification": "generated_output_qk256_host_compiler_strict_f32_barrier_host_compiler_codegen_collapse",
+        "qk256_host_device_div_mul_classification": "generated_output_qk256_host_device_div_mul_host_replay_mismatch",
+        "qk256_host_div_mul_expression_order_classification": "generated_output_qk256_host_div_mul_expression_order_host_expression_order_mismatch",
+        "qk256_host_replay_f32_codegen_ordering_classification": "generated_output_qk256_host_replay_f32_codegen_ordering_host_expression_variants_collapsed_to_policy",
+        "qk256_strict_f32_barrier_evidence_classification": "generated_output_qk256_strict_f32_barrier_evidence_strict_f32_barrier_matches_selected_device_output",
+        "reason": "compiler_strict_f32_codegen_compared",
+        "right": {
+          "any_host_variant_matches_selected_output": false,
+          "classification": "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+          "compiler_codegen_bits_compared": true,
+          "device_div_then_mul_bits": 3215804927,
+          "device_div_then_mul_matches_selected_output": true,
+          "device_mul_then_div_bits": 3215804926,
+          "device_output_bits": 3215804927,
+          "driver_version": "32.0.101.8801",
+          "explicit_f32_barrier_codegen_match": true,
+          "first_mismatch_index": 0,
+          "host_compiler_codegen_collapse": true,
+          "host_compiler_elides_explicit_f32_barrier": true,
+          "host_compiler_preserves_explicit_f32_barrier": false,
+          "host_div_then_mul_bits": 3215804926,
+          "host_div_then_mul_matches_selected_output": false,
+          "host_variants_collapse_to_policy": true,
+          "opencl_frontend_codegen_split": false,
+          "opencl_frontend_device_codegen_matches_selected_output": true,
+          "output_index": 0,
+          "production_kernel_impact_available": true,
+          "production_policy_change_justified": false,
+          "qk256_compiler_strict_f32_codegen_context_available": true,
+          "qk256_device_expression_classification": "generated_output_qk256_device_expression_unmatched_device_value",
+          "qk256_device_math_mode_classification": "generated_output_qk256_device_math_mode_default_div_then_mul",
+          "qk256_host_compiler_strict_f32_barrier_classification": "generated_output_qk256_host_compiler_strict_f32_barrier_host_compiler_codegen_collapse",
+          "qk256_host_device_div_mul_classification": "generated_output_qk256_host_device_div_mul_host_replay_mismatch",
+          "qk256_host_div_mul_expression_order_classification": "generated_output_qk256_host_div_mul_expression_order_host_expression_order_mismatch",
+          "qk256_host_replay_f32_codegen_ordering_classification": "generated_output_qk256_host_replay_f32_codegen_ordering_host_expression_variants_collapsed_to_policy",
+          "qk256_strict_f32_barrier_evidence_classification": "generated_output_qk256_strict_f32_barrier_evidence_strict_f32_barrier_matches_selected_device_output",
+          "reason": "compiler_strict_f32_codegen_compared",
+          "runtime_device": "Intel(R) Arc(TM) A770 Graphics",
+          "strict_f32_barrier_bits_compared": true,
+          "strict_f32_barrier_source": "selected_opencl_device_div_then_mul"
+        },
+        "target_layer_idx": 0
+      }
+    ],
+    "rows_truncated": false
+  },
   "generated_output_qk256_device_expression_frontier": {
     "case_count": 1,
     "classification": "generated_output_qk256_device_expression_frontier_unmatched_device_value",
@@ -5757,9 +5860,9 @@
   },
   "inputs": {
     "left_label": "amd-5700x-cpu-avx2",
-    "left_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\cpu-avx2-summary-logits.json",
+    "left_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json",
     "right_label": "intel-a770-opencl",
-    "right_receipt_path": "ci\\hardware\\amd-5700x-intel-a770\\2026-05-22\\a770-answer-readiness-prompt-contract-summary-logits\\a770-opencl-summary-logits.json"
+    "right_receipt_path": "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json"
   },
   "kernel": {
     "left_label": "amd-5700x-cpu-avx2",
@@ -6199,5 +6302,5 @@
     "passed": 0,
     "total": 1
   },
-  "timestamp": "2026-05-24T22:30:42.556461300+00:00"
+  "timestamp": "2026-05-25T01:37:10.770102100+00:00"
 }

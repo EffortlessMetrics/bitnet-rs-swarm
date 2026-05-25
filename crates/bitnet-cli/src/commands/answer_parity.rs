@@ -403,6 +403,14 @@ fn build_answer_parity_receipt(
             left_label,
             right_label,
         );
+    let generated_output_qk256_compiler_strict_f32_codegen_frontier =
+        build_generated_output_qk256_compiler_strict_f32_codegen_frontier(
+            &case_ids,
+            &left_cases,
+            &right_cases,
+            left_label,
+            right_label,
+        );
 
     let passed = cases.iter().filter(|case| case["passed"] == true).count();
     let failed = cases.len().saturating_sub(passed) + usize::from(!shared_failures.is_empty());
@@ -518,6 +526,7 @@ fn build_answer_parity_receipt(
         "generated_output_qk256_host_replay_f32_codegen_ordering_frontier": generated_output_qk256_host_replay_f32_codegen_ordering_frontier,
         "generated_output_qk256_strict_f32_barrier_evidence_frontier": generated_output_qk256_strict_f32_barrier_evidence_frontier,
         "generated_output_qk256_host_compiler_strict_f32_barrier_frontier": generated_output_qk256_host_compiler_strict_f32_barrier_frontier,
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier": generated_output_qk256_compiler_strict_f32_codegen_frontier,
         "cases": cases,
         "may_claim": may_claim,
         "must_not_claim": must_not_claim,
@@ -6026,6 +6035,72 @@ fn build_generated_output_qk256_host_compiler_strict_f32_barrier_frontier(
     })
 }
 
+fn build_generated_output_qk256_compiler_strict_f32_codegen_frontier(
+    case_ids: &BTreeSet<String>,
+    left_cases: &BTreeMap<String, &Value>,
+    right_cases: &BTreeMap<String, &Value>,
+    left_label: &str,
+    right_label: &str,
+) -> Value {
+    const ROW_LIMIT: usize = 16;
+
+    let mut rows = Vec::new();
+    let mut classification_counts = BTreeMap::<String, usize>::new();
+    let mut row_candidate_count = 0usize;
+
+    for id in case_ids {
+        let row = generated_output_qk256_compiler_strict_f32_codegen_row(
+            id,
+            left_cases.get(id).copied(),
+            right_cases.get(id).copied(),
+        );
+        let classification = row["classification"]
+            .as_str()
+            .unwrap_or("generated_output_qk256_compiler_strict_f32_codegen_missing_context");
+        if classification != "generated_output_qk256_compiler_strict_f32_codegen_not_applicable" {
+            row_candidate_count += 1;
+            *classification_counts.entry(classification.to_string()).or_default() += 1;
+            push_limited_row(&mut rows, ROW_LIMIT, row);
+        }
+    }
+
+    let priority = [
+        "generated_output_qk256_compiler_strict_f32_codegen_missing_context",
+        "generated_output_qk256_compiler_strict_f32_codegen_production_policy_change_not_justified",
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_split",
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_preserves_explicit_f32_barrier",
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_matches_selected_output",
+        "generated_output_qk256_compiler_strict_f32_codegen_clean",
+    ];
+    let row_classification = priority
+        .iter()
+        .find(|classification| classification_counts.contains_key::<str>(*classification))
+        .copied()
+        .unwrap_or("generated_output_qk256_compiler_strict_f32_codegen_clean");
+    let classification = row_classification.replace(
+        "generated_output_qk256_compiler_strict_f32_codegen_",
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_",
+    );
+
+    json!({
+        "classification": classification,
+        "left_label": left_label,
+        "right_label": right_label,
+        "case_count": case_ids.len(),
+        "classification_counts": classification_counts,
+        "qk256_compiler_strict_f32_codegen_context_available": rows.iter().any(|row| {
+            row["qk256_compiler_strict_f32_codegen_context_available"]
+                .as_bool()
+                .unwrap_or(false)
+        }),
+        "next_diagnostic": qk256_compiler_strict_f32_codegen_next_diagnostic(&classification),
+        "rows_truncated": row_candidate_count > rows.len(),
+        "row_limit": ROW_LIMIT,
+        "rows": rows,
+    })
+}
+
 fn generated_output_qkv_projection_dispatch_replay_row(
     id: &str,
     left_case: Option<&Value>,
@@ -8413,6 +8488,223 @@ fn qk256_host_compiler_strict_f32_barrier_side_summary(strict_side: &Value) -> V
     })
 }
 
+fn generated_output_qk256_compiler_strict_f32_codegen_row(
+    id: &str,
+    left_case: Option<&Value>,
+    right_case: Option<&Value>,
+) -> Value {
+    let host_row =
+        generated_output_qk256_host_compiler_strict_f32_barrier_row(id, left_case, right_case);
+    let host_classification = host_row["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_host_compiler_strict_f32_barrier_missing_context");
+
+    if host_classification
+        == "generated_output_qk256_host_compiler_strict_f32_barrier_not_applicable"
+    {
+        return json!({
+            "case_id": id,
+            "classification": "generated_output_qk256_compiler_strict_f32_codegen_not_applicable",
+            "reason": "host_compiler_strict_f32_barrier_not_applicable",
+            "qk256_host_compiler_strict_f32_barrier_classification":
+                host_row["classification"],
+        });
+    }
+
+    if host_classification == "generated_output_qk256_host_compiler_strict_f32_barrier_clean" {
+        return generated_output_qk256_compiler_strict_f32_codegen_context_row(
+            id,
+            "generated_output_qk256_compiler_strict_f32_codegen_clean",
+            "host_compiler_strict_f32_barrier_clean",
+            host_row,
+            json!({
+                "classification": "generated_output_qk256_compiler_strict_f32_codegen_clean"
+            }),
+            json!({
+                "classification": "generated_output_qk256_compiler_strict_f32_codegen_clean"
+            }),
+        );
+    }
+
+    let left = qk256_compiler_strict_f32_codegen_side_summary(&host_row["left"]);
+    let right = qk256_compiler_strict_f32_codegen_side_summary(&host_row["right"]);
+    let left_classification = left["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_compiler_strict_f32_codegen_missing_context");
+    let right_classification = right["classification"]
+        .as_str()
+        .unwrap_or("generated_output_qk256_compiler_strict_f32_codegen_missing_context");
+    let classification = qk256_compiler_strict_f32_codegen_pair_classification(
+        left_classification,
+        right_classification,
+    );
+
+    generated_output_qk256_compiler_strict_f32_codegen_context_row(
+        id,
+        classification,
+        "compiler_strict_f32_codegen_compared",
+        host_row,
+        left,
+        right,
+    )
+}
+
+fn generated_output_qk256_compiler_strict_f32_codegen_context_row(
+    id: &str,
+    classification: &str,
+    reason: &str,
+    host_row: Value,
+    left: Value,
+    right: Value,
+) -> Value {
+    json!({
+        "case_id": id,
+        "classification": classification,
+        "reason": reason,
+        "qk256_device_expression_classification":
+            host_row["qk256_device_expression_classification"],
+        "qk256_device_intermediate_classification":
+            host_row["qk256_device_intermediate_classification"],
+        "qk256_device_math_mode_classification":
+            host_row["qk256_device_math_mode_classification"],
+        "qk256_host_device_div_mul_classification":
+            host_row["qk256_host_device_div_mul_classification"],
+        "qk256_host_div_mul_expression_order_classification":
+            host_row["qk256_host_div_mul_expression_order_classification"],
+        "qk256_host_replay_f32_codegen_ordering_classification":
+            host_row["qk256_host_replay_f32_codegen_ordering_classification"],
+        "qk256_strict_f32_barrier_evidence_classification":
+            host_row["qk256_strict_f32_barrier_evidence_classification"],
+        "qk256_host_compiler_strict_f32_barrier_classification":
+            host_row["classification"],
+        "qk256_compiler_strict_f32_codegen_context_available":
+            classification != "generated_output_qk256_compiler_strict_f32_codegen_missing_context",
+        "first_mismatch_index": host_row["first_mismatch_index"],
+        "target_layer_idx": host_row["target_layer_idx"],
+        "projection": host_row["projection"],
+        "left": left,
+        "right": right,
+        "next_diagnostic": qk256_compiler_strict_f32_codegen_next_diagnostic(classification),
+    })
+}
+
+fn qk256_compiler_strict_f32_codegen_side_summary(host_side: &Value) -> Value {
+    let host_classification = host_side["classification"].as_str().unwrap_or("");
+    if host_classification == "generated_output_qk256_host_compiler_strict_f32_barrier_clean" {
+        return json!({
+            "classification": "generated_output_qk256_compiler_strict_f32_codegen_clean",
+            "reason": "host_compiler_strict_f32_barrier_clean",
+            "qk256_compiler_strict_f32_codegen_context_available": true,
+        });
+    }
+    if host_classification
+        == "generated_output_qk256_host_compiler_strict_f32_barrier_missing_context"
+    {
+        return json!({
+            "classification": "generated_output_qk256_compiler_strict_f32_codegen_missing_context",
+            "reason": "host_compiler_strict_f32_barrier_missing_context",
+            "qk256_compiler_strict_f32_codegen_context_available": false,
+            "qk256_host_compiler_strict_f32_barrier_classification":
+                host_side["classification"],
+        });
+    }
+
+    let production_kernel_impact_available =
+        host_side["production_kernel_impact_available"].as_bool().unwrap_or(false);
+    let strict_f32_barrier_bits_compared =
+        host_side["strict_f32_barrier_bits_compared"].as_bool().unwrap_or(false);
+    let explicit_f32_barrier_codegen_match =
+        host_side["explicit_f32_barrier_codegen_match"].as_bool().unwrap_or(false);
+    let opencl_frontend_codegen_split =
+        host_side["opencl_frontend_codegen_split"].as_bool().unwrap_or(false);
+    let host_compiler_codegen_collapse =
+        host_side["host_compiler_codegen_collapse"].as_bool().unwrap_or(false);
+    let device_div_then_mul_matches_selected_output =
+        host_side["device_div_then_mul_matches_selected_output"].as_bool();
+    let host_div_then_mul_matches_selected_output =
+        host_side["host_div_then_mul_matches_selected_output"].as_bool();
+
+    let compiler_codegen_bits_compared = strict_f32_barrier_bits_compared
+        && device_div_then_mul_matches_selected_output.is_some()
+        && host_div_then_mul_matches_selected_output.is_some();
+    let opencl_frontend_device_codegen_matches_selected_output =
+        device_div_then_mul_matches_selected_output == Some(true)
+            && explicit_f32_barrier_codegen_match
+            && !opencl_frontend_codegen_split;
+    let host_compiler_preserves_explicit_f32_barrier = explicit_f32_barrier_codegen_match
+        && host_div_then_mul_matches_selected_output == Some(true);
+    let host_compiler_elides_explicit_f32_barrier = explicit_f32_barrier_codegen_match
+        && host_compiler_codegen_collapse
+        && host_div_then_mul_matches_selected_output != Some(true);
+
+    let classification = if !production_kernel_impact_available {
+        "generated_output_qk256_compiler_strict_f32_codegen_production_policy_change_not_justified"
+    } else if !compiler_codegen_bits_compared {
+        "generated_output_qk256_compiler_strict_f32_codegen_missing_context"
+    } else if opencl_frontend_codegen_split {
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_split"
+    } else if host_compiler_elides_explicit_f32_barrier {
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier"
+    } else if host_compiler_preserves_explicit_f32_barrier {
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_preserves_explicit_f32_barrier"
+    } else if opencl_frontend_device_codegen_matches_selected_output {
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_matches_selected_output"
+    } else {
+        "generated_output_qk256_compiler_strict_f32_codegen_production_policy_change_not_justified"
+    };
+
+    json!({
+        "classification": classification,
+        "reason": "compiler_strict_f32_codegen_compared",
+        "qk256_compiler_strict_f32_codegen_context_available":
+            classification != "generated_output_qk256_compiler_strict_f32_codegen_missing_context",
+        "qk256_host_compiler_strict_f32_barrier_classification":
+            host_side["classification"],
+        "qk256_strict_f32_barrier_evidence_classification":
+            host_side["qk256_strict_f32_barrier_evidence_classification"],
+        "qk256_host_replay_f32_codegen_ordering_classification":
+            host_side["qk256_host_replay_f32_codegen_ordering_classification"],
+        "qk256_host_div_mul_expression_order_classification":
+            host_side["qk256_host_div_mul_expression_order_classification"],
+        "qk256_host_device_div_mul_classification":
+            host_side["qk256_host_device_div_mul_classification"],
+        "qk256_device_expression_classification":
+            host_side["qk256_device_expression_classification"],
+        "qk256_device_math_mode_classification":
+            host_side["qk256_device_math_mode_classification"],
+        "first_mismatch_index": host_side["first_mismatch_index"],
+        "output_index": host_side["output_index"],
+        "device_output_bits": host_side["device_output_bits"],
+        "host_div_then_mul_bits": host_side["host_div_then_mul_bits"],
+        "device_div_then_mul_bits": host_side["device_div_then_mul_bits"],
+        "device_mul_then_div_bits": host_side["device_mul_then_div_bits"],
+        "compiler_codegen_bits_compared": compiler_codegen_bits_compared,
+        "strict_f32_barrier_bits_compared": strict_f32_barrier_bits_compared,
+        "strict_f32_barrier_source": host_side["strict_f32_barrier_source"],
+        "explicit_f32_barrier_codegen_match": explicit_f32_barrier_codegen_match,
+        "opencl_frontend_device_codegen_matches_selected_output":
+            opencl_frontend_device_codegen_matches_selected_output,
+        "device_div_then_mul_matches_selected_output":
+            device_div_then_mul_matches_selected_output,
+        "host_div_then_mul_matches_selected_output":
+            host_div_then_mul_matches_selected_output,
+        "host_compiler_preserves_explicit_f32_barrier":
+            host_compiler_preserves_explicit_f32_barrier,
+        "host_compiler_elides_explicit_f32_barrier":
+            host_compiler_elides_explicit_f32_barrier,
+        "host_variants_collapse_to_policy":
+            host_side["host_variants_collapse_to_policy"],
+        "any_host_variant_matches_selected_output":
+            host_side["any_host_variant_matches_selected_output"],
+        "host_compiler_codegen_collapse": host_compiler_codegen_collapse,
+        "opencl_frontend_codegen_split": opencl_frontend_codegen_split,
+        "production_kernel_impact_available": production_kernel_impact_available,
+        "production_policy_change_justified": false,
+        "runtime_device": host_side["runtime_device"],
+        "driver_version": host_side["driver_version"],
+    })
+}
+
 fn qk256_device_expression_match(
     sample: &Value,
     target_bits: u32,
@@ -8603,6 +8895,27 @@ fn qk256_host_compiler_strict_f32_barrier_pair_classification(
             *classification == left_classification || *classification == right_classification
         })
         .unwrap_or("generated_output_qk256_host_compiler_strict_f32_barrier_missing_context")
+}
+
+fn qk256_compiler_strict_f32_codegen_pair_classification(
+    left_classification: &str,
+    right_classification: &str,
+) -> &'static str {
+    let priority = [
+        "generated_output_qk256_compiler_strict_f32_codegen_missing_context",
+        "generated_output_qk256_compiler_strict_f32_codegen_production_policy_change_not_justified",
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_split",
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier",
+        "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_preserves_explicit_f32_barrier",
+        "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_matches_selected_output",
+        "generated_output_qk256_compiler_strict_f32_codegen_clean",
+    ];
+    priority
+        .into_iter()
+        .find(|classification| {
+            *classification == left_classification || *classification == right_classification
+        })
+        .unwrap_or("generated_output_qk256_compiler_strict_f32_codegen_missing_context")
 }
 
 fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
@@ -9545,6 +9858,36 @@ fn qk256_host_compiler_strict_f32_barrier_next_diagnostic(classification: &str) 
         "generated_output_qk256_host_compiler_strict_f32_barrier_frontier_missing_context"
         | "generated_output_qk256_host_compiler_strict_f32_barrier_missing_context" => {
             "rerun focused receipts with host compiler strict-f32 barrier context enabled"
+        }
+        _ => "none",
+    }
+}
+
+fn qk256_compiler_strict_f32_codegen_next_diagnostic(classification: &str) -> &'static str {
+    match classification {
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_host_compiler_elides_explicit_f32_barrier"
+        | "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier" => {
+            "capture compiler/disassembly evidence for explicit f32 barrier elision before any production QK256 policy change"
+        }
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_host_compiler_preserves_explicit_f32_barrier"
+        | "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_preserves_explicit_f32_barrier" => {
+            "compare preserved host barrier codegen against selected OpenCL output before any production QK256 policy change"
+        }
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_opencl_frontend_device_codegen_matches_selected_output"
+        | "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_matches_selected_output" => {
+            "compare OpenCL frontend/device codegen against host compiler barrier evidence before any production QK256 policy change"
+        }
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_opencl_frontend_device_codegen_split"
+        | "generated_output_qk256_compiler_strict_f32_codegen_opencl_frontend_device_codegen_split" => {
+            "separate OpenCL frontend source behavior from generated device code for the selected strict-f32 expression"
+        }
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_production_policy_change_not_justified"
+        | "generated_output_qk256_compiler_strict_f32_codegen_production_policy_change_not_justified" => {
+            "keep production QK256 policy unchanged until compiler strict-f32 codegen evidence is complete"
+        }
+        "generated_output_qk256_compiler_strict_f32_codegen_frontier_missing_context"
+        | "generated_output_qk256_compiler_strict_f32_codegen_missing_context" => {
+            "rerun focused receipts with compiler/disassembly strict-f32 codegen context enabled"
         }
         _ => "none",
     }
@@ -13638,6 +13981,57 @@ mod tests {
         assert_eq!(
             frontier["next_diagnostic"],
             "capture compiler-level strict-f32 barrier codegen before any production QK256 policy change"
+        );
+    }
+
+    #[test]
+    fn generic_parity_summarizes_qk256_compiler_strict_f32_codegen_elision() {
+        let expression_trace = qk256_device_expression_trace_fixture(1, -0.25, -0.25, -0.25, -0.25);
+        let mut intermediate_trace = qk256_device_intermediate_trace_fixture(1, -0.625, 101, 5, 96);
+        intermediate_trace["samples"][0]["mul_then_div"] = json!(-0.25);
+        intermediate_trace["samples"][0]["mul_then_div_bits"] = json!((-0.25f32).to_bits());
+        let replay = with_qk256_device_intermediate_trace(
+            with_qk256_device_expression_trace(
+                qkv_projection_dispatch_replay_fixture_with_opencl_policy(
+                    "cpu-replay-output",
+                    "a770-replay-output",
+                    "cpu-replay-output",
+                    1.0,
+                    1.5,
+                    1.0,
+                ),
+                -0.25,
+                -0.625,
+                expression_trace,
+            ),
+            intermediate_trace,
+        );
+
+        let report = qk256_output_casting_report(replay.clone(), replay);
+        let frontier = &report["generated_output_qk256_compiler_strict_f32_codegen_frontier"];
+
+        assert_eq!(
+            frontier["classification"],
+            "generated_output_qk256_compiler_strict_f32_codegen_frontier_host_compiler_elides_explicit_f32_barrier"
+        );
+        assert_eq!(
+            frontier["rows"][0]["classification"],
+            "generated_output_qk256_compiler_strict_f32_codegen_host_compiler_elides_explicit_f32_barrier"
+        );
+        assert_eq!(frontier["rows"][0]["left"]["compiler_codegen_bits_compared"], true);
+        assert_eq!(
+            frontier["rows"][0]["left"]["opencl_frontend_device_codegen_matches_selected_output"],
+            true
+        );
+        assert_eq!(frontier["rows"][0]["left"]["host_compiler_elides_explicit_f32_barrier"], true);
+        assert_eq!(
+            frontier["rows"][0]["left"]["host_compiler_preserves_explicit_f32_barrier"],
+            false
+        );
+        assert_eq!(frontier["rows"][0]["left"]["production_policy_change_justified"], false);
+        assert_eq!(
+            frontier["next_diagnostic"],
+            "capture compiler/disassembly evidence for explicit f32 barrier elision before any production QK256 policy change"
         );
     }
 
