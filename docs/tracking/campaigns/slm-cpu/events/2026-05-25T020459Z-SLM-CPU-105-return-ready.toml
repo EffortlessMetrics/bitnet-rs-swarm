@@ -1,0 +1,18 @@
+timestamp = "2026-05-25T02:04:59Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-105"
+event = "closeout"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 675
+head_sha = "1f895b7e9e72bf8b541b2424f6ecdd4ce96eea67"
+merge_sha = "40407fda48a61d4deb457b824ccf70e84ce62c7e"
+merged_at = "2026-05-25T02:04:59Z"
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+actor = "codex"
+summary = "Returned SLM-CPU-105 to ready after PR #675 merged the q_norm input proof-gate queue definition."
+notes = [
+  "PR #675 queued the q_norm_input materialization proof gate selected by SLM-CPU-104.",
+  "The next SLM-CPU-105 implementation slice remains ready and must either produce before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipts for the selected boundary or record the exact blocker.",
+  "The queue PR made no default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change.",
+]
