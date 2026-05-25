@@ -91,7 +91,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-059 | merged | #700 classified the production-policy impact frontier as requiring production-kernel disassembly/replay context before any production QK256 policy change. |
 | A770-060 | merged | #706 captured selected-device production-kernel disassembly evidence for `qk256_i2s_i8s_scaled_gemv`; #709 pinned the follow-up lookup to exact production-kernel assembly file names before A770-061. |
 | A770-061 | merged | #714 classified the lowered production-kernel operation sequence as requiring production replay instrumentation before any production QK256 policy change. |
-| A770-062 | in_progress | Capture diagnostic production replay instrumentation for adjusted-dot, scale, reciprocal-path, final-value, and store bits before any production QK256 policy change. |
+| A770-062 | pr_open | #719 captures diagnostic production replay instrumentation for adjusted-dot, scale, reciprocal-path, final-value, and store bits before any production QK256 policy change. |
 
 ## Current Claim Boundary
 
