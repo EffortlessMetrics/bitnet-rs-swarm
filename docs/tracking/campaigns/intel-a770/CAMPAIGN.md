@@ -84,11 +84,15 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-052 | merged | #646 inspected host replay f32 codegen and operation ordering, classifying host expression variants collapsed to policy. |
 | A770-053 | merged | #649 captured strict f32 barrier evidence and classified the selected row as matching the A770 device output while still not justifying a production QK256 policy change. |
 | A770-054 | merged | #660 captured host compiler strict-f32 barrier codegen context and classified the selected row as host compiler/codegen collapse, without changing production QK256 policy. |
-| A770-055 | pr_open | #672 captures compiler-level strict-f32 barrier codegen context before any production QK256 policy change. |
+| A770-055 | merged | #672 captured compiler-level strict-f32 barrier codegen context before any production QK256 policy change. |
+| A770-056 | merged | #680 captured selected-device OpenCL program-build and binary metadata for the diagnostic QK256 debug kernel. |
+| A770-057 | merged | #683 captured selected-device OpenCL compiler disassembly evidence for the diagnostic QK256 debug kernel. |
+| A770-058 | merged | #693 classified the lowered strict-f32 disassembly frontier as a barrier-preserving f32 sequence, without changing production QK256 policy. |
+| A770-059 | ready | Classify diagnostic production-policy impact from the committed strict-f32 disassembly context before any production QK256 dispatch or runtime policy change. |
 
 ## Current Claim Boundary
 
-Committed A770 OpenCL proof remains diagnostic. The campaign does not currently claim full BitNet inference, trusted partial acceleration, performance speedup, support-op residency, full device residency, dense SLM support, Gemma support, or native OpenCL proof from OpenVINO GPU. The selected-device QK256 scaled fixture, A770-011 dispatch candidate, A770-012 strict dispatch receipt, A770-013 CLI route receipt scaffold, A770-014 model-contract route alignment, A770-015 through A770-020 answer-corpus and CPU/A770 parity diagnostics, A770-021 through A770-033 generated-output source-frontier diagnostics, A770-034 through A770-054 transformer/QKV/QK256 source-frontier diagnostics, and open A770-055 compiler-level strict-f32 barrier codegen item do not prove GPU-resident activation quantization, broad answer quality, selected attention residency, resident KV, reference parity, strict A770 answer readiness, CPU/A770 answer parity, production QK256 policy correctness, or full BitNet inference.
+Committed A770 OpenCL proof remains diagnostic. The campaign does not currently claim full BitNet inference, trusted partial acceleration, performance speedup, support-op residency, full device residency, dense SLM support, Gemma support, or native OpenCL proof from OpenVINO GPU. The selected-device QK256 scaled fixture, A770-011 dispatch candidate, A770-012 strict dispatch receipt, A770-013 CLI route receipt scaffold, A770-014 model-contract route alignment, A770-015 through A770-020 answer-corpus and CPU/A770 parity diagnostics, A770-021 through A770-033 generated-output source-frontier diagnostics, A770-034 through A770-058 transformer/QKV/QK256/compiler source-frontier diagnostics, and queued A770-059 production-policy-impact frontier do not prove GPU-resident activation quantization, broad answer quality, selected attention residency, resident KV, reference parity, strict A770 answer readiness, CPU/A770 answer parity, production QK256 policy correctness, or full BitNet inference.
 
 ## Review Policy
 

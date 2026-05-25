@@ -1,0 +1,46 @@
+timestamp = "2026-05-25T08:27:52Z"
+campaign = "intel-a770"
+item = "A770-058"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 693
+branch = "codex/intel-a770/A770-058-strict-f32-disassembly-impl"
+head_sha = "471041e135406546c9ce4752b13c5530badd7ca2"
+merge_sha = "a65364fdd6f798d09455c435d4b4d3661c395637"
+merged_at = "2026-05-25T08:26:28Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #693, closing the A770-058 strict-f32 disassembly frontier diagnostic and queueing A770-059."
+notes = [
+  "PR #693 added the diagnostic-only a770-opencl-strict-f32-disassembly-frontier helper, receipt, and report.",
+  "The live receipt classifies the committed A770-057 debug-kernel assembly as a770_qk256_strict_f32_disassembly_frontier_barrier_preserving_f32_sequence.",
+  "The receipt records direct_div_count=0, f32_mul_count=27, ugm_d32_store_count=6, ugm_d32_load_count=6, strict_f32_barrier_store_load_sequence=true, and finite_guard_sequence_present=true.",
+  "A770-059 is queued to classify production-policy impact from this diagnostic context before any production QK256 dispatch or runtime policy change.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-058 classified the lowered strict-f32 barrier operation sequence in the committed selected-device OpenCL debug-kernel assembly.",
+  "A770-059 may classify diagnostic production-policy impact from the committed strict-f32 disassembly context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

@@ -1,0 +1,40 @@
+timestamp = "2026-05-25T08:27:53Z"
+campaign = "intel-a770"
+item = "A770-059"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-059-production-policy-impact-frontier"
+actor = "codex-a770"
+base_main_sha = "a65364fdd6f798d09455c435d4b4d3661c395637"
+claim_allowed = false
+diagnostic_only = true
+summary = "Queued A770-059 to classify production-policy impact after A770-058 found a barrier-preserving lowered strict-f32 sequence."
+notes = [
+  "A770-058 classified the committed A770-057 debug-kernel assembly as barrier-preserving for the strict-f32 sequence.",
+  "A770-059 consumes that context and existing focused QK256 replay receipts to decide whether production-policy impact is bounded, needs production-kernel disassembly/replay context, remains production-policy-change-not-justified, is clean, or is missing context.",
+  "This item remains diagnostic-only and does not change production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, quality, residency, speed, trusted partial acceleration, or full BitNet inference claims.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-059 may classify diagnostic production-policy impact from the committed strict-f32 disassembly context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
