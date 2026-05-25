@@ -38,6 +38,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen3 q_norm input receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-qnorm-receipt-pair-validation.json` | Collects the Qwen3 Q8_0 before/after strict CPU warm-session receipt pair after the identity field landed; generated IDs and decoded text match, but tensor fingerprint capture and Qwen2.5 coverage remain blocked, so no allocation, timing, throughput, or default-runtime claim is made |
 | Qwen3 q_norm tensor fingerprint blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-111-qnorm-tensor-fingerprint-blocker.json` | Precisely blocks f32-le q_norm-input tensor fingerprint capture because the warm-session receipt boundary receives metadata but not the materialized Candle Tensor or a receipt-safe host f32-le slice |
 | Qwen3 q_norm fingerprint diagnostic capture | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-112-qnorm-fingerprint-diagnostic-capture.json` | Adds an opt-in trace-only `attention.q_norm_input` fingerprint record for the exact layer-0 Qwen3 Q8_0 q_proj boundary, recording shape, dtype, source tensor, boundary, and f32-le SHA256 without tensor contents while preserving eager F32 as the default runtime |
+| Qwen3 q_norm fingerprint artifact | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-113-qnorm-fingerprint-artifact.json` | Captures a real i5-8250U Qwen3 Q8_0 `attention.q_norm_input` f32-le SHA256 artifact with strict GGUF tokenizer authority, `cpu-rust`, `fallback_used=false`, and no tensor contents or performance claim |
 
 All rows use:
 
@@ -56,10 +57,10 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-112 Qwen3 q_norm input fingerprint
-diagnostic capture path. It records the opt-in trace-only f32-le tensor
-fingerprint surface for the selected q_norm-input boundary, but it does not add
-a runtime optimization. It
+This refresh is current through the SLM-CPU-113 Qwen3 q_norm input fingerprint
+artifact. It records the opt-in trace-only f32-le tensor fingerprint surface for
+the selected q_norm-input boundary and a real i5-8250U capture, but it does not
+add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the

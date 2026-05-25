@@ -6990,7 +6990,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-113"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-113-qnorm-fingerprint-artifact"
 stackable = false
 review_mode = "codex_premerge"
