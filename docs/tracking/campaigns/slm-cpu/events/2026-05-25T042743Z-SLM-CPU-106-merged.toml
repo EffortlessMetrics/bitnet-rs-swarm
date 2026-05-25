@@ -14,6 +14,12 @@ summary = "Merged PR #681, closing SLM-CPU-106 with the q_norm-input receipt com
 notes = [
   "PR #681 records `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json` as the fail-closed comparator contract for the selected q_norm_input_candle_tensor_boundary.",
   "The comparator burns down the SLM-CPU-105 comparator blocker and still keeps proof blocked on the runtime hook, Qwen3/Qwen2.5 before-after receipt pairs, q_norm input tensor identity, and accumulator-order evidence.",
+  "SLM-CPU-107 is ready to add or precisely block the runtime-disabled q_norm_input_candle_tensor_boundary hook and receipt tensor-identity surface for the exact Qwen3 Q8_0 layers.0.attention.q_proj.weight packed-Q8 sidecar path.",
   "No new inference, default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change is made.",
-  "The slm-cpu campaign currently has no next ready item after SLM-CPU-106.",
 ]
+
+[[next_items]]
+id = "SLM-CPU-107"
+status = "ready"
+branch = "codex/slm-cpu-107-qnorm-runtime-hook-gate"
+summary = "Add or precisely block the runtime-disabled q_norm-input hook and receipt tensor-identity surface needed before q_norm-input materialization can be behavior-proven."

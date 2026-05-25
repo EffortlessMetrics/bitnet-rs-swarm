@@ -148,7 +148,8 @@ Make the Intel i5-8250U a strict CPU proof host for small dense transformer GGUF
 | SLM-CPU-103 | merged | #666 recorded the typed q_norm/RoPE consumer gate blocker for the exact Qwen3 Q8_0 q_proj sidecar path. |
 | SLM-CPU-104 | merged | #671 selected `q_norm_input_candle_tensor_boundary` as the single accepted materialization boundary before q_norm while keeping runtime execution and allocation/timing claims disabled. |
 | SLM-CPU-105 | merged | #677 recorded the q_norm-input proof blocker: missing runtime hook, Qwen3/Qwen2.5 before-after receipt pairs, receipt comparator, q_norm input tensor identity, and accumulator-order evidence. |
-| SLM-CPU-106 | ready | Add or precisely block the q_norm-input boundary receipt identity and fail-closed comparator needed before the selected materialization boundary can be behavior-proven. |
+| SLM-CPU-106 | merged | #681 defined the fail-closed q_norm-input receipt comparator contract while keeping proof blocked on the runtime hook, Qwen3/Qwen2.5 before-after receipts, q_norm-input tensor identity, and accumulator-order evidence. |
+| SLM-CPU-107 | ready | Add or precisely block the runtime-disabled q_norm-input hook and receipt tensor-identity surface needed before the selected materialization boundary can be behavior-proven. |
 
 ## Review Policy
 
