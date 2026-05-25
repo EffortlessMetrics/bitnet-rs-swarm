@@ -61,17 +61,17 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-116 shared q_proj-output hook gate.
-It records the opt-in trace-only f32-le tensor fingerprint surface for the
-selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps that
-boundary fail-closed because the before/after warm-session receipts still do not
-carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has no
-q_norm-input stage to fingerprint. SLM-CPU-115 therefore selects the shared
+This refresh is current through the SLM-CPU-117 shared q_proj-output hook
+surface. It records the opt-in trace-only f32-le tensor fingerprint surface for
+the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
+that boundary fail-closed because the before/after warm-session receipts still do
+not carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has
+no q_norm-input stage to fingerprint. SLM-CPU-115 therefore selects the shared
 `attention.q_proj_output_pre_optional_qnorm` boundary as the next evidence target
 for Qwen3 Q8_0 and Qwen2.5 Q8_0 rather than overstating q_norm coverage.
 SLM-CPU-116 defines the fail-closed receipt/comparator contract for that shared
-boundary and blocks runtime evidence until the diagnostic hook exists. It does
-not add a runtime optimization. It
+boundary, and SLM-CPU-117 adds the opt-in runtime-disabled diagnostic hook and
+comparator artifact surface. It does not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
@@ -253,6 +253,11 @@ hook identity and fingerprint. This is still only a diagnostic/proof surface:
 before/after real Qwen3 and Qwen2.5 receipt pairs are still required before any
 behavior, allocation, timing, default-runtime, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-118 is the next ready proof slice. It must capture or precisely block
+the real Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs for
+the shared `attention.q_proj_output_pre_optional_qnorm` boundary before any
+allocation or timing work treats that boundary as behavior-proven.
 
 ## Thread Envelope
 
