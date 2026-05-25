@@ -14661,10 +14661,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-ASK-009"
-status = "pr_open"
+status = "merged"
 branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
 pr = 743
-head_sha = "0a970c7f3f2fa67cd8481e2fac7b8bbb8a301453"
+head_sha = "b875c9dbbde4fccc0bdadc688f8670bc014ee024"
+merge_sha = "10c1605b9d4027b6c5e8d6edd890dcf95617da76"
+merged_at = "2026-05-25T20:52:10Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
