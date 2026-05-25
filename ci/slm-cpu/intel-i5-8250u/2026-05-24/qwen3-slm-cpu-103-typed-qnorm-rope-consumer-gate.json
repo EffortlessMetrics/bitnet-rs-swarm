@@ -1,0 +1,181 @@
+{
+  "artifact_kind": "slm_cpu_typed_qnorm_rope_consumer_gate",
+  "work_item": "SLM-CPU-103",
+  "created_utc": "2026-05-24T23:35:35Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "input_evidence": {
+    "previous_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-102-typed-attention-head-consumer-gate.json",
+    "slm_cpu_102_status": "blocked_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "can_consume_projection_output_slice": true,
+    "can_apply_logical_head_view_without_candle_tensor": true,
+    "can_apply_q_norm_without_candle_tensor": false,
+    "can_apply_rope_without_candle_tensor": false,
+    "next_required_slice": "typed q_norm/RoPE implementation or a proven single-materialization boundary with strict Qwen3/Qwen2.5 CPU receipts"
+  },
+  "typed_qnorm_rope_consumer_gate": {
+    "role": "attention.q_proj.typed_q_norm_rope_consumer_gate",
+    "status": "blocked_runtime_disabled",
+    "source_gate_status": "blocked_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "can_consume_logical_q_head_view": true,
+    "can_apply_typed_q_norm_without_candle_tensor": false,
+    "can_apply_typed_rope_without_candle_tensor": false,
+    "can_preserve_trace_identity_without_tensor_mapping": false,
+    "can_feed_attention_scores_without_candle_tensor": false,
+    "first_blocking_stage": "typed_q_norm_consumer",
+    "accepted_single_materialization_point": null,
+    "candidate_materialization_points": [
+      "q_norm_input_candle_tensor_boundary",
+      "after_q_norm_before_rope_candle_tensor_boundary",
+      "after_q_rope_before_attention_scores_candle_tensor_boundary"
+    ],
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "stages": [
+      {
+        "stage": "typed_q_head_view_ingress",
+        "consumes": "typed [batch, n_heads, seq, head_dim] Q-head logical view",
+        "required_surface": "stable logical Q-head view carrying exact packed-Q8 q_proj source identity",
+        "current_status": "representable_without_candle_tensor",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": false
+      },
+      {
+        "stage": "typed_q_norm_consumer",
+        "consumes": "typed Q-head logical view plus optional Qwen q_norm weights",
+        "required_surface": "behavior-equivalent typed q_norm matching candle_nn::LayerNorm::forward accumulation, epsilon, dtype, and per-head axis semantics",
+        "current_status": "blocked_by_layernorm_tensor_api_and_accumulator_order_receipt_gap",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": true
+      },
+      {
+        "stage": "typed_rope_consumer",
+        "consumes": "typed q_norm output or typed Q-head logical view plus RoPE tables and position",
+        "required_surface": "behavior-equivalent typed RoPE preserving Qwen split-layout rotation, position index, dtype, and trace summaries",
+        "current_status": "blocked_by_rotary_embedding_tensor_api",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": true
+      },
+      {
+        "stage": "trace_workspace_identity_handoff",
+        "consumes": "typed q_head, q_norm, and q_rope identities",
+        "required_surface": "typed trace fingerprints equivalent to TransformerAttentionOutputSourceTensors q_heads/q_norm/q_rope fields",
+        "current_status": "blocked_by_tensor_receipt_identity_gap",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": true
+      },
+      {
+        "stage": "attention_score_handoff",
+        "consumes": "typed Q-head buffer after q_norm and RoPE",
+        "required_surface": "typed score path or a single proven materialization boundary before prepare_attention_scores",
+        "current_status": "blocked_by_prepare_attention_scores_tensor_api",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": true
+      },
+      {
+        "stage": "receipt_safety_gate",
+        "consumes": "any runtime-adjacent typed q_norm/RoPE consumer candidate",
+        "required_surface": "before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 CPU receipts with identical generated IDs, decoded text, dense hook identity, and fallback=false",
+        "current_status": "blocked_until_behavior_oracles_pass",
+        "selected_materialization_boundary": null,
+        "candle_tensor_materialization_required_today": true
+      }
+    ],
+    "blockers": [
+      {
+        "blocker": "typed_q_norm_kernel_absent",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::apply_qk_norms calls candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+        "required_before_runtime_execution": "Add a typed q_norm kernel over the logical Q-head view that matches Candle LayerNorm/RMSNorm behavior, axis choice, epsilon, dtype, and f32 accumulator order, or prove materialization at q_norm input with strict Qwen3/Qwen2.5 before/after receipts."
+      },
+      {
+        "blocker": "typed_rope_kernel_absent",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::apply_rotary_embeddings calls RotaryEmbedding::apply(&Tensor, position)",
+        "required_before_runtime_execution": "Add typed RoPE over the logical Q-head view preserving split-layout tables, position indexing, head_dim rotation, dtype behavior, and checkpoint trace summaries."
+      },
+      {
+        "blocker": "trace_identity_typed_surface_absent",
+        "category": "receipt-safety",
+        "exact_api_or_surface": "TransformerAttentionOutputSourceTensors stores q_heads, q_norm, and q_rope as Candle Tensor values",
+        "required_before_runtime_execution": "Define typed trace fingerprints for q_head, q_norm, and q_rope that remain comparable with reference checkpoint packs and strict receipts."
+      },
+      {
+        "blocker": "score_handoff_typed_surface_absent",
+        "category": "API",
+        "exact_api_or_surface": "MultiHeadAttention::prepare_attention_scores consumes q as &Tensor and uses Tensor matmul, transpose, dtype, and GQA score operations",
+        "required_before_runtime_execution": "Add a typed score handoff or prove exactly one materialization boundary after q_norm/RoPE before attention scores without claiming packed-Q8 sidecar default-runtime promotion."
+      },
+      {
+        "blocker": "single_materialization_boundary_unproven",
+        "category": "layout",
+        "exact_api_or_surface": "candidate boundaries: q_norm input, after q_norm before RoPE, or after q_rope before attention scores",
+        "required_before_runtime_execution": "Select one boundary only after strict receipts prove identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false."
+      },
+      {
+        "blocker": "accumulator_order_receipt_absent",
+        "category": "accumulator-order",
+        "exact_api_or_surface": "typed q_norm and RoPE execution can change floating-point operation order relative to Candle Tensor operations",
+        "required_before_runtime_execution": "Record numerical parity evidence and before/after Qwen3 Q8_0 plus Qwen2.5 Q8_0 CPU receipts before enabling runtime-adjacent execution or claiming allocation/timing improvement."
+      },
+      {
+        "blocker": "receipt_safety_evidence",
+        "category": "receipt-safety",
+        "exact_api_or_surface": "SLM-CPU-103 runtime-adjacent changes require repeated strict CPU behavior-oracle receipts",
+        "required_before_runtime_execution": "Preserve Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU behavior oracles with identical generated IDs/text/backend/kernel/dense-hook/fallback=false before any default-runtime or timing claim."
+      }
+    ],
+    "next_required_slice": "typed q_norm kernel, typed RoPE kernel, or one proven materialization boundary before attention scores with strict Qwen3/Qwen2.5 CPU receipts"
+  },
+  "receipt_safety_contract": {
+    "required_before_runtime_execution": true,
+    "required_before_allocation_claim": true,
+    "required_before_speedup_claim": true,
+    "gate": "repeated_qwen3_q8_before_after_receipts_with_identical_generated_ids_text_backend_dense_hook_and_fallback_false",
+    "required_fields": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity",
+      "fallback_used=false"
+    ]
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_q_norm_rope_consumer_gate_blocks_runtime_execution",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_q_norm_rope_consumer_gate_names_precise_blockers",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_typed_q_norm_rope_consumer_gate_keeps_receipt_gate_strict"
+  ],
+  "result": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "fused_consumer_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
