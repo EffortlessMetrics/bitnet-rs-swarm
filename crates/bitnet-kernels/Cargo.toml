@@ -167,6 +167,11 @@ required-features = ["opencl"]
 name = "a770-opencl-strict-f32-disassembly-frontier"
 path = "src/bin/a770_opencl_strict_f32_disassembly_frontier.rs"
 
+[[bin]]
+name = "a770-opencl-production-replay-instrumentation"
+path = "src/bin/a770_opencl_production_replay_instrumentation.rs"
+required-features = ["opencl"]
+
 [[test]]
 name = "cpu_scalar_parity"
 path = "tests/cpu_scalar_parity.rs"

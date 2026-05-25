@@ -3351,7 +3351,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-062"
-status = "ready"
+status = "pr_open"
+pr = 719
+head_sha = "f203750f0b103fdef5bcd8a778cd4ac497b7473d"
 branch = "codex/intel-a770/A770-062-production-replay-instrumentation"
 stackable = false
 review_mode = "codex_premerge"
