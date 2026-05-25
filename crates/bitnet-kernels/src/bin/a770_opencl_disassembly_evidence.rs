@@ -9,14 +9,13 @@ use std::{
 
 use bitnet_kernels::a770_opencl_runtime::{
     A770OpenClQk256CompilerBinaryEvidence, capture_a770_qk256_debug_compiler_binary_evidence,
+    capture_a770_qk256_production_compiler_binary_evidence,
 };
 
 const RECEIPT_ENV: &str = "BITNET_A770_OPENCL_DISASSEMBLY_EVIDENCE_RECEIPT";
 const ARTIFACT_DIR_ENV: &str = "BITNET_A770_OPENCL_DISASSEMBLY_ARTIFACT_DIR";
 const OCLOC_ENV: &str = "BITNET_A770_OCLOC";
 const DEFAULT_OCLOC_DEVICE: &str = "dg2-g10";
-const KERNEL_NAME: &str = "qk256_i2s_i8s_scaled_gemv_debug";
-const BINARY_FILE_NAME: &str = "qk256_i2s_i8s_scaled_gemv_debug.bin";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse()?;
@@ -38,6 +37,7 @@ struct Args {
     artifact_dir: PathBuf,
     ocloc: Option<PathBuf>,
     device: String,
+    kernel: KernelFlavor,
 }
 
 impl Args {
@@ -46,6 +46,7 @@ impl Args {
         let mut artifact_dir = env::var_os(ARTIFACT_DIR_ENV).map(PathBuf::from);
         let mut ocloc = env::var_os(OCLOC_ENV).map(PathBuf::from);
         let mut device = DEFAULT_OCLOC_DEVICE.to_owned();
+        let mut kernel = KernelFlavor::Debug;
         let mut args = env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
@@ -69,9 +70,14 @@ impl Args {
                 "--device" => {
                     device = args.next().ok_or_else(|| io_error("--device requires a value"))?;
                 }
+                "--kernel" => {
+                    kernel = KernelFlavor::parse(
+                        &args.next().ok_or_else(|| io_error("--kernel requires a value"))?,
+                    )?;
+                }
                 "--help" | "-h" => {
                     println!(
-                        "Usage: a770-opencl-disassembly-evidence [--receipt <path>] [--artifact-dir <dir>] [--ocloc <path>] [--device <ocloc-device>]\n\nCaptures selected Intel Arc A770 OpenCL program binary disassembly evidence for the diagnostic QK256 debug kernel."
+                        "Usage: a770-opencl-disassembly-evidence [--receipt <path>] [--artifact-dir <dir>] [--ocloc <path>] [--device <ocloc-device>] [--kernel debug|production]\n\nCaptures selected Intel Arc A770 OpenCL program binary disassembly evidence for the diagnostic QK256 debug kernel or production QK256 kernel."
                     );
                     std::process::exit(0);
                 }
@@ -80,12 +86,88 @@ impl Args {
         }
 
         let artifact_dir = artifact_dir.unwrap_or_else(|| default_artifact_dir(receipt.as_deref()));
-        Ok(Self { receipt, artifact_dir, ocloc, device })
+        Ok(Self { receipt, artifact_dir, ocloc, device, kernel })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum KernelFlavor {
+    Debug,
+    Production,
+}
+
+impl KernelFlavor {
+    fn parse(value: &str) -> Result<Self, Box<dyn Error>> {
+        match value {
+            "debug" => Ok(Self::Debug),
+            "production" => Ok(Self::Production),
+            other => Err(io_error(format!(
+                "unknown --kernel value {other:?}; expected debug or production"
+            ))),
+        }
+    }
+
+    fn kernel_name(self) -> &'static str {
+        match self {
+            Self::Debug => "qk256_i2s_i8s_scaled_gemv_debug",
+            Self::Production => "qk256_i2s_i8s_scaled_gemv",
+        }
+    }
+
+    fn binary_file_name(self) -> &'static str {
+        match self {
+            Self::Debug => "qk256_i2s_i8s_scaled_gemv_debug.bin",
+            Self::Production => "qk256_i2s_i8s_scaled_gemv.bin",
+        }
+    }
+
+    fn kernel_source_label(self) -> &'static str {
+        match self {
+            Self::Debug => {
+                "bitnet_kernels::a770_opencl_runtime::QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC"
+            }
+            Self::Production => {
+                "bitnet_kernels::a770_opencl_runtime::QK256_I2S_I8S_SCALED_GEMV_SRC"
+            }
+        }
+    }
+
+    fn work_item(self) -> &'static str {
+        match self {
+            Self::Debug => "A770-057",
+            Self::Production => "A770-060",
+        }
+    }
+
+    fn proof_family(self) -> &'static str {
+        match self {
+            Self::Debug => "a770_opencl_qk256_compiler_disassembly_evidence",
+            Self::Production => "a770_opencl_qk256_production_kernel_disassembly_evidence",
+        }
+    }
+
+    fn proof_stage(self) -> &'static str {
+        match self {
+            Self::Debug => "diagnostic_compiler_disassembly_captured",
+            Self::Production => "diagnostic_production_kernel_disassembly_context_captured",
+        }
+    }
+
+    fn next_diagnostic(self) -> &'static str {
+        match self {
+            Self::Debug => {
+                "inspect lowered strict-f32 barrier operation sequence before any production QK256 policy change"
+            }
+            Self::Production => {
+                "inspect production-kernel lowered operation sequence and replay context before any production QK256 policy change"
+            }
+        }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 struct A770OpenClQk256DisassemblyEvidence {
+    kernel: KernelFlavor,
     compiler: A770OpenClQk256CompilerBinaryEvidence,
     artifact_dir: PathBuf,
     binary_path: Option<PathBuf>,
@@ -106,16 +188,25 @@ struct A770OpenClQk256DisassemblyEvidence {
     classification: String,
 }
 
+impl A770OpenClQk256DisassemblyEvidence {
+    fn compiler_flavor(&self) -> KernelFlavor {
+        self.kernel
+    }
+}
+
 fn collect_disassembly_evidence(
     args: &Args,
 ) -> Result<A770OpenClQk256DisassemblyEvidence, Box<dyn Error>> {
-    let compiler = capture_a770_qk256_debug_compiler_binary_evidence()?;
+    let compiler = match args.kernel {
+        KernelFlavor::Debug => capture_a770_qk256_debug_compiler_binary_evidence()?,
+        KernelFlavor::Production => capture_a770_qk256_production_compiler_binary_evidence()?,
+    };
     std::fs::create_dir_all(&args.artifact_dir)?;
 
     let (binary_index, binary_path) = if let Some((index, binary)) =
         compiler.binaries.iter().enumerate().find(|(_, b)| !b.is_empty())
     {
-        let path = args.artifact_dir.join(BINARY_FILE_NAME);
+        let path = args.artifact_dir.join(args.kernel.binary_file_name());
         std::fs::write(&path, binary)?;
         (Some(index), Some(path))
     } else {
@@ -158,7 +249,7 @@ fn collect_disassembly_evidence(
         ocloc_stderr = compact_output(&output.stderr);
 
         if output.status.success() {
-            if let Some(path) = find_kernel_asm(&disasm_dump_dir)? {
+            if let Some(path) = find_kernel_asm(&disasm_dump_dir, args.kernel.kernel_name())? {
                 let bytes = std::fs::read(&path)?;
                 let (normalized, trimmed) = normalize_asm_bytes(&bytes);
                 if trimmed {
@@ -175,6 +266,7 @@ fn collect_disassembly_evidence(
 
     let disassembly_captured = kernel_asm_path.is_some();
     let classification = disassembly_evidence_classification(
+        args.kernel,
         compiler.program_binary_captured,
         compiler.strict_f32_barrier_source_present,
         ocloc_path.is_some(),
@@ -184,6 +276,7 @@ fn collect_disassembly_evidence(
     .to_owned();
 
     Ok(A770OpenClQk256DisassemblyEvidence {
+        kernel: args.kernel,
         compiler,
         artifact_dir: args.artifact_dir.clone(),
         binary_path,
@@ -210,9 +303,9 @@ fn evidence_to_json(evidence: &A770OpenClQk256DisassemblyEvidence) -> String {
         concat!(
             "{{\n",
             "  \"campaign\": \"intel-a770\",\n",
-            "  \"work_item\": \"A770-057\",\n",
-            "  \"proof_family\": \"a770_opencl_qk256_compiler_disassembly_evidence\",\n",
-            "  \"proof_stage\": \"diagnostic_compiler_disassembly_captured\",\n",
+            "  \"work_item\": \"{}\",\n",
+            "  \"proof_family\": \"{}\",\n",
+            "  \"proof_stage\": \"{}\",\n",
             "  \"requested_backend\": \"intel-arc-a770\",\n",
             "  \"selected_backend\": \"intel-arc-a770-opencl\",\n",
             "  \"runtime_api\": \"opencl\",\n",
@@ -222,7 +315,7 @@ fn evidence_to_json(evidence: &A770OpenClQk256DisassemblyEvidence) -> String {
             "  \"platform_name\": \"{}\",\n",
             "  \"vendor\": \"{}\",\n",
             "  \"driver_version\": \"{}\",\n",
-            "  \"kernel_source\": \"bitnet_kernels::a770_opencl_runtime::QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC\",\n",
+            "  \"kernel_source\": \"{}\",\n",
             "  \"kernel_name\": \"{}\",\n",
             "  \"classification\": \"{}\",\n",
             "  \"build_options\": \"{}\",\n",
@@ -263,7 +356,7 @@ fn evidence_to_json(evidence: &A770OpenClQk256DisassemblyEvidence) -> String {
             "  \"diagnostic_only\": true,\n",
             "  \"performance_claim\": false,\n",
             "  \"full_residency_claim\": false,\n",
-            "  \"next_diagnostic\": \"inspect lowered strict-f32 barrier operation sequence before any production QK256 policy change\",\n",
+            "  \"next_diagnostic\": \"{}\",\n",
             "  \"must_not_claim\": [\n",
             "    \"CPU/A770 answer parity is proven\",\n",
             "    \"Reference parity is proven\",\n",
@@ -278,13 +371,17 @@ fn evidence_to_json(evidence: &A770OpenClQk256DisassemblyEvidence) -> String {
             "  ]\n",
             "}}\n"
         ),
+        evidence.compiler_flavor().work_item(),
+        evidence.compiler_flavor().proof_family(),
+        evidence.compiler_flavor().proof_stage(),
         json_escape(&evidence.compiler.runtime_device),
         evidence.compiler.platform_index,
         evidence.compiler.device_index,
         json_escape(&evidence.compiler.platform_name),
         json_escape(&evidence.compiler.vendor),
         json_escape(&evidence.compiler.driver_version),
-        KERNEL_NAME,
+        evidence.compiler_flavor().kernel_source_label(),
+        evidence.compiler_flavor().kernel_name(),
         json_escape(&evidence.classification),
         json_escape(&evidence.compiler.build_options),
         json_escape(&evidence.compiler.build_log),
@@ -314,7 +411,8 @@ fn evidence_to_json(evidence: &A770OpenClQk256DisassemblyEvidence) -> String {
         option_string_json(evidence.kernel_asm_fnv1a64.as_deref()),
         option_string_json(evidence.kernel_asm_prefix.as_deref()),
         evidence.kernel_asm_trailing_whitespace_trimmed,
-        evidence.disassembly_captured
+        evidence.disassembly_captured,
+        json_escape(evidence.compiler_flavor().next_diagnostic())
     )
 }
 
@@ -359,7 +457,7 @@ fn common_ocloc_paths() -> Vec<PathBuf> {
     ]
 }
 
-fn find_kernel_asm(dir: &Path) -> Result<Option<PathBuf>, Box<dyn Error>> {
+fn find_kernel_asm(dir: &Path, kernel_name: &str) -> Result<Option<PathBuf>, Box<dyn Error>> {
     let mut stack = vec![dir.to_path_buf()];
     let mut candidates = Vec::new();
     while let Some(path) = stack.pop() {
@@ -381,7 +479,7 @@ fn find_kernel_asm(dir: &Path) -> Result<Option<PathBuf>, Box<dyn Error>> {
     candidates.sort();
     Ok(candidates
         .iter()
-        .find(|path| path.to_string_lossy().contains(KERNEL_NAME))
+        .find(|path| path.to_string_lossy().contains(kernel_name))
         .cloned()
         .or_else(|| candidates.into_iter().next()))
 }
@@ -423,12 +521,28 @@ fn normalize_asm_bytes(bytes: &[u8]) -> (Vec<u8>, bool) {
 }
 
 fn disassembly_evidence_classification(
+    kernel: KernelFlavor,
     program_binary_captured: bool,
     strict_f32_barrier_source_present: bool,
     ocloc_available: bool,
     ocloc_success: bool,
     kernel_asm_captured: bool,
 ) -> &'static str {
+    if kernel == KernelFlavor::Production {
+        if !program_binary_captured {
+            return "a770_qk256_production_kernel_disassembly_evidence_missing_program_binary";
+        }
+        if !ocloc_available {
+            return "a770_qk256_production_kernel_disassembly_evidence_ocloc_missing";
+        }
+        if !ocloc_success {
+            return "a770_qk256_production_kernel_disassembly_evidence_disasm_failed";
+        }
+        if !kernel_asm_captured {
+            return "a770_qk256_production_kernel_disassembly_evidence_kernel_asm_missing";
+        }
+        return "a770_qk256_production_kernel_disassembly_evidence_captured";
+    }
     if !program_binary_captured {
         return "a770_qk256_opencl_disassembly_evidence_missing_program_binary";
     }
@@ -533,7 +647,7 @@ mod tests {
     #[test]
     fn classification_requires_binary_first() {
         assert_eq!(
-            disassembly_evidence_classification(false, true, true, true, true),
+            disassembly_evidence_classification(KernelFlavor::Debug, false, true, true, true, true),
             "a770_qk256_opencl_disassembly_evidence_missing_program_binary"
         );
     }
@@ -541,20 +655,60 @@ mod tests {
     #[test]
     fn classification_splits_ocloc_and_disassembly_failures() {
         assert_eq!(
-            disassembly_evidence_classification(true, true, false, false, false),
+            disassembly_evidence_classification(
+                KernelFlavor::Debug,
+                true,
+                true,
+                false,
+                false,
+                false
+            ),
             "a770_qk256_opencl_disassembly_evidence_ocloc_missing"
         );
         assert_eq!(
-            disassembly_evidence_classification(true, true, true, false, false),
+            disassembly_evidence_classification(
+                KernelFlavor::Debug,
+                true,
+                true,
+                true,
+                false,
+                false
+            ),
             "a770_qk256_opencl_disassembly_evidence_disasm_failed"
         );
         assert_eq!(
-            disassembly_evidence_classification(true, true, true, true, false),
+            disassembly_evidence_classification(KernelFlavor::Debug, true, true, true, true, false),
             "a770_qk256_opencl_disassembly_evidence_kernel_asm_missing"
         );
         assert_eq!(
-            disassembly_evidence_classification(true, true, true, true, true),
+            disassembly_evidence_classification(KernelFlavor::Debug, true, true, true, true, true),
             "a770_qk256_opencl_disassembly_evidence_captured"
+        );
+    }
+
+    #[test]
+    fn production_classification_ignores_debug_strict_f32_source_requirement() {
+        assert_eq!(
+            disassembly_evidence_classification(
+                KernelFlavor::Production,
+                true,
+                false,
+                true,
+                true,
+                true
+            ),
+            "a770_qk256_production_kernel_disassembly_evidence_captured"
+        );
+        assert_eq!(
+            disassembly_evidence_classification(
+                KernelFlavor::Production,
+                true,
+                false,
+                true,
+                true,
+                false
+            ),
+            "a770_qk256_production_kernel_disassembly_evidence_kernel_asm_missing"
         );
     }
 

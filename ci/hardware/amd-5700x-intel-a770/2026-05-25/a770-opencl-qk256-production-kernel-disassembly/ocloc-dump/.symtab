@@ -1,0 +1,5 @@
+Id, Name, Section, Value, Type, Visibility, Binding
+0, UNDEF, UNDEF, 0, 0, 0, 0
+1, _entry, .text.qk256_i2s_i8s_scaled_gemv, 256, 0, 0, 0
+2, qk256_i2s_i8s_scaled_gemv, .text.qk256_i2s_i8s_scaled_gemv, 0, 2, 0, 0
+3, __INTEL_PATCH_CROSS_THREAD_OFFSET_OFF_R0, UNDEF, 0, 0, 0, 1

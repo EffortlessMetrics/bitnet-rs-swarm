@@ -89,7 +89,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-057 | merged | #683 captured selected-device OpenCL compiler disassembly evidence for the diagnostic QK256 debug kernel. |
 | A770-058 | merged | #693 classified the lowered strict-f32 disassembly frontier as a barrier-preserving f32 sequence, without changing production QK256 policy. |
 | A770-059 | merged | #700 classified the production-policy impact frontier as requiring production-kernel disassembly/replay context before any production QK256 policy change. |
-| A770-060 | ready | Capture or classify production-kernel disassembly/replay context for `qk256_i2s_i8s_scaled_gemv` before any production QK256 dispatch or runtime policy change. |
+| A770-060 | in_progress | Capture selected-device production-kernel disassembly evidence for `qk256_i2s_i8s_scaled_gemv` before any production QK256 dispatch or runtime policy change. |
 
 ## Current Claim Boundary
 
