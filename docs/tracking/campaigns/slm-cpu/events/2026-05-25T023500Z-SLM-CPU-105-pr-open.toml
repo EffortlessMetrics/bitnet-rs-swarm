@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T02:35:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-105"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+pr = 677
+head_sha = "80b45d18d4e456c19ab043b51f1992d20addd687"
+summary = "Opened PR #677 to block the selected q_norm_input materialization proof gate with machine-checkable missing evidence."
+notes = [
+  "The committed artifact is `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-105-qnorm-input-proof-gate.json`.",
+  "The gate keeps `q_norm_input_candle_tensor_boundary` blocked because the runtime-disabled hook, Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipts, comparator, q_norm input tensor identity, and accumulator-order evidence are missing.",
+  "No new inference, default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change is made.",
+]
