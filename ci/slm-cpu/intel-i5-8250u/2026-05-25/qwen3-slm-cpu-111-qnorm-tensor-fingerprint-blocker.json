@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qwen3_q8_qnorm_tensor_fingerprint_blocker",
+  "tracking_item": "SLM-CPU-111",
+  "timestamp": "2026-05-25T16:45:00Z",
+  "claim": "f32-le q_norm_input tensor fingerprint capture is precisely blocked at the current warm-session receipt boundary; no runtime, allocation, timing, throughput, or default-path claim is made.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "selected_boundary": {
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor_name": "blk.0.attn_q.weight",
+    "materialization_boundary": "q_norm_input_candle_tensor_boundary",
+    "source_stage": "attention.q_proj.reshape_q_heads",
+    "dense_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+    "receipt_field": "dense_q8_hook.q_norm_input_tensor_identity",
+    "required_fingerprint_field": "dense_q8_hook.q_norm_input_tensor_identity.tensor_fingerprint_sha256_f32_le",
+    "required_fingerprint_encoding": "sha256 over contiguous f32 little-endian q_norm_input values"
+  },
+  "current_receipt_surface": {
+    "builder": "crates/bitnet-cli/src/main.rs::slm_warm_session_dense_q8_hook_receipt",
+    "input_available_to_builder": "dense_q8_hook_selection serde_json metadata",
+    "emits_q_norm_identity": true,
+    "emits_shape": false,
+    "emits_dtype": true,
+    "emits_tensor_fingerprint_sha256_f32_le": false,
+    "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+    "q_norm_input_tensor_available_to_builder": false,
+    "host_f32_le_slice_available_to_builder": false
+  },
+  "precise_blockers": [
+    {
+      "blocker": "q_norm_input_tensor_not_threaded_to_receipt_boundary",
+      "category": "lifetime",
+      "exact_api_or_surface": "The warm-session receipt builder receives only dense_q8_hook_selection metadata after model loading; it does not receive the materialized Candle q_norm_input Tensor for layers.0.attention.q_proj.weight.",
+      "required_before_capture": "Add an opt-in diagnostic/runtime hook that captures the exact q_norm_input Tensor at attention.q_proj.reshape_q_heads and carries a bounded fingerprint result into the receipt without extending Tensor lifetime unsafely."
+    },
+    {
+      "blocker": "host_f32_le_extraction_not_defined_for_receipt_safety",
+      "category": "host-extraction",
+      "exact_api_or_surface": "No receipt-safe API currently extracts the q_norm_input Tensor as a contiguous f32 little-endian host byte stream at this boundary while preserving the eager_f32_candle default runtime.",
+      "required_before_capture": "Define a narrow helper that converts only the selected diagnostic Tensor to f32 host values, normalizes byte order to little-endian, hashes the byte stream, and records shape/dtype/fingerprint without dumping tensor contents."
+    },
+    {
+      "blocker": "storage_layout_not_proven",
+      "category": "storage-layout",
+      "exact_api_or_surface": "The receipt identity surface records shape as null and does not prove whether the materialized q_norm_input values are contiguous or require an explicit layout-normalized copy before hashing.",
+      "required_before_capture": "Record the normalized q_norm_input shape and hash the logical tensor order rather than backend storage order."
+    },
+    {
+      "blocker": "qwen2_5_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "SLM-CPU-110 collected Qwen3 Q8_0 before/after receipts, but the Qwen2.5 Q8_0 second-model receipt gate remains open.",
+      "required_before_full_proof": "Collect matching Qwen2.5 Q8_0 before/after strict CPU receipts after fingerprint capture exists, or keep the broader materialization proof blocked."
+    },
+    {
+      "blocker": "accumulator_order_unproven",
+      "category": "numerical-proof",
+      "exact_api_or_surface": "Packed-Q8 sidecar q_proj accumulation feeding q_norm_input can differ from eager_f32_candle before q_norm consumes the materialized Tensor.",
+      "required_before_full_proof": "Compare behavior receipts and q_norm_input fingerprints before claiming behavior preservation, allocation reduction, timing improvement, or runtime promotion."
+    }
+  ],
+  "next_safe_slice": {
+    "id": "SLM-CPU-112",
+    "summary": "Add an opt-in diagnostic q_norm_input fingerprint capture path that hashes only the selected Qwen3 Q8_0 layers.0.attention.q_proj.weight q_norm_input Tensor, records shape/dtype/f32-le SHA256, and keeps packed_q8_sidecar disabled by default until proof gates pass.",
+    "must_preserve": [
+      "eager_f32_candle default runtime",
+      "packed_q8_sidecar disabled by default",
+      "strict loader/tokenizer provenance",
+      "fallback_used=false receipt checks",
+      "no tensor-content dumps in receipts"
+    ]
+  },
+  "result": {
+    "fingerprint_capture_added": false,
+    "fingerprint_capture_blocked": true,
+    "exact_blocker_recorded": true,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false,
+    "proof_ready": false
+  },
+  "validation": {
+    "json_parse_required": true,
+    "tracker_commands_required": [
+      "cargo run -p xtask --no-default-features -- campaign generate",
+      "cargo run -p xtask --no-default-features -- campaign doctor",
+      "git diff --check"
+    ]
+  },
+  "claim_boundary": {
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
