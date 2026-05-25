@@ -1,0 +1,23 @@
+timestamp = "2026-05-25T21:16:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-116"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-116-qproj-output-pre-qnorm-hook"
+pr = 742
+head_sha = "05ec95907776c32bf2b591ec0db186722aadc948"
+merge_sha = "990a91500bb7b4831f821dec35ea87f4f69ac64c"
+summary = "Merged PR #742 with the shared q_proj-output hook gate and fail-closed receipt/comparator contract."
+notes = [
+  "SLM-CPU-116 defines the hook identity and receipt/comparator contract for attention.q_proj_output_pre_optional_qnorm.",
+  "The artifact records the exact blockers: missing runtime-disabled trace hook, missing warm-session receipt field, missing comparator boundary variant, and missing Qwen2.5 before/after artifact pair.",
+  "The default runtime remains eager_f32_candle; packed_q8_sidecar remains unpromoted; no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-117"
+status = "ready"
+branch = "codex/slm-cpu-117-qproj-output-pre-qnorm-hook"
+summary = "Implement or precisely block the runtime-disabled attention.q_proj_output_pre_optional_qnorm diagnostic hook and receipt/comparator surface for Qwen3 Q8_0 and Qwen2.5 Q8_0."
