@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_low_power_battery_plan",
   "proof_stage": "low_power_battery_operator_plan_no_evidence_no_promotion_change",
-  "created_utc": "2026-05-23T20:58:00Z",
+  "created_utc": "2026-05-25T17:25:00Z",
   "machine_id": "intel-258v",
   "artifact_root": "ci/hardware/intel-258v/2026-05-08",
   "operator_runbook": "docs/hardware/intel-258v-low-power-battery-runbook.md",
@@ -47,10 +47,10 @@
         "Get-CimInstance Win32_Battery | Select-Object BatteryStatus, EstimatedChargeRemaining, Status | Format-List"
       ],
       "continue_if": [
-        "BatteryStatus is not 2 and the telemetry receipt reports ac_power_inferred=false"
+        "Win32_Battery is not reporting an AC/charging status and the telemetry receipt reports ac_power_inferred=false"
       ],
       "stop_if": [
-        "BatteryStatus=2 or telemetry-context --require-battery reports ac_power_inferred=true"
+        "BatteryStatus=2/6/7/8/9/11 or telemetry-context --require-battery reports ac_power_inferred=true"
       ]
     },
     {

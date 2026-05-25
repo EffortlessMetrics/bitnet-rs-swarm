@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T17:40:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-015"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 732
+branch = "codex/lunar-lake/LNL258V-POWER-015-battery-status-preflight"
+head_sha = "3ccfb32279748f35e536fad778634215fe050da5"
+actor = "codex"
+summary = "Opened PR #732 for low_power battery preflight clarity."
+notes = [
+  "The PR aligns the generated low_power plan and runbook with the CLI telemetry guard's Windows BatteryStatus AC/charging blocker codes.",
+  "This is no-inference preflight clarity only and does not provide battery-mode low_power evidence.",
+  "No route promotion, speedup, power advantage, measured temperature, native accelerator, or BitNet QK256/I2_S behavior change is claimed.",
+]
