@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T13:34:14Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-070"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-070-post-a770061"
+actor = "codex"
+summary = "Started the no-inference Lunar Lake audit/checklist refresh to current swarm main after adjacent SLM CPU, A770, and migration-metadata deltas through #716."
+notes = [
+  "The refresh records current source_revision 62ab351abf54653b15b0ea0eb4693e2f7b52ad5d.",
+  "SLM-CPU-109/#703/#707 and SLM-CPU-110/#710/#712 are adjacent SLM CPU state only.",
+  "A770-060/#706/#711, A770-060 selector hardening #709/#713, and A770-061/#714/#716 are adjacent A770 diagnostic/tracker state only.",
+  "SWARM-LNL258V-MIGRATE-001 cutoff refresh #708 is migration metadata only.",
+  "LNL258V-POWER-006 remains blocked while this host is on AC power; no battery-mode evidence, route promotion, speedup, power advantage, native accelerator proof, broad quality, semantic-intake stale state, or BitNet QK256/I2_S behavior change is claimed.",
+]
