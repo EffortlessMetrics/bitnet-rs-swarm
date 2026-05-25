@@ -1,0 +1,14 @@
+timestamp = "2026-05-24T23:37:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-103"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 666
+head_sha = "8f871433ff83e51719a705ac5449ab61489232b1"
+summary = "Opened PR #666 to define the typed q_norm/RoPE consumer gate as a runtime-disabled blocker for the exact Qwen3 Q8_0 packed-Q8 q_proj sidecar path."
+notes = [
+  "The slice records exact q_norm, RoPE, trace identity, score handoff, accumulator-order, materialization-boundary, and receipt-safety blockers.",
+  "Runtime execution, packed_q8_sidecar default promotion, allocation reduction, speedup, sustained 8250U throughput, Q4/Q5, server/GPU/NPU/OpenVINO/UHD 620, Qwen3.5, and BitNet QK256 claims remain out of scope.",
+]
