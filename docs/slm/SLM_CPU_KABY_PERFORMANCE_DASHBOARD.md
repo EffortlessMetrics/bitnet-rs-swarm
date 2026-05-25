@@ -32,6 +32,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Typed q_norm/RoPE consumer gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-103-typed-qnorm-rope-consumer-gate.json` | Records the next typed q_norm/RoPE consumer boundary as blocked at `typed_q_norm_consumer`, names the exact Tensor APIs and receipt-safety gaps, and keeps runtime execution, allocation claims, and timing claims disabled |
 | q_norm materialization boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-104-qnorm-materialization-boundary.json` | Selects `q_norm_input_candle_tensor_boundary` as the only accepted materialization boundary for the next proof slice, preserving existing Candle q_norm, RoPE, trace, and score consumers while keeping runtime execution and allocation/timing claims disabled |
 | q_norm input proof gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-105-qnorm-input-proof-gate.json` | Blocks proof of the selected `q_norm_input_candle_tensor_boundary` until a runtime-disabled hook, Qwen3 and Qwen2.5 before/after strict CPU receipt pairs, a fail-closed comparator, q_norm input tensor identity, and accumulator-order evidence exist |
+| q_norm input receipt comparator | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json` | Defines the fail-closed before/after receipt identity comparator for the selected `q_norm_input_candle_tensor_boundary`, burning down the comparator blocker while keeping runtime execution, proof readiness, and allocation/timing claims disabled |
 
 All rows use:
 
@@ -50,7 +51,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-105 q_norm input proof gate
+This refresh is current through the SLM-CPU-106 q_norm input receipt comparator
 gate.
 It does not run new inference or add a runtime
 optimization. It
@@ -60,7 +61,7 @@ packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
 the typed fused Q projection consumer, attention-head view, attention-head
 consumer, q_norm/RoPE consumer blockers, and the selected q_norm-input
-materialization boundary plus its proof blocker.
+materialization boundary plus its proof blocker and comparator contract.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -145,13 +146,21 @@ not an allocation or timing claim. A future runtime-adjacent slice must prove th
 selected boundary with before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts before
 claiming any improvement.
 
-SLM-CPU-105 keeps that boundary blocked rather than treating the SLM-CPU-104
-selection as proof. The missing surfaces are explicit: no runtime-disabled hook
+SLM-CPU-105 kept that boundary blocked rather than treating the SLM-CPU-104
+selection as proof. The missing surfaces were explicit: no runtime-disabled hook
 currently labels a q_norm-input materialization candidate separately from
 `eager_f32_candle`, no Qwen3 Q8_0 or Qwen2.5 Q8_0 before/after strict CPU
-receipt pairs exist for the selected boundary, no comparator fails closed on the
-required receipt fields, no receipt records q_norm-input tensor identity, and
-accumulator-order equivalence remains unproven. Runtime execution remains
+receipt pairs exist for the selected boundary, the comparator surface was not
+yet defined, no receipt records q_norm-input tensor identity, and
+accumulator-order equivalence remains unproven.
+
+SLM-CPU-106 burns down only the comparator blocker. The new comparator contract
+requires model SHA, GGUF tokenizer authority, strict tokenizer mode, prompt-ID
+digest, generated-ID digest, decoded-text digest, selected CPU backend/kernel
+identity, dense hook identity, the `q_norm_input_candle_tensor_boundary` label,
+q_norm-input tensor identity, and `fallback_used=false`, and it fails closed on
+missing fields, mismatches, fallback, non-CPU backend identity, non-strict
+tokenizer mode, or the wrong q_norm-input boundary. Runtime execution remains
 disabled, the default runtime remains `eager_f32_candle`, and this is not an
 allocation, timing, throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet
 QK256 claim.

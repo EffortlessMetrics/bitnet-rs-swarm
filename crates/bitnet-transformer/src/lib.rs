@@ -2373,6 +2373,51 @@ pub struct DenseQ8SidecarQNormInputProofBlocker {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarQNormInputReceiptComparatorGate {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub selected_materialization_boundary: &'static str,
+    pub required_identity_fields: &'static [&'static str],
+    pub fail_closed_on_missing_field: bool,
+    pub fail_closed_on_mismatch: bool,
+    pub fail_closed_on_fallback: bool,
+    pub compares_qwen3_q8: bool,
+    pub compares_qwen25_q8: bool,
+    pub runtime_execution_enabled: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub sustained_throughput_claim: bool,
+    pub q4_q5_runtime_claim: bool,
+    pub server_or_accelerator_claim: bool,
+    pub qwen35_claim: bool,
+    pub bitnet_qk256_claim: bool,
+    pub remaining_blockers: &'static [&'static str],
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarQNormInputReceiptIdentity {
+    pub model_id: &'static str,
+    pub model_sha256: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub prompt_ids_digest: &'static str,
+    pub generated_ids_digest: &'static str,
+    pub decoded_text_digest: &'static str,
+    pub selected_backend: &'static str,
+    pub selected_kernel_identity: &'static str,
+    pub dense_hook_identity: &'static str,
+    pub q_norm_input_boundary: &'static str,
+    pub q_norm_input_tensor_identity: &'static str,
+    pub fallback_used: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarQNormInputReceiptComparison {
+    pub passed: bool,
+    pub failed_fields: Vec<&'static str>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DenseQ8SidecarQNormInputProofGate {
     pub role: &'static str,
     pub status: &'static str,
@@ -2386,6 +2431,7 @@ pub struct DenseQ8SidecarQNormInputProofGate {
     pub missing_runtime_hook: bool,
     pub missing_receipt_field: bool,
     pub missing_comparator: bool,
+    pub comparator_contract_defined: bool,
     pub tensor_identity_unrecorded: bool,
     pub accumulator_order_unproven: bool,
     pub artifact_gap: bool,
@@ -2743,6 +2789,30 @@ pub const DENSE_Q8_SIDECAR_Q_NORM_INPUT_PROOF_REQUIRED_RECEIPTS:
     },
 ];
 
+pub const DENSE_Q8_SIDECAR_Q_NORM_INPUT_RECEIPT_COMPARATOR_FIELDS: &[&str] = &[
+    "model_id",
+    "model_sha256",
+    "tokenizer_source=gguf_metadata",
+    "tokenizer_strict=true",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "selected_backend=cpu-rust",
+    "selected_kernel_identity",
+    "dense_hook_identity",
+    "q_norm_input_boundary=q_norm_input_candle_tensor_boundary",
+    "q_norm_input_tensor_identity",
+    "fallback_used=false",
+];
+
+pub const DENSE_Q8_SIDECAR_Q_NORM_INPUT_RECEIPT_COMPARATOR_REMAINING_BLOCKERS: &[&str] = &[
+    "q_norm_input_runtime_hook_missing",
+    "qwen3_q8_before_after_receipts_missing",
+    "qwen25_q8_before_after_receipts_missing",
+    "q_norm_input_tensor_identity_unrecorded",
+    "accumulator_order_unproven",
+];
+
 pub const DENSE_Q8_SIDECAR_Q_NORM_INPUT_PROOF_BLOCKERS: &[DenseQ8SidecarQNormInputProofBlocker] = &[
     DenseQ8SidecarQNormInputProofBlocker {
         blocker: "q_norm_input_runtime_hook_missing",
@@ -2761,12 +2831,6 @@ pub const DENSE_Q8_SIDECAR_Q_NORM_INPUT_PROOF_BLOCKERS: &[DenseQ8SidecarQNormInp
         category: "artifact-gap",
         exact_api_or_surface: "No SLM-CPU-105 Qwen2.5 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary",
         required_before_proof: "Collect the same before/after receipt contract for the second Qwen dense SLM before treating the boundary as proven.",
-    },
-    DenseQ8SidecarQNormInputProofBlocker {
-        blocker: "q_norm_input_receipt_comparator_missing",
-        category: "comparator",
-        exact_api_or_surface: "Existing receipt checks do not compare q_norm_input boundary identity across before/after Qwen3 and Qwen2.5 strict CPU receipts",
-        required_before_proof: "Add or select a comparator that fails closed on model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected backend/kernel, dense hook identity, and fallback_used.",
     },
     DenseQ8SidecarQNormInputProofBlocker {
         blocker: "q_norm_input_tensor_identity_unrecorded",
@@ -3069,11 +3133,119 @@ pub fn dense_q8_sidecar_q_norm_materialization_boundary_gate()
     }
 }
 
+pub fn dense_q8_sidecar_q_norm_input_receipt_comparator_gate()
+-> DenseQ8SidecarQNormInputReceiptComparatorGate {
+    DenseQ8SidecarQNormInputReceiptComparatorGate {
+        role: "attention.q_proj.q_norm_input_receipt_identity_comparator",
+        status: "comparator_contract_defined_proof_blocked_on_runtime_hook_and_receipts",
+        selected_materialization_boundary: "q_norm_input_candle_tensor_boundary",
+        required_identity_fields: DENSE_Q8_SIDECAR_Q_NORM_INPUT_RECEIPT_COMPARATOR_FIELDS,
+        fail_closed_on_missing_field: true,
+        fail_closed_on_mismatch: true,
+        fail_closed_on_fallback: true,
+        compares_qwen3_q8: true,
+        compares_qwen25_q8: true,
+        runtime_execution_enabled: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        sustained_throughput_claim: false,
+        q4_q5_runtime_claim: false,
+        server_or_accelerator_claim: false,
+        qwen35_claim: false,
+        bitnet_qk256_claim: false,
+        remaining_blockers: DENSE_Q8_SIDECAR_Q_NORM_INPUT_RECEIPT_COMPARATOR_REMAINING_BLOCKERS,
+    }
+}
+
+pub fn compare_dense_q8_sidecar_q_norm_input_receipts(
+    before: &DenseQ8SidecarQNormInputReceiptIdentity,
+    after: &DenseQ8SidecarQNormInputReceiptIdentity,
+) -> DenseQ8SidecarQNormInputReceiptComparison {
+    let mut failed_fields = Vec::new();
+
+    if before.model_id.is_empty() || after.model_id.is_empty() || before.model_id != after.model_id
+    {
+        failed_fields.push("model_id");
+    }
+    if before.model_sha256.is_empty()
+        || after.model_sha256.is_empty()
+        || before.model_sha256 != after.model_sha256
+    {
+        failed_fields.push("model_sha256");
+    }
+    if before.tokenizer_source != "gguf_metadata"
+        || after.tokenizer_source != "gguf_metadata"
+        || before.tokenizer_source != after.tokenizer_source
+    {
+        failed_fields.push("tokenizer_source");
+    }
+    if !before.tokenizer_strict || !after.tokenizer_strict {
+        failed_fields.push("tokenizer_strict");
+    }
+    if before.prompt_ids_digest.is_empty()
+        || after.prompt_ids_digest.is_empty()
+        || before.prompt_ids_digest != after.prompt_ids_digest
+    {
+        failed_fields.push("prompt_ids_digest");
+    }
+    if before.generated_ids_digest.is_empty()
+        || after.generated_ids_digest.is_empty()
+        || before.generated_ids_digest != after.generated_ids_digest
+    {
+        failed_fields.push("generated_ids_digest");
+    }
+    if before.decoded_text_digest.is_empty()
+        || after.decoded_text_digest.is_empty()
+        || before.decoded_text_digest != after.decoded_text_digest
+    {
+        failed_fields.push("decoded_text_digest");
+    }
+    if before.selected_backend != "cpu-rust"
+        || after.selected_backend != "cpu-rust"
+        || before.selected_backend != after.selected_backend
+    {
+        failed_fields.push("selected_backend");
+    }
+    if before.selected_kernel_identity.is_empty()
+        || after.selected_kernel_identity.is_empty()
+        || before.selected_kernel_identity != after.selected_kernel_identity
+    {
+        failed_fields.push("selected_kernel_identity");
+    }
+    if before.dense_hook_identity.is_empty()
+        || after.dense_hook_identity.is_empty()
+        || before.dense_hook_identity != after.dense_hook_identity
+    {
+        failed_fields.push("dense_hook_identity");
+    }
+    if before.q_norm_input_boundary != "q_norm_input_candle_tensor_boundary"
+        || after.q_norm_input_boundary != "q_norm_input_candle_tensor_boundary"
+        || before.q_norm_input_boundary != after.q_norm_input_boundary
+    {
+        failed_fields.push("q_norm_input_boundary");
+    }
+    if before.q_norm_input_tensor_identity.is_empty()
+        || after.q_norm_input_tensor_identity.is_empty()
+        || before.q_norm_input_tensor_identity != after.q_norm_input_tensor_identity
+    {
+        failed_fields.push("q_norm_input_tensor_identity");
+    }
+    if before.fallback_used || after.fallback_used {
+        failed_fields.push("fallback_used");
+    }
+
+    failed_fields.sort_unstable();
+    failed_fields.dedup();
+
+    DenseQ8SidecarQNormInputReceiptComparison { passed: failed_fields.is_empty(), failed_fields }
+}
+
 pub fn dense_q8_sidecar_q_norm_input_proof_gate() -> DenseQ8SidecarQNormInputProofGate {
     let source = dense_q8_sidecar_q_norm_materialization_boundary_gate();
+    let comparator = dense_q8_sidecar_q_norm_input_receipt_comparator_gate();
     DenseQ8SidecarQNormInputProofGate {
         role: "attention.q_proj.q_norm_input_materialization_proof_gate",
-        status: "blocked_missing_runtime_hook_and_before_after_receipts",
+        status: "blocked_missing_runtime_hook_and_before_after_receipts_comparator_defined",
         source_boundary_status: source.status,
         exact_tensor_name: source.exact_tensor_name,
         exact_tensor_role: source.exact_tensor_role,
@@ -3083,7 +3255,10 @@ pub fn dense_q8_sidecar_q_norm_input_proof_gate() -> DenseQ8SidecarQNormInputPro
         proof_ready: false,
         missing_runtime_hook: true,
         missing_receipt_field: true,
-        missing_comparator: true,
+        missing_comparator: false,
+        comparator_contract_defined: comparator.fail_closed_on_missing_field
+            && comparator.fail_closed_on_mismatch
+            && comparator.fail_closed_on_fallback,
         tensor_identity_unrecorded: true,
         accumulator_order_unproven: true,
         artifact_gap: true,
@@ -3097,7 +3272,7 @@ pub fn dense_q8_sidecar_q_norm_input_proof_gate() -> DenseQ8SidecarQNormInputPro
         server_or_accelerator_claim: false,
         qwen35_claim: false,
         bitnet_qk256_claim: false,
-        next_required_slice: "add a runtime-disabled q_norm_input candidate hook plus Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipts and a fail-closed comparator before proving the selected boundary",
+        next_required_slice: "add a runtime-disabled q_norm_input candidate hook plus Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipts that pass the fail-closed comparator before proving the selected boundary",
     }
 }
 

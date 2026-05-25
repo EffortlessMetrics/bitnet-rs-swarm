@@ -1,0 +1,122 @@
+{
+  "artifact_kind": "slm_cpu_qnorm_input_receipt_comparator",
+  "work_item": "SLM-CPU-106",
+  "created_utc": "2026-05-25T03:21:54Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-105-qnorm-input-proof-gate.json",
+  "selected_boundary": {
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "materialization_boundary": "q_norm_input_candle_tensor_boundary",
+    "source_boundary_status": "boundary_selected_runtime_disabled",
+    "proof_status": "blocked_missing_runtime_hook_and_before_after_receipts_comparator_defined"
+  },
+  "receipt_comparator": {
+    "role": "attention.q_proj.q_norm_input_receipt_identity_comparator",
+    "contract_status": "comparator_contract_defined_proof_blocked_on_runtime_hook_and_receipts",
+    "comparator_contract_defined": true,
+    "required_identity_fields": [
+      "model_id",
+      "model_sha256",
+      "tokenizer_source=gguf_metadata",
+      "tokenizer_strict=true",
+      "prompt_ids_digest",
+      "generated_ids_digest",
+      "decoded_text_digest",
+      "selected_backend=cpu-rust",
+      "selected_kernel_identity",
+      "dense_hook_identity",
+      "q_norm_input_boundary=q_norm_input_candle_tensor_boundary",
+      "q_norm_input_tensor_identity",
+      "fallback_used=false"
+    ],
+    "fail_closed_rules": {
+      "missing_field": true,
+      "identity_mismatch": true,
+      "fallback_used": true,
+      "non_cpu_backend": true,
+      "non_strict_tokenizer": true,
+      "wrong_q_norm_input_boundary": true
+    },
+    "compares": {
+      "qwen3_q8_0_before_after_receipts": true,
+      "qwen25_q8_0_before_after_receipts": true
+    }
+  },
+  "remaining_blockers": [
+    {
+      "blocker": "q_norm_input_runtime_hook_missing",
+      "category": "runtime-hook",
+      "exact_api_or_surface": "No packed_q8_sidecar runtime hook currently materializes only the q_norm_input Candle Tensor while preserving the selected dense hook identity for layers.0.attention.q_proj.weight.",
+      "required_before_proof": "Add a runtime-disabled hook/candidate path that labels q_norm_input_candle_tensor_boundary separately from eager_f32_candle before collecting after-receipts."
+    },
+    {
+      "blocker": "qwen3_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No Qwen3 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary with comparator identity fields.",
+      "required_before_proof": "Collect before and after receipts that pass the fail-closed comparator."
+    },
+    {
+      "blocker": "qwen25_q8_before_after_receipts_missing",
+      "category": "artifact-gap",
+      "exact_api_or_surface": "No Qwen2.5 Q8_0 before/after strict CPU receipt pair exists for q_norm_input_candle_tensor_boundary with comparator identity fields.",
+      "required_before_proof": "Collect the same comparator-checked receipt pair for the second Qwen dense SLM before treating the boundary as proven."
+    },
+    {
+      "blocker": "q_norm_input_tensor_identity_unrecorded",
+      "category": "tensor-identity",
+      "exact_api_or_surface": "Strict CPU receipts still do not record q_norm_input materialized Tensor shape, dtype, source tensor name, and boundary label for layers.0.attention.q_proj.weight.",
+      "required_before_proof": "Extend the after-receipt surface to include q_norm_input tensor identity without weakening existing Candle q_norm/RoPE/score consumers."
+    },
+    {
+      "blocker": "accumulator_order_unproven",
+      "category": "accumulator-order",
+      "exact_api_or_surface": "Packed-Q8 sidecar q_proj accumulation feeding q_norm_input may differ from the eager_f32_candle path before Candle LayerNorm consumes the materialized Tensor.",
+      "required_before_proof": "Record generated-ID/text equivalence and focused numerical evidence before claiming behavior preservation or any allocation/timing improvement."
+    }
+  ],
+  "result": {
+    "proof_ready": false,
+    "missing_runtime_hook": true,
+    "missing_receipt_field": true,
+    "missing_comparator": false,
+    "comparator_contract_defined": true,
+    "tensor_identity_unrecorded": true,
+    "accumulator_order_unproven": true,
+    "artifact_gap": true,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_blocks_without_receipts",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_names_required_receipt_pairs",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_names_precise_blockers",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_proof_gate_keeps_claim_boundary",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_receipt_comparator_gate_names_contract",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_receipt_comparator_passes_identical_identity",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_receipt_comparator_fails_closed_on_gaps"
+  ],
+  "claim_boundary": {
+    "new_inference_run": false,
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
