@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T03:44:11Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-106"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-106-qnorm-input-receipt-comparator"
+pr = 681
+head_sha = "0c17f6361acc5a5a3faadeee6cb0f0f144321f93"
+summary = "Opened PR #681 to define the fail-closed q_norm_input receipt identity comparator."
+notes = [
+  "The committed artifact is `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json`.",
+  "The comparator burns down the SLM-CPU-105 comparator blocker but keeps the q_norm_input proof blocked on the runtime hook, before/after Qwen3 and Qwen2.5 receipt pairs, q_norm input tensor identity, and accumulator-order evidence.",
+  "No new inference, default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change is made.",
+]
