@@ -34,8 +34,9 @@ Get-CimInstance Win32_Battery |
   Format-List
 ```
 
-Stop if `BatteryStatus=2` or if the telemetry receipt below reports
-`ac_power_inferred=true`.
+Stop if Windows reports an AC or charging status. The CLI currently treats
+`BatteryStatus=2/6/7/8/9/11` as AC/charging blocker states. Also stop if the
+telemetry receipt below reports `ac_power_inferred=true`.
 
 Before unplugging for the physical run, emit the machine-readable plan receipt
 from the current committed blocker evidence:

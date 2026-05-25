@@ -9142,8 +9142,8 @@ fn low_power_battery_plan_commands() -> Vec<LowPowerBatteryPlanCommand> {
                 "cargo build --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet".to_string(),
                 "Get-CimInstance Win32_Battery | Select-Object BatteryStatus, EstimatedChargeRemaining, Status | Format-List".to_string(),
             ],
-            continue_if: vec!["BatteryStatus is not 2 and the telemetry receipt reports ac_power_inferred=false".to_string()],
-            stop_if: vec!["BatteryStatus=2 or telemetry-context --require-battery reports ac_power_inferred=true".to_string()],
+            continue_if: vec!["Win32_Battery is not reporting an AC/charging status and the telemetry receipt reports ac_power_inferred=false".to_string()],
+            stop_if: vec!["BatteryStatus=2/6/7/8/9/11 or telemetry-context --require-battery reports ac_power_inferred=true".to_string()],
         },
         LowPowerBatteryPlanCommand {
             step: "battery_start_receipt".to_string(),
@@ -20293,6 +20293,14 @@ mod tests {
                     .iter()
                     .any(|command| command.contains("telemetry-context --artifact-root"))
                 && step.command.iter().any(|command| command.contains("--require-battery"))
+        }));
+        let preflight_step = receipt
+            .command_sequence
+            .iter()
+            .find(|step| step.step == "preflight")
+            .context("missing preflight step")?;
+        assert!(preflight_step.stop_if.iter().any(|stop| {
+            stop.contains("BatteryStatus=2/6/7/8/9/11") && stop.contains("ac_power_inferred=true")
         }));
         let route_sample_step = receipt
             .command_sequence
