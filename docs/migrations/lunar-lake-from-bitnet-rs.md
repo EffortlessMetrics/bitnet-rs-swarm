@@ -8,7 +8,7 @@ Target repo: `EffortlessMetrics/bitnet-rs-swarm`
 
 Created: `2026-05-21T15:23:58Z`
 
-Last refreshed: `2026-05-23T15:25:00Z`
+Last refreshed: `2026-05-25T08:28:15Z`
 
 ## Purpose
 
@@ -37,24 +37,28 @@ route, regression, telemetry, and audit receipts:
 - `LNL258V-GOAL-AUDIT-013`: post-A770-006 audit refresh, recording A770-006 as
   adjacent selected-device OpenCL parity evidence, not a Lunar Lake route or
   BitNet semantic trigger.
+- `A770-007`: selected-device receipt identity for the old-repo A770 smoke and
+  `matmul_i2s` parity path, accepted as adjacent A770 evidence only; not a
+  Lunar Lake route, acceleration claim, or BitNet semantic-intake trigger.
 
 Swarm then continued the lane with later no-inference and evidence-indexing
 work. The current committed Lunar Lake audit cutoff is
-`LNL258V-GOAL-AUDIT-045` from PR #470, with tracker closeout PR #472 and
-`source_revision = f06af55c0b941a8e8a2a298525d2febf8b7d5f5e`.
+`LNL258V-GOAL-AUDIT-068` from PR #688, with tracker closeout PR #691 and
+`source_revision = 034785f2eda1bb011a7f413b32ab1743ea959a1b`.
 
-That cutoff records current swarm audit/tracker state through A770-035/#463,
-A770-035 closeout #466, A770-035 source-capture plumbing fix #467, and the
-post-467 handoff/ledger documentation checkpoint. These are adjacent A770
-diagnostic, tracker, or operator-documentation state only. They are not shared
-BitNet semantic fixes, not Lunar Lake semantic-intake stale triggers, and not
-Lunar Lake route evidence.
+That cutoff records current swarm audit/tracker state through adjacent A770-055
+and A770-057 diagnostic/tracker evidence plus SLM-CPU-103 through SLM-CPU-107
+q_norm state. These are adjacent A770 diagnostic or SLM CPU state only. They
+are not shared BitNet semantic fixes, not Lunar Lake semantic-intake stale
+triggers, and not Lunar Lake route evidence.
 
 Current swarm main also contains later adjacent work after that Lunar Lake audit
-cutoff: SLM-CPU-090 ready-state repair #477, A770-036 diagnostic PR #478 and
-closeout #480, and CUDA/Qwen3 warm-session receipt PR #482. Those changes are
-not part of the migrated Lunar Lake operating state and do not change route
-policy, promotion status, inference evidence, power claims, or BitNet behavior.
+cutoff: A770-058 strict-f32 disassembly-frontier queue documentation #690,
+SLM-CPU-107 q_norm runtime-disabled hook gate #692, and SLM-CPU-107 closeout
+#694. It also contains the A770-058 strict-f32 disassembly-frontier diagnostic
+#693. Those changes are not part of the migrated Lunar Lake operating state and
+do not change route policy, promotion status, inference evidence, power claims,
+or BitNet behavior.
 
 ## Carried State
 
