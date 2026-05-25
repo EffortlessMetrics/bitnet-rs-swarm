@@ -341,7 +341,9 @@ fn validate_qproj_output_pre_qnorm_hook_side(
             ("bitnet_rs", "shape") => "bitnet_rs_dense_hook_shape",
             ("bitnet_rs", "dtype") => "bitnet_rs_dense_hook_dtype",
             ("bitnet_rs", "fingerprint") => "bitnet_rs_dense_hook_fingerprint",
-            _ => unreachable!("unexpected dense hook field"),
+            ("reference", _) => "reference_dense_hook",
+            ("bitnet_rs", _) => "bitnet_rs_dense_hook",
+            _ => "dense_hook",
         }
     };
 
@@ -1142,16 +1144,16 @@ mod tests {
     #[test]
     fn qproj_output_pre_optional_qnorm_hook_artifact_fails_closed_without_fingerprint() {
         let mut input = qproj_output_pre_qnorm_artifact();
-        input["bitnet_rs"]["dense_hook"]
-            .as_object_mut()
-            .unwrap()
-            .remove("tensor_fingerprint_sha256_f32_le");
+        if let Some(hook) = input["bitnet_rs"]["dense_hook"].as_object_mut() {
+            hook.remove("tensor_fingerprint_sha256_f32_le");
+        }
 
         let report = build_reference_divergence_receipt(Path::new("compare.json"), &input);
 
         assert_eq!(report["validation"]["passed"], false);
-        let failed = report["validation"]["failed_rules"].as_array().unwrap();
-        assert!(failed.iter().any(|rule| rule == "bitnet_rs_dense_hook_fingerprint"));
+        assert!(report["validation"]["failed_rules"].as_array().is_some_and(|failed| {
+            failed.iter().any(|rule| rule == "bitnet_rs_dense_hook_fingerprint")
+        }));
     }
 
     #[test]
