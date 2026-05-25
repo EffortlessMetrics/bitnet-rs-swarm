@@ -1,0 +1,24 @@
+timestamp = "2026-05-25T16:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-113"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-113-qnorm-fingerprint-artifact"
+pr = 726
+head_sha = "5d2e5fca829e607d8897139ec74db504683fbd8b"
+merge_sha = "ae871be6f580ca9375ddd8b7346d435ef979c8b5"
+summary = "Merged the real i5-8250U Qwen3 Q8_0 q_norm-input fingerprint artifact."
+notes = [
+  "The artifact records strict GGUF tokenizer authority, `cpu-rust`, `fallback_used=false`, prompt/generated IDs, decoded text, top-k, and the layer-0 `attention.q_norm_input` f32-le SHA256.",
+  "Tensor contents and sample values are not dumped.",
+  "The default production runtime remains `eager_f32_candle`; packed_q8_sidecar remains disabled by default.",
+  "No allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-114"
+status = "ready"
+branch = "codex/slm-cpu-114-qnorm-fingerprint-receipt-pair"
+summary = "Compare the Qwen3 q_norm_input fingerprint against before/after strict CPU receipts and add or precisely block the corresponding Qwen2.5 Q8_0 fingerprint artifact."
