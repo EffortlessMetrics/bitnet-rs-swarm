@@ -39,6 +39,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen3 q_norm tensor fingerprint blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-111-qnorm-tensor-fingerprint-blocker.json` | Precisely blocks f32-le q_norm-input tensor fingerprint capture because the warm-session receipt boundary receives metadata but not the materialized Candle Tensor or a receipt-safe host f32-le slice |
 | Qwen3 q_norm fingerprint diagnostic capture | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-112-qnorm-fingerprint-diagnostic-capture.json` | Adds an opt-in trace-only `attention.q_norm_input` fingerprint record for the exact layer-0 Qwen3 Q8_0 q_proj boundary, recording shape, dtype, source tensor, boundary, and f32-le SHA256 without tensor contents while preserving eager F32 as the default runtime |
 | Qwen3 q_norm fingerprint artifact | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-113-qnorm-fingerprint-artifact.json` | Captures a real i5-8250U Qwen3 Q8_0 `attention.q_norm_input` f32-le SHA256 artifact with strict GGUF tokenizer authority, `cpu-rust`, `fallback_used=false`, and no tensor contents or performance claim |
+| q_norm fingerprint receipt-pair review | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-114-qnorm-fingerprint-receipt-pair.json` | Compares the Qwen3 q_norm fingerprint artifact against the existing before/after receipt-pair evidence and records the exact Qwen2.5 blocker: Qwen3 has a real q_norm fingerprint, but the before/after warm-session receipts do not carry f32-le tensor fingerprints, and the accepted Qwen2.5 Q8_0 artifact has no q_norm-input stage to fingerprint |
 
 All rows use:
 
@@ -57,10 +58,12 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-113 Qwen3 q_norm input fingerprint
-artifact. It records the opt-in trace-only f32-le tensor fingerprint surface for
-the selected q_norm-input boundary and a real i5-8250U capture, but it does not
-add a runtime optimization. It
+This refresh is current through the SLM-CPU-114 q_norm fingerprint receipt-pair
+review. It records the opt-in trace-only f32-le tensor fingerprint surface for
+the selected q_norm-input boundary and a real i5-8250U capture, then keeps the
+boundary fail-closed because the before/after warm-session receipts still do not
+carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has no
+q_norm-input stage to fingerprint. It does not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
@@ -68,8 +71,8 @@ logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
 the typed fused Q projection consumer, attention-head view, attention-head
 consumer, q_norm/RoPE consumer blockers, and the selected q_norm-input
 materialization boundary plus its proof blocker, comparator contract,
-runtime-disabled hook/tensor-identity surface, and fingerprint-only diagnostic
-trace.
+runtime-disabled hook/tensor-identity surface, fingerprint-only diagnostic
+trace, and receipt-pair review blocker.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
