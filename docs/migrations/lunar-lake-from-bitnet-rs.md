@@ -8,7 +8,7 @@ Target repo: `EffortlessMetrics/bitnet-rs-swarm`
 
 Created: `2026-05-21T15:23:58Z`
 
-Last refreshed: `2026-05-25T08:28:15Z`
+Last refreshed: `2026-05-25T10:58:17Z`
 
 ## Purpose
 
@@ -43,22 +43,23 @@ route, regression, telemetry, and audit receipts:
 
 Swarm then continued the lane with later no-inference and evidence-indexing
 work. The current committed Lunar Lake audit cutoff is
-`LNL258V-GOAL-AUDIT-068` from PR #688, with tracker closeout PR #691 and
-`source_revision = 034785f2eda1bb011a7f413b32ab1743ea959a1b`.
+`LNL258V-GOAL-AUDIT-069` from PR #699, with tracker closeout PR #704 and
+`source_revision = fa8349dd0374851e186dd7d960fd8b1b16e5e993`.
 
-That cutoff records current swarm audit/tracker state through adjacent A770-055
-and A770-057 diagnostic/tracker evidence plus SLM-CPU-103 through SLM-CPU-107
-q_norm state. These are adjacent A770 diagnostic or SLM CPU state only. They
-are not shared BitNet semantic fixes, not Lunar Lake semantic-intake stale
-triggers, and not Lunar Lake route evidence.
+That cutoff records current swarm audit/tracker state through the prior
+`LNL258V-GOAL-AUDIT-068` closeout, adjacent A770-058/A770-059 diagnostic and
+tracker evidence, SLM-CPU-107/108 adjacent q_norm state, and the prior
+`SWARM-LNL258V-MIGRATE-001` cutoff refresh. These are Lunar Lake
+audit/tracker or migration-metadata state, adjacent A770 diagnostic state, or
+adjacent SLM CPU state only. They are not shared BitNet semantic fixes, not
+Lunar Lake semantic-intake stale triggers, and not Lunar Lake route evidence.
 
 Current swarm main also contains later adjacent work after that Lunar Lake audit
-cutoff: A770-058 strict-f32 disassembly-frontier queue documentation #690,
-SLM-CPU-107 q_norm runtime-disabled hook gate #692, and SLM-CPU-107 closeout
-#694. It also contains the A770-058 strict-f32 disassembly-frontier diagnostic
-#693. Those changes are not part of the migrated Lunar Lake operating state and
-do not change route policy, promotion status, inference evidence, power claims,
-or BitNet behavior.
+cutoff: SLM-CPU-109 q_norm hook-identity receipt field #703 and tracker
+closeout #707, plus A770-060 production-kernel disassembly evidence #706. Those
+changes are adjacent SLM CPU state or adjacent A770 diagnostic state only and do
+not change Lunar Lake route policy, promotion status, inference evidence, power
+claims, or BitNet behavior.
 
 ## Carried State
 
