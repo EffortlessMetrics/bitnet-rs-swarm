@@ -1,0 +1,46 @@
+timestamp = "2026-05-25T19:13:02Z"
+campaign = "intel-a770"
+item = "A770-063"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 731
+branch = "codex/intel-a770/A770-063-focused-production-operands"
+head_sha = "0ccc264a91a35a6551cd01e3ebd10e6bcfb494bc"
+merge_sha = "ae040f6f8dc0832ce6845e8d318a31dbaa650de3"
+merged_at = "2026-05-25T19:13:02Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #731, closing the A770-063 focused production operand diagnostic."
+notes = [
+  "PR #731 added focused-source mode to the A770 OpenCL production replay instrumentation and recorded the A770-063 focused production operand receipt.",
+  "The committed receipt classifies as a770_qk256_focused_production_operands_summary_context_only_raw_operands_missing.",
+  "A770-063 records fallback_used=false, cpu_fallback_allowed=false, bitnet_inference=false, qk256_decode=false, production_qk256_policy_change=false, claim_allowed=false, and diagnostic_only=true.",
+  "Focused summary context matched the requested case and mismatch index, but raw activation_i8 and packed_qk256 operands were unavailable, so production replay was not executed.",
+  "The next diagnostic is to capture raw activation row and packed QK256 bytes for the focused q_proj first mismatch before any production QK256 policy change.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-063 captured focused diagnostic production operand and replay context for the committed generated-output first mismatch.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
