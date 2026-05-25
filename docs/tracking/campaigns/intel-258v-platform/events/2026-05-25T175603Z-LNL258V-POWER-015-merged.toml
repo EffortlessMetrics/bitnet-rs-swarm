@@ -1,0 +1,19 @@
+timestamp = "2026-05-25T17:56:03Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-015"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-POWER-015-battery-status-preflight"
+pr = 732
+head_sha = "05ef112c75a589899f1de20b0b6517458f758042"
+merge_sha = "e10449c548996b14a26d411ab83a72ab91cc20cd"
+merged_at = "2026-05-25T17:56:03Z"
+summary = "Closed LNL258V-POWER-015 after PR #732 merged."
+notes = [
+  "PR #732 aligned the low_power battery preflight with the CLI telemetry guard by naming Windows BatteryStatus AC/charging blocker codes in the generated battery plan and operator runbook.",
+  "The generated plan and runbook still require telemetry-context --require-battery to report ac_power_inferred=false before low_power route samples can be collected.",
+  "LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, valid route samples, and benchmark-qualified power advantage evidence are collected.",
+  "No inference, route promotion, speedup, power-advantage, battery-mode evidence, measured-temperature, native accelerator, acceleration, full BitNet accelerator inference, or BitNet QK256/I2_S behavior-change claim was made.",
+]
