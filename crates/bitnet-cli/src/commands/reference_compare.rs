@@ -19,6 +19,23 @@ const REQUIRED_QWEN3_CHECKPOINT_STAGES: &[&str] = &[
     "lm_head.logits",
 ];
 
+const REQUIRED_QPROJ_OUTPUT_PRE_QNORM_CHECKPOINT_STAGES: &[&str] = &[
+    "decode.input_embedding",
+    "block.attention_norm",
+    "attention.q_proj",
+    "attention.q_proj_output_pre_optional_qnorm",
+    "attention.k_proj",
+    "attention.v_proj",
+    "attention.q_rope",
+    "model.final_norm",
+    "lm_head.logits",
+];
+
+const QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_ARTIFACT_KIND: &str =
+    "slm_qproj_output_pre_qnorm_hook_compare";
+const QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE: &str = "attention.q_proj_output_pre_optional_qnorm";
+const QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY: &str = "attention_q_proj_output_pre_optional_qnorm";
+
 const CHECKPOINT_SAMPLE_ATOL: f64 = 1.0e-4;
 
 /// Validate and normalize an external-reference comparison artifact.
@@ -153,6 +170,7 @@ fn validate_artifact(artifact: &Value) -> Vec<&'static str> {
                 | "slm_reference_divergence"
                 | "bitnet_cpu_reference_compare"
                 | "slm_reference_checkpoint_compare"
+                | QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_ARTIFACT_KIND
         )
     ) {
         failures.push("artifact_kind");
@@ -185,8 +203,31 @@ fn validate_artifact(artifact: &Value) -> Vec<&'static str> {
     validate_side("reference", &artifact["reference"], &mut failures);
     validate_side("bitnet_rs", bitnet_side(artifact), &mut failures);
     if is_checkpoint_artifact(artifact) {
-        validate_checkpoint_side("reference", &artifact["reference"], &mut failures);
-        validate_checkpoint_side("bitnet_rs", bitnet_side(artifact), &mut failures);
+        let required_stages = required_checkpoint_stages(artifact);
+        validate_checkpoint_side(
+            "reference",
+            &artifact["reference"],
+            &mut failures,
+            required_stages,
+        );
+        validate_checkpoint_side(
+            "bitnet_rs",
+            bitnet_side(artifact),
+            &mut failures,
+            required_stages,
+        );
+    }
+    if is_qproj_output_pre_qnorm_artifact(artifact) {
+        validate_qproj_output_pre_qnorm_hook_side(
+            "reference",
+            &artifact["reference"],
+            &mut failures,
+        );
+        validate_qproj_output_pre_qnorm_hook_side(
+            "bitnet_rs",
+            bitnet_side(artifact),
+            &mut failures,
+        );
     }
     if bitnet_artifact {
         validate_bitnet_contract(artifact, &mut failures);
@@ -224,7 +265,12 @@ fn validate_side(label: &'static str, side: &Value, failures: &mut Vec<&'static 
     }
 }
 
-fn validate_checkpoint_side(label: &'static str, side: &Value, failures: &mut Vec<&'static str>) {
+fn validate_checkpoint_side(
+    label: &'static str,
+    side: &Value,
+    failures: &mut Vec<&'static str>,
+    required_stages: &[&str],
+) {
     let Some(checkpoints) = side.get("checkpoints").and_then(Value::as_array) else {
         failures.push(if label == "reference" {
             "reference_checkpoints"
@@ -241,9 +287,8 @@ fn validate_checkpoint_side(label: &'static str, side: &Value, failures: &mut Ve
         });
         return;
     }
-    let has_required = REQUIRED_QWEN3_CHECKPOINT_STAGES
-        .iter()
-        .all(|stage| checkpoint_by_stage(side, stage).is_some());
+    let has_required =
+        required_stages.iter().all(|stage| checkpoint_by_stage(side, stage).is_some());
     if !has_required {
         failures.push(if label == "reference" {
             "reference_required_checkpoints"
@@ -251,7 +296,7 @@ fn validate_checkpoint_side(label: &'static str, side: &Value, failures: &mut Ve
             "bitnet_rs_required_checkpoints"
         });
     }
-    for stage in REQUIRED_QWEN3_CHECKPOINT_STAGES {
+    for stage in required_stages {
         let Some(checkpoint) = checkpoint_by_stage(side, stage) else {
             continue;
         };
@@ -263,6 +308,73 @@ fn validate_checkpoint_side(label: &'static str, side: &Value, failures: &mut Ve
             });
             break;
         }
+    }
+}
+
+fn validate_qproj_output_pre_qnorm_hook_side(
+    label: &'static str,
+    side: &Value,
+    failures: &mut Vec<&'static str>,
+) {
+    let Some(hook) = side.get("dense_hook").and_then(Value::as_object) else {
+        failures.push(if label == "reference" {
+            "reference_dense_hook"
+        } else {
+            "bitnet_rs_dense_hook"
+        });
+        return;
+    };
+
+    let field_failure = |field: &'static str| -> &'static str {
+        match (label, field) {
+            ("reference", "identity") => "reference_dense_hook_identity",
+            ("reference", "boundary") => "reference_dense_hook_boundary",
+            ("reference", "source_tensor") => "reference_dense_hook_source_tensor",
+            ("reference", "stage") => "reference_dense_hook_stage",
+            ("reference", "shape") => "reference_dense_hook_shape",
+            ("reference", "dtype") => "reference_dense_hook_dtype",
+            ("reference", "fingerprint") => "reference_dense_hook_fingerprint",
+            ("bitnet_rs", "identity") => "bitnet_rs_dense_hook_identity",
+            ("bitnet_rs", "boundary") => "bitnet_rs_dense_hook_boundary",
+            ("bitnet_rs", "source_tensor") => "bitnet_rs_dense_hook_source_tensor",
+            ("bitnet_rs", "stage") => "bitnet_rs_dense_hook_stage",
+            ("bitnet_rs", "shape") => "bitnet_rs_dense_hook_shape",
+            ("bitnet_rs", "dtype") => "bitnet_rs_dense_hook_dtype",
+            ("bitnet_rs", "fingerprint") => "bitnet_rs_dense_hook_fingerprint",
+            ("reference", _) => "reference_dense_hook",
+            ("bitnet_rs", _) => "bitnet_rs_dense_hook",
+            _ => "dense_hook",
+        }
+    };
+
+    if hook.get("identity").and_then(Value::as_str).unwrap_or_default().is_empty() {
+        failures.push(field_failure("identity"));
+    }
+    if hook.get("boundary").and_then(Value::as_str)
+        != Some(QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY)
+    {
+        failures.push(field_failure("boundary"));
+    }
+    if hook.get("source_tensor").and_then(Value::as_str).unwrap_or_default().is_empty() {
+        failures.push(field_failure("source_tensor"));
+    }
+    if hook.get("stage").and_then(Value::as_str) != Some(QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE) {
+        failures.push(field_failure("stage"));
+    }
+    if hook
+        .get("shape")
+        .and_then(Value::as_array)
+        .is_none_or(|shape| shape.is_empty() || shape.iter().any(|dim| dim.as_u64().is_none()))
+    {
+        failures.push(field_failure("shape"));
+    }
+    if hook.get("dtype").and_then(Value::as_str).unwrap_or_default().is_empty() {
+        failures.push(field_failure("dtype"));
+    }
+    let fingerprint =
+        hook.get("tensor_fingerprint_sha256_f32_le").and_then(Value::as_str).unwrap_or_default();
+    if fingerprint.len() != 64 || !fingerprint.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        failures.push(field_failure("fingerprint"));
     }
 }
 
@@ -327,7 +439,11 @@ fn first_divergence(artifact: &Value) -> Option<Value> {
         ));
     }
     if is_checkpoint_artifact(artifact)
-        && let Some(divergence) = first_checkpoint_divergence(&artifact["reference"], bitnet)
+        && let Some(divergence) = first_checkpoint_divergence(
+            &artifact["reference"],
+            bitnet,
+            required_checkpoint_stages(artifact),
+        )
     {
         return Some(divergence);
     }
@@ -395,8 +511,12 @@ fn first_divergence(artifact: &Value) -> Option<Value> {
     None
 }
 
-fn first_checkpoint_divergence(reference: &Value, bitnet: &Value) -> Option<Value> {
-    for (index, stage) in REQUIRED_QWEN3_CHECKPOINT_STAGES.iter().enumerate() {
+fn first_checkpoint_divergence(
+    reference: &Value,
+    bitnet: &Value,
+    required_stages: &[&str],
+) -> Option<Value> {
+    for (index, stage) in required_stages.iter().enumerate() {
         let reference_checkpoint = checkpoint_by_stage(reference, stage)?;
         let bitnet_checkpoint = checkpoint_by_stage(bitnet, stage)?;
         if reference_checkpoint["dims"] != bitnet_checkpoint["dims"] {
@@ -575,6 +695,7 @@ fn side_summary(side: &Value) -> Value {
         "chosen_id": chosen_id(side),
         "topk_step0": topk(side).cloned().unwrap_or(Value::Null),
         "checkpoints": checkpoint_side_summary(side),
+        "dense_hook": side.get("dense_hook").cloned().unwrap_or(Value::Null),
     })
 }
 
@@ -584,7 +705,22 @@ fn is_bitnet_artifact(artifact: &Value) -> bool {
 }
 
 fn is_checkpoint_artifact(artifact: &Value) -> bool {
-    artifact["artifact_kind"].as_str() == Some("slm_reference_checkpoint_compare")
+    matches!(
+        artifact["artifact_kind"].as_str(),
+        Some("slm_reference_checkpoint_compare" | QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_ARTIFACT_KIND)
+    )
+}
+
+fn is_qproj_output_pre_qnorm_artifact(artifact: &Value) -> bool {
+    artifact["artifact_kind"].as_str() == Some(QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_ARTIFACT_KIND)
+}
+
+fn required_checkpoint_stages(artifact: &Value) -> &'static [&'static str] {
+    if is_qproj_output_pre_qnorm_artifact(artifact) {
+        REQUIRED_QPROJ_OUTPUT_PRE_QNORM_CHECKPOINT_STAGES
+    } else {
+        REQUIRED_QWEN3_CHECKPOINT_STAGES
+    }
 }
 
 fn checkpoint_side_summary(side: &Value) -> Value {
@@ -610,18 +746,19 @@ fn checkpoint_comparison_summary(artifact: &Value) -> Value {
     }
     let reference = &artifact["reference"];
     let bitnet = bitnet_side(artifact);
-    let missing_reference = REQUIRED_QWEN3_CHECKPOINT_STAGES
+    let required_stages = required_checkpoint_stages(artifact);
+    let missing_reference = required_stages
         .iter()
         .filter(|stage| checkpoint_by_stage(reference, stage).is_none())
         .copied()
         .collect::<Vec<_>>();
-    let missing_bitnet = REQUIRED_QWEN3_CHECKPOINT_STAGES
+    let missing_bitnet = required_stages
         .iter()
         .filter(|stage| checkpoint_by_stage(bitnet, stage).is_none())
         .copied()
         .collect::<Vec<_>>();
     json!({
-        "required_stages": REQUIRED_QWEN3_CHECKPOINT_STAGES,
+        "required_stages": required_stages,
         "missing_reference_stages": missing_reference,
         "missing_bitnet_rs_stages": missing_bitnet,
         "sample_atol": CHECKPOINT_SAMPLE_ATOL,
@@ -804,6 +941,62 @@ mod tests {
         })
     }
 
+    fn qproj_output_pre_qnorm_dense_hook(fingerprint: &str) -> Value {
+        json!({
+            "identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled",
+            "boundary": QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY,
+            "source_tensor": "layers.0.attention.q_proj.weight",
+            "stage": QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+            "shape": [1, 1, 1024],
+            "dtype": "f32",
+            "tensor_fingerprint_sha256_f32_le": fingerprint,
+        })
+    }
+
+    fn qproj_output_pre_qnorm_artifact() -> Value {
+        let reference_checkpoints = REQUIRED_QPROJ_OUTPUT_PRE_QNORM_CHECKPOINT_STAGES
+            .iter()
+            .map(|stage| checkpoint(stage, &[0.1, 0.2, 0.3]))
+            .collect::<Vec<_>>();
+        let bitnet_checkpoints = REQUIRED_QPROJ_OUTPUT_PRE_QNORM_CHECKPOINT_STAGES
+            .iter()
+            .map(|stage| checkpoint(stage, &[0.1, 0.2, 0.3]))
+            .collect::<Vec<_>>();
+        let fingerprint = "738e86d615200bd3391d7ae379779a8e4644bade56d93d0634aa07004fa697f3";
+
+        json!({
+            "schema_version": "1.0.0",
+            "artifact_kind": QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_ARTIFACT_KIND,
+            "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+            "model_family": "qwen3",
+            "prompt_text": "What is 2+2?",
+            "prompt_template": "qwen",
+            "bos": false,
+            "reference": {
+                "backend": "known-good-reference",
+                "kernel": "reference",
+                "prompt_ids": [1, 2, 3],
+                "generated_ids": [19],
+                "text": "4",
+                "topk_step0": [[19, 10.0], [20, 1.0]],
+                "chosen_id": 19,
+                "checkpoints": reference_checkpoints,
+                "dense_hook": qproj_output_pre_qnorm_dense_hook(fingerprint)
+            },
+            "bitnet_rs": {
+                "backend": "cpu-rust",
+                "kernel": "dense-q8_0-reference",
+                "prompt_ids": [1, 2, 3],
+                "generated_ids": [19],
+                "text": "4",
+                "topk_step0": [[19, 10.0], [20, 1.0]],
+                "chosen_id": 19,
+                "checkpoints": bitnet_checkpoints,
+                "dense_hook": qproj_output_pre_qnorm_dense_hook(fingerprint)
+            }
+        })
+    }
+
     #[test]
     fn reference_divergence_passes_matching_artifact() {
         let report =
@@ -927,6 +1120,40 @@ mod tests {
             report["comparison"]["first_divergence"]["classification"],
             "shared_transformer_math_checkpoint_values"
         );
+    }
+
+    #[test]
+    fn qproj_output_pre_optional_qnorm_hook_artifact_passes_with_dense_hook_identity() {
+        let report = build_reference_divergence_receipt(
+            Path::new("compare.json"),
+            &qproj_output_pre_qnorm_artifact(),
+        );
+
+        assert_eq!(report["validation"]["passed"], true);
+        assert_eq!(report["comparison"]["passed"], true);
+        assert_eq!(
+            report["comparison"]["bitnet_rs"]["dense_hook"]["boundary"],
+            QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY
+        );
+        assert_eq!(
+            report["comparison"]["checkpoints"]["required_stages"][3],
+            QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE
+        );
+    }
+
+    #[test]
+    fn qproj_output_pre_optional_qnorm_hook_artifact_fails_closed_without_fingerprint() {
+        let mut input = qproj_output_pre_qnorm_artifact();
+        if let Some(hook) = input["bitnet_rs"]["dense_hook"].as_object_mut() {
+            hook.remove("tensor_fingerprint_sha256_f32_le");
+        }
+
+        let report = build_reference_divergence_receipt(Path::new("compare.json"), &input);
+
+        assert_eq!(report["validation"]["passed"], false);
+        assert!(report["validation"]["failed_rules"].as_array().is_some_and(|failed| {
+            failed.iter().any(|rule| rule == "bitnet_rs_dense_hook_fingerprint")
+        }));
     }
 
     #[test]

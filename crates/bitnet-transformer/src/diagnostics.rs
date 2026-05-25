@@ -7,6 +7,11 @@ use candle_core::{DType, Tensor};
 use sha2::{Digest, Sha256};
 use std::sync::OnceLock;
 
+pub(crate) const QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE: &str =
+    "attention.q_proj_output_pre_optional_qnorm";
+pub(crate) const QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY: &str =
+    "attention_q_proj_output_pre_optional_qnorm";
+
 #[derive(Clone, Debug)]
 struct QwenTraceConfig {
     path: Option<std::path::PathBuf>,
@@ -266,9 +271,61 @@ pub(crate) fn qwen_trace_tensor_fingerprint(
     Ok(())
 }
 
+pub(crate) struct QwenTraceDenseHookIdentity<'a> {
+    pub dense_hook_identity: &'a str,
+    pub gguf_tensor: &'a str,
+    pub runtime_disabled: bool,
+}
+
+pub(crate) fn qwen_trace_tensor_fingerprint_with_dense_hook(
+    stage: &str,
+    layer_idx: Option<usize>,
+    tensor: &Tensor,
+    source_tensor: &str,
+    boundary: &str,
+    identity: QwenTraceDenseHookIdentity<'_>,
+) -> candle_core::Result<()> {
+    if !qwen_trace_active() {
+        return Ok(());
+    }
+    if let Some(layer_idx) = layer_idx
+        && !qwen_trace_layer_enabled(layer_idx)
+    {
+        return Ok(());
+    }
+
+    let tensor_f32 =
+        if tensor.dtype() == DType::F32 { tensor.clone() } else { tensor.to_dtype(DType::F32)? };
+    let values = tensor_f32.flatten_all()?.to_vec1::<f32>()?;
+    let dims = tensor.dims().iter().map(|dim| dim.to_string()).collect::<Vec<_>>().join(",");
+    let layer_json = layer_idx.map(|idx| idx.to_string()).unwrap_or_else(|| "null".to_string());
+    let step = std::env::var("BITNET_QWEN_TRACE_STEP").unwrap_or_else(|_| "null".to_string());
+    let fingerprint = sha256_f32_le(&values);
+
+    qwen_trace_write_line(&format!(
+        "{{\"kind\":\"qwen_trace_tensor_fingerprint\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"dtype\":\"f32\",\"source_dtype\":\"{:?}\",\"dims\":[{}],\"len\":{},\"source_tensor\":\"{}\",\"gguf_tensor\":\"{}\",\"boundary\":\"{}\",\"dense_hook_identity\":\"{}\",\"runtime_disabled\":{},\"tensor_fingerprint_sha256_f32_le\":\"{}\",\"contents_dumped\":false}}",
+        qwen_trace_escape(stage),
+        step,
+        layer_json,
+        tensor.dtype(),
+        dims,
+        values.len(),
+        qwen_trace_escape(source_tensor),
+        qwen_trace_escape(identity.gguf_tensor),
+        qwen_trace_escape(boundary),
+        qwen_trace_escape(identity.dense_hook_identity),
+        identity.runtime_disabled,
+        fingerprint
+    ));
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
-    use super::sha256_f32_le;
+    use super::{
+        QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+        sha256_f32_le,
+    };
 
     #[test]
     fn qwen_trace_fingerprint_hashes_f32_little_endian_order() {
@@ -276,6 +333,18 @@ mod tests {
         assert_eq!(
             sha256_f32_le(&values),
             "738e86d615200bd3391d7ae379779a8e4644bade56d93d0634aa07004fa697f3"
+        );
+    }
+
+    #[test]
+    fn qproj_output_pre_optional_qnorm_boundary_constants_are_stable() {
+        assert_eq!(
+            QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+            "attention.q_proj_output_pre_optional_qnorm"
+        );
+        assert_eq!(
+            QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY,
+            "attention_q_proj_output_pre_optional_qnorm"
         );
     }
 }

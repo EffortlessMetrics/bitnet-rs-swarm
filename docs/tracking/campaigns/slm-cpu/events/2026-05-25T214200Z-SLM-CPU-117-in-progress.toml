@@ -1,0 +1,14 @@
+timestamp = "2026-05-25T21:42:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-117"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/slm-cpu-117-qproj-output-pre-qnorm-hook"
+actor = "codex"
+summary = "Started the implementation-capable shared q_proj-output pre-q_norm diagnostic hook and comparator surface."
+notes = [
+  "The slice targets the runtime-disabled attention.q_proj_output_pre_optional_qnorm boundary selected by SLM-CPU-115 and gated by SLM-CPU-116.",
+  "The implementation must keep eager_f32_candle as the default runtime and keep packed_q8_sidecar unpromoted.",
+  "No allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

@@ -42,6 +42,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_norm fingerprint receipt-pair review | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-114-qnorm-fingerprint-receipt-pair.json` | Compares the Qwen3 q_norm fingerprint artifact against the existing before/after receipt-pair evidence and records the exact Qwen2.5 blocker: Qwen3 has a real q_norm fingerprint, but the before/after warm-session receipts do not carry f32-le tensor fingerprints, and the accepted Qwen2.5 Q8_0 artifact has no q_norm-input stage to fingerprint |
 | q_norm proof next boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-115-qnorm-proof-next-boundary.json` | Resolves the Qwen3-only q_norm-input blocker by selecting the shared `attention.q_proj_output_pre_optional_qnorm` boundary that exists before Qwen3's optional q_norm and also exists on Qwen2.5 Q8_0 |
 | shared q_proj output hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-116-qproj-output-pre-qnorm-hook-gate.json` | Defines the fail-closed receipt/comparator contract for the shared pre-q_norm Q projection output boundary and blocks runtime evidence until an implementation-capable slice adds the diagnostic hook |
+| shared q_proj output hook surface | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-117-qproj-output-pre-qnorm-hook.json` | Adds the opt-in runtime-disabled `attention.q_proj_output_pre_optional_qnorm` fingerprint hook and fail-closed comparator artifact kind without promoting packed_q8_sidecar or claiming behavior, allocation, timing, or throughput |
 
 All rows use:
 
@@ -241,6 +242,17 @@ and comparator fail conditions, then records the exact blockers:
 Runtime execution remains unchanged, `eager_f32_candle` remains the default, and
 no allocation, timing, throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet
 QK256 claim is made.
+
+SLM-CPU-117 adds the missing opt-in trace surface for the shared boundary. When
+Qwen tracing is explicitly active, the transformer emits an
+`attention.q_proj_output_pre_optional_qnorm` f32-le fingerprint with source
+tensor, GGUF tensor, boundary, dense-hook identity, shape, dtype, and
+`runtime_disabled=true`. The reference comparator also accepts a fail-closed
+`slm_qproj_output_pre_qnorm_hook_compare` artifact kind that requires the dense
+hook identity and fingerprint. This is still only a diagnostic/proof surface:
+before/after real Qwen3 and Qwen2.5 receipt pairs are still required before any
+behavior, allocation, timing, default-runtime, Q4/Q5, server, accelerator,
+Qwen3.5, or BitNet QK256 claim.
 
 ## Thread Envelope
 
