@@ -3,7 +3,7 @@
   "artifact_kind": "lunar_lake_migration_manifest",
   "migration_id": "SWARM-LNL258V-MIGRATE-001",
   "created_utc": "2026-05-21T15:23:58Z",
-  "last_refreshed_utc": "2026-05-25T08:28:15Z",
+  "last_refreshed_utc": "2026-05-25T10:58:17Z",
   "source_repo": "EffortlessMetrics/BitNet-rs",
   "target_repo": "EffortlessMetrics/bitnet-rs-swarm",
   "source_cutoff": {
@@ -46,28 +46,20 @@
       }
     ],
     "current_swarm_audit_cutoff": {
-      "work_item": "LNL258V-GOAL-AUDIT-068",
-      "source_pr": 688,
-      "closeout_pr": 691,
-      "source_revision": "034785f2eda1bb011a7f413b32ab1743ea959a1b",
-      "summary": "Current committed swarm no-inference audit after adjacent A770-055/A770-057 diagnostic evidence and SLM-CPU-103 through SLM-CPU-107 q_norm state, with LNL258V-POWER-006 still blocked on battery-mode evidence."
+      "work_item": "LNL258V-GOAL-AUDIT-069",
+      "source_pr": 699,
+      "closeout_pr": 704,
+      "source_revision": "fa8349dd0374851e186dd7d960fd8b1b16e5e993",
+      "summary": "Current committed swarm no-inference audit after the LNL258V-GOAL-AUDIT-068 closeout, adjacent A770-058/A770-059 diagnostic and tracker state, adjacent SLM-CPU-107/108 q_norm state, and the prior SWARM-LNL258V-MIGRATE-001 cutoff refresh, with LNL258V-POWER-006 still blocked on battery-mode evidence."
     },
     "post_cutoff_adjacent_main_updates": [
       {
-        "pr": 690,
-        "summary": "A770-058 strict-f32 disassembly-frontier queue documentation; adjacent A770 tracker/documentation state only."
+        "pr": 703,
+        "summary": "SLM-CPU-109 q_norm hook-identity receipt field; adjacent SLM CPU state only."
       },
       {
-        "pr": 692,
-        "summary": "SLM-CPU-107 runtime-disabled q_norm hook gate; adjacent SLM CPU state only."
-      },
-      {
-        "pr": 693,
-        "summary": "A770-058 strict-f32 disassembly-frontier diagnostic; adjacent A770 diagnostic state only."
-      },
-      {
-        "pr": 694,
-        "summary": "SLM-CPU-107 tracker closeout and SLM-CPU-108 queueing; adjacent SLM CPU tracker state only."
+        "pr": 707,
+        "summary": "SLM-CPU-109 tracker closeout and SLM-CPU-110 queueing; adjacent SLM CPU tracker state only."
       }
     ]
   },
