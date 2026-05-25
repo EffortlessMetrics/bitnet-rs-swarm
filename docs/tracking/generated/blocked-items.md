@@ -857,7 +857,8 @@
 | slm-cpu | SLM-CPU-106 | SLM-CPU-105 | merged |
 | slm-cpu | SLM-CPU-107 | SLM-CPU-106 | merged |
 | slm-cpu | SLM-CPU-108 | SLM-CPU-107 | merged |
-| slm-cpu | SLM-CPU-109 | SLM-CPU-108 | ready |
+| slm-cpu | SLM-CPU-109 | SLM-CPU-108 | merged |
+| slm-cpu | SLM-CPU-110 | SLM-CPU-109 | ready |
 | slm-cpu | SLM-CPU-103 | SLM-CPU-102 | merged |
 | slm-cpu | SLM-CPU-104 | SLM-CPU-103 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
