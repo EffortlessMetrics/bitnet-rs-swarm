@@ -933,6 +933,62 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "A770-055"
+status = "pr_open"
+pr = 664
+head_sha = "23fea3e4100956210b45e4ece32ae64d544af2d5"
+branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen-contract"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-054"]
+acceptance = "Capture compiler-level strict-f32 barrier codegen context for the focused A770-054 selected QK256 expression, classifying whether the host compiler preserves or elides the explicit f32 barrier, whether OpenCL frontend/device codegen still matches the selected A770 output bit, whether production policy remains unjustified, or whether required compiler/disassembly context is missing, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli qk256_compiler_strict_f32_codegen -- --nocapture",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/a770-opencl-summary-logits.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json # expected nonzero while CPU/A770 parity remains divergent",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-vs-a770-summary-logits-parity.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "rustfmt --edition 2024 --check crates/bitnet-cli/src/commands/answer_parity.rs",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/**",
+  "docs/reports/A770_055_COMPILER_STRICT_F32_CODEGEN.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+]
+may_claim = [
+  "A770-055 may capture compact compiler-level strict-f32 barrier codegen context for the committed focused CPU/A770 replay context.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
 id = "A770-034"
 status = "merged"
 pr = 454
