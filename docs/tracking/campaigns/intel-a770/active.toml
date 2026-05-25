@@ -3351,9 +3351,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-062"
-status = "pr_open"
+status = "merged"
 pr = 719
-head_sha = "f203750f0b103fdef5bcd8a778cd4ac497b7473d"
+head_sha = "9d1eae8f01655bbfe87011941734558549ad2289"
+merge_sha = "2cf0768de00938a00c2be1e21535312eccb5d10c"
+merged_at = "2026-05-25T15:04:26Z"
 branch = "codex/intel-a770/A770-062-production-replay-instrumentation"
 stackable = false
 review_mode = "codex_premerge"

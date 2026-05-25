@@ -3,4 +3,3 @@
 
 | Campaign | Item | PR | Branch | Notes |
 |---|---|---:|---|---|
-| intel-a770 | A770-062 | #719 | `codex/intel-a770/A770-062-production-replay-instrumentation` | Capture diagnostic production replay instrumentation for adjusted_dot, activation_scale, weight_scale, reciprocal-path intermediate bits, final scaled value bits, and output store bits after A770-061 classified the lowered production sequence as requiring replay instrumentation, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims. |
