@@ -1918,9 +1918,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-057"
-status = "pr_open"
+status = "merged"
 pr = 683
-head_sha = "ea7731a859b91a6aad9437094515bd02fc197e86"
+head_sha = "e1a2eb5e7031f330174010a041bbb67a5671bdd8"
+merge_sha = "0a4ca3a6c076264cbd429066a7dccb2608ac5b1b"
+merged_at = "2026-05-25T05:05:52Z"
 branch = "codex/intel-a770/A770-057-opencl-disassembly-evidence"
 stackable = false
 review_mode = "codex_premerge"
