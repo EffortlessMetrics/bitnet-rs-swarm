@@ -112,7 +112,7 @@ expires = "2026-08-07"
 [[lane]]
 id = "feature-matrix-pr"
 workflow = ".github/workflows/feature-matrix.yml"
-job = "Feature Matrix PR"
+job = "pr-compile-check"
 kind = "feature"
 tier = "frontdoor"
 default_pr = true
@@ -132,7 +132,7 @@ expires = "2026-11-07"
 [[lane]]
 id = "feature-matrix-full-cli"
 workflow = ".github/workflows/feature-matrix.yml"
-job = "Feature Matrix full-cli PR smoke"
+job = "pr-full-cli-check"
 kind = "feature"
 tier = "frontdoor"
 default_pr = false
@@ -477,7 +477,7 @@ expires = "2026-11-18"
 [[lane]]
 id = "feature-matrix-full"
 workflow = ".github/workflows/feature-matrix.yml"
-job = "Feature Matrix Full"
+job = "compile-check"
 kind = "feature"
 tier = "deep"
 default_pr = false
@@ -503,7 +503,7 @@ expires = "2026-11-07"
 [[lane]]
 id = "gpu-native"
 workflow = ".github/workflows/gpu-ci-matrix.yml"
-job = "GPU native compile"
+job = "native-compile"
 kind = "gpu"
 tier = "risk-gated"
 default_pr = false
@@ -524,7 +524,7 @@ expires = "2026-11-07"
 [[lane]]
 id = "gpu-docker"
 workflow = ".github/workflows/gpu-ci-matrix.yml"
-job = "GPU Docker"
+job = "docker-compile"
 kind = "gpu"
 tier = "expensive"
 default_pr = false
@@ -567,7 +567,7 @@ expires = "2026-11-18"
 [[lane]]
 id = "compatibility-msrv"
 workflow = ".github/workflows/compatibility.yml"
-job = "MSRV"
+job = "Minimum Supported Rust Version"
 kind = "compatibility"
 tier = "risk-gated"
 default_pr = false
@@ -609,7 +609,7 @@ expires = "2026-11-18"
 [[lane]]
 id = "compatibility-ffi-abi"
 workflow = ".github/workflows/compatibility.yml"
-job = "ABI / FFI"
+job = "ABI Stability Check"
 kind = "ffi"
 tier = "risk-gated"
 default_pr = false

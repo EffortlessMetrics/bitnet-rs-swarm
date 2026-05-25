@@ -19,6 +19,7 @@
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
+use serde_yaml::Value as YamlValue;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -237,13 +238,28 @@ pub fn check(
             ));
         }
 
-        // Workflow file should exist.
+        // Workflow file and referenced job should exist.
         let wf = PathBuf::from(&lane.workflow);
         if !wf.exists() {
             report.warnings.push(format!(
                 "lane `{}` references missing workflow `{}`",
                 lane.id, lane.workflow
             ));
+        } else {
+            match workflow_job_names(&wf) {
+                Ok(job_names) => {
+                    if !job_names.contains(&lane.job) {
+                        report.errors.push(format!(
+                            "lane `{}` references job `{}` not found in workflow `{}`",
+                            lane.id, lane.job, lane.workflow
+                        ));
+                    }
+                }
+                Err(err) => report.warnings.push(format!(
+                    "lane `{}` could not parse workflow `{}` for job validation: {err:#}",
+                    lane.id, lane.workflow
+                )),
+            }
         }
     }
 
@@ -333,6 +349,26 @@ pub fn check(
     }
 
     Ok(report)
+}
+
+fn workflow_job_names(path: &Path) -> Result<BTreeSet<String>> {
+    let raw = fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let yaml: YamlValue =
+        serde_yaml::from_str(&raw).with_context(|| format!("parsing {}", path.display()))?;
+    let Some(jobs) = yaml.get("jobs").and_then(YamlValue::as_mapping) else {
+        return Ok(BTreeSet::new());
+    };
+
+    let mut names = BTreeSet::new();
+    for (key, value) in jobs {
+        if let Some(job_id) = key.as_str() {
+            names.insert(job_id.to_string());
+        }
+        if let Some(display_name) = value.get("name").and_then(YamlValue::as_str) {
+            names.insert(display_name.to_string());
+        }
+    }
+    Ok(names)
 }
 
 /// CLI entry point invoked from `xtask`.
@@ -489,5 +525,112 @@ expires = "3000-01-01"
         assert!(r.errors.iter().any(|e| e.contains("placeholder reason")));
         assert!(r.errors.iter().any(|e| e.contains("missing created date")));
         assert!(r.errors.iter().any(|e| e.contains("missing review_after date")));
+    }
+
+    #[test]
+    fn validates_lane_job_against_workflow_job_names() -> Result<()> {
+        let dir = std::env::temp_dir().join(format!("ci-lanes-workflow-{}", std::process::id()));
+        let workflows = dir.join(".github/workflows");
+        fs::create_dir_all(&workflows)?;
+        fs::write(
+            workflows.join("example.yml"),
+            r#"
+name: Example
+on:
+  pull_request:
+jobs:
+  actual:
+    name: Actual Job
+    runs-on: ubuntu-latest
+    steps:
+      - run: true
+"#,
+        )?;
+
+        let whitelist = dir.join("wl.toml");
+        fs::write(
+            &whitelist,
+            format!(
+                r#"
+schema_version = "1.0"
+[runner_multipliers]
+ubuntu_22_04 = 1.0
+[[lane]]
+id = "ok-display-name"
+workflow = "{}"
+job = "Actual Job"
+kind = "rust"
+tier = "frontdoor"
+default_pr = true
+blocking = true
+runner = "ubuntu_22_04"
+base_lem = 1
+owner = "team"
+intent = "intent"
+failure_mode = "mode"
+proof_obligation = "obligation"
+evidence = ["log"]
+allowed_triggers = ["pull_request"]
+duplicate_of = []
+review_after = "3000-01-01"
+expires = "3000-01-01"
+[[lane]]
+id = "ok-job-id"
+workflow = "{}"
+job = "actual"
+kind = "rust"
+tier = "frontdoor"
+default_pr = true
+blocking = true
+runner = "ubuntu_22_04"
+base_lem = 1
+owner = "team"
+intent = "intent"
+failure_mode = "mode"
+proof_obligation = "obligation"
+evidence = ["log"]
+allowed_triggers = ["pull_request"]
+duplicate_of = []
+review_after = "3000-01-01"
+expires = "3000-01-01"
+[[lane]]
+id = "stale"
+workflow = "{}"
+job = "Old Job"
+kind = "rust"
+tier = "frontdoor"
+default_pr = true
+blocking = true
+runner = "ubuntu_22_04"
+base_lem = 1
+owner = "team"
+intent = "intent"
+failure_mode = "mode"
+proof_obligation = "obligation"
+evidence = ["log"]
+allowed_triggers = ["pull_request"]
+duplicate_of = []
+review_after = "3000-01-01"
+expires = "3000-01-01"
+"#,
+                workflows.join("example.yml").display(),
+                workflows.join("example.yml").display(),
+                workflows.join("example.yml").display()
+            ),
+        )?;
+        let exceptions = dir.join("ex.toml");
+        fs::write(&exceptions, "schema_version = \"1.0\"\n")?;
+
+        let report = check(&whitelist, &exceptions, &workflows, None)?;
+
+        assert!(
+            report
+                .errors
+                .iter()
+                .any(|e| { e.contains("lane `stale` references job `Old Job` not found") })
+        );
+        assert!(!report.errors.iter().any(|e| e.contains("ok-display-name")));
+        assert!(!report.errors.iter().any(|e| e.contains("ok-job-id")));
+        Ok(())
     }
 }
