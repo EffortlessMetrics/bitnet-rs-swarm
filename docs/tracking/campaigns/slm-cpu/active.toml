@@ -6601,10 +6601,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-104"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-104-qnorm-materialization-boundary"
 pr = 671
-head_sha = "214fcc97edb0d0d55190a7644ed1884a7f19d750"
+head_sha = "b75fad244d501374b45302297e5999988a746939"
+merge_sha = "0d08ed0f42ba63865ff5dcc560327a52e99e8301"
+merged_at = "2026-05-25T01:25:49Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
