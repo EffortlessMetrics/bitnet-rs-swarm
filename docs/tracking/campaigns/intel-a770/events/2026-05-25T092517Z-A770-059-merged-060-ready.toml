@@ -1,0 +1,46 @@
+timestamp = "2026-05-25T09:25:17Z"
+campaign = "intel-a770"
+item = "A770-059"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 700
+branch = "codex/intel-a770/A770-059-production-policy-impact-frontier"
+head_sha = "4795282fc97d79052629128cb581c123ae62bf57"
+merge_sha = "36ee4b557149245cf7224408b1f7ee6dff4c3024"
+merged_at = "2026-05-25T09:25:17Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #700, closing the A770-059 production-policy impact frontier and queueing A770-060."
+notes = [
+  "PR #700 added the diagnostic-only A770-059 receipt and report.",
+  "The committed receipt classifies the production-policy impact frontier as a770_qk256_production_policy_impact_frontier_requires_production_kernel_disassembly_replay_context.",
+  "A770-059 keeps production_qk256_policy_change=false and runtime_math_change=false.",
+  "The receipt routes the next boundary to production-kernel disassembly or production-kernel replay context for qk256_i2s_i8s_scaled_gemv before any production QK256 policy change.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-059 classified the diagnostic production-policy impact frontier for the committed strict-f32 disassembly context.",
+  "A770-060 may capture or classify diagnostic production-kernel disassembly/replay context for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
