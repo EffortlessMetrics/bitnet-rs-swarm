@@ -477,11 +477,10 @@ fn find_kernel_asm(dir: &Path, kernel_name: &str) -> Result<Option<PathBuf>, Box
         }
     }
     candidates.sort();
+    let expected_file_name = format!(".text.{kernel_name}.asm");
     Ok(candidates
-        .iter()
-        .find(|path| path.to_string_lossy().contains(kernel_name))
-        .cloned()
-        .or_else(|| candidates.into_iter().next()))
+        .into_iter()
+        .find(|path| path.file_name().is_some_and(|name| name == expected_file_name.as_str())))
 }
 
 fn command_to_vec(program: &Path, args: &[OsString]) -> Vec<String> {
@@ -731,5 +730,24 @@ mod tests {
         let (normalized, trimmed) = normalize_asm_bytes(b"mov   \r\nnop\t\n");
         assert!(trimmed);
         assert_eq!(normalized, b"mov\nnop\n");
+    }
+
+    #[test]
+    fn find_kernel_asm_requires_exact_kernel_file_name() {
+        let root =
+            std::env::temp_dir().join(format!("a770-find-kernel-asm-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let debug = root.join(".text.qk256_i2s_i8s_scaled_gemv_debug.asm");
+        let production = root.join(".text.qk256_i2s_i8s_scaled_gemv.asm");
+        std::fs::write(&debug, "debug").unwrap();
+
+        assert_eq!(find_kernel_asm(&root, "qk256_i2s_i8s_scaled_gemv").unwrap(), None);
+
+        std::fs::write(&production, "production").unwrap();
+        assert_eq!(find_kernel_asm(&root, "qk256_i2s_i8s_scaled_gemv").unwrap(), Some(production));
+        assert_eq!(find_kernel_asm(&root, "qk256_i2s_i8s_scaled_gemv_debug").unwrap(), Some(debug));
+
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
