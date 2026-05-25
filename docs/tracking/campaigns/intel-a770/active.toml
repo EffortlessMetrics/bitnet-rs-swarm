@@ -3230,7 +3230,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-060"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-060-production-kernel-disassembly-evidence"
 stackable = false
 review_mode = "codex_premerge"
@@ -3239,6 +3239,10 @@ human_gate = "on_blocker_only"
 blocked_by = ["A770-059"]
 acceptance = "Capture or classify production-kernel disassembly/replay context for qk256_i2s_i8s_scaled_gemv after A770-059 routed the strict-f32 production-policy frontier to production-kernel context, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
 commands = [
+  "rustfmt --edition 2024 --check crates/bitnet-kernels/src/a770_opencl_runtime.rs crates/bitnet-kernels/src/bin/a770_opencl_disassembly_evidence.rs",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-disassembly-evidence",
+  "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-disassembly-evidence -- --kernel production --artifact-dir ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-kernel-disassembly --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-kernel-disassembly-evidence.json --ocloc \"C:\\Program Files (x86)\\Intel\\oneAPI\\ocloc\\latest\\bin\\ocloc.exe\" --device dg2-g10",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-kernel-disassembly-evidence.json -Raw | ConvertFrom-Json | Out-Null\"",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",

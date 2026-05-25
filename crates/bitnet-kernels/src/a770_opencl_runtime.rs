@@ -549,11 +549,41 @@ pub fn run_a770_qk256_i8s_scaled_gemv_debug(
 /// not be used as a production QK256 policy change by itself.
 pub fn capture_a770_qk256_debug_compiler_binary_evidence()
 -> Result<A770OpenClQk256CompilerBinaryEvidence> {
+    capture_a770_qk256_compiler_binary_evidence(
+        QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC,
+        "build qk256_i2s_i8s_scaled_gemv_debug evidence program",
+        QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.contains("volatile_div_then_mul")
+            && QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.contains("volatile float"),
+        true,
+    )
+}
+
+/// Capture OpenCL compiler/build evidence for the selected-device A770 QK256
+/// production kernel.
+///
+/// This records compiler artifacts for the production kernel only. It does not
+/// change production dispatch and must not be treated as a production QK256
+/// policy change by itself.
+pub fn capture_a770_qk256_production_compiler_binary_evidence()
+-> Result<A770OpenClQk256CompilerBinaryEvidence> {
+    capture_a770_qk256_compiler_binary_evidence(
+        QK256_I2S_I8S_SCALED_GEMV_SRC,
+        "build qk256_i2s_i8s_scaled_gemv production evidence program",
+        false,
+        false,
+    )
+}
+
+fn capture_a770_qk256_compiler_binary_evidence(
+    source: &str,
+    build_context: &'static str,
+    strict_f32_barrier_source_present: bool,
+    requires_strict_f32_barrier_source_context: bool,
+) -> Result<A770OpenClQk256CompilerBinaryEvidence> {
     let selected = find_a770_device()?;
     let context = Context::from_device(&selected.device).map_err(gpu_err("create context"))?;
-    let program =
-        Program::create_and_build_from_source(&context, QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC, "")
-            .map_err(gpu_err("build qk256_i2s_i8s_scaled_gemv_debug evidence program"))?;
+    let program = Program::create_and_build_from_source(&context, source, "")
+        .map_err(gpu_err(build_context))?;
 
     let device_id = selected.device.id();
     let build_options = program.get_build_options(device_id).unwrap_or_default();
@@ -572,14 +602,12 @@ pub fn capture_a770_qk256_debug_compiler_binary_evidence()
     let binary_prefix_hex =
         binaries.iter().map(|binary| hex_prefix(binary, 32)).collect::<Vec<_>>();
     let program_binary_captured = binaries.iter().any(|binary| !binary.is_empty());
-    let strict_f32_barrier_source_present = QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC
-        .contains("volatile_div_then_mul")
-        && QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.contains("volatile float");
     let disassembly_captured = false;
     let classification = compiler_binary_evidence_classification(
         program_binary_captured,
         disassembly_captured,
         strict_f32_barrier_source_present,
+        requires_strict_f32_barrier_source_context,
     )
     .to_owned();
 
@@ -599,8 +627,8 @@ pub fn capture_a770_qk256_debug_compiler_binary_evidence()
         binary_fnv1a64,
         binary_prefix_hex,
         binaries,
-        source_bytes: QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.len(),
-        source_fnv1a64: fnv1a64_hex(QK256_I2S_I8S_SCALED_GEMV_DEBUG_SRC.as_bytes()),
+        source_bytes: source.len(),
+        source_fnv1a64: fnv1a64_hex(source.as_bytes()),
         strict_f32_barrier_source_present,
         program_binary_captured,
         disassembly_captured,
@@ -744,8 +772,13 @@ fn compiler_binary_evidence_classification(
     program_binary_captured: bool,
     disassembly_captured: bool,
     strict_f32_barrier_source_present: bool,
+    requires_strict_f32_barrier_source_context: bool,
 ) -> &'static str {
-    match (program_binary_captured, disassembly_captured, strict_f32_barrier_source_present) {
+    match (
+        program_binary_captured,
+        disassembly_captured,
+        strict_f32_barrier_source_present || !requires_strict_f32_barrier_source_context,
+    ) {
         (false, _, _) => "a770_qk256_opencl_compiler_binary_evidence_missing_program_binary",
         (true, false, false) => {
             "a770_qk256_opencl_compiler_binary_evidence_missing_strict_f32_source_context"
@@ -846,7 +879,11 @@ mod tests {
     #[test]
     fn compiler_binary_evidence_classifies_binary_without_disassembly() {
         assert_eq!(
-            compiler_binary_evidence_classification(true, false, true),
+            compiler_binary_evidence_classification(true, false, true, true),
+            "a770_qk256_opencl_compiler_binary_evidence_program_binary_captured_disassembly_missing"
+        );
+        assert_eq!(
+            compiler_binary_evidence_classification(true, false, false, false),
             "a770_qk256_opencl_compiler_binary_evidence_program_binary_captured_disassembly_missing"
         );
     }
@@ -854,7 +891,7 @@ mod tests {
     #[test]
     fn compiler_binary_evidence_classifies_missing_binary() {
         assert_eq!(
-            compiler_binary_evidence_classification(false, false, true),
+            compiler_binary_evidence_classification(false, false, true, true),
             "a770_qk256_opencl_compiler_binary_evidence_missing_program_binary"
         );
     }
