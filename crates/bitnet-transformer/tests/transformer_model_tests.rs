@@ -16,11 +16,13 @@ use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
     DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
     DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
-    DenseLinearRuntimeHookRegistry, KVCache, LayerOutputStorageApiBoundary,
-    NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
+    DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
+    LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, TransformerForwardWorkspace,
+    TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
     dense_q8_sidecar_q_norm_input_proof_gate,
+    dense_q8_sidecar_q_norm_input_receipt_comparator_gate,
     dense_q8_sidecar_q_norm_materialization_boundary_gate,
     dense_q8_sidecar_typed_attention_head_consumer_gate,
     dense_q8_sidecar_typed_attention_head_view_gate,
@@ -1074,7 +1076,10 @@ fn dense_q8_sidecar_q_norm_input_proof_gate_blocks_without_receipts() {
     let gate = dense_q8_sidecar_q_norm_input_proof_gate();
 
     assert_eq!(gate.role, "attention.q_proj.q_norm_input_materialization_proof_gate");
-    assert_eq!(gate.status, "blocked_missing_runtime_hook_and_before_after_receipts");
+    assert_eq!(
+        gate.status,
+        "blocked_missing_runtime_hook_and_before_after_receipts_comparator_defined"
+    );
     assert_eq!(gate.source_boundary_status, source.status);
     assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
     assert_eq!(gate.exact_tensor_role, "AttentionQ");
@@ -1082,7 +1087,8 @@ fn dense_q8_sidecar_q_norm_input_proof_gate_blocks_without_receipts() {
     assert!(!gate.proof_ready);
     assert!(gate.missing_runtime_hook);
     assert!(gate.missing_receipt_field);
-    assert!(gate.missing_comparator);
+    assert!(!gate.missing_comparator);
+    assert!(gate.comparator_contract_defined);
     assert!(gate.tensor_identity_unrecorded);
     assert!(gate.accumulator_order_unproven);
     assert!(gate.artifact_gap);
@@ -1115,7 +1121,6 @@ fn dense_q8_sidecar_q_norm_input_proof_gate_names_precise_blockers() {
         "q_norm_input_runtime_hook_missing",
         "qwen3_q8_before_after_receipts_missing",
         "qwen25_q8_before_after_receipts_missing",
-        "q_norm_input_receipt_comparator_missing",
         "q_norm_input_tensor_identity_unrecorded",
         "accumulator_order_unproven",
     ] {
@@ -1124,6 +1129,12 @@ fn dense_q8_sidecar_q_norm_input_proof_gate_names_precise_blockers() {
             "missing blocker {blocker}"
         );
     }
+    assert!(
+        !gate
+            .blockers
+            .iter()
+            .any(|candidate| candidate.blocker == "q_norm_input_receipt_comparator_missing")
+    );
 }
 
 #[test]
@@ -1141,6 +1152,94 @@ fn dense_q8_sidecar_q_norm_input_proof_gate_keeps_claim_boundary() {
     assert!(!gate.qwen35_claim);
     assert!(!gate.bitnet_qk256_claim);
     assert!(gate.next_required_slice.contains("fail-closed comparator"));
+}
+
+fn sample_q_norm_input_receipt_identity() -> DenseQ8SidecarQNormInputReceiptIdentity {
+    DenseQ8SidecarQNormInputReceiptIdentity {
+        model_id: "qwen3-0.6b-q8_0",
+        model_sha256: "model-sha256",
+        tokenizer_source: "gguf_metadata",
+        tokenizer_strict: true,
+        prompt_ids_digest: "prompt-ids-digest",
+        generated_ids_digest: "generated-ids-digest",
+        decoded_text_digest: "decoded-text-digest",
+        selected_backend: "cpu-rust",
+        selected_kernel_identity: "eager_f32_candle",
+        dense_hook_identity: "layers.0.attention.q_proj.weight",
+        q_norm_input_boundary: "q_norm_input_candle_tensor_boundary",
+        q_norm_input_tensor_identity: "shape=[1,1,1024];dtype=f32;source=q_proj",
+        fallback_used: false,
+    }
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_receipt_comparator_gate_names_contract() {
+    let gate = dense_q8_sidecar_q_norm_input_receipt_comparator_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.q_norm_input_receipt_identity_comparator");
+    assert_eq!(gate.selected_materialization_boundary, "q_norm_input_candle_tensor_boundary");
+    assert!(gate.fail_closed_on_missing_field);
+    assert!(gate.fail_closed_on_mismatch);
+    assert!(gate.fail_closed_on_fallback);
+    assert!(gate.compares_qwen3_q8);
+    assert!(gate.compares_qwen25_q8);
+    for required in [
+        "model_sha256",
+        "tokenizer_source=gguf_metadata",
+        "prompt_ids_digest",
+        "generated_ids_digest",
+        "decoded_text_digest",
+        "selected_backend=cpu-rust",
+        "q_norm_input_boundary=q_norm_input_candle_tensor_boundary",
+        "q_norm_input_tensor_identity",
+        "fallback_used=false",
+    ] {
+        assert!(
+            gate.required_identity_fields.contains(&required),
+            "missing required field {required}"
+        );
+    }
+    assert!(gate.remaining_blockers.contains(&"q_norm_input_runtime_hook_missing"));
+    assert!(gate.remaining_blockers.contains(&"qwen25_q8_before_after_receipts_missing"));
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.speedup_claim);
+    assert!(!gate.server_or_accelerator_claim);
+    assert!(!gate.bitnet_qk256_claim);
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_receipt_comparator_passes_identical_identity() {
+    let before = sample_q_norm_input_receipt_identity();
+    let after = before.clone();
+
+    let comparison = compare_dense_q8_sidecar_q_norm_input_receipts(&before, &after);
+
+    assert!(comparison.passed);
+    assert!(comparison.failed_fields.is_empty());
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_receipt_comparator_fails_closed_on_gaps() {
+    let before = sample_q_norm_input_receipt_identity();
+    let after = DenseQ8SidecarQNormInputReceiptIdentity {
+        generated_ids_digest: "different-generated-ids",
+        q_norm_input_boundary: "wrong_boundary",
+        q_norm_input_tensor_identity: "",
+        fallback_used: true,
+        ..before.clone()
+    };
+
+    let comparison = compare_dense_q8_sidecar_q_norm_input_receipts(&before, &after);
+
+    assert!(!comparison.passed);
+    for failed in [
+        "fallback_used",
+        "generated_ids_digest",
+        "q_norm_input_boundary",
+        "q_norm_input_tensor_identity",
+    ] {
+        assert!(comparison.failed_fields.contains(&failed), "missing failed field {failed}");
+    }
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
