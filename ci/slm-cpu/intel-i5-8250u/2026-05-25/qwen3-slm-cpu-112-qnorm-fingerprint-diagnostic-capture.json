@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qnorm_fingerprint_diagnostic_capture",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-112",
+  "status": "implemented",
+  "scope": "opt_in_diagnostic_capture_only",
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "target": {
+    "tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_stage": "attention.q_proj.reshape_q_heads",
+    "fingerprinted_stage": "attention.q_norm_input",
+    "boundary": "q_norm_input_candle_tensor_boundary",
+    "fingerprint": "sha256_f32_le_logical_order"
+  },
+  "capture_path": {
+    "enabled_by_default": false,
+    "requires_trace_active": true,
+    "env": {
+      "BITNET_QWEN_TRACE_ACTIVE": "1",
+      "BITNET_QWEN_TRACE_LAYER": "0",
+      "BITNET_QWEN_TRACE_JSONL": "<trace path>"
+    },
+    "cli_surface": "--qwen-trace-jsonl <path> --qwen-trace-layer 0",
+    "jsonl_kind": "qwen_trace_tensor_fingerprint",
+    "jsonl_stage": "attention.q_norm_input",
+    "records": [
+      "shape",
+      "dtype=f32",
+      "source_dtype",
+      "source_tensor",
+      "boundary",
+      "tensor_fingerprint_sha256_f32_le",
+      "contents_dumped=false"
+    ],
+    "tensor_contents_dumped": false,
+    "sample_values_dumped": false
+  },
+  "runtime": {
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "packed_q8_sidecar_runtime_promoted": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false
+  },
+  "claim_boundary": {
+    "first_token_or_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_required_slice": "Capture a real i5-8250U Qwen3 Q8_0 trace using the opt-in q_norm_input fingerprint record and compare the f32-le SHA256 across before/after strict CPU receipts before any packed-Q8 sidecar runtime promotion."
+}

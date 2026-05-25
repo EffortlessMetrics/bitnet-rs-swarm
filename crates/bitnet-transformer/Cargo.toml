@@ -21,6 +21,7 @@ candle-nn = { workspace = true }
 anyhow.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+sha2 = "0.10.9"
 
 [dev-dependencies]
 bitnet-test-support.workspace = true

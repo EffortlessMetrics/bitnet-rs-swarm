@@ -21,7 +21,7 @@ use diagnostics::{
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
     debug_mlp_enabled, debug_rmsnorm_enabled, debug_rope_enabled, qwen_trace_event,
     qwen_trace_events_enabled, qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor,
-    trace_rms_enabled,
+    qwen_trace_tensor_fingerprint, trace_rms_enabled,
 };
 #[cfg(test)]
 use layer_builders::layer_norm_with_optional_bias;
