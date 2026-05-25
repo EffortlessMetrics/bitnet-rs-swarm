@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T05:36:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-107"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-107-qnorm-runtime-hook-gate-impl"
+pr = 689
+head_sha = "10ec44b6899b44f8224516743f39aff0f7daf9e9"
+summary = "Opened PR #689 to add the q_norm-input runtime hook gate and tensor-identity surface."
+notes = [
+  "The committed artifact is `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-107-qnorm-runtime-hook-gate.json`.",
+  "The slice burns down the local runtime-hook and tensor-identity-surface blockers while keeping packed_q8_sidecar runtime execution disabled and the default runtime on eager_f32_candle.",
+  "Proof remains blocked on Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs plus accumulator-order evidence.",
+  "No new inference, default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256/I2_S behavior change is made.",
+]

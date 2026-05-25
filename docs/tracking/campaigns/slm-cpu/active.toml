@@ -6657,8 +6657,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-107"
-status = "ready"
-branch = "codex/slm-cpu-107-qnorm-runtime-hook-gate"
+status = "pr_open"
+branch = "codex/slm-cpu-107-qnorm-runtime-hook-gate-impl"
+pr = 689
+head_sha = "10ec44b6899b44f8224516743f39aff0f7daf9e9"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
