@@ -1,0 +1,15 @@
+timestamp = "2026-05-25T01:46:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-105"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+actor = "codex-slm-cpu"
+summary = "Queued SLM-CPU-105 to prove or precisely block the q_norm_input materialization boundary selected by SLM-CPU-104."
+notes = [
+  "SLM-CPU-104 selected q_norm_input_candle_tensor_boundary as the only accepted materialization boundary while keeping runtime execution disabled.",
+  "SLM-CPU-105 must either provide before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipt evidence for that selected boundary or record the exact missing runtime hook, receipt field, comparator, tensor identity, accumulator-order, or artifact gap.",
+  "Any later allocation or timing claim remains gated by matching model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false.",
+  "No default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
