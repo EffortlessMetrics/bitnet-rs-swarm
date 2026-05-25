@@ -1,0 +1,25 @@
+timestamp = "2026-05-25T11:33:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-110"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 710
+branch = "codex/slm-cpu-110-qnorm-receipt-pair-after-identity"
+head_sha = "4f0dc5122ee72411eb367c373ab106abba14a552"
+merge_sha = "48e1c758447236ad37dc11a0c44829d75a5e7ad2"
+merged_at = "2026-05-25T11:33:00Z"
+summary = "Merged the SLM-CPU-110 Qwen3 q_norm input before/after receipt pair."
+notes = [
+  "PR #710 collected Qwen3 Q8_0 strict CPU before/after warm-session receipts for the selected `layers.0.attention.q_proj.weight` q_norm-input identity boundary.",
+  "The validation artifact records identical prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, CPU backend, `fallback_used=false`, and q_norm-input identity object across the eager baseline and packed-Q8 sidecar candidate.",
+  "The materialization boundary remains not fully proven because the f32-le q_norm-input tensor fingerprint is still not captured, Qwen2.5 coverage is missing, and accumulator-order equivalence remains unproven.",
+  "No allocation reduction, timing improvement, sustained-throughput, default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-111"
+status = "ready"
+branch = "codex/slm-cpu-111-qnorm-tensor-fingerprint"
+summary = "Add or precisely block q_norm_input f32-le tensor fingerprint capture for the selected packed-Q8 sidecar materialization boundary."

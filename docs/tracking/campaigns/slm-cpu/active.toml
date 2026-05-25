@@ -6826,10 +6826,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-110"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-110-qnorm-receipt-pair-after-identity"
 pr = 710
 head_sha = "c4af2f83fb3fd93148d057ee16bdf5516c430f8d"
+merge_sha = "48e1c758447236ad37dc11a0c44829d75a5e7ad2"
+merged_at = "2026-05-25T11:33:00Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -6868,6 +6870,58 @@ may_claim = [
 ]
 must_not_claim = [
   "The q_norm-input materialization boundary is fully behavior-proven without Qwen3 and Qwen2.5 before/after receipts.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-111"
+status = "ready"
+branch = "codex/slm-cpu-111-qnorm-tensor-fingerprint"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-110"]
+acceptance = "Add or precisely block f32-le q_norm_input tensor fingerprint capture for the Qwen3 Q8_0 `layers.0.attention.q_proj.weight` packed-Q8 sidecar q_norm_input boundary. A valid slice must preserve eager_f32_candle as the default runtime, keep packed_q8_sidecar disabled by default, and must not claim allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes. If fingerprint capture is blocked, record the exact Tensor API, lifetime, storage-layout, host extraction, or receipt-safety gap in a machine-checkable artifact."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-110 collected the Qwen3 Q8_0 before/after strict CPU receipt pair for the q_norm_input identity surface.",
+  "SLM-CPU-111 may add or precisely block q_norm_input f32-le tensor fingerprint capture.",
+]
+must_not_claim = [
+  "The q_norm-input materialization boundary is fully behavior-proven without tensor fingerprints and Qwen2.5 before/after receipts.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
