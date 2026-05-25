@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T11:06:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-110"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-110-qnorm-receipt-pair-after-identity"
+pr = 710
+head_sha = "c4af2f83fb3fd93148d057ee16bdf5516c430f8d"
+summary = "Opened PR #710 with the Qwen3 Q8_0 before/after q_norm input receipt pair."
+notes = [
+  "The before receipt uses `eager_f32_candle`; the after receipt selects the exact `layers.0.attention.q_proj.weight` `packed_q8_sidecar` candidate.",
+  "The validation artifact records identical prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, CPU backend, `fallback_used=false`, and q_norm-input identity object across the pair.",
+  "The materialization boundary is not fully proven because the f32-le q_norm-input tensor fingerprint is still not captured, Qwen2.5 coverage is missing, and accumulator-order equivalence remains unproven.",
+  "No allocation reduction, timing improvement, sustained-throughput, default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
