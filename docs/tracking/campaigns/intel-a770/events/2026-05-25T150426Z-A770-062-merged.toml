@@ -1,0 +1,45 @@
+timestamp = "2026-05-25T15:04:26Z"
+campaign = "intel-a770"
+item = "A770-062"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 719
+branch = "codex/intel-a770/A770-062-production-replay-instrumentation"
+head_sha = "9d1eae8f01655bbfe87011941734558549ad2289"
+merge_sha = "2cf0768de00938a00c2be1e21535312eccb5d10c"
+merged_at = "2026-05-25T15:04:26Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #719, closing the A770-062 production replay instrumentation diagnostic."
+notes = [
+  "PR #719 added diagnostic production replay instrumentation for qk256_i2s_i8s_scaled_gemv using the unchanged production kernel plus a sideband replay kernel.",
+  "The committed receipt classifies as a770_qk256_production_replay_instrumentation_output_store_matches_replay.",
+  "A770-062 records fallback_used=false, cpu_fallback_allowed=false, bitnet_inference=false, qk256_decode=false, production_qk256_policy_change=false, claim_allowed=false, and diagnostic_only=true.",
+  "The diagnostic captured adjusted_dot, activation_scale, weight_scale, reciprocal-path intermediate bits, final scaled value bits, replay output bits, and production output-store bits.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-062 captured diagnostic production replay instrumentation for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
