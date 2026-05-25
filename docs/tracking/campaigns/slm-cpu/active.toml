@@ -6544,6 +6544,59 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "SLM-CPU-105"
+status = "pr_open"
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+pr = 675
+head_sha = "88ff33217bf55b6be020885737f55cb153e4f260"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-104"]
+acceptance = "Prove or precisely block the q_norm_input_candle_tensor_boundary selected by SLM-CPU-104 for the exact Qwen3 Q8_0 `layers.0.attention.q_proj.weight` packed-Q8 sidecar path. A valid slice must either add before/after strict CPU receipt evidence for Qwen3 Q8_0 and Qwen2.5 Q8_0 showing identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false across the selected boundary, or emit a machine-checkable blocker naming the missing runtime hook, receipt field, comparator, tensor identity, accumulator-order, or artifact gap. The slice must keep the default runtime `eager_f32_candle`, must not promote packed_q8_sidecar, and must not claim allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-105 may prove the selected q_norm_input materialization boundary with before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipts.",
+  "SLM-CPU-105 may record the exact blocker preventing that receipt-backed proof.",
+]
+must_not_claim = [
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
 id = "SLM-CPU-103"
 status = "merged"
 branch = "codex/slm-cpu-103-typed-qnorm-rope-consumer-gate"

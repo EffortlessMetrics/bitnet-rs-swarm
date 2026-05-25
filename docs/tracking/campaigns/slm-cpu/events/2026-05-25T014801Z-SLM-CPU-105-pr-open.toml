@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T01:48:01Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-105"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-105-qnorm-input-proof-gate"
+pr = 675
+head_sha = "88ff33217bf55b6be020885737f55cb153e4f260"
+summary = "Opened PR #675 to queue the SLM-CPU-105 q_norm-input materialization proof gate."
+notes = [
+  "The item follows SLM-CPU-104's selected q_norm_input_candle_tensor_boundary and requires before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipts before any runtime-adjacent claim.",
+  "If the receipt-backed proof cannot be produced, SLM-CPU-105 must emit a machine-checkable blocker naming the missing runtime hook, receipt field, comparator, tensor identity, accumulator-order, or artifact gap.",
+  "No default runtime change, packed_q8_sidecar promotion, allocation reduction claim, speedup claim, sustained throughput claim, Q4/Q5 runtime claim, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
