@@ -2330,6 +2330,30 @@ pub struct DenseQ8SidecarTypedQNormRopeConsumerGate {
     pub next_required_slice: &'static str,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseQ8SidecarQNormMaterializationBoundaryGate {
+    pub role: &'static str,
+    pub status: &'static str,
+    pub source_gate_status: &'static str,
+    pub exact_tensor_name: &'static str,
+    pub exact_tensor_role: &'static str,
+    pub accepted_single_materialization_point: &'static str,
+    pub rejected_materialization_points: &'static [&'static str],
+    pub materializes_before_stage: &'static str,
+    pub preserved_candle_consumers: &'static [&'static str],
+    pub receipt_gate: DenseQ8SidecarFusedQProjectionReceiptContract,
+    pub runtime_execution_enabled: bool,
+    pub default_runtime_changed: bool,
+    pub packed_q8_sidecar_default_enabled: bool,
+    pub allocation_reduction_claim: bool,
+    pub speedup_claim: bool,
+    pub sustained_throughput_claim: bool,
+    pub q4_q5_runtime_claim: bool,
+    pub qwen3_q8_before_after_receipts_required: bool,
+    pub qwen25_q8_before_after_receipts_required: bool,
+    pub next_required_slice: &'static str,
+}
+
 pub const DENSE_Q8_SIDECAR_FUSED_CONSUMER_EXACT_BLOCKING_OPS: &[&str] = &[
     "dense_q8_sidecar_linear_forward(&Tensor, Option<&Tensor>, &DenseLinearPackedQ8Payload) -> candle_core::Result<Tensor>",
     "Tensor::from_vec(output, output_shape, input.device()) transfers owned Vec storage into Candle",
@@ -2639,6 +2663,18 @@ pub const DENSE_Q8_SIDECAR_TYPED_ATTENTION_HEAD_CONSUMER_CANDIDATE_MATERIALIZATI
     "after_q_rope_before_attention_scores_candle_tensor_boundary",
 ];
 
+pub const DENSE_Q8_SIDECAR_Q_NORM_MATERIALIZATION_REJECTED_POINTS: &[&str] = &[
+    "after_q_norm_before_rope_candle_tensor_boundary",
+    "after_q_rope_before_attention_scores_candle_tensor_boundary",
+];
+
+pub const DENSE_Q8_SIDECAR_Q_NORM_MATERIALIZATION_PRESERVED_CONSUMERS: &[&str] = &[
+    "candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+    "RotaryEmbedding::apply(&Tensor, position) for RoPE",
+    "TransformerAttentionOutputSourceTensors q_heads/q_norm/q_rope Tensor identity",
+    "MultiHeadAttention::prepare_attention_scores(&Tensor, ...) Tensor score handoff",
+];
+
 pub const DENSE_Q8_SIDECAR_TYPED_Q_NORM_ROPE_CONSUMER_STAGES:
     &[DenseQ8SidecarTypedQNormRopeConsumerStageContract] = &[
     DenseQ8SidecarTypedQNormRopeConsumerStageContract {
@@ -2896,6 +2932,33 @@ pub fn dense_q8_sidecar_typed_q_norm_rope_consumer_gate() -> DenseQ8SidecarTyped
         allocation_reduction_claim: false,
         speedup_claim: false,
         next_required_slice: "typed q_norm kernel, typed RoPE kernel, or one proven materialization boundary before attention scores with strict Qwen3/Qwen2.5 CPU receipts",
+    }
+}
+
+pub fn dense_q8_sidecar_q_norm_materialization_boundary_gate()
+-> DenseQ8SidecarQNormMaterializationBoundaryGate {
+    let source = dense_q8_sidecar_typed_q_norm_rope_consumer_gate();
+    DenseQ8SidecarQNormMaterializationBoundaryGate {
+        role: "attention.q_proj.q_norm_input_materialization_boundary_gate",
+        status: "boundary_selected_runtime_disabled",
+        source_gate_status: source.status,
+        exact_tensor_name: source.exact_tensor_name,
+        exact_tensor_role: source.exact_tensor_role,
+        accepted_single_materialization_point: "q_norm_input_candle_tensor_boundary",
+        rejected_materialization_points: DENSE_Q8_SIDECAR_Q_NORM_MATERIALIZATION_REJECTED_POINTS,
+        materializes_before_stage: "typed_q_norm_consumer",
+        preserved_candle_consumers: DENSE_Q8_SIDECAR_Q_NORM_MATERIALIZATION_PRESERVED_CONSUMERS,
+        receipt_gate: source.receipt_gate,
+        runtime_execution_enabled: false,
+        default_runtime_changed: false,
+        packed_q8_sidecar_default_enabled: false,
+        allocation_reduction_claim: false,
+        speedup_claim: false,
+        sustained_throughput_claim: false,
+        q4_q5_runtime_claim: false,
+        qwen3_q8_before_after_receipts_required: true,
+        qwen25_q8_before_after_receipts_required: true,
+        next_required_slice: "prove the q_norm-input materialization boundary with strict before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts before enabling any runtime-adjacent packed-Q8 sidecar consumer or claiming allocation/timing improvement",
     }
 }
 

@@ -20,6 +20,7 @@ use bitnet_transformer::{
     NormOutputStorageApiBoundary, TransformerForwardWorkspace, TransformerModel,
     dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
+    dense_q8_sidecar_q_norm_materialization_boundary_gate,
     dense_q8_sidecar_typed_attention_head_consumer_gate,
     dense_q8_sidecar_typed_attention_head_view_gate,
     dense_q8_sidecar_typed_fused_q_projection_implementation_gate,
@@ -997,6 +998,73 @@ fn dense_q8_sidecar_typed_q_norm_rope_consumer_gate_keeps_receipt_gate_strict() 
             .iter()
             .any(|stage| stage.current_status == "blocked_until_behavior_oracles_pass")
     );
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_materialization_boundary_selects_one_point() {
+    let source = dense_q8_sidecar_typed_q_norm_rope_consumer_gate();
+    let gate = dense_q8_sidecar_q_norm_materialization_boundary_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.q_norm_input_materialization_boundary_gate");
+    assert_eq!(gate.status, "boundary_selected_runtime_disabled");
+    assert_eq!(gate.source_gate_status, source.status);
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert_eq!(gate.accepted_single_materialization_point, "q_norm_input_candle_tensor_boundary");
+    assert_eq!(gate.materializes_before_stage, "typed_q_norm_consumer");
+    assert_eq!(
+        gate.rejected_materialization_points,
+        &[
+            "after_q_norm_before_rope_candle_tensor_boundary",
+            "after_q_rope_before_attention_scores_candle_tensor_boundary",
+        ]
+    );
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_materialization_boundary_preserves_candle_consumers() {
+    let gate = dense_q8_sidecar_q_norm_materialization_boundary_gate();
+
+    assert!(
+        gate.preserved_candle_consumers
+            .iter()
+            .any(|consumer| consumer.contains("LayerNorm::forward"))
+    );
+    assert!(
+        gate.preserved_candle_consumers
+            .iter()
+            .any(|consumer| consumer.contains("RotaryEmbedding::apply"))
+    );
+    assert!(
+        gate.preserved_candle_consumers
+            .iter()
+            .any(|consumer| consumer.contains("TransformerAttentionOutputSourceTensors"))
+    );
+    assert!(
+        gate.preserved_candle_consumers
+            .iter()
+            .any(|consumer| consumer.contains("prepare_attention_scores"))
+    );
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_materialization_boundary_keeps_runtime_disabled() {
+    let gate = dense_q8_sidecar_q_norm_materialization_boundary_gate();
+
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.packed_q8_sidecar_default_enabled);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+    assert!(!gate.sustained_throughput_claim);
+    assert!(!gate.q4_q5_runtime_claim);
+    assert!(gate.qwen3_q8_before_after_receipts_required);
+    assert!(gate.qwen25_q8_before_after_receipts_required);
+    assert!(gate.receipt_gate.required_before_runtime_execution);
+    assert!(gate.receipt_gate.required_before_allocation_claim);
+    assert!(gate.receipt_gate.required_before_speedup_claim);
+    assert!(gate.receipt_gate.required_fields.contains(&"fallback_used=false"));
+    assert!(gate.next_required_slice.contains("before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts"));
 }
 
 // ── construction tests ────────────────────────────────────────────────────────

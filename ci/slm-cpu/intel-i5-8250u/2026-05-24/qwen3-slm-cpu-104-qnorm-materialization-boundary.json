@@ -1,0 +1,97 @@
+{
+  "artifact_kind": "slm_cpu_qnorm_materialization_boundary_gate",
+  "work_item": "SLM-CPU-104",
+  "created_utc": "2026-05-25T01:15:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0"
+  },
+  "input_evidence": {
+    "previous_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-103-typed-qnorm-rope-consumer-gate.json",
+    "slm_cpu_103_status": "blocked_runtime_disabled",
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "logical_q_head_view_representable_without_candle_tensor": true,
+    "typed_q_norm_kernel_available": false,
+    "typed_rope_kernel_available": false,
+    "single_materialization_boundary_previously_accepted": false
+  },
+  "qnorm_materialization_boundary_gate": {
+    "role": "attention.q_proj.q_norm_input_materialization_boundary_gate",
+    "status": "boundary_selected_runtime_disabled",
+    "source_gate_status": "blocked_runtime_disabled",
+    "accepted_single_materialization_point": "q_norm_input_candle_tensor_boundary",
+    "rejected_materialization_points": [
+      "after_q_norm_before_rope_candle_tensor_boundary",
+      "after_q_rope_before_attention_scores_candle_tensor_boundary"
+    ],
+    "materializes_before_stage": "typed_q_norm_consumer",
+    "why_this_boundary": [
+      "It is the earliest boundary that preserves the existing Candle q_norm consumer exactly.",
+      "It avoids inventing typed q_norm or typed RoPE math before numerical and behavior receipts exist.",
+      "It keeps RotaryEmbedding, trace identity, and attention-score handoff on the current Tensor-backed path.",
+      "It gives the next runtime slice one precise boundary to prove instead of three competing candidates."
+    ],
+    "preserved_candle_consumers": [
+      "candle_nn::LayerNorm::forward(&Tensor) for q_norm",
+      "RotaryEmbedding::apply(&Tensor, position) for RoPE",
+      "TransformerAttentionOutputSourceTensors q_heads/q_norm/q_rope Tensor identity",
+      "MultiHeadAttention::prepare_attention_scores(&Tensor, ...) Tensor score handoff"
+    ],
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "receipt_safety_contract": {
+    "required_before_runtime_execution": true,
+    "required_before_allocation_claim": true,
+    "required_before_speedup_claim": true,
+    "qwen3_q8_before_after_receipts_required": true,
+    "qwen25_q8_before_after_receipts_required": true,
+    "required_fields": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel identity",
+      "dense_hook identity",
+      "fallback_used=false"
+    ]
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_materialization_boundary_selects_one_point",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_materialization_boundary_preserves_candle_consumers",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_materialization_boundary_keeps_runtime_disabled"
+  ],
+  "result": {
+    "boundary_selected": true,
+    "selected_boundary": "q_norm_input_candle_tensor_boundary",
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "fused_consumer_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

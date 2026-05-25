@@ -1,0 +1,15 @@
+timestamp = "2026-05-25T01:15:29Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-104"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 671
+head_sha = "214fcc97edb0d0d55190a7644ed1884a7f19d750"
+summary = "Opened PR #671 to select q_norm_input as the single SLM-CPU-104 materialization boundary for the Qwen3 Q8_0 packed-Q8 q_proj sidecar path."
+notes = [
+  "The slice preserves the existing Candle q_norm, RoPE, trace identity, and attention-score Tensor consumers while keeping runtime execution disabled.",
+  "Before any later runtime-adjacent packed-Q8 sidecar consumer or allocation/timing claim, Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts must prove identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false.",
+  "No fused runtime execution, packed_q8_sidecar default promotion, allocation reduction, speedup, sustained 8250U throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 change is claimed.",
+]
