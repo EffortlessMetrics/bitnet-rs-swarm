@@ -1,0 +1,19 @@
+timestamp = "2026-05-25T14:09:29Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-111"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 718
+branch = "codex/slm-cpu-111-qnorm-tensor-fingerprint"
+head_sha = "afb539d59020d6faadbcc7d19417025ab7527dc4"
+merge_sha = "66d779640d2e8c6830491edd5271707052251cc7"
+merged_at = "2026-05-25T14:09:29Z"
+summary = "Merged PR #718, closing SLM-CPU-111 with a machine-checkable q_norm-input tensor fingerprint blocker."
+notes = [
+  "PR #718 records `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-111-qnorm-tensor-fingerprint-blocker.json` as the SLM-CPU-111 blocker artifact.",
+  "The blocker names the current warm-session receipt gap: the receipt builder receives dense_q8_hook_selection metadata, not the materialized Candle q_norm_input Tensor or a receipt-safe host f32-le slice.",
+  "SLM-CPU-112 is ready to add or precisely block an opt-in diagnostic q_norm_input fingerprint capture path that records shape, dtype, and f32-le SHA256 without dumping tensor contents.",
+  "No default runtime change, packed_q8_sidecar promotion, allocation reduction claim, timing improvement claim, sustained-throughput claim, Q4/Q5 runtime support, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
