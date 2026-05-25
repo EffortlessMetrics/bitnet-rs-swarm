@@ -30,6 +30,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Typed attention-head view gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-101-typed-attention-head-view-gate.json` | Defines the runtime-disabled typed Q-head view contract and records the remaining q_norm, RoPE, trace identity, score-handoff, and receipt-safety blockers |
 | Typed attention-head consumer gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-102-typed-attention-head-consumer-gate.json` | Classifies the current typed Q-head consumer boundary as blocked before q_norm/RoPE/trace/score handoff, records candidate materialization points, and keeps runtime execution, allocation claims, and timing claims disabled |
 | Typed q_norm/RoPE consumer gate | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-103-typed-qnorm-rope-consumer-gate.json` | Records the next typed q_norm/RoPE consumer boundary as blocked at `typed_q_norm_consumer`, names the exact Tensor APIs and receipt-safety gaps, and keeps runtime execution, allocation claims, and timing claims disabled |
+| q_norm materialization boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-24/qwen3-slm-cpu-104-qnorm-materialization-boundary.json` | Selects `q_norm_input_candle_tensor_boundary` as the only accepted materialization boundary for the next proof slice, preserving existing Candle q_norm, RoPE, trace, and score consumers while keeping runtime execution and allocation/timing claims disabled |
 
 All rows use:
 
@@ -48,7 +49,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-103 typed q_norm/RoPE consumer
+This refresh is current through the SLM-CPU-104 q_norm materialization boundary
 gate.
 It does not run new inference or add a runtime
 optimization. It
@@ -57,7 +58,8 @@ prompt-token caching, prefill attribution, the post-aligned exact-tensor
 packed-Q8 matvec artifact, the residual-add output-storage blocker, the
 logits/output-head boundary, the packed-Q8 caller-output-slice helper gate, and
 the typed fused Q projection consumer, attention-head view, attention-head
-consumer, and q_norm/RoPE consumer blockers.
+consumer, q_norm/RoPE consumer blockers, and the selected q_norm-input
+materialization boundary.
 
 The current operator default remains evidence-scoped to the recorded 4-thread
 operator profile. The default production runtime remains `eager_f32_candle`.
@@ -130,6 +132,17 @@ point is accepted yet. The next safe slice is either a behavior-equivalent typed
 q_norm/RoPE kernel pair or exactly one proven materialization boundary before
 attention scores, with Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts before
 any allocation or timing claim.
+
+SLM-CPU-104 selects exactly one of those materialization candidates:
+`q_norm_input_candle_tensor_boundary`. This is intentionally conservative. It
+keeps q_norm on `candle_nn::LayerNorm::forward(&Tensor)`, RoPE on
+`RotaryEmbedding::apply(&Tensor, position)`, trace identity on
+`TransformerAttentionOutputSourceTensors`, and score handoff on the existing
+Tensor-backed `prepare_attention_scores` path. Runtime fused Q execution remains
+disabled, the default runtime remains `eager_f32_candle`, and the boundary is
+not an allocation or timing claim. A future runtime-adjacent slice must prove the
+selected boundary with before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts before
+claiming any improvement.
 
 ## Thread Envelope
 
