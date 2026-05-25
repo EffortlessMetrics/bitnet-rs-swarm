@@ -3,7 +3,7 @@
   "artifact_kind": "lunar_lake_migration_manifest",
   "migration_id": "SWARM-LNL258V-MIGRATE-001",
   "created_utc": "2026-05-21T15:23:58Z",
-  "last_refreshed_utc": "2026-05-23T15:25:00Z",
+  "last_refreshed_utc": "2026-05-25T08:28:15Z",
   "source_repo": "EffortlessMetrics/BitNet-rs",
   "target_repo": "EffortlessMetrics/bitnet-rs-swarm",
   "source_cutoff": {
@@ -38,31 +38,36 @@
         "work_item": "LNL258V-GOAL-AUDIT-013",
         "source_pr": 6116,
         "summary": "Post-A770-006 audit refresh records selected-device A770 OpenCL matmul_i2s parity as adjacent non-semantic evidence."
+      },
+      {
+        "work_item": "A770-007",
+        "source_pr": 6113,
+        "summary": "Selected-device receipt identity for the old-repo A770 smoke and matmul_i2s parity path, accepted as adjacent A770 evidence only and not a Lunar Lake route or semantic-intake trigger."
       }
     ],
     "current_swarm_audit_cutoff": {
-      "work_item": "LNL258V-GOAL-AUDIT-045",
-      "source_pr": 470,
-      "closeout_pr": 472,
-      "source_revision": "f06af55c0b941a8e8a2a298525d2febf8b7d5f5e",
-      "summary": "Current committed swarm no-inference audit after A770-035/#463, A770-035 closeout #466, A770-035 source-capture plumbing fix #467, and post-467 handoff/ledger documentation, with LNL258V-POWER-006 still blocked on battery-mode evidence."
+      "work_item": "LNL258V-GOAL-AUDIT-068",
+      "source_pr": 688,
+      "closeout_pr": 691,
+      "source_revision": "034785f2eda1bb011a7f413b32ab1743ea959a1b",
+      "summary": "Current committed swarm no-inference audit after adjacent A770-055/A770-057 diagnostic evidence and SLM-CPU-103 through SLM-CPU-107 q_norm state, with LNL258V-POWER-006 still blocked on battery-mode evidence."
     },
     "post_cutoff_adjacent_main_updates": [
       {
-        "pr": 477,
-        "summary": "SLM-CPU-090 ready-state repair; adjacent SLM CPU tracker state only."
+        "pr": 690,
+        "summary": "A770-058 strict-f32 disassembly-frontier queue documentation; adjacent A770 tracker/documentation state only."
       },
       {
-        "pr": 478,
-        "summary": "A770-036 penultimate block source-frontier diagnostic; adjacent A770 diagnostic state only."
+        "pr": 692,
+        "summary": "SLM-CPU-107 runtime-disabled q_norm hook gate; adjacent SLM CPU state only."
       },
       {
-        "pr": 480,
-        "summary": "A770-036 tracker closeout; adjacent A770 tracker state only."
+        "pr": 693,
+        "summary": "A770-058 strict-f32 disassembly-frontier diagnostic; adjacent A770 diagnostic state only."
       },
       {
-        "pr": 482,
-        "summary": "CUDA/Qwen3 warm-session receipt; adjacent CUDA/Qwen3 evidence only."
+        "pr": 694,
+        "summary": "SLM-CPU-107 tracker closeout and SLM-CPU-108 queueing; adjacent SLM CPU tracker state only."
       }
     ]
   },
