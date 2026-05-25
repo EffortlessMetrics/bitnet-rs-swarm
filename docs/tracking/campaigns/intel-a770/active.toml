@@ -2925,9 +2925,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-055"
-status = "pr_open"
+status = "merged"
 pr = 672
-head_sha = "951cb0fd0fd96cfac6a869533b5c1e20f9f921d0"
+head_sha = "63b9f56fbcd4318e89fd0e9b88ac4b6180ed66a2"
+merge_sha = "43f0e031d40b8ec43690ca479d2815c2396993ee"
+merged_at = "2026-05-25T01:43:06Z"
 branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen"
 stackable = false
 review_mode = "codex_premerge"
