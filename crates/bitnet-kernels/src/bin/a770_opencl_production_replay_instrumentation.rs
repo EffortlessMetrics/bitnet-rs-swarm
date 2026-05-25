@@ -1,9 +1,15 @@
-use std::{env, error::Error, io, path::PathBuf};
+use std::{
+    env,
+    error::Error,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use bitnet_kernels::a770_opencl_runtime::{
     A770OpenClQk256ProductionReplay, A770OpenClQk256ProductionReplayResult,
     A770OpenClQk256ProductionReplaySample, run_a770_qk256_i8s_scaled_gemv_production_replay,
 };
+use serde_json::{Value, json};
 
 const RECEIPT_ENV: &str = "BITNET_A770_OPENCL_PRODUCTION_REPLAY_RECEIPT";
 const DEFAULT_RECEIPT: &str = "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-replay-instrumentation.json";
@@ -14,6 +20,16 @@ const SAMPLE_LIMIT: usize = 2;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse()?;
+    if args.focused_source.is_some() {
+        let receipt = focused_receipt_to_json(&args)?;
+        if let Some(parent) = args.receipt.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(&args.receipt, &receipt)?;
+        println!("{receipt}");
+        return Ok(());
+    }
+
     let fixture = fixture();
     let replay =
         run_a770_qk256_i8s_scaled_gemv_production_replay(A770OpenClQk256ProductionReplay {
@@ -39,6 +55,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Args {
     receipt: PathBuf,
+    focused_source: Option<PathBuf>,
+    case_id: Option<String>,
+    first_mismatch_index: Option<usize>,
 }
 
 impl Args {
@@ -46,6 +65,9 @@ impl Args {
         let mut receipt = env::var_os(RECEIPT_ENV)
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from(DEFAULT_RECEIPT));
+        let mut focused_source = None;
+        let mut case_id = None;
+        let mut first_mismatch_index = None;
         let mut args = env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
@@ -55,16 +77,47 @@ impl Args {
                             .ok_or_else(|| io_error("--receipt requires a path argument"))?,
                     );
                 }
+                "--focused-source" => {
+                    focused_source =
+                        Some(PathBuf::from(args.next().ok_or_else(|| {
+                            io_error("--focused-source requires a path argument")
+                        })?));
+                }
+                "--case-id" => {
+                    case_id = Some(
+                        args.next().ok_or_else(|| io_error("--case-id requires an argument"))?,
+                    );
+                }
+                "--first-mismatch-index" => {
+                    let value = args
+                        .next()
+                        .ok_or_else(|| io_error("--first-mismatch-index requires an argument"))?;
+                    first_mismatch_index = Some(value.parse::<usize>().map_err(|err| {
+                        io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            format!("invalid --first-mismatch-index {value:?}: {err}"),
+                        )
+                    })?);
+                }
                 "--help" | "-h" => {
                     println!(
-                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV."
+                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>] [--focused-source <path> --case-id <id> --first-mismatch-index <n>]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV, or classifies focused first-mismatch operand availability from an existing parity receipt."
                     );
                     std::process::exit(0);
                 }
                 other => return Err(io_error(format!("unknown argument {other:?}"))),
             }
         }
-        Ok(Self { receipt })
+        if focused_source.is_some() {
+            if case_id.is_none() {
+                return Err(io_error("--focused-source requires --case-id"));
+            }
+            if first_mismatch_index.is_none() {
+                return Err(io_error("--focused-source requires --first-mismatch-index"));
+            }
+        }
+
+        Ok(Self { receipt, focused_source, case_id, first_mismatch_index })
     }
 }
 
@@ -349,6 +402,400 @@ fn samples_json(
         .collect::<Result<Vec<_>, Box<dyn Error>>>()?
         .join(",\n    ");
     Ok(format!("[\n    {rows}\n  ]"))
+}
+
+fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
+    let focused_source = args
+        .focused_source
+        .as_ref()
+        .ok_or_else(|| io_error("focused receipt requested without --focused-source"))?;
+    let case_id = args
+        .case_id
+        .as_deref()
+        .ok_or_else(|| io_error("focused receipt requested without --case-id"))?;
+    let first_mismatch_index = args
+        .first_mismatch_index
+        .ok_or_else(|| io_error("focused receipt requested without --first-mismatch-index"))?;
+    let source_json = fs::read_to_string(focused_source)?;
+    let source: Value = serde_json::from_str(&source_json)?;
+    let context = focused_context(&source, case_id, first_mismatch_index);
+    let classification = focused_classification(&context);
+    let focused_summary_divergence_available =
+        context.focused_device_output_bits.is_some() && context.focused_policy_bits.is_some();
+    let focused_summary_device_vs_policy_bits_match =
+        match (context.focused_device_output_bits, context.focused_policy_bits) {
+            (Some(device), Some(policy)) => Some(device == policy),
+            _ => None,
+        };
+
+    let receipt = json!({
+        "campaign": "intel-a770",
+        "work_item": "A770-063",
+        "proof_family": "a770_opencl_qk256_focused_production_operands",
+        "proof_stage": "diagnostic_focused_production_operand_context_classified",
+        "requested_backend": "intel-arc-a770",
+        "selected_backend": "intel-arc-a770-opencl",
+        "runtime_api": "opencl",
+        "runtime_device": context.runtime_device,
+        "platform_index": context.platform_index,
+        "device_index": context.device_index,
+        "platform_name": context.platform_name,
+        "vendor": context.vendor,
+        "driver_version": context.driver_version,
+        "kernel_name": "qk256_i2s_i8s_scaled_gemv",
+        "replay_kernel_name": "qk256_i2s_i8s_scaled_gemv_production_replay",
+        "classification": classification,
+        "source_receipts": {
+            "focused_source": path_json_value(focused_source),
+            "production_replay_instrumentation": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-replay-instrumentation.json",
+            "production_lowered_operation_sequence": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-lowered-operation-sequence.json",
+            "production_disassembly_evidence": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-production-kernel-disassembly-evidence.json"
+        },
+        "focused_case": {
+            "case_id": case_id,
+            "requested_first_mismatch_index": first_mismatch_index,
+            "case_found": context.case_found,
+            "summary_first_divergence_matches_request": context.summary_first_divergence_matches_request,
+            "qkv_projection_dispatch_replay_context_available": context.qkv_context_available,
+            "target_layer_idx": context.target_layer_idx,
+            "projection": context.projection,
+            "input_rows": context.input_rows,
+            "output_rows": context.output_rows,
+            "cols": context.cols,
+            "row_stride_bytes": context.row_stride_bytes,
+            "input_row_index": context.input_row_index,
+            "sample_count": context.sample_count,
+            "sample_limit": context.sample_limit
+        },
+        "focused_operand_context": {
+            "focused_first_mismatch_operands_available": context.raw_activation_i8_available && context.raw_packed_qk256_available,
+            "raw_activation_i8_available": context.raw_activation_i8_available,
+            "raw_packed_qk256_available": context.raw_packed_qk256_available,
+            "summary_qk256_trace_available": context.summary_qk256_trace_available,
+            "device_expression_trace_available": context.device_expression_trace_available,
+            "device_intermediate_trace_available": context.device_intermediate_trace_available,
+            "can_feed_production_replay": context.raw_activation_i8_available && context.raw_packed_qk256_available,
+            "production_replay_executed": false,
+            "production_replay_skipped_reason": context.production_replay_skipped_reason,
+            "missing_raw_operand_fields": context.missing_raw_operand_fields
+        },
+        "focused_trace_replay_summary": {
+            "available": focused_summary_divergence_available,
+            "output_index": context.focused_output_index,
+            "activation_sum": context.activation_sum,
+            "activation_scale_bits": context.activation_scale_bits,
+            "weight_scale_bits": context.weight_scale_bits,
+            "int_dot": context.int_dot,
+            "adjusted_dot": context.adjusted_dot,
+            "focused_device_output_bits": context.focused_device_output_bits,
+            "focused_policy_bits": context.focused_policy_bits,
+            "focused_summary_device_vs_policy_bits_match": focused_summary_device_vs_policy_bits_match,
+            "device_intermediate_classification": context.device_intermediate_classification,
+            "device_expression_classification": context.device_expression_classification,
+            "production_policy_change_justified": context.production_policy_change_justified
+        },
+        "captured_intermediates": {
+            "adjusted_dot": context.adjusted_dot.is_some(),
+            "activation_scale": context.activation_scale_bits.is_some(),
+            "weight_scale": context.weight_scale_bits.is_some(),
+            "reciprocal_path_intermediate_bits": false,
+            "final_scaled_value_bits": false,
+            "output_store_bits": false
+        },
+        "production_replay_instrumentation_captured": false,
+        "host_to_device_bytes": 0,
+        "device_to_host_bytes": 0,
+        "kernel_invocations": 0,
+        "fallback_used": false,
+        "cpu_fallback_allowed": false,
+        "bitnet_inference": false,
+        "qk256_decode": false,
+        "production_qk256_policy_change": false,
+        "claim_allowed": false,
+        "diagnostic_only": true,
+        "performance_claim": false,
+        "full_residency_claim": false,
+        "next_diagnostic": context.next_diagnostic,
+        "must_not_claim": [
+            "CPU/A770 answer parity is proven",
+            "Reference parity is proven",
+            "Strict A770 answer readiness is proven",
+            "Broad A770 answer quality is proven",
+            "Official BitNet QK256 production semantics are proven",
+            "Production QK256 dispatch policy changed",
+            "BitNet inference works on A770",
+            "A770 trusted partial acceleration is claim-grade",
+            "Full A770 residency is proven",
+            "A770 performance speedup is proven"
+        ]
+    });
+    Ok(serde_json::to_string_pretty(&receipt)? + "\n")
+}
+
+#[derive(Debug, Clone)]
+struct FocusedContext {
+    case_found: bool,
+    summary_first_divergence_matches_request: bool,
+    qkv_context_available: bool,
+    raw_activation_i8_available: bool,
+    raw_packed_qk256_available: bool,
+    summary_qk256_trace_available: bool,
+    device_expression_trace_available: bool,
+    device_intermediate_trace_available: bool,
+    runtime_device: Option<String>,
+    platform_index: Option<u64>,
+    device_index: Option<u64>,
+    platform_name: Option<String>,
+    vendor: Option<String>,
+    driver_version: Option<String>,
+    target_layer_idx: Option<i64>,
+    projection: Option<String>,
+    input_rows: Option<u64>,
+    output_rows: Option<u64>,
+    cols: Option<u64>,
+    row_stride_bytes: Option<u64>,
+    input_row_index: Option<u64>,
+    sample_count: Option<u64>,
+    sample_limit: Option<u64>,
+    focused_output_index: Option<u64>,
+    activation_sum: Option<i64>,
+    activation_scale_bits: Option<u64>,
+    weight_scale_bits: Option<u64>,
+    int_dot: Option<i64>,
+    adjusted_dot: Option<i64>,
+    focused_device_output_bits: Option<u64>,
+    focused_policy_bits: Option<u64>,
+    device_intermediate_classification: Option<String>,
+    device_expression_classification: Option<String>,
+    production_policy_change_justified: Option<bool>,
+    production_replay_skipped_reason: &'static str,
+    missing_raw_operand_fields: Vec<&'static str>,
+    next_diagnostic: &'static str,
+}
+
+fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -> FocusedContext {
+    let case_found = source
+        .get("cases")
+        .and_then(Value::as_array)
+        .is_some_and(|cases| cases.iter().any(|case| str_field(case, "id") == Some(case_id)));
+    let summary_first_divergence_matches_request =
+        source.pointer("/summary/first_divergence").is_some_and(|divergence| {
+            str_field(divergence, "case_id") == Some(case_id)
+                && usize_field(divergence, "step") == Some(first_mismatch_index)
+        }) || source
+            .pointer("/generated_output_frontier/rows")
+            .and_then(Value::as_array)
+            .is_some_and(|rows| {
+                rows.iter().any(|row| {
+                    str_field(row, "case_id") == Some(case_id)
+                        && usize_field(row, "first_mismatch_index") == Some(first_mismatch_index)
+                })
+            });
+    let qkv_row = find_row(
+        source.pointer("/generated_output_qkv_projection_dispatch_replay_frontier/rows"),
+        case_id,
+        first_mismatch_index,
+    );
+    let right_replay = qkv_row.and_then(|row| row.get("right_replay"));
+    let device_intermediate_trace =
+        right_replay.and_then(|value| value.get("device_intermediate_trace"));
+    let device_expression_trace =
+        right_replay.and_then(|value| value.get("device_expression_trace"));
+    let device_sample = device_intermediate_trace
+        .and_then(|trace| trace.get("samples"))
+        .and_then(Value::as_array)
+        .and_then(|samples| samples.first());
+    let expression_sample = device_expression_trace
+        .and_then(|trace| trace.get("samples"))
+        .and_then(Value::as_array)
+        .and_then(|samples| samples.first());
+    let raw_activation_i8_available = any_array_at(
+        right_replay,
+        &[
+            &["focused_operands", "activations_i8"],
+            &["operands", "activations_i8"],
+            &["activations_i8"],
+        ],
+    );
+    let raw_packed_qk256_available = any_array_at(
+        right_replay,
+        &[&["focused_operands", "packed_qk256"], &["operands", "packed_qk256"], &["packed_qk256"]],
+    );
+    let mut missing_raw_operand_fields = Vec::new();
+    if !raw_activation_i8_available {
+        missing_raw_operand_fields.push("activations_i8");
+    }
+    if !raw_packed_qk256_available {
+        missing_raw_operand_fields.push("packed_qk256");
+    }
+    let summary_qk256_trace_available = right_replay.is_some();
+    let device_expression_trace_available = device_expression_trace.is_some();
+    let device_intermediate_trace_available = device_intermediate_trace.is_some();
+    let production_replay_skipped_reason = if raw_activation_i8_available
+        && raw_packed_qk256_available
+    {
+        "focused_raw_operands_present_but_production_replay_execution_not_enabled_in_this_classifier"
+    } else if summary_qk256_trace_available {
+        "focused_source_has_summary_qk256_trace_but_not_raw_activation_or_packed_qk256_bytes"
+    } else {
+        "focused_source_missing_qk256_replay_context"
+    };
+    let next_diagnostic = if raw_activation_i8_available && raw_packed_qk256_available {
+        "run selected-device production replay on the focused raw QK256 operands before any production QK256 policy change"
+    } else {
+        "capture raw activation row and packed QK256 bytes for the focused q_proj first mismatch before any production QK256 policy change"
+    };
+
+    FocusedContext {
+        case_found,
+        summary_first_divergence_matches_request,
+        qkv_context_available: qkv_row.is_some(),
+        raw_activation_i8_available,
+        raw_packed_qk256_available,
+        summary_qk256_trace_available,
+        device_expression_trace_available,
+        device_intermediate_trace_available,
+        runtime_device: string_at(right_replay, &["a770", "last_device", "runtime_device"]),
+        platform_index: u64_at(right_replay, &["a770", "last_device", "platform_index"]),
+        device_index: u64_at(right_replay, &["a770", "last_device", "device_index"]),
+        platform_name: string_at(right_replay, &["a770", "last_device", "platform_name"]),
+        vendor: string_at(right_replay, &["a770", "last_device", "vendor"]),
+        driver_version: string_at(right_replay, &["a770", "last_device", "driver_version"]),
+        target_layer_idx: qkv_row.and_then(|row| i64_field(row, "target_layer_idx")),
+        projection: qkv_row.and_then(|row| string_field(row, "projection")),
+        input_rows: u64_field(right_replay.unwrap_or(&Value::Null), "input_rows"),
+        output_rows: u64_field(right_replay.unwrap_or(&Value::Null), "output_rows"),
+        cols: u64_field(right_replay.unwrap_or(&Value::Null), "cols"),
+        row_stride_bytes: u64_field(right_replay.unwrap_or(&Value::Null), "row_stride_bytes"),
+        input_row_index: u64_field(
+            device_intermediate_trace.unwrap_or(&Value::Null),
+            "input_row_index",
+        ),
+        sample_count: u64_field(device_intermediate_trace.unwrap_or(&Value::Null), "sample_count"),
+        sample_limit: u64_field(device_intermediate_trace.unwrap_or(&Value::Null), "sample_limit"),
+        focused_output_index: device_sample.and_then(|sample| u64_field(sample, "output_index")),
+        activation_sum: device_sample.and_then(|sample| i64_field(sample, "activation_sum")),
+        activation_scale_bits: device_sample
+            .and_then(|sample| u64_field(sample, "activation_scale_bits")),
+        weight_scale_bits: device_sample.and_then(|sample| u64_field(sample, "weight_scale_bits")),
+        int_dot: device_sample.and_then(|sample| i64_field(sample, "int_dot")),
+        adjusted_dot: device_sample.and_then(|sample| i64_field(sample, "adjusted_dot")),
+        focused_device_output_bits: device_sample.and_then(|sample| u64_field(sample, "output_bits")),
+        focused_policy_bits: expression_sample.and_then(|sample| {
+            u64_field(sample, "div_then_mul_bits")
+                .or_else(|| u64_field(sample, "f64_div_then_mul_cast_bits"))
+        }),
+        device_intermediate_classification: string_at(
+            qkv_row,
+            &["right_replay", "device_intermediate_trace", "classification"],
+        )
+        .or_else(|| {
+            source
+                .pointer("/generated_output_qk256_device_intermediate_frontier/classification")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned)
+        }),
+        device_expression_classification: string_at(
+            qkv_row,
+            &["right_replay", "device_expression_trace", "classification"],
+        )
+        .or_else(|| {
+            source
+                .pointer("/generated_output_qk256_device_expression_frontier/classification")
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned)
+        }),
+        production_policy_change_justified: qkv_row
+            .and_then(|row| {
+                row.pointer("/right_replay/device_expression_trace/production_policy_change_justified")
+            })
+            .and_then(Value::as_bool)
+            .or_else(|| {
+                source
+                    .pointer(
+                        "/generated_output_qk256_compiler_strict_f32_codegen_frontier/rows/0/qk256_context/production_policy_change_justified",
+                    )
+                    .and_then(Value::as_bool)
+            }),
+        production_replay_skipped_reason,
+        missing_raw_operand_fields,
+        next_diagnostic,
+    }
+}
+
+fn focused_classification(context: &FocusedContext) -> &'static str {
+    if !context.case_found || !context.qkv_context_available {
+        "a770_qk256_focused_production_operands_missing_context"
+    } else if context.raw_activation_i8_available && context.raw_packed_qk256_available {
+        "a770_qk256_focused_production_operands_raw_operands_available"
+    } else if context.summary_qk256_trace_available {
+        "a770_qk256_focused_production_operands_summary_context_only_raw_operands_missing"
+    } else {
+        "a770_qk256_focused_production_operands_missing_context"
+    }
+}
+
+fn find_row<'a>(
+    rows: Option<&'a Value>,
+    case_id: &str,
+    first_mismatch_index: usize,
+) -> Option<&'a Value> {
+    rows.and_then(Value::as_array).and_then(|rows| {
+        rows.iter().find(|row| {
+            str_field(row, "case_id") == Some(case_id)
+                && usize_field(row, "first_mismatch_index") == Some(first_mismatch_index)
+        })
+    })
+}
+
+fn any_array_at(root: Option<&Value>, paths: &[&[&str]]) -> bool {
+    paths.iter().any(|path| {
+        let mut value = root;
+        for key in *path {
+            value = value.and_then(|value| value.get(*key));
+        }
+        value.and_then(Value::as_array).is_some_and(|array| !array.is_empty())
+    })
+}
+
+fn path_json_value(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+fn str_field<'a>(value: &'a Value, key: &str) -> Option<&'a str> {
+    value.get(key).and_then(Value::as_str)
+}
+
+fn string_field(value: &Value, key: &str) -> Option<String> {
+    str_field(value, key).map(ToOwned::to_owned)
+}
+
+fn usize_field(value: &Value, key: &str) -> Option<usize> {
+    value.get(key).and_then(Value::as_u64).and_then(|value| value.try_into().ok())
+}
+
+fn u64_field(value: &Value, key: &str) -> Option<u64> {
+    value.get(key).and_then(Value::as_u64)
+}
+
+fn i64_field(value: &Value, key: &str) -> Option<i64> {
+    value.get(key).and_then(Value::as_i64)
+}
+
+fn string_at(root: Option<&Value>, path: &[&str]) -> Option<String> {
+    let mut value = root;
+    for key in path {
+        value = value.and_then(|value| value.get(*key));
+    }
+    value.and_then(Value::as_str).map(ToOwned::to_owned)
+}
+
+fn u64_at(root: Option<&Value>, path: &[&str]) -> Option<u64> {
+    let mut value = root;
+    for key in path {
+        value = value.and_then(|value| value.get(*key));
+    }
+    value.and_then(Value::as_u64)
 }
 
 fn json_escape(value: &str) -> String {
