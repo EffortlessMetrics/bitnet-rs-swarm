@@ -1,0 +1,74 @@
+{
+  "artifact_kind": "slm_cpu_qnorm_input_runtime_hook_gate",
+  "work_item": "SLM-CPU-107",
+  "created_utc": "2026-05-25T05:31:16Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance"
+  },
+  "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-106-qnorm-input-receipt-comparator.json",
+  "selected_boundary": {
+    "exact_tensor_name": "layers.0.attention.q_proj.weight",
+    "exact_tensor_role": "AttentionQ",
+    "materialization_boundary": "q_norm_input_candle_tensor_boundary",
+    "source_comparator_status": "comparator_contract_defined_proof_blocked_on_runtime_hook_and_receipts"
+  },
+  "runtime_hook_gate": {
+    "role": "attention.q_proj.q_norm_input_runtime_hook_gate",
+    "status": "runtime_disabled_hook_and_tensor_identity_surface_defined_receipts_still_required",
+    "runtime_disabled_hook_surface_defined": true,
+    "receipt_tensor_identity_surface_defined": true,
+    "comparator_contract_defined": true,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false
+  },
+  "tensor_identity_surface": {
+    "boundary": "q_norm_input_candle_tensor_boundary",
+    "source_tensor_name": "layers.0.attention.q_proj.weight",
+    "required_identity_shape": "shape vector from the materialized q_norm_input Tensor",
+    "required_identity_dtype": "Candle Tensor dtype from the materialized q_norm_input Tensor",
+    "required_identity_format": "boundary=q_norm_input_candle_tensor_boundary;source=layers.0.attention.q_proj.weight;shape=[...];dtype=..."
+  },
+  "remaining_blockers": [
+    "qwen3_q8_before_after_receipts_missing",
+    "qwen25_q8_before_after_receipts_missing",
+    "accumulator_order_unproven"
+  ],
+  "result": {
+    "proof_ready": false,
+    "runtime_hook_missing": false,
+    "tensor_identity_surface_missing": false,
+    "qwen3_q8_before_after_receipts_missing": true,
+    "qwen25_q8_before_after_receipts_missing": true,
+    "accumulator_order_unproven": true,
+    "runtime_execution_enabled": false,
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "machine_checks": [
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_tensor_identity_surface_records_boundary_source_shape_dtype",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_runtime_hook_gate_defines_disabled_hook_surface",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_runtime_hook_gate_names_remaining_receipt_blockers_only",
+    "crates/bitnet-transformer/tests/transformer_model_tests.rs::dense_q8_sidecar_q_norm_input_runtime_hook_gate_keeps_claim_boundary"
+  ],
+  "claim_boundary": {
+    "new_inference_run": false,
+    "runtime_default_changed": false,
+    "packed_q8_sidecar_promoted": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

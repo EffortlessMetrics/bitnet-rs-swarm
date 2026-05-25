@@ -23,6 +23,8 @@ use bitnet_transformer::{
     dense_q8_sidecar_fused_q_projection_consumer_contract,
     dense_q8_sidecar_q_norm_input_proof_gate,
     dense_q8_sidecar_q_norm_input_receipt_comparator_gate,
+    dense_q8_sidecar_q_norm_input_runtime_hook_gate,
+    dense_q8_sidecar_q_norm_input_tensor_identity_surface,
     dense_q8_sidecar_q_norm_materialization_boundary_gate,
     dense_q8_sidecar_typed_attention_head_consumer_gate,
     dense_q8_sidecar_typed_attention_head_view_gate,
@@ -1240,6 +1242,78 @@ fn dense_q8_sidecar_q_norm_input_receipt_comparator_fails_closed_on_gaps() {
     ] {
         assert!(comparison.failed_fields.contains(&failed), "missing failed field {failed}");
     }
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_tensor_identity_surface_records_boundary_source_shape_dtype() {
+    let tensor =
+        Tensor::new(&[1f32, 2., 3., 4.], &Device::Cpu).unwrap().reshape((1, 1, 4)).unwrap();
+
+    let identity = dense_q8_sidecar_q_norm_input_tensor_identity_surface(
+        "layers.0.attention.q_proj.weight",
+        &tensor,
+    );
+
+    assert_eq!(identity.boundary, "q_norm_input_candle_tensor_boundary");
+    assert_eq!(identity.source_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(identity.shape, vec![1, 1, 4]);
+    assert_eq!(identity.dtype, "F32");
+    assert!(identity.identity.contains("boundary=q_norm_input_candle_tensor_boundary"));
+    assert!(identity.identity.contains("source=layers.0.attention.q_proj.weight"));
+    assert!(identity.identity.contains("shape=[1, 1, 4]"));
+    assert!(identity.identity.contains("dtype=F32"));
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_runtime_hook_gate_defines_disabled_hook_surface() {
+    let comparator = dense_q8_sidecar_q_norm_input_receipt_comparator_gate();
+    let gate = dense_q8_sidecar_q_norm_input_runtime_hook_gate();
+
+    assert_eq!(gate.role, "attention.q_proj.q_norm_input_runtime_hook_gate");
+    assert_eq!(
+        gate.status,
+        "runtime_disabled_hook_and_tensor_identity_surface_defined_receipts_still_required"
+    );
+    assert_eq!(gate.source_comparator_status, comparator.status);
+    assert_eq!(gate.exact_tensor_name, "layers.0.attention.q_proj.weight");
+    assert_eq!(gate.exact_tensor_role, "AttentionQ");
+    assert_eq!(gate.selected_materialization_boundary, "q_norm_input_candle_tensor_boundary");
+    assert!(gate.runtime_disabled_hook_surface_defined);
+    assert!(gate.receipt_tensor_identity_surface_defined);
+    assert!(gate.comparator_contract_defined);
+    assert!(!gate.proof_ready);
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_runtime_hook_gate_names_remaining_receipt_blockers_only() {
+    let gate = dense_q8_sidecar_q_norm_input_runtime_hook_gate();
+
+    for blocker in [
+        "qwen3_q8_before_after_receipts_missing",
+        "qwen25_q8_before_after_receipts_missing",
+        "accumulator_order_unproven",
+    ] {
+        assert!(gate.remaining_blockers.contains(&blocker), "missing remaining blocker {blocker}");
+    }
+    assert!(!gate.remaining_blockers.contains(&"q_norm_input_runtime_hook_missing"));
+    assert!(!gate.remaining_blockers.contains(&"q_norm_input_tensor_identity_unrecorded"));
+    assert!(!gate.remaining_blockers.contains(&"q_norm_input_receipt_comparator_missing"));
+}
+
+#[test]
+fn dense_q8_sidecar_q_norm_input_runtime_hook_gate_keeps_claim_boundary() {
+    let gate = dense_q8_sidecar_q_norm_input_runtime_hook_gate();
+
+    assert!(!gate.runtime_execution_enabled);
+    assert!(!gate.default_runtime_changed);
+    assert!(!gate.packed_q8_sidecar_default_enabled);
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.speedup_claim);
+    assert!(!gate.sustained_throughput_claim);
+    assert!(!gate.q4_q5_runtime_claim);
+    assert!(!gate.server_or_accelerator_claim);
+    assert!(!gate.qwen35_claim);
+    assert!(!gate.bitnet_qk256_claim);
 }
 
 // ── construction tests ────────────────────────────────────────────────────────
