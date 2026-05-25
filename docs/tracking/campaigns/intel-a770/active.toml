@@ -2925,7 +2925,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-055"
-status = "ready"
+status = "pr_open"
+pr = 672
+head_sha = "951cb0fd0fd96cfac6a869533b5c1e20f9f921d0"
 branch = "codex/intel-a770/A770-055-compiler-strict-f32-codegen"
 stackable = false
 review_mode = "codex_premerge"
