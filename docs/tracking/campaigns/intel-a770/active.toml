@@ -3293,9 +3293,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-061"
-status = "pr_open"
+status = "merged"
 pr = 714
-head_sha = "4494f891eab2ee3b5d3cc88206a26f62aada325b"
+head_sha = "2c23c2242ccb0f91ff9483a8b0be54f59e7d8dfd"
+merge_sha = "49783c04ec0bcb57e70589cdb127e494887582f8"
+merged_at = "2026-05-25T12:45:53Z"
 branch = "codex/intel-a770/A770-061-production-lowered-operation-sequence"
 stackable = false
 review_mode = "codex_premerge"
@@ -3327,6 +3329,60 @@ forbidden_paths = [
 ]
 may_claim = [
   "A770-061 may classify the diagnostic lowered production-kernel operation sequence for qk256_i2s_i8s_scaled_gemv.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-062"
+status = "ready"
+branch = "codex/intel-a770/A770-062-production-replay-instrumentation"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-061"]
+acceptance = "Capture diagnostic production replay instrumentation for adjusted_dot, activation_scale, weight_scale, reciprocal-path intermediate bits, final scaled value bits, and output store bits after A770-061 classified the lowered production sequence as requiring replay instrumentation, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+  "crates/bitnet-kernels/src/a770_opencl_runtime.rs",
+  "crates/bitnet-kernels/src/bin/**",
+]
+forbidden_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-062 may capture diagnostic production replay instrumentation for qk256_i2s_i8s_scaled_gemv.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
