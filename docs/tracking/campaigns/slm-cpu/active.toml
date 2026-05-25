@@ -6770,7 +6770,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-109"
-status = "ready"
+status = "pr_open"
+pr = 703
 branch = "codex/slm-cpu-109-warm-session-qnorm-identity"
 stackable = false
 review_mode = "codex_premerge"

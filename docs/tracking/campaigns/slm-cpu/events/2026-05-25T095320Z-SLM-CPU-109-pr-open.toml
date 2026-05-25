@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T09:53:20Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-109"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-109-warm-session-qnorm-identity"
+pr = 703
+head_sha = "50675b170e91b847ee700ac3babfbc78e0e52ef7"
+summary = "Opened PR #703 to emit the SLM warm-session dense q_norm input identity receipt field."
+notes = [
+  "Warm-session per-prompt and aggregate receipts now include `dense_q8_hook.q_norm_input_tensor_identity` under the disabled Qwen3 Q8 q_norm input hook surface.",
+  "The receipt remains fail-closed: the tensor fingerprint is explicitly not captured, `proof_ready=false`, eager_f32_candle remains the default runtime, and packed_q8_sidecar remains disabled by default.",
+  "The slice does not collect or claim before/after Qwen3 or Qwen2.5 strict CPU receipt-pair preservation.",
+  "No runtime promotion, allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
