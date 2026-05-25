@@ -1852,6 +1852,69 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "A770-056"
+status = "pr_open"
+pr = 680
+head_sha = "f0b33b7e53eaf7fb1c74210fe8ccf830102e05e8"
+branch = "codex/intel-a770/A770-056-opencl-compiler-binary-evidence"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-055"]
+acceptance = "Capture selected-device Intel Arc A770 OpenCL program-build and binary metadata for the diagnostic QK256 debug kernel, classifying whether a driver program binary is captured, whether strict-f32 source context is present, and whether vendor/offline disassembly remains missing, without changing production QK256 dispatch, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "rustfmt --edition 2024 --check crates/bitnet-kernels/src/a770_opencl_runtime.rs crates/bitnet-kernels/src/bin/a770_opencl_compiler_evidence.rs",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-compiler-evidence",
+  "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-compiler-evidence -- --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-compiler-binary-evidence.json",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-compiler-binary-evidence.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "cargo test --locked -p bitnet-kernels --no-default-features --features opencl --lib compiler_binary_evidence -- --nocapture",
+  "cargo test --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-compiler-evidence -- --nocapture",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-kernels/Cargo.toml",
+  "crates/bitnet-kernels/src/a770_opencl_runtime.rs",
+  "crates/bitnet-kernels/src/bin/a770_opencl_compiler_evidence.rs",
+  "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-compiler-binary-evidence.json",
+  "docs/reports/A770_056_OPENCL_COMPILER_BINARY_EVIDENCE.md",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-056 may capture selected-device OpenCL compiler program-binary metadata for the diagnostic QK256 debug kernel.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
 id = "A770-049"
 status = "merged"
 pr = 634
