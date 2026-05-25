@@ -14661,8 +14661,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-ASK-009"
-status = "in_progress"
+status = "pr_open"
 branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
+pr = 743
+head_sha = "0a970c7f3f2fa67cd8481e2fac7b8bbb8a301453"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
