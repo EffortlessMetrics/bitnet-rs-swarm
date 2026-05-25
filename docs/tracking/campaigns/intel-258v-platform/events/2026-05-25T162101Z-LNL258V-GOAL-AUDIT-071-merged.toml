@@ -1,0 +1,16 @@
+timestamp = "2026-05-25T16:21:01Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-071"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-071-post-a770062"
+pr = 725
+head_sha = "add9a41d179ce1ef61ec305930dbf92e852b33a4"
+merge_sha = "88e41598d49a0ec1f8ff49952a7e9366cff9c7c6"
+summary = "Merged the Lunar Lake no-inference excellence audit refresh."
+notes = [
+  "This records the GitHub merge observed while closing SLM-CPU-113.",
+  "The merge remains tracker/audit state only and does not claim Lunar Lake inference, route promotion, throughput, power advantage, native accelerator proof, Qwen3 promotion, or BitNet QK256/I2_S behavior changes.",
+]

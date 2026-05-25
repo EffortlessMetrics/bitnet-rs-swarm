@@ -6990,7 +6990,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-113"
-status = "ready"
+status = "merged"
+pr = 726
+head_sha = "5d2e5fca829e607d8897139ec74db504683fbd8b"
+merge_sha = "ae871be6f580ca9375ddd8b7346d435ef979c8b5"
+merged_at = "2026-05-25T16:30:00Z"
 branch = "codex/slm-cpu-113-qnorm-fingerprint-artifact"
 stackable = false
 review_mode = "codex_premerge"
@@ -7024,6 +7028,55 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-112 added an opt-in trace-only q_norm_input fingerprint diagnostic path.",
   "SLM-CPU-113 may capture or precisely block a real i5-8250U Qwen3 Q8_0 q_norm_input fingerprint artifact.",
+]
+must_not_claim = [
+  "The q_norm-input materialization boundary is fully behavior-proven without Qwen3 and Qwen2.5 before/after receipt comparisons that include tensor fingerprints.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-114"
+status = "ready"
+branch = "codex/slm-cpu-114-qnorm-fingerprint-receipt-pair"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-113"]
+acceptance = "Compare the SLM-CPU-113 Qwen3 Q8_0 q_norm_input fingerprint against a before/after strict CPU receipt pair and add the corresponding Qwen2.5 Q8_0 fingerprint artifact or record the exact blocker. A valid slice must preserve identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_norm_input tensor identity/fingerprint, and fallback_used=false across before/after receipts before any packed-Q8 sidecar runtime promotion. It must keep eager_f32_candle as the default runtime and must not claim allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-113 captured a real i5-8250U Qwen3 Q8_0 q_norm_input fingerprint artifact.",
+  "SLM-CPU-114 may compare the Qwen3 q_norm_input fingerprint against before/after strict CPU receipts and add or precisely block a Qwen2.5 Q8_0 fingerprint artifact.",
 ]
 must_not_claim = [
   "The q_norm-input materialization boundary is fully behavior-proven without Qwen3 and Qwen2.5 before/after receipt comparisons that include tensor fingerprints.",

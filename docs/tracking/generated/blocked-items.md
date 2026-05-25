@@ -477,6 +477,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-068 | LNL258V-GOAL-AUDIT-067 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-069 | LNL258V-GOAL-AUDIT-068 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-070 | LNL258V-GOAL-AUDIT-069 | merged |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-071 | LNL258V-GOAL-AUDIT-070 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-POWER-012 | LNL258V-POWER-011 | merged |
@@ -865,7 +866,8 @@
 | slm-cpu | SLM-CPU-110 | SLM-CPU-109 | merged |
 | slm-cpu | SLM-CPU-111 | SLM-CPU-110 | merged |
 | slm-cpu | SLM-CPU-112 | SLM-CPU-111 | merged |
-| slm-cpu | SLM-CPU-113 | SLM-CPU-112 | ready |
+| slm-cpu | SLM-CPU-113 | SLM-CPU-112 | merged |
+| slm-cpu | SLM-CPU-114 | SLM-CPU-113 | ready |
 | slm-cpu | SLM-CPU-103 | SLM-CPU-102 | merged |
 | slm-cpu | SLM-CPU-104 | SLM-CPU-103 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |

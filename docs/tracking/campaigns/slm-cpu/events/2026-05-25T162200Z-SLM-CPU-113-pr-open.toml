@@ -1,0 +1,17 @@
+timestamp = "2026-05-25T16:22:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-113"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-113-qnorm-fingerprint-artifact"
+pr = 726
+head_sha = "0d1b69dc41fa35a49032ba45696554f8ad46e136"
+summary = "Opened PR #726 with a real i5-8250U Qwen3 q_norm-input fingerprint artifact."
+notes = [
+  "The artifact records the verified Qwen3 Q8_0 model SHA, strict GGUF tokenizer authority, `cpu-rust`, `fallback_used=false`, generated IDs/text, top-k, and the exact layer-0 `attention.q_norm_input` f32-le SHA256.",
+  "The raw trace was reduced to a receipt-safe artifact: shape, dtype, source tensor, boundary, and SHA256 are recorded; tensor contents and sample values are not dumped.",
+  "The default production runtime remains `eager_f32_candle`; packed_q8_sidecar remains disabled by default.",
+  "No allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server or accelerator claim, Qwen3.5 claim, or BitNet QK256 claim is made.",
+]
