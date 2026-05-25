@@ -105,7 +105,7 @@ failure_mode = "Public docs or rustdoc examples drift from compilable API."
 proof_obligation = "Run cargo doc --workspace --no-default-features --features cpu."
 evidence = ["job logs"]
 allowed_triggers = ["pull_request", "push", "workflow_dispatch"]
-duplicate_of = ["docs-automation if overlapping"]
+duplicate_of = ["future:docs-automation"]
 review_after = "2026-06-07"
 expires = "2026-08-07"
 
@@ -688,6 +688,6 @@ proof_obligation = "Run ripr check on production Rust diffs and upload JSON/SARI
 evidence = ["target/ripr/ripr.json", "target/ripr/ripr.sarif", "GitHub annotations"]
 allowed_triggers = ["pull_request:path-gated", "workflow_dispatch"]
 labels = ["ripr", "full-ci"]
-duplicate_of = ["mutation-nightly"]
+duplicate_of = ["future:mutation-nightly"]
 review_after = "2026-06-07"
 expires = "2026-11-07"
