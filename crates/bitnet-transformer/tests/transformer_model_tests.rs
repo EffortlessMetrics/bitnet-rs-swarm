@@ -1245,9 +1245,9 @@ fn dense_q8_sidecar_q_norm_input_receipt_comparator_fails_closed_on_gaps() {
 }
 
 #[test]
-fn dense_q8_sidecar_q_norm_input_tensor_identity_surface_records_boundary_source_shape_dtype() {
-    let tensor =
-        Tensor::new(&[1f32, 2., 3., 4.], &Device::Cpu).unwrap().reshape((1, 1, 4)).unwrap();
+fn dense_q8_sidecar_q_norm_input_tensor_identity_surface_records_boundary_source_shape_dtype()
+-> anyhow::Result<()> {
+    let tensor = Tensor::new(&[1f32, 2., 3., 4.], &Device::Cpu)?.reshape((1, 1, 4))?;
 
     let identity = dense_q8_sidecar_q_norm_input_tensor_identity_surface(
         "layers.0.attention.q_proj.weight",
@@ -1262,6 +1262,8 @@ fn dense_q8_sidecar_q_norm_input_tensor_identity_surface_records_boundary_source
     assert!(identity.identity.contains("source=layers.0.attention.q_proj.weight"));
     assert!(identity.identity.contains("shape=[1, 1, 4]"));
     assert!(identity.identity.contains("dtype=F32"));
+
+    Ok(())
 }
 
 #[test]
