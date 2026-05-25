@@ -1,0 +1,45 @@
+timestamp = "2026-05-25T03:40:21Z"
+campaign = "intel-a770"
+item = "A770-056"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 680
+branch = "codex/intel-a770/A770-056-opencl-compiler-binary-evidence"
+head_sha = "1906dfacf94ffe4fa88257a06af7329ada4e192d"
+merge_sha = "3e5bf21407c180145ac272c804d9ca10f02d9145"
+merged_at = "2026-05-25T03:40:21Z"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #680, closing the A770-056 selected-device OpenCL compiler binary evidence diagnostic."
+notes = [
+  "PR #680 added `a770-opencl-compiler-evidence` and captured selected-device OpenCL program-build and binary metadata for the diagnostic QK256 debug kernel.",
+  "The live A770 receipt classifies the selected result as `a770_qk256_opencl_compiler_binary_evidence_program_binary_captured_disassembly_missing`.",
+  "The receipt records `binary_type=executable`, `program_binary_captured=true`, `strict_f32_barrier_source_present=true`, and `disassembly_captured=false`.",
+  "The next diagnostic remains vendor/offline compiler disassembly evidence before any production QK256 policy change.",
+  "No production QK256 dispatch, answer scoring, sampling, runtime policy, CPU/A770 parity, A770 readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim is made.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-056 captured selected-device OpenCL compiler program-binary metadata for the diagnostic QK256 debug kernel.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
