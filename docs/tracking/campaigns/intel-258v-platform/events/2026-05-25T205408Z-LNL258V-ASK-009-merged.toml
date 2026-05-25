@@ -1,0 +1,20 @@
+timestamp = "2026-05-25T20:54:08Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-ASK-009"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 743
+branch = "codex/lunar-lake/LNL258V-ASK-009-openvino-python-fallback"
+head_sha = "b875c9dbbde4fccc0bdadc688f8670bc014ee024"
+merge_sha = "10c1605b9d4027b6c5e8d6edd890dcf95617da76"
+merged_at = "2026-05-25T20:52:10Z"
+actor = "codex"
+summary = "Marked LNL258V-ASK-009 merged after PR #743 landed by automerge."
+notes = [
+  "PR #743 made the Lunar Lake OpenVINO operator ask helper discover target/lunar-lake-openvino-venv/Scripts/python.exe when BITNET_LUNAR_LAKE_OPENVINO_PYTHON and .venv are absent.",
+  "Local validation on the rebased PR head verified ask_normal auto without BITNET_LUNAR_LAKE_OPENVINO_PYTHON selected the profile-promoted OpenVINO GPU route with fallback_used=false and a bounded answer-gate pass.",
+  "The merged change is limited to helper Python discovery.",
+  "LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage exist.",
+  "No Lunar Lake route promotion, speedup claim, power-advantage claim, battery-mode evidence, native accelerator proof, broad dense SLM quality claim, model behavior change, full BitNet accelerator inference proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim was added.",
+]
