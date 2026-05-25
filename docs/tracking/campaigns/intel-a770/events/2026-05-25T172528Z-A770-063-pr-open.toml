@@ -1,0 +1,40 @@
+timestamp = "2026-05-25T17:25:28Z"
+campaign = "intel-a770"
+item = "A770-063"
+event = "pr_open"
+actor = "codex-a770"
+previous_status = "in_progress"
+new_status = "pr_open"
+branch = "codex/intel-a770/A770-063-focused-production-operands"
+pr = 731
+head_sha = "df975a185349068474a38ec35c0e81d6b12224db"
+summary = "Opened PR #731 with focused production operand context classification for the committed A770 generated-output first mismatch."
+notes = [
+  "The live receipt classifies the focused source as summary context only with raw focused operands missing.",
+  "The focused source has QK256 replay and device trace context for a770_summary_seed770024_keywords_014 at first mismatch index 9.",
+  "The focused source does not include the raw activations_i8 row or packed_qk256 bytes required to execute production replay on exact focused operands.",
+  "The PR keeps production replay unexecuted for focused operands rather than synthesizing model operands or promoting a production QK256 policy change.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-063 classifies focused diagnostic production operand availability for the committed generated-output first mismatch.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
