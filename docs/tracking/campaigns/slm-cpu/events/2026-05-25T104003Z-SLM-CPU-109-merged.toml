@@ -1,0 +1,25 @@
+timestamp = "2026-05-25T10:40:03Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-109"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 703
+branch = "codex/slm-cpu-109-warm-session-qnorm-identity"
+head_sha = "5f8eebbb727a5d1c02bf94234c9a21689146d8dd"
+merge_sha = "d042ea8be0f76c3ee26b5353bb0346b991182af1"
+merged_at = "2026-05-25T10:40:03Z"
+summary = "Merged the SLM-CPU-109 warm-session q_norm input tensor identity receipt field."
+notes = [
+  "PR #703 added `dense_q8_hook.q_norm_input_tensor_identity` to SLM warm-session per-prompt and aggregate receipts.",
+  "The receipt remains fail-closed: tensor fingerprint capture is explicitly unavailable, `proof_ready=false`, eager_f32_candle remains the default runtime, and packed_q8_sidecar remains disabled by default.",
+  "No before/after Qwen3 or Qwen2.5 strict CPU receipt-pair behavior preservation is claimed by SLM-CPU-109.",
+  "No runtime promotion, allocation reduction, timing improvement, sustained-throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-110"
+status = "ready"
+branch = "codex/slm-cpu-110-qnorm-receipt-pair-after-identity"
+summary = "Collect or precisely block the Qwen3 Q8_0 before/after strict CPU receipt pair now that the q_norm input tensor identity field exists in warm-session receipts."

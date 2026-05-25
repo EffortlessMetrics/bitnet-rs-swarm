@@ -6770,9 +6770,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-109"
-status = "pr_open"
-pr = 703
+status = "merged"
 branch = "codex/slm-cpu-109-warm-session-qnorm-identity"
+pr = 703
+head_sha = "5f8eebbb727a5d1c02bf94234c9a21689146d8dd"
+merge_sha = "d042ea8be0f76c3ee26b5353bb0346b991182af1"
+merged_at = "2026-05-25T10:40:03Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -6812,6 +6815,58 @@ may_claim = [
 must_not_claim = [
   "The q_norm-input materialization boundary is fully behavior-proven without Qwen3 and Qwen2.5 before/after receipts.",
   "The packed-Q8 sidecar is promoted to default runtime.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-110"
+status = "ready"
+branch = "codex/slm-cpu-110-qnorm-receipt-pair-after-identity"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-109"]
+acceptance = "Collect the Qwen3 Q8_0 before/after strict CPU receipt pair now that warm-session receipts emit dense_q8_hook.q_norm_input_tensor_identity, or record the next narrower machine-checkable blocker. A valid proof must preserve identical model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_norm_input tensor identity, and fallback_used=false across before/after receipts before claiming behavior preservation. It must keep eager_f32_candle as the default runtime, keep packed_q8_sidecar disabled by default unless all proof gates pass, and must not claim allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-109 added the missing warm-session q_norm_input tensor identity receipt field.",
+  "SLM-CPU-110 may collect or precisely block the Qwen3 Q8_0 before/after strict CPU receipt pair for that q_norm_input boundary.",
+]
+must_not_claim = [
+  "The q_norm-input materialization boundary is fully behavior-proven without Qwen3 and Qwen2.5 before/after receipts.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",
