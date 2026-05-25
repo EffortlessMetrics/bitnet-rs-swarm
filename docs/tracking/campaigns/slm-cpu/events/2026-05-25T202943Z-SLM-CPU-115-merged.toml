@@ -1,0 +1,23 @@
+timestamp = "2026-05-25T20:29:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-115"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-115-qnorm-proof-next-boundary"
+pr = 740
+head_sha = "ecbbd6851d19df64494e7b0a7249649a3804898e"
+merge_sha = "c57341c19d16c310f1545fa8bf16433e90961d6a"
+summary = "Merged PR #740 with the shared Qwen-family q_proj-output proof boundary selection."
+notes = [
+  "SLM-CPU-115 keeps the Qwen3 q_norm_input fingerprint evidence but rejects q_norm_input as a cross-family proof boundary because the accepted Qwen2.5 artifact has no q_norm-input stage.",
+  "The selected next boundary is attention.q_proj_output_pre_optional_qnorm, which exists before optional q_norm/k_norm on Qwen3 and also exists on Qwen2.5 Q8_0.",
+  "The default runtime remains eager_f32_candle; packed_q8_sidecar remains unpromoted; no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-116"
+status = "ready"
+branch = "codex/slm-cpu-116-qproj-output-pre-qnorm-hook"
+summary = "Add or precisely block a runtime-disabled diagnostic hook and fail-closed receipt/comparator surface for the shared attention.q_proj_output_pre_optional_qnorm boundary on Qwen3 Q8_0 and Qwen2.5 Q8_0."
