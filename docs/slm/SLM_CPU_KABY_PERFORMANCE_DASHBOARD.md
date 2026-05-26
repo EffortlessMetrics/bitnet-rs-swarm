@@ -52,6 +52,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_proj numeric tolerance gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json` | Accepts a narrow absolute `1e-4` f32 gate for the exact layer-0 `attention.q_proj_output_pre_optional_qnorm` diagnostic boundary using the accepted Qwen3 exact-match evidence and Qwen2.5 full-vector bounded-drift evidence; this proves only that exact boundary and does not claim allocation reduction, timing improvement, throughput, or default-runtime promotion |
 | q_proj allocation/timing readiness blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-126-allocation-timing-readiness-blocker.json` | Keeps the next before/after allocation or timing experiment fail-closed because the fresh cross-model receipt prerequisites are incomplete in this workspace: Qwen3 Q8_0 is present, but the exact Qwen2.5 Q8_0 GGUF needed for fresh before/after receipts is missing |
 | q_proj fresh receipt prerequisites | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-127-fresh-receipt-prereq.json` | Restores the exact Qwen2.5 Q8_0 cache artifact by pinned SHA256 and records fresh Qwen3/Qwen2.5 before/after strict CPU receipts with stable generated IDs/text, `cpu-rust`, `dense-qwen-cpu-reference`, and `fallback_used=false`; this is receipt readiness only, not an allocation, timing, speedup, or default-runtime claim |
+| q_proj timing classification | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-128-qproj-timing-classification.json` | Consumes the SLM-CPU-127 receipt pack and classifies the exact-tensor packed-Q8 sidecar timing evidence as mixed: Qwen3 is neutral on one sample, Qwen2.5 regresses, and allocation-audit counters are absent; no speedup, timing improvement, allocation reduction, or default-runtime promotion is claimed |
 
 Qwen3 rows use:
 
@@ -118,6 +119,14 @@ models. This restores receipt readiness for a later bounded experiment, but it
 does not itself claim allocation reduction, timing improvement, speedup,
 sustained throughput, default-runtime promotion, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 behavior.
+SLM-CPU-128 consumes that restored receipt pack as the first bounded
+classification rather than treating availability as improvement. The result is
+mixed and fail-closed: Qwen3's one-token `say_four` sample is neutral within a
+single-run timing envelope, while Qwen2.5's `math_2_plus_2_brief` sample
+regresses on decode-total, first-token, prefill, and tokens-per-second fields.
+The receipts do not carry allocation-audit counters, so no allocation reduction
+can be evaluated from this pack. The exact-tensor packed-Q8 sidecar remains
+opt-in, exact-tensor scoped, and not promoted to the default runtime.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

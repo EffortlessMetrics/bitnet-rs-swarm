@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_allocation_timing_classification",
+  "id": "SLM-CPU-128",
+  "status": "classified_no_speedup_claim",
+  "claim": "SLM-CPU-128 consumes the SLM-CPU-127 fresh cross-model before/after receipt pack and classifies the exact-tensor packed-Q8 sidecar timing evidence as mixed and insufficient for any allocation, timing-improvement, speedup, or default-runtime-promotion claim.",
+  "source_gate": {
+    "numeric_gate_item": "SLM-CPU-125",
+    "numeric_gate_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json",
+    "fresh_receipt_item": "SLM-CPU-127",
+    "fresh_receipt_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-127-fresh-receipt-prereq.json",
+    "accepted_boundary": "attention.q_proj_output_pre_optional_qnorm",
+    "exact_tensor": "layers.0.attention.q_proj.weight",
+    "runtime_path_policy": "packed-Q8 sidecar remains opt-in and exact-tensor scoped; eager F32 Candle remains the default runtime"
+  },
+  "behavior_equivalence": {
+    "qwen3_generated_ids_match": true,
+    "qwen3_generated_ids": [19],
+    "qwen3_decoded_text_match": true,
+    "qwen3_decoded_text": "4",
+    "qwen25_generated_ids_match": true,
+    "qwen25_generated_ids": [17, 10, 17, 16819, 220, 19, 13, 151645],
+    "qwen25_decoded_text_match": true,
+    "qwen25_decoded_text": "2+2 equals 4.",
+    "all_receipts_fallback_false": true,
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "selected_backend_preserved": "cpu-rust",
+    "selected_kernel_preserved": "dense-qwen-cpu-reference"
+  },
+  "timing_samples": {
+    "qwen3": {
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-127-before-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-127-after-run.json",
+      "case_id": "say_four",
+      "generated_token_count": 1,
+      "before_decode_total_ms": 2962.873,
+      "after_decode_total_ms": 2825.778,
+      "decode_total_after_before_ratio": 0.953729,
+      "before_first_token_ms": 18408,
+      "after_first_token_ms": 18399,
+      "first_token_after_before_ratio": 0.999511,
+      "before_prefill_ms": 15441.785,
+      "after_prefill_ms": 15569.504,
+      "prefill_after_before_ratio": 1.00827,
+      "before_tokens_per_second": 0.0542976597708639,
+      "after_tokens_per_second": 0.0543271581463574,
+      "tokens_per_second_after_before_ratio": 1.000543,
+      "classification": "neutral_single_sample_not_a_speedup_claim"
+    },
+    "qwen25": {
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-127-before-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-127-after-run.json",
+      "case_id": "math_2_plus_2_brief",
+      "generated_token_count": 8,
+      "before_decode_total_ms": 6330.646,
+      "after_decode_total_ms": 6583.319,
+      "decode_total_after_before_ratio": 1.039913,
+      "before_first_token_ms": 19228,
+      "after_first_token_ms": 19981,
+      "first_token_after_before_ratio": 1.039162,
+      "before_prefill_ms": 17415.841,
+      "after_prefill_ms": 18151.474,
+      "prefill_after_before_ratio": 1.042239,
+      "before_tokens_per_second": 0.336757029802997,
+      "after_tokens_per_second": 0.323336836149058,
+      "tokens_per_second_after_before_ratio": 0.960149,
+      "classification": "regressed_single_sample"
+    }
+  },
+  "allocation_evidence": {
+    "allocation_audit_present": false,
+    "allocation_reduction_claim": false,
+    "reason": "The SLM-CPU-127 receipt pack is answer-corpus timing evidence and does not carry allocation-audit counters for this exact-tensor experiment."
+  },
+  "classification": {
+    "behavior_equivalence_passed": true,
+    "timing_result": "mixed_single_sample_qwen3_neutral_qwen25_regressed",
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "next_safe_step": "Do not promote packed-Q8 sidecar. If this boundary remains interesting, collect repeated warm-session receipts with allocation-audit counters for both Qwen3 and Qwen2.5 before making any timing or allocation claim."
+  },
+  "claim_boundary": {
+    "packed_q8_sidecar_default_enabled": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_claim": false,
+    "accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

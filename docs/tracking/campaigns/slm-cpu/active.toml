@@ -7809,7 +7809,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-128"
-status = "ready"
+status = "pr_open"
+pr = 778
+head_sha = "45480f0e21bd149f0f699d3b4deec8dcb2200228"
 branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
 stackable = false
 review_mode = "codex_premerge"

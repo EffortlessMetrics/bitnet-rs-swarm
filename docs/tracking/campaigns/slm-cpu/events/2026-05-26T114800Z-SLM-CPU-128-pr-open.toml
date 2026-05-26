@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T11:48:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-128"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 778
+branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
+head_sha = "45480f0e21bd149f0f699d3b4deec8dcb2200228"
+summary = "Opened PR #778 to classify the exact q_proj packed-Q8 sidecar timing evidence from the fresh cross-model receipt pack."
+notes = [
+  "The PR records behavior-equivalent Qwen3 and Qwen2.5 before/after receipt evidence from SLM-CPU-127.",
+  "The timing classification is mixed: Qwen3 is neutral on one sample, while Qwen2.5 regresses.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
