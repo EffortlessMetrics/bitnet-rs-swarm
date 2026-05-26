@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_source_order_qproj_receipt_pair_blocker",
+  "tracking_item": "SLM-CPU-136",
+  "timestamp": "2026-05-26T16:19:33Z",
+  "input_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-135-source-order-qproj-behavior-gate.json",
+  "candidate": {
+    "prototype_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-134-source-order-qproj-matvec-prototype.json",
+    "tensor": "layers.0.attention.q_proj.weight",
+    "boundary": "attention.q_proj_output_pre_optional_qnorm",
+    "candidate_path": "source_order_q8_0_qproj_matvec",
+    "default_runtime": "eager_f32_candle",
+    "runtime_selection_enabled": false
+  },
+  "required_receipt_pairs": {
+    "qwen3_q8_0": {
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "baseline_receipt": null,
+      "candidate_receipt": null,
+      "status": "blocked_before_after_source_order_selector_receipts_missing"
+    },
+    "qwen2_5_0_5b_instruct_q8_0": {
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "baseline_receipt": null,
+      "candidate_receipt": null,
+      "status": "blocked_before_after_source_order_selector_receipts_missing"
+    }
+  },
+  "receipt_identity_requirements": [
+    "model.sha256",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend",
+    "selected_kernel",
+    "dense_hook_identity",
+    "fallback_used",
+    "q_proj_numeric_evidence"
+  ],
+  "inspection_evidence": {
+    "prototype_surface": "crates/bitnet-models/src/dense_gguf_q8_sidecar.rs::DenseGgufQ8SidecarDescriptor::source_order_matvec_prototype",
+    "prototype_scope": "runtime-disabled proof helper that consumes caller-provided f32 input and exact packed payload bytes",
+    "runtime_selector_surface": "not wired for generation-time source-order q_proj selection",
+    "cli_selector_flag": "not available for source_order_q8_0_qproj_matvec",
+    "receipt_field_for_source_order_selector": "not available",
+    "existing_dense_hook_identity_surface": "attention.q_proj_output_pre_optional_qnorm",
+    "existing_numeric_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json"
+  },
+  "blockers": [
+    {
+      "blocker": "selector_hook_missing",
+      "category": "runtime-selection",
+      "detail": "No generation-time hook selects the SLM-CPU-134 source-order Q8_0 q_proj matvec prototype for either Qwen3 or Qwen2.5.",
+      "required_to_unblock": "Add an opt-in, default-disabled selector path that can route only the exact q_proj tensor through the source-order matvec candidate while preserving eager_f32_candle as the default."
+    },
+    {
+      "blocker": "candidate_receipt_identity_missing",
+      "category": "receipt-safety",
+      "detail": "No strict CPU receipt field records source_order_q8_0_qproj_matvec as the selected dense hook candidate with q_proj numeric evidence.",
+      "required_to_unblock": "Record candidate dense hook identity, selected kernel/path identity, q_proj numeric evidence, and fallback_used=false in the before/after receipts."
+    },
+    {
+      "blocker": "candidate_input_binding_missing",
+      "category": "trace-identity",
+      "detail": "The prototype currently consumes a caller-provided f32 input slice; it is not bound to the exact runtime hidden-state input used by the Qwen3/Qwen2.5 strict CPU generation path.",
+      "required_to_unblock": "Bind the candidate input to the same runtime q_proj input tensor/trace boundary used by the baseline path and emit comparable q_proj output evidence."
+    },
+    {
+      "blocker": "cross_model_receipt_pair_missing",
+      "category": "behavior-oracle",
+      "detail": "The required Qwen3 and Qwen2.5 baseline/candidate receipt pairs have not been captured for the source-order selector path.",
+      "required_to_unblock": "Capture both model pairs and prove unchanged prompt IDs, generated IDs, decoded text, backend/kernel identity, tokenizer authority, model SHA, dense hook identity, and fallback_used=false."
+    }
+  ],
+  "classification": "source_order_qproj_receipt_pairs_blocked_selector_hook_missing",
+  "next_safe_step": "Add a default-disabled exact-tensor selector hook and receipt identity fields, then capture Qwen3/Qwen2.5 before/after strict CPU receipt pairs before considering selector use.",
+  "claim_boundary": {
+    "runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
