@@ -8008,7 +8008,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-132"
-status = "ready"
+status = "pr_open"
+pr = 786
+head_sha = "1ce29b30b9e0be0b3052cd6a634a50dbd45df961"
 branch = "codex/slm-cpu-132-qwen3-qproj-payload-reorder-contract"
 stackable = false
 review_mode = "codex_premerge"
