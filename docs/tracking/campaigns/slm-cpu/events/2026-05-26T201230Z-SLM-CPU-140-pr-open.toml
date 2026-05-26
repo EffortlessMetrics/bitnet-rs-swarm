@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T20:12:30Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-140"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-140-qwen25-cache-restore-contract"
+pr = 802
+head_sha = "998b08287eb7d91830c1385783fbe7d5dc101a9d"
+summary = "Opened PR #802 with the Qwen2.5 cache restoration and source-order receipt capture contract."
+notes = [
+  "The contract names the exact Qwen2.5 Q8_0 repo, revision, file, SHA256, non-committed cache path, and verification gate.",
+  "The contract names the four Qwen3/Qwen2.5 before/after receipt outputs and required SLM-CPU-137 source_order_* identity fields.",
+  "The slice captures no fresh receipts, commits no model or target cache artifacts, and makes no runtime, allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
