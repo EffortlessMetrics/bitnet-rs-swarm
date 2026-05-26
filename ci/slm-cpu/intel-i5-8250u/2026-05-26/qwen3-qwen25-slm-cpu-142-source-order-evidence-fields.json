@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_evidence_fields",
+  "tracking_item": "SLM-CPU-142",
+  "created_at": "2026-05-26T22:20:00Z",
+  "status": "receipt_fields_added_fail_closed",
+  "summary": "The warm-session dense_q8_hook receipt surface now carries explicit source_order_qproj_candidate_identity and q_proj_numeric_evidence objects. This resolves the SLM-CPU-141 absent-field ambiguity without promoting source-order q_proj runtime selection, claiming allocation or timing improvement, or weakening the Qwen3/Qwen2.5 behavior oracle.",
+  "field_contract": {
+    "source_order_qproj_candidate_identity": {
+      "purpose": "Record whether the exact layer-0 q_proj payload is the source-order Q8_0 matvec candidate, including path, kernel, receipt identity, dimensions, runtime-enabled state, and a fail-closed blocking reason.",
+      "candidate_status": "candidate_identity_present_runtime_disabled",
+      "runtime_shape_compatible_status": "not_source_order_runtime_shape_compatible",
+      "runtime_enabled": false
+    },
+    "q_proj_numeric_evidence": {
+      "purpose": "Make the missing q_proj numeric comparison evidence machine-checkable instead of inferred from an absent receipt field.",
+      "present": false,
+      "status": "not_captured_by_warm_session_receipt",
+      "required_stage": "attention.q_proj_output_pre_optional_qnorm",
+      "required_boundary": "attention_q_proj_output_pre_optional_qnorm",
+      "required_evidence": [
+        "before_after_q_proj_output_f32_le_fingerprint_or_bounded_vector",
+        "max_abs_diff",
+        "mean_abs_diff",
+        "rms_abs_diff",
+        "first_differing_index",
+        "accepted_absolute_tolerance"
+      ]
+    }
+  },
+  "expected_model_classification": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "expected_source_order_status": "candidate_identity_present_runtime_disabled",
+      "expected_q_proj_numeric_evidence_status": "not_captured_by_warm_session_receipt",
+      "meaning": "Qwen3 layer-0 q_proj remains a source-order Q8_0 candidate, but selector use stays blocked until numeric evidence is attached to fresh behavior-preserving receipts."
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "expected_source_order_status": "not_source_order_runtime_shape_compatible",
+      "expected_q_proj_numeric_evidence_status": "not_captured_by_warm_session_receipt",
+      "meaning": "Qwen2.5 is not forced into the Qwen3 source-order candidate path because its payload matches runtime matrix shape; it remains useful as a cross-model behavior oracle with an explicit non-source-order classification."
+    }
+  ],
+  "validation": {
+    "focused_tests": [
+      "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_dense_q8_hook_receipt"
+    ],
+    "passed": true,
+    "format_note": "rustfmt --check over crates/bitnet-cli/src/main.rs still reports the repository's pre-existing Windows newline-style issue across the bitnet-cli module tree; git diff --check passed."
+  },
+  "claim_boundary": {
+    "runtime_selection_promoted": false,
+    "default_runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_safe_step": "Regenerate Qwen3/Qwen2.5 strict CPU receipt pairs with the new fields. Selector promotion remains blocked until q_proj numeric evidence is present and behavior receipts preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, and fallback_used=false."
+}

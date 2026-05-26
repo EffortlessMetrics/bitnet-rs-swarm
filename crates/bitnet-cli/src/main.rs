@@ -10744,6 +10744,41 @@ fn slm_warm_session_dense_q8_hook_receipt(
         .and_then(|boundary| boundary.get("source_order_selected_kernel"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
+    let source_order_input_dim = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_input_dim"))
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let source_order_output_dim = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_output_dim"))
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let sidecar_payload_order_matches_runtime_shape = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("sidecar_payload_order_matches_runtime_shape"))
+        .and_then(serde_json::Value::as_bool);
+    let source_order_status = if source_order_candidate {
+        "candidate_identity_present_runtime_disabled"
+    } else if sidecar_payload_order_matches_runtime_shape == Some(true) {
+        "not_source_order_runtime_shape_compatible"
+    } else if dense_q8_hook_selection.get("payload_bearing_boundary").is_some() {
+        "payload_boundary_present_without_source_order_identity"
+    } else {
+        "no_payload_boundary"
+    };
+    let source_order_blocking_reason = match source_order_status {
+        "candidate_identity_present_runtime_disabled" => {
+            "q_proj numeric evidence is still required before source-order selector use"
+        }
+        "not_source_order_runtime_shape_compatible" => {
+            "payload already matches runtime matrix shape, so it is not the Qwen3 source-order q_proj candidate"
+        }
+        "payload_boundary_present_without_source_order_identity" => {
+            "payload boundary is present but selector classification did not expose source-order path/kernel identity"
+        }
+        _ => "no payload-bearing dense Q8 boundary reached this receipt surface",
+    };
     let selected_tensor = dense_q8_hook_selection
         .get("payload_bearing_boundary")
         .and_then(|boundary| boundary.get("tensor_name"))
@@ -10786,6 +10821,46 @@ fn slm_warm_session_dense_q8_hook_receipt(
         "source_order_selected_kernel": source_order_selected_kernel,
         "source_order_candidate_receipt_identity": source_order_candidate_receipt_identity,
         "source_order_candidate_runtime_enabled": false,
+        "source_order_qproj_candidate_identity": {
+            "present": source_order_candidate,
+            "status": source_order_status,
+            "selected_tensor": selected_tensor,
+            "selected_path": dense_q8_hook_selection
+                .get("payload_bearing_boundary")
+                .and_then(|boundary| boundary.get("source_order_selected_path"))
+                .cloned()
+                .unwrap_or(serde_json::Value::Null),
+            "selected_kernel": dense_q8_hook_selection
+                .get("payload_bearing_boundary")
+                .and_then(|boundary| boundary.get("source_order_selected_kernel"))
+                .cloned()
+                .unwrap_or(serde_json::Value::Null),
+            "receipt_identity": dense_q8_hook_selection
+                .get("payload_bearing_boundary")
+                .and_then(|boundary| boundary.get("source_order_candidate_receipt_identity"))
+                .cloned()
+                .unwrap_or(serde_json::Value::Null),
+            "input_dim": source_order_input_dim,
+            "output_dim": source_order_output_dim,
+            "runtime_enabled": false,
+            "blocking_reason": source_order_blocking_reason,
+        },
+        "q_proj_numeric_evidence": {
+            "present": false,
+            "status": "not_captured_by_warm_session_receipt",
+            "required_stage": "attention.q_proj_output_pre_optional_qnorm",
+            "required_boundary": "attention_q_proj_output_pre_optional_qnorm",
+            "required_source_tensor": selected_tensor,
+            "required_evidence": [
+                "before_after_q_proj_output_f32_le_fingerprint_or_bounded_vector",
+                "max_abs_diff",
+                "mean_abs_diff",
+                "rms_abs_diff",
+                "first_differing_index",
+                "accepted_absolute_tolerance"
+            ],
+            "blocking_reason": "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating",
+        },
         "q_norm_input_boundary": gate.selected_materialization_boundary,
         "q_norm_input_tensor_identity": {
             "identity": tensor_identity,
@@ -14945,6 +15020,9 @@ mod tests {
                 "source_order_selected_path": "source_order_q8_0_qproj_matvec",
                 "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
                 "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+                "source_order_input_dim": 1024,
+                "source_order_output_dim": 2048,
+                "sidecar_payload_order_matches_runtime_shape": false,
             },
         });
 
@@ -14959,6 +15037,22 @@ mod tests {
         assert_eq!(
             receipt["source_order_candidate_receipt_identity"],
             "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled"
+        );
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["present"], true);
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["status"],
+            "candidate_identity_present_runtime_disabled"
+        );
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["input_dim"], 1024);
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["output_dim"], 2048);
+        assert_eq!(receipt["q_proj_numeric_evidence"]["present"], false);
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["status"],
+            "not_captured_by_warm_session_receipt"
+        );
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["required_boundary"],
+            "attention_q_proj_output_pre_optional_qnorm"
         );
         assert_eq!(receipt["after_receipt_field"], "dense_q8_hook.q_norm_input_tensor_identity");
         assert_eq!(
@@ -14980,6 +15074,44 @@ mod tests {
         assert_eq!(receipt["proof_ready"], false);
         assert_eq!(receipt["speedup_claim"], false);
         assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_dense_q8_hook_receipt_blocks_runtime_shape_compatible_source_order() {
+        let selection = serde_json::json!({
+            "selected_path": "eager_f32_candle",
+            "selected_kernel": "dense-f32-candle-linear",
+            "payload_bearing_boundary": {
+                "tensor_name": "layers.0.attention.q_proj.weight",
+                "source_order_q8_matvec_candidate": false,
+                "source_order_input_dim": 896,
+                "source_order_output_dim": 896,
+                "sidecar_payload_order_matches_runtime_shape": true,
+            },
+        });
+
+        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+
+        assert_eq!(receipt["source_order_q8_matvec_candidate"], false);
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["present"], false);
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["status"],
+            "not_source_order_runtime_shape_compatible"
+        );
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["blocking_reason"],
+            "payload already matches runtime matrix shape, so it is not the Qwen3 source-order q_proj candidate"
+        );
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["input_dim"], 896);
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["output_dim"], 896);
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["blocking_reason"],
+            "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating"
+        );
+        assert_eq!(receipt["runtime_compute_enabled"], false);
+        assert_eq!(receipt["default_runtime_changed"], false);
+        assert_eq!(receipt["speedup_claim"], false);
     }
 
     #[test]
