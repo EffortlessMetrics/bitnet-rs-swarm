@@ -578,7 +578,7 @@ fn dense_q8_runtime_hooks_from_sidecars(
         let Some(canonical_name) = dense_q8_transformer_hook_name(descriptor) else {
             continue;
         };
-        let payload_order_matches_runtime_shape = !descriptor.shape_reshaped_without_transpose;
+        let payload_order_matches_runtime_shape = descriptor.payload_order_matches_runtime_shape();
         let runtime_compute_enabled = payload_order_matches_runtime_shape
             && runtime_compute_tensor
                 .as_deref()

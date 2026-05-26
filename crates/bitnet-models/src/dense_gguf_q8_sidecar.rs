@@ -56,6 +56,33 @@ pub struct DenseGgufQ8SidecarRegistry {
     pub next_runtime_api_hook: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DenseQ8PayloadOrderProofStatus {
+    MatchesRuntimeShape,
+    BlockedPendingPayloadReorderProof,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DenseQ8PayloadOrderProof {
+    pub schema: u64,
+    pub artifact_kind: String,
+    pub tensor_name: String,
+    pub role: DenseGgufTensorRole,
+    pub source_shape: Vec<usize>,
+    pub runtime_candle_shape: Vec<usize>,
+    pub source_payload_order_matches_runtime_shape: bool,
+    pub runtime_shape_requires_reorder: bool,
+    pub q8_block_size: usize,
+    pub q8_block_count: usize,
+    pub q8_payload_bytes: usize,
+    pub packed_q8_bytes_sha256: String,
+    pub proof_status: DenseQ8PayloadOrderProofStatus,
+    pub runtime_selection_allowed: bool,
+    pub blocker: Option<String>,
+    pub next_safe_step: String,
+}
+
 impl Default for DenseGgufQ8SidecarRegistry {
     fn default() -> Self {
         Self {
@@ -176,6 +203,50 @@ impl DenseGgufQ8SidecarDescriptor {
             generated_id_preservation_required_before_runtime_use: true,
             next_runtime_api_hook: "dense_linear_dispatch_q8_sidecar_candidate".to_string(),
         }))
+    }
+
+    pub fn payload_order_matches_runtime_shape(&self) -> bool {
+        !self.shape_reshaped_without_transpose
+    }
+
+    pub fn payload_order_proof(&self) -> DenseQ8PayloadOrderProof {
+        let source_payload_order_matches_runtime_shape = self.payload_order_matches_runtime_shape();
+        let proof_status = if source_payload_order_matches_runtime_shape {
+            DenseQ8PayloadOrderProofStatus::MatchesRuntimeShape
+        } else {
+            DenseQ8PayloadOrderProofStatus::BlockedPendingPayloadReorderProof
+        };
+        let blocker = (!source_payload_order_matches_runtime_shape).then(|| {
+            format!(
+                "GGUF source shape {:?} is represented at runtime as Candle shape {:?}; packed Q8_0 bytes remain in source payload order and require a tensor-specific reorder/runtime-shape proof before packed sidecar selection",
+                self.source_shape, self.runtime_candle_shape
+            )
+        });
+        let next_safe_step = if source_payload_order_matches_runtime_shape {
+            "eligible for generated-ID before/after receipt gate before runtime selection"
+                .to_string()
+        } else {
+            "produce a tensor-specific payload reorder proof, or keep the selector fail-closed on eager_f32_candle".to_string()
+        };
+
+        DenseQ8PayloadOrderProof {
+            schema: 1,
+            artifact_kind: "dense_q8_payload_order_proof".to_string(),
+            tensor_name: self.tensor_name.clone(),
+            role: self.role,
+            source_shape: self.source_shape.clone(),
+            runtime_candle_shape: self.runtime_candle_shape.clone(),
+            source_payload_order_matches_runtime_shape,
+            runtime_shape_requires_reorder: !source_payload_order_matches_runtime_shape,
+            q8_block_size: self.q8_block_size,
+            q8_block_count: self.q8_block_count,
+            q8_payload_bytes: self.q8_payload_bytes,
+            packed_q8_bytes_sha256: self.packed_q8_bytes_sha256.clone(),
+            proof_status,
+            runtime_selection_allowed: source_payload_order_matches_runtime_shape,
+            blocker,
+            next_safe_step,
+        }
     }
 }
 
@@ -335,6 +406,53 @@ mod tests {
         assert!(transposed_descriptor.shape_reshaped_without_transpose);
         assert_eq!(token_major_descriptor.runtime_candle_shape, vec![32768, 64]);
         assert!(!token_major_descriptor.shape_reshaped_without_transpose);
+    }
+
+    #[test]
+    fn dense_gguf_q8_payload_order_proof_blocks_transposed_projection_payload() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![1024, 2048], 2_228_224);
+        let data = vec![0u8; 2_228_224];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let proof = descriptor.payload_order_proof();
+
+        assert_eq!(proof.tensor_name, "blk.0.attn_q.weight");
+        assert_eq!(proof.source_shape, vec![1024, 2048]);
+        assert_eq!(proof.runtime_candle_shape, vec![2048, 1024]);
+        assert_eq!(
+            proof.proof_status,
+            DenseQ8PayloadOrderProofStatus::BlockedPendingPayloadReorderProof
+        );
+        assert!(!proof.source_payload_order_matches_runtime_shape);
+        assert!(proof.runtime_shape_requires_reorder);
+        assert!(!proof.runtime_selection_allowed);
+        assert!(
+            proof
+                .blocker
+                .as_deref()
+                .is_some_and(|blocker| blocker.contains("require a tensor-specific reorder"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_payload_order_proof_allows_matching_projection_payload() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![896, 896], 852_992);
+        let data = vec![0u8; 852_992];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let proof = descriptor.payload_order_proof();
+
+        assert_eq!(proof.source_shape, vec![896, 896]);
+        assert_eq!(proof.runtime_candle_shape, vec![896, 896]);
+        assert_eq!(proof.proof_status, DenseQ8PayloadOrderProofStatus::MatchesRuntimeShape);
+        assert!(proof.source_payload_order_matches_runtime_shape);
+        assert!(!proof.runtime_shape_requires_reorder);
+        assert!(proof.runtime_selection_allowed);
+        assert!(proof.blocker.is_none());
+        Ok(())
     }
 
     #[test]

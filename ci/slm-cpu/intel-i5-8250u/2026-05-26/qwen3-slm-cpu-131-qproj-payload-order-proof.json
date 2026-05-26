@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_qwen3_qproj_payload_order_proof",
+  "tracking_item": "SLM-CPU-131",
+  "timestamp": "2026-05-26T12:41:00Z",
+  "inputs": {
+    "selector_convergence_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-130-selector-convergence-gate.json",
+    "qwen3_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-129-after-warm-allocation.json"
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "accepted_behavior_gate": {
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "allocation_audit_counters_available": true,
+    "q_proj_numeric_gate_preserved": true
+  },
+  "payload_order_proof": {
+    "schema": 1,
+    "artifact_kind": "dense_q8_payload_order_proof",
+    "tensor_name": "layers.0.attention.q_proj.weight",
+    "role": "attention_q",
+    "source_shape": [1024, 2048],
+    "runtime_candle_shape": [2048, 1024],
+    "source_payload_order_matches_runtime_shape": false,
+    "runtime_shape_requires_reorder": true,
+    "q8_block_size": 32,
+    "q8_block_count": 65536,
+    "q8_payload_bytes": 2228224,
+    "packed_q8_bytes_sha256": "a8e16a232ea8c19a5c5d2eb5f21bfdf5c297eba0ac90e74b0afc052577179c24",
+    "proof_status": "blocked_pending_payload_reorder_proof",
+    "runtime_selection_allowed": false,
+    "blocker": "GGUF source shape [1024, 2048] is represented at runtime as Candle shape [2048, 1024]; packed Q8_0 bytes remain in source payload order and require a tensor-specific reorder/runtime-shape proof before packed sidecar selection.",
+    "next_safe_step": "produce a Qwen3 tensor-specific payload reorder proof or keep the selector fail-closed on eager_f32_candle"
+  },
+  "selector_resolution": {
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "runtime_compute_enabled": false,
+    "dense_runtime_replaced": false,
+    "sidecar_payload_bytes_available": true,
+    "sidecar_payload_contract_valid": true,
+    "sidecar_payload_order_matches_runtime_shape": false,
+    "selector_contract": "fail_closed_until_payload_order_proof"
+  },
+  "classification": "qwen3_qproj_runtime_selection_blocked_by_source_payload_order",
+  "resolution": {
+    "qwen3_runtime_status": "diagnostic_only_until_payload_reorder_or_runtime_shape_proof_exists",
+    "default_runtime_status": "eager_f32_candle_preserved",
+    "next_safe_step": "implement and test a Qwen3 q_proj payload reorder proof before enabling the packed-Q8 sidecar selector for this tensor"
+  },
+  "not_claimed": [
+    "allocation reduction",
+    "timing improvement",
+    "speedup",
+    "sustained throughput",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality"
+  ]
+}
