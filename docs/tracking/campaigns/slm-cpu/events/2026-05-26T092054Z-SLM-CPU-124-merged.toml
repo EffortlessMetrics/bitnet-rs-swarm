@@ -1,0 +1,24 @@
+timestamp = "2026-05-26T09:20:54Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-124"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 770
+branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
+head_sha = "aa6bc330110d4c17783144360bed42c708703475"
+merge_sha = "beb8cb6a9cbcb3e152f40f6b0d8532fe2ed820d2"
+summary = "Merged PR #770 with the Qwen2.5 q_proj-output tensor dump classification."
+notes = [
+  "The slice adds an opt-in bounded f32 dump for the shared attention.q_proj_output_pre_optional_qnorm trace boundary.",
+  "The artifact records Qwen2.5 Q8_0 before/after strict CPU receipts and full 896-f32 q_proj-output dumps, with generated ID 19 and decoded text 4 preserved while f32-le fingerprints differ.",
+  "The slice classifies the mismatch as small f32 numeric drift, with first_differing_index 0 and max_abs_diff 0.00008773799999772791 at index 568.",
+  "The slice keeps packed-Q8 sidecar behavior proof, default-runtime promotion, allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, and BitNet QK256 claims fail-closed.",
+]
+
+[[next_items]]
+id = "SLM-CPU-125"
+status = "ready"
+branch = "codex/slm-cpu-125-qproj-numeric-tolerance-gate"
+summary = "Define, validate, reject, or fail-close a conservative numeric tolerance gate for the shared q_proj-output sidecar proof using the accepted Qwen3 and Qwen2.5 evidence."

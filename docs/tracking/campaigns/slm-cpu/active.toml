@@ -7598,9 +7598,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-124"
-status = "pr_open"
+status = "merged"
 pr = 770
 head_sha = "aa6bc330110d4c17783144360bed42c708703475"
+merge_sha = "beb8cb6a9cbcb3e152f40f6b0d8532fe2ed820d2"
+merged_at = "2026-05-26T09:20:54Z"
 branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
 stackable = false
 review_mode = "codex_premerge"
@@ -7641,6 +7643,58 @@ may_claim = [
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality and numeric-diff gates pass.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-125"
+status = "ready"
+branch = "codex/slm-cpu-125-qproj-numeric-tolerance-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-124"]
+acceptance = "Decide the next shared attention.q_proj_output_pre_optional_qnorm proof gate after SLM-CPU-124 classified the Qwen2.5 before/after mismatch as small f32 numeric drift. A valid slice must either define and validate a conservative numeric tolerance policy using accepted Qwen3 and Qwen2.5 strict CPU before/after evidence, or keep the boundary fail-closed with a machine-checkable blocker naming the next implementation fix. It must preserve strict GGUF tokenizer authority, CPU backend, fallback_used=false, model SHA, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, boundary label, source tensor identity, shape/dtype, f32-le fingerprint, max_abs_diff, and first_differing_index, and must not claim packed-Q8 sidecar behavior proof, allocation reduction, timing improvement, or default-runtime promotion unless the accepted numeric proof gate passes."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-124 classifies the Qwen2.5 q_proj-output fingerprint mismatch as small f32 numeric drift while generated behavior remains stable.",
+  "SLM-CPU-125 may define, validate, reject, or fail-close a conservative numeric tolerance gate for the shared q_proj-output sidecar proof.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven until the accepted numeric proof gate passes for Qwen3 and Qwen2.5 strict CPU before/after evidence.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
