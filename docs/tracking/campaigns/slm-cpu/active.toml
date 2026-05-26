@@ -7809,9 +7809,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-128"
-status = "pr_open"
+status = "merged"
 pr = 778
-head_sha = "45480f0e21bd149f0f699d3b4deec8dcb2200228"
+head_sha = "794d626e5b62a1f3b130ce6ee665da58d40caa6b"
+merge_sha = "200e1d67e1c6c6f1fb914e45ee4e46b3aecba083"
+merged_at = "2026-05-26T11:43:19Z"
 branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
 stackable = false
 review_mode = "codex_premerge"
@@ -7844,6 +7846,50 @@ may_claim = [
 ]
 must_not_claim = [
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-129"
+status = "ready"
+branch = "codex/slm-cpu-129-repeated-allocation-audit-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-128"]
+acceptance = "Collect or explicitly block repeated warm-session before/after receipts with allocation-audit counters for the exact-tensor packed-Q8 sidecar boundary after SLM-CPU-128 classified the single-sample timing evidence as mixed. A valid slice must preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and the accepted layer-0 attention.q_proj_output_pre_optional_qnorm numeric gate. It must require at least repeated behavior-equivalent receipts before claiming allocation reduction or timing improvement, and must fail closed if allocation-audit counters are unavailable or behavior drifts."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-128 classifies the single-sample exact-tensor timing evidence as mixed and fail-closed.",
+  "SLM-CPU-129 may collect repeated warm-session allocation-audit receipts or fail closed with the exact missing-counter or behavior-drift blocker.",
+]
+must_not_claim = [
+  "Allocation reduction or speedup is proven without repeated behavior-equivalent before/after strict CPU receipts.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",

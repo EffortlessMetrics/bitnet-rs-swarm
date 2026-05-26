@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T11:43:19Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-128"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 778
+branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
+head_sha = "794d626e5b62a1f3b130ce6ee665da58d40caa6b"
+merge_sha = "200e1d67e1c6c6f1fb914e45ee4e46b3aecba083"
+summary = "Merged PR #778 classifying the exact q_proj packed-Q8 sidecar timing evidence as mixed and fail-closed."
+notes = [
+  "The classification consumes the SLM-CPU-127 fresh Qwen3 and Qwen2.5 before/after receipt pack.",
+  "The result preserves generated IDs, decoded text, strict GGUF tokenizer authority, cpu-rust, dense-qwen-cpu-reference, and fallback_used=false.",
+  "Qwen3 is neutral on one sample, Qwen2.5 regresses, allocation-audit counters are absent, and no allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-129"
+status = "ready"
+branch = "codex/slm-cpu-129-repeated-allocation-audit-receipts"
+summary = "Collect or explicitly block repeated warm-session allocation-audit receipts for the exact-tensor packed-Q8 sidecar boundary before any allocation or timing claim."
