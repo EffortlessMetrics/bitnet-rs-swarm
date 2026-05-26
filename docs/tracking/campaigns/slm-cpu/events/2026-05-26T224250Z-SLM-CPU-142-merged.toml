@@ -1,0 +1,24 @@
+timestamp = "2026-05-26T22:42:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-142"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-142-source-order-qproj-evidence-fields"
+pr = 806
+head_sha = "c81cf827e50320fc894beebaca71f81497d15493"
+merge_sha = "c666fe63897231162d9ac88d68e32c4689482451"
+summary = "Merged PR #806 with SLM-CPU-142 source-order q_proj evidence fields."
+notes = [
+  "The warm-session dense Q8 hook receipt now records explicit source_order_qproj_candidate_identity fields.",
+  "The same receipt surface now records q_proj_numeric_evidence as an explicit fail-closed object instead of relying on absent fields.",
+  "Runtime selection remains on the default eager_f32_candle path; no allocation, timing, speed, Q4/Q5, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+  "SLM-CPU-143 is ready to refresh exact Qwen3/Qwen2.5 strict CPU receipts with the SLM-CPU-142 fields or keep selector use blocked with the exact missing evidence.",
+]
+
+[[next_work_item]]
+id = "SLM-CPU-143"
+status = "ready"
+branch = "codex/slm-cpu-143-source-order-evidence-receipts"
+summary = "Refresh exact Qwen3/Qwen2.5 strict CPU receipt evidence with source-order q_proj candidate identity and q_proj numeric evidence fields, or keep source-order selector use fail-closed with the exact blocker."
