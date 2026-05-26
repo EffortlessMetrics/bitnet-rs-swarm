@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_sidecar_blocker_burndown",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-120",
+  "status": "partially_isolated_fail_closed",
+  "review_date": "2026-05-26",
+  "claim": "SLM-CPU-120 adds a fail-closed runtime guard for packed Q8_0 sidecar payloads whose GGUF byte order has only been reshaped into the Candle runtime matrix shape without a proven payload reorder. This prevents the q_proj sidecar runtime selector from executing on the recorded Qwen-family transposed payload boundary, but it does not prove allocation reduction, timing improvement, default-runtime promotion, or packed-Q8 behavior equivalence.",
+  "source_boundary": {
+    "selected_by": "SLM-CPU-115",
+    "implemented_by": "SLM-CPU-117",
+    "prior_blocker": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-119-qproj-output-receipt-pair-blocker.json",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight"
+  },
+  "runtime_guard": {
+    "field": "payload_order_matches_runtime_shape",
+    "enabled_when": "descriptor.shape_reshaped_without_transpose == false",
+    "runtime_compute_requires": [
+      "BITNET_DENSE_Q8_RUNTIME_ENABLE selects the exact tensor",
+      "packed_q8_payload is present",
+      "payload contract is valid",
+      "payload_order_matches_runtime_shape is true"
+    ],
+    "qwen_qproj_effect": "Qwen-family blk.0.attn_q.weight sidecar descriptors are shape-reshaped to the Candle linear matrix shape, but the packed GGUF bytes are not reordered; the opt-in packed sidecar runtime therefore declines and preserves eager_f32_candle."
+  },
+  "qwen3_capture": {
+    "model_id": "qwen3-0.6b-q8_0",
+    "model_file": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "attempted_trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-120-after-transpose-guard-trace.jsonl",
+    "attempted_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-120-after-transpose-guard-run.json",
+    "result": "blocked_before_receipt",
+    "exit_code": "0xc0000409",
+    "failure": "memory allocation of 167772160 bytes failed before a receipt or layer-0 attention.q_proj_output_pre_optional_qnorm fingerprint was written",
+    "new_isolation": "The post-guard trace reaches prompt.ids and contains no q_proj hook fingerprint, so the remaining Qwen3 failure is before the q_proj-output proof boundary and must not be used as packed sidecar behavior evidence."
+  },
+  "qwen25_capture": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "model_file": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "result": "unit_guard_only",
+    "prior_blocker": "SLM-CPU-119 recorded generated-ID preservation with changed q_proj-output fingerprint when the packed sidecar runtime was allowed to execute.",
+    "new_guard_effect": "The runtime hook now declines transposed-without-reordered payloads before packed matvec execution, so this exact mismatch is fail-closed rather than accepted as behavior proof."
+  },
+  "validation": {
+    "commands": [
+      "cargo test --locked -p bitnet-models --lib dense_gguf_q8_sidecar_runtime_compute_declines_transposed_payload_order -- --nocapture",
+      "cargo test --locked -p bitnet-transformer --lib exact_q8_sidecar_runtime_hook -- --nocapture"
+    ],
+    "passed": true,
+    "qwen25_real_receipt_attempt": "timed_out_during_recompile_before_run_or_trace_artifacts",
+    "qwen25_real_receipt_attempt_note": "No Qwen2.5 SLM-CPU-120 run artifact was written; the accepted evidence for this slice is the fail-closed runtime selector guard plus targeted unit coverage."
+  },
+  "proof_readiness": {
+    "qwen3_after_receipt_exists": false,
+    "qwen3_after_hook_fingerprint_exists": false,
+    "qwen25_after_receipt_exists_for_slm_cpu_120": false,
+    "sidecar_runtime_executes_on_transposed_payload": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle",
+    "shared_boundary_behavior_proven": false
+  },
+  "next_required_slice": {
+    "id": "SLM-CPU-121",
+    "summary": "Resolve the remaining pre-boundary Qwen3 167772160-byte allocation failure or capture a real Qwen2.5 after receipt with the fail-closed sidecar guard, then reopen packed sidecar behavior proof only with payload-order-correct evidence."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

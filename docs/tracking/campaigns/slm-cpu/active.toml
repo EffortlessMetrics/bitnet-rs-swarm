@@ -7368,8 +7368,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-120"
-status = "ready"
-branch = "codex/slm-cpu-120-qproj-output-sidecar-blocker-burndown"
+status = "pr_open"
+pr = 759
+head_sha = "1bfcb631d5030ee6b83bc2dbc1f44b9a5185bb8c"
+branch = "codex/slm-cpu-120-sidecar-transpose-guard"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -7406,6 +7408,59 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-119 restored the accepted Qwen2.5 Q8_0 artifact path and captured real q_proj-output hook evidence for Qwen3 and Qwen2.5.",
   "SLM-CPU-120 may fix or further isolate the Qwen3 after-run allocation failure and Qwen2.5 q_proj-output fingerprint mismatch.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-121"
+status = "ready"
+branch = "codex/slm-cpu-121-qwen3-preboundary-allocation"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-120"]
+acceptance = "Resolve or precisely isolate the remaining Qwen3 Q8_0 167772160-byte allocation failure that occurs after prompt IDs are emitted but before a post-guard receipt or layer-0 attention.q_proj_output_pre_optional_qnorm fingerprint is written. A valid slice must preserve the SLM-CPU-120 fail-closed packed-Q8 sidecar payload-order guard, keep eager_f32_candle as the default runtime, preserve strict GGUF tokenizer authority, CPU backend, fallback_used=false where receipts exist, and must not claim q_proj sidecar behavior proof, allocation reduction, timing improvement, default-runtime promotion, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes until accepted Qwen3 and Qwen2.5 before/after proof gates pass."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-120 fail-closes packed-Q8 sidecar runtime execution when payload byte order does not match the runtime matrix shape.",
+  "SLM-CPU-121 may resolve or further isolate the remaining Qwen3 pre-boundary allocation failure.",
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",
