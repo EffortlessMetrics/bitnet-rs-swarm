@@ -1,0 +1,935 @@
+{
+  "allocation_audit": {
+    "claim_scope": "allocation counter deltas for this prompt/profile only; sampling scratch cleanup is scoped and no broad performance improvement is claimed",
+    "decode": {
+      "embed": {
+        "alloc_bytes_total": 876,
+        "alloc_count_total": 14,
+        "count": 1,
+        "dealloc_bytes_total": 668,
+        "dealloc_count_total": 11,
+        "max_alloc_bytes_per_token": 876,
+        "max_alloc_count_per_token": 14,
+        "mean_alloc_bytes_per_token": 876.0,
+        "mean_alloc_count_per_token": 14.0,
+        "net_bytes_total": 208
+      },
+      "forward": {
+        "alloc_bytes_total": 36427034,
+        "alloc_count_total": 26172,
+        "count": 1,
+        "dealloc_bytes_total": 36193290,
+        "dealloc_count_total": 26167,
+        "max_alloc_bytes_per_token": 36427034,
+        "max_alloc_count_per_token": 26172,
+        "mean_alloc_bytes_per_token": 36427034.0,
+        "mean_alloc_count_per_token": 26172.0,
+        "net_bytes_total": 233744
+      },
+      "logits": {
+        "alloc_bytes_total": 608983,
+        "alloc_count_total": 22,
+        "count": 1,
+        "dealloc_bytes_total": 959,
+        "dealloc_count_total": 17,
+        "max_alloc_bytes_per_token": 608983,
+        "max_alloc_count_per_token": 22,
+        "mean_alloc_bytes_per_token": 608983.0,
+        "mean_alloc_count_per_token": 22.0,
+        "net_bytes_total": 608024
+      },
+      "logits_boundary": {
+        "backend_internal_in_place_api_exposed": false,
+        "behavior_gate": "generated IDs, decoded text, strict GGUF tokenizer authority, selected CPU backend/kernel, model SHA, dense hook identity where applicable, and fallback=false must match the Qwen3 Q8_0 baseline",
+        "can_fill_caller_output_storage": false,
+        "can_fuse_output_head_and_selection": false,
+        "claim_scope": "allocation-boundary classification only; no logits/output-head runtime optimization, speedup, packed-Q8 promotion, or sustained-throughput claim is made",
+        "current_boundary": "TransformerModel::logits owned Tensor output and optional host logits extraction",
+        "device_argmax_available_after_logits_tensor": true,
+        "exact_blocking_ops": [
+          "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>",
+          "Tensor::matmul(&self, &Tensor) -> Result<Tensor>",
+          "Tensor::reshape(&self, shape) -> Result<Tensor>",
+          "Tensor::to_vec1::<f32>(&self) -> Result<Vec<f32>> when host logits extraction is requested"
+        ],
+        "fused_selection_blocking_ops": [
+          "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+          "Tensor::matmul(&self, &Tensor) -> Result<Tensor> materializes full logits before selection",
+          "Tensor::argmax(&self, dim) -> Result<Tensor> selects after full logits Tensor materialization",
+          "Tensor::sort_last_dim(&self, asc) -> Result<(Tensor, Tensor)> sorts after full logits Tensor materialization",
+          "Tensor::arg_sort_last_dim(&self, asc) -> Result<Tensor> sorts indices after full logits Tensor materialization"
+        ],
+        "host_logits_extraction_involved_when_requested": true,
+        "lm_head_forward_involved": true,
+        "next_safe_change": "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor",
+        "operation_detail": "lm_head.forward_or_tied_embedding_matmul_then_reshape",
+        "operation_family": "candle output-head projection",
+        "prior_cleanup_preserved": [
+          "SLM-CPU-024 greedy no-penalty sampler fast path avoids sampler logits scratch copying",
+          "SLM-CPU-025 deterministic no-penalty steps use direct tensor argmax where exact",
+          "SLM-CPU-026 reuses host logits scratch for default repetition-penalty decode steps"
+        ],
+        "public_api_accepts_output_storage": false,
+        "public_api_return_type": "Result<Tensor>",
+        "remaining_boundary": "model still materializes a Candle logits Tensor before sampling or extraction; full host logits Vec extraction still allocates when diagnostics require it",
+        "required_missing_api": "logits/output-head API accepting caller-provided output storage or a fused top-k/argmax path that avoids materializing a full owned logits tensor",
+        "selection_boundary": {
+          "current_safe_path": "deterministic no-penalty greedy can call Tensor::argmax after TransformerModel::logits has already produced an owned full logits Tensor",
+          "remaining_blocker": "no public Candle output-head projection API fuses lm_head matmul with argmax/top-k or writes into caller-provided output storage",
+          "topk_diagnostic_path": "Tensor::sort_last_dim / Tensor::arg_sort_last_dim can reduce host transfer for top-k diagnostics only after full logits Tensor materialization"
+        },
+        "status": "logits_output_storage_blocked_by_candle_tensor_ops",
+        "target_surface": "model.logits / output-head tensor allocation",
+        "tied_embedding_matmul_involved": true,
+        "topk_sort_available_after_logits_tensor": true
+      },
+      "sample": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      },
+      "steady_state": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 0,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": null,
+        "max_alloc_count_per_token": null,
+        "mean_alloc_bytes_per_token": null,
+        "mean_alloc_count_per_token": null,
+        "net_bytes_total": 0
+      },
+      "stop_tail_update": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      },
+      "token_decode": {
+        "alloc_bytes_total": 139,
+        "alloc_count_total": 7,
+        "count": 1,
+        "dealloc_bytes_total": 138,
+        "dealloc_count_total": 6,
+        "max_alloc_bytes_per_token": 139,
+        "max_alloc_count_per_token": 7,
+        "mean_alloc_bytes_per_token": 139.0,
+        "mean_alloc_count_per_token": 7.0,
+        "net_bytes_total": 1
+      },
+      "token_vector_update": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      },
+      "total": {
+        "alloc_bytes_total": 37037232,
+        "alloc_count_total": 26218,
+        "count": 1,
+        "dealloc_bytes_total": 36195055,
+        "dealloc_count_total": 26201,
+        "max_alloc_bytes_per_token": 37037232,
+        "max_alloc_count_per_token": 26218,
+        "mean_alloc_bytes_per_token": 37037232.0,
+        "mean_alloc_count_per_token": 26218.0,
+        "net_bytes_total": 842177
+      }
+    },
+    "enabled": true,
+    "instrumentation_excluded": [
+      "model_load",
+      "tokenizer_load",
+      "aggregate_receipt_serialization",
+      "OS allocator reuse and fragmentation outside counter deltas"
+    ],
+    "instrumentation_included": [
+      "prompt_tokenize",
+      "prompt_setup",
+      "prompt_setup.buffer_reset",
+      "prompt_setup.token_seed",
+      "prompt_setup.kv_cache",
+      "prompt_setup.sampler_setup",
+      "prompt_prefill_step",
+      "prompt_prefill.embed",
+      "prompt_prefill.forward",
+      "decode_step_total",
+      "model.embed",
+      "model.forward",
+      "model.logits_and_extract",
+      "sampler.sample",
+      "token_vector_updates",
+      "tokenizer.decode",
+      "stop_tail_updates",
+      "receipt_construction"
+    ],
+    "method": "process_global_allocator_counter_delta",
+    "optimization_deferred": false,
+    "prompt_prefill": {
+      "alloc_bytes_total": 589057538,
+      "alloc_count_total": 706490,
+      "count": 27,
+      "dealloc_bytes_total": 589281298,
+      "dealloc_count_total": 706409,
+      "max_alloc_bytes_per_token": 35384966,
+      "max_alloc_count_per_token": 26186,
+      "mean_alloc_bytes_per_token": 21816945.852,
+      "mean_alloc_count_per_token": 26166.296,
+      "net_bytes_total": -223760
+    },
+    "prompt_prefill_breakdown": {
+      "embed": {
+        "alloc_bytes_total": 23652,
+        "alloc_count_total": 378,
+        "count": 27,
+        "dealloc_bytes_total": 18036,
+        "dealloc_count_total": 297,
+        "max_alloc_bytes_per_token": 876,
+        "max_alloc_count_per_token": 14,
+        "mean_alloc_bytes_per_token": 876.0,
+        "mean_alloc_count_per_token": 14.0,
+        "net_bytes_total": 5616
+      },
+      "forward": {
+        "alloc_bytes_total": 589033886,
+        "alloc_count_total": 706112,
+        "count": 27,
+        "dealloc_bytes_total": 589263262,
+        "dealloc_count_total": 706112,
+        "max_alloc_bytes_per_token": 35384090,
+        "max_alloc_count_per_token": 26172,
+        "mean_alloc_bytes_per_token": 21816069.852,
+        "mean_alloc_count_per_token": 26152.296,
+        "net_bytes_total": -229376
+      },
+      "forward_boundary": {
+        "behavior_gate": "generated IDs, decoded text, strict GGUF tokenizer authority, selected CPU backend/kernel, model SHA, and fallback=false must match the Qwen3 Q8_0 baseline",
+        "bias_accessible": true,
+        "can_fill_caller_output_storage": false,
+        "can_fill_final_norm_output_storage": false,
+        "can_fill_layer_output_storage": false,
+        "claim_scope": "allocation-boundary classification only; no dense math, kernel, or sustained-throughput claim is made",
+        "classification": "FeedForward::forward_with_workspace reaches the exact FeedForward::down_proj output boundary and the Candle Linear weight/bias tensors are readable, but Tensor::matmul plus optional broadcast_add still return owned tensors without caller-provided output storage",
+        "final_norm_bias_accessible": false,
+        "final_norm_caller_output_helper_status": "final_norm_output_storage_helper_blocked_by_owned_candle_norm_output",
+        "final_norm_classification": "model.final_norm.output remains blocked at the public Candle norm compute boundary: input, weight, optional bias, epsilon, and RMSNorm/LayerNorm kind are readable, but LayerNorm::forward and candle_nn::ops norm helpers still return owned Tensors without caller-provided output storage",
+        "final_norm_input_accessible": true,
+        "final_norm_operation_detail": "rms_norm",
+        "final_norm_operation_family": "candle_nn::RmsNorm::forward",
+        "final_norm_output_surface": "model.final_norm.output",
+        "final_norm_reuse_status": "final_norm_output_storage_blocked_by_candle_layer_norm_ops",
+        "final_norm_weight_accessible": true,
+        "first_reusable_allocation_surface": "feed_forward.down_proj.output",
+        "layer_output_backend_internal_in_place_api_exposed": false,
+        "layer_output_branch_output_shape_recorded": true,
+        "layer_output_caller_output_helper_status": "layer_output_storage_helper_blocked_by_owned_candle_residual_add_output",
+        "layer_output_classification": "transformer.block.output remains blocked because public Candle Tensor::add and Tensor::broadcast_add return Result<Tensor> owned outputs and expose no caller-provided output-storage parameter",
+        "layer_output_exact_blocking_ops": [
+          "Tensor::add(&self, &Tensor) -> Result<Tensor>",
+          "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>",
+          "std::ops::Add for Tensor/&Tensor delegates to Tensor::add and returns Result<Tensor>"
+        ],
+        "layer_output_input_accessible": true,
+        "layer_output_operation_detail": "residual_add_owned_tensor_output",
+        "layer_output_operation_family": "candle_core::Tensor residual_add",
+        "layer_output_public_api_accepts_output_storage": false,
+        "layer_output_public_api_return_type": "Result<Tensor>",
+        "layer_output_required_missing_api": "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)",
+        "layer_output_residual_add_involved": true,
+        "layer_output_residual_input_shape_recorded": true,
+        "layer_output_reuse_status": "layer_output_storage_blocked_by_candle_tensor_add_ops",
+        "layer_output_surface": "transformer.block.output",
+        "model_forward_classification": "TransformerModel::forward_with_workspace moves the final Candle Tensor through a TransformerForwardWorkspace-owned model output slot; SLM-CPU-085 separately classifies final norm and layer output as caller-output-storage blockers",
+        "model_forward_owned_output_surface": "model.forward.output",
+        "model_forward_reuse_status": "model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops",
+        "next_dense_math_boundary": {
+          "current_path": "eager_dense_standard_quant_dequant_to_f32_before_candle_tensor",
+          "dequantizes_before_compute": true,
+          "materializes_f32_tensor": true,
+          "must_preserve": "generated IDs, decoded text, strict GGUF tokenizer authority, selected CPU backend/kernel, model SHA, and fallback=false",
+          "source": "SLM-CPU-042",
+          "target": "q8_dense_linear_locality_boundary"
+        },
+        "next_safe_change": "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)",
+        "no_reuse_reason": "candle_nn::Linear exposes weight and optional bias tensors, but its behavior-preserving compute path is Tensor::matmul plus optional broadcast_add, and those operations return owned Tensors without a caller-provided output-storage parameter",
+        "owned_output_surfaces": [
+          "model.forward.output",
+          "model.final_norm.output",
+          "transformer.block.output",
+          "feed_forward.down_proj.output"
+        ],
+        "post_model_forward_required_api_boundary": "final_norm_output_storage_api_or_apply_op_output_hook",
+        "required_api_boundary": "dense_linear_output_storage_api_boundary",
+        "reuse_status": "dense_linear_output_storage_blocked_by_candle_tensor_ops",
+        "weight_accessible": true,
+        "workspace_owned_output_surface": "feed_forward.down_proj.output",
+        "workspace_storage_owner": "TransformerForwardWorkspace"
+      }
+    },
+    "prompt_prefill_breakdown_scope": "subcomponent counter deltas nested inside prompt_prefill; these are attribution evidence and do not change generation behavior",
+    "prompt_setup": {
+      "alloc_bytes_total": 3177,
+      "alloc_count_total": 26,
+      "count": 1,
+      "dealloc_bytes_total": 0,
+      "dealloc_count_total": 0,
+      "max_alloc_bytes_per_token": 3177,
+      "max_alloc_count_per_token": 26,
+      "mean_alloc_bytes_per_token": 3177.0,
+      "mean_alloc_count_per_token": 26.0,
+      "net_bytes_total": 3177
+    },
+    "prompt_setup_breakdown": {
+      "buffer_reset": {
+        "alloc_bytes_total": 3177,
+        "alloc_count_total": 26,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 3177,
+        "max_alloc_count_per_token": 26,
+        "mean_alloc_bytes_per_token": 3177.0,
+        "mean_alloc_count_per_token": 26.0,
+        "net_bytes_total": 3177
+      },
+      "kv_cache": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      },
+      "sampler_setup": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      },
+      "token_seed": {
+        "alloc_bytes_total": 0,
+        "alloc_count_total": 0,
+        "count": 1,
+        "dealloc_bytes_total": 0,
+        "dealloc_count_total": 0,
+        "max_alloc_bytes_per_token": 0,
+        "max_alloc_count_per_token": 0,
+        "mean_alloc_bytes_per_token": 0.0,
+        "mean_alloc_count_per_token": 0.0,
+        "net_bytes_total": 0
+      }
+    },
+    "prompt_setup_breakdown_scope": "subcomponent counter deltas nested inside prompt_setup; these are attribution evidence and do not change generation behavior",
+    "prompt_tokenize": {
+      "alloc_bytes_total": 141,
+      "alloc_count_total": 1,
+      "count": 1,
+      "dealloc_bytes_total": 141,
+      "dealloc_count_total": 1,
+      "max_alloc_bytes_per_token": 141,
+      "max_alloc_count_per_token": 1,
+      "mean_alloc_bytes_per_token": 141.0,
+      "mean_alloc_count_per_token": 1.0,
+      "net_bytes_total": 0
+    },
+    "prompt_total_counter_delta": {
+      "alloc_bytes_total": 626101810,
+      "alloc_count_total": 732790,
+      "count": 1,
+      "dealloc_bytes_total": 626095808,
+      "dealloc_count_total": 732736,
+      "max_alloc_bytes_per_token": 626101810,
+      "max_alloc_count_per_token": 732790,
+      "mean_alloc_bytes_per_token": 626101810.0,
+      "mean_alloc_count_per_token": 732790.0,
+      "net_bytes_total": 6002
+    },
+    "ranked_hotspots": [
+      {
+        "alloc_bytes": 589057538,
+        "alloc_count": 706490,
+        "component": "prompt_prefill"
+      },
+      {
+        "alloc_bytes": 589033886,
+        "alloc_count": 706112,
+        "component": "prompt_prefill.forward"
+      },
+      {
+        "alloc_bytes": 37037232,
+        "alloc_count": 26218,
+        "component": "decode_total"
+      },
+      {
+        "alloc_bytes": 36427034,
+        "alloc_count": 26172,
+        "component": "model.forward"
+      },
+      {
+        "alloc_bytes": 608983,
+        "alloc_count": 22,
+        "component": "model.logits_and_extract"
+      },
+      {
+        "alloc_bytes": 83280,
+        "alloc_count": 893,
+        "component": "receipt_construction"
+      },
+      {
+        "alloc_bytes": 23652,
+        "alloc_count": 378,
+        "component": "prompt_prefill.embed"
+      },
+      {
+        "alloc_bytes": 3177,
+        "alloc_count": 26,
+        "component": "prompt_setup"
+      },
+      {
+        "alloc_bytes": 3177,
+        "alloc_count": 26,
+        "component": "prompt_setup.buffer_reset"
+      },
+      {
+        "alloc_bytes": 876,
+        "alloc_count": 14,
+        "component": "model.embed"
+      },
+      {
+        "alloc_bytes": 141,
+        "alloc_count": 1,
+        "component": "prompt_tokenize"
+      },
+      {
+        "alloc_bytes": 139,
+        "alloc_count": 7,
+        "component": "tokenizer.decode"
+      }
+    ],
+    "receipt_construction": {
+      "alloc_bytes_total": 83280,
+      "alloc_count_total": 893,
+      "count": 1,
+      "dealloc_bytes_total": 28331,
+      "dealloc_count_total": 319,
+      "max_alloc_bytes_per_token": 83280,
+      "max_alloc_count_per_token": 893,
+      "mean_alloc_bytes_per_token": 83280.0,
+      "mean_alloc_count_per_token": 893.0,
+      "net_bytes_total": 54949
+    },
+    "scope": "selected generic CPU SLM warm-session prompt hot path",
+    "unavoidable_candidates": [
+      "model.embed/model.forward/model.logits tensor outputs from the current dense Qwen CPU execution path",
+      "tokenizer.decode allocation for per-token text and stop-tail checks",
+      "receipt construction outside the decode hot loop",
+      "prompt token vector growth is controlled by reusable session buffers; model tensor outputs remain the dominant allocation source"
+    ],
+    "unavoidable_candidates_named_before_optimization": true
+  },
+  "artifact_kind": "slm_cpu_warm_session_prompt",
+  "artifact_path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-26\\qwen3-slm-cpu-129-after-warm-allocation-prompts\\02-say-exactly-4.json",
+  "case_id": "prompt_02",
+  "dense_q8_hook": {
+    "after_receipt_field": "dense_q8_hook.q_norm_input_tensor_identity",
+    "artifact_kind": "dense_q8_hook_receipt_identity",
+    "claim_boundary": {
+      "no_allocation_reduction_claim": true,
+      "no_bitnet_qk256_claim": true,
+      "no_q4_q5_runtime_support": true,
+      "no_qwen35_claim": true,
+      "no_runtime_promotion": true,
+      "no_server_or_accelerator_claim": true,
+      "no_sustained_throughput_claim": true,
+      "no_timing_improvement_claim": true
+    },
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "proof_ready": false,
+    "q_norm_input_boundary": "q_norm_input_candle_tensor_boundary",
+    "q_norm_input_tensor_identity": {
+      "boundary": "q_norm_input_candle_tensor_boundary",
+      "dense_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "dtype": "f32",
+      "identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "required_identity_fields": [
+        "q_norm_input.boundary=q_norm_input_candle_tensor_boundary",
+        "q_norm_input.source_tensor=layers.0.attention.q_proj.weight",
+        "q_norm_input.source_stage=attention.q_proj.reshape_q_heads",
+        "q_norm_input.shape",
+        "q_norm_input.dtype",
+        "q_norm_input.dense_hook_identity",
+        "q_norm_input.tensor_fingerprint_sha256_f32_le"
+      ],
+      "shape": null,
+      "source_stage": "attention.q_proj.reshape_q_heads",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "tensor_fingerprint_sha256_f32_le": null,
+      "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+      "tensor_identity_surface_defined": true
+    },
+    "remaining_blockers": [
+      "q_norm_input_tensor_fingerprint_not_captured",
+      "qwen3_q8_before_after_receipts_missing",
+      "qwen25_q8_before_after_receipts_missing",
+      "accumulator_order_unproven"
+    ],
+    "required_receipts": [
+      {
+        "model_architecture": "qwen3",
+        "model_id": "qwen3-0.6b-q8_0",
+        "quant_format": "Q8_0",
+        "required_after_receipt": "strict CPU receipt after q_norm_input materialization candidate",
+        "required_before_receipt": "strict CPU eager_f32_candle receipt before q_norm_input materialization candidate",
+        "required_fields": [
+          "model.sha256",
+          "tokenizer.source=gguf_metadata",
+          "tokenizer.strict=true",
+          "prompt_ids",
+          "generated_ids",
+          "decoded_text",
+          "selected_backend=cpu-rust",
+          "selected_kernel identity",
+          "dense_hook identity",
+          "fallback_used=false"
+        ]
+      },
+      {
+        "model_architecture": "qwen2",
+        "model_id": "qwen2.5-0.5b-instruct-q8_0",
+        "quant_format": "Q8_0",
+        "required_after_receipt": "strict CPU receipt after q_norm_input materialization candidate",
+        "required_before_receipt": "strict CPU eager_f32_candle receipt before q_norm_input materialization candidate",
+        "required_fields": [
+          "model.sha256",
+          "tokenizer.source=gguf_metadata",
+          "tokenizer.strict=true",
+          "prompt_ids",
+          "generated_ids",
+          "decoded_text",
+          "selected_backend=cpu-rust",
+          "selected_kernel identity",
+          "dense_hook identity",
+          "fallback_used=false"
+        ]
+      }
+    ],
+    "runtime_compute_enabled": false,
+    "schema": 1,
+    "selected_kernel": "dense-f32-candle-linear",
+    "selected_path": "eager_f32_candle",
+    "selected_tensor": "layers.0.attention.q_proj.weight",
+    "speedup_claim": false,
+    "tracking_item": "SLM-CPU-109"
+  },
+  "dense_q8_hook_selection": {
+    "all_boundaries_preserve_eager_f32": true,
+    "artifact_kind": "dense_gguf_q8_hook_selection_receipt_gate",
+    "dense_runtime_replaced": false,
+    "example_boundary": {
+      "dense_runtime_replaced": false,
+      "eager_f32_runtime_preserved": true,
+      "generated_id_preservation_required_before_runtime_use": true,
+      "next_receipt_gate": "before_after_qwen3_q8_generated_id_text_receipts",
+      "runtime_compute_enabled": false,
+      "selected_kernel": "dense-f32-candle-linear",
+      "selected_path": "eager_f32_candle",
+      "sidecar_descriptor_present": true,
+      "sidecar_matrix_cols": null,
+      "sidecar_matrix_rows": null,
+      "sidecar_payload_bytes": null,
+      "sidecar_payload_bytes_available": false,
+      "sidecar_payload_contract_valid": false,
+      "sidecar_payload_order_matches_runtime_shape": false,
+      "sidecar_payload_sha256": "98a8baa5023c260fb83a5e4897e17cfbd89f20ba0f27ce356d61ee9dc517f690",
+      "sidecar_q8_block_count": null,
+      "sidecar_role": "TokenEmbedding",
+      "speedup_claim": false,
+      "tensor_name": "embed_tokens.weight"
+    },
+    "fallback_used": false,
+    "hook_boundary_count": 197,
+    "next_safe_step": "run before/after Qwen3 Q8_0 warm-session receipts that record identical model SHA, tokenizer source/strictness, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook selection identity, and fallback_used=false before enabling packed sidecar compute",
+    "payload_bearing_boundary": {
+      "dense_runtime_replaced": false,
+      "eager_f32_runtime_preserved": true,
+      "generated_id_preservation_required_before_runtime_use": true,
+      "next_receipt_gate": "before_after_qwen3_q8_generated_id_text_receipts",
+      "runtime_compute_enabled": false,
+      "selected_kernel": "dense-f32-candle-linear",
+      "selected_path": "eager_f32_candle",
+      "sidecar_descriptor_present": true,
+      "sidecar_matrix_cols": 1024,
+      "sidecar_matrix_rows": 2048,
+      "sidecar_payload_bytes": 2228224,
+      "sidecar_payload_bytes_available": true,
+      "sidecar_payload_contract_valid": true,
+      "sidecar_payload_order_matches_runtime_shape": false,
+      "sidecar_payload_sha256": "a8e16a232ea8c19a5c5d2eb5f21bfdf5c297eba0ac90e74b0afc052577179c24",
+      "sidecar_q8_block_count": 65536,
+      "sidecar_role": "AttentionQ",
+      "speedup_claim": false,
+      "tensor_name": "layers.0.attention.q_proj.weight"
+    },
+    "payload_bearing_boundary_count": 1,
+    "remaining_blockers": [
+      "packed_q8_sidecar_payload_order_does_not_match_runtime_matrix_shape",
+      "before_after_qwen3_q8_warm_session_receipts_with_hook_selection_identity_missing"
+    ],
+    "runtime_boundary": null,
+    "runtime_compute_enabled": false,
+    "schema": 1,
+    "selected_kernel": "dense-f32-candle-linear",
+    "selected_path": "eager_f32_candle",
+    "sidecar_descriptor_count": 197,
+    "sidecar_descriptors_reached_transformer": true,
+    "speedup_claim": false
+  },
+  "execution": {
+    "fallback_reason": null,
+    "fallback_used": false,
+    "generated_tokens": 1,
+    "phase": "warm_session_decode",
+    "prompt_tokens": 28,
+    "requested_backend": "cpu",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "thread_count": 4
+  },
+  "fallback_reason": null,
+  "fallback_used": false,
+  "kernel": {
+    "family": "i2_s",
+    "implementation": "avx2",
+    "kernel_id": "i2_s-avx2-reference"
+  },
+  "model": {
+    "architecture": "qwen3",
+    "fallback_loader_used": false,
+    "family": "qwen",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "format": "gguf",
+    "loader_mode": "real_gguf",
+    "path": "models\\slm\\Qwen3-0.6B-Q8_0.gguf",
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "sha256_rehash_skipped": false,
+    "sha256_source": "computed_from_model_file",
+    "tokenizer": "gguf_metadata"
+  },
+  "operator_ux": {
+    "aggregate_receipt_at_exit": true,
+    "clear_failure_messages": true,
+    "interactive_prompt_collection": false,
+    "model_tokenizer_loaded_once_status": "recorded_in_session_receipt",
+    "per_turn_receipts_enabled": true,
+    "progress_enabled": false,
+    "quiet_default_logs": true,
+    "quiet_requested": true,
+    "status_stream": "stderr",
+    "stdout_token_stream": false,
+    "stream_tokens_requested": false,
+    "time_to_first_token_receipt": true,
+    "token_stream": "disabled"
+  },
+  "prompt": "Say exactly: 4",
+  "prompt_generation_identity": {
+    "generation_parameters": {
+      "deterministic": true,
+      "fixed_token_count": false,
+      "greedy": true,
+      "max_new_tokens": 1,
+      "qwen_no_think": true,
+      "repetition_penalty": 1.100000023841858,
+      "seed": null,
+      "stream": false,
+      "temperature": 0.0,
+      "threads": 4,
+      "top_k": 1,
+      "top_p": 1.0
+    },
+    "generation_params_sha256": "d3cb70f789d6c56634afbda375dac227dc57e855602badb87947eee9bc03bee5",
+    "identity_sha256": "4ee4ae433d739ee45e1b86f027756142fe4688f2046a59dbfac7c3c132735f0c",
+    "schema_version": "1.0.0",
+    "stop_criteria": {
+      "manual_stop_sequences": [],
+      "manual_stop_token_ids": [],
+      "policy": "manual_plus_template_defaults",
+      "stop_sequences": [
+        "<|im_end|>",
+        "<|endoftext|>"
+      ],
+      "stop_string_window": null,
+      "stop_token_ids": [
+        151645,
+        151643
+      ]
+    },
+    "stop_criteria_sha256": "81a924f2031522e91546999535ab8a890a22f5db6ce5e5f623f2571025fff4c0",
+    "stop_sequences_sha256": "50b6705dbef36945728e51c433d1789e6ec42a214a46339ec29bb2e4d86947bf",
+    "stop_token_ids_sha256": "fe9bdf32be61eb87b5bf38ca1e7112390baf7eb7206bdff7f4d23be6fcbba6da",
+    "template": {
+      "family": "qwen-chat",
+      "source": "bitnet-prompt-templates-core"
+    },
+    "template_family": "qwen-chat",
+    "template_sha256": "4420914d3e5bd8bfb4f679b5666dc4c4b92af57d4b9cf4b65022c5699b0162e3",
+    "tokenizer_authority": {
+      "authority": "present",
+      "sha256": null,
+      "source": "gguf_metadata",
+      "strict": true
+    }
+  },
+  "prompt_index": 1,
+  "prompt_policy": {
+    "qwen_no_think": true,
+    "template": "qwen-chat"
+  },
+  "prompt_prefill": {
+    "exercised": true,
+    "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
+    "tokens": 27
+  },
+  "prompt_render": {
+    "add_bos": false,
+    "parse_special": true,
+    "qwen_no_think": true,
+    "rendered_sha256": "d1a21118038fa775ced3300b9ef8ebaae4f6d741fa34f024fc3fa549ddd63ca3",
+    "rendered_text": "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\nSay exactly: 4<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+    "stop_sequences": [
+      "<|im_end|>",
+      "<|endoftext|>"
+    ],
+    "stop_token_ids": [
+      151645,
+      151643
+    ],
+    "template_family": "qwen-chat"
+  },
+  "quality": {
+    "distinct_generated_tokens": 1,
+    "failed_rules": [],
+    "gate_kind": null,
+    "gate_passed": true,
+    "generated_tokens": 1,
+    "min_distinct_generated_tokens": 1,
+    "min_generated_tokens": 1,
+    "mostly_text": true,
+    "no_replacement_chars": true,
+    "non_degenerate": true,
+    "non_empty": true,
+    "normalized_text": "4",
+    "passed": true,
+    "printable_utf8": true,
+    "valid_utf8": true
+  },
+  "repeat_index": 0,
+  "requested_backend": "cpu",
+  "runtime_api": "cpu",
+  "schema_version": "1.0.0",
+  "selected_backend": "cpu-rust",
+  "session_artifact_path": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-26\\qwen3-slm-cpu-129-after-warm-allocation.json",
+  "session_reuse": {
+    "allocation_audit_buffers_reused": true,
+    "buffer_reuse_evidence": {
+      "buffers_cleared_without_reallocation": true,
+      "capacity_sufficient_for_prompt": true,
+      "decode_allocation_sample_capacity": 4,
+      "decode_timing_capacity": 4,
+      "generated_token_capacity": 4,
+      "generated_token_capacity_grew": false,
+      "generated_token_capacity_needed": 1,
+      "logits_capacity": 151936,
+      "logits_capacity_grew": false,
+      "logits_capacity_needed": 151936,
+      "prefill_allocation_sample_capacity": 27,
+      "previous_generated_token_capacity": 4,
+      "previous_logits_capacity": 151936,
+      "previous_stop_tail_capacity": 29,
+      "previous_token_capacity": 29,
+      "reset_reused_existing_capacity": true,
+      "stop_tail_capacity": 29,
+      "stop_tail_capacity_grew": false,
+      "stop_tail_capacity_needed": 29,
+      "token_capacity": 29,
+      "token_capacity_grew": false,
+      "token_capacity_needed": 29
+    },
+    "direct_greedy_logits_steps": 1,
+    "generated_token_buffer_reused": true,
+    "kv_cache_allocation_policy": "max_prompt_plus_generation_bounded",
+    "kv_cache_cleared_per_prompt": true,
+    "kv_cache_estimated_f32_bytes": "6422528",
+    "kv_cache_max_seq_len": 28,
+    "kv_cache_model_max_position_embeddings": 40960,
+    "kv_cache_recreated_per_prompt": false,
+    "kv_cache_reuse_policy": "single_kv_cache_cleared_per_prompt_for_prompt_isolation",
+    "kv_cache_reused_across_prompts": true,
+    "logits_buffer_reuse_policy": "full logits Vec extraction bypassed; deterministic greedy no-penalty steps use direct tensor argmax and repetition-penalty steps reuse a preallocated host logits scratch buffer",
+    "logits_scratch_reuse_steps": 0,
+    "logits_vec_extraction_bypassed": true,
+    "logits_vec_extraction_steps": 0,
+    "model_loaded_once": true,
+    "prompt_token_buffer_reused": true,
+    "prompt_token_cache_enabled": true,
+    "prompt_token_cache_entry_count": 1,
+    "prompt_token_cache_hit": true,
+    "prompt_token_cache_policy": "rendered_prompt_token_ids_reused_across_repeated_warm_session_prompts",
+    "reuse_scope": "resident_session",
+    "sampler_recreated_per_prompt": false,
+    "sampler_reuse_policy": "single_sampler_reused_for_temperature_zero_prompt_independence",
+    "sampler_reused_across_prompts": true,
+    "session_owned_buffers": true,
+    "stop_policy_precomputed_once": true,
+    "stop_sequence_count": 2,
+    "stop_tail_buffer_reused": true,
+    "stop_token_id_count": 2,
+    "timing_buffers_reused": true,
+    "tokenizer_loaded_once": true
+  },
+  "speedup_claim": false,
+  "text": "4",
+  "timestamp": "2026-05-26T11:50:35.487316800+00:00",
+  "timing": {
+    "decode_steady_state_tok_s": null,
+    "decode_total_ms": 789.898,
+    "embed_ms": {
+      "count": 1,
+      "max_ms": 0.03,
+      "mean_ms": 0.03,
+      "min_ms": 0.03,
+      "p50_ms": 0.03,
+      "p95_ms": 0.03,
+      "total_ms": 0.03
+    },
+    "first_token_decode_ms": 789.898,
+    "first_token_ms": 16369,
+    "forward_ms": {
+      "count": 1,
+      "max_ms": 602.384,
+      "mean_ms": 602.384,
+      "min_ms": 602.384,
+      "p50_ms": 602.384,
+      "p95_ms": 602.384,
+      "total_ms": 602.384
+    },
+    "logits_ms": {
+      "count": 1,
+      "max_ms": 187.45,
+      "mean_ms": 187.45,
+      "min_ms": 187.45,
+      "p50_ms": 187.45,
+      "p95_ms": 187.45,
+      "total_ms": 187.45
+    },
+    "model_load_ms": 0.0,
+    "prefill_ms": 15579.953,
+    "sample_ms": {
+      "count": 1,
+      "max_ms": 0.0,
+      "mean_ms": 0.0,
+      "min_ms": 0.0,
+      "p50_ms": 0.0,
+      "p95_ms": 0.0,
+      "total_ms": 0.0
+    },
+    "sampling_ms_per_token": 0.0,
+    "session_model_load_ms": 64969.586,
+    "session_model_sha256_ms": 7602.457,
+    "session_tokenizer_load_ms": 1301.968,
+    "time_to_first_token_ms": 16369,
+    "token_decode_ms": {
+      "count": 1,
+      "max_ms": 0.021,
+      "mean_ms": 0.021,
+      "min_ms": 0.021,
+      "p50_ms": 0.021,
+      "p95_ms": 0.021,
+      "total_ms": 0.021
+    },
+    "tokenize_ms": 0.018,
+    "tokenizer_load_ms": 0.0,
+    "total_ms": 16370.062
+  },
+  "tokenizer": {
+    "bos": 151643,
+    "eos": 151645,
+    "model_family": "gguf_metadata",
+    "pretokenizer_authority": "present",
+    "source": "gguf_metadata",
+    "strict": true,
+    "type": "gguf_metadata"
+  },
+  "tokens": {
+    "generated": 1,
+    "generated_ids": [
+      19
+    ],
+    "ids": [
+      19
+    ],
+    "prompt": 28,
+    "prompt_ids": [
+      151644,
+      8948,
+      198,
+      2610,
+      525,
+      264,
+      10950,
+      17847,
+      13,
+      151645,
+      198,
+      151644,
+      872,
+      198,
+      45764,
+      6896,
+      25,
+      220,
+      19,
+      151645,
+      198,
+      151644,
+      77091,
+      198,
+      151667,
+      271,
+      151668,
+      271
+    ],
+    "total": 29
+  }
+}
