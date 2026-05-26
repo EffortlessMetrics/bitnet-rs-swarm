@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T16:08:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-135"
+event = "merged"
+pr = 792
+head_sha = "9f120b56b975eb51b2529ef0ea1a73bced267056"
+merge_sha = "13fe70d4e953ab66d04b7d789cffbcbac3d9a60f"
+actor = "codex"
+
+summary = "Merged PR #792 adding the SLM-CPU-135 source-order q_proj behavior gate."
+
+notes = [
+  "The merged artifact defines the exact-model receipt gate required before source-order q_proj matvec selector use is considered.",
+  "Runtime selection remains disabled because Qwen3 and Qwen2.5 selector-path before/after strict CPU receipt pairs are still missing.",
+  "SLM-CPU-136 is ready to capture those receipt pairs or keep the path fail-closed with an exact blocker.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
