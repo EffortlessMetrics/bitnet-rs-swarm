@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T00:28:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-118"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-118-qproj-output-receipt-pair"
+pr = 753
+head_sha = "ee95430f9c337ba798d0f64be39789a629a48faa"
+merge_sha = "e7ea1bbc0767bfb73a2ed3458dae976e227ba6b6"
+merged_at = "2026-05-26T00:28:17Z"
+summary = "Merged PR #753, recording the exact blocker for the shared q_proj-output before/after receipt-pair proof."
+notes = [
+  "SLM-CPU-118 is evidence/docs only and records why the shared q_proj-output boundary is still not behavior-proven.",
+  "The merge preserves no runtime changes, allocation claim, timing claim, throughput claim, Q4/Q5 support, server execution, accelerator execution, Qwen3.5 support, or BitNet QK256/I2_S claim.",
+]
+
+[[next_items]]
+id = "SLM-CPU-119"
+status = "ready"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+summary = "Capture the exact Qwen3 and Qwen2.5 before/after strict CPU receipt pairs with the shared q_proj-output hook active, or record the exact capture blocker."
