@@ -7761,9 +7761,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-127"
-status = "pr_open"
+status = "merged"
 pr = 776
-head_sha = "d3d249a6d5cdb85f948ad163885ba4f04b8b63de"
+head_sha = "706f5e6b39aef0494b6299f8fc0231760c57ad3c"
+merge_sha = "e8a9928763285a8a91088fa1c2611b89e0d78949"
+merged_at = "2026-05-26T11:34:33Z"
 branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
 stackable = false
 review_mode = "codex_premerge"
@@ -7793,6 +7795,50 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-126 identifies the missing exact Qwen2.5 Q8_0 artifact as the blocker before fresh cross-model allocation or timing receipts.",
   "SLM-CPU-127 may restore artifact availability and receipt readiness, or fail closed with an exact missing-artifact or missing-receipt blocker.",
+]
+must_not_claim = [
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-128"
+status = "ready"
+branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-127"]
+acceptance = "Use the SLM-CPU-125 exact-boundary numeric gate and the SLM-CPU-127 fresh Qwen3/Qwen2.5 before/after receipt pack to run or classify the next bounded exact-tensor packed-Q8 sidecar allocation or timing experiment. A valid slice must preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and the accepted layer-0 attention.q_proj_output_pre_optional_qnorm numeric gate. It may record a bounded allocation/timing result only if matching receipts prove behavior equivalence; otherwise it must fail closed with the exact blocker."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-127 restores exact Qwen2.5 Q8_0 artifact availability and fresh cross-model receipt readiness.",
+  "SLM-CPU-128 may classify a bounded exact-tensor allocation or timing result only if fresh behavior-equivalent receipts support it.",
 ]
 must_not_claim = [
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
