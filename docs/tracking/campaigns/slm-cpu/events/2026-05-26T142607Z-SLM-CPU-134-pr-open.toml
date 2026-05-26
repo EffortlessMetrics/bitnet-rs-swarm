@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T14:26:07Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-134"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 790
+branch = "codex/slm-cpu-134-source-order-qproj-matvec-prototype"
+head_sha = "8bf75ed3cc183e8aec050bf04f637930446a0544"
+summary = "Opened PR #790 to add the SLM-CPU-134 source-order Q8_0 q_proj matvec prototype."
+notes = [
+  "The PR adds a runtime-disabled source-order Q8_0 matvec prototype that consumes GGUF source-order rows and accumulates into the runtime output vector.",
+  "The fixture proof compares the prototype against an eager source-order f32 reference and keeps runtime selection disabled.",
+  "Exact Qwen3/Qwen2.5 selector use remains blocked until before/after strict CPU receipts preserve generated IDs, decoded text, backend/kernel identity, dense hook identity, fallback state, and receipt identity.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
