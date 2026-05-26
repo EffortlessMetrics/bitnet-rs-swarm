@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_qwen3_qproj_payload_reorder_contract",
+  "tracking_item": "SLM-CPU-132",
+  "timestamp": "2026-05-26T13:32:00Z",
+  "inputs": {
+    "payload_order_proof": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-131-qproj-payload-order-proof.json",
+    "selector_convergence_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-130-selector-convergence-gate.json",
+    "qwen3_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-129-after-warm-allocation.json"
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "accepted_behavior_gate": {
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "allocation_audit_counters_available": true,
+    "q_proj_numeric_gate_preserved": true
+  },
+  "payload_reorder_contract": {
+    "schema": 1,
+    "artifact_kind": "dense_q8_payload_reorder_contract",
+    "tensor_name": "layers.0.attention.q_proj.weight",
+    "role": "attention_q",
+    "source_shape": [1024, 2048],
+    "runtime_candle_shape": [2048, 1024],
+    "q8_block_size": 32,
+    "q8_block_count": 65536,
+    "source_row_major_block_span": 2048,
+    "runtime_row_major_block_span": 1024,
+    "source_payload_order_matches_runtime_shape": false,
+    "pure_byte_reorder_possible": false,
+    "requires_dequantize_requantize": true,
+    "runtime_selection_allowed": false,
+    "contract_status": "blocked_requires_dequantize_requantize",
+    "blocker": "Q8_0 scales are attached to 32-value contiguous source row-major blocks; source shape [1024, 2048] would be consumed as runtime shape [2048, 1024], so a pure byte reorder would regroup values under the wrong block scales. Runtime selection requires a dequantize/requantize proof or a kernel that consumes source-order Q8_0 blocks directly.",
+    "next_safe_step": "prove dequantize/requantize equivalence for the exact tensor, or implement a source-order Q8_0 kernel; keep eager_f32_candle selected until that proof exists"
+  },
+  "selector_resolution": {
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "runtime_compute_enabled": false,
+    "dense_runtime_replaced": false,
+    "sidecar_payload_bytes_available": true,
+    "sidecar_payload_contract_valid": true,
+    "sidecar_payload_order_matches_runtime_shape": false,
+    "payload_reorder_contract_valid_for_runtime_selection": false,
+    "selector_contract": "fail_closed_until_dequant_requant_or_source_order_kernel_proof"
+  },
+  "classification": "qwen3_qproj_packed_q8_payload_reorder_requires_dequant_requant_or_source_order_kernel",
+  "resolution": {
+    "qwen3_runtime_status": "diagnostic_only_until_payload_reorder_contract_is_implemented",
+    "default_runtime_status": "eager_f32_candle_preserved",
+    "next_safe_step": "choose either exact-tensor dequantize/requantize proof or a source-order Q8_0 q_proj kernel before enabling packed sidecar selection"
+  },
+  "not_claimed": [
+    "allocation reduction",
+    "timing improvement",
+    "speedup",
+    "sustained throughput",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality"
+  ]
+}
