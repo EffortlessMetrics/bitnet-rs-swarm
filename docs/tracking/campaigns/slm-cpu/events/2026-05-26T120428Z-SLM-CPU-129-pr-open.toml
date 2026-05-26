@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T12:04:28Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-129"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 780
+branch = "codex/slm-cpu-129-repeated-allocation-audit-receipts"
+head_sha = "e267281b2fe4481834b1a4bcdddee3857af29351"
+summary = "Opened PR #780 to collect repeated warm-session allocation-audit receipts after the SLM-CPU-128 mixed timing classification."
+notes = [
+  "The PR records Qwen3 and Qwen2.5 before/after warm-session receipts with allocation-audit counters.",
+  "Generated IDs and decoded text remain behavior-equivalent with strict GGUF tokenizer authority, cpu-rust, and fallback_used=false.",
+  "The classification remains fail-closed for optimization: Qwen3 does not select packed sidecar compute, Qwen2.5 selection is opt-in and counter-scoped, and no allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
