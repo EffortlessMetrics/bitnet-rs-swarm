@@ -7857,9 +7857,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-129"
-status = "pr_open"
+status = "merged"
 pr = 780
 head_sha = "e267281b2fe4481834b1a4bcdddee3857af29351"
+merge_sha = "3ec39af9f5410426c0ee1e681aded9aa47cac60a"
+merged_at = "2026-05-26T12:06:49Z"
 branch = "codex/slm-cpu-129-repeated-allocation-audit-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -7893,6 +7895,53 @@ may_claim = [
 must_not_claim = [
   "Allocation reduction or speedup is proven without repeated behavior-equivalent before/after strict CPU receipts.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-130"
+status = "ready"
+branch = "codex/slm-cpu-130-qproj-selector-convergence-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-129"]
+acceptance = "Resolve or explicitly classify the cross-model exact-tensor packed-Q8 selector mismatch after SLM-CPU-129: Qwen3 records allocation counters but stays on eager_f32_candle for the selected path, while Qwen2.5 records opt-in packed_q8_sidecar counter selection for the exact layer-0 attention.q_proj tensor. A valid slice must preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, allocation-audit counters, and the accepted q_proj numeric gate. It may narrow the selector or keep the sidecar diagnostic-only, but must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-129 records repeated warm-session allocation-audit counters with behavior-equivalent Qwen3 and Qwen2.5 receipts.",
+  "SLM-CPU-130 may classify why Qwen3 and Qwen2.5 do not exercise the same packed-Q8 selector boundary, or may narrow the selector contract so the diagnostic surface is explicit.",
+]
+must_not_claim = [
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",

@@ -1,0 +1,15 @@
+timestamp = "2026-05-26T12:06:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-129"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 780
+merge_sha = "3ec39af9f5410426c0ee1e681aded9aa47cac60a"
+summary = "Merged SLM-CPU-129 repeated warm-session allocation-audit receipts."
+notes = [
+  "The merged artifact records Qwen3 and Qwen2.5 before/after warm-session receipts with allocation-audit counters.",
+  "Generated IDs and decoded text remain behavior-equivalent with strict GGUF tokenizer authority, cpu-rust, and fallback_used=false.",
+  "The evidence remains fail-closed for optimization: Qwen3 does not select packed sidecar compute and Qwen2.5 selection remains opt-in and counter-scoped, so no allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
