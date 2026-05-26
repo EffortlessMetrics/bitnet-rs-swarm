@@ -1,0 +1,24 @@
+timestamp = "2026-05-26T21:54:03Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-141"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-141-source-order-receipt-capture"
+pr = 804
+head_sha = "e697323779f6735ec445bac37dcf4354fa23b179"
+merge_sha = "96e339a1f5945935eab6e25b9ee325ff5a728778"
+summary = "Merged PR #804 with the SLM-CPU-141 source-order q_proj receipt capture blocker."
+notes = [
+  "The exact Qwen2.5 Q8_0 cache was restored locally and verified by SHA256 without committing model or target cache artifacts.",
+  "Fresh Qwen3 and Qwen2.5 before/after strict CPU warm-session receipts preserve generated IDs, decoded text, GGUF tokenizer authority, cpu-rust, and fallback_used=false.",
+  "The selector gate remains fail-closed because q_proj numeric evidence is absent and Qwen2.5 does not record the source-order q_proj candidate identity.",
+  "SLM-CPU-142 is ready to add or precisely block the missing q_proj numeric evidence and cross-model source-order identity fields without runtime promotion or performance claims.",
+]
+
+[[next_work_item]]
+id = "SLM-CPU-142"
+status = "ready"
+branch = "codex/slm-cpu-142-source-order-qproj-evidence-fields"
+summary = "Add or precisely block the missing q_proj numeric evidence and cross-model source-order candidate identity fields required before source-order selector use is considered."
