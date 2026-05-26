@@ -7262,8 +7262,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-118"
-status = "pr_open"
+status = "merged"
 pr = 753
+head_sha = "ee95430f9c337ba798d0f64be39789a629a48faa"
+merge_sha = "e7ea1bbc0767bfb73a2ed3458dae976e227ba6b6"
+merged_at = "2026-05-26T00:28:17Z"
 branch = "codex/slm-cpu-118-qproj-output-receipt-pair"
 stackable = false
 review_mode = "codex_premerge"
