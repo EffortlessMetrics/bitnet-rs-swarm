@@ -1,0 +1,18 @@
+timestamp = "2026-05-25T23:59:06Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-117"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 749
+branch = "codex/slm-cpu-117-qproj-output-pre-qnorm-hook"
+head_sha = "5f4a704833377131e28693226ebb4b4c4546ea40"
+merge_sha = "36d7e48a022b7d1fb57f091a94d33749f813e3f7"
+merged_at = "2026-05-25T23:41:38Z"
+actor = "codex"
+summary = "Marked SLM-CPU-117 merged after PR #749 landed on main."
+notes = [
+  "PR #749 added the opt-in, runtime-disabled Qwen attention.q_proj_output_pre_optional_qnorm trace fingerprint and reference-compare receipt surface.",
+  "The merged change preserves eager_f32_candle as the default runtime and keeps packed_q8_sidecar unpromoted.",
+  "The closeout records tracker state only; it does not add Lunar Lake route evidence, route promotion, speedup, power advantage, battery-mode evidence, GPU/NPU/OpenVINO execution, Qwen3.5 support, or BitNet QK256/I2_S behavior changes.",
+]

@@ -7203,9 +7203,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-117"
-status = "pr_open"
+status = "merged"
 pr = 749
 head_sha = "5f4a704833377131e28693226ebb4b4c4546ea40"
+merge_sha = "36d7e48a022b7d1fb57f091a94d33749f813e3f7"
+merged_at = "2026-05-25T23:41:38Z"
 branch = "codex/slm-cpu-117-qproj-output-pre-qnorm-hook"
 stackable = false
 review_mode = "codex_premerge"
