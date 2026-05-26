@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T13:38:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-132"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 786
+branch = "codex/slm-cpu-132-qwen3-qproj-payload-reorder-contract"
+head_sha = "1ce29b30b9e0be0b3052cd6a634a50dbd45df961"
+summary = "Opened PR #786 to define the SLM-CPU-132 Qwen3 q_proj payload reorder contract."
+notes = [
+  "The PR defines a fail-closed dense Q8 payload-reorder contract for sidecar descriptors.",
+  "The exact Qwen3 layer-0 attention.q_proj payload remains blocked because a pure Q8_0 byte reorder would regroup values under the wrong block scales.",
+  "Runtime selection remains blocked until a dequantize/requantize equivalence proof or source-order Q8_0 kernel exists.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]

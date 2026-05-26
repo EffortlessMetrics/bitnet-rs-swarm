@@ -63,6 +63,14 @@ pub enum DenseQ8PayloadOrderProofStatus {
     BlockedPendingPayloadReorderProof,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DenseQ8PayloadReorderContractStatus {
+    NativePayloadOrder,
+    BlockedRequiresDequantizeRequantize,
+    BlockedUnsupportedShapeRank,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DenseQ8PayloadOrderProof {
     pub schema: u64,
@@ -79,6 +87,27 @@ pub struct DenseQ8PayloadOrderProof {
     pub packed_q8_bytes_sha256: String,
     pub proof_status: DenseQ8PayloadOrderProofStatus,
     pub runtime_selection_allowed: bool,
+    pub blocker: Option<String>,
+    pub next_safe_step: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DenseQ8PayloadReorderContract {
+    pub schema: u64,
+    pub artifact_kind: String,
+    pub tensor_name: String,
+    pub role: DenseGgufTensorRole,
+    pub source_shape: Vec<usize>,
+    pub runtime_candle_shape: Vec<usize>,
+    pub q8_block_size: usize,
+    pub q8_block_count: usize,
+    pub source_row_major_block_span: Option<usize>,
+    pub runtime_row_major_block_span: Option<usize>,
+    pub source_payload_order_matches_runtime_shape: bool,
+    pub pure_byte_reorder_possible: bool,
+    pub requires_dequantize_requantize: bool,
+    pub runtime_selection_allowed: bool,
+    pub contract_status: DenseQ8PayloadReorderContractStatus,
     pub blocker: Option<String>,
     pub next_safe_step: String,
 }
@@ -244,6 +273,74 @@ impl DenseGgufQ8SidecarDescriptor {
             packed_q8_bytes_sha256: self.packed_q8_bytes_sha256.clone(),
             proof_status,
             runtime_selection_allowed: source_payload_order_matches_runtime_shape,
+            blocker,
+            next_safe_step,
+        }
+    }
+
+    pub fn payload_reorder_contract(&self) -> DenseQ8PayloadReorderContract {
+        let source_payload_order_matches_runtime_shape = self.payload_order_matches_runtime_shape();
+        let source_row_major_block_span = self.source_shape.last().copied();
+        let runtime_row_major_block_span = self.runtime_candle_shape.last().copied();
+
+        let contract_status = if source_payload_order_matches_runtime_shape {
+            DenseQ8PayloadReorderContractStatus::NativePayloadOrder
+        } else if self.source_shape.len() == 2 && self.runtime_candle_shape.len() == 2 {
+            DenseQ8PayloadReorderContractStatus::BlockedRequiresDequantizeRequantize
+        } else {
+            DenseQ8PayloadReorderContractStatus::BlockedUnsupportedShapeRank
+        };
+        let requires_dequantize_requantize = matches!(
+            contract_status,
+            DenseQ8PayloadReorderContractStatus::BlockedRequiresDequantizeRequantize
+        );
+        let runtime_selection_allowed =
+            matches!(contract_status, DenseQ8PayloadReorderContractStatus::NativePayloadOrder);
+        let pure_byte_reorder_possible = false;
+        let blocker = match contract_status {
+            DenseQ8PayloadReorderContractStatus::NativePayloadOrder => None,
+            DenseQ8PayloadReorderContractStatus::BlockedRequiresDequantizeRequantize => {
+                Some(format!(
+                    "Q8_0 scales are attached to {}-value contiguous source row-major blocks; source shape {:?} would be consumed as runtime shape {:?}, so a pure byte reorder would regroup values under the wrong block scales. Runtime selection requires a dequantize/requantize proof or a kernel that consumes source-order Q8_0 blocks directly.",
+                    self.q8_block_size, self.source_shape, self.runtime_candle_shape
+                ))
+            }
+            DenseQ8PayloadReorderContractStatus::BlockedUnsupportedShapeRank => Some(format!(
+                "Q8_0 payload reorder is defined only for native-order tensors and explicit 2D transpose blockers; source shape {:?} and runtime shape {:?} are unsupported for runtime selection",
+                self.source_shape, self.runtime_candle_shape
+            )),
+        };
+        let next_safe_step = match contract_status {
+            DenseQ8PayloadReorderContractStatus::NativePayloadOrder => {
+                "eligible for generated-ID before/after receipt gate before runtime selection"
+                    .to_string()
+            }
+            DenseQ8PayloadReorderContractStatus::BlockedRequiresDequantizeRequantize => {
+                "prove dequantize/requantize equivalence for the exact tensor, or implement a source-order Q8_0 kernel; keep eager_f32_candle selected until that proof exists"
+                    .to_string()
+            }
+            DenseQ8PayloadReorderContractStatus::BlockedUnsupportedShapeRank => {
+                "add an explicit tensor-rank-specific reorder contract, or keep eager_f32_candle selected"
+                    .to_string()
+            }
+        };
+
+        DenseQ8PayloadReorderContract {
+            schema: 1,
+            artifact_kind: "dense_q8_payload_reorder_contract".to_string(),
+            tensor_name: self.tensor_name.clone(),
+            role: self.role,
+            source_shape: self.source_shape.clone(),
+            runtime_candle_shape: self.runtime_candle_shape.clone(),
+            q8_block_size: self.q8_block_size,
+            q8_block_count: self.q8_block_count,
+            source_row_major_block_span,
+            runtime_row_major_block_span,
+            source_payload_order_matches_runtime_shape,
+            pure_byte_reorder_possible,
+            requires_dequantize_requantize,
+            runtime_selection_allowed,
+            contract_status,
             blocker,
             next_safe_step,
         }
@@ -452,6 +549,57 @@ mod tests {
         assert!(!proof.runtime_shape_requires_reorder);
         assert!(proof.runtime_selection_allowed);
         assert!(proof.blocker.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_payload_reorder_contract_blocks_qwen3_qproj_byte_reorder() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![1024, 2048], 2_228_224);
+        let data = vec![0u8; 2_228_224];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let contract = descriptor.payload_reorder_contract();
+
+        assert_eq!(contract.source_shape, vec![1024, 2048]);
+        assert_eq!(contract.runtime_candle_shape, vec![2048, 1024]);
+        assert_eq!(
+            contract.contract_status,
+            DenseQ8PayloadReorderContractStatus::BlockedRequiresDequantizeRequantize
+        );
+        assert_eq!(contract.source_row_major_block_span, Some(2048));
+        assert_eq!(contract.runtime_row_major_block_span, Some(1024));
+        assert!(!contract.source_payload_order_matches_runtime_shape);
+        assert!(!contract.pure_byte_reorder_possible);
+        assert!(contract.requires_dequantize_requantize);
+        assert!(!contract.runtime_selection_allowed);
+        assert!(
+            contract
+                .blocker
+                .as_deref()
+                .is_some_and(|blocker| blocker.contains("wrong block scales"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_payload_reorder_contract_allows_native_payload_order() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![896, 896], 852_992);
+        let data = vec![0u8; 852_992];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let contract = descriptor.payload_reorder_contract();
+
+        assert_eq!(
+            contract.contract_status,
+            DenseQ8PayloadReorderContractStatus::NativePayloadOrder
+        );
+        assert!(contract.source_payload_order_matches_runtime_shape);
+        assert!(!contract.pure_byte_reorder_possible);
+        assert!(!contract.requires_dequantize_requantize);
+        assert!(contract.runtime_selection_allowed);
+        assert!(contract.blocker.is_none());
         Ok(())
     }
 
