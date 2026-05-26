@@ -7956,7 +7956,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-131"
-status = "ready"
+status = "pr_open"
+pr = 784
+head_sha = "db095fbd9af59e2cf72724288357e5f03514d3f8"
 branch = "codex/slm-cpu-131-qwen3-qproj-payload-order-proof"
 stackable = false
 review_mode = "codex_premerge"
