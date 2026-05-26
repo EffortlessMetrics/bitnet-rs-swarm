@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T16:22:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-136"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 794
+branch = "codex/slm-cpu-136-source-order-qproj-receipt-pairs"
+head_sha = "1fd3643f29f184e2ace47feb44efb2e83932f334"
+summary = "Opened PR #794 to add the SLM-CPU-136 source-order q_proj receipt-pair blocker."
+notes = [
+  "The PR records that source-order q_proj receipt-pair capture is blocked because the generation-time selector hook, candidate receipt identity, and runtime input binding are not wired.",
+  "Runtime selection remains disabled and the default eager_f32_candle path is preserved.",
+  "The next safe slice is a default-disabled exact-tensor selector hook plus receipt identity fields, followed by Qwen3/Qwen2.5 before/after strict CPU receipt pairs.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
