@@ -7262,7 +7262,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-118"
-status = "ready"
+status = "pr_open"
+pr = 753
 branch = "codex/slm-cpu-118-qproj-output-receipt-pair"
 stackable = false
 review_mode = "codex_premerge"
@@ -7296,6 +7297,55 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-117 added the opt-in runtime-disabled attention.q_proj_output_pre_optional_qnorm diagnostic hook and fail-closed comparator artifact surface.",
   "SLM-CPU-118 may capture real Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after evidence at that shared boundary, or record the exact missing model, hook, receipt, tensor fingerprint, or comparator blocker.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven without accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality or explicit blockers.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-119"
+status = "ready"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-118"]
+acceptance = "Capture the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs with the SLM-CPU-117 `attention.q_proj_output_pre_optional_qnorm` hook active, or provide the exact missing GGUF/cache path, trace activation, receipt field, tensor fingerprint, or command transcript blocker. A valid capture must preserve identical model SHA, strict GGUF tokenizer authority, CPU backend, fallback_used=false, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, boundary label, source tensor identity, shape/dtype, and f32-le tensor fingerprint equality before any allocation or timing claim."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-118 recorded the exact blocker for the shared q_proj-output receipt-pair proof.",
+  "SLM-CPU-119 may capture the exact Qwen3 and Qwen2.5 before/after hook-fingerprint receipt pairs or record a more precise capture blocker.",
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven without accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality or explicit blockers.",

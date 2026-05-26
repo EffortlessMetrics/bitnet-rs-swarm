@@ -259,6 +259,15 @@ the real Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs for
 the shared `attention.q_proj_output_pre_optional_qnorm` boundary before any
 allocation or timing work treats that boundary as behavior-proven.
 
+The SLM-CPU-118 review blocks that proof exactly in
+`ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-qwen25-slm-cpu-118-qproj-output-receipt-pair-blocker.json`.
+Qwen3 Q8_0 is locally available and has an older before/after behavior pair, but
+that pair predates the shared hook and does not carry the required
+`attention.q_proj_output_pre_optional_qnorm` f32-le fingerprints. The accepted
+Qwen2.5 Q8_0 sanity receipts exist, but the exact accepted GGUF cache path is
+not present in this worktree and no Qwen2.5 before/after shared-hook pair exists.
+The boundary therefore remains not behavior-proven.
+
 ## Thread Envelope
 
 The thread envelope is a bounded single-run comparison. Generated IDs are stable

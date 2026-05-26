@@ -1,0 +1,22 @@
+timestamp = "2026-05-26T00:06:04Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-118"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-118-qproj-output-receipt-pair"
+pr = 753
+head_sha = "301ba1037ace41fd0aa5f0145b631c2b295a8cea"
+summary = "Opened PR #753 with an exact blocker for the shared q_proj-output before/after receipt-pair proof."
+notes = [
+  "Qwen3 Q8_0 is locally available and has older before/after behavior receipts, but those receipts predate the SLM-CPU-117 hook and do not carry attention.q_proj_output_pre_optional_qnorm f32-le fingerprints.",
+  "The accepted Qwen2.5 Q8_0 sanity artifacts exist, but the exact accepted GGUF/cache path is not present in this worktree and no Qwen2.5 before/after shared-hook pair exists.",
+  "The slice preserves the no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim boundary.",
+]
+
+[[next_items]]
+id = "SLM-CPU-119"
+status = "ready"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+summary = "Capture the exact Qwen3 and Qwen2.5 before/after strict CPU receipt pairs with the shared q_proj-output hook active, or record the exact capture blocker."
