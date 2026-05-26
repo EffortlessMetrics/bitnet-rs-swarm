@@ -71,6 +71,14 @@ pub enum DenseQ8PayloadReorderContractStatus {
     BlockedUnsupportedShapeRank,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DenseQ8SourceOrderKernelContractStatus {
+    NativePayloadOrder,
+    RuntimeDisabledSourceOrderMatvecCandidate,
+    BlockedUnsupportedShape,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DenseQ8PayloadOrderProof {
     pub schema: u64,
@@ -108,6 +116,31 @@ pub struct DenseQ8PayloadReorderContract {
     pub requires_dequantize_requantize: bool,
     pub runtime_selection_allowed: bool,
     pub contract_status: DenseQ8PayloadReorderContractStatus,
+    pub blocker: Option<String>,
+    pub next_safe_step: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DenseQ8SourceOrderKernelContract {
+    pub schema: u64,
+    pub artifact_kind: String,
+    pub tensor_name: String,
+    pub role: DenseGgufTensorRole,
+    pub source_shape: Vec<usize>,
+    pub runtime_candle_shape: Vec<usize>,
+    pub q8_block_size: usize,
+    pub q8_block_count: usize,
+    pub source_input_dim: Option<usize>,
+    pub source_output_dim: Option<usize>,
+    pub runtime_input_dim: Option<usize>,
+    pub runtime_output_dim: Option<usize>,
+    pub source_row_major_block_span: Option<usize>,
+    pub consumes_source_order_payload_directly: bool,
+    pub requires_dequantize_requantize: bool,
+    pub requires_output_accumulator: bool,
+    pub runtime_selection_allowed: bool,
+    pub proof_gate_required_before_runtime_selection: bool,
+    pub contract_status: DenseQ8SourceOrderKernelContractStatus,
     pub blocker: Option<String>,
     pub next_safe_step: String,
 }
@@ -340,6 +373,85 @@ impl DenseGgufQ8SidecarDescriptor {
             pure_byte_reorder_possible,
             requires_dequantize_requantize,
             runtime_selection_allowed,
+            contract_status,
+            blocker,
+            next_safe_step,
+        }
+    }
+
+    pub fn source_order_kernel_contract(&self) -> DenseQ8SourceOrderKernelContract {
+        let is_2d_transpose = self.source_shape.len() == 2
+            && self.runtime_candle_shape.len() == 2
+            && self.source_shape[0] == self.runtime_candle_shape[1]
+            && self.source_shape[1] == self.runtime_candle_shape[0]
+            && self.source_shape != self.runtime_candle_shape;
+        let native_payload_order = self.payload_order_matches_runtime_shape();
+
+        let contract_status = if native_payload_order {
+            DenseQ8SourceOrderKernelContractStatus::NativePayloadOrder
+        } else if is_2d_transpose {
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate
+        } else {
+            DenseQ8SourceOrderKernelContractStatus::BlockedUnsupportedShape
+        };
+        let source_input_dim = self.source_shape.first().copied();
+        let source_output_dim = self.source_shape.get(1).copied();
+        let runtime_output_dim = self.runtime_candle_shape.first().copied();
+        let runtime_input_dim = self.runtime_candle_shape.get(1).copied();
+        let consumes_source_order_payload_directly = matches!(
+            contract_status,
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate
+        );
+        let requires_output_accumulator = consumes_source_order_payload_directly;
+        let proof_gate_required_before_runtime_selection = consumes_source_order_payload_directly;
+        let runtime_selection_allowed = false;
+        let blocker = match contract_status {
+            DenseQ8SourceOrderKernelContractStatus::NativePayloadOrder => None,
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate => {
+                Some(format!(
+                    "source-order Q8_0 matvec candidate for source shape {:?} and runtime shape {:?} must prove accumulator order, block-scale decode, generated-ID preservation, and receipt identity before runtime selection",
+                    self.source_shape, self.runtime_candle_shape
+                ))
+            }
+            DenseQ8SourceOrderKernelContractStatus::BlockedUnsupportedShape => Some(format!(
+                "source-order Q8_0 kernel contract is defined only for native payload order or explicit 2D transpose candidates; source shape {:?} and runtime shape {:?} are unsupported",
+                self.source_shape, self.runtime_candle_shape
+            )),
+        };
+        let next_safe_step = match contract_status {
+            DenseQ8SourceOrderKernelContractStatus::NativePayloadOrder => {
+                "use the native payload-order receipt gate; no source-order transpose kernel is needed"
+                    .to_string()
+            }
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate => {
+                "add a runtime-disabled source-order Q8_0 matvec implementation and compare it against eager_f32_candle with the accepted Qwen3/Qwen2.5 behavior oracle before enabling selection"
+                    .to_string()
+            }
+            DenseQ8SourceOrderKernelContractStatus::BlockedUnsupportedShape => {
+                "add an explicit tensor-shape contract, or keep eager_f32_candle selected"
+                    .to_string()
+            }
+        };
+
+        DenseQ8SourceOrderKernelContract {
+            schema: 1,
+            artifact_kind: "dense_q8_source_order_kernel_contract".to_string(),
+            tensor_name: self.tensor_name.clone(),
+            role: self.role,
+            source_shape: self.source_shape.clone(),
+            runtime_candle_shape: self.runtime_candle_shape.clone(),
+            q8_block_size: self.q8_block_size,
+            q8_block_count: self.q8_block_count,
+            source_input_dim,
+            source_output_dim,
+            runtime_input_dim,
+            runtime_output_dim,
+            source_row_major_block_span: self.source_shape.last().copied(),
+            consumes_source_order_payload_directly,
+            requires_dequantize_requantize: false,
+            requires_output_accumulator,
+            runtime_selection_allowed,
+            proof_gate_required_before_runtime_selection,
             contract_status,
             blocker,
             next_safe_step,
@@ -599,6 +711,60 @@ mod tests {
         assert!(!contract.pure_byte_reorder_possible);
         assert!(!contract.requires_dequantize_requantize);
         assert!(contract.runtime_selection_allowed);
+        assert!(contract.blocker.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_source_order_kernel_contract_accepts_qwen3_qproj_candidate() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![1024, 2048], 2_228_224);
+        let data = vec![0u8; 2_228_224];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let contract = descriptor.source_order_kernel_contract();
+
+        assert_eq!(
+            contract.contract_status,
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate
+        );
+        assert_eq!(contract.source_input_dim, Some(1024));
+        assert_eq!(contract.source_output_dim, Some(2048));
+        assert_eq!(contract.runtime_input_dim, Some(1024));
+        assert_eq!(contract.runtime_output_dim, Some(2048));
+        assert_eq!(contract.source_row_major_block_span, Some(2048));
+        assert!(contract.consumes_source_order_payload_directly);
+        assert!(!contract.requires_dequantize_requantize);
+        assert!(contract.requires_output_accumulator);
+        assert!(contract.proof_gate_required_before_runtime_selection);
+        assert!(!contract.runtime_selection_allowed);
+        assert!(
+            contract
+                .blocker
+                .as_deref()
+                .is_some_and(|blocker| blocker.contains("accumulator order"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_source_order_kernel_contract_uses_native_payload_gate_when_matching()
+    -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![896, 896], 852_992);
+        let data = vec![0u8; 852_992];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let contract = descriptor.source_order_kernel_contract();
+
+        assert_eq!(
+            contract.contract_status,
+            DenseQ8SourceOrderKernelContractStatus::NativePayloadOrder
+        );
+        assert!(!contract.consumes_source_order_payload_directly);
+        assert!(!contract.requires_dequantize_requantize);
+        assert!(!contract.proof_gate_required_before_runtime_selection);
+        assert!(!contract.runtime_selection_allowed);
         assert!(contract.blocker.is_none());
         Ok(())
     }

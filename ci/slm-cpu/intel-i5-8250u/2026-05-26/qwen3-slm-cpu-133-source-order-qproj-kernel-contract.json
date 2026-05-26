@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_qwen3_source_order_qproj_kernel_contract",
+  "tracking_item": "SLM-CPU-133",
+  "timestamp": "2026-05-26T13:49:00Z",
+  "inputs": {
+    "payload_reorder_contract": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-132-qproj-payload-reorder-contract.json",
+    "payload_order_proof": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-131-qproj-payload-order-proof.json",
+    "selector_convergence_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-130-selector-convergence-gate.json"
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "accepted_behavior_gate": {
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "allocation_audit_counters_available": true,
+    "q_proj_numeric_gate_preserved": true
+  },
+  "source_order_kernel_contract": {
+    "schema": 1,
+    "artifact_kind": "dense_q8_source_order_kernel_contract",
+    "tensor_name": "layers.0.attention.q_proj.weight",
+    "role": "attention_q",
+    "source_shape": [1024, 2048],
+    "runtime_candle_shape": [2048, 1024],
+    "q8_block_size": 32,
+    "q8_block_count": 65536,
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "runtime_input_dim": 1024,
+    "runtime_output_dim": 2048,
+    "source_row_major_block_span": 2048,
+    "consumes_source_order_payload_directly": true,
+    "requires_dequantize_requantize": false,
+    "requires_output_accumulator": true,
+    "runtime_selection_allowed": false,
+    "proof_gate_required_before_runtime_selection": true,
+    "contract_status": "runtime_disabled_source_order_matvec_candidate",
+    "blocker": "source-order Q8_0 matvec candidate for source shape [1024, 2048] and runtime shape [2048, 1024] must prove accumulator order, block-scale decode, generated-ID preservation, and receipt identity before runtime selection",
+    "next_safe_step": "add a runtime-disabled source-order Q8_0 matvec implementation and compare it against eager_f32_candle with the accepted Qwen3/Qwen2.5 behavior oracle before enabling selection"
+  },
+  "selector_resolution": {
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "runtime_compute_enabled": false,
+    "dense_runtime_replaced": false,
+    "source_order_kernel_contract_available": true,
+    "source_order_kernel_runtime_enabled": false,
+    "selector_contract": "runtime_disabled_until_source_order_q8_matvec_equivalence_proof"
+  },
+  "classification": "qwen3_qproj_source_order_q8_matvec_contract_defined_runtime_disabled",
+  "resolution": {
+    "qwen3_runtime_status": "diagnostic_only_until_source_order_kernel_equivalence_proof_exists",
+    "default_runtime_status": "eager_f32_candle_preserved",
+    "next_safe_step": "implement a runtime-disabled source-order Q8_0 q_proj matvec and compare behavior, q_proj numeric gate, allocation counters, and receipts before any selector use"
+  },
+  "not_claimed": [
+    "allocation reduction",
+    "timing improvement",
+    "speedup",
+    "sustained throughput",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality"
+  ]
+}

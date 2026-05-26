@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T13:57:04Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-133"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 788
+branch = "codex/slm-cpu-133-qwen3-source-order-qproj-kernel-contract"
+head_sha = "f6a6d5527495d72daa81d1121ade529f7e03e7de"
+summary = "Opened PR #788 to define the SLM-CPU-133 Qwen3 source-order q_proj kernel contract."
+notes = [
+  "The PR defines a runtime-disabled source-order Q8_0 q_proj kernel contract for the exact Qwen3 layer-0 attention.q_proj tensor.",
+  "The contract preserves the SLM-CPU-132 finding that pure Q8_0 byte reorder is invalid because it would regroup values under the wrong block scales.",
+  "Runtime selection remains blocked until a proof-gated source-order matvec preserves accumulator order, block-scale decode, generated IDs, and receipt identity.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]

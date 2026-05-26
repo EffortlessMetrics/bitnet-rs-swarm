@@ -8060,8 +8060,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-133"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-133-qwen3-source-order-qproj-kernel-contract"
+pr = 788
+head_sha = "f6a6d5527495d72daa81d1121ade529f7e03e7de"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
