@@ -8526,9 +8526,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-142"
-status = "pr_open"
+status = "merged"
 pr = 806
-head_sha = "08f5b23b4a8d6ec3746c053491d0153c2e953b97"
+head_sha = "c81cf827e50320fc894beebaca71f81497d15493"
+merge_sha = "c666fe63897231162d9ac88d68e32c4689482451"
+merged_at = "2026-05-26T22:42:50Z"
 branch = "codex/slm-cpu-142-source-order-qproj-evidence-fields"
 stackable = false
 review_mode = "codex_premerge"
@@ -8560,6 +8562,52 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-141 restored and verified the exact Qwen2.5 Q8_0 cache locally and captured fresh Qwen3/Qwen2.5 before/after strict CPU receipts.",
   "SLM-CPU-142 may add or precisely block the missing q_proj numeric evidence and cross-model source-order candidate identity fields required before source-order selector use is considered.",
+]
+must_not_claim = [
+  "The exact Qwen2.5 Q8_0 model binary is committed.",
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-143"
+status = "ready"
+branch = "codex/slm-cpu-143-source-order-evidence-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-142"]
+acceptance = "Regenerate or precisely block the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU warm-session receipts on current main with the SLM-CPU-142 source-order q_proj candidate identity and q_proj numeric evidence fields present. A valid slice must preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, source_order_qproj_candidate_identity, q_proj_numeric_evidence, fallback_used=false, and default eager_f32_candle runtime. If capture is unavailable, emit a machine-checkable blocker naming the exact missing model cache, trace identity field, q_proj numeric evidence boundary, runtime input binding, or receipt capture command. It must not commit models/** or target/** artifacts, claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-142 added explicit fail-closed source-order q_proj candidate identity and q_proj numeric evidence receipt fields.",
+  "SLM-CPU-143 may refresh exact Qwen3/Qwen2.5 strict CPU receipt evidence or keep source-order selector use blocked with the exact missing evidence.",
 ]
 must_not_claim = [
   "The exact Qwen2.5 Q8_0 model binary is committed.",
