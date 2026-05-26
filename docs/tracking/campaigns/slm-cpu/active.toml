@@ -8218,8 +8218,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-136"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-136-source-order-qproj-receipt-pairs"
+pr = 794
+head_sha = "1fd3643f29f184e2ace47feb44efb2e83932f334"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
