@@ -7605,7 +7605,9 @@ fn run_help_documents_qwen_trace_flags() {
         .stdout(predicate::str::contains("--qwen-trace-jsonl"))
         .stdout(predicate::str::contains("--qwen-trace-layer"))
         .stdout(predicate::str::contains("--qwen-trace-full-prompt"))
-        .stdout(predicate::str::contains("--qwen-trace-prompt-ids"));
+        .stdout(predicate::str::contains("--qwen-trace-prompt-ids"))
+        .stdout(predicate::str::contains("--qwen-trace-qproj-dump"))
+        .stdout(predicate::str::contains("--qwen-trace-dump-limit"));
 }
 
 /// `run --help` documents the --repetition-penalty option.

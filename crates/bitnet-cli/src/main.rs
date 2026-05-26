@@ -482,6 +482,14 @@ enum Commands {
         #[arg(long, value_name = "IDS")]
         qwen_trace_prompt_ids: Option<String>,
 
+        /// Dump a bounded f32 prefix for the Qwen q_proj-output trace hook
+        #[arg(long, default_value_t = false)]
+        qwen_trace_qproj_dump: bool,
+
+        /// Maximum f32 values to dump for --qwen-trace-qproj-dump
+        #[arg(long, default_value_t = 32, value_name = "N")]
+        qwen_trace_dump_limit: usize,
+
         /// Suppress performance warnings
         #[arg(long, default_value_t = false)]
         no_warnings: bool,
@@ -1520,6 +1528,8 @@ async fn async_main() -> Result<()> {
             qwen_trace_layer,
             qwen_trace_full_prompt,
             qwen_trace_prompt_ids,
+            qwen_trace_qproj_dump,
+            qwen_trace_dump_limit,
             no_warnings,
             profile_id,
             allocation_audit,
@@ -1561,6 +1571,8 @@ async fn async_main() -> Result<()> {
                 qwen_trace_layer,
                 qwen_trace_full_prompt,
                 qwen_trace_prompt_ids,
+                qwen_trace_qproj_dump,
+                qwen_trace_dump_limit,
                 no_warnings,
                 profile_id,
                 allocation_audit,
@@ -4150,6 +4162,8 @@ async fn run_simple_generation(
     qwen_trace_layer: Option<usize>,
     qwen_trace_full_prompt: bool,
     qwen_trace_prompt_ids: Option<String>,
+    qwen_trace_qproj_dump: bool,
+    qwen_trace_dump_limit: usize,
     no_warnings: bool,
     profile_id: Option<String>,
     allocation_audit: bool,
@@ -4166,6 +4180,8 @@ async fn run_simple_generation(
         layer: qwen_trace_layer,
         full_prompt: qwen_trace_full_prompt,
         prompt_ids: qwen_trace_prompt_ids.as_deref(),
+        qproj_dump: qwen_trace_qproj_dump,
+        dump_limit: qwen_trace_dump_limit,
     }
     .apply();
 
@@ -11158,6 +11174,8 @@ async fn run_lunar_lake_ask(
             false,
             None,
             false,
+            32,
+            false,
             Some("lunar_lake_ask".to_string()),
             false,
             false,
@@ -12123,6 +12141,8 @@ async fn run_ask_generation(
         None,
         false,
         None,
+        false,
+        32,
         false,
         Some("ask".to_string()),
         false,

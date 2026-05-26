@@ -105,6 +105,41 @@ pub(crate) fn qwen_trace_number(value: f64) -> String {
     if value.is_finite() { format!("{value:.9}") } else { "null".to_string() }
 }
 
+fn qwen_qproj_output_dump_enabled(boundary: &str) -> bool {
+    boundary == QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY
+        && env_flag_eq_1("BITNET_QWEN_TRACE_DUMP_QPROJ_OUTPUT")
+}
+
+fn qwen_trace_dump_limit(values_len: usize) -> usize {
+    let requested = std::env::var("BITNET_QWEN_TRACE_DUMP_LIMIT")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .unwrap_or(32);
+    requested.min(values_len).min(4096)
+}
+
+fn qwen_trace_f32_values_json(values: &[f32], limit: usize) -> String {
+    values
+        .iter()
+        .take(limit)
+        .map(|value| qwen_trace_number(*value as f64))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn qwen_trace_contents_fragment(boundary: &str, values: &[f32]) -> String {
+    if !qwen_qproj_output_dump_enabled(boundary) {
+        return "\"contents_dumped\":false".to_string();
+    }
+
+    let dump_len = qwen_trace_dump_limit(values.len());
+    let values_json = qwen_trace_f32_values_json(values, dump_len);
+    format!(
+        "\"contents_dumped\":true,\"dump_kind\":\"f32_prefix\",\"dump_limit\":{},\"dump_len\":{},\"values_f32\":[{}]",
+        dump_len, dump_len, values_json
+    )
+}
+
 fn qwen_trace_write_line(line: &str) {
     if let Some(path) = qwen_trace_path() {
         if let Some(parent) = path.parent()
@@ -255,9 +290,10 @@ pub(crate) fn qwen_trace_tensor_fingerprint(
     let layer_json = layer_idx.map(|idx| idx.to_string()).unwrap_or_else(|| "null".to_string());
     let step = std::env::var("BITNET_QWEN_TRACE_STEP").unwrap_or_else(|_| "null".to_string());
     let fingerprint = sha256_f32_le(&values);
+    let contents_fragment = qwen_trace_contents_fragment(boundary, &values);
 
     qwen_trace_write_line(&format!(
-        "{{\"kind\":\"qwen_trace_tensor_fingerprint\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"dtype\":\"f32\",\"source_dtype\":\"{:?}\",\"dims\":[{}],\"len\":{},\"source_tensor\":\"{}\",\"boundary\":\"{}\",\"tensor_fingerprint_sha256_f32_le\":\"{}\",\"contents_dumped\":false}}",
+        "{{\"kind\":\"qwen_trace_tensor_fingerprint\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"dtype\":\"f32\",\"source_dtype\":\"{:?}\",\"dims\":[{}],\"len\":{},\"source_tensor\":\"{}\",\"boundary\":\"{}\",\"tensor_fingerprint_sha256_f32_le\":\"{}\",{}}}",
         qwen_trace_escape(stage),
         step,
         layer_json,
@@ -266,7 +302,8 @@ pub(crate) fn qwen_trace_tensor_fingerprint(
         values.len(),
         qwen_trace_escape(source_tensor),
         qwen_trace_escape(boundary),
-        fingerprint
+        fingerprint,
+        contents_fragment
     ));
     Ok(())
 }
@@ -301,9 +338,10 @@ pub(crate) fn qwen_trace_tensor_fingerprint_with_dense_hook(
     let layer_json = layer_idx.map(|idx| idx.to_string()).unwrap_or_else(|| "null".to_string());
     let step = std::env::var("BITNET_QWEN_TRACE_STEP").unwrap_or_else(|_| "null".to_string());
     let fingerprint = sha256_f32_le(&values);
+    let contents_fragment = qwen_trace_contents_fragment(boundary, &values);
 
     qwen_trace_write_line(&format!(
-        "{{\"kind\":\"qwen_trace_tensor_fingerprint\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"dtype\":\"f32\",\"source_dtype\":\"{:?}\",\"dims\":[{}],\"len\":{},\"source_tensor\":\"{}\",\"gguf_tensor\":\"{}\",\"boundary\":\"{}\",\"dense_hook_identity\":\"{}\",\"runtime_disabled\":{},\"tensor_fingerprint_sha256_f32_le\":\"{}\",\"contents_dumped\":false}}",
+        "{{\"kind\":\"qwen_trace_tensor_fingerprint\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"dtype\":\"f32\",\"source_dtype\":\"{:?}\",\"dims\":[{}],\"len\":{},\"source_tensor\":\"{}\",\"gguf_tensor\":\"{}\",\"boundary\":\"{}\",\"dense_hook_identity\":\"{}\",\"runtime_disabled\":{},\"tensor_fingerprint_sha256_f32_le\":\"{}\",{}}}",
         qwen_trace_escape(stage),
         step,
         layer_json,
@@ -315,7 +353,8 @@ pub(crate) fn qwen_trace_tensor_fingerprint_with_dense_hook(
         qwen_trace_escape(boundary),
         qwen_trace_escape(identity.dense_hook_identity),
         identity.runtime_disabled,
-        fingerprint
+        fingerprint,
+        contents_fragment
     ));
     Ok(())
 }
@@ -324,7 +363,7 @@ pub(crate) fn qwen_trace_tensor_fingerprint_with_dense_hook(
 mod tests {
     use super::{
         QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
-        sha256_f32_le,
+        qwen_trace_f32_values_json, sha256_f32_le,
     };
 
     #[test]
@@ -346,6 +385,12 @@ mod tests {
             QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY,
             "attention_q_proj_output_pre_optional_qnorm"
         );
+    }
+
+    #[test]
+    fn qwen_trace_f32_values_json_uses_bounded_prefix() {
+        let values = [1.0f32, -2.5, f32::NAN, 4.25];
+        assert_eq!(qwen_trace_f32_values_json(&values, 3), "1.000000000,-2.500000000,null");
     }
 }
 

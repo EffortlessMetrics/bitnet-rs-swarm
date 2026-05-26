@@ -6,6 +6,8 @@ pub(crate) struct QwenTraceEnv<'a> {
     pub(crate) layer: Option<usize>,
     pub(crate) full_prompt: bool,
     pub(crate) prompt_ids: Option<&'a str>,
+    pub(crate) qproj_dump: bool,
+    pub(crate) dump_limit: usize,
 }
 
 impl QwenTraceEnv<'_> {
@@ -28,6 +30,12 @@ impl QwenTraceEnv<'_> {
         if let Some(prompt_ids) = self.prompt_ids {
             unsafe {
                 std::env::set_var("BITNET_QWEN_TRACE_PROMPT_IDS", prompt_ids);
+            }
+        }
+        if self.qproj_dump {
+            unsafe {
+                std::env::set_var("BITNET_QWEN_TRACE_DUMP_QPROJ_OUTPUT", "1");
+                std::env::set_var("BITNET_QWEN_TRACE_DUMP_LIMIT", self.dump_limit.to_string());
             }
         }
     }

@@ -48,6 +48,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Bounded KV cache pre-boundary allocation | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-cache.json` | Resolves the Qwen3 post-guard pre-boundary full-context KV allocation failure by allocating prompt-plus-generation bounded KV capacity; the run reaches receipt emission and the layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint, without claiming q_proj sidecar behavior, timing improvement, allocation-performance improvement, or default-runtime promotion |
 | q_proj output proof refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-122-qproj-output-proof-refresh.json` | Refreshes the shared q_proj-output before/after proof after SLM-CPU-121; Qwen3 behavior and fingerprint now match, but Qwen2.5 still preserves generated behavior while changing the f32-le q_proj-output fingerprint, so the boundary remains fail-closed |
 | Qwen2.5 q_proj fingerprint root cause | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-123-qproj-fingerprint-root-cause.json` | Classifies the remaining Qwen2.5 blocker as a sidecar-gated q_proj-output equivalence gap that cannot be numerically localized from fingerprint-only traces; it keeps packed-Q8 sidecar behavior proof and performance claims fail-closed until a bounded tensor sample or full 896-f32 dump exists |
+| Qwen2.5 q_proj tensor dump classification | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-qproj-tensor-dump-classification.json` | Captures an opt-in full 896-f32 q_proj-output diagnostic dump for the Qwen2.5 before/after pair and classifies the fingerprint delta as small f32 numeric drift while generated behavior remains stable; packed-Q8 sidecar behavior proof, allocation, timing, throughput, and default-runtime promotion remain fail-closed |
 
 Qwen3 rows use:
 
@@ -66,7 +67,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-123. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-124. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -79,9 +80,14 @@ default-runtime promotion, allocation-performance claim, timing claim,
 sustained-throughput claim, or answer-quality claim. SLM-CPU-123 classifies the
 remaining Qwen2.5 blocker as unresolved from the existing artifacts because the
 before/after traces contain only f32-le SHA256 fingerprints and explicitly set
-`contents_dumped=false`; the next safe slice must capture bounded tensor
-contents or a full 896-f32 diagnostic dump before trying to explain the numeric
-delta or claim a sidecar behavior proof.
+`contents_dumped=false`. SLM-CPU-124 adds an opt-in bounded q_proj-output dump
+surface, captures the full 896-f32 Qwen2.5 before/after vectors for the strict
+CPU proof prompt, and classifies the remaining mismatch as small f32 numeric
+drift: the first difference is at index 0 with absolute delta `0.000000015`, and
+the maximum absolute delta is `0.00008773799999772791` at index 568. Because no
+explicit tolerance policy has been accepted for the shared q_proj-output sidecar
+proof, this remains a fail-closed diagnostic result rather than a packed-Q8
+behavior proof or performance claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

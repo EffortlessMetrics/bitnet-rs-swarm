@@ -7598,7 +7598,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-124"
-status = "ready"
+status = "pr_open"
+pr = 770
+head_sha = "aa6bc330110d4c17783144360bed42c708703475"
 branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
 stackable = false
 review_mode = "codex_premerge"
