@@ -54,6 +54,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_proj fresh receipt prerequisites | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-127-fresh-receipt-prereq.json` | Restores the exact Qwen2.5 Q8_0 cache artifact by pinned SHA256 and records fresh Qwen3/Qwen2.5 before/after strict CPU receipts with stable generated IDs/text, `cpu-rust`, `dense-qwen-cpu-reference`, and `fallback_used=false`; this is receipt readiness only, not an allocation, timing, speedup, or default-runtime claim |
 | q_proj timing classification | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-128-qproj-timing-classification.json` | Consumes the SLM-CPU-127 receipt pack and classifies the exact-tensor packed-Q8 sidecar timing evidence as mixed: Qwen3 is neutral on one sample, Qwen2.5 regresses, and allocation-audit counters are absent; no speedup, timing improvement, allocation reduction, or default-runtime promotion is claimed |
 | Repeated q_proj allocation audit | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-129-repeated-allocation-audit.json` | Collects repeated warm-session allocation-audit receipts for Qwen3 and Qwen2.5 after SLM-CPU-128; generated IDs/text remain behavior-equivalent and counters are available, but Qwen3 does not select packed sidecar compute and Qwen2.5 remains opt-in/counter-scoped, so no allocation reduction, speedup, timing improvement, or default-runtime promotion is claimed |
+| q_proj selector convergence gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-130-selector-convergence-gate.json` | Explains the cross-model selector mismatch from SLM-CPU-129: Qwen3 is correctly declined by the payload-order guard because `sidecar_payload_order_matches_runtime_shape=false`, while Qwen2.5 reaches the opt-in packed-Q8 counter path with matching payload order; the guard remains fail-closed and no runtime promotion or performance claim is made |
 
 Qwen3 rows use:
 
@@ -138,6 +139,17 @@ selection without runtime promotion. The slice therefore proves counter
 availability and behavior preservation only; it does not claim allocation
 reduction, timing improvement, speedup, sustained throughput, default-runtime
 promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 behavior.
+SLM-CPU-130 resolves the apparent cross-model selector mismatch as an intended
+payload-order guard outcome. The Qwen3 exact q_proj sidecar is payload-bearing
+and contract-valid, but its receipt records
+`sidecar_payload_order_matches_runtime_shape=false`, so the selector dispatches
+and declines all calls while preserving `eager_f32_candle`. Qwen2.5 records
+`sidecar_payload_order_matches_runtime_shape=true`, so the same opt-in exact
+tensor boundary reaches the packed-Q8 counter path. The next safe Qwen3 work is
+a payload-reorder or runtime-shape proof, not a selector relaxation. No
+allocation reduction, timing improvement, speedup, sustained throughput,
+default-runtime promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256
+behavior is claimed.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
