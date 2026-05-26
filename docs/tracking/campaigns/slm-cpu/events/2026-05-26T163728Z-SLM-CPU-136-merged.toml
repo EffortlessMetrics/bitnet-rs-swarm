@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T16:37:28Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-136"
+event = "merged"
+pr = 794
+head_sha = "65bd87a08b025bca725dd3cf9b5b9a4c3dfcd9a7"
+merge_sha = "41316012dd162ce7252137ab61a6f46eabcdfdbc"
+actor = "codex"
+
+summary = "Merged PR #794 adding the SLM-CPU-136 source-order q_proj receipt-pair blocker."
+
+notes = [
+  "The merged artifact records that receipt-pair capture is blocked because the generation-time selector hook, candidate receipt identity, and runtime input binding are not wired.",
+  "Runtime selection remains disabled and the default eager_f32_candle path is preserved.",
+  "SLM-CPU-137 is ready to add or precisely block a default-disabled exact-tensor selector hook plus receipt identity surface.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
