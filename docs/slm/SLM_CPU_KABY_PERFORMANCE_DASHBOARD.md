@@ -57,6 +57,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_proj selector convergence gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-130-selector-convergence-gate.json` | Explains the cross-model selector mismatch from SLM-CPU-129: Qwen3 is correctly declined by the payload-order guard because `sidecar_payload_order_matches_runtime_shape=false`, while Qwen2.5 reaches the opt-in packed-Q8 counter path with matching payload order; the guard remains fail-closed and no runtime promotion or performance claim is made |
 | Qwen3 q_proj payload-order proof | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-131-qproj-payload-order-proof.json` | Records the machine-checkable Qwen3 blocker: the GGUF source shape `[1024, 2048]` maps to Candle runtime shape `[2048, 1024]`, so the packed Q8_0 source payload must remain fail-closed until a tensor-specific reorder/runtime-shape proof exists; no selector relaxation or performance claim is made |
 | Qwen3 q_proj payload-reorder contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-132-qproj-payload-reorder-contract.json` | Defines the fail-closed reorder contract for the same exact tensor: a pure Q8_0 byte reorder is not valid because transposing from source shape `[1024, 2048]` to runtime shape `[2048, 1024]` would regroup values under the wrong 32-value Q8_0 block scales; runtime selection remains blocked until a dequantize/requantize proof or source-order Q8_0 kernel exists |
+| Qwen3 source-order q_proj kernel contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-133-source-order-qproj-kernel-contract.json` | Defines the runtime-disabled source-order Q8_0 matvec contract for the same tensor: consume GGUF source-order rows directly with an output accumulator rather than byte-transposing or dequantize/requantizing the payload; selection remains disabled until accumulator order, block-scale decode, generated-ID preservation, and receipt identity are proven |
 
 Qwen3 rows use:
 
@@ -171,6 +172,16 @@ runtime path is either an exact-tensor dequantize/requantize equivalence proof
 or a source-order Q8_0 kernel; until then the selector keeps Qwen3 on
 `eager_f32_candle`. This still makes no allocation, timing, speedup,
 default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-133 defines the source-order option as the next runtime-disabled
+contract. The candidate would consume the Qwen3 q_proj GGUF source-order Q8_0
+payload with `source_input_dim=1024`, `source_output_dim=2048`, and a 2048-wide
+row-major Q8 block span, accumulating directly into the runtime output vector.
+That avoids pure byte-transpose and dequantize/requantize claims, but still
+requires an implementation and behavior-equivalence proof before selector use:
+accumulator order, block-scale decode, generated IDs, decoded text, selected
+backend/kernel identity, dense hook identity, allocation counters, and strict
+receipts must match the Qwen3/Qwen2.5 oracle first.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
