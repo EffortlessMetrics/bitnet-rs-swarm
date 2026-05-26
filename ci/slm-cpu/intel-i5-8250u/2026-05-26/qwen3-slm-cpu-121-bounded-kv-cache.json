@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_qwen3_preboundary_allocation_resolution",
+  "work_item": "SLM-CPU-121",
+  "status": "resolved_preboundary_kv_allocation",
+  "claim_boundary": {
+    "qproj_sidecar_behavior_proven": false,
+    "packed_q8_default_runtime_promoted": false,
+    "allocation_performance_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "prior_blocker": {
+    "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-120-sidecar-transpose-guard.json",
+    "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-120-after-transpose-guard-trace.jsonl",
+    "observed_failure": "memory allocation of 167772160 bytes failed",
+    "failure_position": "after prompt IDs and before receipt emission or layer-0 attention.q_proj_output_pre_optional_qnorm fingerprint"
+  },
+  "root_cause": {
+    "classification": "full_model_context_kv_cache_allocation_before_forward",
+    "model_max_position_embeddings": 40960,
+    "kv_heads": 8,
+    "head_dim": 128,
+    "bytes_per_k_or_v_tensor_at_model_context": 167772160,
+    "total_f32_kv_bytes_at_model_context_across_layers": "9395240960",
+    "explanation": "The simple generation path allocated a full-context F32 KV cache before the first embed/forward trace point. On Qwen3-0.6B Q8_0, one K or V tensor at the advertised 40960-token context is 167772160 bytes, matching the prior failure."
+  },
+  "implementation": {
+    "kv_cache_constructor": "KVCache::new_with_max_seq_len",
+    "capacity_policy": "prompt_plus_generation_bounded",
+    "capacity_helper": "bounded_generation_kv_cache_len",
+    "trace_events": [
+      "kv_cache.allocate_start",
+      "kv_cache.allocate_finish"
+    ],
+    "covered_paths": [
+      "simple CPU generation",
+      "CPU phase prompt run",
+      "single-run decode path",
+      "SLM warm-session setup"
+    ],
+    "default_runtime": "eager_f32_candle",
+    "packed_q8_sidecar_payload_order_guard_preserved": true
+  },
+  "proof_run": {
+    "model": "Qwen/Qwen3-0.6B-GGUF / Qwen3-0.6B-Q8_0.gguf",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "prompt": "What is 2+2? Answer with only the number.",
+    "prompt_template": "qwen-chat",
+    "qwen_no_think": true,
+    "prompt_tokens": 36,
+    "max_new_tokens": 1,
+    "kv_cache_max_seq_len": 36,
+    "kv_cache_estimated_f32_bytes": "8257536",
+    "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-run.json",
+    "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-trace.jsonl",
+    "trace_evidence": {
+      "kv_cache_allocate_start_line": 1446,
+      "kv_cache_allocate_finish_line": 1447,
+      "qproj_output_pre_optional_qnorm_line": 52019,
+      "qproj_output_pre_optional_qnorm_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "qproj_runtime_disabled": true
+    },
+    "receipt_evidence": {
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "generated_ids": [
+        17
+      ],
+      "decoded_text": "2"
+    }
+  },
+  "accepted_result": {
+    "preboundary_allocation_failure_resolved": true,
+    "receipt_emitted": true,
+    "layer0_qproj_output_pre_optional_qnorm_fingerprint_emitted": true,
+    "behavior_oracle_preserved": false,
+    "notes": "This slice reaches the receipt and shared q_proj-output fingerprint boundary that SLM-CPU-120 could not reach. It does not prove packed-Q8 sidecar behavior, q_proj fingerprint equality, answer quality, or a performance improvement."
+  },
+  "next_required_slice": {
+    "suggested_work_item": "SLM-CPU-122",
+    "purpose": "resume shared q_proj-output behavior proof from the now-reachable Qwen3 boundary and the existing Qwen2.5 proof gate, without promoting packed_q8_sidecar or making allocation/timing claims"
+  }
+}
