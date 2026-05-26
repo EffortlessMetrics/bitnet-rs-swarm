@@ -7655,9 +7655,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-125"
-status = "pr_open"
+status = "merged"
 pr = 772
-head_sha = "97e45414b268e2e7831b152e8dd95a719ba798ac"
+head_sha = "dae4625ff2740461140dc63f726657bb889ab0ff"
+merge_sha = "03ac5609751404d9948220cb45f667140b346d06"
+merged_at = "2026-05-26T10:44:20Z"
 branch = "codex/slm-cpu-125-qproj-numeric-tolerance-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -7697,6 +7699,52 @@ may_claim = [
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until the accepted numeric proof gate passes for Qwen3 and Qwen2.5 strict CPU before/after evidence.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-126"
+status = "ready"
+branch = "codex/slm-cpu-126-qproj-allocation-timing-experiment"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-125"]
+acceptance = "Use the accepted exact-boundary SLM-CPU-125 numeric gate as a prerequisite for the next Qwen3/Qwen2.5 before/after packed-Q8 sidecar allocation or timing experiment. A valid slice must collect fresh strict CPU receipts before and after the experiment, preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and the accepted layer-0 attention.q_proj_output_pre_optional_qnorm numeric gate, then either record a bounded allocation/timing result or fail closed with the exact blocker. It must not promote packed-Q8 sidecar to default runtime or claim speedup, sustained throughput, broad answer quality, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes without matching receipts."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-125 accepts a narrow absolute 1e-4 f32 numeric gate for the exact layer-0 attention.q_proj_output_pre_optional_qnorm diagnostic boundary.",
+  "SLM-CPU-126 may run a bounded allocation or timing experiment only if fresh before/after strict CPU receipts preserve the accepted behavior and numeric gates.",
+]
+must_not_claim = [
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
