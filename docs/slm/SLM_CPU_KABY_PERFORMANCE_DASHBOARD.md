@@ -43,8 +43,9 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_norm proof next boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-115-qnorm-proof-next-boundary.json` | Resolves the Qwen3-only q_norm-input blocker by selecting the shared `attention.q_proj_output_pre_optional_qnorm` boundary that exists before Qwen3's optional q_norm and also exists on Qwen2.5 Q8_0 |
 | shared q_proj output hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-116-qproj-output-pre-qnorm-hook-gate.json` | Defines the fail-closed receipt/comparator contract for the shared pre-q_norm Q projection output boundary and blocks runtime evidence until an implementation-capable slice adds the diagnostic hook |
 | shared q_proj output hook surface | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-117-qproj-output-pre-qnorm-hook.json` | Adds the opt-in runtime-disabled `attention.q_proj_output_pre_optional_qnorm` fingerprint hook and fail-closed comparator artifact kind without promoting packed_q8_sidecar or claiming behavior, allocation, timing, or throughput |
+| q_proj output receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-119-qproj-output-receipt-pair-blocker.json` | Captures real Qwen3 and Qwen2.5 hook evidence, restores the accepted Qwen2.5 artifact, and blocks behavior proof because Qwen3 sidecar-gated after-run fails before receipt emission while Qwen2.5 preserves generated output but changes the q_proj-output f32 fingerprint |
 
-All rows use:
+Qwen3 rows use:
 
 ```text
 model = Qwen/Qwen3-0.6B-GGUF / Qwen3-0.6B-Q8_0.gguf
@@ -61,8 +62,8 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-118 shared q_proj-output receipt-pair
-blocker. It records the opt-in trace-only f32-le tensor fingerprint surface for
+This refresh is current through the SLM-CPU-119 shared q_proj-output receipt-pair
+capture blocker. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
 that boundary fail-closed because the before/after warm-session receipts still do
 not carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has
@@ -71,8 +72,10 @@ no q_norm-input stage to fingerprint. SLM-CPU-115 therefore selects the shared
 for Qwen3 Q8_0 and Qwen2.5 Q8_0 rather than overstating q_norm coverage.
 SLM-CPU-116 defines the fail-closed receipt/comparator contract for that shared
 boundary, SLM-CPU-117 adds the opt-in runtime-disabled diagnostic hook and
-comparator artifact surface, and SLM-CPU-118 blocks behavior proof until exact
-Qwen3 and Qwen2.5 before/after receipt pairs carry that hook fingerprint. It
+comparator artifact surface, SLM-CPU-118 blocks behavior proof until exact
+Qwen3 and Qwen2.5 before/after receipt pairs carry that hook fingerprint, and
+SLM-CPU-119 restores the accepted Qwen2.5 Q8_0 artifact and captures the next
+real evidence. It
 does not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor
@@ -256,19 +259,19 @@ before/after real Qwen3 and Qwen2.5 receipt pairs are still required before any
 behavior, allocation, timing, default-runtime, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 claim.
 
-SLM-CPU-118 is the next ready proof slice. It must capture or precisely block
-the real Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs for
-the shared `attention.q_proj_output_pre_optional_qnorm` boundary before any
-allocation or timing work treats that boundary as behavior-proven.
-
-The SLM-CPU-118 review blocks that proof exactly in
-`ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-qwen25-slm-cpu-118-qproj-output-receipt-pair-blocker.json`.
-Qwen3 Q8_0 is locally available and has an older before/after behavior pair, but
-that pair predates the shared hook and does not carry the required
-`attention.q_proj_output_pre_optional_qnorm` f32-le fingerprints. The accepted
-Qwen2.5 Q8_0 sanity receipts exist, but the exact accepted GGUF cache path is
-not present in this worktree and no Qwen2.5 before/after shared-hook pair exists.
-The boundary therefore remains not behavior-proven.
+SLM-CPU-119 captures the next proof slice in
+`ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-119-qproj-output-receipt-pair-blocker.json`.
+Qwen3 Q8_0 now has a before-side `attention.q_proj_output_pre_optional_qnorm`
+fingerprint, but the sidecar-gated after-run fails before writing a receipt with
+`memory allocation of 167772160 bytes failed`. Qwen2.5 Q8_0 has before/after
+strict CPU receipts with identical model SHA, tokenizer authority, prompt IDs,
+generated ID `19`, decoded text `4`, selected backend/kernel, and
+`fallback_used=false`, but the q_proj-output f32 fingerprint changes from
+`4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344` to
+`4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff`.
+The boundary therefore remains not behavior-proven, and SLM-CPU-120 must burn
+down those two concrete blockers before allocation, timing, default-runtime, or
+throughput work can use this boundary as proof.
 
 ## Thread Envelope
 

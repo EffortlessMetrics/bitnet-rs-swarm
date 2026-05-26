@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_pre_qnorm_receipt_pair_capture",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-119",
+  "status": "blocked_exact",
+  "review_date": "2026-05-26",
+  "claim": "SLM-CPU-119 captured real strict CPU hook evidence for the shared attention.q_proj_output_pre_optional_qnorm boundary and blocks behavior, allocation, timing, default-runtime, and throughput claims because the exact before/after proof gates do not pass for both Qwen3 Q8_0 and Qwen2.5 Q8_0.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof host",
+    "claim_boundary": "correctness and bounded Kaby evidence only; no sustained throughput claim"
+  },
+  "source_boundary": {
+    "selected_by": "SLM-CPU-115",
+    "gated_by": "SLM-CPU-116",
+    "implemented_by": "SLM-CPU-117",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "dense_hook_identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled"
+  },
+  "required_pair_fields": [
+    "model.sha256",
+    "model.architecture",
+    "model.quant_format",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend",
+    "selected_kernel",
+    "fallback_used",
+    "dense_hook.identity",
+    "dense_hook.boundary",
+    "dense_hook.source_tensor",
+    "dense_hook.stage",
+    "dense_hook.shape",
+    "dense_hook.dtype",
+    "dense_hook.tensor_fingerprint_sha256_f32_le"
+  ],
+  "qwen3_capture": {
+    "model_id": "qwen3-0.6b-q8_0",
+    "model_file": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0",
+    "before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-119-before-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-119-before-qproj-output-trace.jsonl",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "fallback_used": false,
+      "prompt_token_count": 36,
+      "generated_ids": [17],
+      "decoded_text": "2",
+      "dense_hook": {
+        "identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled",
+        "boundary": "attention_q_proj_output_pre_optional_qnorm",
+        "stage": "attention.q_proj_output_pre_optional_qnorm",
+        "source_tensor": "layers.0.attention.q_proj.weight",
+        "gguf_tensor": "blk.0.attn_q.weight",
+        "shape": [1, 1, 2048],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b"
+      }
+    },
+    "after": {
+      "command_attempted": true,
+      "receipt": null,
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-119-after-qproj-output-trace.jsonl",
+      "env": {
+        "BITNET_DENSE_Q8_PAYLOAD_ENABLE": "1",
+        "BITNET_DENSE_Q8_PAYLOAD_TENSOR": "blk.0.attn_q.weight",
+        "BITNET_DENSE_Q8_RUNTIME_ENABLE": "1",
+        "BITNET_DENSE_Q8_RUNTIME_TENSOR": "blk.0.attn_q.weight"
+      },
+      "exit_code": 1,
+      "failure": "memory allocation of 167772160 bytes failed after model load and tokenizer setup; no after receipt was written and no after q_proj-output fingerprint was emitted",
+      "classification": "qwen3_after_receipt_missing_due_runtime_allocation_failure"
+    },
+    "pair_status": "blocked",
+    "blocker": "Qwen3 has a valid before-side attention.q_proj_output_pre_optional_qnorm hook fingerprint, but the sidecar-gated after run aborts before inference with a 167772160-byte allocation failure. The required after receipt, generated IDs, decoded text, and after fingerprint are absent."
+  },
+  "qwen25_capture": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "model_file": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "architecture": "qwen2",
+    "quant_format": "Q8_0",
+    "artifact_restored": true,
+    "artifact_size_bytes": 675710816,
+    "before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-before-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-before-qproj-output-trace.jsonl",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "fallback_used": false,
+      "prompt_token_count": 42,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "dense_hook": {
+        "identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled",
+        "boundary": "attention_q_proj_output_pre_optional_qnorm",
+        "stage": "attention.q_proj_output_pre_optional_qnorm",
+        "source_tensor": "layers.0.attention.q_proj.weight",
+        "gguf_tensor": "blk.0.attn_q.weight",
+        "shape": [1, 1, 896],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344"
+      }
+    },
+    "after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-qproj-output-trace.jsonl",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "fallback_used": false,
+      "prompt_token_count": 42,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "dense_hook": {
+        "identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled",
+        "boundary": "attention_q_proj_output_pre_optional_qnorm",
+        "stage": "attention.q_proj_output_pre_optional_qnorm",
+        "source_tensor": "layers.0.attention.q_proj.weight",
+        "gguf_tensor": "blk.0.attn_q.weight",
+        "shape": [1, 1, 896],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff"
+      }
+    },
+    "pair_status": "blocked",
+    "behavior_fields_equal": {
+      "model_sha256": true,
+      "tokenizer_source": true,
+      "tokenizer_strict": true,
+      "selected_backend": true,
+      "selected_kernel": true,
+      "fallback_used": true,
+      "prompt_ids": true,
+      "generated_ids": true,
+      "decoded_text": true
+    },
+    "fingerprint_equal": false,
+    "classification": "qwen25_behavior_preserved_but_qproj_output_fingerprint_changed",
+    "blocker": "Qwen2.5 before/after strict CPU receipts preserve the prompt IDs, generated IDs, decoded text, selected backend/kernel, tokenizer authority, and fallback=false, but the attention.q_proj_output_pre_optional_qnorm f32-le tensor fingerprint changes from 4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344 to 4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff. This boundary is not behavior-proven for allocation or timing claims."
+  },
+  "proof_readiness": {
+    "qwen3_exact_model_available": true,
+    "qwen3_before_hook_fingerprint_exists": true,
+    "qwen3_after_receipt_exists": false,
+    "qwen3_after_hook_fingerprint_exists": false,
+    "qwen25_exact_model_available_in_worktree": true,
+    "qwen25_before_after_behavior_fields_equal": true,
+    "qwen25_before_after_hook_fingerprint_equal": false,
+    "shared_boundary_behavior_proven": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "next_required_slice": {
+    "id": "SLM-CPU-120",
+    "summary": "Fix or further isolate the sidecar-gated q_proj-output proof blocker: Qwen3 after-run allocation failure and Qwen2.5 before/after q_proj-output fingerprint mismatch must be resolved before allocation, timing, default-runtime, or throughput claims."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
