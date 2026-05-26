@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T09:00:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-124"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 770
+branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
+head_sha = "aa6bc330110d4c17783144360bed42c708703475"
+summary = "Opened PR #770 to capture and classify the Qwen2.5 q_proj-output tensor dump."
+notes = [
+  "The PR adds an opt-in bounded f32 dump for the shared attention.q_proj_output_pre_optional_qnorm trace boundary.",
+  "The PR records real Qwen2.5 Q8_0 strict CPU before/after receipts and full 896-f32 q_proj-output dumps.",
+  "The PR classifies the remaining fingerprint mismatch as small f32 numeric drift while keeping packed-Q8 sidecar behavior proof, default-runtime promotion, allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, and BitNet QK256 claims fail-closed.",
+]
