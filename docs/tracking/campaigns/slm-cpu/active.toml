@@ -8112,10 +8112,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-134"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-134-source-order-qproj-matvec-prototype"
 pr = 790
-head_sha = "8bf75ed3cc183e8aec050bf04f637930446a0544"
+head_sha = "c494cc998e0796cbd4f03fbfe2f8c6d6f281e50c"
+merge_sha = "cc3db3e5717f07eba49738fef5a26b00cfa99ea2"
+merged_at = "2026-05-26T15:08:29Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -8148,6 +8150,55 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-133 defines the runtime-disabled source-order Q8_0 q_proj kernel contract for the exact Qwen3 layer-0 tensor.",
   "SLM-CPU-134 may add a runtime-disabled source-order q_proj matvec prototype or keep the path fail-closed with the exact blocker.",
+]
+must_not_claim = [
+  "Runtime selection uses the source-order matvec prototype.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-135"
+status = "ready"
+branch = "codex/slm-cpu-135-source-order-qproj-behavior-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-134"]
+acceptance = "Define the exact-model behavior gate required before the SLM-CPU-134 source-order Q8_0 q_proj matvec prototype can be considered for selector use. A valid slice must either capture strict before/after Qwen3 Q8_0 and Qwen2.5 Q8_0 CPU receipts proving unchanged model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, fallback_used=false, and accepted q_proj numeric evidence, or keep runtime selection disabled with the exact missing receipt or trace blocker. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-134 added a runtime-disabled source-order Q8_0 q_proj matvec prototype with fixture proof evidence.",
+  "SLM-CPU-135 may define or satisfy the exact-model behavior gate required before selector use is considered.",
 ]
 must_not_claim = [
   "Runtime selection uses the source-order matvec prototype.",

@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T15:17:47Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-134"
+event = "merged"
+pr = 790
+head_sha = "c494cc998e0796cbd4f03fbfe2f8c6d6f281e50c"
+merge_sha = "cc3db3e5717f07eba49738fef5a26b00cfa99ea2"
+actor = "codex"
+
+summary = "Merged PR #790 adding the runtime-disabled SLM-CPU-134 source-order Q8_0 q_proj matvec prototype and fixture proof artifact."
+
+notes = [
+  "The default eager runtime path remains unchanged and selector use remains disabled.",
+  "The proof artifact is fixture-level and does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 behavior.",
+  "SLM-CPU-135 is ready to define or satisfy the exact-model behavior gate required before selector use is considered.",
+]
