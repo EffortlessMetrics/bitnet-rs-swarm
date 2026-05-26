@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qwen25_cache_restore_contract",
+  "tracking_item": "SLM-CPU-140",
+  "timestamp": "2026-05-26T20:14:00Z",
+  "status": "contract_only",
+  "input_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-139-source-order-exact-model-receipt-blocker.json",
+  "contract_doc": "docs/slm/SLM_CPU_QWEN25_CACHE_RESTORE_CONTRACT.md",
+  "required_model_cache": {
+    "qwen3_q8_0": {
+      "model_id": "qwen3-0.6b-q8_0",
+      "path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "committed_binary_required": false
+    },
+    "qwen2_5_0_5b_instruct_q8_0": {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "runtime_cache_path": "target/slm-cpu-140/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+      "committed_binary_required": false,
+      "committed_binary_allowed": false
+    }
+  },
+  "source_order_candidate": {
+    "exact_tensor": "layers.0.attention.q_proj.weight",
+    "source_tensor": "blk.0.attn_q.weight",
+    "candidate_path": "source_order_q8_0_qproj_matvec",
+    "candidate_kernel": "dense-q8-source-order-qproj-matvec",
+    "candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+    "candidate_runtime_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "required_receipt_fields": [
+    "model.sha256",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend",
+    "selected_kernel",
+    "dense_hook_identity",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_q8_matvec_candidate",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_selected_path",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_selected_kernel",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_input_dim",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_output_dim",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_candidate_receipt_identity",
+    "dense_q8_hook.source_order_q8_matvec_candidate",
+    "dense_q8_hook.source_order_selected_path",
+    "dense_q8_hook.source_order_selected_kernel",
+    "dense_q8_hook.source_order_candidate_receipt_identity",
+    "dense_q8_hook.source_order_candidate_runtime_enabled",
+    "q_proj_numeric_evidence",
+    "fallback_used"
+  ],
+  "capture_outputs": {
+    "qwen3_before": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-140-before-run.json",
+    "qwen3_after": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-140-after-run.json",
+    "qwen25_before": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-140-before-run.json",
+    "qwen25_after": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-140-after-run.json"
+  },
+  "validation_gate": {
+    "prompt_ids_preserved": "required",
+    "generated_ids_preserved": "required",
+    "decoded_text_preserved": "required",
+    "model_sha_preserved": "required",
+    "tokenizer_authority_preserved": "required",
+    "selected_backend_preserved": "required",
+    "fallback_used": false,
+    "source_order_candidate_runtime_enabled": false,
+    "q_proj_numeric_evidence": "required"
+  },
+  "claim_boundary": {
+    "fresh_receipts_captured": false,
+    "runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_safe_step": "Restore the exact Qwen2.5 Q8_0 model into a non-committed local cache, verify its SHA256, then capture the four strict CPU receipts named by this contract and fail closed if any required identity field or generated behavior gate drifts."
+}
