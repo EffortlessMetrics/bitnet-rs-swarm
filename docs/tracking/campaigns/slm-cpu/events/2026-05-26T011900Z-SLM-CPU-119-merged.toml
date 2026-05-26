@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T01:19:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-119"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+pr = 757
+head_sha = "b8e38c4b6ef011efa2ac08131b94f5a440dfcfef"
+merge_sha = "f67a78f01e43a01436fd90e02585bbe5e2724e53"
+summary = "Merged PR #757 with the exact q_proj-output receipt-pair blocker for Qwen3 and Qwen2.5."
+notes = [
+  "Qwen3 Q8_0 captured the before hook fingerprint, but the sidecar-gated after run failed before receipt emission with a 167772160-byte allocation failure.",
+  "Qwen2.5 Q8_0 captured before/after strict CPU receipts with preserved generated-token behavior, but the attention.q_proj_output_pre_optional_qnorm f32-le fingerprints differ.",
+  "The shared q_proj-output boundary remains not behavior-proven and no allocation, timing, default-runtime, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-120"
+status = "ready"
+branch = "codex/slm-cpu-120-qproj-output-sidecar-blocker-burndown"
+summary = "Fix or further isolate the Qwen3 after-run allocation failure and Qwen2.5 q_proj-output fingerprint mismatch recorded by SLM-CPU-119."

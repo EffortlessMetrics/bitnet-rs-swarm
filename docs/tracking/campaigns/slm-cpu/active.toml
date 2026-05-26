@@ -7315,9 +7315,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-119"
-status = "pr_open"
+status = "merged"
 pr = 757
-head_sha = "7cbd261d4f48416b97df533af5a92d93dec58758"
+head_sha = "b8e38c4b6ef011efa2ac08131b94f5a440dfcfef"
+merge_sha = "f67a78f01e43a01436fd90e02585bbe5e2724e53"
+merged_at = "2026-05-26T01:19:00Z"
 branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
 stackable = false
 review_mode = "codex_premerge"
