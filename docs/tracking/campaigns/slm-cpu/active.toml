@@ -8526,7 +8526,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-142"
-status = "ready"
+status = "pr_open"
+pr = 806
+head_sha = "08f5b23b4a8d6ec3746c053491d0153c2e953b97"
 branch = "codex/slm-cpu-142-source-order-qproj-evidence-fields"
 stackable = false
 review_mode = "codex_premerge"
