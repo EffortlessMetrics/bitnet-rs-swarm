@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T00:28:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-118"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-118-qproj-output-receipt-pair"
+pr = 753
+head_sha = "ee95430f9c337ba798d0f64be39789a629a48faa"
+merge_sha = "e7ea1bbc0767bfb73a2ed3458dae976e227ba6b6"
+summary = "Merged PR #753 with the exact shared q_proj-output before/after receipt-pair blocker."
+notes = [
+  "The SLM-CPU-118 artifact records that Qwen3 Q8_0 has older behavior evidence but lacks the SLM-CPU-117 shared-hook fingerprint pair.",
+  "The accepted Qwen2.5 Q8_0 sanity evidence exists, but the exact accepted GGUF/cache path and shared-hook before/after pair are missing in the worktree.",
+  "The shared boundary remains not behavior-proven and no allocation, timing, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-119"
+status = "ready"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+summary = "Capture the exact Qwen3 and Qwen2.5 before/after strict CPU receipt pairs with the shared q_proj-output hook active, or record the exact capture blocker."
