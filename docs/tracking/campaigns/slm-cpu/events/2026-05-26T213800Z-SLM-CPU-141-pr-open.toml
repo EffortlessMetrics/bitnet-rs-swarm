@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T21:38:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-141"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 804
+branch = "codex/slm-cpu-141-source-order-receipt-capture"
+head_sha = "0e54b136d5eab0404f59171463d9e7c6e4891bbc"
+summary = "Opened PR #804 with the SLM-CPU-141 source-order q_proj receipt capture blocker."
+notes = [
+  "The PR restores and verifies the exact Qwen2.5 Q8_0 cache locally without committing model or target artifacts.",
+  "Fresh Qwen3 and Qwen2.5 before/after strict CPU warm-session receipts preserve generated token IDs, decoded text, cpu-rust, GGUF tokenizer authority, and fallback_used=false.",
+  "The source-order selector gate remains fail-closed because q_proj numeric evidence is absent and Qwen2.5 does not record the source-order q_proj candidate identity.",
+  "No source-order runtime promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

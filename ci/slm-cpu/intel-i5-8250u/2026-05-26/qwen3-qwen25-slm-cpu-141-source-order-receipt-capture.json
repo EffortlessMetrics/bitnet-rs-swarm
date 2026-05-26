@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_receipt_capture_blocker",
+  "tracking_item": "SLM-CPU-141",
+  "created_at": "2026-05-26T21:36:00Z",
+  "status": "blocked_missing_qproj_numeric_and_cross_model_source_order_identity",
+  "summary": "The exact Qwen2.5 Q8_0 cache was restored and verified, and fresh Qwen3/Qwen2.5 before/after strict CPU receipts were captured. Generated behavior and strict CPU provenance are preserved, but the receipt set still cannot satisfy the source-order selector gate: Qwen3 records the source-order q_proj candidate identity while q_proj numeric evidence remains absent, and Qwen2.5 records a payload-bearing boundary without the source-order candidate identity or q_proj numeric evidence.",
+  "model_cache_restore": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+    "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "cache_path": "target/slm-cpu-140/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "expected_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "actual_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "expected_bytes": 675710816,
+    "actual_bytes": 675710816,
+    "verified": true,
+    "committed_to_repo": false
+  },
+  "receipt_pairs": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "architecture": "qwen3",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-141-before-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-141-after-run.json",
+      "receipt_surface": "slm-warm-session",
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "behavior_preserved": true,
+      "representative_generated_ids_before": [9454, 11, 3015, 374, 6509, 14401, 13, 151645],
+      "representative_generated_ids_after": [9454, 11, 3015, 374, 6509, 14401, 13, 151645],
+      "representative_decoded_text_before": "Yes, water is considered wet.",
+      "representative_decoded_text_after": "Yes, water is considered wet.",
+      "source_order_receipt": {
+        "payload_bearing_boundary_present": true,
+        "payload_tensor_name": "layers.0.attention.q_proj.weight",
+        "source_order_q8_matvec_candidate": true,
+        "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+        "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+        "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+        "source_order_candidate_runtime_enabled": false,
+        "source_order_input_dim": 1024,
+        "source_order_output_dim": 2048,
+        "sidecar_payload_bytes_available": true,
+        "sidecar_payload_order_matches_runtime_shape": false,
+        "q_proj_numeric_evidence_present": false
+      }
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "architecture": "qwen2",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-141-before-warm-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-141-after-warm-run.json",
+      "receipt_surface": "slm-warm-session",
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "behavior_preserved": true,
+      "representative_generated_ids_before": [17, 10, 17, 16819, 220, 19, 13, 151645],
+      "representative_generated_ids_after": [17, 10, 17, 16819, 220, 19, 13, 151645],
+      "representative_decoded_text_before": "2+2 equals 4.",
+      "representative_decoded_text_after": "2+2 equals 4.",
+      "source_order_receipt": {
+        "payload_bearing_boundary_present": true,
+        "payload_tensor_name": "layers.0.attention.q_proj.weight",
+        "source_order_q8_matvec_candidate": false,
+        "source_order_selected_path": null,
+        "source_order_selected_kernel": null,
+        "source_order_candidate_receipt_identity": null,
+        "source_order_candidate_runtime_enabled": null,
+        "source_order_input_dim": 896,
+        "source_order_output_dim": 896,
+        "sidecar_payload_bytes_available": true,
+        "sidecar_payload_order_matches_runtime_shape": true,
+        "q_proj_numeric_evidence_present": false
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "field": "q_proj_numeric_evidence",
+      "models": ["qwen3-0.6b-q8_0", "qwen2.5-0.5b-instruct-q8_0"],
+      "reason": "Fresh strict CPU receipts do not include q_proj numeric evidence for the source-order q_proj selector gate."
+    },
+    {
+      "field": "source_order_candidate_receipt_identity",
+      "models": ["qwen2.5-0.5b-instruct-q8_0"],
+      "reason": "The Qwen2.5 payload boundary is present, but it is not classified as the source-order q_proj matvec candidate and does not record the source-order path/kernel/receipt identity required by SLM-CPU-141."
+    },
+    {
+      "field": "runtime_input_binding",
+      "models": ["qwen3-0.6b-q8_0", "qwen2.5-0.5b-instruct-q8_0"],
+      "reason": "The default runtime remains eager_f32_candle and the source-order candidate remains runtime-disabled; no selector behavior or timing claim is made from these receipts."
+    }
+  ],
+  "claim_boundary": {
+    "models_or_target_cache_committed": false,
+    "runtime_selection_promoted": false,
+    "default_runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_safe_step": "Teach the receipt path to carry q_proj numeric evidence and cross-model source-order q_proj identity where applicable, or split Qwen2.5 into a separate exact-tensor selector contract if its Q8_0 q_proj payload is shape-compatible and should not use the Qwen3 source-order candidate."
+}
