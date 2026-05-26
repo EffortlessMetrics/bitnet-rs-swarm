@@ -7426,9 +7426,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-121"
-status = "pr_open"
+status = "merged"
 pr = 764
-head_sha = "be3cd28f2d06825afa39b823dbb65153fb46cf40"
+head_sha = "51274c5040a87c1598d28ae91190b3f2e41942ff"
+merge_sha = "9d7393b2e31b92ae904c7d6eca1226b1e4bdf6d4"
+merged_at = "2026-05-26T06:30:35Z"
 branch = "codex/slm-cpu-121-qwen3-preboundary-allocation"
 stackable = false
 review_mode = "codex_premerge"
