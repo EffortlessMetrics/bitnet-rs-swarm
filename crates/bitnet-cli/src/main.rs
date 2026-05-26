@@ -10724,6 +10724,26 @@ fn slm_warm_session_dense_q8_hook_receipt(
         .get("selected_kernel")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("dense-f32-candle-linear");
+    let source_order_candidate = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_q8_matvec_candidate"))
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
+    let source_order_candidate_receipt_identity = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_candidate_receipt_identity"))
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let source_order_selected_path = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_selected_path"))
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let source_order_selected_kernel = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .and_then(|boundary| boundary.get("source_order_selected_kernel"))
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
     let selected_tensor = dense_q8_hook_selection
         .get("payload_bearing_boundary")
         .and_then(|boundary| boundary.get("tensor_name"))
@@ -10761,6 +10781,11 @@ fn slm_warm_session_dense_q8_hook_receipt(
         "selected_path": selected_path,
         "selected_kernel": selected_kernel,
         "selected_tensor": selected_tensor,
+        "source_order_q8_matvec_candidate": source_order_candidate,
+        "source_order_selected_path": source_order_selected_path,
+        "source_order_selected_kernel": source_order_selected_kernel,
+        "source_order_candidate_receipt_identity": source_order_candidate_receipt_identity,
+        "source_order_candidate_runtime_enabled": false,
         "q_norm_input_boundary": gate.selected_materialization_boundary,
         "q_norm_input_tensor_identity": {
             "identity": tensor_identity,
@@ -10785,6 +10810,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
             "qwen3_q8_before_after_receipts_missing",
             "qwen25_q8_before_after_receipts_missing",
             "accumulator_order_unproven",
+            "source_order_q8_matvec_behavior_receipt_pairs_missing",
         ],
         "proof_ready": false,
         "speedup_claim": false,
@@ -14915,6 +14941,10 @@ mod tests {
             "selected_kernel": "dense-f32-candle-linear",
             "payload_bearing_boundary": {
                 "tensor_name": "layers.0.attention.q_proj.weight",
+                "source_order_q8_matvec_candidate": true,
+                "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+                "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+                "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
             },
         });
 
@@ -14924,6 +14954,12 @@ mod tests {
         assert_eq!(receipt["selected_path"], "eager_f32_candle");
         assert_eq!(receipt["runtime_compute_enabled"], false);
         assert_eq!(receipt["packed_q8_sidecar_default_enabled"], false);
+        assert_eq!(receipt["source_order_q8_matvec_candidate"], true);
+        assert_eq!(receipt["source_order_candidate_runtime_enabled"], false);
+        assert_eq!(
+            receipt["source_order_candidate_receipt_identity"],
+            "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled"
+        );
         assert_eq!(receipt["after_receipt_field"], "dense_q8_hook.q_norm_input_tensor_identity");
         assert_eq!(
             receipt["q_norm_input_tensor_identity"]["boundary"],
