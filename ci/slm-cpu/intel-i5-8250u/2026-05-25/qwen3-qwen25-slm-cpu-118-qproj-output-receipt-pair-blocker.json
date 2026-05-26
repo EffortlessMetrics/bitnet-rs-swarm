@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_pre_qnorm_receipt_pair_review",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-118",
+  "status": "blocked_exact",
+  "review_date": "2026-05-25",
+  "claim": "SLM-CPU-118 reviewed the shared attention.q_proj_output_pre_optional_qnorm hook surface added by SLM-CPU-117 and blocks behavior, allocation, timing, default-runtime, and throughput claims until real Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs carry matching f32-le hook fingerprints.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof host",
+    "claim_boundary": "correctness and bounded Kaby evidence only; no sustained throughput claim"
+  },
+  "source_boundary": {
+    "selected_by": "SLM-CPU-115",
+    "gated_by": "SLM-CPU-116",
+    "implemented_by": "SLM-CPU-117",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "dense_hook_identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled"
+  },
+  "required_pair_fields": [
+    "model.sha256",
+    "model.architecture",
+    "model.quant_format",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend",
+    "selected_kernel",
+    "fallback_used",
+    "dense_hook.identity",
+    "dense_hook.boundary",
+    "dense_hook.source_tensor",
+    "dense_hook.stage",
+    "dense_hook.shape",
+    "dense_hook.dtype",
+    "dense_hook.tensor_fingerprint_sha256_f32_le"
+  ],
+  "qwen3_review": {
+    "model_id": "qwen3-0.6b-q8_0",
+    "model_file": "Qwen3-0.6B-Q8_0.gguf",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0",
+    "local_model_file_present": true,
+    "local_model_path_reviewed": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "existing_behavior_pair": {
+      "validation_path": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-qnorm-receipt-pair-validation.json",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-before-warm-session.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-110-after-warm-session.json",
+      "behavior_equivalence_passed": true,
+      "before_selected_path": "eager_f32_candle",
+      "after_selected_path": "packed_q8_sidecar",
+      "fallback_false_preserved": true,
+      "prompt_ids_generated_ids_and_text_equal": true
+    },
+    "qproj_output_pre_optional_qnorm_fingerprint_pair_available": false,
+    "classification": "qwen3_behavior_pair_exists_but_shared_hook_fingerprint_pair_missing",
+    "blocker": "The accepted Qwen3 before/after warm-session pair predates SLM-CPU-117 and does not carry dense_hook.identity, boundary, shape, dtype, or tensor_fingerprint_sha256_f32_le for attention.q_proj_output_pre_optional_qnorm. A fresh before/after pair must be captured with the SLM-CPU-117 trace hook active before this boundary is behavior-proven."
+  },
+  "qwen25_review": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "architecture": "qwen2",
+    "quant_format": "Q8_0",
+    "accepted_model_verify_path": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-model-verify.json",
+    "accepted_sanity_receipt_path": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-second-model-sanity.json",
+    "accepted_artifact_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "local_accepted_artifact_present": false,
+    "qproj_output_pre_optional_qnorm_receipt_pair_available": false,
+    "classification": "qwen25_exact_model_artifact_and_shared_hook_pair_missing",
+    "blocker": "The accepted Qwen2.5 Q8_0 receipts prove positive second-model sanity, but the exact accepted GGUF path is not present in this worktree and no before/after strict CPU receipt pair carries the SLM-CPU-117 attention.q_proj_output_pre_optional_qnorm dense hook identity or f32-le fingerprint. Do not substitute another model path or infer hook coverage from Qwen3."
+  },
+  "proof_readiness": {
+    "qwen3_exact_model_available": true,
+    "qwen3_before_after_behavior_pair_exists": true,
+    "qwen3_qproj_output_pre_optional_qnorm_fingerprint_pair_exists": false,
+    "qwen25_positive_second_model_sanity_exists": true,
+    "qwen25_exact_model_available_in_worktree": false,
+    "qwen25_qproj_output_pre_optional_qnorm_fingerprint_pair_exists": false,
+    "shared_boundary_behavior_proven": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "next_required_slice": {
+    "id": "SLM-CPU-119",
+    "summary": "Capture the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs with the attention.q_proj_output_pre_optional_qnorm hook active, or provide the missing exact model artifact/cache path and command transcript blocker."
+  },
+  "forbidden_claims_preserved": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
