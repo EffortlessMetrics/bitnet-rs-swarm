@@ -7711,9 +7711,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-126"
-status = "pr_open"
+status = "merged"
 pr = 774
-head_sha = "33bd8e5f94bd3e342f9c5c954763feda77b3c40c"
+head_sha = "4039f84638d50d497a33df32e0a3db0663465100"
+merge_sha = "337638b8fa1828f8f5550dbdbfafdd07f24401ae"
+merged_at = "2026-05-26T11:10:31Z"
 branch = "codex/slm-cpu-126-qproj-allocation-timing-experiment"
 stackable = false
 review_mode = "codex_premerge"
@@ -7749,6 +7751,50 @@ may_claim = [
 must_not_claim = [
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-127"
+status = "ready"
+branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-126"]
+acceptance = "Restore or fetch the exact Qwen2.5-0.5B-Instruct Q8_0 GGUF artifact required by SLM-CPU-126, verify its pinned SHA256, and collect or explicitly block the fresh Qwen3/Qwen2.5 before/after strict CPU receipt pack needed before any allocation or timing experiment can claim improvement. A valid slice must not commit model binaries, must preserve strict GGUF tokenizer authority, selected CPU backend/kernel identity, prompt IDs, generated IDs, decoded text, dense hook identity, fallback_used=false, and the SLM-CPU-125 q_proj-output numeric gate, and must fail closed if the artifact or receipt pack cannot be produced."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-126 identifies the missing exact Qwen2.5 Q8_0 artifact as the blocker before fresh cross-model allocation or timing receipts.",
+  "SLM-CPU-127 may restore artifact availability and receipt readiness, or fail closed with an exact missing-artifact or missing-receipt blocker.",
+]
+must_not_claim = [
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",

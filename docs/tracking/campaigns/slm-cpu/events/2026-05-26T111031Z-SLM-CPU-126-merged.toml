@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T11:10:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-126"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 774
+branch = "codex/slm-cpu-126-qproj-allocation-timing-experiment"
+head_sha = "4039f84638d50d497a33df32e0a3db0663465100"
+merge_sha = "337638b8fa1828f8f5550dbdbfafdd07f24401ae"
+summary = "Merged PR #774 recording the allocation/timing readiness blocker."
+notes = [
+  "SLM-CPU-126 records that SLM-CPU-125's exact-boundary q_proj-output numeric gate is available as a prerequisite for future experiments.",
+  "The item remains fail-closed for allocation or timing claims because the exact Qwen2.5 Q8_0 GGUF required for fresh cross-model before/after receipts is missing in this workspace.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-127"
+status = "ready"
+branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
+summary = "Restore exact Qwen2.5 Q8_0 artifact availability and collect or explicitly block the fresh cross-model receipt pack required before allocation or timing experiments."
