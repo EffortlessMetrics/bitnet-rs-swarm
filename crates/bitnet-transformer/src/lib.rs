@@ -387,6 +387,7 @@ pub struct DenseLinearRuntimeHookDescriptor {
     pub role: String,
     pub sidecar_payload_sha256: Option<String>,
     pub packed_q8_payload: Option<DenseLinearPackedQ8Payload>,
+    pub payload_order_matches_runtime_shape: bool,
     pub runtime_compute_enabled: bool,
 }
 
@@ -404,6 +405,7 @@ pub struct DenseLinearRuntimeHookBoundary {
     pub sidecar_matrix_rows: Option<usize>,
     pub sidecar_matrix_cols: Option<usize>,
     pub sidecar_payload_contract_valid: bool,
+    pub sidecar_payload_order_matches_runtime_shape: bool,
     pub runtime_compute_enabled: bool,
     pub eager_f32_runtime_preserved: bool,
     pub dense_runtime_replaced: bool,
@@ -427,6 +429,7 @@ impl DenseLinearRuntimeHookBoundary {
             sidecar_matrix_rows: None,
             sidecar_matrix_cols: None,
             sidecar_payload_contract_valid: false,
+            sidecar_payload_order_matches_runtime_shape: false,
             runtime_compute_enabled: false,
             eager_f32_runtime_preserved: true,
             dense_runtime_replaced: false,
@@ -449,6 +452,7 @@ impl DenseLinearRuntimeHookBoundary {
         });
         let runtime_compute_enabled = descriptor.runtime_compute_enabled
             && tensor_name == SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR
+            && descriptor.payload_order_matches_runtime_shape
             && payload_contract_valid;
         Self {
             tensor_name,
@@ -471,6 +475,8 @@ impl DenseLinearRuntimeHookBoundary {
             sidecar_matrix_rows: payload.map(|payload| payload.matrix_rows),
             sidecar_matrix_cols: payload.map(|payload| payload.matrix_cols),
             sidecar_payload_contract_valid: payload_contract_valid,
+            sidecar_payload_order_matches_runtime_shape: descriptor
+                .payload_order_matches_runtime_shape,
             runtime_compute_enabled,
             eager_f32_runtime_preserved: !runtime_compute_enabled,
             dense_runtime_replaced: runtime_compute_enabled,
@@ -5647,6 +5653,7 @@ mod tests {
                     matrix_rows: 2,
                     matrix_cols: 2,
                 }),
+                payload_order_matches_runtime_shape: true,
                 runtime_compute_enabled: true,
             },
         );
@@ -5723,6 +5730,7 @@ mod tests {
                 role: "AttentionQ".to_string(),
                 sidecar_payload_sha256: Some("sha256:test".to_string()),
                 packed_q8_payload: None,
+                payload_order_matches_runtime_shape: false,
                 runtime_compute_enabled: false,
             },
         );
@@ -5745,6 +5753,61 @@ mod tests {
             instrumentation_after.selector_declined_calls
                 > instrumentation_before.selector_declined_calls
         );
+        Ok(())
+    }
+
+    #[test]
+    fn exact_q8_sidecar_runtime_hook_declines_payload_order_mismatch() -> Result<()> {
+        let device = Device::Cpu;
+        let weight = Tensor::from_slice(&[0.5f32, 1.0, 1.5, 2.0], (2, 2), &device)?;
+        let linear = Linear::new(weight, None);
+        let input = Tensor::from_slice(&[2.0f32, 3.0], (1, 1, 2), &device)?;
+
+        let mut packed = Vec::new();
+        packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
+        packed.extend(std::iter::repeat_n(1_u8, 32));
+
+        let mut hooks = DenseLinearRuntimeHookRegistry::default();
+        hooks.insert(
+            SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR.to_string(),
+            DenseLinearRuntimeHookDescriptor {
+                tensor_name: "blk.0.attn_q.weight".to_string(),
+                role: "AttentionQ".to_string(),
+                sidecar_payload_sha256: Some("sha256:test".to_string()),
+                packed_q8_payload: Some(DenseLinearPackedQ8Payload {
+                    tensor_name: "blk.0.attn_q.weight".to_string(),
+                    packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+                    q8_block_size: 32,
+                    q8_block_count: 1,
+                    matrix_rows: 2,
+                    matrix_cols: 2,
+                }),
+                payload_order_matches_runtime_shape: false,
+                runtime_compute_enabled: true,
+            },
+        );
+
+        let descriptor = hooks.get(SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR).ok_or_else(|| {
+            BitNetError::Config(format!(
+                "missing test hook descriptor for {SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR}"
+            ))
+        })?;
+        let boundary = DenseLinearRuntimeHookBoundary::from_sidecar_descriptor(
+            SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
+            descriptor,
+        );
+        assert_eq!(boundary.selected_path, "eager_f32_candle");
+        assert!(boundary.sidecar_payload_contract_valid);
+        assert!(!boundary.sidecar_payload_order_matches_runtime_shape);
+        assert!(!boundary.runtime_compute_enabled);
+
+        let output = maybe_forward_dense_q8_sidecar_linear(
+            &input,
+            &linear,
+            SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
+            &hooks,
+        )?;
+        assert!(output.is_none());
         Ok(())
     }
 
@@ -5798,6 +5861,7 @@ mod tests {
                     matrix_rows: 2,
                     matrix_cols: 64,
                 }),
+                payload_order_matches_runtime_shape: true,
                 runtime_compute_enabled: true,
             },
         );
@@ -5874,6 +5938,7 @@ mod tests {
                     matrix_rows,
                     matrix_cols,
                 }),
+                payload_order_matches_runtime_shape: true,
                 runtime_compute_enabled: true,
             },
         );

@@ -476,6 +476,11 @@ impl BitNetModel {
             hook_boundaries.iter().any(|boundary| boundary.runtime_compute_enabled);
         let dense_runtime_replaced =
             hook_boundaries.iter().any(|boundary| boundary.dense_runtime_replaced);
+        let has_payload_order_mismatch = hook_boundaries.iter().any(|boundary| {
+            boundary.sidecar_payload_bytes_available
+                && boundary.sidecar_payload_contract_valid
+                && !boundary.sidecar_payload_order_matches_runtime_shape
+        });
         let sidecar_descriptor_count = self.dense_q8_sidecars.descriptor_count();
         let hook_boundary_count = hook_boundaries.len();
         let sidecar_descriptors_reached_transformer = hook_boundary_count > 0
@@ -494,6 +499,7 @@ impl BitNetModel {
                 "sidecar_matrix_rows": boundary.sidecar_matrix_rows,
                 "sidecar_matrix_cols": boundary.sidecar_matrix_cols,
                 "sidecar_payload_contract_valid": boundary.sidecar_payload_contract_valid,
+                "sidecar_payload_order_matches_runtime_shape": boundary.sidecar_payload_order_matches_runtime_shape,
                 "runtime_compute_enabled": boundary.runtime_compute_enabled,
                 "eager_f32_runtime_preserved": boundary.eager_f32_runtime_preserved,
                 "dense_runtime_replaced": boundary.dense_runtime_replaced,
@@ -526,6 +532,11 @@ impl BitNetModel {
             "fallback_used": false,
             "remaining_blockers": if runtime_compute_enabled {
                 serde_json::json!([
+                    "before_after_qwen3_q8_warm_session_receipts_with_hook_selection_identity_missing"
+                ])
+            } else if has_payload_order_mismatch {
+                serde_json::json!([
+                    "packed_q8_sidecar_payload_order_does_not_match_runtime_matrix_shape",
                     "before_after_qwen3_q8_warm_session_receipts_with_hook_selection_identity_missing"
                 ])
             } else {
@@ -567,9 +578,11 @@ fn dense_q8_runtime_hooks_from_sidecars(
         let Some(canonical_name) = dense_q8_transformer_hook_name(descriptor) else {
             continue;
         };
-        let runtime_compute_enabled = runtime_compute_tensor
-            .as_deref()
-            .is_some_and(|tensor| tensor == descriptor.tensor_name)
+        let payload_order_matches_runtime_shape = !descriptor.shape_reshaped_without_transpose;
+        let runtime_compute_enabled = payload_order_matches_runtime_shape
+            && runtime_compute_tensor
+                .as_deref()
+                .is_some_and(|tensor| tensor == descriptor.tensor_name)
             && descriptor.packed_q8_bytes.is_some();
         hooks.insert(
             canonical_name,
@@ -578,6 +591,7 @@ fn dense_q8_runtime_hooks_from_sidecars(
                 role: format!("{:?}", descriptor.role),
                 sidecar_payload_sha256: Some(descriptor.packed_q8_bytes_sha256.clone()),
                 packed_q8_payload: dense_q8_packed_payload_from_sidecar(descriptor),
+                payload_order_matches_runtime_shape,
                 runtime_compute_enabled,
             },
         );
@@ -698,7 +712,7 @@ mod dense_q8_runtime_hook_tests {
 
     #[test]
     #[serial]
-    fn dense_gguf_q8_sidecar_runtime_compute_requires_explicit_exact_tensor_gate() -> Result<()> {
+    fn dense_gguf_q8_sidecar_runtime_compute_declines_transposed_payload_order() -> Result<()> {
         unsafe {
             std::env::set_var(DENSE_Q8_RUNTIME_ENABLE_ENV, "1");
             std::env::set_var(DENSE_Q8_RUNTIME_TENSOR_ENV, "blk.0.attn_q.weight");
@@ -720,8 +734,9 @@ mod dense_q8_runtime_hook_tests {
                 ));
             };
 
-            assert!(hook.runtime_compute_enabled);
+            assert!(!hook.runtime_compute_enabled);
             assert!(hook.packed_q8_payload.is_some());
+            assert!(!hook.payload_order_matches_runtime_shape);
             Ok(())
         })();
         unsafe {

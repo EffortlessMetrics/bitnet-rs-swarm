@@ -44,6 +44,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | shared q_proj output hook gate | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-116-qproj-output-pre-qnorm-hook-gate.json` | Defines the fail-closed receipt/comparator contract for the shared pre-q_norm Q projection output boundary and blocks runtime evidence until an implementation-capable slice adds the diagnostic hook |
 | shared q_proj output hook surface | `ci/slm-cpu/intel-i5-8250u/2026-05-25/qwen3-slm-cpu-117-qproj-output-pre-qnorm-hook.json` | Adds the opt-in runtime-disabled `attention.q_proj_output_pre_optional_qnorm` fingerprint hook and fail-closed comparator artifact kind without promoting packed_q8_sidecar or claiming behavior, allocation, timing, or throughput |
 | q_proj output receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-119-qproj-output-receipt-pair-blocker.json` | Captures real Qwen3 and Qwen2.5 hook evidence, restores the accepted Qwen2.5 artifact, and blocks behavior proof because Qwen3 sidecar-gated after-run fails before receipt emission while Qwen2.5 preserves generated output but changes the q_proj-output f32 fingerprint |
+| q_proj sidecar transpose guard | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-120-sidecar-transpose-guard.json` | Adds a fail-closed runtime guard for packed Q8_0 sidecar payloads whose GGUF byte order has only been shape-reshaped to Candle runtime matrix orientation; Qwen3 still fails before a post-guard receipt, so no allocation, timing, default-runtime, or packed-Q8 behavior claim is made |
 
 Qwen3 rows use:
 
@@ -62,8 +63,8 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-119 shared q_proj-output receipt-pair
-capture blocker. It records the opt-in trace-only f32-le tensor fingerprint surface for
+This refresh is current through the SLM-CPU-120 shared q_proj-output sidecar
+transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
 that boundary fail-closed because the before/after warm-session receipts still do
 not carry f32-le tensor fingerprints and the accepted Qwen2.5 Q8_0 artifact has
@@ -75,7 +76,13 @@ boundary, SLM-CPU-117 adds the opt-in runtime-disabled diagnostic hook and
 comparator artifact surface, SLM-CPU-118 blocks behavior proof until exact
 Qwen3 and Qwen2.5 before/after receipt pairs carry that hook fingerprint, and
 SLM-CPU-119 restores the accepted Qwen2.5 Q8_0 artifact and captures the next
-real evidence. It
+real evidence. SLM-CPU-120 adds a fail-closed guard so packed Q8_0 sidecar
+runtime execution is declined when the GGUF payload byte order has only been
+shape-reshaped into the Candle runtime matrix shape without a proven payload
+reorder. It also records that the real Qwen3 Q8_0 post-guard run still fails
+before a receipt or layer-0 q_proj-output fingerprint with the same 167772160
+byte allocation failure, so that remaining blocker is now classified as
+pre-boundary rather than accepted as q_proj sidecar behavior evidence. It
 does not add a runtime optimization. It
 re-indexes the merged Kaby Lake Qwen3 Q8_0 evidence after KV-cache reuse,
 prompt-token caching, prefill attribution, the post-aligned exact-tensor

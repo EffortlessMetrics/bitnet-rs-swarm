@@ -397,6 +397,7 @@ fn dense_linear_runtime_hook_boundary_accepts_inert_q8_sidecar_descriptor() -> a
             role: "AttentionQ".to_string(),
             sidecar_payload_sha256: Some("abc123".to_string()),
             packed_q8_payload: None,
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: false,
         },
     );
@@ -445,6 +446,7 @@ fn dense_linear_runtime_hook_boundary_can_carry_payload_without_enabling_compute
                 matrix_rows: 8,
                 matrix_cols: 8,
             }),
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: false,
         },
     );
@@ -493,6 +495,7 @@ fn dense_linear_runtime_hook_boundary_rejects_payload_tensor_mismatch() -> anyho
                 matrix_rows: 8,
                 matrix_cols: 8,
             }),
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: true,
         },
     );
@@ -526,6 +529,7 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             role: "MlpDown".to_string(),
             sidecar_payload_sha256: Some("sha256:down".to_string()),
             packed_q8_payload: None,
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: false,
         },
     );
@@ -536,6 +540,7 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             role: "AttentionQ".to_string(),
             sidecar_payload_sha256: Some("sha256:q".to_string()),
             packed_q8_payload: None,
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: false,
         },
     );
@@ -570,6 +575,7 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
             role: "AttentionQ".to_string(),
             sidecar_payload_sha256: Some("sha256:future".to_string()),
             packed_q8_payload: None,
+            payload_order_matches_runtime_shape: true,
             runtime_compute_enabled: true,
         },
     );

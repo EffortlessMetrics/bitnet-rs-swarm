@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T03:38:22Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-120"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-120-sidecar-transpose-guard"
+pr = 759
+head_sha = "1bfcb631d5030ee6b83bc2dbc1f44b9a5185bb8c"
+summary = "Opened PR #759 to fail-close transposed-without-reordered Q8 sidecar payload runtime selection and isolate the remaining Qwen3 pre-boundary allocation failure."
+notes = [
+  "The runtime selector now requires payload_order_matches_runtime_shape before packed Q8 sidecar execution.",
+  "Qwen3 Q8_0 still fails before receipt emission with a 167772160-byte allocation failure after prompt IDs and before a layer-0 q_proj-output fingerprint.",
+  "The slice does not claim allocation reduction, timing improvement, default-runtime promotion, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
