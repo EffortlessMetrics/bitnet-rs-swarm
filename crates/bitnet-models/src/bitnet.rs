@@ -3,7 +3,7 @@
 use crate::dense_gguf_q8_dispatch::{DenseQ8DispatchSelection, select_dense_q8_runtime};
 use crate::dense_gguf_q8_sidecar::{
     DenseGgufQ8SidecarDescriptor, DenseGgufQ8SidecarRegistry,
-    dense_q8_runtime_compute_tensor_from_env,
+    DenseQ8SourceOrderKernelContractStatus, dense_q8_runtime_compute_tensor_from_env,
 };
 use crate::transformer::{KVCache, TransformerModel};
 use bitnet_common::{
@@ -500,6 +500,13 @@ impl BitNetModel {
                 "sidecar_matrix_cols": boundary.sidecar_matrix_cols,
                 "sidecar_payload_contract_valid": boundary.sidecar_payload_contract_valid,
                 "sidecar_payload_order_matches_runtime_shape": boundary.sidecar_payload_order_matches_runtime_shape,
+                "source_order_q8_matvec_candidate": boundary.source_order_q8_matvec_candidate,
+                "source_order_selected_path": boundary.source_order_selected_path,
+                "source_order_selected_kernel": boundary.source_order_selected_kernel,
+                "source_order_input_dim": boundary.source_order_input_dim,
+                "source_order_output_dim": boundary.source_order_output_dim,
+                "source_order_candidate_receipt_identity": boundary.source_order_candidate_receipt_identity,
+                "source_order_candidate_runtime_enabled": boundary.source_order_candidate_runtime_enabled,
                 "runtime_compute_enabled": boundary.runtime_compute_enabled,
                 "eager_f32_runtime_preserved": boundary.eager_f32_runtime_preserved,
                 "dense_runtime_replaced": boundary.dense_runtime_replaced,
@@ -579,6 +586,11 @@ fn dense_q8_runtime_hooks_from_sidecars(
             continue;
         };
         let payload_order_matches_runtime_shape = descriptor.payload_order_matches_runtime_shape();
+        let source_order_contract = descriptor.source_order_kernel_contract();
+        let source_order_q8_matvec_candidate = matches!(
+            source_order_contract.contract_status,
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate
+        ) && descriptor.packed_q8_bytes.is_some();
         let runtime_compute_enabled = payload_order_matches_runtime_shape
             && runtime_compute_tensor
                 .as_deref()
@@ -592,6 +604,9 @@ fn dense_q8_runtime_hooks_from_sidecars(
                 sidecar_payload_sha256: Some(descriptor.packed_q8_bytes_sha256.clone()),
                 packed_q8_payload: dense_q8_packed_payload_from_sidecar(descriptor),
                 payload_order_matches_runtime_shape,
+                source_order_q8_matvec_candidate,
+                source_order_input_dim: source_order_contract.source_input_dim,
+                source_order_output_dim: source_order_contract.source_output_dim,
                 runtime_compute_enabled,
             },
         );
@@ -737,6 +752,9 @@ mod dense_q8_runtime_hook_tests {
             assert!(!hook.runtime_compute_enabled);
             assert!(hook.packed_q8_payload.is_some());
             assert!(!hook.payload_order_matches_runtime_shape);
+            assert!(hook.source_order_q8_matvec_candidate);
+            assert_eq!(hook.source_order_input_dim, Some(64));
+            assert_eq!(hook.source_order_output_dim, Some(32));
             Ok(())
         })();
         unsafe {

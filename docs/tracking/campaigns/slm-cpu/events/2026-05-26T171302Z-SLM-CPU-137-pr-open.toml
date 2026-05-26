@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T17:13:02Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-137"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-137-source-order-qproj-selector-hook"
+pr = 796
+head_sha = "5b8577687a50f077a605c77084931c5d4d280f00"
+summary = "Opened PR #796 with a default-disabled source-order q_proj selector identity surface."
+notes = [
+  "Opened #796 to add a default-disabled source-order Q8_0 q_proj candidate identity surface for the exact layers.0.attention.q_proj.weight hook.",
+  "The slice records source-order candidate path/kernel/dims/receipt identity in dense_q8_hook_selection and warm-session dense_q8_hook receipts while preserving eager_f32_candle as the default runtime.",
+  "Runtime selection remains disabled; Qwen3/Qwen2.5 before/after strict CPU receipt pairs remain required before any behavior, allocation, timing, or speed claim.",
+]

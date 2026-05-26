@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_selector_hook_gate",
+  "tracking_item": "SLM-CPU-137",
+  "scope": "default-disabled exact-tensor selector hook and receipt identity surface for source-order Q8_0 q_proj matvec candidate",
+  "exact_tensor": "layers.0.attention.q_proj.weight",
+  "source_tensor": "blk.0.attn_q.weight",
+  "selected_default_path": "eager_f32_candle",
+  "selected_default_kernel": "dense-f32-candle-linear",
+  "candidate_path": "source_order_q8_0_qproj_matvec",
+  "candidate_kernel": "dense-q8-source-order-qproj-matvec",
+  "candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+  "candidate_runtime_enabled": false,
+  "default_runtime_changed": false,
+  "packed_q8_sidecar_default_enabled": false,
+  "source_order_candidate_available_when": [
+    "exact tensor is layers.0.attention.q_proj.weight",
+    "packed Q8_0 payload bytes are present",
+    "payload contract is valid",
+    "payload order does not match runtime matrix shape",
+    "source-order input and output dimensions are known"
+  ],
+  "receipt_identity_surface": [
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_q8_matvec_candidate",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_selected_path",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_selected_kernel",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_input_dim",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_output_dim",
+    "dense_q8_hook_selection.payload_bearing_boundary.source_order_candidate_receipt_identity",
+    "dense_q8_hook.source_order_q8_matvec_candidate",
+    "dense_q8_hook.source_order_selected_path",
+    "dense_q8_hook.source_order_selected_kernel",
+    "dense_q8_hook.source_order_candidate_receipt_identity",
+    "dense_q8_hook.source_order_candidate_runtime_enabled"
+  ],
+  "remaining_blockers": [
+    "qwen3_q8_before_after_receipts_missing",
+    "qwen25_q8_before_after_receipts_missing",
+    "source_order_q8_matvec_behavior_receipt_pairs_missing",
+    "candidate_runtime_input_binding_unproven",
+    "candidate_accumulator_order_unproven"
+  ],
+  "next_safe_step": "capture Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs proving unchanged model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, q_proj numeric evidence, and fallback_used=false before considering runtime selection",
+  "claim_boundary": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

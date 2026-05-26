@@ -388,6 +388,9 @@ pub struct DenseLinearRuntimeHookDescriptor {
     pub sidecar_payload_sha256: Option<String>,
     pub packed_q8_payload: Option<DenseLinearPackedQ8Payload>,
     pub payload_order_matches_runtime_shape: bool,
+    pub source_order_q8_matvec_candidate: bool,
+    pub source_order_input_dim: Option<usize>,
+    pub source_order_output_dim: Option<usize>,
     pub runtime_compute_enabled: bool,
 }
 
@@ -406,6 +409,13 @@ pub struct DenseLinearRuntimeHookBoundary {
     pub sidecar_matrix_cols: Option<usize>,
     pub sidecar_payload_contract_valid: bool,
     pub sidecar_payload_order_matches_runtime_shape: bool,
+    pub source_order_q8_matvec_candidate: bool,
+    pub source_order_selected_path: Option<&'static str>,
+    pub source_order_selected_kernel: Option<&'static str>,
+    pub source_order_input_dim: Option<usize>,
+    pub source_order_output_dim: Option<usize>,
+    pub source_order_candidate_receipt_identity: Option<String>,
+    pub source_order_candidate_runtime_enabled: bool,
     pub runtime_compute_enabled: bool,
     pub eager_f32_runtime_preserved: bool,
     pub dense_runtime_replaced: bool,
@@ -430,6 +440,13 @@ impl DenseLinearRuntimeHookBoundary {
             sidecar_matrix_cols: None,
             sidecar_payload_contract_valid: false,
             sidecar_payload_order_matches_runtime_shape: false,
+            source_order_q8_matvec_candidate: false,
+            source_order_selected_path: None,
+            source_order_selected_kernel: None,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
+            source_order_candidate_receipt_identity: None,
+            source_order_candidate_runtime_enabled: false,
             runtime_compute_enabled: false,
             eager_f32_runtime_preserved: true,
             dense_runtime_replaced: false,
@@ -449,6 +466,18 @@ impl DenseLinearRuntimeHookBoundary {
             payload.tensor_name == descriptor.tensor_name
                 && payload.shape_matches_matvec_contract()
                 && payload.payload_len_matches_contract()
+        });
+        let source_order_q8_matvec_candidate = descriptor.source_order_q8_matvec_candidate
+            && tensor_name == SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR
+            && payload_contract_valid
+            && !descriptor.payload_order_matches_runtime_shape
+            && descriptor.source_order_input_dim.is_some()
+            && descriptor.source_order_output_dim.is_some();
+        let source_order_candidate_receipt_identity = source_order_q8_matvec_candidate.then(|| {
+            format!(
+                "{}:source_order_q8_0_qproj_matvec:runtime_disabled",
+                SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR
+            )
         });
         let runtime_compute_enabled = descriptor.runtime_compute_enabled
             && tensor_name == SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR
@@ -477,6 +506,15 @@ impl DenseLinearRuntimeHookBoundary {
             sidecar_payload_contract_valid: payload_contract_valid,
             sidecar_payload_order_matches_runtime_shape: descriptor
                 .payload_order_matches_runtime_shape,
+            source_order_q8_matvec_candidate,
+            source_order_selected_path: source_order_q8_matvec_candidate
+                .then_some("source_order_q8_0_qproj_matvec"),
+            source_order_selected_kernel: source_order_q8_matvec_candidate
+                .then_some("dense-q8-source-order-qproj-matvec"),
+            source_order_input_dim: descriptor.source_order_input_dim,
+            source_order_output_dim: descriptor.source_order_output_dim,
+            source_order_candidate_receipt_identity,
+            source_order_candidate_runtime_enabled: false,
             runtime_compute_enabled,
             eager_f32_runtime_preserved: !runtime_compute_enabled,
             dense_runtime_replaced: runtime_compute_enabled,
@@ -5705,6 +5743,9 @@ mod tests {
                     matrix_cols: 2,
                 }),
                 payload_order_matches_runtime_shape: true,
+                source_order_q8_matvec_candidate: false,
+                source_order_input_dim: None,
+                source_order_output_dim: None,
                 runtime_compute_enabled: true,
             },
         );
@@ -5782,6 +5823,9 @@ mod tests {
                 sidecar_payload_sha256: Some("sha256:test".to_string()),
                 packed_q8_payload: None,
                 payload_order_matches_runtime_shape: false,
+                source_order_q8_matvec_candidate: false,
+                source_order_input_dim: None,
+                source_order_output_dim: None,
                 runtime_compute_enabled: false,
             },
         );
@@ -5834,6 +5878,9 @@ mod tests {
                     matrix_cols: 2,
                 }),
                 payload_order_matches_runtime_shape: false,
+                source_order_q8_matvec_candidate: true,
+                source_order_input_dim: Some(2),
+                source_order_output_dim: Some(2),
                 runtime_compute_enabled: true,
             },
         );
@@ -5850,6 +5897,16 @@ mod tests {
         assert_eq!(boundary.selected_path, "eager_f32_candle");
         assert!(boundary.sidecar_payload_contract_valid);
         assert!(!boundary.sidecar_payload_order_matches_runtime_shape);
+        assert!(boundary.source_order_q8_matvec_candidate);
+        assert_eq!(
+            boundary.source_order_candidate_receipt_identity.as_deref(),
+            Some(
+                "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled"
+            )
+        );
+        assert_eq!(boundary.source_order_input_dim, Some(2));
+        assert_eq!(boundary.source_order_output_dim, Some(2));
+        assert!(!boundary.source_order_candidate_runtime_enabled);
         assert!(!boundary.runtime_compute_enabled);
 
         let output = maybe_forward_dense_q8_sidecar_linear(
@@ -5913,6 +5970,9 @@ mod tests {
                     matrix_cols: 64,
                 }),
                 payload_order_matches_runtime_shape: true,
+                source_order_q8_matvec_candidate: false,
+                source_order_input_dim: None,
+                source_order_output_dim: None,
                 runtime_compute_enabled: true,
             },
         );
@@ -5990,6 +6050,9 @@ mod tests {
                     matrix_cols,
                 }),
                 payload_order_matches_runtime_shape: true,
+                source_order_q8_matvec_candidate: false,
+                source_order_input_dim: None,
+                source_order_output_dim: None,
                 runtime_compute_enabled: true,
             },
         );
