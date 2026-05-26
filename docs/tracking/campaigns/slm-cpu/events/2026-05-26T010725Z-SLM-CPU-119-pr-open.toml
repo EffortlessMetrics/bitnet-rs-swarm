@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T01:07:25Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-119"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-119-qproj-output-receipt-pair-capture"
+pr = 757
+head_sha = "7cbd261d4f48416b97df533af5a92d93dec58758"
+
+notes = [
+  "Opened PR #757 to capture the real Qwen3 and Qwen2.5 attention.q_proj_output_pre_optional_qnorm evidence for SLM-CPU-119.",
+  "The artifact records an exact blocker rather than behavior proof: Qwen3 sidecar-gated after-run fails before receipt emission, and Qwen2.5 preserves generated output but changes the q_proj-output f32 fingerprint.",
+  "No allocation reduction, timing improvement, default-runtime promotion, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 claim is made.",
+]
