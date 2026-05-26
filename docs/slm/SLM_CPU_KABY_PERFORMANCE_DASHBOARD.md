@@ -58,6 +58,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen3 q_proj payload-order proof | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-131-qproj-payload-order-proof.json` | Records the machine-checkable Qwen3 blocker: the GGUF source shape `[1024, 2048]` maps to Candle runtime shape `[2048, 1024]`, so the packed Q8_0 source payload must remain fail-closed until a tensor-specific reorder/runtime-shape proof exists; no selector relaxation or performance claim is made |
 | Qwen3 q_proj payload-reorder contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-132-qproj-payload-reorder-contract.json` | Defines the fail-closed reorder contract for the same exact tensor: a pure Q8_0 byte reorder is not valid because transposing from source shape `[1024, 2048]` to runtime shape `[2048, 1024]` would regroup values under the wrong 32-value Q8_0 block scales; runtime selection remains blocked until a dequantize/requantize proof or source-order Q8_0 kernel exists |
 | Qwen3 source-order q_proj kernel contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-133-source-order-qproj-kernel-contract.json` | Defines the runtime-disabled source-order Q8_0 matvec contract for the same tensor: consume GGUF source-order rows directly with an output accumulator rather than byte-transposing or dequantize/requantizing the payload; selection remains disabled until accumulator order, block-scale decode, generated-ID preservation, and receipt identity are proven |
+| Qwen3 source-order q_proj matvec prototype | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-134-source-order-qproj-matvec-prototype.json` | Adds a runtime-disabled source-order Q8_0 matvec prototype surface that accumulates GGUF source-order rows into the runtime output vector and proves the fixture implementation against an eager source-order f32 reference; selector use remains blocked until exact Qwen3/Qwen2.5 behavior receipts preserve generated IDs and receipt identity |
 
 Qwen3 rows use:
 
@@ -76,7 +77,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-125. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-134. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -182,6 +183,16 @@ requires an implementation and behavior-equivalence proof before selector use:
 accumulator order, block-scale decode, generated IDs, decoded text, selected
 backend/kernel identity, dense hook identity, allocation counters, and strict
 receipts must match the Qwen3/Qwen2.5 oracle first.
+
+SLM-CPU-134 adds the first runtime-disabled source-order Q8_0 matvec prototype
+surface for that contract. The prototype decodes Q8_0 scales/codes inside the
+matvec while walking GGUF source-order rows and accumulating into the runtime
+output vector; it does not materialize full f32 weights and it does not relax
+selector policy. The committed proof is fixture-level and fail-closed for exact
+runtime use: Qwen3 and Qwen2.5 before/after strict CPU receipts must still prove
+unchanged prompt IDs, generated IDs, decoded text, backend/kernel identity,
+dense hook identity, fallback state, and receipt identity before any selector
+use, allocation claim, timing claim, or speed claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
