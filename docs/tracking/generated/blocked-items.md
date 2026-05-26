@@ -877,7 +877,7 @@
 | slm-cpu | SLM-CPU-116 | SLM-CPU-115 | merged |
 | slm-cpu | SLM-CPU-117 | SLM-CPU-116 | merged |
 | slm-cpu | SLM-CPU-118 | SLM-CPU-117 | merged |
-| slm-cpu | SLM-CPU-119 | SLM-CPU-118 | pr_open |
+| slm-cpu | SLM-CPU-119 | SLM-CPU-118 | merged |
 | slm-cpu | SLM-CPU-120 | SLM-CPU-119 | ready |
 | slm-cpu | SLM-CPU-103 | SLM-CPU-102 | merged |
 | slm-cpu | SLM-CPU-104 | SLM-CPU-103 | merged |
