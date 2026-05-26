@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_source_order_qproj_behavior_gate",
+  "tracking_item": "SLM-CPU-135",
+  "timestamp": "2026-05-26T15:45:00Z",
+  "inputs": {
+    "source_order_matvec_prototype": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-134-source-order-qproj-matvec-prototype.json",
+    "source_order_kernel_contract": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-133-source-order-qproj-kernel-contract.json",
+    "accepted_qproj_numeric_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json",
+    "fresh_receipt_prerequisite_pack": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-127-fresh-receipt-prereq.json"
+  },
+  "scope": {
+    "models": [
+      {
+        "model_id": "qwen3-0.6b-q8_0",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "required": true
+      },
+      {
+        "model_id": "qwen2.5-0.5b-instruct-q8_0",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "required": true
+      }
+    ],
+    "host": "intel-i5-8250u",
+    "thread_profile": "4-thread-operator-profile",
+    "candidate_boundary": "layers.0.attention.q_proj.weight source-order Q8_0 matvec prototype"
+  },
+  "required_before_selector_use": {
+    "before_after_receipts": {
+      "qwen3": {
+        "baseline_receipt": null,
+        "candidate_receipt": null,
+        "status": "missing_for_source_order_matvec_selector_use"
+      },
+      "qwen2_5": {
+        "baseline_receipt": null,
+        "candidate_receipt": null,
+        "status": "missing_for_source_order_matvec_selector_use"
+      }
+    },
+    "receipt_identity_fields": [
+      "model.sha256",
+      "tokenizer.source",
+      "tokenizer.strict",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend",
+      "selected_kernel",
+      "dense_hook_identity",
+      "fallback_used"
+    ],
+    "qproj_numeric_evidence": {
+      "accepted_boundary": "attention.q_proj_output_pre_optional_qnorm",
+      "qwen3_requirement": "exact_match_or_accepted_numeric_gate",
+      "qwen2_5_requirement": "absolute_delta_lte_1e-4",
+      "status": "prior_gate_exists_but_not_bound_to_source_order_matvec_selector_receipts"
+    },
+    "strict_requirements": {
+      "model_sha_preserved": true,
+      "strict_gguf_tokenizer_authority_preserved": true,
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "selected_backend_preserved": true,
+      "selected_kernel_identity_recorded": true,
+      "dense_hook_identity_recorded": true,
+      "fallback_used_false": true
+    }
+  },
+  "selector_policy": {
+    "runtime_selection_allowed": false,
+    "default_runtime": "eager_f32_candle",
+    "source_order_matvec_prototype_available": true,
+    "source_order_matvec_selector_enabled": false,
+    "blocker": "missing exact Qwen3 and Qwen2.5 before/after strict CPU receipts for the source-order q_proj matvec selector path",
+    "next_safe_step": "capture the required before/after receipt pairs and compare generated IDs, decoded text, q_proj numeric evidence, selected backend/kernel identity, dense hook identity, and fallback state before enabling selector use"
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "runtime_selection_enabled": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "classification": "source_order_qproj_behavior_gate_defined_runtime_selection_blocked",
+  "not_claimed": [
+    "runtime source-order matvec selection",
+    "allocation reduction",
+    "timing improvement",
+    "speedup",
+    "sustained throughput",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality"
+  ]
+}
