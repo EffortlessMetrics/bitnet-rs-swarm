@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T07:41:14Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-123"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 768
+branch = "codex/slm-cpu-123-qwen25-qproj-fingerprint-root-cause"
+head_sha = "014f386478a86ba7850ad94768d157ca46a419a7"
+merge_sha = "f717147d34b57a06ce848471e164461b32a3fd10"
+summary = "Merged PR #768 with the Qwen2.5 q_proj-output fingerprint blocker classification."
+notes = [
+  "The artifact preserves that Qwen2.5 Q8_0 strict CPU before/after receipts keep model SHA, tokenizer authority, CPU backend, fallback=false, generated IDs, and decoded text stable while q_proj-output f32-le fingerprints differ.",
+  "The slice fails closed because both existing traces set contents_dumped=false, so the numeric mismatch cannot be localized from the current artifact set.",
+  "The slice does not claim packed-Q8 sidecar behavior proof, default-runtime promotion, allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-124"
+status = "ready"
+branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
+summary = "Capture bounded Qwen2.5 q_proj-output tensor contents or a full 896-f32 diagnostic dump to classify the first numeric mismatch behind the fingerprint delta."

@@ -7541,9 +7541,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-123"
-status = "pr_open"
+status = "merged"
 pr = 768
-head_sha = "40aeb98c415b84d386ded459983eab07ef194c76"
+head_sha = "014f386478a86ba7850ad94768d157ca46a419a7"
+merge_sha = "f717147d34b57a06ce848471e164461b32a3fd10"
+merged_at = "2026-05-26T07:41:14Z"
 branch = "codex/slm-cpu-123-qwen25-qproj-fingerprint-root-cause"
 stackable = false
 review_mode = "codex_premerge"
@@ -7584,6 +7586,59 @@ may_claim = [
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-124"
+status = "ready"
+branch = "codex/slm-cpu-124-qwen25-qproj-tensor-dump"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-123"]
+acceptance = "Capture a bounded Qwen2.5 Q8_0 attention.q_proj_output_pre_optional_qnorm tensor sample or full 896-f32 diagnostic dump for the strict CPU before/after pair, then classify the numeric mismatch behind the SLM-CPU-123 fingerprint delta before any packed-Q8 sidecar behavior proof, allocation reduction, timing improvement, or default-runtime promotion claim. A valid slice must preserve strict GGUF tokenizer authority, CPU backend, fallback_used=false, model SHA, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, boundary label, source tensor identity, shape/dtype, f32-le fingerprint, and must emit max_abs_diff plus first_differing_index or fail closed with the exact missing dump blocker."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-123 identifies the current Qwen2.5 q_proj-output blocker as unresolved from fingerprint-only traces because contents_dumped=false.",
+  "SLM-CPU-124 may capture bounded tensor contents and classify the first numeric mismatch while preserving the strict CPU receipt contract.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality and numeric-diff gates pass.",
   "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
   "Sustained 8250U throughput is proven.",
