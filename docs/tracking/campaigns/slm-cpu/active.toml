@@ -8578,7 +8578,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-143"
-status = "ready"
+status = "pr_open"
+pr = 808
 branch = "codex/slm-cpu-143-source-order-evidence-receipts"
 stackable = false
 review_mode = "codex_premerge"

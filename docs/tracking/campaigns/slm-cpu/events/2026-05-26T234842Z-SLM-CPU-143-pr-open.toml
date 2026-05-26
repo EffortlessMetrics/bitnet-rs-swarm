@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T23:48:42Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-143"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 808
+branch = "codex/slm-cpu-143-source-order-evidence-receipts"
+head_sha = "605e267f778616a55eccc162ee1d4f30533e0553"
+summary = "Opened PR #808 with fresh source-order q_proj evidence receipts and a fail-closed selector blocker."
+notes = [
+  "Opened the SLM-CPU-143 evidence refresh PR with fresh Qwen3/Qwen2.5 strict CPU warm-session receipt pairs and a fail-closed source-order q_proj selector blocker.",
+  "The receipt pairs preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend, and fallback_used=false.",
+  "Selector use remains blocked because source_order_qproj_candidate_identity is present but not a usable candidate identity, and q_proj_numeric_evidence remains not_captured_by_warm_session_receipt.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
