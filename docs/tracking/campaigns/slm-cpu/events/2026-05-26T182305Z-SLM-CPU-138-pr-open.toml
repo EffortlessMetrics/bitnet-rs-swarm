@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T18:23:05Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-138"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-138-source-order-qproj-receipt-pairs"
+pr = 798
+head_sha = "8702eea700b9e04b022f2e359a3ea3127d6aa5ea"
+summary = "Opened PR #798 with a machine-checkable source-order q_proj receipt-pair blocker."
+notes = [
+  "Qwen3 Q8_0 is present locally, but the exact Qwen2.5 Q8_0 model cache is missing under models/slm.",
+  "The existing SLM-CPU-127 Qwen3/Qwen2.5 receipt pairs predate SLM-CPU-137 and do not carry source_order_* candidate identity fields.",
+  "Runtime selection remains disabled and no allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
