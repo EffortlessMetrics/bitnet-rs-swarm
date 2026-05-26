@@ -7541,7 +7541,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-123"
-status = "ready"
+status = "pr_open"
+pr = 768
+head_sha = "40aeb98c415b84d386ded459983eab07ef194c76"
 branch = "codex/slm-cpu-123-qwen25-qproj-fingerprint-root-cause"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T07:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-123"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 768
+branch = "codex/slm-cpu-123-qwen25-qproj-fingerprint-root-cause"
+head_sha = "40aeb98c415b84d386ded459983eab07ef194c76"
+summary = "Opened PR #768 to classify the Qwen2.5 q_proj-output fingerprint blocker."
+notes = [
+  "The PR records that Qwen2.5 Q8_0 preserves strict receipt behavior while the q_proj-output f32-le fingerprints differ.",
+  "The PR fails closed because the current traces contain only SHA256 fingerprints and contents_dumped=false, so the numeric mismatch cannot yet be localized.",
+  "The PR does not claim packed-Q8 sidecar behavior proof, default-runtime promotion, allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
