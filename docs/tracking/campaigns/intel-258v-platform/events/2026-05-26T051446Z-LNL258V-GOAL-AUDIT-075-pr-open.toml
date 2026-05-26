@@ -10,8 +10,8 @@ head_sha = "5a778551c0c3f77d5c51d7ac5a9798d752cd4128"
 actor = "codex"
 summary = "Opened PR #761 for the no-inference Lunar Lake SLM CPU audit/checklist refresh."
 notes = [
-  "PR #761 refreshes the Lunar Lake excellence audit and goal artifact checklist to current swarm main after SLM-CPU-116/#742 plus closeout #746, SLM-CPU-117/#749 plus closeout #752, SLM-CPU-118/#753 plus closeout #755, SLM-CPU-119/#757 plus closeout #758, CI lane whitelist #747/#750, and badge refresh #632.",
-  "The PR records those changes as adjacent SLM CPU diagnostic/receipt-pair or control-plane state only.",
+  "PR #761 refreshes the Lunar Lake excellence audit and goal artifact checklist to current swarm main after SLM-CPU-116/#742 plus closeout #746, SLM-CPU-117/#749 plus closeout #752, SLM-CPU-118/#753 plus closeout #755, SLM-CPU-119/#757 plus closeout #758, SLM-CPU-120/#759 plus closeout #760, CI lane whitelist #747/#750, and badge refresh #632.",
+  "The PR records those changes as adjacent SLM CPU diagnostic/receipt-pair/fail-closed runtime-support or control-plane state only.",
   "LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage exist.",
   "No Lunar Lake inference, model load, fallback behavior change, route promotion, speedup, power advantage, battery-mode evidence, measured temperature, native accelerator proof, broad quality, semantic-intake stale state, dense-SLM-as-BitNet proof, full BitNet accelerator inference, production QK256 dispatch policy, or BitNet QK256/I2_S behavior-change claim is in scope.",
 ]
