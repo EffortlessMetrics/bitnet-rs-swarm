@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T22:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-142"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 806
+branch = "codex/slm-cpu-142-source-order-qproj-evidence-fields"
+head_sha = "08f5b23b4a8d6ec3746c053491d0153c2e953b97"
+summary = "Opened PR #806 with fail-closed source-order q_proj evidence fields."
+notes = [
+  "The warm-session dense_q8_hook receipt now emits source_order_qproj_candidate_identity for the exact q_proj payload boundary.",
+  "The receipt now emits q_proj_numeric_evidence as an explicit not_captured_by_warm_session_receipt object instead of leaving the evidence absent.",
+  "Qwen2.5 can now record not_source_order_runtime_shape_compatible rather than looking like a missing Qwen3 source-order candidate identity.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

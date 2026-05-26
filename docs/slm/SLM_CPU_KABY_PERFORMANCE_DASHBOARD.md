@@ -66,6 +66,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order exact-model blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-139-source-order-exact-model-receipt-blocker.json` | Re-checks the current-main exact-model source-order receipt gate and blocks because the exact Qwen2.5 Q8_0 cache is still absent and the older receipt pairs predate the source-order identity fields |
 | Qwen2.5 cache restore contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-140-cache-restore-contract.json` | Defines the non-committed Qwen2.5 Q8_0 cache restoration and Qwen3/Qwen2.5 source-order receipt-capture contract; it captures no fresh receipts and makes no runtime, allocation, timing, or speed claim |
 | Source-order q_proj receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-141-source-order-receipt-capture.json` | Restores and verifies the exact Qwen2.5 Q8_0 cache, captures fresh Qwen3/Qwen2.5 before/after strict CPU warm-session receipts, and keeps selector use blocked because q_proj numeric evidence is absent and Qwen2.5 does not record the source-order q_proj candidate identity |
+| Source-order q_proj evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-142-source-order-evidence-fields.json` | Adds explicit fail-closed receipt fields for source-order q_proj candidate identity and missing q_proj numeric evidence, resolving absent-field ambiguity without runtime promotion or performance claims |
 
 Qwen3 rows use:
 
@@ -84,7 +85,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-141. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-142. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -278,6 +279,21 @@ also lacks `q_proj_numeric_evidence`. No model or target cache artifacts are
 committed, and no allocation, timing, speedup, sustained-throughput,
 default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is
 made.
+
+SLM-CPU-142 resolves the absent-field ambiguity from SLM-CPU-141 without
+promoting runtime selection. The warm-session `dense_q8_hook` receipt now emits
+`source_order_qproj_candidate_identity` for the exact q_proj payload boundary
+and `q_proj_numeric_evidence` as an explicit fail-closed object. Qwen3 can
+record `candidate_identity_present_runtime_disabled`, while Qwen2.5 can record
+`not_source_order_runtime_shape_compatible` instead of looking like a missing
+source-order identity bug. The numeric evidence field remains
+`not_captured_by_warm_session_receipt`; selector use is still blocked until
+fresh Qwen3/Qwen2.5 receipts attach q_proj numeric evidence while preserving
+model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded
+text, selected CPU backend/kernel identity, and `fallback_used=false`. This is
+receipt-surface hardening only. It does not claim allocation reduction, timing
+improvement, speedup, sustained-throughput, default-runtime promotion, Q4/Q5,
+server, accelerator, Qwen3.5, or BitNet QK256 behavior.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
