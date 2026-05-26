@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_evidence_receipt_refresh",
+  "tracking_item": "SLM-CPU-143",
+  "status": "blocked_source_order_selector_use",
+  "summary": "Fresh current-main Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU warm-session receipts were captured with the SLM-CPU-142 receipt fields present. The runs preserve strict model/tokenizer/backend/fallback provenance and generated behavior, but selector use remains blocked because source_order_qproj_candidate_identity is not a usable candidate identity and q_proj numeric evidence is not captured by warm-session receipts.",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false,
+    "model_or_target_artifacts_committed": false
+  },
+  "receipt_pack": {
+    "host": "intel-i5-8250u",
+    "date": "2026-05-26",
+    "runtime": "cpu-rust",
+    "requested_backend": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "default_runtime": "eager_f32_candle",
+    "strict_tokenizer_source": "gguf_metadata",
+    "strict_tokenizer": true
+  },
+  "models": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-143-before-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-143-after-run.json",
+      "before_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-143-before-run-prompts/",
+      "after_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-143-after-run-prompts/",
+      "prompt_receipt_count": 6,
+      "behavior_preservation": {
+        "model_sha256_match": true,
+        "tokenizer_source_match": true,
+        "tokenizer_strict_match": true,
+        "selected_backend_match": true,
+        "fallback_used_false": true,
+        "prompt_ids_match": true,
+        "generated_ids_match": true,
+        "decoded_text_match": true,
+        "generated_outputs": [
+          {
+            "case_id": "bounded_yes_no_water",
+            "generated_ids": [9454, 11, 3015, 374, 6509, 14401, 13, 151645],
+            "decoded_text": "Yes, water is considered wet."
+          },
+          {
+            "case_id": "bounded_repeat_colors",
+            "generated_ids": [6033, 11, 6303, 11, 6176, 13, 151645],
+            "decoded_text": "Red, blue, green."
+          },
+          {
+            "case_id": "bounded_capital_france",
+            "generated_ids": [785, 6722, 315, 9625, 374, 3070, 59604, 334],
+            "decoded_text": "The capital of France is **Paris**"
+          }
+        ]
+      },
+      "source_order_evidence": {
+        "source_order_qproj_candidate_identity_status": "payload_boundary_present_without_source_order_identity",
+        "source_order_qproj_candidate_identity_present": false,
+        "source_order_qproj_candidate_runtime_enabled": false,
+        "q_proj_numeric_evidence_status": "not_captured_by_warm_session_receipt",
+        "q_proj_numeric_evidence_present": false,
+        "blocking_reason": "The warm-session receipt carries the SLM-CPU-142 fields, but the selector classification does not expose source-order path/kernel identity and does not capture before/after q_proj numeric comparison evidence."
+      }
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-143-before-warm-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-143-after-warm-run.json",
+      "before_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-143-before-warm-run-prompts/",
+      "after_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-143-after-warm-run-prompts/",
+      "prompt_receipt_count": 2,
+      "behavior_preservation": {
+        "model_sha256_match": true,
+        "tokenizer_source_match": true,
+        "tokenizer_strict_match": true,
+        "selected_backend_match": true,
+        "fallback_used_false": true,
+        "prompt_ids_match": true,
+        "generated_ids_match": true,
+        "decoded_text_match": true,
+        "generated_outputs": [
+          {
+            "case_id": "prompt_01",
+            "generated_ids": [17, 10, 17, 16819, 220, 19, 13, 151645],
+            "decoded_text": "2+2 equals 4."
+          }
+        ]
+      },
+      "source_order_evidence": {
+        "source_order_qproj_candidate_identity_status": "payload_boundary_present_without_source_order_identity",
+        "source_order_qproj_candidate_identity_present": false,
+        "source_order_qproj_candidate_runtime_enabled": false,
+        "q_proj_numeric_evidence_status": "not_captured_by_warm_session_receipt",
+        "q_proj_numeric_evidence_present": false,
+        "blocking_reason": "The warm-session receipt carries the SLM-CPU-142 fields, but the selector classification does not expose source-order path/kernel identity and does not capture before/after q_proj numeric comparison evidence."
+      }
+    }
+  ],
+  "receipt_field_status": {
+    "source_order_qproj_candidate_identity": "present_but_fail_closed_without_candidate_identity",
+    "q_proj_numeric_evidence": "present_but_not_captured_by_warm_session_receipt",
+    "selector_use_allowed": false,
+    "runtime_compute_enabled": false,
+    "packed_q8_sidecar_default_enabled": false
+  },
+  "next_safe_step": "Expose a real payload-bearing source-order q_proj boundary with source-order path/kernel identity, or capture q_proj numeric evidence at the attention_q_proj_output_pre_optional_qnorm boundary, then regenerate exact Qwen3/Qwen2.5 before/after receipts before considering selector use."
+}
