@@ -1,0 +1,24 @@
+timestamp = "2026-05-26T19:53:56Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-139"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-139-source-order-qproj-exact-model-receipts"
+pr = 800
+head_sha = "6ca914079eca8355cce1b6e073c8dede60635b94"
+merge_sha = "3c15e338ef9713024a3f7c6e1133ab49dd5431b6"
+summary = "Merged PR #800 with the exact-model source-order q_proj receipt blocker."
+notes = [
+  "The artifact records that Qwen3 Q8_0 is present locally, but the exact Qwen2.5 Q8_0 cache is missing under models/slm.",
+  "The active slice forbids models/** and target/**, so it could not restore the missing model cache directly.",
+  "Existing SLM-CPU-127 receipts preserve generated behavior but predate the SLM-CPU-137 source_order_* identity fields and do not bind q_proj numeric evidence to fresh current-main receipts.",
+  "Runtime selection remains disabled and no allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-140"
+status = "ready"
+branch = "codex/slm-cpu-140-qwen25-cache-restore-contract"
+summary = "Define the non-committed Qwen2.5 cache restoration and source-order receipt capture contract."

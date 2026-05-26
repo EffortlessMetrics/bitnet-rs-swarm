@@ -8374,9 +8374,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-139"
-status = "pr_open"
+status = "merged"
 pr = 800
-head_sha = "85fad1cefc5df10ab4d6eb4892b4ba069e84db95"
+head_sha = "6ca914079eca8355cce1b6e073c8dede60635b94"
+merge_sha = "3c15e338ef9713024a3f7c6e1133ab49dd5431b6"
+merged_at = "2026-05-26T19:53:56Z"
 branch = "codex/slm-cpu-139-source-order-qproj-exact-model-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -8409,6 +8411,53 @@ may_claim = [
   "SLM-CPU-139 may restore or precisely block the missing exact-model evidence needed for fresh source-order identity receipt pairs.",
 ]
 must_not_claim = [
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-140"
+status = "ready"
+branch = "codex/slm-cpu-140-qwen25-cache-restore-contract"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-139"]
+acceptance = "Define the exact Qwen2.5 Q8_0 cache restoration contract needed before source-order q_proj receipt capture can resume. The slice must name the required model path, SHA256, non-committed cache handling, receipt capture commands, source-order q_proj identity fields, and validation gates for Qwen3 Q8_0 plus Qwen2.5 Q8_0 fresh before/after strict CPU receipts. It must not commit models/** or target/** artifacts, claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-139 precisely blocked source-order receipt capture on the missing exact Qwen2.5 Q8_0 cache and stale receipt identity fields.",
+  "SLM-CPU-140 may define the non-committed cache restoration and receipt-capture contract for the next evidence slice.",
+]
+must_not_claim = [
+  "The exact Qwen2.5 Q8_0 model binary is committed.",
+  "Fresh source-order Qwen3/Qwen2.5 receipt pairs have been captured.",
   "Runtime selection uses the source-order matvec prototype by default.",
   "Allocation reduction or speedup is proven.",
   "The packed-Q8 sidecar is promoted to default runtime.",
