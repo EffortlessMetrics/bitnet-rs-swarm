@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_repeated_allocation_audit_summary",
+  "tracking_item": "SLM-CPU-129",
+  "timestamp": "2026-05-26T11:56:00Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "scope": {
+    "purpose": "collect repeated warm-session before/after receipts with allocation-audit counters for the exact-tensor packed-Q8 sidecar boundary after the mixed single-sample SLM-CPU-128 result",
+    "models": [
+      "Qwen3-0.6B-Q8_0",
+      "Qwen2.5-0.5B-Instruct-Q8_0"
+    ],
+    "prompts_per_receipt": 2,
+    "threads": 4,
+    "device": "cpu",
+    "strict_loader": true,
+    "strict_tokenizer": true,
+    "fallback_required": false
+  },
+  "inputs": {
+    "qwen3_before": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-129-before-warm-allocation.json",
+    "qwen3_after": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-129-after-warm-allocation.json",
+    "qwen25_before": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-129-before-warm-allocation.json",
+    "qwen25_after": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-129-after-warm-allocation.json"
+  },
+  "model_results": [
+    {
+      "model_id": "qwen3_0_6b_q8_0",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "behavior_equivalence": "passed",
+      "before_generated_ids": [
+        19
+      ],
+      "after_generated_ids": [
+        19
+      ],
+      "before_text": "4",
+      "after_text": "4",
+      "fallback_used": false,
+      "allocation_audit_enabled": true,
+      "after_selected_path": "eager_f32_candle",
+      "after_selected_kernel": "dense-f32-candle-linear",
+      "after_runtime_compute_enabled": false,
+      "sidecar_classification": "selector_observed_without_packed_selection",
+      "packed_selected_calls": 0,
+      "packed_matvec_calls": 0,
+      "timing_classification": "diagnostic_only_no_speedup_claim",
+      "notes": [
+        "The Qwen3 receipt preserves generated IDs and text with fallback=false.",
+        "The exact-tensor sidecar was instrumented but did not replace runtime compute for this Qwen3 warm-session receipt."
+      ]
+    },
+    {
+      "model_id": "qwen25_0_5b_instruct_q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "behavior_equivalence": "passed",
+      "before_generated_ids": [
+        17,
+        10,
+        17,
+        16819,
+        220,
+        19,
+        13,
+        151645
+      ],
+      "after_generated_ids": [
+        17,
+        10,
+        17,
+        16819,
+        220,
+        19,
+        13,
+        151645
+      ],
+      "before_text": "2+2 equals 4.",
+      "after_text": "2+2 equals 4.",
+      "fallback_used": false,
+      "allocation_audit_enabled": true,
+      "after_selected_path": "packed_q8_sidecar",
+      "after_selected_kernel": "dense-q8-sidecar-linear",
+      "after_runtime_compute_enabled": false,
+      "sidecar_classification": "selected_counter_pack",
+      "packed_selected_calls": 92,
+      "packed_matvec_calls": 92,
+      "timing_classification": "diagnostic_only_no_speedup_claim",
+      "notes": [
+        "The Qwen2.5 receipt preserves generated IDs and text with fallback=false.",
+        "Packed-Q8 sidecar counters were observed for the exact q_proj tensor, but runtime_compute_enabled remains false and no speedup or default-runtime claim is made."
+      ]
+    }
+  ],
+  "classification": "behavior_equivalent_allocation_counters_available_fail_closed_on_speedup",
+  "accepted_evidence": {
+    "behavior_equivalence_preserved": true,
+    "fallback_false": true,
+    "allocation_audit_counters_available": true,
+    "repeated_prompts_in_warm_session": true,
+    "packed_q8_selection_observed_for_qwen25": true,
+    "packed_q8_selection_observed_for_qwen3": false
+  },
+  "not_claimed": [
+    "allocation reduction",
+    "speedup",
+    "timing improvement",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality",
+    "sustained throughput"
+  ],
+  "next_recommended_step": {
+    "tracking_item": "SLM-CPU-130",
+    "purpose": "decide whether to keep the exact-tensor packed-Q8 sidecar behind an opt-in diagnostic gate or narrow the runtime selector so Qwen3 and Qwen2.5 exercise the same selected-counter boundary before any optimization claim",
+    "required_boundary": "keep behavior-equivalent receipts and allocation counters as gates; do not claim speedup until repeated timing evidence is stable"
+  }
+}
