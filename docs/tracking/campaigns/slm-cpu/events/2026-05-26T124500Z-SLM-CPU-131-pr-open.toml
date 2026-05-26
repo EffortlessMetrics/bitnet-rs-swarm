@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T12:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-131"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 784
+branch = "codex/slm-cpu-131-qwen3-qproj-payload-order-proof"
+head_sha = "db095fbd9af59e2cf72724288357e5f03514d3f8"
+summary = "Opened PR #784 to add the SLM-CPU-131 Qwen3 q_proj payload-order proof gate."
+notes = [
+  "The PR adds a machine-checkable dense Q8 payload-order proof surface for sidecar descriptors.",
+  "The Qwen3 exact q_proj artifact remains fail-closed because source shape [1024, 2048] maps to Candle runtime shape [2048, 1024].",
+  "Runtime selection remains blocked until a tensor-specific payload reorder/runtime-shape proof exists.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
