@@ -1,0 +1,21 @@
+timestamp = "2026-05-26T13:35:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-132"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 786
+merge_sha = "caf026d82b4f10052be0f5dd16ebf008e3b042fc"
+summary = "Merged SLM-CPU-132 Qwen3 q_proj payload reorder contract."
+notes = [
+  "The merged contract keeps the exact Qwen3 layer-0 attention.q_proj sidecar fail-closed because pure Q8_0 byte reorder would regroup source-order values under the wrong 32-value block scales.",
+  "Runtime selection remains blocked until either a source-order Q8_0 q_proj kernel contract or a dequantize/requantize equivalence proof exists.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
+
+[[next_item]]
+id = "SLM-CPU-133"
+status = "ready"
+branch = "codex/slm-cpu-133-qwen3-source-order-qproj-kernel-contract"
+summary = "Define or precisely block the Qwen3 source-order Q8_0 q_proj kernel contract."
