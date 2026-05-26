@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T11:34:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-127"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 776
+branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
+head_sha = "706f5e6b39aef0494b6299f8fc0231760c57ad3c"
+merge_sha = "e8a9928763285a8a91088fa1c2611b89e0d78949"
+summary = "Merged PR #776 restoring exact Qwen2.5 Q8_0 artifact availability and fresh cross-model receipt prerequisites."
+notes = [
+  "The merge verifies the restored Qwen2.5 Q8_0 cache artifact by pinned SHA256 without committing the model binary.",
+  "The fresh receipt pack records Qwen3 and Qwen2.5 before/after strict CPU receipts preserving generated IDs, decoded text, strict GGUF tokenizer authority, cpu-rust, dense-qwen-cpu-reference, and fallback_used=false.",
+  "The merge restores receipt readiness only and does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-128"
+status = "ready"
+branch = "codex/slm-cpu-128-qproj-allocation-timing-classification"
+summary = "Use the restored fresh cross-model receipt prerequisites to run or fail-close the next bounded exact-tensor allocation/timing classification without overclaiming speedup or default-runtime promotion."
