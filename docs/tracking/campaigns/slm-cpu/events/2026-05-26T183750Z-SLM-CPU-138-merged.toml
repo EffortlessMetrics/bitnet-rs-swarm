@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T18:37:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-138"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-138-source-order-qproj-receipt-pairs"
+pr = 798
+head_sha = "a59eac0d1b46067e35a49e207bf1c12bd82f4987"
+merge_sha = "a37191a21077be6badac6ab8366d0953bb63d58c"
+summary = "Merged PR #798 with a source-order q_proj receipt-pair blocker refresh."
+notes = [
+  "The artifact records that Qwen3 Q8_0 is present locally, but the exact Qwen2.5 Q8_0 cache is missing under models/slm.",
+  "The existing SLM-CPU-127 cross-model receipts preserve behavior but predate the SLM-CPU-137 source_order_* identity fields.",
+  "Runtime selection remains disabled and no allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_items]]
+id = "SLM-CPU-139"
+status = "ready"
+branch = "codex/slm-cpu-139-source-order-qproj-exact-model-receipts"
+summary = "Restore or precisely block exact-model receipt capture with source-order q_proj identity fields."
