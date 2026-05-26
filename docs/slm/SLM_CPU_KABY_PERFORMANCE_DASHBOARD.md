@@ -51,6 +51,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen2.5 q_proj tensor dump classification | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-qproj-tensor-dump-classification.json` | Captures an opt-in full 896-f32 q_proj-output diagnostic dump for the Qwen2.5 before/after pair and classifies the fingerprint delta as small f32 numeric drift while generated behavior remains stable; packed-Q8 sidecar behavior proof, allocation, timing, throughput, and default-runtime promotion remain fail-closed |
 | q_proj numeric tolerance gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json` | Accepts a narrow absolute `1e-4` f32 gate for the exact layer-0 `attention.q_proj_output_pre_optional_qnorm` diagnostic boundary using the accepted Qwen3 exact-match evidence and Qwen2.5 full-vector bounded-drift evidence; this proves only that exact boundary and does not claim allocation reduction, timing improvement, throughput, or default-runtime promotion |
 | q_proj allocation/timing readiness blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-126-allocation-timing-readiness-blocker.json` | Keeps the next before/after allocation or timing experiment fail-closed because the fresh cross-model receipt prerequisites are incomplete in this workspace: Qwen3 Q8_0 is present, but the exact Qwen2.5 Q8_0 GGUF needed for fresh before/after receipts is missing |
+| q_proj fresh receipt prerequisites | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-127-fresh-receipt-prereq.json` | Restores the exact Qwen2.5 Q8_0 cache artifact by pinned SHA256 and records fresh Qwen3/Qwen2.5 before/after strict CPU receipts with stable generated IDs/text, `cpu-rust`, `dense-qwen-cpu-reference`, and `fallback_used=false`; this is receipt readiness only, not an allocation, timing, speedup, or default-runtime claim |
 
 Qwen3 rows use:
 
@@ -103,13 +104,20 @@ default runtime and it does not claim allocation reduction, timing improvement,
 sustained throughput, Q4/Q5 support, server, accelerator, Qwen3.5, or BitNet
 QK256 behavior. SLM-CPU-126 then checks whether that accepted exact-boundary
 gate can be used for a fresh allocation or timing experiment. It remains
-fail-closed: the local workspace has the verified Qwen3 Q8_0 GGUF, but the
-exact Qwen2.5 Q8_0 GGUF required for fresh cross-model before/after receipts is
-not present at
+fail-closed because the local workspace has the verified Qwen3 Q8_0 GGUF, but
+the exact Qwen2.5 Q8_0 GGUF required for fresh cross-model before/after receipts
+is not present at
 `target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf`.
-No allocation reduction, timing improvement, speedup, sustained throughput,
-default-runtime promotion, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256
-claim is made.
+SLM-CPU-127 restores that exact Qwen2.5 cache artifact in the swarm workspace
+without committing the model binary, verifies SHA256
+`ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e`, and
+collects fresh Qwen3 and Qwen2.5 before/after strict CPU receipts. The receipt
+pack preserves generated IDs, decoded text, strict GGUF tokenizer authority,
+`cpu-rust`, `dense-qwen-cpu-reference`, and `fallback_used=false` for both
+models. This restores receipt readiness for a later bounded experiment, but it
+does not itself claim allocation reduction, timing improvement, speedup,
+sustained throughput, default-runtime promotion, Q4/Q5, server, accelerator,
+Qwen3.5, or BitNet QK256 behavior.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
