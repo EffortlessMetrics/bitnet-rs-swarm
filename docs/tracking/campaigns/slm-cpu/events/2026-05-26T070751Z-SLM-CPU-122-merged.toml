@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T07:07:51Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-122"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 766
+branch = "codex/slm-cpu-122-qproj-output-proof-refresh"
+head_sha = "a870059bdaa91348affcb6c4cab32911ab838452"
+merge_sha = "95c1e21e84df503122037011785718e532fd0d34"
+summary = "Merged PR #766 with the SLM-CPU-122 q_proj-output proof refresh."
+notes = [
+  "The artifact preserves strict Qwen3 Q8_0 and Qwen2.5 Q8_0 CPU before/after receipt evidence at attention.q_proj_output_pre_optional_qnorm.",
+  "Qwen3 Q8_0 remains stable across the refreshed pair, but Qwen2.5 Q8_0 still mismatches at the f32-le fingerprint boundary, so the shared boundary proof fails closed.",
+  "The slice does not claim packed-Q8 sidecar behavior proof, default-runtime promotion, allocation reduction, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-123"
+status = "ready"
+branch = "codex/slm-cpu-123-qwen25-qproj-fingerprint-root-cause"
+summary = "Explain or eliminate the Qwen2.5 Q8_0 q_proj-output f32-le fingerprint mismatch before any packed-Q8 sidecar behavior proof or default-runtime promotion claim."
