@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_exact_tensor_selector_convergence_gate",
+  "tracking_item": "SLM-CPU-130",
+  "timestamp": "2026-05-26T12:18:00Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "inputs": {
+    "source_summary": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-129-repeated-allocation-audit.json",
+    "qwen3_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-129-after-warm-allocation.json",
+    "qwen25_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-129-after-warm-allocation.json"
+  },
+  "accepted_behavior_gate": {
+    "model_sha_preserved": true,
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "allocation_audit_counters_available": true,
+    "q_proj_numeric_gate_preserved": true
+  },
+  "selector_comparison": [
+    {
+      "model_id": "qwen3_0_6b_q8_0",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "tensor_name": "layers.0.attention.q_proj.weight",
+      "after_selected_path": "eager_f32_candle",
+      "after_selected_kernel": "dense-f32-candle-linear",
+      "runtime_compute_enabled": false,
+      "dense_runtime_replaced": false,
+      "sidecar_payload_bytes_available": true,
+      "sidecar_payload_contract_valid": true,
+      "sidecar_payload_order_matches_runtime_shape": false,
+      "sidecar_matrix_rows": 2048,
+      "sidecar_matrix_cols": 1024,
+      "selector_dispatch_calls": 10976,
+      "selector_declined_calls": 10976,
+      "selector_selected_calls": 0,
+      "packed_matvec_calls": 0,
+      "classification": "payload_order_guard_declined_runtime_compute",
+      "reason": "Qwen3 has a payload-bearing exact q_proj sidecar, but the receipt records sidecar_payload_order_matches_runtime_shape=false; the runtime hook therefore preserves eager F32 Candle and records declined selector calls."
+    },
+    {
+      "model_id": "qwen25_0_5b_instruct_q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "tensor_name": "layers.0.attention.q_proj.weight",
+      "after_selected_path": "packed_q8_sidecar",
+      "after_selected_kernel": "dense-q8-sidecar-linear",
+      "runtime_compute_enabled": true,
+      "dense_runtime_replaced": true,
+      "sidecar_payload_bytes_available": true,
+      "sidecar_payload_contract_valid": true,
+      "sidecar_payload_order_matches_runtime_shape": true,
+      "sidecar_matrix_rows": 896,
+      "sidecar_matrix_cols": 896,
+      "selector_dispatch_calls": 15456,
+      "selector_declined_calls": 15364,
+      "selector_selected_calls": 92,
+      "packed_matvec_calls": 92,
+      "classification": "payload_order_guard_allowed_opt_in_counter_pack",
+      "reason": "Qwen2.5 has the same exact q_proj boundary with payload order matching the runtime matrix shape; the opt-in sidecar hook records selected packed-Q8 counter calls while preserving generated IDs and fallback=false."
+    }
+  ],
+  "classification": "selector_mismatch_explained_by_payload_order_guard",
+  "resolution": {
+    "selector_contract": "keep the existing payload-order guard fail-closed",
+    "qwen3_runtime_status": "diagnostic_only_until_payload_reorder_or_model_specific_runtime_shape_proof_exists",
+    "qwen25_runtime_status": "opt_in_exact_tensor_counter_pack_only",
+    "default_runtime_status": "eager_f32_candle_preserved",
+    "next_safe_step": "classify or implement a receipt-proven Qwen3 q_proj payload reorder/runtime-shape proof before attempting any Qwen3 packed-Q8 runtime selection"
+  },
+  "not_claimed": [
+    "allocation reduction",
+    "timing improvement",
+    "speedup",
+    "sustained throughput",
+    "default packed-Q8 runtime promotion",
+    "Q4 or Q5 support",
+    "server or accelerator execution",
+    "broad answer quality"
+  ]
+}

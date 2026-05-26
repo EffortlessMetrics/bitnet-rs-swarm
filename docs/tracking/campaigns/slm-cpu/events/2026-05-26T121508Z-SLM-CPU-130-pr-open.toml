@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T12:15:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-130"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 782
+branch = "codex/slm-cpu-130-qproj-selector-convergence-gate"
+head_sha = "3f1234f1b3e3921e71109f57baa5881fcffa6c99"
+summary = "Opened PR #782 to classify the SLM-CPU-130 q_proj packed-Q8 selector convergence gate."
+notes = [
+  "The PR explains the cross-model selector mismatch from SLM-CPU-129 as the intended payload-order guard outcome.",
+  "Qwen3 remains on eager_f32_candle because its payload-bearing q_proj sidecar records sidecar_payload_order_matches_runtime_shape=false.",
+  "Qwen2.5 reaches the opt-in exact-tensor packed-Q8 counter path because its q_proj sidecar payload order matches the runtime matrix shape.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]

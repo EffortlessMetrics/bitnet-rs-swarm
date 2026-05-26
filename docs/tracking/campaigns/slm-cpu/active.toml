@@ -7905,7 +7905,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-130"
-status = "ready"
+status = "pr_open"
+pr = 782
+head_sha = "3f1234f1b3e3921e71109f57baa5881fcffa6c99"
 branch = "codex/slm-cpu-130-qproj-selector-convergence-gate"
 stackable = false
 review_mode = "codex_premerge"
