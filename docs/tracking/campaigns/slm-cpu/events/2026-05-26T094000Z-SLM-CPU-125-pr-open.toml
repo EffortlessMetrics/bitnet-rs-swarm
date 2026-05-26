@@ -1,0 +1,22 @@
+timestamp = "2026-05-26T09:40:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-125"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 772
+branch = "codex/slm-cpu-125-qproj-numeric-tolerance-gate"
+head_sha = "97e45414b268e2e7831b152e8dd95a719ba798ac"
+summary = "Opened PR #772 to accept the exact-boundary q_proj-output numeric tolerance gate."
+notes = [
+  "The PR records SLM-CPU-125 as an evidence-policy slice for the exact layer-0 attention.q_proj_output_pre_optional_qnorm diagnostic boundary.",
+  "The artifact accepts an absolute 1e-4 f32 gate using accepted Qwen3 exact-match evidence and Qwen2.5 full-vector bounded-drift evidence.",
+  "The PR does not claim allocation reduction, timing improvement, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-126"
+status = "ready"
+branch = "codex/slm-cpu-126-qproj-allocation-timing-experiment"
+summary = "Use the accepted exact-boundary gate as one prerequisite for the next before/after allocation or timing experiment, with fresh strict receipts required before any improvement claim."
