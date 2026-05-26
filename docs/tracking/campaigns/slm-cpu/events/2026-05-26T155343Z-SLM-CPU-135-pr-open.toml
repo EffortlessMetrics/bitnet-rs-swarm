@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T15:53:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-135"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 792
+branch = "codex/slm-cpu-135-source-order-qproj-behavior-gate"
+head_sha = "221609b7fcf9b97a76394d8f50746b81763ac058"
+summary = "Opened PR #792 to add the SLM-CPU-135 source-order q_proj behavior gate."
+notes = [
+  "The PR adds a fail-closed behavior-gate artifact for the runtime-disabled source-order Q8_0 q_proj matvec prototype.",
+  "The gate records that Qwen3 and Qwen2.5 selector-path before/after strict CPU receipts are missing.",
+  "Runtime selection remains disabled until receipts preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, backend/kernel identity, dense hook identity, q_proj numeric evidence, and fallback_used=false.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]

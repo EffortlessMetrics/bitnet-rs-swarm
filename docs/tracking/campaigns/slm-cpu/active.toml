@@ -8165,8 +8165,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-135"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-135-source-order-qproj-behavior-gate"
+pr = 792
+head_sha = "221609b7fcf9b97a76394d8f50746b81763ac058"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
