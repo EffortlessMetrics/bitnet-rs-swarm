@@ -79,6 +79,15 @@ pub enum DenseQ8SourceOrderKernelContractStatus {
     BlockedUnsupportedShape,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DenseQ8SourceOrderMatvecPrototypeStatus {
+    RuntimeDisabledPrototypeAvailable,
+    BlockedMissingPayload,
+    BlockedUnsupportedContract,
+    NativePayloadOrderUsesExistingGate,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DenseQ8PayloadOrderProof {
     pub schema: u64,
@@ -143,6 +152,40 @@ pub struct DenseQ8SourceOrderKernelContract {
     pub contract_status: DenseQ8SourceOrderKernelContractStatus,
     pub blocker: Option<String>,
     pub next_safe_step: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DenseQ8SourceOrderMatvecPrototypeProof {
+    pub schema: u64,
+    pub artifact_kind: String,
+    pub tensor_name: String,
+    pub role: DenseGgufTensorRole,
+    pub source_shape: Vec<usize>,
+    pub runtime_candle_shape: Vec<usize>,
+    pub q8_block_size: usize,
+    pub q8_block_count: usize,
+    pub input_len: usize,
+    pub output_len: usize,
+    pub consumes_source_order_payload_directly: bool,
+    pub dequantizes_inside_matvec: bool,
+    pub materializes_full_f32_weights: bool,
+    pub compares_against_eager_f32_reference: bool,
+    pub max_abs_diff_vs_eager_source_order_f32: Option<f32>,
+    pub fused_output_sha256: Option<String>,
+    pub eager_output_sha256: Option<String>,
+    pub runtime_selection_allowed: bool,
+    pub default_runtime_preserved: bool,
+    pub generated_id_preservation_required_before_runtime_use: bool,
+    pub prototype_status: DenseQ8SourceOrderMatvecPrototypeStatus,
+    pub blocker: Option<String>,
+    pub next_safe_step: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DenseQ8SourceOrderMatvecPrototype {
+    pub proof: DenseQ8SourceOrderMatvecPrototypeProof,
+    pub fused_output: Vec<f32>,
+    pub eager_output: Vec<f32>,
 }
 
 impl Default for DenseGgufQ8SidecarRegistry {
@@ -457,6 +500,158 @@ impl DenseGgufQ8SidecarDescriptor {
             next_safe_step,
         }
     }
+
+    pub fn source_order_matvec_prototype(
+        &self,
+        input: &[f32],
+    ) -> Result<DenseQ8SourceOrderMatvecPrototype> {
+        let contract = self.source_order_kernel_contract();
+        let status = match contract.contract_status {
+            DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate => {
+                if self.packed_q8_bytes.is_some() {
+                    DenseQ8SourceOrderMatvecPrototypeStatus::RuntimeDisabledPrototypeAvailable
+                } else {
+                    DenseQ8SourceOrderMatvecPrototypeStatus::BlockedMissingPayload
+                }
+            }
+            DenseQ8SourceOrderKernelContractStatus::NativePayloadOrder => {
+                DenseQ8SourceOrderMatvecPrototypeStatus::NativePayloadOrderUsesExistingGate
+            }
+            DenseQ8SourceOrderKernelContractStatus::BlockedUnsupportedShape => {
+                DenseQ8SourceOrderMatvecPrototypeStatus::BlockedUnsupportedContract
+            }
+        };
+
+        let input_len = contract.source_input_dim.unwrap_or_default();
+        let output_len = contract.source_output_dim.unwrap_or_default();
+        let blocker = match status {
+            DenseQ8SourceOrderMatvecPrototypeStatus::RuntimeDisabledPrototypeAvailable => None,
+            DenseQ8SourceOrderMatvecPrototypeStatus::BlockedMissingPayload => Some(format!(
+                "source-order Q8_0 matvec prototype for '{}' requires exact packed payload bytes; set {}=1 and {}={} during strict GGUF load",
+                self.tensor_name, DENSE_Q8_PAYLOAD_ENABLE_ENV, DENSE_Q8_PAYLOAD_TENSOR_ENV, self.tensor_name
+            )),
+            DenseQ8SourceOrderMatvecPrototypeStatus::BlockedUnsupportedContract => {
+                contract.blocker.clone()
+            }
+            DenseQ8SourceOrderMatvecPrototypeStatus::NativePayloadOrderUsesExistingGate => Some(
+                "native payload order should use the existing native packed-Q8 gate, not the source-order transpose prototype"
+                    .to_string(),
+            ),
+        };
+
+        if status != DenseQ8SourceOrderMatvecPrototypeStatus::RuntimeDisabledPrototypeAvailable {
+            return Ok(DenseQ8SourceOrderMatvecPrototype {
+                proof: DenseQ8SourceOrderMatvecPrototypeProof {
+                    schema: 1,
+                    artifact_kind: "dense_q8_source_order_matvec_prototype_proof".to_string(),
+                    tensor_name: self.tensor_name.clone(),
+                    role: self.role,
+                    source_shape: self.source_shape.clone(),
+                    runtime_candle_shape: self.runtime_candle_shape.clone(),
+                    q8_block_size: self.q8_block_size,
+                    q8_block_count: self.q8_block_count,
+                    input_len,
+                    output_len,
+                    consumes_source_order_payload_directly: false,
+                    dequantizes_inside_matvec: false,
+                    materializes_full_f32_weights: false,
+                    compares_against_eager_f32_reference: false,
+                    max_abs_diff_vs_eager_source_order_f32: None,
+                    fused_output_sha256: None,
+                    eager_output_sha256: None,
+                    runtime_selection_allowed: false,
+                    default_runtime_preserved: true,
+                    generated_id_preservation_required_before_runtime_use: true,
+                    prototype_status: status,
+                    blocker,
+                    next_safe_step: contract.next_safe_step,
+                },
+                fused_output: Vec::new(),
+                eager_output: Vec::new(),
+            });
+        }
+
+        let Some(source_input_dim) = contract.source_input_dim else {
+            return Err(BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{}' has no source input dimension",
+                self.tensor_name
+            )));
+        };
+        let Some(source_output_dim) = contract.source_output_dim else {
+            return Err(BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{}' has no source output dimension",
+                self.tensor_name
+            )));
+        };
+        if input.len() != source_input_dim {
+            return Err(BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{}' input length {} does not match source input dim {}",
+                self.tensor_name,
+                input.len(),
+                source_input_dim
+            )));
+        }
+        let payload = self.packed_q8_bytes.as_deref().ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{}' is missing packed payload bytes",
+                self.tensor_name
+            ))
+        })?;
+        let fused_output = source_order_q8_0_matvec(
+            payload,
+            self.q8_block_count,
+            self.q8_block_size,
+            source_input_dim,
+            source_output_dim,
+            input,
+            &self.tensor_name,
+        )?;
+        let eager_output = source_order_eager_f32_matvec(
+            payload,
+            self.q8_block_count,
+            self.q8_block_size,
+            source_input_dim,
+            source_output_dim,
+            input,
+            &self.tensor_name,
+        )?;
+        let max_abs_diff = max_abs_diff(&fused_output, &eager_output)?;
+
+        Ok(DenseQ8SourceOrderMatvecPrototype {
+            proof: DenseQ8SourceOrderMatvecPrototypeProof {
+                schema: 1,
+                artifact_kind: "dense_q8_source_order_matvec_prototype_proof".to_string(),
+                tensor_name: self.tensor_name.clone(),
+                role: self.role,
+                source_shape: self.source_shape.clone(),
+                runtime_candle_shape: self.runtime_candle_shape.clone(),
+                q8_block_size: self.q8_block_size,
+                q8_block_count: self.q8_block_count,
+                input_len: source_input_dim,
+                output_len: source_output_dim,
+                consumes_source_order_payload_directly: true,
+                dequantizes_inside_matvec: true,
+                materializes_full_f32_weights: false,
+                compares_against_eager_f32_reference: true,
+                max_abs_diff_vs_eager_source_order_f32: Some(max_abs_diff),
+                fused_output_sha256: Some(f32_values_sha256(&fused_output)),
+                eager_output_sha256: Some(f32_values_sha256(&eager_output)),
+                runtime_selection_allowed: false,
+                default_runtime_preserved: true,
+                generated_id_preservation_required_before_runtime_use: true,
+                prototype_status: status,
+                blocker: Some(
+                    "runtime selection remains disabled until this prototype is validated against real Qwen3/Qwen2.5 behavior receipts with unchanged generated IDs and receipt identity"
+                        .to_string(),
+                ),
+                next_safe_step:
+                    "capture exact-model before/after behavior receipts before any selector use"
+                        .to_string(),
+            },
+            fused_output,
+            eager_output,
+        })
+    }
 }
 
 pub fn dense_q8_payload_candidate_tensor_from_env() -> Option<String> {
@@ -522,6 +717,155 @@ fn checked_element_count(shape: &[usize], tensor_name: &str) -> Result<usize> {
     })
 }
 
+fn source_order_q8_0_matvec(
+    bytes: &[u8],
+    q8_block_count: usize,
+    q8_block_size: usize,
+    source_input_dim: usize,
+    source_output_dim: usize,
+    input: &[f32],
+    tensor_name: &str,
+) -> Result<Vec<f32>> {
+    let expected_values =
+        checked_matvec_value_count(source_input_dim, source_output_dim, tensor_name)?;
+    let expected_blocks = expected_values.div_ceil(q8_block_size);
+    if expected_blocks != q8_block_count {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' expected {expected_blocks} blocks from shape, descriptor has {q8_block_count}"
+        )));
+    }
+    let expected_bytes =
+        q8_block_count.checked_mul(GgufTensorType::Q8_0.element_size()).ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{tensor_name}' byte count overflows for {q8_block_count} blocks"
+            ))
+        })?;
+    if bytes.len() < expected_bytes {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' has {} bytes, expected at least {expected_bytes}",
+            bytes.len()
+        )));
+    }
+    if input.len() != source_input_dim {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' input length {} does not match source input dim {source_input_dim}",
+            input.len()
+        )));
+    }
+
+    let mut output = vec![0.0f32; source_output_dim];
+    for (source_input_idx, input_value) in input.iter().enumerate().take(source_input_dim) {
+        let source_row_start = source_input_idx * source_output_dim;
+        for (source_output_idx, output_value) in output.iter_mut().enumerate() {
+            let weight_idx = source_row_start + source_output_idx;
+            let weight =
+                q8_0_value_at(bytes, weight_idx, expected_values, q8_block_size, tensor_name)?;
+            *output_value += weight * *input_value;
+        }
+    }
+    Ok(output)
+}
+
+fn source_order_eager_f32_matvec(
+    bytes: &[u8],
+    q8_block_count: usize,
+    q8_block_size: usize,
+    source_input_dim: usize,
+    source_output_dim: usize,
+    input: &[f32],
+    tensor_name: &str,
+) -> Result<Vec<f32>> {
+    let expected_values =
+        checked_matvec_value_count(source_input_dim, source_output_dim, tensor_name)?;
+    let expected_blocks = expected_values.div_ceil(q8_block_size);
+    if expected_blocks != q8_block_count {
+        return Err(BitNetError::Validation(format!(
+            "source-order eager f32 matvec prototype '{tensor_name}' expected {expected_blocks} blocks from shape, descriptor has {q8_block_count}"
+        )));
+    }
+    let mut values = Vec::with_capacity(expected_values);
+    for weight_idx in 0..expected_values {
+        values.push(q8_0_value_at(bytes, weight_idx, expected_values, q8_block_size, tensor_name)?);
+    }
+    let mut output = vec![0.0f32; source_output_dim];
+    for (source_input_idx, input_value) in input.iter().enumerate().take(source_input_dim) {
+        let source_row_start = source_input_idx * source_output_dim;
+        for source_output_idx in 0..source_output_dim {
+            output[source_output_idx] +=
+                values[source_row_start + source_output_idx] * *input_value;
+        }
+    }
+    Ok(output)
+}
+
+fn checked_matvec_value_count(
+    source_input_dim: usize,
+    source_output_dim: usize,
+    tensor_name: &str,
+) -> Result<usize> {
+    source_input_dim.checked_mul(source_output_dim).ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' shape overflows: {source_input_dim}x{source_output_dim}"
+        ))
+    })
+}
+
+fn q8_0_value_at(
+    bytes: &[u8],
+    value_idx: usize,
+    expected_values: usize,
+    q8_block_size: usize,
+    tensor_name: &str,
+) -> Result<f32> {
+    if q8_block_size != GgufTensorType::Q8_0.block_size() {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' block size {q8_block_size} does not match GGUF Q8_0 block size {}",
+            GgufTensorType::Q8_0.block_size()
+        )));
+    }
+    if value_idx >= expected_values {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' value index {value_idx} exceeds {expected_values}"
+        )));
+    }
+    let block_idx = value_idx / q8_block_size;
+    let code_idx = value_idx % q8_block_size;
+    let block_offset =
+        block_idx.checked_mul(GgufTensorType::Q8_0.element_size()).ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "source-order Q8_0 matvec prototype '{tensor_name}' block offset overflows for block {block_idx}"
+            ))
+        })?;
+    if block_offset + 2 + code_idx >= bytes.len() {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec prototype '{tensor_name}' value index {value_idx} reads past payload"
+        )));
+    }
+    let scale_bits = u16::from_le_bytes([bytes[block_offset], bytes[block_offset + 1]]);
+    let scale = half::f16::from_bits(scale_bits).to_f32();
+    let q = bytes[block_offset + 2 + code_idx] as i8;
+    Ok(scale * f32::from(q))
+}
+
+fn f32_values_sha256(values: &[f32]) -> String {
+    let mut hasher = Sha256::new();
+    for value in values {
+        hasher.update(value.to_le_bytes());
+    }
+    format!("{:x}", hasher.finalize())
+}
+
+fn max_abs_diff(lhs: &[f32], rhs: &[f32]) -> Result<f32> {
+    if lhs.len() != rhs.len() {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8_0 matvec output length mismatch: {} vs {}",
+            lhs.len(),
+            rhs.len()
+        )));
+    }
+    Ok(lhs.iter().zip(rhs).map(|(a, b)| (a - b).abs()).fold(0.0f32, f32::max))
+}
+
 fn bytes_sha256(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
@@ -540,6 +884,15 @@ mod tests {
             offset: 128,
             size,
         }
+    }
+
+    fn q8_0_blob(scale: f32, code: i8) -> Vec<u8> {
+        let mut blob = Vec::with_capacity(GgufTensorType::Q8_0.element_size());
+        blob.extend_from_slice(&half::f16::from_f32(scale).to_bits().to_le_bytes());
+        for _ in 0..32 {
+            blob.push(code as u8);
+        }
+        blob
     }
 
     #[test]
@@ -766,6 +1119,101 @@ mod tests {
         assert!(!contract.proof_gate_required_before_runtime_selection);
         assert!(!contract.runtime_selection_allowed);
         assert!(contract.blocker.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_source_order_matvec_prototype_matches_eager_source_order_reference()
+    -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![2, 64], 136);
+        let mut data = Vec::new();
+        data.extend_from_slice(&q8_0_blob(1.0, 1));
+        data.extend_from_slice(&q8_0_blob(1.0, 1));
+        data.extend_from_slice(&q8_0_blob(1.0, 2));
+        data.extend_from_slice(&q8_0_blob(1.0, 2));
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor_with_payload_candidate(
+            &info,
+            &data,
+            Some("blk.0.attn_q.weight"),
+        )?
+        .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let prototype = descriptor.source_order_matvec_prototype(&[3.0, 1.0])?;
+
+        assert_eq!(
+            prototype.proof.prototype_status,
+            DenseQ8SourceOrderMatvecPrototypeStatus::RuntimeDisabledPrototypeAvailable
+        );
+        assert_eq!(prototype.proof.input_len, 2);
+        assert_eq!(prototype.proof.output_len, 64);
+        assert!(prototype.proof.consumes_source_order_payload_directly);
+        assert!(prototype.proof.dequantizes_inside_matvec);
+        assert!(!prototype.proof.materializes_full_f32_weights);
+        assert!(prototype.proof.compares_against_eager_f32_reference);
+        assert_eq!(prototype.proof.max_abs_diff_vs_eager_source_order_f32, Some(0.0));
+        assert_eq!(prototype.fused_output, vec![5.0; 64]);
+        assert_eq!(prototype.eager_output, prototype.fused_output);
+        assert_eq!(prototype.proof.fused_output_sha256, prototype.proof.eager_output_sha256);
+        assert!(!prototype.proof.runtime_selection_allowed);
+        assert!(prototype.proof.default_runtime_preserved);
+        assert!(prototype.proof.generated_id_preservation_required_before_runtime_use);
+        assert!(
+            prototype
+                .proof
+                .blocker
+                .as_deref()
+                .is_some_and(|blocker| blocker.contains("runtime selection remains disabled"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_source_order_matvec_prototype_blocks_without_payload() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![2, 64], 136);
+        let data = vec![0u8; 136];
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor(&info, &data)?
+            .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let prototype = descriptor.source_order_matvec_prototype(&[3.0, 1.0])?;
+
+        assert_eq!(
+            prototype.proof.prototype_status,
+            DenseQ8SourceOrderMatvecPrototypeStatus::BlockedMissingPayload
+        );
+        assert!(prototype.fused_output.is_empty());
+        assert!(prototype.eager_output.is_empty());
+        assert!(!prototype.proof.runtime_selection_allowed);
+        assert!(prototype.proof.default_runtime_preserved);
+        assert!(
+            prototype
+                .proof
+                .blocker
+                .as_deref()
+                .is_some_and(|blocker| blocker.contains(DENSE_Q8_PAYLOAD_ENABLE_ENV))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn dense_gguf_q8_source_order_matvec_prototype_rejects_wrong_input_len() -> Result<()> {
+        let info = q8_info("blk.0.attn_q.weight", vec![2, 64], 136);
+        let mut data = Vec::new();
+        data.extend_from_slice(&q8_0_blob(1.0, 1));
+        data.extend_from_slice(&q8_0_blob(1.0, 1));
+        data.extend_from_slice(&q8_0_blob(1.0, 2));
+        data.extend_from_slice(&q8_0_blob(1.0, 2));
+        let descriptor = DenseGgufQ8SidecarDescriptor::from_tensor_with_payload_candidate(
+            &info,
+            &data,
+            Some("blk.0.attn_q.weight"),
+        )?
+        .ok_or_else(|| BitNetError::Validation("expected Q8 sidecar descriptor".to_string()))?;
+
+        let err = descriptor
+            .source_order_matvec_prototype(&[1.0])
+            .expect_err("wrong input length should fail");
+
+        assert!(err.to_string().contains("input length 1 does not match source input dim 2"));
         Ok(())
     }
 

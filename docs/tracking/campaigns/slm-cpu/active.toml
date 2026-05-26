@@ -8112,8 +8112,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-134"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-134-source-order-qproj-matvec-prototype"
+pr = 790
+head_sha = "8bf75ed3cc183e8aec050bf04f637930446a0544"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
