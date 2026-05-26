@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qwen25_qproj_tensor_dump_classification",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-124",
+  "status": "numeric_mismatch_classified_fail_closed",
+  "claim": "SLM-CPU-124 adds an opt-in bounded q_proj-output tensor dump and classifies the Qwen2.5 Q8_0 before/after fingerprint mismatch as small f32 numeric drift while preserving generated behavior; it does not claim packed-Q8 sidecar behavior proof, allocation reduction, timing improvement, throughput, or default-runtime promotion.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof appliance"
+  },
+  "model": {
+    "family": "qwen2.5",
+    "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "quant": "Q8_0"
+  },
+  "boundary": {
+    "stage": "attention_q_proj_output_pre_optional_qnorm",
+    "boundary": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "blk.0.attn_q.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "dense_hook_identity": "dense_q8_blk0_attn_q_qproj_output_pre_optional_qnorm",
+    "shape": [
+      896
+    ],
+    "dtype": "f32",
+    "fingerprint_encoding": "sha256_f32_le"
+  },
+  "strict_cpu_run": {
+    "prompt": "What is 2+2? Answer with only the number.",
+    "prompt_template": "qwen2.5",
+    "prompt_token_count": 42,
+    "generated_ids": [
+      19
+    ],
+    "decoded_text": "4",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_kernel": "dense-qwen-cpu-reference",
+    "fallback_used": false,
+    "loader_mode": "real_gguf",
+    "tokenizer_source": "gguf_metadata",
+    "tokenizer_strict": true
+  },
+  "captures": {
+    "before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-before-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-before-qproj-output-dump-trace.jsonl",
+      "tensor_fingerprint_sha256_f32_le": "4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344",
+      "contents_dumped": true,
+      "dump_kind": "f32_prefix",
+      "dump_len": 896,
+      "first_values_f32": [
+        0.136557609,
+        0.343333632,
+        0.095606044,
+        -1.119642496,
+        -16.200429916
+      ]
+    },
+    "after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-after-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-124-after-qproj-output-dump-trace.jsonl",
+      "tensor_fingerprint_sha256_f32_le": "4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff",
+      "contents_dumped": true,
+      "dump_kind": "f32_prefix",
+      "dump_len": 896,
+      "first_values_f32": [
+        0.136557624,
+        0.343333751,
+        0.095606014,
+        -1.119642615,
+        -16.200422287
+      ]
+    }
+  },
+  "comparison": {
+    "fingerprint_equal": false,
+    "contents_available_for_numeric_diff": true,
+    "compared_values": 896,
+    "first_differing_index": 0,
+    "first_difference": {
+      "before": 0.136557609,
+      "after": 0.136557624,
+      "signed_diff": 0.000000015,
+      "abs_diff": 0.000000015
+    },
+    "max_abs_diff": 0.00008773799999772791,
+    "max_abs_diff_index": 568,
+    "max_abs_diff_values": {
+      "before": 44.031570435,
+      "after": 44.031658173
+    },
+    "differing_value_count": 854,
+    "classification": "small_f32_numeric_drift",
+    "not_explained_by": [
+      "gross tensor mapping mismatch",
+      "row or column permutation",
+      "shape mismatch",
+      "dtype mismatch",
+      "generated behavior drift",
+      "fallback",
+      "tokenizer mismatch",
+      "model mismatch"
+    ],
+    "unresolved": "Whether this numeric drift is acceptable for the shared q_proj-output sidecar proof requires a later explicit tolerance policy; SLM-CPU-124 keeps the proof fail-closed."
+  },
+  "proof_readiness": {
+    "before_after_receipts_exist": true,
+    "behavior_fields_equal": true,
+    "tensor_contents_available": true,
+    "numeric_mismatch_classified": true,
+    "shared_boundary_behavior_proven": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "forbidden_claims": {
+    "packed_q8_sidecar_behavior_proof": false,
+    "allocation_reduction": false,
+    "timing_improvement": false,
+    "default_runtime_promotion": false,
+    "sustained_throughput": false,
+    "q4_q5_runtime_support": false,
+    "server_inference": false,
+    "gpu_npu_openvino_uhd620": false,
+    "qwen35": false,
+    "bitnet_qk256": false
+  }
+}
