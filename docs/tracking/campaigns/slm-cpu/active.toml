@@ -8218,10 +8218,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-136"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-136-source-order-qproj-receipt-pairs"
 pr = 794
-head_sha = "1fd3643f29f184e2ace47feb44efb2e83932f334"
+head_sha = "65bd87a08b025bca725dd3cf9b5b9a4c3dfcd9a7"
+merge_sha = "41316012dd162ce7252137ab61a6f46eabcdfdbc"
+merged_at = "2026-05-26T16:37:02Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -8254,6 +8256,55 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-135 defines the exact-model behavior gate required before source-order q_proj selector use is considered.",
   "SLM-CPU-136 may capture the required Qwen3/Qwen2.5 before/after strict CPU receipt pairs or keep the selector path fail-closed with an exact blocker.",
+]
+must_not_claim = [
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-137"
+status = "ready"
+branch = "codex/slm-cpu-137-source-order-qproj-selector-hook"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-136"]
+acceptance = "Add or precisely block a default-disabled exact-tensor selector hook and receipt identity surface for the source-order Q8_0 q_proj matvec candidate. A valid slice may introduce an opt-in selector path for only layers.0.attention.q_proj.weight that preserves eager_f32_candle as default, records selected dense hook/kernel identity and q_proj numeric evidence in receipts, and remains unusable for behavior or performance claims until Qwen3/Qwen2.5 before/after strict CPU receipt pairs pass. If implementation is not safe, emit a machine-checkable blocker naming the exact missing Tensor API, selector integration point, trace identity field, receipt field, or hidden-state input binding. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-136 records that source-order q_proj receipt-pair capture is blocked by missing selector hook, receipt identity, and runtime input binding.",
+  "SLM-CPU-137 may add a default-disabled exact-tensor selector hook and receipt identity surface or keep it fail-closed with an exact blocker.",
 ]
 must_not_claim = [
   "Runtime selection uses the source-order matvec prototype by default.",
