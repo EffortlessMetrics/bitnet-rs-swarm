@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T20:39:55Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-140"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-140-qwen25-cache-restore-contract"
+pr = 802
+head_sha = "c78e38f780d3740d6ea6c26976bd335f8ca1c5e3"
+merge_sha = "59917c0d1a46fa6f3876dc56cf5f6aa128882faf"
+summary = "Merged PR #802 with the exact Qwen2.5 Q8_0 cache restoration and source-order receipt capture contract."
+notes = [
+  "The contract names the exact Qwen2.5 Q8_0 repo, revision, file, SHA256, non-committed cache path, and verification gate.",
+  "The contract names the four Qwen3/Qwen2.5 before/after receipt outputs and required SLM-CPU-137 source_order_* identity fields.",
+  "The slice captured no fresh receipts, committed no model or target cache artifacts, and made no runtime, allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+
+[[next_items]]
+id = "SLM-CPU-141"
+status = "ready"
+branch = "codex/slm-cpu-141-source-order-receipt-capture"
+summary = "Restore the exact Qwen2.5 cache locally and capture source-order q_proj receipt pairs, or emit a precise blocker."
