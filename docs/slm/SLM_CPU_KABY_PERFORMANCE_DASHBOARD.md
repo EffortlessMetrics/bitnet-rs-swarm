@@ -63,6 +63,8 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-136-source-order-qproj-receipt-pair-blocker.json` | Blocks source-order q_proj selector receipt capture because the generation-time selector hook, candidate receipt identity, and runtime input binding are not wired; runtime selection remains disabled until those surfaces exist and Qwen3/Qwen2.5 before/after receipts preserve generated IDs and receipt identity |
 | Source-order q_proj selector identity gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-137-source-order-qproj-selector-hook.json` | Adds the default-disabled source-order q_proj candidate identity surface to strict receipts while keeping eager F32 as the default runtime |
 | Source-order q_proj receipt-pair blocker refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-138-source-order-qproj-receipt-pair-blocker.json` | Keeps source-order selector use fail-closed because this workspace has Qwen3 Q8_0 only, the exact Qwen2.5 Q8_0 model cache is missing, and the existing cross-model receipts predate the SLM-CPU-137 source-order identity fields |
+| Source-order exact-model blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-139-source-order-exact-model-receipt-blocker.json` | Re-checks the current-main exact-model source-order receipt gate and blocks because the exact Qwen2.5 Q8_0 cache is still absent and the older receipt pairs predate the source-order identity fields |
+| Qwen2.5 cache restore contract | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-140-cache-restore-contract.json` | Defines the non-committed Qwen2.5 Q8_0 cache restoration and Qwen3/Qwen2.5 source-order receipt-capture contract; it captures no fresh receipts and makes no runtime, allocation, timing, or speed claim |
 
 Qwen3 rows use:
 
@@ -81,7 +83,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-139. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-140. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -247,6 +249,18 @@ current-main strict CPU receipts. The accepted next step is an explicitly scoped
 cache restoration or a fresh capture once the exact Qwen2.5 model is available.
 No allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5,
 server, accelerator, Qwen3.5, or BitNet QK256 claim is made.
+
+SLM-CPU-140 converts that blocker into an explicit cache-restoration and
+receipt-capture contract. It names the exact Qwen2.5 Q8_0 repo, revision, file,
+SHA256, non-committed local cache path, four required Qwen3/Qwen2.5 before/after
+receipt outputs, source-order q_proj candidate identity fields, and the
+behavior-preservation gate for prompt IDs, generated IDs, decoded text, strict
+GGUF tokenizer authority, selected CPU backend/kernel identity, q_proj numeric
+evidence, and `fallback_used=false`. It intentionally captures no fresh
+receipts, commits no model or target cache artifacts, keeps source-order runtime
+selection disabled, and makes no allocation, timing, speedup,
+sustained-throughput, default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or
+BitNet QK256 claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

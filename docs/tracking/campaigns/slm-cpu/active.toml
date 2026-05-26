@@ -8424,7 +8424,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-140"
-status = "ready"
+status = "pr_open"
+pr = 802
+head_sha = "998b08287eb7d91830c1385783fbe7d5dc101a9d"
 branch = "codex/slm-cpu-140-qwen25-cache-restore-contract"
 stackable = false
 review_mode = "codex_premerge"
