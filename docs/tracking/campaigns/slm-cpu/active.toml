@@ -7484,7 +7484,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-122"
-status = "ready"
+status = "pr_open"
+pr = 766
+head_sha = "14f26825298634be5c944df72262a504c88c041f"
 branch = "codex/slm-cpu-122-qproj-output-proof-refresh"
 stackable = false
 review_mode = "codex_premerge"

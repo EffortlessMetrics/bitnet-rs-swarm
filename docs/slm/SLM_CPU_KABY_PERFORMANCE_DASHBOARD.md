@@ -46,6 +46,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | q_proj output receipt-pair blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-119-qproj-output-receipt-pair-blocker.json` | Captures real Qwen3 and Qwen2.5 hook evidence, restores the accepted Qwen2.5 artifact, and blocks behavior proof because Qwen3 sidecar-gated after-run fails before receipt emission while Qwen2.5 preserves generated output but changes the q_proj-output f32 fingerprint |
 | q_proj sidecar transpose guard | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-120-sidecar-transpose-guard.json` | Adds a fail-closed runtime guard for packed Q8_0 sidecar payloads whose GGUF byte order has only been shape-reshaped to Candle runtime matrix orientation; Qwen3 still fails before a post-guard receipt, so no allocation, timing, default-runtime, or packed-Q8 behavior claim is made |
 | Bounded KV cache pre-boundary allocation | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-cache.json` | Resolves the Qwen3 post-guard pre-boundary full-context KV allocation failure by allocating prompt-plus-generation bounded KV capacity; the run reaches receipt emission and the layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint, without claiming q_proj sidecar behavior, timing improvement, allocation-performance improvement, or default-runtime promotion |
+| q_proj output proof refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-122-qproj-output-proof-refresh.json` | Refreshes the shared q_proj-output before/after proof after SLM-CPU-121; Qwen3 behavior and fingerprint now match, but Qwen2.5 still preserves generated behavior while changing the f32-le q_proj-output fingerprint, so the boundary remains fail-closed |
 
 Qwen3 rows use:
 
@@ -64,15 +65,17 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through the SLM-CPU-121 bounded KV-cache pre-boundary
-allocation slice. It records that Qwen3 Q8_0 strict CPU generation now reaches
-post-guard receipt emission and the layer-0
-`attention.q_proj_output_pre_optional_qnorm` fingerprint after allocating only
-the prompt-plus-generation KV capacity required by the tiny proof run. That is a
-blocker resolution for the SLM-CPU-120 167772160-byte full-context KV allocation
-failure, not a q_proj sidecar behavior proof, packed-Q8 default-runtime
-promotion, allocation-performance claim, timing claim, sustained-throughput
-claim, or answer-quality claim.
+This refresh is current through SLM-CPU-122. SLM-CPU-121 records that Qwen3
+Q8_0 strict CPU generation now reaches post-guard receipt emission and the
+layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
+allocating only the prompt-plus-generation KV capacity required by the tiny
+proof run. SLM-CPU-122 then refreshes the shared q_proj-output before/after
+comparison: Qwen3 now preserves generated behavior and the f32-le q_proj-output
+fingerprint across the before/after pair, but Qwen2.5 preserves generated
+behavior while its q_proj-output f32-le fingerprint still changes. That is a
+cross-model fail-closed result, not a q_proj sidecar behavior proof, packed-Q8
+default-runtime promotion, allocation-performance claim, timing claim,
+sustained-throughput claim, or answer-quality claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

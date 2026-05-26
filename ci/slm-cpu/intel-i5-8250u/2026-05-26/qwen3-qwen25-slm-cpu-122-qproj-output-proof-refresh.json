@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_output_proof_refresh",
+  "campaign": "slm-cpu",
+  "work_item": "SLM-CPU-122",
+  "status": "fail_closed_fingerprint_mismatch",
+  "review_date": "2026-05-26",
+  "claim": "SLM-CPU-122 refreshes the shared attention.q_proj_output_pre_optional_qnorm before/after proof after SLM-CPU-121 made the Qwen3 Q8_0 post-guard receipt and layer-0 fingerprint reachable. Qwen3 before/after strict CPU receipts preserve behavior and the q_proj-output f32-le fingerprint; Qwen2.5 before/after strict CPU receipts preserve behavior but the q_proj-output f32-le fingerprint differs, so the shared boundary remains fail-closed.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof host",
+    "claim_boundary": "correctness and bounded Kaby evidence only; no sustained throughput claim"
+  },
+  "source_boundary": {
+    "selected_by": "SLM-CPU-115",
+    "gated_by": "SLM-CPU-116",
+    "implemented_by": "SLM-CPU-117",
+    "refreshed_after": "SLM-CPU-121",
+    "boundary_id": "attention_q_proj_output_pre_optional_qnorm",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "dense_hook_identity": "layers.0.attention.q_proj.weight:attention_q_proj_output_pre_optional_qnorm:runtime_disabled"
+  },
+  "qwen3_capture": {
+    "model_id": "qwen3-0.6b-q8_0",
+    "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "architecture": "qwen3",
+    "quant_format": "Q8_0",
+    "pair_status": "passed",
+    "before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-119-before-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-119-before-qproj-output-trace.jsonl",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "kernel_id": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "prompt_token_count": 36,
+      "generated_ids": [17],
+      "decoded_text": "2",
+      "fingerprint": {
+        "shape": [1, 1, 2048],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b"
+      }
+    },
+    "after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-121-bounded-kv-trace.jsonl",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "kernel_id": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "prompt_token_count": 36,
+      "generated_ids": [17],
+      "decoded_text": "2",
+      "fingerprint": {
+        "shape": [1, 1, 2048],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b"
+      }
+    },
+    "behavior_fields_equal": {
+      "model_sha256": true,
+      "loader_mode": true,
+      "tokenizer_source": true,
+      "tokenizer_strict": true,
+      "runtime_api": true,
+      "selected_backend": true,
+      "kernel_id": true,
+      "fallback_used": true,
+      "prompt_ids": true,
+      "generated_ids": true,
+      "decoded_text": true
+    },
+    "fingerprint_equal": true,
+    "classification": "qwen3_behavior_and_qproj_output_fingerprint_preserved_after_bounded_kv_cache"
+  },
+  "qwen25_capture": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "architecture": "qwen2",
+    "quant_format": "Q8_0",
+    "pair_status": "failed_closed",
+    "before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-before-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-before-qproj-output-trace.jsonl",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "kernel_id": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "prompt_token_count": 42,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "fingerprint": {
+        "shape": [1, 1, 896],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344"
+      }
+    },
+    "after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-run.json",
+      "trace": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-qproj-output-trace.jsonl",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "kernel_id": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "prompt_token_count": 42,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "fingerprint": {
+        "shape": [1, 1, 896],
+        "dtype": "f32",
+        "source_dtype": "F32",
+        "runtime_disabled": true,
+        "tensor_fingerprint_sha256_f32_le": "4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff"
+      }
+    },
+    "behavior_fields_equal": {
+      "model_sha256": true,
+      "loader_mode": true,
+      "tokenizer_source": true,
+      "tokenizer_strict": true,
+      "runtime_api": true,
+      "selected_backend": true,
+      "kernel_id": true,
+      "fallback_used": true,
+      "prompt_ids": true,
+      "generated_ids": true,
+      "decoded_text": true
+    },
+    "fingerprint_equal": false,
+    "classification": "qwen25_behavior_preserved_but_qproj_output_fingerprint_changed",
+    "blocker": "The Qwen2.5 before/after strict CPU receipts preserve the model, tokenizer authority, CPU backend, fallback=false, generated IDs, and decoded text, but the attention.q_proj_output_pre_optional_qnorm f32-le tensor fingerprint changes from 4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344 to 4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff."
+  },
+  "proof_readiness": {
+    "qwen3_before_after_receipts_exist": true,
+    "qwen3_before_after_behavior_fields_equal": true,
+    "qwen3_before_after_hook_fingerprint_equal": true,
+    "qwen25_before_after_receipts_exist": true,
+    "qwen25_before_after_behavior_fields_equal": true,
+    "qwen25_before_after_hook_fingerprint_equal": false,
+    "shared_boundary_behavior_proven": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "default_runtime": "eager_f32_candle"
+  },
+  "next_required_slice": {
+    "summary": "Do not promote the packed-Q8 q_proj-output boundary. The next safe slice must explain or eliminate the Qwen2.5 f32-le fingerprint delta under the same strict receipt identity before any allocation, timing, or default-runtime claim."
+  },
+  "forbidden_claims_preserved": {
+    "packed_q8_sidecar_behavior_proof": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "default_runtime_promotion_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

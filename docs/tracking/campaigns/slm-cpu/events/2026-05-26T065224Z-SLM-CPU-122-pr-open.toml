@@ -1,0 +1,15 @@
+timestamp = "2026-05-26T06:52:24Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-122"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 766
+branch = "codex/slm-cpu-122-qproj-output-proof-refresh"
+head_sha = "14f26825298634be5c944df72262a504c88c041f"
+summary = "Opened PR #766 to refresh the shared q_proj-output proof after SLM-CPU-121 made the Qwen3 after receipt reachable."
+notes = [
+  "Opened the q_proj-output proof refresh PR.",
+  "The artifact records Qwen3 before/after behavior plus f32-le q_proj-output fingerprint equality after SLM-CPU-121, but keeps the shared boundary fail-closed because Qwen2.5 preserves generated behavior while its q_proj-output f32-le fingerprint changes.",
+]
