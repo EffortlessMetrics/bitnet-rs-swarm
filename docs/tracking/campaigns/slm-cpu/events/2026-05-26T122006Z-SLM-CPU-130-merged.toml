@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T12:20:06Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-130"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 782
+merge_sha = "af2d4822ed1517b33921d6b630132be79c34cc9a"
+summary = "Merged SLM-CPU-130 q_proj packed-Q8 selector convergence gate."
+notes = [
+  "The merged artifact explains the cross-model selector mismatch as the intended payload-order guard outcome.",
+  "Qwen3 remains on eager_f32_candle because its payload-bearing q_proj sidecar records sidecar_payload_order_matches_runtime_shape=false.",
+  "Qwen2.5 reaches the opt-in exact-tensor packed-Q8 counter path because its q_proj sidecar payload order matches the runtime matrix shape.",
+  "The next item is a Qwen3 payload-order/runtime-shape proof gate before any selector relaxation.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
+
+[[next_item]]
+id = "SLM-CPU-131"
+status = "ready"
+branch = "codex/slm-cpu-131-qwen3-qproj-payload-order-proof"
+summary = "Prove or fail closed on Qwen3 exact q_proj packed-Q8 payload order before selector relaxation."
