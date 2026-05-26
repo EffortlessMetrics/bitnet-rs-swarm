@@ -1,0 +1,22 @@
+timestamp = "2026-05-26T13:07:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-131"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 784
+merge_sha = "74723fa3abb73c0dcc664c10b5acc11291efbf1b"
+summary = "Merged SLM-CPU-131 Qwen3 q_proj payload-order proof gate."
+notes = [
+  "The merged proof surface adds machine-checkable dense Q8 payload-order checks for sidecar descriptors.",
+  "The Qwen3 exact layer-0 attention.q_proj artifact remains fail-closed because source shape [1024, 2048] maps to Candle runtime shape [2048, 1024].",
+  "Runtime selection remains blocked until a tensor-specific payload reorder/runtime-shape contract is proven.",
+  "The merge does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
+
+[[next_item]]
+id = "SLM-CPU-132"
+status = "ready"
+branch = "codex/slm-cpu-132-qwen3-qproj-payload-reorder-contract"
+summary = "Define or precisely block the Qwen3 q_proj payload reorder/runtime-shape contract."
