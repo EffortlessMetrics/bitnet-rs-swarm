@@ -8271,7 +8271,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-137"
-status = "ready"
+status = "pr_open"
+pr = 796
+head_sha = "5b8577687a50f077a605c77084931c5d4d280f00"
 branch = "codex/slm-cpu-137-source-order-qproj-selector-hook"
 stackable = false
 review_mode = "codex_premerge"
