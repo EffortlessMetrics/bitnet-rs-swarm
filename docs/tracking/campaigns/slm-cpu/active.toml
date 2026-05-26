@@ -8008,9 +8008,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-132"
-status = "pr_open"
+status = "merged"
 pr = 786
 head_sha = "1ce29b30b9e0be0b3052cd6a634a50dbd45df961"
+merge_sha = "caf026d82b4f10052be0f5dd16ebf008e3b042fc"
+merged_at = "2026-05-26T13:35:33Z"
 branch = "codex/slm-cpu-132-qwen3-qproj-payload-reorder-contract"
 stackable = false
 review_mode = "codex_premerge"
@@ -8044,6 +8046,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-131 proves Qwen3 exact q_proj runtime selection is blocked by source payload order mismatch.",
   "SLM-CPU-132 may define a payload reorder/runtime-shape contract or may keep Qwen3 fail-closed with the exact missing proof.",
+]
+must_not_claim = [
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-133"
+status = "ready"
+branch = "codex/slm-cpu-133-qwen3-source-order-qproj-kernel-contract"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-132"]
+acceptance = "Define or precisely block the source-order Q8_0 layer-0 attention.q_proj kernel contract for the exact Qwen3 Q8_0 tensor after SLM-CPU-132 proved pure byte reorder invalid. A valid slice may add a runtime-disabled contract, tests, and proof artifact for consuming GGUF source-order payload shape [1024, 2048] directly against the runtime input vector without dequantize/requantize, or may fail closed with the exact missing API/layout/accumulator proof. It must preserve the Qwen3 and Qwen2.5 behavior oracles with model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, allocation-audit counters, and accepted q_proj numeric gate before any runtime selection claim. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-132 proves Qwen3 exact q_proj cannot be enabled by pure Q8_0 byte reorder because the transpose would regroup values under the wrong block scales.",
+  "SLM-CPU-133 may define a runtime-disabled source-order Q8_0 q_proj kernel contract or may keep Qwen3 fail-closed with the exact blocker.",
 ]
 must_not_claim = [
   "Allocation reduction or speedup is proven.",
