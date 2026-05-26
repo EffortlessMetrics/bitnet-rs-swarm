@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_qproj_allocation_timing_experiment_readiness",
+  "id": "SLM-CPU-126",
+  "status": "blocked_missing_fresh_cross_model_receipts",
+  "claim": "SLM-CPU-126 does not run a before/after allocation or timing experiment because the fresh cross-model receipt prerequisites are incomplete in this workspace.",
+  "prerequisite_gate": {
+    "source_item": "SLM-CPU-125",
+    "policy_id": "slm_cpu_qproj_output_abs_1e-4_exact_boundary_v1",
+    "accepted_boundary": "attention.q_proj_output_pre_optional_qnorm",
+    "absolute_tolerance": 0.0001,
+    "relative_tolerance": null,
+    "scope": "exact layer-0 q_proj-output diagnostic boundary only",
+    "policy_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json"
+  },
+  "required_fresh_receipts": {
+    "qwen3_before": {
+      "required": true,
+      "model_id": "qwen3-0.6b-q8_0",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "local_model_present": true
+    },
+    "qwen3_after": {
+      "required": true,
+      "model_id": "qwen3-0.6b-q8_0",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "local_model_present": true
+    },
+    "qwen25_before": {
+      "required": true,
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "local_model_present": false,
+      "checked_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf"
+    },
+    "qwen25_after": {
+      "required": true,
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "local_model_present": false,
+      "checked_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf"
+    }
+  },
+  "receipt_identity_requirements": [
+    "model_sha256",
+    "tokenizer.source = gguf_metadata",
+    "tokenizer.strict = true",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "selected_backend = cpu-rust",
+    "selected_kernel",
+    "dense_hook_identity",
+    "fallback_used=false",
+    "attention.q_proj_output_pre_optional_qnorm numeric gate"
+  ],
+  "experiment_result": {
+    "before_after_experiment_run": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "default_runtime_promotion": false,
+    "reason": "The Qwen2.5 Q8_0 GGUF required for fresh cross-model before/after receipts is not present in this workspace, so SLM-CPU-126 remains fail-closed before any allocation or timing experiment."
+  },
+  "next_safe_step": {
+    "summary": "Restore or fetch the exact Qwen2.5 Q8_0 artifact, then capture fresh Qwen3 and Qwen2.5 before/after strict CPU receipts under the SLM-CPU-125 numeric gate before claiming any allocation or timing result.",
+    "must_preserve": [
+      "model SHA",
+      "strict GGUF tokenizer authority",
+      "prompt IDs",
+      "generated IDs",
+      "decoded text",
+      "selected CPU backend/kernel identity",
+      "dense hook identity",
+      "fallback_used=false"
+    ]
+  },
+  "claim_boundary": {
+    "packed_q8_sidecar_default_enabled": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_claim": false,
+    "accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

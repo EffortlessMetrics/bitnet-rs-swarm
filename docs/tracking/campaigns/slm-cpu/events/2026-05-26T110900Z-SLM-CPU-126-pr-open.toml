@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T11:09:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-126"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 774
+branch = "codex/slm-cpu-126-qproj-allocation-timing-experiment"
+head_sha = "33bd8e5f94bd3e342f9c5c954763feda77b3c40c"
+summary = "Opened PR #774 to record the SLM-CPU-126 allocation/timing readiness blocker."
+notes = [
+  "The PR records that SLM-CPU-125's exact-boundary numeric gate is available as a prerequisite for future experiments.",
+  "The PR keeps SLM-CPU-126 fail-closed because the exact Qwen2.5 Q8_0 GGUF required for fresh cross-model before/after receipts is missing in this workspace.",
+  "The PR does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
