@@ -7655,7 +7655,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-125"
-status = "ready"
+status = "pr_open"
+pr = 772
+head_sha = "97e45414b268e2e7831b152e8dd95a719ba798ac"
 branch = "codex/slm-cpu-125-qproj-numeric-tolerance-gate"
 stackable = false
 review_mode = "codex_premerge"
