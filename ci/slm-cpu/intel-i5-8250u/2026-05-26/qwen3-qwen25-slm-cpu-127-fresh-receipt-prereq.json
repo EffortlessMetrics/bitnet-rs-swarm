@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_fresh_cross_model_receipt_prereq",
+  "id": "SLM-CPU-127",
+  "status": "fresh_receipt_prerequisites_available",
+  "claim": "SLM-CPU-127 restores the exact Qwen2.5 Q8_0 artifact availability in the local swarm cache and records fresh Qwen3/Qwen2.5 before/after strict CPU receipt pairs before any allocation or timing experiment claim.",
+  "model_artifact_restore": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "source_role": "existing_release_surface_cache",
+    "restored_to_swarm_cache": true,
+    "committed_model_binary": false,
+    "cache_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "expected_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "actual_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "expected_bytes": 675710816,
+    "actual_bytes": 675710816,
+    "verify_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-127-model-verify.json",
+    "verified": true
+  },
+  "prerequisite_gate": {
+    "source_item": "SLM-CPU-125",
+    "policy_id": "slm_cpu_qproj_output_abs_1e-4_exact_boundary_v1",
+    "accepted_boundary": "attention.q_proj_output_pre_optional_qnorm",
+    "absolute_tolerance": 0.0001,
+    "relative_tolerance": null,
+    "policy_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json",
+    "scope": "exact layer-0 q_proj-output diagnostic boundary only"
+  },
+  "receipt_pack": {
+    "qwen3_before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-127-before-run.json",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "case_id": "say_four",
+      "prompt_token_count": 28,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "chosen_id": 19,
+      "quality_passed": true
+    },
+    "qwen3_after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-127-after-run.json",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "case_id": "say_four",
+      "prompt_token_count": 28,
+      "generated_ids": [19],
+      "decoded_text": "4",
+      "chosen_id": 19,
+      "quality_passed": true
+    },
+    "qwen25_before": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-127-before-run.json",
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "case_id": "math_2_plus_2_brief",
+      "prompt_token_count": 39,
+      "generated_ids": [17, 10, 17, 16819, 220, 19, 13, 151645],
+      "decoded_text": "2+2 equals 4.",
+      "chosen_id": 17,
+      "quality_passed": true
+    },
+    "qwen25_after": {
+      "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-127-after-run.json",
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "selected_backend": "cpu-rust",
+      "selected_kernel": "dense-qwen-cpu-reference",
+      "fallback_used": false,
+      "case_id": "math_2_plus_2_brief",
+      "prompt_token_count": 39,
+      "generated_ids": [17, 10, 17, 16819, 220, 19, 13, 151645],
+      "decoded_text": "2+2 equals 4.",
+      "chosen_id": 17,
+      "quality_passed": true
+    }
+  },
+  "behavior_equivalence": {
+    "qwen3_generated_ids_match": true,
+    "qwen3_decoded_text_match": true,
+    "qwen25_generated_ids_match": true,
+    "qwen25_decoded_text_match": true,
+    "all_receipts_fallback_false": true,
+    "strict_tokenizer_authority_preserved": true,
+    "selected_cpu_backend_preserved": true,
+    "receipt_pack_complete": true
+  },
+  "experiment_result": {
+    "before_after_receipt_pack_available": true,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "default_runtime_promotion": false,
+    "reason": "This slice restores receipt readiness only. It does not run or claim a bounded allocation or timing improvement experiment."
+  },
+  "claim_boundary": {
+    "packed_q8_sidecar_default_enabled": false,
+    "sustained_throughput_claim": false,
+    "broad_answer_quality_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_claim": false,
+    "accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

@@ -7761,7 +7761,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-127"
-status = "ready"
+status = "pr_open"
+pr = 776
+head_sha = "d3d249a6d5cdb85f948ad163885ba4f04b8b63de"
 branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
 stackable = false
 review_mode = "codex_premerge"

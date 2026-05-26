@@ -1,0 +1,16 @@
+timestamp = "2026-05-26T11:33:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-127"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 776
+branch = "codex/slm-cpu-127-qwen25-fresh-receipt-prereq"
+head_sha = "d3d249a6d5cdb85f948ad163885ba4f04b8b63de"
+summary = "Opened PR #776 to restore exact Qwen2.5 Q8_0 artifact availability and record fresh cross-model receipt prerequisites."
+notes = [
+  "The PR verifies the restored Qwen2.5 Q8_0 cache artifact by pinned SHA256 without committing the model binary.",
+  "The PR records fresh Qwen3 and Qwen2.5 before/after strict CPU receipts preserving generated IDs, decoded text, strict GGUF tokenizer authority, cpu-rust, dense-qwen-cpu-reference, and fallback_used=false.",
+  "The PR restores receipt readiness only and does not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
