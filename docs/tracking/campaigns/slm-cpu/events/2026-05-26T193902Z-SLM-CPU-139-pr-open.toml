@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T19:39:02Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-139"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-139-source-order-qproj-exact-model-receipts"
+pr = 800
+head_sha = "85fad1cefc5df10ab4d6eb4892b4ba069e84db95"
+summary = "Opened PR #800 with a machine-checkable exact-model source-order q_proj receipt blocker."
+notes = [
+  "Qwen3 Q8_0 is present locally, but the exact Qwen2.5 Q8_0 model cache is still missing under models/slm.",
+  "The active SLM-CPU-139 slice forbids models/** and target/**, so it cannot restore the missing model cache directly.",
+  "Existing SLM-CPU-127 receipts preserve generated behavior but predate the SLM-CPU-137 source_order_* candidate identity fields.",
+  "Runtime selection remains disabled and no allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

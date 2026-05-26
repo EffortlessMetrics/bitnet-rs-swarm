@@ -8374,7 +8374,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-139"
-status = "ready"
+status = "pr_open"
+pr = 800
+head_sha = "85fad1cefc5df10ab4d6eb4892b4ba069e84db95"
 branch = "codex/slm-cpu-139-source-order-qproj-exact-model-receipts"
 stackable = false
 review_mode = "codex_premerge"
