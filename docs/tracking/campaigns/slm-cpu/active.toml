@@ -7368,9 +7368,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-120"
-status = "pr_open"
+status = "merged"
 pr = 759
-head_sha = "1bfcb631d5030ee6b83bc2dbc1f44b9a5185bb8c"
+head_sha = "0a749fa014d5896e198c406651c1bf759fc7793d"
+merge_sha = "8401eee073967d458e495b5becc45d5866437554"
+merged_at = "2026-05-26T04:53:27Z"
 branch = "codex/slm-cpu-120-sidecar-transpose-guard"
 stackable = false
 review_mode = "codex_premerge"
@@ -7407,7 +7409,8 @@ forbidden_paths = [
 ]
 may_claim = [
   "SLM-CPU-119 restored the accepted Qwen2.5 Q8_0 artifact path and captured real q_proj-output hook evidence for Qwen3 and Qwen2.5.",
-  "SLM-CPU-120 may fix or further isolate the Qwen3 after-run allocation failure and Qwen2.5 q_proj-output fingerprint mismatch.",
+  "SLM-CPU-120 fail-closes packed-Q8 sidecar runtime execution when payload byte order does not match the runtime matrix shape.",
+  "SLM-CPU-120 isolates the remaining Qwen3 Q8_0 allocation failure as pre-boundary after prompt IDs and before post-guard receipt or layer-0 q_proj-output fingerprint emission.",
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",

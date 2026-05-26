@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T04:53:27Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-120"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-120-sidecar-transpose-guard"
+pr = 759
+head_sha = "0a749fa014d5896e198c406651c1bf759fc7793d"
+merge_sha = "8401eee073967d458e495b5becc45d5866437554"
+summary = "Merged PR #759 with the packed-Q8 sidecar payload-order guard and Qwen3 pre-boundary allocation isolation."
+notes = [
+  "Packed-Q8 sidecar runtime selection now fails closed when payload byte order does not match the runtime matrix shape.",
+  "Qwen3 Q8_0 still fails before receipt emission with a 167772160-byte allocation failure after prompt IDs and before a layer-0 q_proj-output fingerprint.",
+  "The slice does not claim q_proj sidecar behavior proof, allocation reduction, timing improvement, default-runtime promotion, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-121"
+status = "ready"
+branch = "codex/slm-cpu-121-qwen3-preboundary-allocation"
+summary = "Resolve or precisely isolate the remaining Qwen3 pre-boundary 167772160-byte allocation failure."
