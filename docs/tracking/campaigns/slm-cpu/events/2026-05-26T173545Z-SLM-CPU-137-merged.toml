@@ -1,0 +1,23 @@
+timestamp = "2026-05-26T17:35:45Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-137"
+event = "merged"
+actor = "github"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/slm-cpu-137-source-order-qproj-selector-hook"
+pr = 796
+head_sha = "14a871a0a803499b9715015142ad9e260237ce7e"
+merge_sha = "76c50a94031e9b6ffbf2abdf0cff941509dde95b"
+summary = "Merged PR #796 with a default-disabled source-order q_proj selector identity surface."
+notes = [
+  "The merged slice records source-order q_proj candidate path, kernel, dims, and receipt identity in dense_q8_hook_selection and warm-session dense_q8_hook receipts.",
+  "Runtime selection remains disabled and eager_f32_candle remains the default path.",
+  "Qwen3 and Qwen2.5 before/after strict CPU receipt pairs remain required before source-order selector use or any behavior, allocation, timing, or speed claim.",
+]
+
+[[next_items]]
+id = "SLM-CPU-138"
+status = "ready"
+branch = "codex/slm-cpu-138-source-order-qproj-receipt-pairs"
+summary = "Capture or precisely block before/after strict CPU receipt pairs carrying the source-order q_proj candidate identity surface."

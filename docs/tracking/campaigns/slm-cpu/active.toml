@@ -8271,9 +8271,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-137"
-status = "pr_open"
+status = "merged"
 pr = 796
 head_sha = "5b8577687a50f077a605c77084931c5d4d280f00"
+merge_sha = "76c50a94031e9b6ffbf2abdf0cff941509dde95b"
+merged_at = "2026-05-26T17:35:45Z"
 branch = "codex/slm-cpu-137-source-order-qproj-selector-hook"
 stackable = false
 review_mode = "codex_premerge"
@@ -8307,6 +8309,52 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-136 records that source-order q_proj receipt-pair capture is blocked by missing selector hook, receipt identity, and runtime input binding.",
   "SLM-CPU-137 may add a default-disabled exact-tensor selector hook and receipt identity surface or keep it fail-closed with an exact blocker.",
+]
+must_not_claim = [
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-138"
+status = "ready"
+branch = "codex/slm-cpu-138-source-order-qproj-receipt-pairs"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-137"]
+acceptance = "Capture or precisely block Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipt pairs that include the SLM-CPU-137 source-order Q8_0 q_proj candidate identity surface. A valid slice must preserve identical model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, source-order q_proj candidate path/kernel/receipt identity, q_proj numeric evidence, and fallback_used=false before any source-order selector use. If capture is unsafe or unavailable, emit a machine-checkable blocker naming the exact missing model cache, CLI flag, receipt field, trace identity field, q_proj numeric evidence, or runtime input binding. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-137 added a default-disabled source-order q_proj candidate identity surface.",
+  "SLM-CPU-138 may capture before/after receipt-pair evidence for that identity surface or keep it fail-closed with an exact blocker.",
 ]
 must_not_claim = [
   "Runtime selection uses the source-order matvec prototype by default.",
