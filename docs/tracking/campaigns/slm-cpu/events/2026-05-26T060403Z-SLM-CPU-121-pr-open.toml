@@ -1,0 +1,22 @@
+timestamp = "2026-05-26T06:04:03Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-121"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+branch = "codex/slm-cpu-121-qwen3-preboundary-allocation"
+pr = 764
+head_sha = "be3cd28f2d06825afa39b823dbb65153fb46cf40"
+summary = "Opened PR #764 to resolve the Qwen3 pre-boundary KV allocation failure with prompt-plus-generation bounded KV cache capacity."
+notes = [
+  "The prior Qwen3 Q8_0 post-guard run failed after prompt IDs and before receipt or layer-0 q_proj-output fingerprint emission with a 167772160-byte allocation failure.",
+  "The SLM-CPU-121 run allocates bounded KV capacity for the strict tiny prompt, emits a receipt, and reaches the layer-0 attention.q_proj_output_pre_optional_qnorm fingerprint.",
+  "The slice does not claim q_proj sidecar behavior proof, packed-Q8 default-runtime promotion, allocation-performance improvement, timing improvement, sustained throughput, Q4/Q5 runtime support, server, accelerator, Qwen3.5, or BitNet QK256 changes.",
+]
+
+[[next_items]]
+id = "SLM-CPU-122"
+status = "ready"
+branch = "codex/slm-cpu-122-qproj-output-proof-refresh"
+summary = "Resume the shared q_proj-output behavior proof from the now-reachable Qwen3 boundary and the existing Qwen2.5 proof gate."

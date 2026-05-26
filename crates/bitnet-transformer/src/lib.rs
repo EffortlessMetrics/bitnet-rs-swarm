@@ -4349,9 +4349,30 @@ pub struct KVCache {
 
 impl KVCache {
     pub fn new(config: &BitNetConfig, batch_size: usize, device: &Device) -> Result<Self> {
+        Self::new_with_max_seq_len(config, batch_size, device, config.model.max_position_embeddings)
+    }
+
+    pub fn new_with_max_seq_len(
+        config: &BitNetConfig,
+        batch_size: usize,
+        device: &Device,
+        max_seq_len: usize,
+    ) -> Result<Self> {
         let n_layers = config.model.num_layers;
         let n_heads = config.model.num_heads;
         let hidden_size = config.model.hidden_size;
+        let model_max_seq_len = config.model.max_position_embeddings;
+
+        if max_seq_len == 0 {
+            return Err(BitNetError::Validation(
+                "KVCache: max_seq_len must be greater than zero".to_string(),
+            ));
+        }
+        if max_seq_len > model_max_seq_len {
+            return Err(BitNetError::Validation(format!(
+                "KVCache: requested max_seq_len {max_seq_len} exceeds model context {model_max_seq_len}"
+            )));
+        }
 
         // Validate shape assumptions before calculating dimensions
         if config.model.attention_head_dim.is_none() && !hidden_size.is_multiple_of(n_heads) {
@@ -4370,7 +4391,6 @@ impl KVCache {
         }
 
         let head_dim = config.model.attention_head_dim.unwrap_or_else(|| hidden_size / n_heads);
-        let max_seq_len = config.model.max_position_embeddings;
 
         let mut layers = Vec::with_capacity(n_layers);
         for _ in 0..n_layers {
@@ -4378,6 +4398,37 @@ impl KVCache {
         }
 
         Ok(Self { layers })
+    }
+
+    pub fn estimated_f32_bytes_for_max_seq_len(
+        config: &BitNetConfig,
+        batch_size: usize,
+        max_seq_len: usize,
+    ) -> Result<u128> {
+        let n_layers = config.model.num_layers as u128;
+        let n_heads = config.model.num_heads;
+        let hidden_size = config.model.hidden_size;
+        if config.model.attention_head_dim.is_none() && !hidden_size.is_multiple_of(n_heads) {
+            return Err(BitNetError::Validation(format!(
+                "KVCache: hidden_size {} not divisible by num_heads {}",
+                hidden_size, n_heads
+            )));
+        }
+        let n_kv_heads = config.model.num_key_value_heads.max(1).min(n_heads);
+        if !n_heads.is_multiple_of(n_kv_heads) {
+            return Err(BitNetError::Validation(format!(
+                "KVCache: num_heads {} not divisible by num_key_value_heads {}",
+                n_heads, n_kv_heads
+            )));
+        }
+        let head_dim = config.model.attention_head_dim.unwrap_or_else(|| hidden_size / n_heads);
+        Ok(n_layers
+            .saturating_mul(2)
+            .saturating_mul(batch_size as u128)
+            .saturating_mul(n_kv_heads as u128)
+            .saturating_mul(max_seq_len as u128)
+            .saturating_mul(head_dim as u128)
+            .saturating_mul(std::mem::size_of::<f32>() as u128))
     }
 
     pub fn layer_mut(&mut self, idx: usize) -> Option<&mut LayerKVCache> {
@@ -6341,6 +6392,56 @@ mod tests {
             logits_3d.to_vec3::<f32>()?,
             vec![vec![vec![2.0, 3.0, 5.0, 10.0], vec![7.0, 11.0, 13.0, 31.0]]]
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn kv_cache_can_be_bounded_below_model_context() -> Result<()> {
+        let device = Device::Cpu;
+        let mut config = BitNetConfig::default();
+        config.model.num_layers = 2;
+        config.model.num_heads = 4;
+        config.model.num_key_value_heads = 2;
+        config.model.hidden_size = 16;
+        config.model.max_position_embeddings = 128;
+
+        let cache = KVCache::new_with_max_seq_len(&config, 1, &device, 12)?;
+
+        assert_eq!(cache.layers.len(), 2);
+        for layer in &cache.layers {
+            assert_eq!(layer.max_seq_len, 12);
+            assert_eq!(layer.k.dims(), &[1, 2, 12, 4]);
+            assert_eq!(layer.v.dims(), &[1, 2, 12, 4]);
+        }
+        let bytes_per_f32 = std::mem::size_of::<f32>() as u128;
+        assert_eq!(
+            KVCache::estimated_f32_bytes_for_max_seq_len(&config, 1, 12)?,
+            2u128 * 2 * 1 * 2 * 12 * 4 * bytes_per_f32
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn kv_cache_rejects_bounded_context_above_model_context() -> Result<()> {
+        let device = Device::Cpu;
+        let mut config = BitNetConfig::default();
+        config.model.num_layers = 1;
+        config.model.num_heads = 2;
+        config.model.num_key_value_heads = 1;
+        config.model.hidden_size = 8;
+        config.model.max_position_embeddings = 16;
+
+        let err = match KVCache::new_with_max_seq_len(&config, 1, &device, 17) {
+            Ok(_) => {
+                return Err(BitNetError::Validation(
+                    "bounded KV cache accepted a request past model context".to_string(),
+                ));
+            }
+            Err(err) => err,
+        };
+        assert!(err.to_string().contains("exceeds model context"), "unexpected error: {err}");
 
         Ok(())
     }

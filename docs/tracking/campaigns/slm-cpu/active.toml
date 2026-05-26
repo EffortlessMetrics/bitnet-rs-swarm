@@ -7426,7 +7426,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-121"
-status = "ready"
+status = "pr_open"
+pr = 764
+head_sha = "be3cd28f2d06825afa39b823dbb65153fb46cf40"
 branch = "codex/slm-cpu-121-qwen3-preboundary-allocation"
 stackable = false
 review_mode = "codex_premerge"
@@ -7463,7 +7465,61 @@ forbidden_paths = [
 ]
 may_claim = [
   "SLM-CPU-120 fail-closes packed-Q8 sidecar runtime execution when payload byte order does not match the runtime matrix shape.",
-  "SLM-CPU-121 may resolve or further isolate the remaining Qwen3 pre-boundary allocation failure.",
+  "SLM-CPU-121 resolves the remaining Qwen3 pre-boundary allocation failure by using prompt-plus-generation bounded KV cache capacity for strict tiny generation runs.",
+  "SLM-CPU-121 reaches post-guard receipt emission and the layer-0 attention.q_proj_output_pre_optional_qnorm fingerprint for the Qwen3 Q8_0 run that SLM-CPU-120 could not complete.",
+]
+must_not_claim = [
+  "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",
+  "The packed-Q8 sidecar is promoted to default runtime without all proof gates passing.",
+  "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-122"
+status = "ready"
+branch = "codex/slm-cpu-122-qproj-output-proof-refresh"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-121"]
+acceptance = "Resume the shared attention.q_proj_output_pre_optional_qnorm behavior proof after SLM-CPU-121 makes the Qwen3 Q8_0 post-guard receipt and layer-0 fingerprint reachable. A valid slice must compare accepted Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict CPU receipts at the shared q_proj-output boundary, preserve strict GGUF tokenizer authority, CPU backend, fallback_used=false, model SHA, prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, boundary label, source tensor identity, shape/dtype, and must fail closed on missing or mismatched f32-le fingerprints. It must not claim packed-Q8 sidecar behavior proof, allocation reduction, timing improvement, default-runtime promotion, sustained throughput, Q4/Q5 runtime support, server/GPU/NPU/OpenVINO/UHD 620 execution, Qwen3.5 support, or BitNet QK256 changes unless the accepted cross-model proof gates pass."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+  "packed_q8_sidecar default-runtime promotion without proof gates",
+  "Q4/Q5 runtime implementation",
+  "server inference",
+  "GPU, NPU, OpenVINO, or UHD 620 execution",
+  "Qwen3.5 or hybrid architecture support",
+  "BitNet QK256/I2_S kernels",
+]
+may_claim = [
+  "SLM-CPU-121 resolves the Qwen3 pre-boundary KV allocation failure and makes post-guard receipt plus q_proj-output fingerprint evidence reachable.",
+  "SLM-CPU-122 may prove or fail-close the shared q_proj-output boundary using Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipt pairs.",
 ]
 must_not_claim = [
   "The shared q_proj-output boundary is behavior-proven until accepted Qwen3 and Qwen2.5 before/after f32-le tensor fingerprint equality passes.",

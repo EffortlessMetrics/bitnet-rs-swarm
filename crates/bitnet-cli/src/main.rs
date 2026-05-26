@@ -4014,6 +4014,27 @@ fn qwen_trace_prompt_id_override() -> Result<Option<Vec<u32>>> {
     Ok(Some(ids))
 }
 
+fn bounded_generation_kv_cache_len(
+    prompt_tokens: usize,
+    max_new_tokens: usize,
+    model_max_position_embeddings: usize,
+) -> Result<usize> {
+    if model_max_position_embeddings == 0 {
+        anyhow::bail!("model max_position_embeddings must be greater than zero");
+    }
+    let prefill_tokens = prompt_tokens.saturating_sub(1);
+    let required_tokens = prefill_tokens
+        .checked_add(max_new_tokens)
+        .ok_or_else(|| anyhow::anyhow!("generation KV cache token capacity overflow"))?;
+    let bounded_tokens = required_tokens.max(1);
+    if bounded_tokens > model_max_position_embeddings {
+        anyhow::bail!(
+            "generation requires KV cache capacity {bounded_tokens}, but model context is {model_max_position_embeddings}"
+        );
+    }
+    Ok(bounded_tokens)
+}
+
 pub(crate) fn nvidia_smi_memory_used_bytes(device_index: Option<usize>) -> Option<u64> {
     let mut command = std::process::Command::new("nvidia-smi");
     let index_arg;
@@ -4503,8 +4524,36 @@ async fn run_simple_generation(
         full_prompt_result?;
     }
 
-    // Create KV cache
-    let cache = KVCache::new(&config, 1, &candle_core::Device::Cpu)?;
+    // Create a prompt-bounded KV cache. Qwen3 advertises a large context window
+    // (40,960 positions), but strict Kaby proof runs use tiny prompts and bounded
+    // generation. Allocating only the required capacity prevents a pre-boundary
+    // full-context KV allocation before the first embed/forward trace point.
+    let kv_cache_max_seq_len = bounded_generation_kv_cache_len(
+        tokens.len(),
+        max_new_tokens,
+        config.model.max_position_embeddings,
+    )?;
+    let kv_cache_estimated_bytes =
+        KVCache::estimated_f32_bytes_for_max_seq_len(&config, 1, kv_cache_max_seq_len)?;
+    qwen_trace_write(serde_json::json!({
+        "kind": "qwen_trace_event",
+        "stage": "kv_cache.allocate_start",
+        "prompt_tokens": tokens.len(),
+        "max_new_tokens": max_new_tokens,
+        "max_seq_len": kv_cache_max_seq_len,
+        "model_max_position_embeddings": config.model.max_position_embeddings,
+        "estimated_f32_bytes": kv_cache_estimated_bytes.to_string(),
+        "allocation_policy": "prompt_plus_generation_bounded",
+    }))?;
+    let cache =
+        KVCache::new_with_max_seq_len(&config, 1, &candle_core::Device::Cpu, kv_cache_max_seq_len)?;
+    qwen_trace_write(serde_json::json!({
+        "kind": "qwen_trace_event",
+        "stage": "kv_cache.allocate_finish",
+        "max_seq_len": kv_cache_max_seq_len,
+        "estimated_f32_bytes": kv_cache_estimated_bytes.to_string(),
+        "allocation_policy": "prompt_plus_generation_bounded",
+    }))?;
     let mut any_cache: Box<dyn std::any::Any> = Box::new(cache);
 
     // Create sampler
@@ -6647,7 +6696,13 @@ fn run_cpu_phase_prompt(
     let prompt_token_count = tokens.len();
     let prompt_token_ids = tokens.clone();
 
-    let cache = KVCache::new(config, 1, &candle_core::Device::Cpu)?;
+    let kv_cache_max_seq_len = bounded_generation_kv_cache_len(
+        prompt_token_count,
+        plan.max_new_tokens,
+        config.model.max_position_embeddings,
+    )?;
+    let cache =
+        KVCache::new_with_max_seq_len(config, 1, &candle_core::Device::Cpu, kv_cache_max_seq_len)?;
     let mut any_cache: Box<dyn std::any::Any> = Box::new(cache);
     let mut sampler = SamplingStrategy::new(SamplingConfig {
         temperature: 0.0,
@@ -7244,7 +7299,17 @@ async fn run_cuda_warm_session(
         let prompt_token_count = prompt_token_ids.len();
         let max_stop_len = all_stop_sequences.iter().map(|value| value.len()).max().unwrap_or(0);
 
-        let cache = KVCache::new(&config, 1, &candle_core::Device::Cpu)?;
+        let kv_cache_max_seq_len = bounded_generation_kv_cache_len(
+            prompt_token_count,
+            max_new_tokens,
+            config.model.max_position_embeddings,
+        )?;
+        let cache = KVCache::new_with_max_seq_len(
+            &config,
+            1,
+            &candle_core::Device::Cpu,
+            kv_cache_max_seq_len,
+        )?;
         let mut any_cache: Box<dyn std::any::Any> = Box::new(cache);
         let mut sampler = SamplingStrategy::new(SamplingConfig {
             temperature,
@@ -8758,8 +8823,30 @@ async fn run_slm_warm_session(
     let sampler_reuse_enabled = warm_session_sampler_reuse_enabled(&sampling_config);
     let sampler_reuse_policy = warm_session_sampler_reuse_policy(sampler_reuse_enabled);
     let kv_cache_reuse_policy = "single_kv_cache_cleared_per_prompt_for_prompt_isolation";
+    let mut kv_cache_max_seq_len = 1usize;
+    for prompt_input in &prompt_inputs {
+        let formatted_prompt = apply_qwen_no_think_prompt_policy(
+            template_type,
+            template_type.apply(&prompt_input.prompt, system_prompt.as_deref()),
+            no_think,
+        )?;
+        let mut prompt_tokens = tokenizer.encode(
+            &formatted_prompt,
+            template_type.should_add_bos(),
+            template_type.parse_special(),
+        )?;
+        ensure_non_empty_generation_context(&mut prompt_tokens, tokenizer.as_ref())?;
+        kv_cache_max_seq_len = kv_cache_max_seq_len.max(bounded_generation_kv_cache_len(
+            prompt_tokens.len(),
+            max_new_tokens,
+            config.model.max_position_embeddings,
+        )?);
+    }
+    let kv_cache_estimated_bytes =
+        KVCache::estimated_f32_bytes_for_max_seq_len(&config, 1, kv_cache_max_seq_len)?;
     let kv_cache_session_alloc_start = AllocationAuditSnapshot::current();
-    let mut session_kv_cache = KVCache::new(&config, 1, &candle_core::Device::Cpu)?;
+    let mut session_kv_cache =
+        KVCache::new_with_max_seq_len(&config, 1, &candle_core::Device::Cpu, kv_cache_max_seq_len)?;
     let kv_cache_session_alloc = AllocationAuditSnapshot::delta_since(kv_cache_session_alloc_start);
     let kv_cache_reused_across_prompts = true;
     let mut kv_cache_reused_prompt_count = 0usize;
@@ -9209,6 +9296,10 @@ async fn run_slm_warm_session(
                 "kv_cache_reused_across_prompts": kv_cache_reused_across_prompts,
                 "kv_cache_cleared_per_prompt": true,
                 "kv_cache_recreated_per_prompt": false,
+                "kv_cache_allocation_policy": "max_prompt_plus_generation_bounded",
+                "kv_cache_max_seq_len": kv_cache_max_seq_len,
+                "kv_cache_model_max_position_embeddings": config.model.max_position_embeddings,
+                "kv_cache_estimated_f32_bytes": kv_cache_estimated_bytes.to_string(),
                 "sampler_reuse_policy": sampler_reuse_policy,
                 "sampler_reused_across_prompts": sampler_reuse_enabled,
                 "sampler_recreated_per_prompt": !sampler_reuse_enabled,
@@ -9571,6 +9662,10 @@ async fn run_slm_warm_session(
             "scope": "resident warm-session setup before prompt loop",
             "kv_cache": allocation_samples_json(std::slice::from_ref(&kv_cache_session_alloc)),
             "kv_cache_reuse_policy": kv_cache_reuse_policy,
+            "kv_cache_allocation_policy": "max_prompt_plus_generation_bounded",
+            "kv_cache_max_seq_len": kv_cache_max_seq_len,
+            "kv_cache_model_max_position_embeddings": config.model.max_position_embeddings,
+            "kv_cache_estimated_f32_bytes": kv_cache_estimated_bytes.to_string(),
         },
         "claim_boundary": {
             "warm_session_flow": true,
@@ -14712,6 +14807,29 @@ mod tests {
         assert_eq!(quality["passed"], true);
         assert_eq!(quality["gate_passed"], true);
         assert_eq!(quality["normalized_text"], "Answer: blue");
+    }
+
+    #[test]
+    fn bounded_generation_kv_cache_len_uses_prompt_prefix_plus_decode_steps() -> Result<()> {
+        assert_eq!(bounded_generation_kv_cache_len(32, 1, 40960)?, 32);
+        assert_eq!(bounded_generation_kv_cache_len(32, 8, 40960)?, 39);
+        assert_eq!(bounded_generation_kv_cache_len(1, 1, 40960)?, 1);
+        assert_eq!(bounded_generation_kv_cache_len(0, 0, 40960)?, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_generation_kv_cache_len_rejects_context_overflow() -> Result<()> {
+        let err = match bounded_generation_kv_cache_len(32, 8, 35) {
+            Ok(_) => {
+                return Err(anyhow::anyhow!(
+                    "bounded generation KV cache accepted capacity past model context"
+                ));
+            }
+            Err(err) => err,
+        };
+        assert!(err.to_string().contains("model context"), "unexpected error: {err}");
+        Ok(())
     }
 
     #[test]
