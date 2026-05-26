@@ -81,7 +81,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-138. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-139. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -234,6 +234,19 @@ evidence, and `fallback_used=false` are still required before any source-order
 selector use. No allocation, timing, speedup, sustained-throughput,
 default-runtime, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is
 made.
+
+SLM-CPU-139 re-checks that exact-model gate on current main and preserves the
+same fail-closed result as a machine-checkable blocker. The workspace still has
+the verified Qwen3 Q8_0 GGUF, but still lacks the exact Qwen2.5 Q8_0 model cache
+under `models/slm/qwen2.5-0.5b-instruct-q8_0.gguf`; the active slice also
+forbids `models/**` and `target/**`, so it cannot restore the binary cache in
+this PR. The older SLM-CPU-127 Qwen3/Qwen2.5 receipt pairs remain useful as
+behavior-preserving oracle evidence, but they still predate the SLM-CPU-137
+source-order identity fields and do not bind q_proj numeric evidence to fresh
+current-main strict CPU receipts. The accepted next step is an explicitly scoped
+cache restoration or a fresh capture once the exact Qwen2.5 model is available.
+No allocation, timing, speedup, sustained-throughput, default-runtime, Q4/Q5,
+server, accelerator, Qwen3.5, or BitNet QK256 claim is made.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
