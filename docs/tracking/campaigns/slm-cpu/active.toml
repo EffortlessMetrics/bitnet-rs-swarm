@@ -9356,7 +9356,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-158"
-status = "pr_open"
+status = "merged"
+pr = 839
+head_sha = "3e6e78e89cbc44402ace27b9111e00e2a428670e"
+merge_sha = "baba6a319512fe14d6bc08f82338b72e42672053"
+merged_at = "2026-05-27T21:13:00Z"
 branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -9505,6 +9509,55 @@ may_claim = [
 must_not_claim = [
   "The packed-Q8 sidecar is promoted to default runtime.",
   "Allocation reduction or speedup is proven without before/after strict CPU receipts.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-159"
+status = "ready"
+branch = "codex/slm-cpu-159-source-order-qproj-runtime-next-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-158"]
+acceptance = "Consume the SLM-CPU-158 default-disabled source-order q_proj runtime binding evidence and define the next safe boundary for this lane. A valid slice may either record the exact blocker that prevents further source-order runtime expansion, or add one behavior-preserving, opt-in-only follow-up boundary with fresh Qwen3 and Qwen2.5 strict CPU receipts proving unchanged model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_proj numeric evidence where applicable, and `fallback_used=false`. It must not promote source-order or packed-Q8 sidecars to the default runtime, and it must not claim allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-158 added the default-disabled source-order q_proj runtime binding gate for the exact Qwen3 candidate with paired Qwen3/Qwen2.5 strict CPU receipts.",
+  "SLM-CPU-159 may define the next safe opt-in-only source-order runtime boundary or record the exact blocker that prevents one.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The source-order q_proj candidate is promoted to default runtime.",
+  "The packed-Q8 sidecar path is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
