@@ -4632,7 +4632,7 @@ async fn run_simple_generation(
     }
     if allocation_audit && !allocation_audit_backend_supported(&backend_identity) {
         anyhow::bail!(
-            "--allocation-audit is currently scoped to supported Apple CPU/NEON labels with fallback_used=false; got requested_backend={}, selected_backend={}, runtime_api={}, fallback_used={}",
+            "--allocation-audit is currently scoped to supported CPU warm-session labels with fallback_used=false; got requested_backend={}, selected_backend={}, runtime_api={}, fallback_used={}",
             backend_identity.requested_backend,
             backend_identity.selected_backend,
             backend_identity.runtime_api,
@@ -14722,8 +14722,13 @@ pub(crate) fn is_a770_opencl_backend_label(label: &str) -> bool {
 }
 
 fn allocation_audit_backend_supported(identity: &RunBackendIdentity) -> bool {
-    is_supported_apple_cpu_neon_backend(identity.requested_backend.as_str())
-        && identity.selected_backend == identity.requested_backend
+    let requested_backend = identity.requested_backend.trim().to_ascii_lowercase();
+    let selected_backend = identity.selected_backend.trim().to_ascii_lowercase();
+    let apple_cpu_neon_selected = is_supported_apple_cpu_neon_backend(&requested_backend)
+        && selected_backend == requested_backend;
+    let generic_cpu_selected = requested_backend == "cpu" && selected_backend == "cpu-rust";
+
+    (apple_cpu_neon_selected || generic_cpu_selected)
         && identity.runtime_api == "cpu"
         && !identity.fallback_used
 }
@@ -17956,7 +17961,7 @@ mod tests {
     }
 
     #[test]
-    fn allocation_audit_requires_selected_apple_cpu_neon_without_fallback() {
+    fn allocation_audit_requires_selected_cpu_warm_session_without_fallback() {
         assert!(allocation_audit_backend_supported(&RunBackendIdentity {
             requested_backend: "apple-m4-cpu-neon".to_string(),
             selected_backend: "apple-m4-cpu-neon".to_string(),
@@ -17971,6 +17976,13 @@ mod tests {
             fallback_used: false,
             fallback_reason: None,
         }));
+        assert!(allocation_audit_backend_supported(&RunBackendIdentity {
+            requested_backend: "cpu".to_string(),
+            selected_backend: "cpu-rust".to_string(),
+            runtime_api: "cpu".to_string(),
+            fallback_used: false,
+            fallback_reason: None,
+        }));
 
         assert!(!allocation_audit_backend_supported(&RunBackendIdentity {
             requested_backend: "apple-m4-cpu-neon".to_string(),
@@ -17981,7 +17993,7 @@ mod tests {
         }));
         assert!(!allocation_audit_backend_supported(&RunBackendIdentity {
             requested_backend: "cpu".to_string(),
-            selected_backend: "cpu-rust".to_string(),
+            selected_backend: "cpu".to_string(),
             runtime_api: "cpu".to_string(),
             fallback_used: false,
             fallback_reason: None,
@@ -17990,7 +18002,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "full-cli")]
-    fn slm_warm_session_accepts_cpu_backend_without_enabling_allocation_audit() {
+    fn slm_warm_session_accepts_cpu_backend_with_allocation_audit() {
         assert!(is_supported_slm_warm_session_backend("cpu"));
         assert!(is_supported_slm_warm_session_backend("apple-m4-cpu-neon"));
         assert!(is_supported_slm_warm_session_backend("apple-m3-air-cpu-neon"));
@@ -18002,7 +18014,7 @@ mod tests {
             crate::allocation_audit::warm_session_allocation_scope("cpu"),
             "selected generic CPU SLM warm-session prompt hot path"
         );
-        assert!(!allocation_audit_backend_supported(&RunBackendIdentity {
+        assert!(allocation_audit_backend_supported(&RunBackendIdentity {
             requested_backend: "cpu".to_string(),
             selected_backend: "cpu-rust".to_string(),
             runtime_api: "cpu".to_string(),

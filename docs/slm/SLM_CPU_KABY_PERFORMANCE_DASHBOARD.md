@@ -178,9 +178,31 @@ allocation-audit-enabled Qwen3 and Qwen2.5 before/after receipts, plus a concret
 caller-output-storage shape contract for the exact Candle tensor boundary being
 changed.
 
+SLM-CPU-161 captures the allocation-audit-enabled baseline for the same Kaby
+CPU route before any new runtime allocation behavior changes. The aggregate
+receipts are:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json
+```
+
+Both receipts use `requested_backend=cpu`, `selected_backend=cpu-rust`,
+`runtime_api=cpu`, `fallback_used=false`, strict GGUF tokenizer authority, and
+`allocation_audit.enabled=true`. Qwen3 records six prompt receipts from the
+existing warm-session corpus; Qwen2.5 records a duplicate-prompt deterministic
+baseline from the verified Q8_0 cache artifact. In both cases the measured
+dominant allocation hotspot remains `prompt_prefill`, and the next target stays
+`residual_block_output_storage_boundary` with status
+`layer_output_storage_blocked_by_candle_tensor_add_ops`. This establishes the
+baseline required for later before/after allocation PRs; it does not claim
+allocation reduction, speedup, sustained throughput, Q4/Q5 support, default
+runtime promotion, server/accelerator execution, Qwen3.5 support, or BitNet
+QK256 changes.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-160. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-161. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
