@@ -398,6 +398,9 @@ fn dense_linear_runtime_hook_boundary_accepts_inert_q8_sidecar_descriptor() -> a
             sidecar_payload_sha256: Some("abc123".to_string()),
             packed_q8_payload: None,
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: false,
         },
     );
@@ -447,6 +450,9 @@ fn dense_linear_runtime_hook_boundary_can_carry_payload_without_enabling_compute
                 matrix_cols: 8,
             }),
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: false,
         },
     );
@@ -496,6 +502,9 @@ fn dense_linear_runtime_hook_boundary_rejects_payload_tensor_mismatch() -> anyho
                 matrix_cols: 8,
             }),
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: true,
         },
     );
@@ -530,6 +539,9 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             sidecar_payload_sha256: Some("sha256:down".to_string()),
             packed_q8_payload: None,
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: false,
         },
     );
@@ -541,6 +553,9 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             sidecar_payload_sha256: Some("sha256:q".to_string()),
             packed_q8_payload: None,
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: false,
         },
     );
@@ -576,6 +591,9 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
             sidecar_payload_sha256: Some("sha256:future".to_string()),
             packed_q8_payload: None,
             payload_order_matches_runtime_shape: true,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
             runtime_compute_enabled: true,
         },
     );

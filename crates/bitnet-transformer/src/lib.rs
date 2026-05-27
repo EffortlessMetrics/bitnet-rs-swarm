@@ -19,10 +19,12 @@ mod qk256;
 
 use diagnostics::{
     QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
-    QwenTraceDenseHookIdentity, dbg_finite, dbg_stats, debug_attn_enabled,
-    debug_attn_scale_enabled, debug_gqa_enabled, debug_mlp_enabled, debug_rmsnorm_enabled,
-    debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled, qwen_trace_layer_enabled,
-    qwen_trace_number, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY, QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
+    QwenTraceDenseHookIdentity, QwenTraceSourceOrderQ8Candidate, dbg_finite, dbg_stats,
+    debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled, debug_mlp_enabled,
+    debug_rmsnorm_enabled, debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled,
+    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_source_order_q8_candidate,
+    qwen_trace_tensor, qwen_trace_tensor_fingerprint,
     qwen_trace_tensor_fingerprint_with_dense_hook, trace_rms_enabled,
 };
 #[cfg(test)]
@@ -617,6 +619,208 @@ fn maybe_forward_dense_q8_sidecar_linear(
     dense_q8_sidecar_linear_forward(input, linear.bias(), payload)
         .map(Some)
         .map_err(BitNetError::from)
+}
+
+pub(crate) fn maybe_trace_dense_q8_source_order_qproj_candidate(
+    input: &Tensor,
+    eager_output: &Tensor,
+    linear: &Linear,
+    tensor_name: &str,
+    hooks: &DenseLinearRuntimeHookRegistry,
+    layer_idx: usize,
+) -> Result<()> {
+    if std::env::var("BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE").as_deref() != Ok("1")
+        || !qwen_trace_layer_enabled(layer_idx)
+    {
+        return Ok(());
+    }
+    if tensor_name != SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR {
+        return Ok(());
+    }
+    let Some(descriptor) = hooks.get(tensor_name) else {
+        return Ok(());
+    };
+    let boundary = DenseLinearRuntimeHookBoundary::from_sidecar_descriptor(tensor_name, descriptor);
+    if !boundary.source_order_q8_matvec_candidate {
+        return Ok(());
+    }
+    let Some(payload) = descriptor.packed_q8_payload.as_ref() else {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture for {tensor_name} requires payload bytes"
+        )));
+    };
+    let source_input_dim = boundary.source_order_input_dim.ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "source-order Q8 candidate capture for {tensor_name} is missing source input dim"
+        ))
+    })?;
+    let source_output_dim = boundary.source_order_output_dim.ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "source-order Q8 candidate capture for {tensor_name} is missing source output dim"
+        ))
+    })?;
+    let Some((&input_cols, _)) = input.dims().split_last() else {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture for {tensor_name} requires input rank >= 1"
+        )));
+    };
+    if input_cols != source_input_dim {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture input cols {input_cols} do not match source input dim {source_input_dim} for {tensor_name}"
+        )));
+    }
+    let Some((&output_cols, _)) = eager_output.dims().split_last() else {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture for {tensor_name} requires output rank >= 1"
+        )));
+    };
+    if output_cols != source_output_dim {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture eager output cols {output_cols} do not match source output dim {source_output_dim} for {tensor_name}"
+        )));
+    }
+
+    let input_values = input.to_dtype(DType::F32)?.flatten_all()?.to_vec1::<f32>()?;
+    if !input_values.len().is_multiple_of(source_input_dim) {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture input value count {} is not divisible by source input dim {source_input_dim} for {tensor_name}",
+            input_values.len()
+        )));
+    }
+    let eager_values = eager_output.to_dtype(DType::F32)?.flatten_all()?.to_vec1::<f32>()?;
+    let input_rows = input_values.len() / source_input_dim;
+    let expected_output_len = input_rows.checked_mul(source_output_dim).ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "source-order Q8 candidate capture output length overflows for {tensor_name}"
+        ))
+    })?;
+    if eager_values.len() != expected_output_len {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture eager output len {} does not match expected len {expected_output_len} for {tensor_name}",
+            eager_values.len()
+        )));
+    }
+
+    let bias_values = match linear.bias() {
+        Some(bias) => Some(bias.to_dtype(DType::F32)?.to_vec1::<f32>()?),
+        None => None,
+    };
+    if let Some(bias_values) = bias_values.as_ref()
+        && bias_values.len() != source_output_dim
+    {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 candidate capture bias length {} does not match source output dim {source_output_dim} for {tensor_name}",
+            bias_values.len()
+        )));
+    }
+
+    let mut candidate = vec![0.0f32; expected_output_len];
+    dense_q8_source_order_qproj_matvec_into(
+        &input_values,
+        bias_values.as_deref(),
+        payload,
+        source_input_dim,
+        source_output_dim,
+        &mut candidate,
+    )?;
+    let dense_hook_identity =
+        boundary.source_order_candidate_receipt_identity.unwrap_or_else(|| {
+            format!("{tensor_name}:source_order_q8_0_qproj_matvec:runtime_disabled")
+        });
+    qwen_trace_source_order_q8_candidate(QwenTraceSourceOrderQ8Candidate {
+        stage: QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
+        layer_idx,
+        source_tensor: tensor_name,
+        gguf_tensor: "blk.0.attn_q.weight",
+        boundary: QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY,
+        dense_hook_identity: &dense_hook_identity,
+        candidate_path: boundary
+            .source_order_selected_path
+            .unwrap_or("source_order_q8_0_qproj_matvec"),
+        candidate_kernel: boundary
+            .source_order_selected_kernel
+            .unwrap_or("dense-q8-source-order-qproj-matvec"),
+        source_input_dim,
+        source_output_dim,
+        input_rows,
+        candidate: &candidate,
+        eager: &eager_values,
+    });
+    Ok(())
+}
+
+fn dense_q8_source_order_qproj_matvec_into(
+    input_values: &[f32],
+    bias_values: Option<&[f32]>,
+    payload: &DenseLinearPackedQ8Payload,
+    source_input_dim: usize,
+    source_output_dim: usize,
+    output: &mut [f32],
+) -> Result<()> {
+    if source_input_dim == 0 || source_output_dim == 0 {
+        return Err(BitNetError::Validation(
+            "source-order Q8 q_proj matvec requires nonzero source dimensions".to_string(),
+        ));
+    }
+    if !input_values.len().is_multiple_of(source_input_dim) {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj matvec input len {} is not divisible by source input dim {source_input_dim}",
+            input_values.len()
+        )));
+    }
+    let input_rows = input_values.len() / source_input_dim;
+    let expected_output = input_rows.checked_mul(source_output_dim).ok_or_else(|| {
+        BitNetError::Validation("source-order Q8 q_proj matvec output length overflow".to_string())
+    })?;
+    if output.len() != expected_output {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj matvec output len {} does not match expected len {expected_output}",
+            output.len()
+        )));
+    }
+    let value_count = source_input_dim.checked_mul(source_output_dim).ok_or_else(|| {
+        BitNetError::Validation("source-order Q8 q_proj matvec value count overflow".to_string())
+    })?;
+    let expected_blocks = value_count.div_ceil(payload.q8_block_size);
+    if expected_blocks != payload.q8_block_count {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj matvec expected {expected_blocks} blocks from source dims [{source_input_dim}, {source_output_dim}], payload has {}",
+            payload.q8_block_count
+        )));
+    }
+    if payload.expected_q8_payload_len() != Some(payload.payload_len()) {
+        return Err(BitNetError::Validation(
+            "source-order Q8 q_proj matvec payload length does not match q8 block contract"
+                .to_string(),
+        ));
+    }
+    if let Some(bias_values) = bias_values
+        && bias_values.len() != source_output_dim
+    {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj matvec bias len {} does not match source output dim {source_output_dim}",
+            bias_values.len()
+        )));
+    }
+
+    let block_stride = 2 + payload.q8_block_size;
+    for (input_row_idx, input_row) in input_values.chunks_exact(source_input_dim).enumerate() {
+        for out_col in 0..source_output_dim {
+            let mut sum = bias_values.map_or(0.0, |bias| bias[out_col]);
+            for (in_row, input_value) in input_row.iter().enumerate().take(source_input_dim) {
+                let weight_idx = in_row * source_output_dim + out_col;
+                let block_idx = weight_idx / payload.q8_block_size;
+                let block_value_offset = weight_idx % payload.q8_block_size;
+                let block_offset = block_idx * block_stride;
+                let scale = dense_q8_sidecar_block_scale(&payload.packed_q8_bytes, block_offset);
+                let q_idx = block_offset + 2 + block_value_offset;
+                let q = payload.packed_q8_bytes[q_idx] as i8;
+                sum += scale * f32::from(q) * *input_value;
+            }
+            output[input_row_idx * source_output_dim + out_col] = sum;
+        }
+    }
+    Ok(())
 }
 
 fn dense_q8_sidecar_linear_forward(
@@ -5795,7 +5999,7 @@ mod tests {
         );
         assert!(
             instrumentation_after.packed_matvec_input_rows
-                >= instrumentation_before.packed_matvec_input_rows + 1
+                > instrumentation_before.packed_matvec_input_rows
         );
         assert!(
             instrumentation_after.packed_matvec_output_values
@@ -5920,6 +6124,31 @@ mod tests {
     }
 
     #[test]
+    fn source_order_qproj_candidate_matvec_uses_source_shape_contract() -> Result<()> {
+        let mut packed = Vec::new();
+        packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
+        for value in [1i8, 2, 3, 4, 5, 6] {
+            packed.push(value as u8);
+        }
+        packed.resize(34, 0);
+        let payload = DenseLinearPackedQ8Payload {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+            q8_block_size: 32,
+            q8_block_count: 1,
+            matrix_rows: 2,
+            matrix_cols: 3,
+        };
+        let input = [10.0f32, 20.0];
+        let mut output = vec![0.0f32; 3];
+
+        dense_q8_source_order_qproj_matvec_into(&input, None, &payload, 2, 3, &mut output)?;
+
+        assert_eq!(output, vec![45.0, 60.0, 75.0]);
+        Ok(())
+    }
+
+    #[test]
     fn exact_q8_sidecar_runtime_hook_matches_reference_across_q8_blocks() -> Result<()> {
         let device = Device::Cpu;
         let mut weight_values = Vec::new();
@@ -6008,14 +6237,14 @@ mod tests {
         let mut weight_values = Vec::new();
         let mut packed = Vec::new();
 
-        for block_idx in 0..q8_block_count {
-            packed.extend_from_slice(&f32_to_fp16(scales[block_idx]).to_le_bytes());
+        for (block_idx, scale) in scales.iter().enumerate().take(q8_block_count) {
+            packed.extend_from_slice(&f32_to_fp16(*scale).to_le_bytes());
             for offset in 0..q8_block_size {
                 let flat_idx = block_idx * q8_block_size + offset;
                 let q = ((flat_idx % 17) as i8) - 8;
                 packed.push(q as u8);
                 if flat_idx < matrix_rows * matrix_cols {
-                    weight_values.push(scales[block_idx] * f32::from(q));
+                    weight_values.push(*scale * f32::from(q));
                 }
             }
         }
@@ -6115,8 +6344,8 @@ mod tests {
         let q8_block_count = 3;
         let scales = [0.125f32, 0.25, 0.5];
         let mut packed = Vec::new();
-        for block_idx in 0..q8_block_count {
-            packed.extend_from_slice(&f32_to_fp16(scales[block_idx]).to_le_bytes());
+        for (block_idx, scale) in scales.iter().enumerate().take(q8_block_count) {
+            packed.extend_from_slice(&f32_to_fp16(*scale).to_le_bytes());
             for offset in 0..q8_block_size {
                 let flat_idx = block_idx * q8_block_size + offset;
                 let q = ((flat_idx % 17) as i8) - 8;
@@ -6480,7 +6709,7 @@ mod tests {
         let bytes_per_f32 = std::mem::size_of::<f32>() as u128;
         assert_eq!(
             KVCache::estimated_f32_bytes_for_max_seq_len(&config, 1, 12)?,
-            2u128 * 2 * 1 * 2 * 12 * 4 * bytes_per_f32
+            2u128 * 2 * 2 * 12 * 4 * bytes_per_f32
         );
 
         Ok(())

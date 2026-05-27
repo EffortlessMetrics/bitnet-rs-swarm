@@ -11,6 +11,10 @@ pub(crate) const QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE: &str =
     "attention.q_proj_output_pre_optional_qnorm";
 pub(crate) const QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY: &str =
     "attention_q_proj_output_pre_optional_qnorm";
+pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE: &str =
+    "attention.q_proj_source_order_q8_candidate";
+pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY: &str =
+    "attention_q_proj_source_order_q8_candidate";
 
 #[derive(Clone, Debug)]
 struct QwenTraceConfig {
@@ -106,8 +110,11 @@ pub(crate) fn qwen_trace_number(value: f64) -> String {
 }
 
 fn qwen_qproj_output_dump_enabled(boundary: &str) -> bool {
-    boundary == QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY
-        && env_flag_eq_1("BITNET_QWEN_TRACE_DUMP_QPROJ_OUTPUT")
+    matches!(
+        boundary,
+        QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY
+            | QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY
+    ) && env_flag_eq_1("BITNET_QWEN_TRACE_DUMP_QPROJ_OUTPUT")
 }
 
 fn qwen_trace_dump_limit(values_len: usize) -> usize {
@@ -359,10 +366,87 @@ pub(crate) fn qwen_trace_tensor_fingerprint_with_dense_hook(
     Ok(())
 }
 
+pub(crate) struct QwenTraceSourceOrderQ8Candidate<'a> {
+    pub stage: &'a str,
+    pub layer_idx: usize,
+    pub source_tensor: &'a str,
+    pub gguf_tensor: &'a str,
+    pub boundary: &'a str,
+    pub dense_hook_identity: &'a str,
+    pub candidate_path: &'a str,
+    pub candidate_kernel: &'a str,
+    pub source_input_dim: usize,
+    pub source_output_dim: usize,
+    pub input_rows: usize,
+    pub candidate: &'a [f32],
+    pub eager: &'a [f32],
+}
+
+pub(crate) fn qwen_trace_source_order_q8_candidate(event: QwenTraceSourceOrderQ8Candidate<'_>) {
+    if !qwen_trace_active() || !qwen_trace_layer_enabled(event.layer_idx) {
+        return;
+    }
+
+    let compared_len = event.candidate.len().min(event.eager.len());
+    let mut max_abs_diff = 0.0f64;
+    let mut mean_abs_diff = 0.0f64;
+    let mut rms_abs_diff = 0.0f64;
+    let mut first_diff_index: Option<usize> = None;
+    for idx in 0..compared_len {
+        let diff = f64::from((event.candidate[idx] - event.eager[idx]).abs());
+        if diff > 0.0 && first_diff_index.is_none() {
+            first_diff_index = Some(idx);
+        }
+        max_abs_diff = max_abs_diff.max(diff);
+        mean_abs_diff += diff;
+        rms_abs_diff += diff * diff;
+    }
+    if compared_len > 0 {
+        let denom = compared_len as f64;
+        mean_abs_diff /= denom;
+        rms_abs_diff = (rms_abs_diff / denom).sqrt();
+    }
+
+    let step = std::env::var("BITNET_QWEN_TRACE_STEP").unwrap_or_else(|_| "null".to_string());
+    let first_diff_json =
+        first_diff_index.map(|idx| idx.to_string()).unwrap_or_else(|| "null".to_string());
+    let candidate_dump = qwen_trace_contents_fragment(event.boundary, event.candidate);
+    let eager_dump = qwen_trace_contents_fragment(event.boundary, event.eager);
+
+    qwen_trace_write_line(&format!(
+        "{{\"kind\":\"qwen_trace_source_order_q8_candidate\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"source_tensor\":\"{}\",\"gguf_tensor\":\"{}\",\"boundary\":\"{}\",\"dense_hook_identity\":\"{}\",\"candidate_path\":\"{}\",\"candidate_kernel\":\"{}\",\"runtime_disabled\":true,\"default_runtime_preserved\":true,\"source_input_dim\":{},\"source_output_dim\":{},\"input_rows\":{},\"candidate_len\":{},\"eager_len\":{},\"compared_len\":{},\"candidate_sha256_f32_le\":\"{}\",\"eager_sha256_f32_le\":\"{}\",\"max_abs_diff_vs_eager\":{},\"mean_abs_diff_vs_eager\":{},\"rms_abs_diff_vs_eager\":{},\"first_diff_index\":{},\"candidate\":{{{}}},\"eager\":{{{}}}}}",
+        qwen_trace_escape(event.stage),
+        step,
+        event.layer_idx,
+        qwen_trace_escape(event.source_tensor),
+        qwen_trace_escape(event.gguf_tensor),
+        qwen_trace_escape(event.boundary),
+        qwen_trace_escape(event.dense_hook_identity),
+        qwen_trace_escape(event.candidate_path),
+        qwen_trace_escape(event.candidate_kernel),
+        event.source_input_dim,
+        event.source_output_dim,
+        event.input_rows,
+        event.candidate.len(),
+        event.eager.len(),
+        compared_len,
+        sha256_f32_le(event.candidate),
+        sha256_f32_le(event.eager),
+        qwen_trace_number(max_abs_diff),
+        qwen_trace_number(mean_abs_diff),
+        qwen_trace_number(rms_abs_diff),
+        first_diff_json,
+        candidate_dump,
+        eager_dump
+    ));
+}
+
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)]
 mod tests {
     use super::{
         QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+        QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY, QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
         qwen_trace_f32_values_json, sha256_f32_le,
     };
 
@@ -391,6 +475,18 @@ mod tests {
     fn qwen_trace_f32_values_json_uses_bounded_prefix() {
         let values = [1.0f32, -2.5, f32::NAN, 4.25];
         assert_eq!(qwen_trace_f32_values_json(&values, 3), "1.000000000,-2.500000000,null");
+    }
+
+    #[test]
+    fn source_order_q8_candidate_boundary_constants_are_stable() {
+        assert_eq!(
+            QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
+            "attention.q_proj_source_order_q8_candidate"
+        );
+        assert_eq!(
+            QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY,
+            "attention_q_proj_source_order_q8_candidate"
+        );
     }
 }
 

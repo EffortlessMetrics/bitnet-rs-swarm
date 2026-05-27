@@ -8941,8 +8941,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-150"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-150-source-order-qproj-candidate-capture"
+pr = 823
+head_sha = "9990215bdb751a5c400a15f535ffd4a636c9601f"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
