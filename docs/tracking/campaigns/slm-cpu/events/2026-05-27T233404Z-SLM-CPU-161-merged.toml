@@ -1,0 +1,28 @@
+timestamp = "2026-05-27T23:34:04Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-161"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 845
+branch = "codex/slm-cpu-161-allocation-audit-baseline"
+head_sha = "fcda6b562a9c51a544827a9957ad68ec69cece0b"
+merge_sha = "6fef7fb82cd3a90e997843788db4af74b19fcd7b"
+summary = "Merged PR #845 with allocation-audit-enabled Kaby baselines for Qwen3 Q8_0 and Qwen2.5 Q8_0."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+]
+notes = [
+  "The merged slice enables allocation audit for strict generic CPU warm-session receipts while preserving the existing Apple CPU/NEON gate.",
+  "Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts preserve model SHA, strict GGUF tokenizer authority, prompt/generated token evidence, selected_backend=cpu-rust, runtime_api=cpu, and fallback_used=false.",
+  "Both receipts record allocation_audit.enabled=true and identify prompt_prefill as the dominant hotspot while keeping residual_block_output_storage_boundary blocked by Candle tensor add/output ownership.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_item]]
+item = "SLM-CPU-162"
+status = "ready"
+branch = "codex/slm-cpu-162-residual-output-storage-contract"
+summary = "Define or precisely block the residual_block_output_storage_boundary shape and ownership contract required before runtime allocation changes."
