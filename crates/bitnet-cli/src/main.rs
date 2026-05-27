@@ -907,6 +907,22 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         allocation_audit: bool,
 
+        /// Write first-prompt Qwen trace events as JSONL during the warm decode path
+        #[arg(long, value_name = "PATH")]
+        qwen_trace_jsonl: Option<std::path::PathBuf>,
+
+        /// Qwen transformer layer to trace
+        #[arg(long, value_name = "LAYER")]
+        qwen_trace_layer: Option<usize>,
+
+        /// Dump a bounded f32 prefix for the layer q_proj output trace event
+        #[arg(long, default_value_t = false)]
+        qwen_trace_qproj_dump: bool,
+
+        /// Maximum f32 values to dump for --qwen-trace-qproj-dump
+        #[arg(long, default_value_t = 32)]
+        qwen_trace_dump_limit: usize,
+
         /// Stream generated token text to stdout as each token is decoded
         #[arg(long, default_value_t = false)]
         stream: bool,
@@ -1714,6 +1730,10 @@ async fn async_main() -> Result<()> {
             fail_on_quality,
             require_determinism,
             allocation_audit,
+            qwen_trace_jsonl,
+            qwen_trace_layer,
+            qwen_trace_qproj_dump,
+            qwen_trace_dump_limit,
             stream,
             progress,
             quiet,
@@ -1748,7 +1768,14 @@ async fn async_main() -> Result<()> {
                 fail_on_quality,
                 require_determinism,
                 allocation_audit,
-                SlmWarmSessionOutput::new(stream, progress, quiet),
+                SlmWarmSessionOutput::new(stream, progress, quiet).with_qwen_trace(
+                    WarmSessionQwenTraceOptions {
+                        jsonl_path: qwen_trace_jsonl,
+                        layer: qwen_trace_layer,
+                        qproj_dump: qwen_trace_qproj_dump,
+                        dump_limit: qwen_trace_dump_limit,
+                    },
+                ),
                 min_generated_tokens,
                 min_distinct_generated_tokens,
                 json_out,
@@ -8482,6 +8509,45 @@ fn cuda_execution_residency_receipt(
 
 #[cfg(feature = "full-cli")]
 #[derive(Clone, Debug, Default)]
+pub(crate) struct WarmSessionQwenTraceOptions {
+    pub(crate) jsonl_path: Option<std::path::PathBuf>,
+    pub(crate) layer: Option<usize>,
+    pub(crate) qproj_dump: bool,
+    pub(crate) dump_limit: usize,
+}
+
+#[cfg(feature = "full-cli")]
+impl WarmSessionQwenTraceOptions {
+    fn enabled(&self) -> bool {
+        self.jsonl_path.is_some()
+    }
+
+    fn receipt(&self) -> serde_json::Value {
+        serde_json::json!({
+            "enabled": self.enabled(),
+            "jsonl_path": self.jsonl_path.as_ref().map(|path| path.display().to_string()),
+            "layer": self.layer,
+            "qproj_dump": self.qproj_dump,
+            "dump_limit": self.dump_limit,
+            "activation_scope": if self.enabled() {
+                "first_prompt_first_decode_forward_only"
+            } else {
+                "disabled"
+            },
+            "full_prompt_trace": false,
+            "prompt_ids_override": serde_json::Value::Null,
+            "claim_boundary": {
+                "captures_warm_session_runtime_path": self.enabled(),
+                "before_after_numeric_comparison_claimed": false,
+                "runtime_promotion_claimed": false,
+                "speedup_claim": false,
+            },
+        })
+    }
+}
+
+#[cfg(feature = "full-cli")]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct SlmWarmSessionOutput {
     pub(crate) stream_tokens: bool,
     pub(crate) progress: bool,
@@ -8490,6 +8556,7 @@ pub(crate) struct SlmWarmSessionOutput {
     pub(crate) interactive_prompt_collection: bool,
     pub(crate) model_sha256_override: Option<String>,
     pub(crate) metal_prefill_qkv_phase: bool,
+    pub(crate) qwen_trace: WarmSessionQwenTraceOptions,
 }
 
 #[cfg(feature = "full-cli")]
@@ -8503,6 +8570,12 @@ impl SlmWarmSessionOutput {
             interactive_prompt_collection: false,
             model_sha256_override: None,
             metal_prefill_qkv_phase: false,
+            qwen_trace: WarmSessionQwenTraceOptions {
+                jsonl_path: None,
+                layer: None,
+                qproj_dump: false,
+                dump_limit: 32,
+            },
         }
     }
 
@@ -8532,6 +8605,11 @@ impl SlmWarmSessionOutput {
         metal_prefill_qkv_phase: bool,
     ) -> Self {
         self.metal_prefill_qkv_phase = metal_prefill_qkv_phase;
+        self
+    }
+
+    pub(crate) fn with_qwen_trace(mut self, qwen_trace: WarmSessionQwenTraceOptions) -> Self {
+        self.qwen_trace = qwen_trace;
         self
     }
 
@@ -8586,6 +8664,16 @@ async fn run_slm_warm_session(
     use bitnet_tokenizers::Tokenizer;
     use std::io::Write;
     use std::sync::Arc;
+
+    simple_generation::environment::QwenTraceEnv {
+        jsonl_path: output.qwen_trace.jsonl_path.as_deref(),
+        layer: output.qwen_trace.layer,
+        full_prompt: false,
+        prompt_ids: None,
+        qproj_dump: output.qwen_trace.qproj_dump,
+        dump_limit: output.qwen_trace.dump_limit,
+    }
+    .apply();
 
     let corpus = corpus_path.as_deref().map(SlmWarmSessionCorpus::load).transpose()?;
     if corpus.is_some() && !prompts.is_empty() {
@@ -8708,7 +8796,8 @@ async fn run_slm_warm_session(
     })?;
     let config = loaded_model.config().clone();
     let dense_q8_hook_selection = loaded_model.dense_q8_hook_selection_receipt();
-    let dense_q8_hook_receipt = slm_warm_session_dense_q8_hook_receipt(&dense_q8_hook_selection);
+    let dense_q8_hook_receipt =
+        slm_warm_session_dense_q8_hook_receipt(&dense_q8_hook_selection, &output.qwen_trace);
     let model: Arc<dyn Model> = Arc::from(loaded_model);
     let model_load_ms = elapsed_ms(model_load_start);
     let loader_mode = detect_loader_mode_for_path(&model_path, is_hf_directory);
@@ -8785,6 +8874,31 @@ async fn run_slm_warm_session(
     } else {
         "computed_from_model_file"
     };
+    if output.qwen_trace.enabled() {
+        qwen_trace_reset_file()?;
+        unsafe {
+            std::env::remove_var("BITNET_QWEN_TRACE_ACTIVE");
+            std::env::remove_var("BITNET_QWEN_TRACE_STEP");
+        }
+        qwen_trace_write(serde_json::json!({
+            "kind": "qwen_trace_event",
+            "stage": "warm_session_trace_start",
+            "tracking_item": "SLM-CPU-147",
+            "model_path": model_path.display().to_string(),
+            "model_sha256": model_sha256.as_str(),
+            "requested_backend": requested_backend_label,
+            "selected_backend": backend_identity.selected_backend.as_str(),
+            "runtime_api": backend_identity.runtime_api.as_str(),
+            "prompt_template": prompt_template.as_str(),
+            "qwen_no_think": no_think,
+            "max_new_tokens": max_new_tokens,
+            "temperature": temperature,
+            "top_k": top_k,
+            "greedy": greedy,
+            "deterministic": deterministic,
+            "activation_scope": "first_prompt_first_decode_forward_only",
+        }))?;
+    }
     let model_repo = infer_model_repo(&model_path);
     let model_architecture = infer_model_architecture(&model_path);
     let model_family = receipt_model_family(&model_architecture);
@@ -8991,6 +9105,7 @@ async fn run_slm_warm_session(
         let prefill_ms = if prefill_token_count > 0 { elapsed_ms(prefill_start) } else { 0.0 };
 
         for _step_idx in 0..max_new_tokens {
+            let step_idx = generated_tokens.len();
             let decode_step_start = std::time::Instant::now();
             let decode_alloc_start = AllocationAuditSnapshot::current();
             let last_token = tokens.last().copied().expect("tokens must be non-empty");
@@ -9005,7 +9120,37 @@ async fn run_slm_warm_session(
 
             let forward_start = std::time::Instant::now();
             let forward_alloc_start = AllocationAuditSnapshot::current();
-            let h = model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any)?;
+            let qwen_trace_this_step = output.qwen_trace.enabled() && index == 0 && step_idx == 0;
+            if qwen_trace_this_step {
+                unsafe {
+                    std::env::set_var("BITNET_QWEN_TRACE_ACTIVE", "1");
+                    std::env::set_var("BITNET_QWEN_TRACE_STEP", step_idx.to_string());
+                }
+                qwen_trace_write(serde_json::json!({
+                    "kind": "qwen_trace_event",
+                    "stage": "warm_session_decode_forward_start",
+                    "tracking_item": "SLM-CPU-147",
+                    "prompt_index": index,
+                    "step": step_idx,
+                    "last_token": last_token,
+                    "activation_scope": "first_prompt_first_decode_forward_only",
+                }))?;
+            }
+            let forward_result = model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any);
+            if qwen_trace_this_step {
+                unsafe {
+                    std::env::remove_var("BITNET_QWEN_TRACE_ACTIVE");
+                    std::env::remove_var("BITNET_QWEN_TRACE_STEP");
+                }
+                qwen_trace_write(serde_json::json!({
+                    "kind": "qwen_trace_event",
+                    "stage": "warm_session_decode_forward_end",
+                    "tracking_item": "SLM-CPU-147",
+                    "prompt_index": index,
+                    "step": step_idx,
+                }))?;
+            }
+            let h = forward_result?;
             if allocation_audit_enabled {
                 forward_step_allocs.push(AllocationAuditSnapshot::delta_since(forward_alloc_start));
             }
@@ -9621,6 +9766,7 @@ async fn run_slm_warm_session(
         "dense_q8_hook_selection": dense_q8_hook_selection,
         "dense_q8_hook": dense_q8_hook_receipt,
         "dense_q8_sidecar_instrumentation": dense_q8_sidecar_instrumentation,
+        "qwen_trace": output.qwen_trace.receipt(),
         "cpu": {
             "model": cpu_model.as_str(),
             "arch": std::env::consts::ARCH,
@@ -10714,6 +10860,7 @@ fn slm_warm_session_determinism_receipt(
 #[cfg(feature = "full-cli")]
 fn slm_warm_session_dense_q8_hook_receipt(
     dense_q8_hook_selection: &serde_json::Value,
+    qwen_trace: &WarmSessionQwenTraceOptions,
 ) -> serde_json::Value {
     let gate = bitnet_transformer::dense_q8_sidecar_q_norm_input_runtime_hook_gate();
     let payload_bearing_boundary = dense_q8_hook_selection
@@ -10819,11 +10966,27 @@ fn slm_warm_session_dense_q8_hook_receipt(
             })
         })
         .collect();
+    let q_proj_numeric_status = if qwen_trace.enabled() {
+        "warm_session_capture_surface_enabled_without_before_after_comparison"
+    } else {
+        "not_captured_by_warm_session_receipt"
+    };
+    let q_proj_numeric_blocking_reason = if qwen_trace.enabled() {
+        "warm-session q_proj trace capture is available for the eager runtime path, but before/after numeric comparison receipts are still required before selector promotion"
+    } else {
+        "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating"
+    };
+    let tensor_fingerprint_status = if qwen_trace.enabled() {
+        "captured_in_qwen_trace_jsonl_when_runtime_reaches_boundary"
+    } else {
+        "not_captured_by_warm_session_receipt"
+    };
 
     serde_json::json!({
         "schema": 1,
         "artifact_kind": "dense_q8_hook_receipt_identity",
         "tracking_item": "SLM-CPU-109",
+        "capture_tracking_item": "SLM-CPU-147",
         "selected_path": selected_path,
         "selected_kernel": selected_kernel,
         "selected_tensor": selected_tensor,
@@ -10861,10 +11024,11 @@ fn slm_warm_session_dense_q8_hook_receipt(
         },
         "q_proj_numeric_evidence": {
             "present": false,
-            "status": "not_captured_by_warm_session_receipt",
+            "status": q_proj_numeric_status,
             "required_stage": "attention.q_proj_output_pre_optional_qnorm",
             "required_boundary": "attention_q_proj_output_pre_optional_qnorm",
             "required_source_tensor": selected_tensor,
+            "warm_session_capture_surface": qwen_trace.receipt(),
             "required_evidence": [
                 "before_after_q_proj_output_f32_le_fingerprint_or_bounded_vector",
                 "max_abs_diff",
@@ -10873,7 +11037,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
                 "first_differing_index",
                 "accepted_absolute_tolerance"
             ],
-            "blocking_reason": "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating",
+            "blocking_reason": q_proj_numeric_blocking_reason,
         },
         "q_norm_input_boundary": gate.selected_materialization_boundary,
         "q_norm_input_tensor_identity": {
@@ -10885,7 +11049,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
             "dtype": "f32",
             "dense_hook_identity": gate.hook_identity,
             "tensor_fingerprint_sha256_f32_le": serde_json::Value::Null,
-            "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+            "tensor_fingerprint_status": tensor_fingerprint_status,
             "tensor_identity_surface_defined": gate.tensor_identity_surface_defined,
             "required_identity_fields": gate.tensor_identity_fields,
         },
@@ -15040,7 +15204,10 @@ mod tests {
             },
         });
 
-        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+        let receipt = slm_warm_session_dense_q8_hook_receipt(
+            &selection,
+            &WarmSessionQwenTraceOptions::default(),
+        );
 
         assert_eq!(receipt["tracking_item"], "SLM-CPU-109");
         assert_eq!(receipt["selected_path"], "eager_f32_candle");
@@ -15105,7 +15272,10 @@ mod tests {
             },
         });
 
-        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+        let receipt = slm_warm_session_dense_q8_hook_receipt(
+            &selection,
+            &WarmSessionQwenTraceOptions::default(),
+        );
 
         assert_eq!(receipt["source_order_q8_matvec_candidate"], false);
         assert_eq!(receipt["source_order_qproj_candidate_identity"]["present"], false);
@@ -15130,6 +15300,59 @@ mod tests {
 
     #[test]
     #[cfg(feature = "full-cli")]
+    fn slm_warm_session_dense_q8_hook_receipt_records_qproj_capture_surface() {
+        let selection = serde_json::json!({
+            "selected_path": "eager_f32_candle",
+            "selected_kernel": "dense-f32-candle-linear",
+            "payload_bearing_boundary": {
+                "tensor_name": "layers.0.attention.q_proj.weight",
+                "source_order_q8_matvec_candidate": true,
+                "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+                "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+                "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+                "source_order_input_dim": 1024,
+                "source_order_output_dim": 2048,
+                "sidecar_payload_order_matches_runtime_shape": false,
+            },
+        });
+        let trace = WarmSessionQwenTraceOptions {
+            jsonl_path: Some(std::path::PathBuf::from("target/slm-cpu/qwen-trace.jsonl")),
+            layer: Some(0),
+            qproj_dump: true,
+            dump_limit: 16,
+        };
+
+        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection, &trace);
+
+        assert_eq!(receipt["capture_tracking_item"], "SLM-CPU-147");
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["status"],
+            "warm_session_capture_surface_enabled_without_before_after_comparison"
+        );
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["warm_session_capture_surface"]["enabled"],
+            true
+        );
+        assert_eq!(receipt["q_proj_numeric_evidence"]["warm_session_capture_surface"]["layer"], 0);
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["warm_session_capture_surface"]["qproj_dump"],
+            true
+        );
+        assert_eq!(
+            receipt["q_proj_numeric_evidence"]["warm_session_capture_surface"]["dump_limit"],
+            16
+        );
+        assert_eq!(
+            receipt["q_norm_input_tensor_identity"]["tensor_fingerprint_status"],
+            "captured_in_qwen_trace_jsonl_when_runtime_reaches_boundary"
+        );
+        assert_eq!(receipt["q_proj_numeric_evidence"]["present"], false);
+        assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
+        assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
     fn slm_warm_session_dense_q8_hook_receipt_treats_null_payload_boundary_as_absent() {
         let selection = serde_json::json!({
             "selected_path": "eager_f32_candle",
@@ -15140,7 +15363,10 @@ mod tests {
             },
         });
 
-        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+        let receipt = slm_warm_session_dense_q8_hook_receipt(
+            &selection,
+            &WarmSessionQwenTraceOptions::default(),
+        );
 
         assert_eq!(receipt["source_order_q8_matvec_candidate"], false);
         assert_eq!(receipt["source_order_qproj_candidate_identity"]["present"], false);
