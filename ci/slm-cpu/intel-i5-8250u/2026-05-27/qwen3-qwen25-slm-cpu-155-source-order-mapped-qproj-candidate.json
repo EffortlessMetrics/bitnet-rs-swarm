@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_mapped_qproj_candidate",
+  "tracking_item": "SLM-CPU-155",
+  "generated_at_utc": "2026-05-27T14:45:00Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_154_row_mapping_proof": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-154-source-order-row-mapping-proof.json",
+    "qwen3_local_run": "target/slm-cpu/qwen3-slm-cpu-155-mapped-qproj-candidate-run.json",
+    "qwen3_local_trace": "target/slm-cpu/qwen3-slm-cpu-155-mapped-qproj-candidate-trace.jsonl",
+    "qwen25_local_run": "target/slm-cpu/qwen25-slm-cpu-155-mapped-qproj-candidate-run.json",
+    "qwen25_local_trace": "target/slm-cpu/qwen25-slm-cpu-155-mapped-qproj-candidate-trace.jsonl",
+    "local_target_artifacts_committed": false
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_preserved": true,
+    "source_order_candidate_selected_for_runtime": false,
+    "source_order_candidate_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1",
+    "accumulator_audit_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT=1",
+    "candle_slice_compare_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDLE_SLICE_COMPARE=1",
+    "row_mapping_proof_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ROW_MAPPING_PROOF=1",
+    "payload_gate": "BITNET_DENSE_Q8_PAYLOAD_ENABLE=1 BITNET_DENSE_Q8_PAYLOAD_TENSOR=blk.0.attn_q.weight",
+    "runtime_gate": "BITNET_DENSE_Q8_RUNTIME_ENABLE=1 BITNET_DENSE_Q8_RUNTIME_TENSOR=blk.0.attn_q.weight"
+  },
+  "qwen3": {
+    "model": {
+      "architecture": "qwen3",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "format": "gguf",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "tokenizer": "gguf_metadata",
+      "quant_format": "Q8_0"
+    },
+    "backend": {
+      "fallback_used": false,
+      "requested_backend": "cpu",
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust"
+    },
+    "prompt_result": {
+      "prompt": "What is 2+2? Answer with only the number.",
+      "prompt_template": "qwen",
+      "no_think": true,
+      "prompt_tokens": 36,
+      "generated_token_ids": [
+        17
+      ],
+      "decoded_text": "2"
+    },
+    "candidate_trace": {
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "gguf_tensor": "blk.0.attn_q.weight",
+      "dense_hook_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+      "candidate_path": "source_order_q8_0_qproj_matvec",
+      "candidate_kernel": "dense-q8-source-order-qproj-matvec",
+      "source_input_dim": 1024,
+      "source_output_dim": 2048,
+      "candidate_len": 2048,
+      "eager_len": 2048,
+      "candidate_sha256_f32_le": "731fa50b6c1125f3529c313fe1742fb39e7dfb1d8c90ef849110fc60394c3990",
+      "eager_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "max_abs_diff_vs_eager": 0.000005245,
+      "mean_abs_diff_vs_eager": 0.000000113,
+      "rms_abs_diff_vs_eager": 0.000000273,
+      "runtime_disabled": true,
+      "default_runtime_preserved": true
+    },
+    "selected_accumulator_indices": [
+      {
+        "output_index": 0,
+        "candidate_output": 0.018396096,
+        "eager_output": 0.018396128,
+        "abs_diff_vs_eager": 0.000000032,
+        "mapped_recomputed_output": 0.018396096,
+        "candle_recomputed_output": 0.018396096,
+        "abs_diff_mapped_vs_candle": 0.0
+      },
+      {
+        "output_index": 1419,
+        "candidate_output": -5.888991833,
+        "eager_output": -5.88899374,
+        "abs_diff_vs_eager": 0.000001907,
+        "mapped_recomputed_output": -5.888991833,
+        "candle_recomputed_output": -5.888991833,
+        "abs_diff_mapped_vs_candle": 0.0
+      },
+      {
+        "output_index": 1970,
+        "candidate_output": 0.827744961,
+        "eager_output": 0.827744126,
+        "abs_diff_vs_eager": 0.000000834,
+        "mapped_recomputed_output": 0.827744961,
+        "candle_recomputed_output": 0.827744961,
+        "abs_diff_mapped_vs_candle": 0.0
+      }
+    ],
+    "classification": "mapped_source_order_qproj_candidate_matches_eager_within_trace_tolerance"
+  },
+  "qwen25": {
+    "model": {
+      "architecture": "qwen2",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "format": "gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0"
+    },
+    "backend": {
+      "fallback_used": false,
+      "requested_backend": "cpu",
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust"
+    },
+    "prompt_result": {
+      "corpus": "ci/quality/slm-second-model-sanity-corpus.yaml",
+      "case_id": "math_2_plus_2_brief",
+      "status": "passed",
+      "generated_token_ids": [
+        17,
+        10,
+        17,
+        16819,
+        220,
+        19,
+        13,
+        151645
+      ],
+      "decoded_text": "2+2 equals 4."
+    },
+    "candidate_trace": {
+      "source_order_qproj_candidate_stage_present": false,
+      "reason": "Qwen2.5 exact q_proj path does not expose the Qwen3 source-order runtime-shape boundary exercised by SLM-CPU-154/155; the run remains behavior evidence and non-applicability evidence for this source-order candidate."
+    },
+    "classification": "qwen25_behavior_preserved_candidate_not_applicable_to_source_order_qproj_boundary"
+  },
+  "decision": {
+    "status": "accepted_for_trace_gated_candidate",
+    "summary": "The SLM-CPU-154 runtime row mapping has been applied to the default-disabled source-order Qwen3 q_proj candidate. Under explicit trace gates, the candidate now matches the eager q_proj oracle within trace tolerance while preserving eager_f32_candle as the default runtime.",
+    "next_safe_step": "A later slice may decide whether this candidate can be promoted beyond diagnostic trace evidence, but only after fresh selector/runtime receipt gates preserve behavior and attach required identity evidence."
+  }
+}
