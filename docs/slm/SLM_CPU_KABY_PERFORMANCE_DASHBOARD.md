@@ -69,6 +69,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-142-source-order-evidence-fields.json` | Adds explicit fail-closed receipt fields for source-order q_proj candidate identity and missing q_proj numeric evidence, resolving absent-field ambiguity without runtime promotion or performance claims |
 | Source-order q_proj evidence receipt refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-143-source-order-evidence-receipts.json` | Captures fresh current-main Qwen3/Qwen2.5 before/after strict CPU warm-session receipts with the SLM-CPU-142 fields present; generated behavior is preserved, but selector use remains blocked because source-order q_proj candidate identity is still not usable and q_proj numeric evidence is not captured |
 | Source-order q_proj identity blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-144-source-order-qproj-identity-blocker.json` | Classifies the SLM-CPU-143 source-order identity gap as a missing payload-gate capture plus a receipt-classifier null-boundary ambiguity; runtime selection remains disabled |
+| Payload/runtime q_proj capture | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-145-payload-runtime-qproj-capture.json` | Captures exact Qwen3/Qwen2.5 payload+runtime gated receipts for `blk.0.attn_q.weight`: Qwen3 exposes the source-order q_proj identity but remains fail-closed on payload-order mismatch, while Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected; selector promotion remains blocked because q_proj numeric evidence is not attached |
 
 Qwen3 rows use:
 
@@ -87,7 +88,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-144. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-145. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -323,6 +324,19 @@ source-order selector use. This is receipt classification and blocker evidence
 only, not an allocation reduction, timing improvement, speedup,
 sustained-throughput, default-runtime promotion, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-145 performs that exact-model payload/runtime capture with both
+`BITNET_DENSE_Q8_PAYLOAD_*` and `BITNET_DENSE_Q8_RUNTIME_*` set for
+`blk.0.attn_q.weight`. Qwen3 preserves the strict warm-session behavior oracle
+and exposes `layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled`,
+but runtime compute remains declined because the GGUF source payload order does
+not match the Candle runtime matrix shape. Qwen2.5 also preserves generated
+IDs/text and records 92 opt-in packed q_proj matvec calls for the same exact
+tensor. Selector promotion still remains fail-closed because the receipts do
+not attach bounded q_proj numeric diff evidence for the runtime path. This is
+payload/runtime receipt evidence only, not a default-runtime promotion,
+allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5,
+server, accelerator, Qwen3.5, or BitNet QK256 claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
