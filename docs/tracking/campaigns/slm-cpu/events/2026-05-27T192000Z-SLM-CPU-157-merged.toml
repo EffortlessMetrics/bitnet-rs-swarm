@@ -1,0 +1,25 @@
+timestamp = "2026-05-27T19:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-157"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 837
+branch = "codex/slm-cpu-157-source-order-qproj-receipt-pair"
+head_sha = "e276acb2035278405181a8b9a2e3b294ac9fe218"
+merge_sha = "da93284da891b017dd6a5d9292edc68d93d0635c"
+summary = "Merged PR #837 capturing paired Qwen3/Qwen2.5 source-order q_proj selector-gate receipt evidence."
+notes = [
+  "The receipt bundle includes committed aggregate and per-prompt strict CPU warm-session receipts for Qwen3 and Qwen2.5 before/after runs.",
+  "Prompt IDs, generated IDs, decoded text, model SHA, GGUF tokenizer authority, selected CPU backend/kernel identity, and fallback=false are preserved.",
+  "Qwen3 keeps eager_f32_candle selected and records the source-order q_proj candidate as runtime-disabled/default-disabled with exact q_proj numeric preservation.",
+  "Qwen2.5 records the opt-in packed-Q8 sidecar selector path with q_proj numeric drift inside the accepted 1e-4 absolute tolerance.",
+  "No default-runtime promotion, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-158"
+status = "ready"
+branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
+summary = "Consume the SLM-CPU-157 paired evidence and add or precisely block the default-disabled source-order q_proj runtime binding gate."
