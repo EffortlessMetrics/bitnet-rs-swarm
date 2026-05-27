@@ -1,0 +1,17 @@
+timestamp = "2026-05-26T20:21:59Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-144"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 810
+branch = "codex/slm-cpu-144-source-order-qproj-identity"
+head_sha = "39cf4f453d51f3a2a47b70c39f8b6ba2a05eb9dd"
+summary = "Opened PR #810 with a null payload-boundary classifier fix and SLM-CPU-144 blocker artifact."
+notes = [
+  "The PR treats payload_bearing_boundary=null as no payload boundary rather than an ambiguous payload-boundary source-order q_proj identity gap.",
+  "The blocker artifact explains that SLM-CPU-143 enabled BITNET_DENSE_Q8_RUNTIME_* without also enabling BITNET_DENSE_Q8_PAYLOAD_* for blk.0.attn_q.weight.",
+  "Selector use remains blocked until exact-model receipts are recaptured with both payload and runtime gates plus q_proj numeric evidence.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
