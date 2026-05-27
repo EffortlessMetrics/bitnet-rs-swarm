@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T08:55:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-150"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 823
+branch = "codex/slm-cpu-150-source-order-qproj-candidate-capture"
+merge_sha = "6593ae57ba3843a3d8c754d6639d149938439f87"
+summary = "Merged PR #823 with the default-disabled Qwen3 source-order q_proj candidate capture surface and i5-8250U evidence."
+notes = [
+  "The merged slice binds the generation-time eager q_proj input to the source-order Q8_0 prototype under BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1.",
+  "The artifact records candidate/eager hashes, bounded vector prefixes, and diff metrics for layers.0.attention.q_proj.weight / blk.0.attn_q.weight while preserving eager_f32_candle runtime.",
+  "The captured source-order candidate differs from the eager warm-session q_proj oracle, so SLM-CPU-151 is ready to classify the next concrete mismatch boundary without runtime promotion or performance claims.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-151"
+status = "ready"
+branch = "codex/slm-cpu-151-source-order-qproj-candidate-mismatch"
+summary = "Classify or precisely block the Qwen3 source-order q_proj candidate/eager mismatch captured by SLM-CPU-150."
