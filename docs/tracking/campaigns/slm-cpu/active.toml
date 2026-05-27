@@ -9149,10 +9149,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-154"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
 pr = 831
-head_sha = "d485e0bad1d547ca705e27162f663133c83c3afe"
+head_sha = "4604a0d887f25bc610311a502c23aa9678c81a3d"
+merge_sha = "a6fca350a46983015b5e9fd84c20e7a364db0233"
+merged_at = "2026-05-27T13:40:04Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
