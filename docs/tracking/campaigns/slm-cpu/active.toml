@@ -9097,10 +9097,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-153"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
 pr = 829
-head_sha = "43d436d416e3cb4530da24405418a094dc56d36d"
+head_sha = "71699077bd70d2558251f00cabe0994a39964c6b"
+merge_sha = "acb09092d3d781f1613fd95e67803916bfb1fca8"
+merged_at = "2026-05-27T12:30:00Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
