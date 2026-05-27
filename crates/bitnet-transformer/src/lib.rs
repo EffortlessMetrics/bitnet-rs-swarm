@@ -885,6 +885,19 @@ fn maybe_trace_dense_q8_source_order_qproj_accumulator_audit(
     Ok(())
 }
 
+struct DenseQ8AccumulatorTerm {
+    input_index: usize,
+    weight_idx: usize,
+    q8_block_index: usize,
+    q8_block_value_offset: usize,
+    q8_block_scale: f32,
+    q: i8,
+    input_value: f32,
+    contribution: f32,
+    partial_sum_after: f32,
+    term_kind: &'static str,
+}
+
 fn dense_q8_source_order_qproj_accumulator_audit_entry(
     input_row: &[f32],
     initial_bias: f32,
@@ -895,7 +908,7 @@ fn dense_q8_source_order_qproj_accumulator_audit_entry(
     let block_stride = 2 + payload.q8_block_size;
     let mut sum = initial_bias;
     let mut first_terms = Vec::new();
-    let mut max_abs_term: Option<(usize, usize, usize, usize, f32, i8, f32, f32, f32)> = None;
+    let mut max_abs_term: Option<DenseQ8AccumulatorTerm> = None;
     for (in_row, input_value) in input_row.iter().enumerate() {
         let weight_idx = in_row * source_output_dim + output_index;
         let block_idx = weight_idx / payload.q8_block_size;
@@ -911,121 +924,63 @@ fn dense_q8_source_order_qproj_accumulator_audit_entry(
         let contribution = scale * f32::from(q) * *input_value;
         sum += contribution;
         if first_terms.len() < 8 {
-            first_terms.push((
-                in_row,
+            first_terms.push(DenseQ8AccumulatorTerm {
+                input_index: in_row,
                 weight_idx,
-                block_idx,
-                block_value_offset,
-                scale,
+                q8_block_index: block_idx,
+                q8_block_value_offset: block_value_offset,
+                q8_block_scale: scale,
                 q,
-                *input_value,
+                input_value: *input_value,
                 contribution,
-                sum,
-                "prefix",
-            ));
+                partial_sum_after: sum,
+                term_kind: "prefix",
+            });
         }
         let replace_max = match max_abs_term.as_ref() {
-            Some((_, _, _, _, _, _, _, existing, _)) => contribution.abs() > existing.abs(),
+            Some(existing) => contribution.abs() > existing.contribution.abs(),
             None => true,
         };
         if replace_max {
-            max_abs_term = Some((
-                in_row,
+            max_abs_term = Some(DenseQ8AccumulatorTerm {
+                input_index: in_row,
                 weight_idx,
-                block_idx,
-                block_value_offset,
-                scale,
+                q8_block_index: block_idx,
+                q8_block_value_offset: block_value_offset,
+                q8_block_scale: scale,
                 q,
-                *input_value,
+                input_value: *input_value,
                 contribution,
-                sum,
-            ));
+                partial_sum_after: sum,
+                term_kind: "max_abs_contribution",
+            });
         }
     }
     let mut terms_json = first_terms
         .into_iter()
-        .map(
-            |(
-                in_row,
-                weight_idx,
-                block_idx,
-                block_value_offset,
-                scale,
-                q,
-                input_value,
-                contribution,
-                partial_sum_after,
-                term_kind,
-            )| {
-                dense_q8_source_order_qproj_accumulator_term_json(
-                    in_row,
-                    weight_idx,
-                    block_idx,
-                    block_value_offset,
-                    scale,
-                    q,
-                    input_value,
-                    contribution,
-                    partial_sum_after,
-                    term_kind,
-                )
-            },
-        )
+        .map(|term| dense_q8_source_order_qproj_accumulator_term_json(&term))
         .collect::<Vec<_>>();
-    if let Some((
-        in_row,
-        weight_idx,
-        block_idx,
-        block_value_offset,
-        scale,
-        q,
-        input_value,
-        contribution,
-        partial_sum_after,
-    )) = max_abs_term
-        && in_row >= 8
+    if let Some(term) = max_abs_term
+        && term.input_index >= 8
     {
-        terms_json.push(dense_q8_source_order_qproj_accumulator_term_json(
-            in_row,
-            weight_idx,
-            block_idx,
-            block_value_offset,
-            scale,
-            q,
-            input_value,
-            contribution,
-            partial_sum_after,
-            "max_abs_contribution",
-        ));
+        terms_json.push(dense_q8_source_order_qproj_accumulator_term_json(&term));
     }
     Ok((sum, terms_json.join(",")))
 }
 
-#[allow(clippy::too_many_arguments)]
-fn dense_q8_source_order_qproj_accumulator_term_json(
-    input_index: usize,
-    weight_idx: usize,
-    q8_block_index: usize,
-    q8_block_value_offset: usize,
-    q8_block_scale: f32,
-    q: i8,
-    input_value: f32,
-    contribution: f32,
-    partial_sum_after: f32,
-    term_kind: &str,
-) -> String {
+fn dense_q8_source_order_qproj_accumulator_term_json(term: &DenseQ8AccumulatorTerm) -> String {
     format!(
         "{{\"term_kind\":\"{}\",\"input_index\":{},\"weight_idx\":{},\"q8_block_index\":{},\"q8_block_value_offset\":{},\"q8_block_scale\":{},\"q\":{},\"input_value\":{},\"contribution\":{},\"partial_sum_after\":{}}}",
-        term_kind,
-        input_index,
-        weight_idx,
-        q8_block_index,
-        q8_block_value_offset,
-        qwen_trace_number(f64::from(q8_block_scale)),
-        q,
-        qwen_trace_number(f64::from(input_value)),
-        qwen_trace_number(f64::from(contribution)),
-        qwen_trace_number(f64::from(partial_sum_after))
+        term.term_kind,
+        term.input_index,
+        term.weight_idx,
+        term.q8_block_index,
+        term.q8_block_value_offset,
+        qwen_trace_number(f64::from(term.q8_block_scale)),
+        term.q,
+        qwen_trace_number(f64::from(term.input_value)),
+        qwen_trace_number(f64::from(term.contribution)),
+        qwen_trace_number(f64::from(term.partial_sum_after))
     )
 }
 
