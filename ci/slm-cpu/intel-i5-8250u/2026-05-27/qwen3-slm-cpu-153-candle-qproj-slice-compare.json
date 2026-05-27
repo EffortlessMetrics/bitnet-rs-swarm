@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_candle_slice_compare",
+  "tracking_item": "SLM-CPU-153",
+  "generated_at_utc": "2026-05-27T15:58:00Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_152_accumulator_audit": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-152-source-order-qproj-accumulator-audit.json",
+    "local_trace": "target/slm-cpu/qwen3-slm-cpu-153-candle-qproj-slice-compare-trace.jsonl",
+    "local_trace_committed": false,
+    "local_run": "target/slm-cpu/qwen3-slm-cpu-153-candle-qproj-slice-compare-run.json",
+    "local_run_committed": false
+  },
+  "model": {
+    "architecture": "qwen3",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "format": "gguf",
+    "loader_mode": "real_gguf",
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "tokenizer": "gguf_metadata",
+    "quant_format": "Q8_0"
+  },
+  "backend": {
+    "fallback_used": false,
+    "requested_backend": "cpu",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust"
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "payload_gate": "BITNET_DENSE_Q8_PAYLOAD_ENABLE=1 BITNET_DENSE_Q8_PAYLOAD_TENSOR=blk.0.attn_q.weight",
+    "runtime_gate": "BITNET_DENSE_Q8_RUNTIME_ENABLE=1 BITNET_DENSE_Q8_RUNTIME_TENSOR=blk.0.attn_q.weight",
+    "source_order_candidate_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1",
+    "accumulator_audit_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT=1",
+    "candle_slice_compare_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDLE_SLICE_COMPARE=1",
+    "source_order_candidate_selected_for_runtime": false,
+    "default_runtime_preserved": true
+  },
+  "prompt_result": {
+    "prompt": "What is 2+2? Answer with only the number.",
+    "prompt_template": "qwen",
+    "no_think": true,
+    "prompt_tokens": 36,
+    "generated_token_ids": [
+      17
+    ],
+    "decoded_text": "2",
+    "generated_ids_preserved_from_slm_cpu_150": true
+  },
+  "candidate_diff": {
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "input_rows": 1,
+    "candidate_len": 2048,
+    "eager_len": 2048,
+    "candidate_sha256_f32_le": "245bfb2a098ce31faad2b220a177a4449428dd0b8b555eb995012cecd549a7ac",
+    "eager_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+    "max_abs_diff_vs_eager": 5.735998631,
+    "mean_abs_diff_vs_eager": 0.280192134,
+    "rms_abs_diff_vs_eager": 0.516290998,
+    "first_diff_index": 0
+  },
+  "candle_slice_compare": {
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "input_row": 0,
+    "q8_block_size": 32,
+    "entries": [
+      {
+        "output_index": 0,
+        "source_order_output": -0.039782636,
+        "candle_recomputed_output": 0.018396096,
+        "eager_output": 0.018396128,
+        "abs_diff_source_order_vs_candle": 0.05817873,
+        "abs_diff_candle_vs_eager": 0.000000032,
+        "selected_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "source_weight_idx": 0,
+            "candle_weight_idx": 0,
+            "q8_block_index": 0,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000294209,
+            "q": 11,
+            "source_order_weight_value": 0.003236294,
+            "candle_weight_value": 0.003236294,
+            "input_value": 0.00725793,
+            "source_order_contribution": 0.000023489,
+            "candle_contribution": 0.000023489,
+            "contribution_delta": 0.0
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "source_weight_idx": 2048,
+            "candle_weight_idx": 1,
+            "q8_block_index": 64,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000262976,
+            "q": 70,
+            "source_order_weight_value": 0.018408298,
+            "candle_weight_value": -0.003530502,
+            "input_value": 0.655267537,
+            "source_order_contribution": 0.012062361,
+            "candle_contribution": -0.002313424,
+            "contribution_delta": 0.014375784
+          },
+          {
+            "term_kind": "max_abs_contribution_delta",
+            "input_index": 106,
+            "source_weight_idx": 217088,
+            "candle_weight_idx": 106,
+            "q8_block_index": 6784,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000597,
+            "q": -127,
+            "source_order_weight_value": -0.075819016,
+            "candle_weight_value": 0.006585121,
+            "input_value": 0.835196435,
+            "source_order_contribution": -0.063323773,
+            "candle_contribution": 0.00549987,
+            "contribution_delta": -0.068823643
+          }
+        ]
+      },
+      {
+        "output_index": 1419,
+        "source_order_output": -0.152995154,
+        "candle_recomputed_output": -5.888991833,
+        "eager_output": -5.88899374,
+        "abs_diff_source_order_vs_candle": 5.735996723,
+        "abs_diff_candle_vs_eager": 0.000001907,
+        "selected_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "source_weight_idx": 1419,
+            "candle_weight_idx": 1453056,
+            "q8_block_index": 44,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.00058794,
+            "q": 29,
+            "source_order_weight_value": 0.017050266,
+            "candle_weight_value": -0.004673004,
+            "input_value": 0.00725793,
+            "source_order_contribution": 0.00012375,
+            "candle_contribution": -0.000033916,
+            "contribution_delta": 0.000157666
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "source_weight_idx": 3467,
+            "candle_weight_idx": 1453057,
+            "q8_block_index": 108,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.000213504,
+            "q": 40,
+            "source_order_weight_value": 0.008540154,
+            "candle_weight_value": 0.004673004,
+            "input_value": 0.655267537,
+            "source_order_contribution": 0.005596085,
+            "candle_contribution": 0.003062068,
+            "contribution_delta": 0.002534017
+          },
+          {
+            "term_kind": "max_abs_contribution_delta",
+            "input_index": 35,
+            "source_weight_idx": 73099,
+            "candle_weight_idx": 1453091,
+            "q8_block_index": 2284,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.000130057,
+            "q": 13,
+            "source_order_weight_value": 0.001690745,
+            "candle_weight_value": 0.139966965,
+            "input_value": -1.3026824,
+            "source_order_contribution": -0.002202504,
+            "candle_contribution": -0.182332501,
+            "contribution_delta": 0.18012999
+          }
+        ]
+      },
+      {
+        "output_index": 1970,
+        "source_order_output": 0.641220629,
+        "candle_recomputed_output": 0.827744961,
+        "eager_output": 0.827744126,
+        "abs_diff_source_order_vs_candle": 0.186524332,
+        "abs_diff_candle_vs_eager": 0.000000834,
+        "selected_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "source_weight_idx": 1970,
+            "candle_weight_idx": 2017280,
+            "q8_block_index": 61,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.000411272,
+            "q": -22,
+            "source_order_weight_value": -0.009047985,
+            "candle_weight_value": 0.103149414,
+            "input_value": 0.00725793,
+            "source_order_contribution": -0.00006567,
+            "candle_contribution": 0.000748651,
+            "contribution_delta": -0.000814321
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "source_weight_idx": 4018,
+            "candle_weight_idx": 2017281,
+            "q8_block_index": 125,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.000241041,
+            "q": 40,
+            "source_order_weight_value": 0.009641647,
+            "candle_weight_value": -0.012893677,
+            "input_value": 0.655267537,
+            "source_order_contribution": 0.006317859,
+            "candle_contribution": -0.008448808,
+            "contribution_delta": 0.014766666
+          },
+          {
+            "term_kind": "max_abs_contribution_delta",
+            "input_index": 14,
+            "source_weight_idx": 30642,
+            "candle_weight_idx": 2017294,
+            "q8_block_index": 957,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.00057888,
+            "q": 0,
+            "source_order_weight_value": 0.0,
+            "candle_weight_value": -0.263031006,
+            "input_value": -1.023838162,
+            "source_order_contribution": 0.0,
+            "candle_contribution": 0.269301176,
+            "contribution_delta": -0.269301176
+          }
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "candle_recomputed_qproj_matches_eager_oracle": true,
+    "source_order_payload_interpretation_matches_eager_oracle": false,
+    "max_abs_diff_candle_vs_eager": 0.000001907,
+    "max_abs_diff_source_order_vs_candle": 5.735996723,
+    "remaining_boundary": "source_order_payload_to_runtime_row_mapping",
+    "rationale": "For the selected layer-0 q_proj output indices, direct recomputation from the Candle-materialized q_proj row slice matches the eager q_proj output within approximately 2e-6. The source-order Q8 payload traversal still differs, and the selected term comparisons show different Candle row positions and values for the same source-order payload offsets. The evidence points to the source-order GGUF payload-to-runtime row mapping, not Candle eager output attribution.",
+    "next_safe_step": "Prove or implement the source-order payload-to-runtime row mapping for blk.0.attn_q.weight before any source-order or packed-Q8 runtime selection."
+  }
+}

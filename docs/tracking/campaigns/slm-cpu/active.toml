@@ -9097,8 +9097,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-153"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
+pr = 829
+head_sha = "43d436d416e3cb4530da24405418a094dc56d36d"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -9130,6 +9132,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-152 added a default-disabled source-order Qwen3 q_proj accumulator audit and i5-8250U evidence.",
   "SLM-CPU-153 may compare audited source-order payload terms against an exact Candle-materialized q_proj slice or record the missing proof needed.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-154"
+status = "ready"
+branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-153"]
+acceptance = "Use the SLM-CPU-153 Candle row-slice comparison to prove or precisely block the source-order payload-to-runtime row mapping for the exact Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` path. A valid slice must either define a machine-checkable mapping from source-order GGUF Q8 block/offset indices to Candle runtime row-major q_proj indices, with selected-row evidence that reconciles source-order payload terms to the Candle-materialized q_proj row slice, or emit a blocker naming the missing GGUF tensor-layout proof, Q8 block regrouping rule, row/column transpose contract, or comparison hook. It must preserve `eager_f32_candle` as the default runtime and must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-153 showed that Candle row-slice recomputation matches the eager q_proj oracle while source-order payload traversal still diverges.",
+  "SLM-CPU-154 may prove the source-order payload-to-runtime row mapping or record the exact missing layout proof needed.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",

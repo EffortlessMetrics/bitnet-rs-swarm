@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T16:09:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-153"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 829
+branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
+head_sha = "43d436d416e3cb4530da24405418a094dc56d36d"
+summary = "Opened PR #829 with the Candle q_proj row-slice compare slice for the exact Qwen3 Q8_0 source-order q_proj payload boundary."
+notes = [
+  "The slice adds a default-disabled trace surface comparing audited source-order Q8 terms against the Candle-materialized q_proj row slice for selected output indices.",
+  "The committed i5-8250U artifact records that Candle row-slice recomputation matches the eager q_proj oracle within trace tolerance, while source-order payload traversal still diverges.",
+  "The remaining blocker is classified as source_order_payload_to_runtime_row_mapping.",
+  "The PR preserves eager_f32_candle as the default runtime and makes no allocation, timing, speedup, sustained-throughput, default-runtime-promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+
+[[next_item]]
+item = "SLM-CPU-154"
+status = "ready"
+branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+summary = "Prove or precisely block the source-order payload-to-runtime row mapping for the exact Qwen3 q_proj payload boundary."
