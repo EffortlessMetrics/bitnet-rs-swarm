@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T12:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-153"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 829
+branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
+merge_sha = "acb09092d3d781f1613fd95e67803916bfb1fca8"
+summary = "Merged PR #829 adding the Qwen3 q_proj Candle row-slice comparison."
+notes = [
+  "The default-disabled comparison records selected output indices, source weight indices, Q8 block indices, scales, quantized bytes, decoded source-order values, Candle-materialized values, and contribution deltas.",
+  "The i5-8250U artifact shows Candle-materialized row-slice recomputation matches the eager q_proj oracle within trace tolerance while source-order payload traversal still diverges.",
+  "The remaining blocker is the source-order payload-to-runtime row mapping proof, not Candle eager attribution.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-154"
+status = "ready"
+branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+summary = "Prove or precisely block the source-order payload-to-runtime row mapping."

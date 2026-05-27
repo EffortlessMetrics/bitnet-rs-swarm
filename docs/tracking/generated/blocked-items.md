@@ -912,7 +912,7 @@
 | slm-cpu | SLM-CPU-150 | SLM-CPU-149 | merged |
 | slm-cpu | SLM-CPU-151 | SLM-CPU-150 | merged |
 | slm-cpu | SLM-CPU-152 | SLM-CPU-151 | merged |
-| slm-cpu | SLM-CPU-153 | SLM-CPU-152 | pr_open |
+| slm-cpu | SLM-CPU-153 | SLM-CPU-152 | merged |
 | slm-cpu | SLM-CPU-154 | SLM-CPU-153 | ready |
 | slm-cpu | SLM-CPU-103 | SLM-CPU-102 | merged |
 | slm-cpu | SLM-CPU-104 | SLM-CPU-103 | merged |
