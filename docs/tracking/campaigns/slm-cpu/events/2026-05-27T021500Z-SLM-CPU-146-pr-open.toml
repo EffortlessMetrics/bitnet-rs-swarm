@@ -1,0 +1,14 @@
+timestamp = "2026-05-27T02:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-146"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 814
+branch = "codex/slm-cpu-146-qproj-numeric-evidence-gate"
+head_sha = "c3a5357eda4f60e355c351a284bdc107307432d1"
+summary = "Opened PR #814 with a machine-checkable q_proj numeric evidence blocker for the exact SLM-CPU-145 payload/runtime warm-session path."
+notes = [
+  "Opened SLM-CPU-146 PR with a machine-checkable q_proj numeric evidence blocker for the exact SLM-CPU-145 payload/runtime warm-session path.",
+]

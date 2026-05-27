@@ -1,0 +1,161 @@
+{
+  "schema_version": "1.0.0",
+  "schema": 1,
+  "artifact_kind": "slm_cpu_146_qproj_numeric_evidence_gate",
+  "tracking_item": "SLM-CPU-146",
+  "created_utc": "2026-05-27T02:06:00Z",
+  "status": "blocked_numeric_evidence_not_captured_by_warm_session",
+  "summary": "SLM-CPU-145 captured exact Qwen3 Q8_0 and Qwen2.5 Q8_0 payload/runtime-gated warm-session receipts for blk.0.attn_q.weight and preserved the strict behavior oracles. This slice checks whether those receipts can attach bounded q_proj numeric evidence. They cannot yet: the warm-session receipts expose payload/runtime selector identity and behavior preservation, but they do not carry q_proj output f32 fingerprints, bounded vectors, or before/after numeric diff fields.",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof appliance"
+  },
+  "env_gates": {
+    "BITNET_DENSE_Q8_PAYLOAD_ENABLE": "1",
+    "BITNET_DENSE_Q8_PAYLOAD_TENSOR": "blk.0.attn_q.weight",
+    "BITNET_DENSE_Q8_RUNTIME_ENABLE": "1",
+    "BITNET_DENSE_Q8_RUNTIME_TENSOR": "blk.0.attn_q.weight"
+  },
+  "accepted_numeric_policy_reference": {
+    "policy_id": "slm_cpu_qproj_output_abs_1e-4_exact_boundary_v1",
+    "policy_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-125-qproj-numeric-tolerance-gate.json",
+    "absolute_tolerance": 0.0001,
+    "scope_limit": "The policy applies only when complete q_proj-output vector or fingerprint-plus-vector evidence is attached to the exact before/after boundary being judged."
+  },
+  "required_numeric_evidence": {
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "boundary": "attention_q_proj_output_pre_optional_qnorm",
+    "source_tensor": "blk.0.attn_q.weight",
+    "canonical_tensor": "layers.0.attention.q_proj.weight",
+    "required_fields": [
+      "max_abs_diff",
+      "mean_abs_diff",
+      "rms_abs_diff",
+      "first_differing_index",
+      "accepted_tolerance",
+      "payload_runtime_selector_identity",
+      "behavior_preservation"
+    ],
+    "required_capture": [
+      "before_after_q_proj_output_f32_le_fingerprint",
+      "bounded_or_complete_f32_vector_dump",
+      "same model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected backend/kernel, dense hook identity, and fallback=false"
+    ]
+  },
+  "models": {
+    "qwen3": {
+      "model_id": "qwen3-0.6b-q8_0",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-143-before-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-145-after-run.json",
+      "after_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-145-after-run-prompts/",
+      "model_sha256_preserved": true,
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "tokenizer_authority_preserved": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "behavior_preserved": true,
+      "payload_runtime_selector_identity": {
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "runtime_compute_enabled": false,
+        "payload_bearing_boundary_present": true,
+        "payload_tensor": "layers.0.attention.q_proj.weight",
+        "payload_order_matches_runtime_shape": false,
+        "source_order_candidate_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+        "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+        "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+        "selector_dispatch_calls": 42336,
+        "selector_selected_calls": 0,
+        "selector_declined_calls": 42336
+      },
+      "numeric_evidence": {
+        "present": false,
+        "max_abs_diff": null,
+        "mean_abs_diff": null,
+        "rms_abs_diff": null,
+        "first_differing_index": null,
+        "accepted_tolerance": 0.0001,
+        "blocking_reason": "The SLM-CPU-145 warm-session receipts expose q_proj payload/runtime selector identity and behavior preservation, but no q_proj-output f32 fingerprint, bounded vector, or diff summary is attached. Qwen3 also remains fail-closed because the payload order does not match the runtime matrix shape, so no runtime q_proj output vector exists for the source-order candidate path in the receipt."
+      }
+    },
+    "qwen25": {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-143-before-warm-run.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-145-after-warm-run.json",
+      "after_prompt_receipts": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-145-after-warm-run-prompts/",
+      "model_sha256_preserved": true,
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "tokenizer_authority_preserved": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "behavior_preserved": true,
+      "payload_runtime_selector_identity": {
+        "selected_path": "packed_q8_sidecar",
+        "selected_kernel": "dense-q8-sidecar-linear",
+        "runtime_compute_enabled": true,
+        "payload_bearing_boundary_present": true,
+        "payload_tensor": "layers.0.attention.q_proj.weight",
+        "payload_order_matches_runtime_shape": true,
+        "source_order_candidate_identity": null,
+        "source_order_selected_path": null,
+        "source_order_selected_kernel": null,
+        "selector_dispatch_calls": 15456,
+        "selector_selected_calls": 92,
+        "selector_declined_calls": 15364,
+        "packed_matvec_calls": 92,
+        "packed_matvec_output_values": 82432
+      },
+      "numeric_evidence": {
+        "present": false,
+        "max_abs_diff": null,
+        "mean_abs_diff": null,
+        "rms_abs_diff": null,
+        "first_differing_index": null,
+        "accepted_tolerance": 0.0001,
+        "blocking_reason": "The SLM-CPU-145 Qwen2.5 warm-session receipt proves behavior preservation with the opt-in packed q_proj path selected, but warm-session receipts do not attach the q_proj-output f32 vector or diff summary needed to bind the selected packed path to the accepted SLM-CPU-125 numeric tolerance gate."
+      }
+    }
+  },
+  "capture_surface_gap": {
+    "run_command_supports_qproj_dump": true,
+    "run_command_flags": [
+      "--qwen-trace-jsonl",
+      "--qwen-trace-layer",
+      "--qwen-trace-qproj-dump",
+      "--qwen-trace-dump-limit"
+    ],
+    "slm_warm_session_supports_qproj_dump": false,
+    "blocking_reason": "The accepted SLM-CPU-145 oracles are warm-session receipts. The current slm-warm-session command does not expose qwen trace JSONL or q_proj dump flags, so it cannot attach q_proj numeric evidence without adding a new explicit trace surface or producing separate non-warm-session artifacts that would not be the SLM-CPU-145 oracle path."
+  },
+  "gate_result": {
+    "numeric_evidence_attached": false,
+    "selector_promotion_allowed": false,
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_changed": false,
+    "next_safe_step": "Add an explicit slm-warm-session q_proj numeric capture surface or an artifact ingest path, then regenerate exact Qwen3/Qwen2.5 payload/runtime-gated before/after evidence with q_proj numeric diffs attached."
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false,
+    "models_or_target_artifacts_committed": false
+  }
+}
