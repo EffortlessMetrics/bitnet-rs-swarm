@@ -1,0 +1,22 @@
+timestamp = "2026-05-27T06:20:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-148"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 819
+branch = "codex/slm-cpu-148-warm-session-qproj-numeric-evidence"
+merge_sha = "c2831cb2f7635aea416e94018b10a871044d7171"
+summary = "Captured bounded warm-session q_proj numeric evidence for Qwen2.5 and precisely blocked Qwen3 runtime-sidecar evidence at the source-order boundary."
+notes = [
+  "Qwen2.5 Q8_0 captured accepted before/after q_proj numeric evidence under explicit packed-Q8 sidecar gates while preserving generated IDs and decoded text.",
+  "Qwen3 Q8_0 captured eager-path q_proj behavior preservation and precisely blocked runtime-sidecar numeric evidence because the source-order payload does not match the runtime matrix shape.",
+  "The slice preserved strict GGUF tokenizer authority, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and default eager_f32_candle runtime outside explicit gates.",
+  "No model binaries, target artifacts, allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior were claimed.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-149"
+status = "ready"
+summary = "Resolve or precisely block the Qwen3 source-order q_proj runtime evidence boundary identified by SLM-CPU-148."
