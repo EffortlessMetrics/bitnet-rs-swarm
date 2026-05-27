@@ -423,6 +423,32 @@ candidate runtime or claim allocation reduction, timing improvement, speedup,
 sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or
 BitNet QK256 behavior.
 
+SLM-CPU-153 compares those audited source-order q_proj payload terms against
+the exact Candle-materialized layer-0 q_proj row slices for the same selected
+output indices. The compact artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-153-candle-qproj-slice-compare.json
+```
+
+The compare records:
+
+```text
+selected output indices = 0, 1419, 1970
+max_abs_diff_candle_vs_eager = 0.000001907
+max_abs_diff_source_order_vs_candle = 5.735996723
+classification = source_order_payload_to_runtime_row_mapping
+```
+
+This shows that direct recomputation from the Candle-materialized q_proj row
+slice matches the eager q_proj output within trace tolerance, while the
+source-order Q8 payload traversal still diverges. The remaining blocker is the
+source-order payload-to-runtime row mapping for `blk.0.attn_q.weight`, not
+eager Candle output attribution. It keeps `eager_f32_candle` as the default
+runtime and does not claim allocation reduction, timing improvement, speedup,
+sustained throughput, default-runtime promotion, Q4/Q5 support,
+server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
+
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
