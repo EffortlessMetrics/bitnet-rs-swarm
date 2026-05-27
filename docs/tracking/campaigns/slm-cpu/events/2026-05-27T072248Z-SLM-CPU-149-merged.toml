@@ -1,0 +1,22 @@
+timestamp = "2026-05-27T07:22:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-149"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 821
+branch = "codex/slm-cpu-149-qwen3-source-order-qproj-runtime-boundary"
+merge_sha = "ce686cddae8bca8ea0696a1f2aa756a16eb2fd7e"
+summary = "Captured the Qwen3 source-order q_proj runtime boundary as a precise generation-time input binding and trace-attribution blocker."
+notes = [
+  "The artifact records the exact Qwen3-0.6B Q8_0 blk.0.attn_q.weight / layers.0.attention.q_proj.weight boundary.",
+  "Qwen3 preserves strict GGUF tokenizer authority, cpu-rust backend, generated IDs, decoded text, and fallback_used=false while remaining on eager_f32_candle.",
+  "Source-order candidate identity is visible, but selector-selected and packed-matvec calls remain zero because no receipt-safe generation-time input slice or candidate output vector is bound to the source-order prototype.",
+  "No runtime code, model/target artifacts, default-runtime promotion, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior was claimed.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-150"
+status = "ready"
+summary = "Add or precisely block a default-disabled Qwen3 source-order q_proj input and candidate-output capture surface."
