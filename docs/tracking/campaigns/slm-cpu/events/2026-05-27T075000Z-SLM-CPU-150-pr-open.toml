@@ -1,0 +1,16 @@
+timestamp = "2026-05-27T07:50:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-150"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 823
+branch = "codex/slm-cpu-150-source-order-qproj-candidate-capture"
+head_sha = "9990215bdb751a5c400a15f535ffd4a636c9601f"
+summary = "Opened PR #823 with a default-disabled Qwen3 source-order q_proj candidate capture surface and i5-8250U evidence."
+notes = [
+  "The PR binds the generation-time eager q_proj input to the source-order Q8_0 prototype under BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1.",
+  "The artifact records candidate/eager hashes, bounded vector prefixes, and diff metrics for layers.0.attention.q_proj.weight / blk.0.attn_q.weight while preserving eager_f32_candle runtime.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]

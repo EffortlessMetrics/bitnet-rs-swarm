@@ -18,8 +18,9 @@ use super::{
     TransformerQkvProjectionDispatchReplayCpuStats, TransformerQkvProjectionDispatchReplayTensors,
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
-    debug_rope_enabled, qk256_inline_scale, qwen_trace_event, qwen_trace_events_enabled,
-    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
+    debug_rope_enabled, maybe_trace_dense_q8_source_order_qproj_candidate, qk256_inline_scale,
+    qwen_trace_event, qwen_trace_events_enabled, qwen_trace_layer_enabled, qwen_trace_number,
+    qwen_trace_tensor, qwen_trace_tensor_fingerprint,
     qwen_trace_tensor_fingerprint_with_dense_hook, trace_rms_enabled,
 };
 use bitnet_common::Result;
@@ -325,6 +326,14 @@ impl MultiHeadAttention {
 
         let output =
             self.apply_linear(input, linear, proj_name, raw_tensors, dense_linear_hooks)?;
+        maybe_trace_dense_q8_source_order_qproj_candidate(
+            input,
+            &output,
+            linear,
+            &tensor_name,
+            dense_linear_hooks,
+            self.layer_idx,
+        )?;
 
         if let (Some(workspace), Some(source_input)) = (workspace, source_input) {
             let dispatch_after = bitnet_qk256_dispatch::qk256_dispatch_coverage();

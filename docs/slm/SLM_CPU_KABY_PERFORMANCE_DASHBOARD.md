@@ -91,7 +91,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-149. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-150. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -377,6 +377,20 @@ slice to the source-order prototype. The next safe slice is therefore a
 default-disabled source-order q_proj input/candidate-output capture surface or
 selector branch that can compare candidate output against the eager warm-session
 oracle before any runtime selection or performance claim.
+
+SLM-CPU-150 adds that default-disabled capture surface for the exact Qwen3
+Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` layer-0 path.
+With `BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1`, the warm-session path
+binds the generation-time hidden-state input used by eager q_proj to the
+source-order Q8_0 prototype, emits a receipt-safe candidate/eager hash and
+bounded-vector diff event, and keeps `eager_f32_candle` as the selected runtime.
+The first i5-8250U artifact records candidate length 2048, eager length 2048,
+`max_abs_diff_vs_eager=5.735998631`, `mean_abs_diff_vs_eager=0.280192134`,
+`rms_abs_diff_vs_eager=0.516290998`, and `fallback_used=false`. This is
+diagnostic evidence only: it proves the capture surface and current
+source-order/eager mismatch, not allocation reduction, timing improvement,
+speedup, sustained throughput, default-runtime promotion, Q4/Q5 support,
+server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
