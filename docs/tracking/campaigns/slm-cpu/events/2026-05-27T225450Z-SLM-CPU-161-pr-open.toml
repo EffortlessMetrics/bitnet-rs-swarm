@@ -1,0 +1,21 @@
+timestamp = "2026-05-27T22:54:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-161"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 845
+head_sha = "d9b4adcb61ea72765e92f5f5d0af7503695dd3b8"
+branch = "codex/slm-cpu-161-allocation-audit-baseline"
+summary = "Opened PR #845 with allocation-audit-enabled Kaby baselines for Qwen3 Q8_0 and Qwen2.5 Q8_0."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+]
+notes = [
+  "The slice enables allocation audit for strict generic CPU warm-session receipts in addition to the existing Apple CPU/NEON labels.",
+  "Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts preserve model SHA, strict GGUF tokenizer authority, prompt/generated token evidence, selected_backend=cpu-rust, runtime_api=cpu, and fallback_used=false.",
+  "Both receipts record allocation_audit.enabled=true and identify prompt_prefill as the dominant hotspot while keeping residual_block_output_storage_boundary blocked by Candle tensor add/output ownership.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
