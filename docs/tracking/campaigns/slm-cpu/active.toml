@@ -8835,8 +8835,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-148"
-status = "ready"
+status = "merged"
 branch = "codex/slm-cpu-148-warm-session-qproj-numeric-evidence"
+pr = 819
+head_sha = "e4152b653a042a57c7e4dc7173542f401e14f88f"
+merge_sha = "c2831cb2f7635aea416e94018b10a871044d7171"
+merged_at = "2026-05-27T06:20:49Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -8874,6 +8878,55 @@ must_not_claim = [
   "Runtime selection uses the source-order matvec prototype by default.",
   "Allocation reduction or speedup is proven.",
   "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-149"
+status = "ready"
+branch = "codex/slm-cpu-149-qwen3-source-order-qproj-runtime-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-148"]
+acceptance = "Resolve or precisely block the Qwen3 Q8_0 source-order q_proj runtime evidence boundary identified by SLM-CPU-148. A valid slice must use the exact Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` layer-0 path and either produce behavior-preserving source-order q_proj runtime numeric evidence against the eager-path warm-session oracle, or emit a machine-checkable blocker naming the exact payload-order, matrix-shape, Tensor API, trace-attribution, or lifetime gap. It must preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and eager_f32_candle default runtime outside explicit gates. It must not commit models/** or target/** artifacts, claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-148 captured accepted Qwen2.5 q_proj before/after numeric evidence under explicit packed-Q8 sidecar gates.",
+  "SLM-CPU-148 proved Qwen3 eager-path q_proj behavior preservation and precisely blocked runtime-sidecar numeric evidence at the payload-order/runtime-shape boundary.",
+  "SLM-CPU-149 may resolve or precisely block Qwen3 source-order q_proj runtime evidence for the same exact tensor boundary.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
