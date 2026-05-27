@@ -1,0 +1,22 @@
+timestamp = "2026-05-27T04:40:20Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-147"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 816
+branch = "codex/slm-cpu-147-warm-session-qproj-numeric-capture"
+merge_sha = "069dbb5150e9e56df2435fef92078a12991ae90b"
+summary = "Added the warm-session q_proj trace capture surface and kept numeric parity proof blocked until before/after evidence exists."
+notes = [
+  "slm-warm-session now accepts Qwen trace JSONL, layer, q_proj dump, and dump-limit flags.",
+  "The trace is scoped to first prompt, first decode forward only, preserving the eager CPU runtime default outside explicit gates.",
+  "Warm-session receipts record the capture surface without claiming before/after numeric comparison, runtime promotion, allocation reduction, speedup, sustained throughput, Q4/Q5, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.",
+  "Follow-up SLM-CPU-148 should capture or precisely block before/after q_proj numeric evidence using the SLM-CPU-145/146 Qwen3 Q8_0 and Qwen2.5 Q8_0 oracles.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-148"
+status = "ready"
+summary = "Capture or precisely block before/after q_proj numeric evidence for the warm-session path using the new SLM-CPU-147 capture surface."
