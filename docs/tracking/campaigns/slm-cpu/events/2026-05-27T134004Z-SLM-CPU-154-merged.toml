@@ -1,0 +1,24 @@
+timestamp = "2026-05-27T13:40:04Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-154"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 831
+branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+head_sha = "4604a0d887f25bc610311a502c23aa9678c81a3d"
+merge_sha = "a6fca350a46983015b5e9fd84c20e7a364db0233"
+summary = "Merged PR #831 proving the Qwen3 q_proj source-order payload-to-runtime row mapping for selected rows."
+notes = [
+  "The artifact proves `runtime_weight_idx=output_index*source_input_dim+input_index` reconciles selected source-order Q8 payload terms to Candle-materialized q_proj row slices.",
+  "The selected output indices 0, 1419, and 1970 match Candle with `max_abs_diff_mapped_vs_candle = 0.0` and remain within the eager q_proj oracle tolerance.",
+  "The source-order q_proj candidate remains default-disabled and `eager_f32_candle` remains the default runtime.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-155"
+status = "ready"
+branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
+summary = "Use the proven row mapping to update or precisely block the default-disabled source-order q_proj candidate."
