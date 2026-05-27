@@ -68,6 +68,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-141-source-order-receipt-capture.json` | Restores and verifies the exact Qwen2.5 Q8_0 cache, captures fresh Qwen3/Qwen2.5 before/after strict CPU warm-session receipts, and keeps selector use blocked because q_proj numeric evidence is absent and Qwen2.5 does not record the source-order q_proj candidate identity |
 | Source-order q_proj evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-142-source-order-evidence-fields.json` | Adds explicit fail-closed receipt fields for source-order q_proj candidate identity and missing q_proj numeric evidence, resolving absent-field ambiguity without runtime promotion or performance claims |
 | Source-order q_proj evidence receipt refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-143-source-order-evidence-receipts.json` | Captures fresh current-main Qwen3/Qwen2.5 before/after strict CPU warm-session receipts with the SLM-CPU-142 fields present; generated behavior is preserved, but selector use remains blocked because source-order q_proj candidate identity is still not usable and q_proj numeric evidence is not captured |
+| Source-order q_proj identity blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-144-source-order-qproj-identity-blocker.json` | Classifies the SLM-CPU-143 source-order identity gap as a missing payload-gate capture plus a receipt-classifier null-boundary ambiguity; runtime selection remains disabled |
 
 Qwen3 rows use:
 
@@ -86,7 +87,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-143. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-144. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -306,6 +307,20 @@ authority, prompt IDs, generated IDs, decoded text, selected CPU backend, and
 and `q_proj_numeric_evidence.status` remains
 `not_captured_by_warm_session_receipt`. This is a current-main evidence refresh
 and blocker, not an allocation reduction, timing improvement, speedup,
+sustained-throughput, default-runtime promotion, Q4/Q5, server, accelerator,
+Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-144 localizes that identity gap. The SLM-CPU-143 after-run commands
+enabled `BITNET_DENSE_Q8_RUNTIME_*` for `blk.0.attn_q.weight` but did not also
+enable `BITNET_DENSE_Q8_PAYLOAD_*`, so the hook selection receipt contained
+`payload_bearing_boundary = null`. The warm-session receipt classifier treated
+that JSON null field as an ambiguous payload boundary; SLM-CPU-144 corrects the
+classification so a null payload boundary is reported as `no_payload_boundary`.
+Selector use remains disabled. A future exact-model receipt capture must set
+both the payload and runtime gates, preserve the same strict Qwen3/Qwen2.5
+behavior oracle, and still attach q_proj numeric evidence before claiming any
+source-order selector use. This is receipt classification and blocker evidence
+only, not an allocation reduction, timing improvement, speedup,
 sustained-throughput, default-runtime promotion, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 claim.
 

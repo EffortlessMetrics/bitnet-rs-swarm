@@ -10716,6 +10716,9 @@ fn slm_warm_session_dense_q8_hook_receipt(
     dense_q8_hook_selection: &serde_json::Value,
 ) -> serde_json::Value {
     let gate = bitnet_transformer::dense_q8_sidecar_q_norm_input_runtime_hook_gate();
+    let payload_bearing_boundary = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object());
     let selected_path = dense_q8_hook_selection
         .get("selected_path")
         .and_then(serde_json::Value::as_str)
@@ -10726,43 +10729,50 @@ fn slm_warm_session_dense_q8_hook_receipt(
         .unwrap_or("dense-f32-candle-linear");
     let source_order_candidate = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_q8_matvec_candidate"))
         .and_then(serde_json::Value::as_bool)
         .unwrap_or(false);
     let source_order_candidate_receipt_identity = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_candidate_receipt_identity"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
     let source_order_selected_path = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_selected_path"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
     let source_order_selected_kernel = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_selected_kernel"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
     let source_order_input_dim = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_input_dim"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
     let source_order_output_dim = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("source_order_output_dim"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
     let sidecar_payload_order_matches_runtime_shape = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("sidecar_payload_order_matches_runtime_shape"))
         .and_then(serde_json::Value::as_bool);
     let source_order_status = if source_order_candidate {
         "candidate_identity_present_runtime_disabled"
     } else if sidecar_payload_order_matches_runtime_shape == Some(true) {
         "not_source_order_runtime_shape_compatible"
-    } else if dense_q8_hook_selection.get("payload_bearing_boundary").is_some() {
+    } else if payload_bearing_boundary.is_some() {
         "payload_boundary_present_without_source_order_identity"
     } else {
         "no_payload_boundary"
@@ -10781,6 +10791,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
     };
     let selected_tensor = dense_q8_hook_selection
         .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("tensor_name"))
         .and_then(serde_json::Value::as_str)
         .or_else(|| {
@@ -10827,16 +10838,19 @@ fn slm_warm_session_dense_q8_hook_receipt(
             "selected_tensor": selected_tensor,
             "selected_path": dense_q8_hook_selection
                 .get("payload_bearing_boundary")
+                .filter(|boundary| boundary.is_object())
                 .and_then(|boundary| boundary.get("source_order_selected_path"))
                 .cloned()
                 .unwrap_or(serde_json::Value::Null),
             "selected_kernel": dense_q8_hook_selection
                 .get("payload_bearing_boundary")
+                .filter(|boundary| boundary.is_object())
                 .and_then(|boundary| boundary.get("source_order_selected_kernel"))
                 .cloned()
                 .unwrap_or(serde_json::Value::Null),
             "receipt_identity": dense_q8_hook_selection
                 .get("payload_bearing_boundary")
+                .filter(|boundary| boundary.is_object())
                 .and_then(|boundary| boundary.get("source_order_candidate_receipt_identity"))
                 .cloned()
                 .unwrap_or(serde_json::Value::Null),
@@ -15109,6 +15123,40 @@ mod tests {
             receipt["q_proj_numeric_evidence"]["blocking_reason"],
             "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating"
         );
+        assert_eq!(receipt["runtime_compute_enabled"], false);
+        assert_eq!(receipt["default_runtime_changed"], false);
+        assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_dense_q8_hook_receipt_treats_null_payload_boundary_as_absent() {
+        let selection = serde_json::json!({
+            "selected_path": "eager_f32_candle",
+            "selected_kernel": "dense-f32-candle-linear",
+            "payload_bearing_boundary": null,
+            "example_boundary": {
+                "tensor_name": "embed_tokens.weight",
+            },
+        });
+
+        let receipt = slm_warm_session_dense_q8_hook_receipt(&selection);
+
+        assert_eq!(receipt["source_order_q8_matvec_candidate"], false);
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["present"], false);
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["status"],
+            "no_payload_boundary"
+        );
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["blocking_reason"],
+            "no payload-bearing dense Q8 boundary reached this receipt surface"
+        );
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["selected_tensor"],
+            "embed_tokens.weight"
+        );
+        assert_eq!(receipt["q_proj_numeric_evidence"]["present"], false);
         assert_eq!(receipt["runtime_compute_enabled"], false);
         assert_eq!(receipt["default_runtime_changed"], false);
         assert_eq!(receipt["speedup_claim"], false);
