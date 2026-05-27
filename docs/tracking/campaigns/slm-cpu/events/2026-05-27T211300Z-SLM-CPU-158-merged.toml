@@ -1,0 +1,24 @@
+timestamp = "2026-05-27T21:13:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-158"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 839
+branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
+head_sha = "3e6e78e89cbc44402ace27b9111e00e2a428670e"
+merge_sha = "baba6a319512fe14d6bc08f82338b72e42672053"
+summary = "Merged PR #839 adding the default-disabled source-order q_proj runtime binding gate and paired Qwen3/Qwen2.5 evidence."
+notes = [
+  "Qwen3 explicitly selects source_order_q8_0_qproj_matvec only under the opt-in gate while preserving generated token ID [17], decoded text 2, cpu-rust, and fallback=false.",
+  "Qwen3 q_proj numeric evidence compares 2048 f32 values with max absolute delta 0.000005245000000098088, within the accepted 1e-4 tolerance.",
+  "Qwen2.5 guard evidence preserves generated IDs [17, 10, 17, 16819, 220, 19, 13, 151645], decoded text 2+2 equals 4., cpu-rust, and fallback=false while selecting the compatible packed-Q8 sidecar path.",
+  "eager_f32_candle remains the default runtime and no default promotion, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-159"
+status = "ready"
+branch = "codex/slm-cpu-159-source-order-qproj-runtime-next-boundary"
+summary = "Define the next safe opt-in-only source-order runtime boundary or record the exact blocker after SLM-CPU-158."
