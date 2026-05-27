@@ -485,10 +485,17 @@ impl DenseLinearRuntimeHookBoundary {
             && !descriptor.payload_order_matches_runtime_shape
             && descriptor.source_order_input_dim.is_some()
             && descriptor.source_order_output_dim.is_some();
+        let source_order_candidate_runtime_enabled =
+            descriptor.runtime_compute_enabled && source_order_q8_matvec_candidate;
         let source_order_candidate_receipt_identity = source_order_q8_matvec_candidate.then(|| {
+            let runtime_status = if source_order_candidate_runtime_enabled {
+                "runtime_enabled"
+            } else {
+                "runtime_disabled"
+            };
             format!(
-                "{}:source_order_q8_0_qproj_matvec:runtime_disabled",
-                SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR
+                "{}:source_order_q8_0_qproj_matvec:{runtime_status}",
+                SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
             )
         });
         let runtime_compute_enabled = descriptor.runtime_compute_enabled
@@ -497,12 +504,16 @@ impl DenseLinearRuntimeHookBoundary {
             && payload_contract_valid;
         Self {
             tensor_name,
-            selected_path: if runtime_compute_enabled {
+            selected_path: if source_order_candidate_runtime_enabled {
+                "source_order_q8_0_qproj_matvec"
+            } else if runtime_compute_enabled {
                 "packed_q8_sidecar"
             } else {
                 "eager_f32_candle"
             },
-            selected_kernel: if runtime_compute_enabled {
+            selected_kernel: if source_order_candidate_runtime_enabled {
+                "dense-q8-source-order-qproj-matvec"
+            } else if runtime_compute_enabled {
                 "dense-q8-sidecar-linear"
             } else {
                 "dense-f32-candle-linear"
@@ -526,10 +537,12 @@ impl DenseLinearRuntimeHookBoundary {
             source_order_input_dim: descriptor.source_order_input_dim,
             source_order_output_dim: descriptor.source_order_output_dim,
             source_order_candidate_receipt_identity,
-            source_order_candidate_runtime_enabled: false,
+            source_order_candidate_runtime_enabled,
             runtime_compute_enabled,
-            eager_f32_runtime_preserved: !runtime_compute_enabled,
-            dense_runtime_replaced: runtime_compute_enabled,
+            eager_f32_runtime_preserved: !(runtime_compute_enabled
+                || source_order_candidate_runtime_enabled),
+            dense_runtime_replaced: runtime_compute_enabled
+                || source_order_candidate_runtime_enabled,
             speedup_claim: false,
             generated_id_preservation_required_before_runtime_use: true,
             next_receipt_gate: "before_after_qwen3_q8_generated_id_text_receipts",
@@ -570,6 +583,39 @@ fn maybe_forward_dense_q8_sidecar_linear(
     };
     add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_dispatch_calls, 1);
     let boundary = DenseLinearRuntimeHookBoundary::from_sidecar_descriptor(tensor_name, descriptor);
+    if boundary.source_order_candidate_runtime_enabled {
+        let Some(payload) = descriptor.packed_q8_payload.as_ref() else {
+            add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_error_calls, 1);
+            add_counter(
+                &DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_dispatch_ns,
+                elapsed_ns_u64(selector_start),
+            );
+            return Err(BitNetError::Validation(format!(
+                "source-order Q8 runtime hook for {tensor_name} was enabled without payload bytes"
+            )));
+        };
+        add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_selected_calls, 1);
+        add_counter(
+            &DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_dispatch_ns,
+            elapsed_ns_u64(selector_start),
+        );
+        return dense_q8_source_order_qproj_linear_forward(
+            input,
+            linear.bias(),
+            payload,
+            boundary.source_order_input_dim.ok_or_else(|| {
+                BitNetError::Validation(format!(
+                    "source-order Q8 runtime hook for {tensor_name} is missing source input dim"
+                ))
+            })?,
+            boundary.source_order_output_dim.ok_or_else(|| {
+                BitNetError::Validation(format!(
+                    "source-order Q8 runtime hook for {tensor_name} is missing source output dim"
+                ))
+            })?,
+        )
+        .map(Some);
+    }
     if !boundary.runtime_compute_enabled {
         add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.selector_declined_calls, 1);
         add_counter(
@@ -1627,6 +1673,87 @@ fn dense_q8_source_order_qproj_matvec_into(
         }
     }
     Ok(())
+}
+
+fn dense_q8_source_order_qproj_linear_forward(
+    input: &Tensor,
+    bias: Option<&Tensor>,
+    payload: &DenseLinearPackedQ8Payload,
+    source_input_dim: usize,
+    source_output_dim: usize,
+) -> Result<Tensor> {
+    let dims = input.dims();
+    let Some((&input_cols, prefix)) = dims.split_last() else {
+        return Err(BitNetError::Validation(
+            "source-order Q8 runtime hook requires a tensor with at least one dimension"
+                .to_string(),
+        ));
+    };
+    if input_cols != source_input_dim {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 runtime hook input cols {input_cols} do not match source input dim {source_input_dim}"
+        )));
+    }
+
+    let input_materialization_start = Instant::now();
+    let input_values = input.to_dtype(DType::F32)?.flatten_all()?.to_vec1::<f32>()?;
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.input_materialization_calls, 1);
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.input_materialization_ns,
+        elapsed_ns_u64(input_materialization_start),
+    );
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.input_values_materialized,
+        input_values.len() as u64,
+    );
+
+    let bias_materialization_start = Instant::now();
+    let bias_values = match bias {
+        Some(bias) => Some(bias.to_dtype(DType::F32)?.to_vec1::<f32>()?),
+        None => None,
+    };
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.bias_materialization_calls, 1);
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.bias_materialization_ns,
+        elapsed_ns_u64(bias_materialization_start),
+    );
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.bias_values_materialized,
+        bias_values.as_ref().map_or(0, Vec::len) as u64,
+    );
+
+    let input_rows = input_values.len().checked_div(source_input_dim).unwrap_or(0);
+    let output_values = input_rows.checked_mul(source_output_dim).ok_or_else(|| {
+        BitNetError::Validation("source-order Q8 runtime hook output length overflow".to_string())
+    })?;
+    let mut output = vec![0.0f32; output_values];
+    let matvec_start = Instant::now();
+    dense_q8_source_order_qproj_matvec_into(
+        &input_values,
+        bias_values.as_deref(),
+        payload,
+        source_input_dim,
+        source_output_dim,
+        &mut output,
+    )?;
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.packed_matvec_calls, 1);
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.packed_matvec_ns, elapsed_ns_u64(matvec_start));
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.packed_matvec_input_rows, input_rows as u64);
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.packed_matvec_output_values,
+        output_values as u64,
+    );
+
+    let mut output_shape = prefix.to_vec();
+    output_shape.push(source_output_dim);
+    let output_construction_start = Instant::now();
+    let tensor = Tensor::from_vec(output, output_shape, input.device()).map_err(BitNetError::from);
+    add_counter(&DENSE_Q8_SIDECAR_INSTRUMENTATION.output_tensor_construction_calls, 1);
+    add_counter(
+        &DENSE_Q8_SIDECAR_INSTRUMENTATION.output_tensor_construction_ns,
+        elapsed_ns_u64(output_construction_start),
+    );
+    tensor
 }
 
 fn dense_q8_sidecar_linear_forward(

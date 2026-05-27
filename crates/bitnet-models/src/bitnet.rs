@@ -463,8 +463,9 @@ impl BitNetModel {
             .map(|transformer| transformer.dense_linear_runtime_hook_boundaries())
             .unwrap_or_default();
         let example = hook_boundaries.first();
-        let runtime_boundary =
-            hook_boundaries.iter().find(|boundary| boundary.runtime_compute_enabled);
+        let runtime_boundary = hook_boundaries.iter().find(|boundary| {
+            boundary.runtime_compute_enabled || boundary.source_order_candidate_runtime_enabled
+        });
         let payload_boundary =
             hook_boundaries.iter().find(|boundary| boundary.sidecar_payload_bytes_available);
         let selected_boundary = runtime_boundary.or(payload_boundary).or(example);
@@ -472,8 +473,9 @@ impl BitNetModel {
             .iter()
             .filter(|boundary| boundary.sidecar_payload_bytes_available)
             .count();
-        let runtime_compute_enabled =
-            hook_boundaries.iter().any(|boundary| boundary.runtime_compute_enabled);
+        let runtime_compute_enabled = hook_boundaries.iter().any(|boundary| {
+            boundary.runtime_compute_enabled || boundary.source_order_candidate_runtime_enabled
+        });
         let dense_runtime_replaced =
             hook_boundaries.iter().any(|boundary| boundary.dense_runtime_replaced);
         let has_payload_order_mismatch = hook_boundaries.iter().any(|boundary| {
@@ -591,11 +593,12 @@ fn dense_q8_runtime_hooks_from_sidecars(
             source_order_contract.contract_status,
             DenseQ8SourceOrderKernelContractStatus::RuntimeDisabledSourceOrderMatvecCandidate
         ) && descriptor.packed_q8_bytes.is_some();
-        let runtime_compute_enabled = payload_order_matches_runtime_shape
-            && runtime_compute_tensor
-                .as_deref()
-                .is_some_and(|tensor| tensor == descriptor.tensor_name)
-            && descriptor.packed_q8_bytes.is_some();
+        let runtime_tensor_matches = runtime_compute_tensor
+            .as_deref()
+            .is_some_and(|tensor| tensor == descriptor.tensor_name);
+        let runtime_compute_enabled = runtime_tensor_matches
+            && descriptor.packed_q8_bytes.is_some()
+            && (payload_order_matches_runtime_shape || source_order_q8_matvec_candidate);
         hooks.insert(
             canonical_name,
             DenseLinearRuntimeHookDescriptor {
@@ -727,7 +730,7 @@ mod dense_q8_runtime_hook_tests {
 
     #[test]
     #[serial]
-    fn dense_gguf_q8_sidecar_runtime_compute_declines_transposed_payload_order() -> Result<()> {
+    fn dense_gguf_q8_sidecar_runtime_compute_allows_source_order_qproj_candidate() -> Result<()> {
         unsafe {
             std::env::set_var(DENSE_Q8_RUNTIME_ENABLE_ENV, "1");
             std::env::set_var(DENSE_Q8_RUNTIME_TENSOR_ENV, "blk.0.attn_q.weight");
@@ -749,7 +752,7 @@ mod dense_q8_runtime_hook_tests {
                 ));
             };
 
-            assert!(!hook.runtime_compute_enabled);
+            assert!(hook.runtime_compute_enabled);
             assert!(hook.packed_q8_payload.is_some());
             assert!(!hook.payload_order_matches_runtime_shape);
             assert!(hook.source_order_q8_matvec_candidate);

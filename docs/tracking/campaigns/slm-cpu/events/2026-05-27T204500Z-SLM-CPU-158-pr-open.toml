@@ -1,0 +1,17 @@
+timestamp = "2026-05-27T20:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-158"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 839
+head_sha = "1bb18213f469fe5522c55e19c825e02becf2aabd"
+branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
+summary = "Opened PR #839 adding the default-disabled source-order q_proj runtime binding gate and paired Qwen3/Qwen2.5 evidence."
+notes = [
+  "The Qwen3 after run explicitly selects source_order_q8_0_qproj_matvec for layers.0.attention.q_proj.weight while preserving generated token ID [17], decoded text 2, cpu-rust, and fallback=false.",
+  "The Qwen3 q_proj numeric evidence compares 2048 f32 values with max absolute delta 0.000005245000000098088, within the accepted 1e-4 tolerance.",
+  "The Qwen2.5 guard pair preserves generated IDs [17, 10, 17, 16819, 220, 19, 13, 151645], decoded text 2+2 equals 4., cpu-rust, and fallback=false; its compatible packed-Q8 q_proj max delta is 0.00008773799999772791.",
+  "eager_f32_candle remains the default runtime and no default promotion, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
