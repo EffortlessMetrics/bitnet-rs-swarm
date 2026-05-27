@@ -9045,10 +9045,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-152"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-152-source-order-qproj-accumulator-audit"
 pr = 827
-head_sha = "a178e650ab5c60ba3537b0fcd9c7c64732fda0a5"
+head_sha = "e1eae9a16002b7b43cb1b78bc9cc99f0cd14e5b4"
+merge_sha = "b20e784c985c22eecefa6a78f9347d27dcbd5de6"
+merged_at = "2026-05-27T11:21:06Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -9080,6 +9082,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-151 classified the source-order q_proj candidate/eager mismatch and ruled out pure output-index orientation or hash/diff construction as sufficient explanations.",
   "SLM-CPU-152 may add or block a small source-order q_proj accumulator audit to distinguish Q8 block-scale decode, source-order row accumulation, and eager oracle attribution.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-153"
+status = "ready"
+branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-152"]
+acceptance = "Compare the SLM-CPU-152 audited source-order Qwen3 q_proj payload terms against the exact Candle-materialized layer-0 q_proj row/column slice for the same selected output indices in the Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` path. A valid slice must record enough machine-checkable evidence to distinguish source-order GGUF Q8 payload interpretation from eager Candle weight materialization, including selected output index, source weight index, q8 block index, block scale, quantized byte, decoded source-order value, Candle-materialized value, and contribution delta. If it cannot be done safely, emit a machine-checkable blocker naming the missing Candle tensor slice, source-order payload field, shape/orientation proof, or comparison hook needed. It must keep eager_f32_candle as the default runtime outside explicit gates and must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-152 added a default-disabled source-order Qwen3 q_proj accumulator audit and i5-8250U evidence.",
+  "SLM-CPU-153 may compare audited source-order payload terms against an exact Candle-materialized q_proj slice or record the missing proof needed.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",

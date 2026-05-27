@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T11:21:06Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-152"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 827
+branch = "codex/slm-cpu-152-source-order-qproj-accumulator-audit"
+merge_sha = "b20e784c985c22eecefa6a78f9347d27dcbd5de6"
+summary = "Merged PR #827 adding the Qwen3 source-order q_proj accumulator audit."
+notes = [
+  "The default-disabled audit records selected output-index Q8 block index, scale, quantized byte, input value, contribution, and partial sum order while preserving eager_f32_candle as the default runtime.",
+  "The i5-8250U artifact shows audited source-order sums reproduce the candidate vector but still diverge from the eager Candle q_proj oracle.",
+  "The next safe slice is a Candle-materialized q_proj row/column comparison for the same selected output indices to distinguish source-order GGUF payload interpretation from eager weight materialization.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-153"
+status = "ready"
+branch = "codex/slm-cpu-153-candle-qproj-slice-compare"
+summary = "Compare audited source-order q_proj payload terms against exact Candle-materialized q_proj slices."
