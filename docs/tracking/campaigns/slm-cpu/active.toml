@@ -9201,7 +9201,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-155"
-status = "ready"
+status = "pr_open"
+pr = 833
+head_sha = "b20c14e13fe7db625f0f8f8f5cc514d50d109aad"
 branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
 stackable = false
 review_mode = "codex_premerge"
