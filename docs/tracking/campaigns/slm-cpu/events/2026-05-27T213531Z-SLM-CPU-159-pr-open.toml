@@ -1,0 +1,16 @@
+timestamp = "2026-05-27T21:35:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-159"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 841
+head_sha = "2b703c397a2dda9fae2e1bbfbcef18bd89c9df37"
+branch = "codex/slm-cpu-159-kaby-performance-dashboard"
+summary = "Opened PR #841 formalizing the Kaby Lake SLM performance dashboard from existing strict receipts."
+notes = [
+  "The dashboard records Qwen3 Q8_0 as the appliance baseline, Qwen2.5 Q8_0 as bounded positive second-model sanity evidence, and SmolLM2 as fail-closed.",
+  "It summarizes the bounded 1/2/4/8-thread envelope, selected 4-thread operator profile, cold load, warm-session timing, prefill, first-token, steady decode, memory, storage, thermal, and power boundaries.",
+  "It names next safe optimization targets without claiming sustained throughput, broad answer quality, Q4/Q5 support, default-runtime promotion, source-order or packed-Q8 speedup, server or accelerator execution, Qwen3.5, or BitNet QK256 behavior.",
+]

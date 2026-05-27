@@ -920,7 +920,7 @@
 | slm-cpu | SLM-CPU-158 | SLM-CPU-157 | merged |
 | slm-cpu | SLM-CPU-103 | SLM-CPU-102 | merged |
 | slm-cpu | SLM-CPU-104 | SLM-CPU-103 | merged |
-| slm-cpu | SLM-CPU-159 | SLM-CPU-158 | ready |
+| slm-cpu | SLM-CPU-159 | SLM-CPU-158 | pr_open |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
 | wasm-inference | WASM-002 | WASM-001 | ready |

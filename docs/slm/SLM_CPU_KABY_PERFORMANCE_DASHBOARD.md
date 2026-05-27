@@ -1,9 +1,10 @@
 # Kaby Lake SLM CPU Performance Dashboard
 
 This dashboard is the baseline for i5-8250U dense SLM performance work. It
-summarizes existing strict Qwen3-0.6B Q8_0 receipts only; it is not a sustained
-throughput claim and it does not broaden support to Q4/Q5, server, GPU, NPU,
-OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
+summarizes committed strict CPU receipts for the Qwen3-0.6B Q8_0 appliance
+profile and the bounded Qwen2.5-0.5B Q8_0 second-model sanity path. It is not a
+sustained throughput claim and it does not broaden support to Q4/Q5, server,
+GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 
 ## Evidence Set
 
@@ -92,9 +93,70 @@ temperature = 0.0
 greedy = true
 ```
 
+## Current Performance Profile
+
+This is the current Kaby Lake proof-appliance profile, not a general hardware
+claim. The values below are copied from committed receipts and remain scoped to
+the recorded i5-8250U host, model artifacts, corpus, backend, and thread
+settings.
+
+| Surface | Current Evidence | Interpretation |
+| --- | --- | --- |
+| Primary appliance model | Qwen3-0.6B Q8_0, SHA `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` | Baseline model for Kaby correctness and performance work |
+| Second-model sanity | Qwen2.5-0.5B-Instruct Q8_0, SHA `ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e` | Positive bounded sanity evidence; not a broad model-family claim |
+| SmolLM2 | Governed fail-closed by exact metadata-scoped normalization and comparator evidence | Not an answer-ready Kaby model yet |
+| Runtime backend | `cpu-rust`, strict GGUF tokenizer metadata, `fallback_used=false` | Required behavior oracle for all optimization PRs |
+| Operator thread count | 4 threads | Selected from the bounded thread envelope; fastest recorded total session and steady decode in the committed 1/2/4/8-thread sweep |
+| Model/tokenizer load | Model load once: 37,531.292 ms; tokenizer load once: 780.975 ms in the 4-thread operator profile | Cold-load cost is separated from warm prompt timing |
+| 4-thread thread-envelope total | 135,679.052 ms total session; 94,416.265 ms warm prompt wall time | Bounded single-run envelope only |
+| 4-thread prefill/decode | 64,733.698 ms prefill; 23,725.190 ms decode-total in the thread envelope | Prefill remains the dominant measured phase |
+| 4-thread first token | 12,328.333 ms mean; 13,187.0 ms p95 in the thread envelope | First-token latency is high but receipt-backed |
+| 4-thread steady decode | 1.963 mean tok/s in the thread envelope | Best recorded steady decode among 1/2/4/8 in this receipt pack; not sustained throughput |
+| Operator memory | 3,045,429,248 bytes resident, source `sysinfo_current_process` | Memory context is populated for the operator profile |
+| Thermal/power | Fields present; not measured in the thread envelope | No sustained thermal or power claim |
+| Storage context | Populated by the operator profile follow-up after Windows verbatim-path handling was fixed | Host free-space context is part of the release evidence surface |
+
+### Thread Envelope
+
+| Threads | Total Session ms | Warm Prompt Wall ms | Prefill ms | Decode Total ms | First Token Mean ms | Steady Decode Mean tok/s | Boundary |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | 137,179.478 | 94,609.006 | 65,837.089 | 23,650.743 | 12,311.833 | 1.931 | Behavior/determinism passed; no thermal/power/memory sampling |
+| 2 | 136,826.761 | 95,562.894 | 65,459.825 | 23,672.087 | 12,405.667 | 1.898 | Behavior/determinism passed; no thermal/power/memory sampling |
+| 4 | 135,679.052 | 94,416.265 | 64,733.698 | 23,725.190 | 12,328.333 | 1.963 | Current operator default from bounded evidence |
+| 8 | 136,190.928 | 94,979.978 | 65,590.721 | 24,318.391 | 12,332.833 | 1.907 | Behavior/determinism passed; no sustained advantage shown |
+
+The selected default remains 4 threads because it has the best recorded total
+session time and steady-decode rate in the committed envelope while preserving
+generated IDs across thread counts. The envelope itself explicitly keeps
+`sustained_throughput_claim=false`; any future default change needs fresh
+receipts with the same model SHA, prompt IDs, generated IDs, decoded text,
+backend/kernel identity, tokenizer authority, and `fallback_used=false`.
+
+### Next Safe Optimization Targets
+
+Current receipts point to these bounded next targets:
+
+1. Keep prompt/session buffers pre-sized and reusable, especially prompt prefill
+   and decode timing/allocation vectors.
+2. Continue reducing `prompt_prefill.forward` and `model.forward` allocation
+   churn before broader kernel work.
+3. Keep output-head/logits extraction out of the hot path where an exact
+   sampler fast path or scratch-buffer path preserves generated IDs.
+4. Treat Q8_0 dequant plus GEMV locality as exact-tensor scoped until paired
+   Qwen3 and Qwen2.5 receipts prove behavior preservation.
+5. Keep source-order or packed-Q8 sidecar runtime paths opt-in until before/after
+   receipts prove unchanged generated IDs, decoded text, strict provenance, and
+   accepted q_proj numeric evidence.
+
+Q4_K_M and Q4_K_S remain planned expansion targets, not supported runtime
+targets. A Q4 artifact is not "supported" until it passes the same gates as the
+Qwen3 Q8_0 appliance profile: strict metadata, tokenizer authority,
+`fallback_used=false`, constrained corpus, multi-token determinism, warm-session
+receipt, operator profile, and bounded timing envelope.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-158. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-159. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
