@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T01:31:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-145"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 812
+branch = "codex/slm-cpu-145-payload-runtime-qproj-capture"
+merge_sha = "46b568c183833bda7618bc8522e64a9510e7e105"
+summary = "Merged SLM-CPU-145 with exact Qwen3/Qwen2.5 payload/runtime q_proj evidence receipts."
+notes = [
+  "The merged evidence captures both BITNET_DENSE_Q8_PAYLOAD_* and BITNET_DENSE_Q8_RUNTIME_* gated warm-session receipts for blk.0.attn_q.weight.",
+  "Qwen3 preserves generated IDs/text and exposes source-order q_proj identity, but runtime compute remains blocked by payload-order mismatch.",
+  "Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected.",
+  "Selector promotion remains blocked because q_proj numeric evidence is not attached.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-146"
+status = "ready"
+summary = "Attach or precisely block bounded q_proj numeric evidence for the exact payload/runtime path."
