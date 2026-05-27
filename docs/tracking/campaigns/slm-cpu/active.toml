@@ -9201,9 +9201,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-155"
-status = "pr_open"
+status = "merged"
 pr = 833
 head_sha = "b20c14e13fe7db625f0f8f8f5cc514d50d109aad"
+merge_sha = "5ca0bc643d188dd4830acec7704cc861a86ee5af"
+merged_at = "2026-05-27T15:14:31Z"
 branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
 stackable = false
 review_mode = "codex_premerge"
@@ -9240,6 +9242,53 @@ may_claim = [
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
   "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-156"
+status = "ready"
+branch = "codex/slm-cpu-156-source-order-qproj-selector-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-155"]
+acceptance = "Use the SLM-CPU-155 mapped-candidate evidence to add or precisely block the next default-disabled Qwen3 source-order q_proj selector/runtime gate. A valid slice must preserve `eager_f32_candle` as the default runtime unless fresh Qwen3 and Qwen2.5 strict CPU receipts prove unchanged model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_proj numeric evidence, and `fallback_used=false`. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion without receipts, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-155 proved the mapped default-disabled source-order q_proj candidate matches the Qwen3 eager q_proj oracle within trace tolerance.",
+  "SLM-CPU-156 may add or precisely block the next source-order q_proj selector/runtime gate.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
   "Allocation reduction or speedup is proven.",
   "Sustained 8250U throughput is proven.",
   "Broad answer quality is proven.",

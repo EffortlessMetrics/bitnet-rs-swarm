@@ -1,0 +1,25 @@
+timestamp = "2026-05-27T15:14:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-155"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 833
+branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
+head_sha = "dfbf6ed0f63ebcb1655870dfb4d6066482a77243"
+merge_sha = "5ca0bc643d188dd4830acec7704cc861a86ee5af"
+summary = "Merged PR #833 applying the SLM-CPU-154 runtime row mapping to the default-disabled Qwen3 source-order q_proj candidate."
+notes = [
+  "The mapped source-order Qwen3 q_proj candidate matches the eager q_proj oracle within trace tolerance under explicit diagnostic gates.",
+  "The i5-8250U artifact records max_abs_diff_vs_eager=0.000005245 for the full 2048-wide Qwen3 candidate vector and max_abs_diff_mapped_vs_candle=0.0 for selected output indices 0, 1419, and 1970.",
+  "The Qwen2.5 sanity run preserves the accepted math_2_plus_2_brief behavior, but does not emit the source-order q_proj candidate stage because it does not expose the exact Qwen3 source-order runtime-shape boundary.",
+  "The source-order candidate remains runtime-disabled and eager_f32_candle remains the default runtime.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-156"
+status = "ready"
+branch = "codex/slm-cpu-156-source-order-qproj-selector-gate"
+summary = "Use the mapped-candidate evidence to add or precisely block the next default-disabled Qwen3 source-order q_proj selector/runtime gate."
