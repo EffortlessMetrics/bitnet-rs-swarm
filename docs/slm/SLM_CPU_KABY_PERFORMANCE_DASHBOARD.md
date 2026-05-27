@@ -71,6 +71,8 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj identity blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-144-source-order-qproj-identity-blocker.json` | Classifies the SLM-CPU-143 source-order identity gap as a missing payload-gate capture plus a receipt-classifier null-boundary ambiguity; runtime selection remains disabled |
 | Payload/runtime q_proj capture | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-145-payload-runtime-qproj-capture.json` | Captures exact Qwen3/Qwen2.5 payload+runtime gated receipts for `blk.0.attn_q.weight`: Qwen3 exposes the source-order q_proj identity but remains fail-closed on payload-order mismatch, while Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected; selector promotion remains blocked because q_proj numeric evidence is not attached |
 | Payload/runtime q_proj numeric gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-146-qproj-numeric-evidence-gate.json` | Consumes the SLM-CPU-145 payload/runtime receipt oracles and precisely blocks selector promotion because the warm-session receipt surface still lacks attached q_proj f32 fingerprint/vector diff evidence |
+| Warm-session q_proj capture surface | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-148-warm-session-qproj-numeric-evidence.json` | Consumes the SLM-CPU-147 trace surface: Qwen2.5 captures accepted before/after q_proj numeric evidence under explicit packed-Q8 gates, while Qwen3 preserves eager q_proj behavior and remains blocked from runtime-sidecar evidence at the payload-order/runtime-shape boundary |
+| Qwen3 source-order runtime boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-149-source-order-qproj-runtime-boundary.json` | Precisely blocks Qwen3 source-order q_proj runtime evidence because current generation receipts expose candidate identity and eager q_proj numeric preservation, but no receipt-safe generation-time source-order input binding or candidate output vector exists |
 
 Qwen3 rows use:
 
@@ -89,7 +91,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-145. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-149. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -351,6 +353,30 @@ safe step is an explicit warm-session q_proj numeric capture surface or artifact
 ingest path. Selector promotion remains blocked; no allocation, timing,
 speedup, sustained-throughput, default-runtime, Q4/Q5, server, accelerator,
 Qwen3.5, or BitNet QK256 claim is made.
+
+SLM-CPU-148 consumes the new warm-session q_proj trace surface and attaches the
+bounded numeric evidence missing from SLM-CPU-146. Qwen2.5 captures accepted
+before/after q_proj-output vector evidence within the SLM-CPU-125 `1e-4`
+tolerance while preserving generated IDs/text under the explicit packed-Q8
+sidecar gates. Qwen3 preserves generated IDs/text and produces identical
+eager-path q_proj-output vectors, but it still records zero selector-selected
+and packed-matvec calls because `blk.0.attn_q.weight` is source-order
+`[1024, 2048]` while the Candle runtime matrix shape is `[2048, 1024]`.
+That is behavior-preserving evidence plus a precise Qwen3 runtime-sidecar
+blocker, not a default-runtime promotion, allocation reduction, timing
+improvement, speedup, sustained-throughput, Q4/Q5, server, accelerator,
+Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-149 further narrows the Qwen3 source-order q_proj runtime boundary. The
+source-order candidate identity is present and names
+`dense-q8-source-order-qproj-matvec`, but current generation receipts still
+cannot emit a source-order candidate output vector: the selector declines all
+calls, the q_proj trace records only the post-linear eager output boundary, and
+there is no receipt-safe binding from the generation-time hidden-state input
+slice to the source-order prototype. The next safe slice is therefore a
+default-disabled source-order q_proj input/candidate-output capture surface or
+selector branch that can compare candidate output against the eager warm-session
+oracle before any runtime selection or performance claim.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

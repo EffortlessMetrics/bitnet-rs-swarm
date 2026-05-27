@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_149_source_order_qproj_runtime_boundary",
+  "tracking_item": "SLM-CPU-149",
+  "created_utc": "2026-05-27T06:45:00Z",
+  "status": "blocked_source_order_runtime_input_binding_missing",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict CPU proof appliance"
+  },
+  "model": {
+    "id": "qwen3-0.6b-q8_0",
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "quant": "Q8_0",
+    "architecture": "qwen3"
+  },
+  "strict_provenance_oracle": {
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-148-warm-session-qproj-numeric-evidence.json",
+    "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-148-before-warm-run.json",
+    "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-148-after-warm-run.json",
+    "before_trace": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-148-before-qproj-event.json",
+    "after_trace": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-148-after-qproj-event.json",
+    "tokenizer_source": "gguf_metadata",
+    "tokenizer_strict": true,
+    "selected_backend": "cpu-rust",
+    "runtime_api": "cpu",
+    "fallback_used": false,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "behavior_preserved": true
+  },
+  "exact_boundary": {
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "canonical_tensor": "layers.0.attention.q_proj.weight",
+    "stage": "attention.q_proj_output_pre_optional_qnorm",
+    "boundary": "attention_q_proj_output_pre_optional_qnorm",
+    "source_shape": [1024, 2048],
+    "runtime_candle_shape": [2048, 1024],
+    "source_order_input_dim": 1024,
+    "source_order_output_dim": 2048,
+    "q8_block_size": 32
+  },
+  "env_gates": {
+    "BITNET_DENSE_Q8_PAYLOAD_ENABLE": "1",
+    "BITNET_DENSE_Q8_PAYLOAD_TENSOR": "blk.0.attn_q.weight",
+    "BITNET_DENSE_Q8_RUNTIME_ENABLE": "1",
+    "BITNET_DENSE_Q8_RUNTIME_TENSOR": "blk.0.attn_q.weight"
+  },
+  "current_evidence": {
+    "payload_boundary_present": true,
+    "payload_contract_valid": true,
+    "payload_order_matches_runtime_shape": false,
+    "payload_sha256": "a8e16a232ea8c19a5c5d2eb5f21bfdf5c297eba0ac90e74b0afc052577179c24",
+    "source_order_q8_matvec_candidate": true,
+    "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+    "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+    "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+    "source_order_candidate_runtime_enabled": false,
+    "selected_kernel": "dense-f32-candle-linear",
+    "selected_path": "eager_f32_candle",
+    "runtime_compute_enabled": false,
+    "selector_dispatch_calls": 42336,
+    "selector_selected_calls": 0,
+    "selector_declined_calls": 42336,
+    "packed_matvec_calls": 0,
+    "q_proj_numeric_evidence": {
+      "present": true,
+      "evidence_kind": "eager_path_before_after_q_proj_output",
+      "len": 2048,
+      "before_hash": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "after_hash": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "rms_abs_diff": 0.0,
+      "accepted_tolerance": 0.0001,
+      "within_tolerance": true
+    }
+  },
+  "blocker": {
+    "classification": "runtime_input_binding_and_trace_attribution_gap",
+    "runtime_evidence_produced": false,
+    "source_order_runtime_output_vector_present": false,
+    "reason": "The Qwen3 source-order candidate is visible in receipts, but the generation selector still declines all calls and preserves eager_f32_candle. The committed q_proj trace captures the post-linear eager q_proj output boundary; it does not capture the pre-linear hidden-state input slice bound to the source-order prototype, nor a source-order candidate output vector attributable to generation-time execution.",
+    "gaps": [
+      {
+        "name": "payload_order",
+        "status": "known_source_order_transpose_candidate",
+        "detail": "GGUF Q8_0 payload bytes are source row-major for shape [1024, 2048], while Candle linear runtime expects [2048, 1024]. Pure byte transpose is not accepted because Q8_0 scale blocks would be regrouped."
+      },
+      {
+        "name": "matrix_shape",
+        "status": "source_order_dims_known",
+        "detail": "The accepted source-order prototype dimensions are input_dim=1024 and output_dim=2048 for the exact Qwen3 layer-0 q_proj tensor."
+      },
+      {
+        "name": "tensor_api",
+        "status": "missing_generation_time_input_slice_binding",
+        "detail": "The runtime selector receives a Candle Tensor and can materialize input for the native packed sidecar path only after runtime_compute_enabled passes; there is no source-order branch that binds the exact f32 input slice to the source-order prototype while preserving receipt attribution."
+      },
+      {
+        "name": "trace_attribution",
+        "status": "eager_output_only",
+        "detail": "The current q_proj trace event records attention.q_proj_output_pre_optional_qnorm after the eager Candle linear path. It cannot prove a source-order q_proj runtime output because selector_selected_calls and packed_matvec_calls are both zero."
+      },
+      {
+        "name": "lifetime",
+        "status": "not_yet_a_receipt_safe_runtime_artifact",
+        "detail": "The source-order prototype can compare payload math against an eager source-order f32 reference, but no receipt-safe generation-time artifact carries both the runtime input vector and the candidate output vector for the exact warm-session prompt."
+      }
+    ],
+    "next_safe_step": "Add a default-disabled Qwen3 source-order q_proj input/candidate-output capture surface or selector branch that consumes the exact generation-time hidden-state input, emits a source-order candidate vector, and compares it against the eager q_proj warm-session oracle before any runtime selection or performance claim."
+  },
+  "gate_result": {
+    "selector_promotion_allowed": false,
+    "runtime_selection_allowed": false,
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_changed": false,
+    "behavior_oracle_preserved": true,
+    "qwen3_source_order_runtime_evidence": "precisely_blocked"
+  },
+  "claim_boundary": {
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_behavior_claim": false,
+    "committed_models_or_target_artifacts": false
+  }
+}
