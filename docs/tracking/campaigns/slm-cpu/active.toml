@@ -9519,7 +9519,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-159"
-status = "ready"
+status = "pr_open"
+pr = 841
 branch = "codex/slm-cpu-159-kaby-performance-dashboard"
 stackable = false
 review_mode = "codex_premerge"
