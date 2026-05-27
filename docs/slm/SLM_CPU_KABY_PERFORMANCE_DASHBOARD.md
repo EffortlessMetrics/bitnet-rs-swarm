@@ -75,6 +75,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen3 source-order runtime boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-149-source-order-qproj-runtime-boundary.json` | Precisely blocks Qwen3 source-order q_proj runtime evidence because current generation receipts expose candidate identity and eager q_proj numeric preservation, but no receipt-safe generation-time source-order input binding or candidate output vector exists |
 | Source-order mapped q_proj candidate | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-155-source-order-mapped-qproj-candidate.json` | Applies the SLM-CPU-154 runtime row mapping to the default-disabled Qwen3 source-order q_proj candidate; the trace-gated candidate matches the eager q_proj oracle within tolerance, while `eager_f32_candle` remains the default runtime |
 | Source-order q_proj selector gate | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-156-source-order-qproj-selector-gate.json` | Precisely blocks source-order q_proj selector promotion after SLM-CPU-155 because paired Qwen3/Qwen2.5 strict CPU before/after behavior receipts with q_proj numeric evidence are still required; `eager_f32_candle` remains the default runtime |
+| Source-order q_proj receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json` | Captures paired Qwen3/Qwen2.5 strict CPU before/after receipts with prompt IDs, generated IDs/text, backend/kernel identity, fallback=false, and q_proj numeric evidence; Qwen3 source-order candidate remains runtime-disabled/default-disabled and Qwen2.5 opt-in sidecar stays within the accepted `1e-4` q_proj tolerance, with no runtime promotion or performance claim |
 
 Qwen3 rows use:
 
@@ -93,7 +94,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-156. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-157. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -522,6 +523,29 @@ text, selected CPU backend/kernel identity, dense hook identity, q_proj numeric
 evidence, and `fallback_used=false`. This does not claim allocation reduction,
 timing improvement, speedup, sustained throughput, default-runtime promotion,
 Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
+
+SLM-CPU-157 captures that paired receipt evidence without changing the runtime
+promotion boundary. The compact artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json
+```
+
+The Qwen3 before/after pair preserves model SHA, GGUF tokenizer authority,
+prompt IDs, generated token ID `[17]`, decoded text `2`, `cpu-rust`,
+`dense-f32-candle-linear`, and `fallback_used=false`; its q_proj dump is
+fingerprint-identical across 2048 f32 values. The source-order q_proj candidate
+identity is receipt-visible, but remains `runtime_disabled`, so
+`eager_f32_candle` remains the selected path. The Qwen2.5 before/after pair
+preserves model SHA, GGUF tokenizer authority, prompt IDs, generated IDs
+`[17, 10, 17, 16819, 220, 19, 13, 151645]`, decoded text
+`2+2 equals 4.`, `cpu-rust`, and `fallback_used=false`; its opt-in packed-Q8
+sidecar q_proj output remains within the accepted `1e-4` absolute tolerance
+with maximum absolute delta `0.00008773799999772791`. This is paired
+selector-gate evidence only. It does not promote the source-order q_proj
+candidate or packed-Q8 sidecar to default runtime and it does not claim
+allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5
+support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
