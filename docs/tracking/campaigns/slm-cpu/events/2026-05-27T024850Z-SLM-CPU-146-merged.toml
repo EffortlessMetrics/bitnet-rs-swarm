@@ -1,0 +1,21 @@
+timestamp = "2026-05-27T02:48:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-146"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 814
+branch = "codex/slm-cpu-146-qproj-numeric-evidence-gate"
+merge_sha = "a3d0cc30a9d8e2553a9ed86398f37005c33e8125"
+summary = "Merged SLM-CPU-146 with a machine-checkable blocker for q_proj numeric evidence on the current warm-session receipt surface."
+notes = [
+  "SLM-CPU-146 preserves the SLM-CPU-145 Qwen3/Qwen2.5 behavior and selector identity oracles.",
+  "The slice precisely blocks q_proj numeric evidence because warm-session receipts expose selector identity and behavior preservation but not the q_proj f32 output fingerprint, vector, or diff.",
+  "No allocation reduction, timing improvement, speedup, sustained-throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-147"
+status = "ready"
+summary = "Add or precisely block the narrow warm-session q_proj numeric capture surface needed after SLM-CPU-146."

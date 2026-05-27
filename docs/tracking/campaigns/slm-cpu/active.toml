@@ -8728,9 +8728,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-146"
-status = "pr_open"
+status = "merged"
 pr = 814
-head_sha = "f6fe498a824b3c7fa7a045b5b2bc61aed58dbb0d"
+head_sha = "654d12881587281b4fb8786d48081fe80d438c8c"
+merge_sha = "a3d0cc30a9d8e2553a9ed86398f37005c33e8125"
+merged_at = "2026-05-27T02:48:50Z"
 branch = "codex/slm-cpu-146-qproj-numeric-evidence-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -8764,6 +8766,55 @@ may_claim = [
   "SLM-CPU-145 captured exact Qwen3/Qwen2.5 q_proj payload/runtime-gated receipts.",
   "Qwen3 remains fail-closed on payload-order mismatch while Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected.",
   "SLM-CPU-146 may attach bounded q_proj numeric evidence or precisely block why it is still unavailable.",
+]
+must_not_claim = [
+  "The exact Qwen2.5 Q8_0 model binary is committed.",
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-147"
+status = "ready"
+branch = "codex/slm-cpu-147-warm-session-qproj-numeric-capture"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-146"]
+acceptance = "Add or precisely block a warm-session q_proj numeric capture surface for the exact layer-0 blk.0.attn_q.weight payload/runtime path using the SLM-CPU-145/146 Qwen3 Q8_0 and Qwen2.5 Q8_0 receipt oracles. A valid slice must preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and eager_f32_candle default runtime outside explicit gates. If numeric evidence is captured, it must report max_abs_diff, mean_abs_diff, rms_abs_diff, first differing index, accepted tolerance, payload/runtime selector identity, and behavior preservation for the warm-session path. If not, it must name the exact remaining CLI, trace, receipt, tensor, lifetime, or artifact boundary. It must not commit models/** or target/** artifacts, claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-146 precisely blocked q_proj numeric evidence on the current warm-session receipt surface.",
+  "SLM-CPU-147 may add the narrow capture surface needed to expose bounded q_proj numeric evidence for warm-session receipts.",
 ]
 must_not_claim = [
   "The exact Qwen2.5 Q8_0 model binary is committed.",
