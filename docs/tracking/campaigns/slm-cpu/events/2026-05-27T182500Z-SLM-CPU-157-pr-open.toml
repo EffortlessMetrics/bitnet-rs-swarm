@@ -1,0 +1,18 @@
+timestamp = "2026-05-27T18:25:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-157"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 837
+head_sha = "6cd8f630f8a6c696b760a978d73bfecdb380ce7e"
+branch = "codex/slm-cpu-157-source-order-qproj-receipt-pair"
+summary = "Opened PR #837 capturing paired Qwen3/Qwen2.5 source-order q_proj selector-gate receipt evidence."
+notes = [
+  "The receipt bundle includes committed aggregate and per-prompt strict CPU warm-session receipts for Qwen3 and Qwen2.5 before/after runs.",
+  "Prompt IDs, generated IDs, decoded text, model SHA, GGUF tokenizer authority, selected CPU backend/kernel identity, and fallback=false are preserved.",
+  "Qwen3 keeps eager_f32_candle selected and records the source-order q_proj candidate as runtime-disabled/default-disabled with exact q_proj numeric preservation.",
+  "Qwen2.5 records the opt-in packed-Q8 sidecar selector path with q_proj numeric drift inside the accepted 1e-4 absolute tolerance.",
+  "No default-runtime promotion, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]

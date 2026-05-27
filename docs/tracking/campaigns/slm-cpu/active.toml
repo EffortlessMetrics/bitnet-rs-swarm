@@ -9304,7 +9304,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-157"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-157-source-order-qproj-receipt-pair"
 stackable = false
 review_mode = "codex_premerge"
