@@ -449,6 +449,31 @@ runtime and does not claim allocation reduction, timing improvement, speedup,
 sustained throughput, default-runtime promotion, Q4/Q5 support,
 server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
+SLM-CPU-154 proves the selected-row source-order payload-to-runtime row mapping
+for the same exact Qwen3 Q8_0 q_proj boundary. The compact artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-154-source-order-row-mapping-proof.json
+```
+
+The proof records:
+
+```text
+mapping_rule = runtime_weight_idx=output_index*source_input_dim+input_index
+source_order_weight_idx = input_index*source_output_dim+output_index
+selected output indices = 0, 1419, 1970
+max_abs_diff_mapped_vs_candle = 0.0
+max_abs_diff_mapped_vs_eager = 0.000001907
+```
+
+This shows that the Q8 payload values reconcile with the Candle row-major
+q_proj slices when addressed by the runtime row mapping. The old source-order
+candidate accumulator is still diagnostic-only and remains wrong until it uses
+that mapping; `eager_f32_candle` remains the default runtime. This does not
+claim allocation reduction, timing improvement, speedup, sustained throughput,
+default-runtime promotion, Q4/Q5 support, server/accelerator execution,
+Qwen3.5, or BitNet QK256 behavior.
+
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps

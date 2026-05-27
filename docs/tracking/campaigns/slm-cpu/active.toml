@@ -9149,8 +9149,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-154"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+pr = 831
+head_sha = "d485e0bad1d547ca705e27162f663133c83c3afe"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -9182,6 +9184,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-153 showed that Candle row-slice recomputation matches the eager q_proj oracle while source-order payload traversal still diverges.",
   "SLM-CPU-154 may prove the source-order payload-to-runtime row mapping or record the exact missing layout proof needed.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-155"
+status = "ready"
+branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-154"]
+acceptance = "Use the SLM-CPU-154 runtime row-mapping proof to update or precisely block the default-disabled source-order Qwen3 q_proj candidate accumulator for the exact Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` path. A valid slice must preserve `eager_f32_candle` as the default runtime, keep the source-order candidate behind explicit trace/runtime-disabled gates, and capture before/after Qwen3 and Qwen2.5 receipts or a machine-checkable blocker proving why the mapped candidate cannot yet preserve generated IDs. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-154 proved the selected-row runtime row mapping for the Qwen3 Q8_0 layer-0 q_proj payload.",
+  "SLM-CPU-155 may update the default-disabled source-order q_proj candidate to use that mapping or record the exact remaining blocker.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
