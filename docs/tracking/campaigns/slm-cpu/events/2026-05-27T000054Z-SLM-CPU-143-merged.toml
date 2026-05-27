@@ -1,0 +1,17 @@
+timestamp = "2026-05-27T00:00:54Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-143"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 808
+branch = "codex/slm-cpu-143-source-order-evidence-receipts"
+merge_sha = "d6639ff79645738e4cfe6065355e9e4c71a64d83"
+summary = "Merged SLM-CPU-143 with fresh Qwen3/Qwen2.5 source-order q_proj evidence receipts and a fail-closed selector blocker."
+notes = [
+  "The receipt pairs preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend, and fallback_used=false.",
+  "Selector use remains blocked because source_order_qproj_candidate_identity.status is payload_boundary_present_without_source_order_identity for both exact models.",
+  "q_proj_numeric_evidence remains explicit and not_captured_by_warm_session_receipt.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
