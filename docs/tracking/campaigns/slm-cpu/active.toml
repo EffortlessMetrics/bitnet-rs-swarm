@@ -9356,7 +9356,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-158"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
 stackable = false
 review_mode = "codex_premerge"
