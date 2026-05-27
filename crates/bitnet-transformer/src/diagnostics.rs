@@ -15,6 +15,10 @@ pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE: &str =
     "attention.q_proj_source_order_q8_candidate";
 pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY: &str =
     "attention_q_proj_source_order_q8_candidate";
+pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE: &str =
+    "attention.q_proj_source_order_q8_accumulator_audit";
+pub(crate) const QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_BOUNDARY: &str =
+    "attention_q_proj_source_order_q8_accumulator_audit";
 
 #[derive(Clone, Debug)]
 struct QwenTraceConfig {
@@ -441,11 +445,78 @@ pub(crate) fn qwen_trace_source_order_q8_candidate(event: QwenTraceSourceOrderQ8
     ));
 }
 
+pub(crate) struct QwenTraceSourceOrderQ8AccumulatorAuditEntry<'a> {
+    pub output_index: usize,
+    pub initial_bias: f32,
+    pub candidate_output: f32,
+    pub eager_output: f32,
+    pub abs_diff_vs_eager: f32,
+    pub partial_terms_json: &'a str,
+}
+
+pub(crate) struct QwenTraceSourceOrderQ8AccumulatorAudit<'a> {
+    pub stage: &'a str,
+    pub layer_idx: usize,
+    pub source_tensor: &'a str,
+    pub gguf_tensor: &'a str,
+    pub boundary: &'a str,
+    pub dense_hook_identity: &'a str,
+    pub source_input_dim: usize,
+    pub source_output_dim: usize,
+    pub input_row: usize,
+    pub q8_block_size: usize,
+    pub entries: &'a [QwenTraceSourceOrderQ8AccumulatorAuditEntry<'a>],
+}
+
+pub(crate) fn qwen_trace_source_order_q8_accumulator_audit(
+    event: QwenTraceSourceOrderQ8AccumulatorAudit<'_>,
+) {
+    if !qwen_trace_active() || !qwen_trace_layer_enabled(event.layer_idx) {
+        return;
+    }
+
+    let entries_json = event
+        .entries
+        .iter()
+        .map(|entry| {
+            format!(
+                "{{\"output_index\":{},\"initial_bias\":{},\"candidate_output\":{},\"eager_output\":{},\"abs_diff_vs_eager\":{},\"partial_terms\":[{}]}}",
+                entry.output_index,
+                qwen_trace_number(f64::from(entry.initial_bias)),
+                qwen_trace_number(f64::from(entry.candidate_output)),
+                qwen_trace_number(f64::from(entry.eager_output)),
+                qwen_trace_number(f64::from(entry.abs_diff_vs_eager)),
+                entry.partial_terms_json
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let step = std::env::var("BITNET_QWEN_TRACE_STEP").unwrap_or_else(|_| "null".to_string());
+
+    qwen_trace_write_line(&format!(
+        "{{\"kind\":\"qwen_trace_source_order_q8_accumulator_audit\",\"stage\":\"{}\",\"step\":{},\"layer\":{},\"source_tensor\":\"{}\",\"gguf_tensor\":\"{}\",\"boundary\":\"{}\",\"dense_hook_identity\":\"{}\",\"runtime_disabled\":true,\"default_runtime_preserved\":true,\"source_input_dim\":{},\"source_output_dim\":{},\"input_row\":{},\"q8_block_size\":{},\"entries\":[{}]}}",
+        qwen_trace_escape(event.stage),
+        step,
+        event.layer_idx,
+        qwen_trace_escape(event.source_tensor),
+        qwen_trace_escape(event.gguf_tensor),
+        qwen_trace_escape(event.boundary),
+        qwen_trace_escape(event.dense_hook_identity),
+        event.source_input_dim,
+        event.source_output_dim,
+        event.input_row,
+        event.q8_block_size,
+        entries_json
+    ));
+}
+
 #[cfg(test)]
 #[allow(clippy::items_after_test_module)]
 mod tests {
     use super::{
         QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+        QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_BOUNDARY,
+        QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE,
         QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY, QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
         qwen_trace_f32_values_json, sha256_f32_le,
     };
@@ -486,6 +557,14 @@ mod tests {
         assert_eq!(
             QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY,
             "attention_q_proj_source_order_q8_candidate"
+        );
+        assert_eq!(
+            QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE,
+            "attention.q_proj_source_order_q8_accumulator_audit"
+        );
+        assert_eq!(
+            QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_BOUNDARY,
+            "attention_q_proj_source_order_q8_accumulator_audit"
         );
     }
 }

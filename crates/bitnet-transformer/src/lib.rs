@@ -19,12 +19,15 @@ mod qk256;
 
 use diagnostics::{
     QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_BOUNDARY, QWEN_QPROJ_OUTPUT_PRE_OPTIONAL_QNORM_STAGE,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_BOUNDARY,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE,
     QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY, QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
-    QwenTraceDenseHookIdentity, QwenTraceSourceOrderQ8Candidate, dbg_finite, dbg_stats,
-    debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled, debug_mlp_enabled,
+    QwenTraceDenseHookIdentity, QwenTraceSourceOrderQ8AccumulatorAudit,
+    QwenTraceSourceOrderQ8AccumulatorAuditEntry, QwenTraceSourceOrderQ8Candidate, dbg_finite,
+    dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled, debug_mlp_enabled,
     debug_rmsnorm_enabled, debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled,
-    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_source_order_q8_candidate,
-    qwen_trace_tensor, qwen_trace_tensor_fingerprint,
+    qwen_trace_layer_enabled, qwen_trace_number, qwen_trace_source_order_q8_accumulator_audit,
+    qwen_trace_source_order_q8_candidate, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
     qwen_trace_tensor_fingerprint_with_dense_hook, trace_rms_enabled,
 };
 #[cfg(test)]
@@ -746,7 +749,239 @@ pub(crate) fn maybe_trace_dense_q8_source_order_qproj_candidate(
         candidate: &candidate,
         eager: &eager_values,
     });
+    maybe_trace_dense_q8_source_order_qproj_accumulator_audit(
+        &input_values,
+        bias_values.as_deref(),
+        payload,
+        source_input_dim,
+        source_output_dim,
+        &candidate,
+        &eager_values,
+        &dense_hook_identity,
+        tensor_name,
+        layer_idx,
+    )?;
     Ok(())
+}
+
+fn source_order_qproj_accumulator_audit_enabled() -> bool {
+    std::env::var("BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT").as_deref() == Ok("1")
+}
+
+fn source_order_qproj_accumulator_audit_indices(source_output_dim: usize) -> Vec<usize> {
+    let mut indices = Vec::new();
+    if let Ok(raw) = std::env::var("BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_INDICES") {
+        for part in raw.split(',') {
+            let part = part.trim();
+            if part.is_empty() {
+                continue;
+            }
+            if let Ok(index) = part.parse::<usize>()
+                && index < source_output_dim
+                && !indices.contains(&index)
+            {
+                indices.push(index);
+            }
+        }
+    }
+    if indices.is_empty() {
+        for index in [0usize, 1419, 1970] {
+            if index < source_output_dim && !indices.contains(&index) {
+                indices.push(index);
+            }
+        }
+        if indices.is_empty() && source_output_dim > 0 {
+            indices.push(0);
+        }
+    }
+    indices
+}
+
+#[allow(clippy::too_many_arguments)]
+fn maybe_trace_dense_q8_source_order_qproj_accumulator_audit(
+    input_values: &[f32],
+    bias_values: Option<&[f32]>,
+    payload: &DenseLinearPackedQ8Payload,
+    source_input_dim: usize,
+    source_output_dim: usize,
+    candidate: &[f32],
+    eager: &[f32],
+    dense_hook_identity: &str,
+    tensor_name: &str,
+    layer_idx: usize,
+) -> Result<()> {
+    if !source_order_qproj_accumulator_audit_enabled() || !qwen_trace_layer_enabled(layer_idx) {
+        return Ok(());
+    }
+    if input_values.len() < source_input_dim || candidate.len() < source_output_dim {
+        return Ok(());
+    }
+
+    let input_row = &input_values[..source_input_dim];
+    let indices = source_order_qproj_accumulator_audit_indices(source_output_dim);
+    let mut entry_data = Vec::with_capacity(indices.len());
+    for output_index in indices {
+        let initial_bias = bias_values.map_or(0.0, |bias| bias[output_index]);
+        let (candidate_output, terms_json) = dense_q8_source_order_qproj_accumulator_audit_entry(
+            input_row,
+            initial_bias,
+            payload,
+            source_output_dim,
+            output_index,
+        )?;
+        let eager_output = eager.get(output_index).copied().unwrap_or(0.0);
+        entry_data.push((
+            output_index,
+            initial_bias,
+            candidate_output,
+            eager_output,
+            (candidate_output - eager_output).abs(),
+            terms_json,
+        ));
+    }
+    let entries = entry_data
+        .iter()
+        .map(
+            |(
+                output_index,
+                initial_bias,
+                candidate_output,
+                eager_output,
+                abs_diff_vs_eager,
+                partial_terms_json,
+            )| QwenTraceSourceOrderQ8AccumulatorAuditEntry {
+                output_index: *output_index,
+                initial_bias: *initial_bias,
+                candidate_output: *candidate_output,
+                eager_output: *eager_output,
+                abs_diff_vs_eager: *abs_diff_vs_eager,
+                partial_terms_json,
+            },
+        )
+        .collect::<Vec<_>>();
+    qwen_trace_source_order_q8_accumulator_audit(QwenTraceSourceOrderQ8AccumulatorAudit {
+        stage: QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE,
+        layer_idx,
+        source_tensor: tensor_name,
+        gguf_tensor: "blk.0.attn_q.weight",
+        boundary: QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_BOUNDARY,
+        dense_hook_identity,
+        source_input_dim,
+        source_output_dim,
+        input_row: 0,
+        q8_block_size: payload.q8_block_size,
+        entries: &entries,
+    });
+    for (output_index, _, candidate_output, _, _, _) in entry_data {
+        if let Some(existing) = candidate.get(output_index) {
+            let diff = (candidate_output - *existing).abs();
+            if diff > 1e-4 {
+                return Err(BitNetError::Validation(format!(
+                    "source-order Q8 q_proj accumulator audit output {output_index} recomputed {candidate_output} but candidate vector has {existing}"
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+struct DenseQ8AccumulatorTerm {
+    input_index: usize,
+    weight_idx: usize,
+    q8_block_index: usize,
+    q8_block_value_offset: usize,
+    q8_block_scale: f32,
+    q: i8,
+    input_value: f32,
+    contribution: f32,
+    partial_sum_after: f32,
+    term_kind: &'static str,
+}
+
+fn dense_q8_source_order_qproj_accumulator_audit_entry(
+    input_row: &[f32],
+    initial_bias: f32,
+    payload: &DenseLinearPackedQ8Payload,
+    source_output_dim: usize,
+    output_index: usize,
+) -> Result<(f32, String)> {
+    let block_stride = 2 + payload.q8_block_size;
+    let mut sum = initial_bias;
+    let mut first_terms = Vec::new();
+    let mut max_abs_term: Option<DenseQ8AccumulatorTerm> = None;
+    for (in_row, input_value) in input_row.iter().enumerate() {
+        let weight_idx = in_row * source_output_dim + output_index;
+        let block_idx = weight_idx / payload.q8_block_size;
+        let block_value_offset = weight_idx % payload.q8_block_size;
+        let block_offset = block_idx * block_stride;
+        let scale = dense_q8_sidecar_block_scale(&payload.packed_q8_bytes, block_offset);
+        let q_idx = block_offset + 2 + block_value_offset;
+        let q = payload.packed_q8_bytes.get(q_idx).copied().ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "source-order Q8 q_proj accumulator audit q byte index {q_idx} is out of range"
+            ))
+        })? as i8;
+        let contribution = scale * f32::from(q) * *input_value;
+        sum += contribution;
+        if first_terms.len() < 8 {
+            first_terms.push(DenseQ8AccumulatorTerm {
+                input_index: in_row,
+                weight_idx,
+                q8_block_index: block_idx,
+                q8_block_value_offset: block_value_offset,
+                q8_block_scale: scale,
+                q,
+                input_value: *input_value,
+                contribution,
+                partial_sum_after: sum,
+                term_kind: "prefix",
+            });
+        }
+        let replace_max = match max_abs_term.as_ref() {
+            Some(existing) => contribution.abs() > existing.contribution.abs(),
+            None => true,
+        };
+        if replace_max {
+            max_abs_term = Some(DenseQ8AccumulatorTerm {
+                input_index: in_row,
+                weight_idx,
+                q8_block_index: block_idx,
+                q8_block_value_offset: block_value_offset,
+                q8_block_scale: scale,
+                q,
+                input_value: *input_value,
+                contribution,
+                partial_sum_after: sum,
+                term_kind: "max_abs_contribution",
+            });
+        }
+    }
+    let mut terms_json = first_terms
+        .into_iter()
+        .map(|term| dense_q8_source_order_qproj_accumulator_term_json(&term))
+        .collect::<Vec<_>>();
+    if let Some(term) = max_abs_term
+        && term.input_index >= 8
+    {
+        terms_json.push(dense_q8_source_order_qproj_accumulator_term_json(&term));
+    }
+    Ok((sum, terms_json.join(",")))
+}
+
+fn dense_q8_source_order_qproj_accumulator_term_json(term: &DenseQ8AccumulatorTerm) -> String {
+    format!(
+        "{{\"term_kind\":\"{}\",\"input_index\":{},\"weight_idx\":{},\"q8_block_index\":{},\"q8_block_value_offset\":{},\"q8_block_scale\":{},\"q\":{},\"input_value\":{},\"contribution\":{},\"partial_sum_after\":{}}}",
+        term.term_kind,
+        term.input_index,
+        term.weight_idx,
+        term.q8_block_index,
+        term.q8_block_value_offset,
+        qwen_trace_number(f64::from(term.q8_block_scale)),
+        term.q,
+        qwen_trace_number(f64::from(term.input_value)),
+        qwen_trace_number(f64::from(term.contribution)),
+        qwen_trace_number(f64::from(term.partial_sum_after))
+    )
 }
 
 fn dense_q8_source_order_qproj_matvec_into(
