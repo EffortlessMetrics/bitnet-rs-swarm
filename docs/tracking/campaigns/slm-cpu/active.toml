@@ -9253,7 +9253,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-156"
-status = "ready"
+status = "pr_open"
+pr = 835
+head_sha = "145e1a191c5e5765302b01d34fbdeadf6e64ecf2"
 branch = "codex/slm-cpu-156-source-order-qproj-selector-gate"
 stackable = false
 review_mode = "codex_premerge"

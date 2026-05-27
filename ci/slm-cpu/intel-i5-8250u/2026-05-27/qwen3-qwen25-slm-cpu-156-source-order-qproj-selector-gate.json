@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_selector_gate",
+  "tracking_item": "SLM-CPU-156",
+  "generated_at_utc": "2026-05-27T15:45:00Z",
+  "decision": "blocked_pending_before_after_receipts",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_155_mapped_candidate": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-155-source-order-mapped-qproj-candidate.json",
+    "qwen3_before_after_behavior_receipts": null,
+    "qwen25_before_after_behavior_receipts": null
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_preserved": true,
+    "source_order_candidate_runtime_enabled": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "candidate_path": "source_order_q8_0_qproj_matvec",
+    "candidate_kernel": "dense-q8-source-order-qproj-matvec",
+    "candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled",
+    "candidate_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1",
+    "payload_gate": "BITNET_DENSE_Q8_PAYLOAD_ENABLE=1 BITNET_DENSE_Q8_PAYLOAD_TENSOR=blk.0.attn_q.weight",
+    "runtime_gate": "BITNET_DENSE_Q8_RUNTIME_ENABLE=1 BITNET_DENSE_Q8_RUNTIME_TENSOR=blk.0.attn_q.weight"
+  },
+  "mapped_candidate_evidence": {
+    "qwen3": {
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "architecture": "qwen3",
+      "quant_format": "Q8_0",
+      "tokenizer": "gguf_metadata",
+      "fallback_used": false,
+      "candidate_matches_eager_within_trace_tolerance": true,
+      "max_abs_diff_vs_eager": 0.000005245,
+      "mean_abs_diff_vs_eager": 0.000000113,
+      "rms_abs_diff_vs_eager": 0.000000273
+    },
+    "qwen25": {
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "architecture": "qwen2",
+      "quant_format": "Q8_0",
+      "fallback_used": false,
+      "source_order_candidate_applicable": false,
+      "accepted_behavior_preserved": true
+    }
+  },
+  "required_before_runtime_promotion": {
+    "qwen3_q8_before_receipt": true,
+    "qwen3_q8_after_receipt": true,
+    "qwen25_q8_before_receipt": true,
+    "qwen25_q8_after_receipt": true,
+    "required_fields": [
+      "model.sha256",
+      "tokenizer.source",
+      "tokenizer.strict",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend",
+      "selected_kernel",
+      "dense_hook_identity",
+      "q_proj_numeric_evidence",
+      "fallback_used"
+    ],
+    "unchanged_behavior_required": true,
+    "fallback_used_must_equal": false
+  },
+  "blocking_reason": "SLM-CPU-155 proves the mapped source-order q_proj candidate matches the Qwen3 eager q_proj oracle within trace tolerance, but runtime selector promotion still lacks paired Qwen3 and Qwen2.5 strict CPU before/after receipts carrying q_proj numeric evidence and unchanged generated behavior.",
+  "next_safe_slice": "Capture paired strict CPU before/after receipts for Qwen3 and Qwen2.5 with q_proj numeric evidence before enabling any source-order q_proj runtime selector."
+}

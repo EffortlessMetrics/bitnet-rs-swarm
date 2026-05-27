@@ -10987,6 +10987,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
         "artifact_kind": "dense_q8_hook_receipt_identity",
         "tracking_item": "SLM-CPU-109",
         "capture_tracking_item": "SLM-CPU-147",
+        "selector_gate_tracking_item": "SLM-CPU-156",
         "selected_path": selected_path,
         "selected_kernel": selected_kernel,
         "selected_tensor": selected_tensor,
@@ -11038,6 +11039,37 @@ fn slm_warm_session_dense_q8_hook_receipt(
                 "accepted_absolute_tolerance"
             ],
             "blocking_reason": q_proj_numeric_blocking_reason,
+        },
+        "source_order_selector_gate": {
+            "tracking_item": "SLM-CPU-156",
+            "decision": "blocked_pending_before_after_receipts",
+            "candidate_path": source_order_selected_path,
+            "candidate_kernel": source_order_selected_kernel,
+            "candidate_receipt_identity": source_order_candidate_receipt_identity,
+            "candidate_runtime_enabled": false,
+            "default_runtime": selected_path,
+            "default_runtime_preserved": true,
+            "q_proj_numeric_evidence_present": false,
+            "required_behavior_receipts": [
+                "qwen3_q8_before_receipt",
+                "qwen3_q8_after_receipt",
+                "qwen25_q8_before_receipt",
+                "qwen25_q8_after_receipt"
+            ],
+            "required_behavior_fields": [
+                "model.sha256",
+                "tokenizer.source",
+                "tokenizer.strict",
+                "prompt_ids",
+                "generated_ids",
+                "decoded_text",
+                "selected_backend",
+                "selected_kernel",
+                "dense_hook_identity",
+                "q_proj_numeric_evidence",
+                "fallback_used"
+            ],
+            "blocking_reason": "source-order q_proj selector promotion requires paired Qwen3 and Qwen2.5 strict CPU receipts with q_proj numeric evidence and unchanged generated behavior",
         },
         "q_norm_input_boundary": gate.selected_materialization_boundary,
         "q_norm_input_tensor_identity": {
@@ -15210,6 +15242,7 @@ mod tests {
         );
 
         assert_eq!(receipt["tracking_item"], "SLM-CPU-109");
+        assert_eq!(receipt["selector_gate_tracking_item"], "SLM-CPU-156");
         assert_eq!(receipt["selected_path"], "eager_f32_candle");
         assert_eq!(receipt["runtime_compute_enabled"], false);
         assert_eq!(receipt["packed_q8_sidecar_default_enabled"], false);
@@ -15227,6 +15260,30 @@ mod tests {
         assert_eq!(receipt["source_order_qproj_candidate_identity"]["input_dim"], 1024);
         assert_eq!(receipt["source_order_qproj_candidate_identity"]["output_dim"], 2048);
         assert_eq!(receipt["q_proj_numeric_evidence"]["present"], false);
+        assert_eq!(
+            receipt["source_order_selector_gate"]["decision"],
+            "blocked_pending_before_after_receipts"
+        );
+        assert_eq!(
+            receipt["source_order_selector_gate"]["candidate_path"],
+            "source_order_q8_0_qproj_matvec"
+        );
+        assert_eq!(
+            receipt["source_order_selector_gate"]["candidate_kernel"],
+            "dense-q8-source-order-qproj-matvec"
+        );
+        assert_eq!(
+            receipt["source_order_selector_gate"]["candidate_receipt_identity"],
+            "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled"
+        );
+        assert_eq!(receipt["source_order_selector_gate"]["candidate_runtime_enabled"], false);
+        assert_eq!(receipt["source_order_selector_gate"]["default_runtime"], "eager_f32_candle");
+        assert_eq!(receipt["source_order_selector_gate"]["default_runtime_preserved"], true);
+        assert_eq!(receipt["source_order_selector_gate"]["q_proj_numeric_evidence_present"], false);
+        assert_eq!(
+            receipt["source_order_selector_gate"]["required_behavior_receipts"][0],
+            "qwen3_q8_before_receipt"
+        );
         assert_eq!(
             receipt["q_proj_numeric_evidence"]["status"],
             "not_captured_by_warm_session_receipt"

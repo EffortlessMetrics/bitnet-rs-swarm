@@ -11220,35 +11220,33 @@ pub fn explain_blocked_operator_ask_route_selection(
     if let Some(selected_route_id) = profile.promoted_route.as_deref() {
         if let Some(promotion) =
             ledger.routes.iter().find(|route| route.route_id == selected_route_id)
-        {
-            if let Some(route_reason) =
+            && let Some(route_reason) =
                 non_executable_promoted_ask_route_error(promotion, &profile.profile_id)
-            {
-                let (why_not_cpu, why_not_gpu, why_not_npu) =
-                    route_selection_explanations(&ledger, profile, "");
-                let route_profile_comparison = route_profile_comparison
-                    .map(|path| path_string(&resolve_receipt_path(root, path)));
-                return Ok(Some(BlockedOperatorAskRouteSelection {
-                    requested_device,
-                    requested_route,
-                    profile_id: profile.profile_id.clone(),
-                    route_selection_status: "blocked".to_string(),
-                    promotion_status: "promoted_reference_route_not_ask_executable".to_string(),
-                    selection_source: "promotion_ledger_auto_blocked".to_string(),
-                    route_reason,
-                    candidate_routes: profile.candidate_routes.clone(),
-                    why_not_cpu,
-                    why_not_gpu,
-                    why_not_npu,
-                    operator_runbook: blocked_operator_ask_runbook(&profile.profile_id)
-                        .map(str::to_string),
-                    next_required_evidence: blocked_operator_ask_next_required_evidence(
-                        &profile.profile_id,
-                    ),
-                    promotion_ledger: Some(path_string(&ledger_path)),
-                    route_profile_comparison,
-                }));
-            }
+        {
+            let (why_not_cpu, why_not_gpu, why_not_npu) =
+                route_selection_explanations(&ledger, profile, "");
+            let route_profile_comparison =
+                route_profile_comparison.map(|path| path_string(&resolve_receipt_path(root, path)));
+            return Ok(Some(BlockedOperatorAskRouteSelection {
+                requested_device,
+                requested_route,
+                profile_id: profile.profile_id.clone(),
+                route_selection_status: "blocked".to_string(),
+                promotion_status: "promoted_reference_route_not_ask_executable".to_string(),
+                selection_source: "promotion_ledger_auto_blocked".to_string(),
+                route_reason,
+                candidate_routes: profile.candidate_routes.clone(),
+                why_not_cpu,
+                why_not_gpu,
+                why_not_npu,
+                operator_runbook: blocked_operator_ask_runbook(&profile.profile_id)
+                    .map(str::to_string),
+                next_required_evidence: blocked_operator_ask_next_required_evidence(
+                    &profile.profile_id,
+                ),
+                promotion_ledger: Some(path_string(&ledger_path)),
+                route_profile_comparison,
+            }));
         }
         return Ok(None);
     }
