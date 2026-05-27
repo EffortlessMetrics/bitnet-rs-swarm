@@ -1,0 +1,17 @@
+timestamp = "2026-05-27T09:41:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-151"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 825
+branch = "codex/slm-cpu-151-source-order-qproj-candidate-mismatch"
+head_sha = "e0b1641010f0c1c4afa76acfc9cde0d82bb83702"
+summary = "Opened PR #825 classifying the Qwen3 source-order q_proj candidate/eager mismatch captured by SLM-CPU-150."
+notes = [
+  "The compact artifact records full-vector hashes, direct diff metrics, sorted-value permutation probes, and the next root-cause boundary without committing the raw target trace.",
+  "The evidence rules out pure output-index orientation or hash/diff construction as sufficient explanations because sorted-value and sorted-absolute distributions still differ materially.",
+  "The next safe slice is a small source-order q_proj accumulator audit for selected output indices, including Q8 block index, block scale, quantized byte, input value, partial sum order, and eager oracle slice.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
