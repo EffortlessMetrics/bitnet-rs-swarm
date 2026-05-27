@@ -10910,12 +10910,20 @@ fn slm_warm_session_dense_q8_hook_receipt(
         .and_then(|boundary| boundary.get("source_order_output_dim"))
         .cloned()
         .unwrap_or(serde_json::Value::Null);
+    let source_order_candidate_runtime_enabled = dense_q8_hook_selection
+        .get("payload_bearing_boundary")
+        .filter(|boundary| boundary.is_object())
+        .and_then(|boundary| boundary.get("source_order_candidate_runtime_enabled"))
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
     let sidecar_payload_order_matches_runtime_shape = dense_q8_hook_selection
         .get("payload_bearing_boundary")
         .filter(|boundary| boundary.is_object())
         .and_then(|boundary| boundary.get("sidecar_payload_order_matches_runtime_shape"))
         .and_then(serde_json::Value::as_bool);
-    let source_order_status = if source_order_candidate {
+    let source_order_status = if source_order_candidate && source_order_candidate_runtime_enabled {
+        "candidate_identity_present_runtime_enabled"
+    } else if source_order_candidate {
         "candidate_identity_present_runtime_disabled"
     } else if sidecar_payload_order_matches_runtime_shape == Some(true) {
         "not_source_order_runtime_shape_compatible"
@@ -10925,6 +10933,9 @@ fn slm_warm_session_dense_q8_hook_receipt(
         "no_payload_boundary"
     };
     let source_order_blocking_reason = match source_order_status {
+        "candidate_identity_present_runtime_enabled" => {
+            "source-order q_proj runtime binding is explicitly enabled for this run; before/after receipts are still required before any default-runtime promotion"
+        }
         "candidate_identity_present_runtime_disabled" => {
             "q_proj numeric evidence is still required before source-order selector use"
         }
@@ -10995,7 +11006,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
         "source_order_selected_path": source_order_selected_path,
         "source_order_selected_kernel": source_order_selected_kernel,
         "source_order_candidate_receipt_identity": source_order_candidate_receipt_identity,
-        "source_order_candidate_runtime_enabled": false,
+        "source_order_candidate_runtime_enabled": source_order_candidate_runtime_enabled,
         "source_order_qproj_candidate_identity": {
             "present": source_order_candidate,
             "status": source_order_status,
@@ -11020,7 +11031,7 @@ fn slm_warm_session_dense_q8_hook_receipt(
                 .unwrap_or(serde_json::Value::Null),
             "input_dim": source_order_input_dim,
             "output_dim": source_order_output_dim,
-            "runtime_enabled": false,
+            "runtime_enabled": source_order_candidate_runtime_enabled,
             "blocking_reason": source_order_blocking_reason,
         },
         "q_proj_numeric_evidence": {
@@ -11041,14 +11052,20 @@ fn slm_warm_session_dense_q8_hook_receipt(
             "blocking_reason": q_proj_numeric_blocking_reason,
         },
         "source_order_selector_gate": {
-            "tracking_item": "SLM-CPU-156",
-            "decision": "blocked_pending_before_after_receipts",
+            "tracking_item": if source_order_candidate_runtime_enabled { "SLM-CPU-158" } else { "SLM-CPU-156" },
+            "decision": if source_order_candidate_runtime_enabled {
+                "explicit_runtime_binding_enabled_pending_after_receipt_review"
+            } else {
+                "blocked_pending_before_after_receipts"
+            },
             "candidate_path": source_order_selected_path,
             "candidate_kernel": source_order_selected_kernel,
             "candidate_receipt_identity": source_order_candidate_receipt_identity,
-            "candidate_runtime_enabled": false,
-            "default_runtime": selected_path,
-            "default_runtime_preserved": true,
+            "candidate_runtime_enabled": source_order_candidate_runtime_enabled,
+            "default_runtime": "eager_f32_candle",
+            "selected_runtime": selected_path,
+            "default_runtime_preserved": !source_order_candidate_runtime_enabled,
+            "explicit_runtime_opt_in": source_order_candidate_runtime_enabled,
             "q_proj_numeric_evidence_present": false,
             "required_behavior_receipts": [
                 "qwen3_q8_before_receipt",
@@ -15406,6 +15423,55 @@ mod tests {
         assert_eq!(receipt["q_proj_numeric_evidence"]["present"], false);
         assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
         assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_dense_q8_hook_receipt_records_source_order_runtime_binding() {
+        let selection = serde_json::json!({
+            "selected_path": "source_order_q8_0_qproj_matvec",
+            "selected_kernel": "dense-q8-source-order-qproj-matvec",
+            "payload_bearing_boundary": {
+                "tensor_name": "layers.0.attention.q_proj.weight",
+                "source_order_q8_matvec_candidate": true,
+                "source_order_selected_path": "source_order_q8_0_qproj_matvec",
+                "source_order_selected_kernel": "dense-q8-source-order-qproj-matvec",
+                "source_order_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_enabled",
+                "source_order_candidate_runtime_enabled": true,
+                "source_order_input_dim": 1024,
+                "source_order_output_dim": 2048,
+                "sidecar_payload_order_matches_runtime_shape": false,
+            },
+        });
+
+        let receipt = slm_warm_session_dense_q8_hook_receipt(
+            &selection,
+            &WarmSessionQwenTraceOptions::default(),
+        );
+
+        assert_eq!(receipt["selected_path"], "source_order_q8_0_qproj_matvec");
+        assert_eq!(receipt["selected_kernel"], "dense-q8-source-order-qproj-matvec");
+        assert_eq!(receipt["source_order_candidate_runtime_enabled"], true);
+        assert_eq!(
+            receipt["source_order_qproj_candidate_identity"]["status"],
+            "candidate_identity_present_runtime_enabled"
+        );
+        assert_eq!(receipt["source_order_qproj_candidate_identity"]["runtime_enabled"], true);
+        assert_eq!(receipt["source_order_selector_gate"]["tracking_item"], "SLM-CPU-158");
+        assert_eq!(
+            receipt["source_order_selector_gate"]["decision"],
+            "explicit_runtime_binding_enabled_pending_after_receipt_review"
+        );
+        assert_eq!(receipt["source_order_selector_gate"]["candidate_runtime_enabled"], true);
+        assert_eq!(receipt["source_order_selector_gate"]["default_runtime"], "eager_f32_candle");
+        assert_eq!(
+            receipt["source_order_selector_gate"]["selected_runtime"],
+            "source_order_q8_0_qproj_matvec"
+        );
+        assert_eq!(receipt["source_order_selector_gate"]["default_runtime_preserved"], false);
+        assert_eq!(receipt["source_order_selector_gate"]["explicit_runtime_opt_in"], true);
+        assert_eq!(receipt["speedup_claim"], false);
+        assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
     }
 
     #[test]

@@ -616,6 +616,61 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
 }
 
 #[test]
+fn dense_linear_runtime_hook_boundary_can_select_source_order_qproj_with_explicit_gate()
+-> anyhow::Result<()> {
+    let config = tiny_config(8, 16, 2);
+    let device = Device::Cpu;
+    let vb = VarBuilder::zeros(DType::F32, &device);
+    let payload_bytes = vec![0_u8; 136];
+    let mut hooks = DenseLinearRuntimeHookRegistry::default();
+    hooks.insert(
+        "layers.0.attention.q_proj.weight".to_string(),
+        DenseLinearRuntimeHookDescriptor {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            role: "AttentionQ".to_string(),
+            sidecar_payload_sha256: Some("sha256:source-order".to_string()),
+            packed_q8_payload: Some(DenseLinearPackedQ8Payload {
+                tensor_name: "blk.0.attn_q.weight".to_string(),
+                packed_q8_bytes: std::sync::Arc::from(payload_bytes.into_boxed_slice()),
+                q8_block_size: 32,
+                q8_block_count: 4,
+                matrix_rows: 16,
+                matrix_cols: 8,
+            }),
+            payload_order_matches_runtime_shape: false,
+            source_order_q8_matvec_candidate: true,
+            source_order_input_dim: Some(8),
+            source_order_output_dim: Some(16),
+            runtime_compute_enabled: true,
+        },
+    );
+    let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
+        config,
+        vb,
+        Default::default(),
+        hooks,
+    )?;
+
+    let boundary = model.dense_linear_runtime_hook_boundary("layers.0.attention.q_proj.weight");
+
+    assert_eq!(boundary.selected_path, "source_order_q8_0_qproj_matvec");
+    assert_eq!(boundary.selected_kernel, "dense-q8-source-order-qproj-matvec");
+    assert!(boundary.source_order_q8_matvec_candidate);
+    assert!(boundary.source_order_candidate_runtime_enabled);
+    assert!(!boundary.runtime_compute_enabled);
+    assert!(!boundary.eager_f32_runtime_preserved);
+    assert!(boundary.dense_runtime_replaced);
+    assert_eq!(boundary.source_order_input_dim, Some(8));
+    assert_eq!(boundary.source_order_output_dim, Some(16));
+    assert_eq!(
+        boundary.source_order_candidate_receipt_identity.as_deref(),
+        Some("layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_enabled")
+    );
+    assert!(!boundary.speedup_claim);
+    Ok(())
+}
+
+#[test]
 fn dense_q8_sidecar_fused_consumer_boundary_names_downstream_tensor_blocker() {
     let boundary = dense_q8_sidecar_fused_consumer_boundary();
 

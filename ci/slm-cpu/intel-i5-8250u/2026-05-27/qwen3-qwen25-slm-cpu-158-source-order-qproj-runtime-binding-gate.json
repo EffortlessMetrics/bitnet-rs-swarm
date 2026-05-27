@@ -1,0 +1,257 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_runtime_binding_gate",
+  "tracking_item": "SLM-CPU-158",
+  "generated_at_utc": "2026-05-27T20:42:18Z",
+  "decision": "accepted_for_default_disabled_runtime_binding_no_default_promotion",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_157_receipt_pair": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json",
+    "local_trace_artifacts_committed": false,
+    "local_trace_paths": {
+      "qwen3_before": "target/slm-cpu-158/qwen3-before-qproj-trace.jsonl",
+      "qwen3_after": "target/slm-cpu-158/qwen3-after-qproj-trace.jsonl",
+      "qwen25_before": "target/slm-cpu-158/qwen25-before-qproj-trace.jsonl",
+      "qwen25_after": "target/slm-cpu-158/qwen25-after-qproj-trace.jsonl"
+    }
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "default_runtime_preserved_without_explicit_opt_in": true,
+    "default_runtime_promoted": false,
+    "source_order_candidate_default_enabled": false,
+    "source_order_candidate_runtime_enabled_when_explicitly_opted_in": true,
+    "explicit_opt_in_env": {
+      "BITNET_DENSE_Q8_PAYLOAD_ENABLE": "1",
+      "BITNET_DENSE_Q8_PAYLOAD_TENSOR": "blk.0.attn_q.weight",
+      "BITNET_DENSE_Q8_RUNTIME_ENABLE": "1",
+      "BITNET_DENSE_Q8_RUNTIME_TENSOR": "blk.0.attn_q.weight",
+      "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE": "1"
+    },
+    "qwen3_candidate_path": "source_order_q8_0_qproj_matvec",
+    "qwen3_candidate_kernel": "dense-q8-source-order-qproj-matvec",
+    "qwen3_candidate_receipt_identity": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_enabled",
+    "qwen25_selector_path": "packed_q8_sidecar",
+    "qwen25_selector_scope": "runtime-shape-compatible packed sidecar; not the Qwen3 source-order candidate"
+  },
+  "qwen3": {
+    "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-158-before-warm-session.json",
+    "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-158-after-warm-session.json",
+    "model_sha256_before": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "model_sha256_after": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "tokenizer_source_before": "gguf_metadata",
+    "tokenizer_source_after": "gguf_metadata",
+    "tokenizer_strict_before": true,
+    "tokenizer_strict_after": true,
+    "selected_backend_before": "cpu-rust",
+    "selected_backend_after": "cpu-rust",
+    "runtime_api_before": "cpu",
+    "runtime_api_after": "cpu",
+    "fallback_used_before": false,
+    "fallback_used_after": false,
+    "selected_kernel_before": "dense-f32-candle-linear",
+    "selected_kernel_after": "dense-q8-source-order-qproj-matvec",
+    "selected_path_before": "eager_f32_candle",
+    "selected_path_after": "source_order_q8_0_qproj_matvec",
+    "runtime_compute_enabled_after": true,
+    "source_order_candidate_status_after": "candidate_identity_present_runtime_enabled",
+    "source_order_candidate_receipt_identity_after": "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_enabled",
+    "source_order_candidate_runtime_enabled_after": true,
+    "q_proj_numeric_evidence": {
+      "stage": "attention.q_proj_output_pre_optional_qnorm",
+      "boundary": "attention_q_proj_output_pre_optional_qnorm",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "gguf_tensor": "blk.0.attn_q.weight",
+      "before_fingerprint_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+      "after_fingerprint_sha256_f32_le": "731fa50b6c1125f3529c313fe1742fb39e7dfb1d8c90ef849110fc60394c3990",
+      "values_compared": 2048,
+      "contents_dumped_locally": true,
+      "local_trace_artifacts_committed": false,
+      "first_differing_index": 0,
+      "max_abs_diff": 5.245000000098088e-06,
+      "max_abs_diff_index": 1458,
+      "mean_abs_diff": 1.1288183593650732e-07,
+      "rms_abs_diff": 2.7280466232893215e-07,
+      "accepted_absolute_tolerance": 0.0001,
+      "within_accepted_tolerance": true
+    },
+    "prompts_before": [
+      {
+        "prompt_index": 0,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer with only the number.",
+        "generated_token_ids": [
+          17
+        ],
+        "decoded_text": "2",
+        "receipt_path": "target\\slm-cpu-158\\qwen3-before-warm-session-prompts\\01-what-is-22-answer-with-only-the-number.json"
+      },
+      {
+        "prompt_index": 1,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer with only the number.",
+        "generated_token_ids": [
+          17
+        ],
+        "decoded_text": "2",
+        "receipt_path": "target\\slm-cpu-158\\qwen3-before-warm-session-prompts\\02-what-is-22-answer-with-only-the-number.json"
+      }
+    ],
+    "prompts_after": [
+      {
+        "prompt_index": 0,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer with only the number.",
+        "generated_token_ids": [
+          17
+        ],
+        "decoded_text": "2",
+        "receipt_path": "target\\slm-cpu-158\\qwen3-after-warm-session-prompts\\01-what-is-22-answer-with-only-the-number.json"
+      },
+      {
+        "prompt_index": 1,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer with only the number.",
+        "generated_token_ids": [
+          17
+        ],
+        "decoded_text": "2",
+        "receipt_path": "target\\slm-cpu-158\\qwen3-after-warm-session-prompts\\02-what-is-22-answer-with-only-the-number.json"
+      }
+    ],
+    "generated_behavior_preserved": true
+  },
+  "qwen25": {
+    "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-158-before-warm-session.json",
+    "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-158-after-warm-session.json",
+    "model_sha256_before": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "model_sha256_after": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "tokenizer_source_before": "gguf_metadata",
+    "tokenizer_source_after": "gguf_metadata",
+    "tokenizer_strict_before": true,
+    "tokenizer_strict_after": true,
+    "selected_backend_before": "cpu-rust",
+    "selected_backend_after": "cpu-rust",
+    "runtime_api_before": "cpu",
+    "runtime_api_after": "cpu",
+    "fallback_used_before": false,
+    "fallback_used_after": false,
+    "selected_kernel_before": "dense-f32-candle-linear",
+    "selected_kernel_after": "dense-q8-sidecar-linear",
+    "selected_path_before": "eager_f32_candle",
+    "selected_path_after": "packed_q8_sidecar",
+    "runtime_compute_enabled_after": true,
+    "source_order_candidate_status_after": "not_source_order_runtime_shape_compatible",
+    "source_order_candidate_receipt_identity_after": null,
+    "source_order_candidate_runtime_enabled_after": false,
+    "q_proj_numeric_evidence": {
+      "stage": "attention.q_proj_output_pre_optional_qnorm",
+      "boundary": "attention_q_proj_output_pre_optional_qnorm",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "gguf_tensor": "blk.0.attn_q.weight",
+      "before_fingerprint_sha256_f32_le": "4cf085e0c5715156b96c59668a9601da8e5925fb96f2772ff4863cb67eade344",
+      "after_fingerprint_sha256_f32_le": "4d69d3d003359fa0b221affec60e25f1c22b6146d52e91f69b4c7437c648b9ff",
+      "values_compared": 896,
+      "contents_dumped_locally": true,
+      "local_trace_artifacts_committed": false,
+      "first_differing_index": 0,
+      "max_abs_diff": 8.773799999772791e-05,
+      "max_abs_diff_index": 568,
+      "mean_abs_diff": 2.513893973225678e-06,
+      "rms_abs_diff": 6.597620119015958e-06,
+      "accepted_absolute_tolerance": 0.0001,
+      "within_accepted_tolerance": true
+    },
+    "prompts_before": [
+      {
+        "prompt_index": 0,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer briefly.",
+        "generated_token_ids": [
+          17,
+          10,
+          17,
+          16819,
+          220,
+          19,
+          13,
+          151645
+        ],
+        "decoded_text": "2+2 equals 4.",
+        "receipt_path": "target\\slm-cpu-158\\qwen25-before-warm-session-prompts\\01-what-is-22-answer-briefly.json"
+      },
+      {
+        "prompt_index": 1,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer briefly.",
+        "generated_token_ids": [
+          17,
+          10,
+          17,
+          16819,
+          220,
+          19,
+          13,
+          151645
+        ],
+        "decoded_text": "2+2 equals 4.",
+        "receipt_path": "target\\slm-cpu-158\\qwen25-before-warm-session-prompts\\02-what-is-22-answer-briefly.json"
+      }
+    ],
+    "prompts_after": [
+      {
+        "prompt_index": 0,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer briefly.",
+        "generated_token_ids": [
+          17,
+          10,
+          17,
+          16819,
+          220,
+          19,
+          13,
+          151645
+        ],
+        "decoded_text": "2+2 equals 4.",
+        "receipt_path": "target\\slm-cpu-158\\qwen25-after-warm-session-prompts\\01-what-is-22-answer-briefly.json"
+      },
+      {
+        "prompt_index": 1,
+        "repeat_index": 0,
+        "prompt": "What is 2+2? Answer briefly.",
+        "generated_token_ids": [
+          17,
+          10,
+          17,
+          16819,
+          220,
+          19,
+          13,
+          151645
+        ],
+        "decoded_text": "2+2 equals 4.",
+        "receipt_path": "target\\slm-cpu-158\\qwen25-after-warm-session-prompts\\02-what-is-22-answer-briefly.json"
+      }
+    ],
+    "generated_behavior_preserved": true
+  },
+  "acceptance": {
+    "qwen3_generated_behavior_preserved": true,
+    "qwen25_generated_behavior_preserved": true,
+    "qwen3_qproj_within_tolerance": true,
+    "qwen25_qproj_within_tolerance": true,
+    "fallback_used_false_all_receipts": true,
+    "default_promotion_claimed": false,
+    "speedup_claimed": false
+  }
+}

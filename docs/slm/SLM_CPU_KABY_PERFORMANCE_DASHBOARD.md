@@ -94,7 +94,7 @@ greedy = true
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-157. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-158. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
@@ -546,6 +546,31 @@ selector-gate evidence only. It does not promote the source-order q_proj
 candidate or packed-Q8 sidecar to default runtime and it does not claim
 allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5
 support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
+
+SLM-CPU-158 consumes that paired evidence and adds the next explicit opt-in
+runtime binding gate for the exact Qwen3 source-order q_proj candidate. The
+compact artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-158-source-order-qproj-runtime-binding-gate.json
+```
+
+The default runtime remains `eager_f32_candle`; source-order q_proj execution is
+selected only when the exact tensor is explicitly opted in through the dense-Q8
+payload/runtime environment gate. With that gate enabled, Qwen3 selects
+`source_order_q8_0_qproj_matvec` / `dense-q8-source-order-qproj-matvec` for
+`layers.0.attention.q_proj.weight`, preserves generated token ID `[17]` and
+decoded text `2`, and keeps `fallback_used=false`. The Qwen3 q_proj numeric
+evidence compares 2048 f32 values with maximum absolute delta
+`0.000005245000000098088`, within the accepted `1e-4` tolerance. The Qwen2.5
+guard pair preserves generated IDs `[17, 10, 17, 16819, 220, 19, 13, 151645]`
+and decoded text `2+2 equals 4.`; its compatible packed-Q8 q_proj selector
+remains model-specific guard evidence rather than a Qwen3 source-order claim,
+with maximum absolute delta `0.00008773799999772791`, also within tolerance.
+This slice does not promote any dense-Q8 sidecar path to default runtime and
+does not claim allocation reduction, timing improvement, speedup, sustained
+throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet
+QK256 behavior.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
