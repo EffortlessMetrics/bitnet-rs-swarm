@@ -1,0 +1,18 @@
+timestamp = "2026-05-27T16:30:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-156"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 835
+head_sha = "145e1a191c5e5765302b01d34fbdeadf6e64ecf2"
+branch = "codex/slm-cpu-156-source-order-qproj-selector-gate"
+summary = "Opened PR #835 recording the source-order q_proj selector gate as fail-closed after SLM-CPU-155."
+notes = [
+  "The warm-session dense Q8 hook receipt now exposes selector_gate_tracking_item=SLM-CPU-156 and a source_order_selector_gate block.",
+  "The selector gate records candidate path, kernel, receipt identity, runtime-disabled status, default runtime preservation, and required Qwen3/Qwen2.5 before/after behavior receipt fields.",
+  "The i5-8250U artifact precisely blocks selector promotion until paired strict CPU before/after receipts carry q_proj numeric evidence and unchanged generated behavior.",
+  "The source-order q_proj candidate remains runtime-disabled and eager_f32_candle remains the default runtime.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
