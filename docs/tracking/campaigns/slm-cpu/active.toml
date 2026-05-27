@@ -8993,10 +8993,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-151"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-151-source-order-qproj-candidate-mismatch"
 pr = 825
 head_sha = "e0b1641010f0c1c4afa76acfc9cde0d82bb83702"
+merge_sha = "5610df0cd92fed11c698777abf19bc43bbba6574"
+merged_at = "2026-05-27T10:01:05Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -9028,6 +9030,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-150 added a default-disabled Qwen3 source-order q_proj candidate capture surface and i5-8250U evidence.",
   "SLM-CPU-151 may classify the captured source-order candidate/eager mismatch or record the exact missing proof needed to localize it.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-152"
+status = "ready"
+branch = "codex/slm-cpu-152-source-order-qproj-accumulator-audit"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-151"]
+acceptance = "Add or precisely block a small source-order Qwen3 q_proj accumulator audit for selected output indices in the exact Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` layer-0 path. A valid slice must use the SLM-CPU-151 classification to record Q8 block index, block scale, quantized byte, input value, partial sum order, selected candidate output, and corresponding eager oracle slice for enough indices to distinguish Q8 block-scale decode, source-order row accumulation, and eager oracle attribution. If it cannot be done safely, emit a machine-checkable blocker naming the missing tensor slice, accumulator order proof, Q8 payload interpretation, or eager reference needed. It must keep eager_f32_candle as the default runtime outside explicit gates and must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-151 classified the source-order q_proj candidate/eager mismatch and ruled out pure output-index orientation or hash/diff construction as sufficient explanations.",
+  "SLM-CPU-152 may add or block a small source-order q_proj accumulator audit to distinguish Q8 block-scale decode, source-order row accumulation, and eager oracle attribution.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
