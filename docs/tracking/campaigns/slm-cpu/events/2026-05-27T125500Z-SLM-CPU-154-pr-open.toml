@@ -1,0 +1,23 @@
+timestamp = "2026-05-27T12:55:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-154"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 831
+branch = "codex/slm-cpu-154-source-order-row-mapping-proof"
+head_sha = "d485e0bad1d547ca705e27162f663133c83c3afe"
+summary = "Opened PR #831 to prove the Qwen3 q_proj source-order payload-to-runtime row mapping."
+notes = [
+  "The new default-disabled trace records the mapping rule `runtime_weight_idx=output_index*source_input_dim+input_index` against the old source-order index `input_index*source_output_dim+output_index`.",
+  "The i5-8250U artifact shows mapped Q8 payload values match Candle-materialized q_proj rows exactly for selected output indices 0, 1419, and 1970.",
+  "The source-order candidate remains runtime-disabled and `eager_f32_candle` remains the default runtime.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-155"
+status = "ready"
+branch = "codex/slm-cpu-155-source-order-mapped-qproj-candidate"
+summary = "Use the proven row mapping to update or precisely block the default-disabled source-order q_proj candidate."

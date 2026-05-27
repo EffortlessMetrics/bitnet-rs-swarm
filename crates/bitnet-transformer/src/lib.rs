@@ -23,15 +23,18 @@ use diagnostics::{
     QWEN_QPROJ_SOURCE_ORDER_Q8_ACCUMULATOR_AUDIT_STAGE,
     QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_BOUNDARY, QWEN_QPROJ_SOURCE_ORDER_Q8_CANDIDATE_STAGE,
     QWEN_QPROJ_SOURCE_ORDER_Q8_CANDLE_SLICE_COMPARE_BOUNDARY,
-    QWEN_QPROJ_SOURCE_ORDER_Q8_CANDLE_SLICE_COMPARE_STAGE, QwenTraceDenseHookIdentity,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_CANDLE_SLICE_COMPARE_STAGE,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_ROW_MAPPING_PROOF_BOUNDARY,
+    QWEN_QPROJ_SOURCE_ORDER_Q8_ROW_MAPPING_PROOF_STAGE, QwenTraceDenseHookIdentity,
     QwenTraceSourceOrderQ8AccumulatorAudit, QwenTraceSourceOrderQ8AccumulatorAuditEntry,
     QwenTraceSourceOrderQ8Candidate, QwenTraceSourceOrderQ8CandleSliceCompare,
-    QwenTraceSourceOrderQ8CandleSliceCompareEntry, dbg_finite, dbg_stats, debug_attn_enabled,
+    QwenTraceSourceOrderQ8CandleSliceCompareEntry, QwenTraceSourceOrderQ8RowMappingProof,
+    QwenTraceSourceOrderQ8RowMappingProofEntry, dbg_finite, dbg_stats, debug_attn_enabled,
     debug_attn_scale_enabled, debug_gqa_enabled, debug_mlp_enabled, debug_rmsnorm_enabled,
     debug_rope_enabled, qwen_trace_event, qwen_trace_events_enabled, qwen_trace_layer_enabled,
     qwen_trace_number, qwen_trace_source_order_q8_accumulator_audit,
     qwen_trace_source_order_q8_candidate, qwen_trace_source_order_q8_candle_slice_compare,
-    qwen_trace_tensor, qwen_trace_tensor_fingerprint,
+    qwen_trace_source_order_q8_row_mapping_proof, qwen_trace_tensor, qwen_trace_tensor_fingerprint,
     qwen_trace_tensor_fingerprint_with_dense_hook, trace_rms_enabled,
 };
 #[cfg(test)]
@@ -778,6 +781,19 @@ pub(crate) fn maybe_trace_dense_q8_source_order_qproj_candidate(
         tensor_name,
         layer_idx,
     )?;
+    maybe_trace_dense_q8_source_order_qproj_row_mapping_proof(
+        &input_values,
+        bias_values.as_deref(),
+        payload,
+        linear,
+        source_input_dim,
+        source_output_dim,
+        &candidate,
+        &eager_values,
+        &dense_hook_identity,
+        tensor_name,
+        layer_idx,
+    )?;
     Ok(())
 }
 
@@ -787,6 +803,10 @@ fn source_order_qproj_accumulator_audit_enabled() -> bool {
 
 fn source_order_qproj_candle_slice_compare_enabled() -> bool {
     std::env::var("BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDLE_SLICE_COMPARE").as_deref() == Ok("1")
+}
+
+fn source_order_qproj_row_mapping_proof_enabled() -> bool {
+    std::env::var("BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ROW_MAPPING_PROOF").as_deref() == Ok("1")
 }
 
 fn source_order_qproj_accumulator_audit_indices(source_output_dim: usize) -> Vec<usize> {
@@ -1014,6 +1034,117 @@ fn maybe_trace_dense_q8_source_order_qproj_candle_slice_compare(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
+fn maybe_trace_dense_q8_source_order_qproj_row_mapping_proof(
+    input_values: &[f32],
+    bias_values: Option<&[f32]>,
+    payload: &DenseLinearPackedQ8Payload,
+    linear: &Linear,
+    source_input_dim: usize,
+    source_output_dim: usize,
+    candidate: &[f32],
+    eager: &[f32],
+    dense_hook_identity: &str,
+    tensor_name: &str,
+    layer_idx: usize,
+) -> Result<()> {
+    if !source_order_qproj_row_mapping_proof_enabled() || !qwen_trace_layer_enabled(layer_idx) {
+        return Ok(());
+    }
+    if input_values.len() < source_input_dim || candidate.len() < source_output_dim {
+        return Ok(());
+    }
+    if linear.weight().dims() != [source_output_dim, source_input_dim] {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj row mapping proof expected Candle weight dims [{source_output_dim}, {source_input_dim}] for {tensor_name}, got {:?}",
+            linear.weight().dims()
+        )));
+    }
+
+    let candle_weight = linear.weight().to_dtype(DType::F32)?.flatten_all()?.to_vec1::<f32>()?;
+    let expected_candle_values =
+        source_output_dim.checked_mul(source_input_dim).ok_or_else(|| {
+            BitNetError::Validation(
+                "source-order Q8 q_proj row mapping proof value count overflow".to_string(),
+            )
+        })?;
+    if candle_weight.len() != expected_candle_values {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj row mapping proof materialized {} values, expected {expected_candle_values}",
+            candle_weight.len()
+        )));
+    }
+
+    let input_row = &input_values[..source_input_dim];
+    let indices = source_order_qproj_accumulator_audit_indices(source_output_dim);
+    struct OwnedEntry {
+        output_index: usize,
+        initial_bias: f32,
+        source_order_output: f32,
+        mapped_recomputed_output: f32,
+        candle_recomputed_output: f32,
+        eager_output: f32,
+        abs_diff_mapped_vs_candle: f32,
+        abs_diff_mapped_vs_eager: f32,
+        terms_json: String,
+    }
+    let mut entry_data = Vec::with_capacity(indices.len());
+    for output_index in indices {
+        let initial_bias = bias_values.map_or(0.0, |bias| bias[output_index]);
+        let (mapped_recomputed_output, candle_recomputed_output, terms_json) =
+            dense_q8_source_order_qproj_row_mapping_proof_entry(
+                input_row,
+                initial_bias,
+                payload,
+                &candle_weight,
+                source_input_dim,
+                source_output_dim,
+                output_index,
+            )?;
+        let source_order_output = candidate.get(output_index).copied().unwrap_or(0.0);
+        let eager_output = eager.get(output_index).copied().unwrap_or(0.0);
+        entry_data.push(OwnedEntry {
+            output_index,
+            initial_bias,
+            source_order_output,
+            mapped_recomputed_output,
+            candle_recomputed_output,
+            eager_output,
+            abs_diff_mapped_vs_candle: (mapped_recomputed_output - candle_recomputed_output).abs(),
+            abs_diff_mapped_vs_eager: (mapped_recomputed_output - eager_output).abs(),
+            terms_json,
+        });
+    }
+    let entries = entry_data
+        .iter()
+        .map(|entry| QwenTraceSourceOrderQ8RowMappingProofEntry {
+            output_index: entry.output_index,
+            initial_bias: entry.initial_bias,
+            source_order_output: entry.source_order_output,
+            mapped_recomputed_output: entry.mapped_recomputed_output,
+            candle_recomputed_output: entry.candle_recomputed_output,
+            eager_output: entry.eager_output,
+            abs_diff_mapped_vs_candle: entry.abs_diff_mapped_vs_candle,
+            abs_diff_mapped_vs_eager: entry.abs_diff_mapped_vs_eager,
+            terms_json: &entry.terms_json,
+        })
+        .collect::<Vec<_>>();
+    qwen_trace_source_order_q8_row_mapping_proof(QwenTraceSourceOrderQ8RowMappingProof {
+        stage: QWEN_QPROJ_SOURCE_ORDER_Q8_ROW_MAPPING_PROOF_STAGE,
+        layer_idx,
+        source_tensor: tensor_name,
+        gguf_tensor: "blk.0.attn_q.weight",
+        boundary: QWEN_QPROJ_SOURCE_ORDER_Q8_ROW_MAPPING_PROOF_BOUNDARY,
+        dense_hook_identity,
+        source_input_dim,
+        source_output_dim,
+        input_row: 0,
+        q8_block_size: payload.q8_block_size,
+        entries: &entries,
+    });
+    Ok(())
+}
+
 struct DenseQ8AccumulatorTerm {
     input_index: usize,
     weight_idx: usize,
@@ -1043,6 +1174,31 @@ struct DenseQ8CandleSliceTerm {
     candle_contribution: f32,
     contribution_delta: f32,
     source_order_partial_sum_after: f32,
+    candle_partial_sum_after: f32,
+}
+
+struct DenseQ8RowMappingTerm {
+    term_kind: &'static str,
+    input_index: usize,
+    source_order_weight_idx: usize,
+    runtime_weight_idx: usize,
+    candle_weight_idx: usize,
+    source_q8_block_index: usize,
+    source_q8_block_value_offset: usize,
+    runtime_q8_block_index: usize,
+    runtime_q8_block_value_offset: usize,
+    source_q8_block_scale: f32,
+    runtime_q8_block_scale: f32,
+    source_q: i8,
+    runtime_q: i8,
+    source_order_weight_value: f32,
+    mapped_weight_value: f32,
+    candle_weight_value: f32,
+    input_value: f32,
+    mapped_contribution: f32,
+    candle_contribution: f32,
+    contribution_delta_mapped_vs_candle: f32,
+    mapped_partial_sum_after: f32,
     candle_partial_sum_after: f32,
 }
 
@@ -1237,6 +1393,157 @@ fn dense_q8_source_order_qproj_candle_slice_term_json(term: &DenseQ8CandleSliceT
         qwen_trace_number(f64::from(term.candle_contribution)),
         qwen_trace_number(f64::from(term.contribution_delta)),
         qwen_trace_number(f64::from(term.source_order_partial_sum_after)),
+        qwen_trace_number(f64::from(term.candle_partial_sum_after))
+    )
+}
+
+fn dense_q8_payload_value_at(
+    payload: &DenseLinearPackedQ8Payload,
+    weight_idx: usize,
+) -> Result<(usize, usize, f32, i8, f32)> {
+    let block_stride = 2 + payload.q8_block_size;
+    let block_index = weight_idx / payload.q8_block_size;
+    let block_value_offset = weight_idx % payload.q8_block_size;
+    let block_offset = block_index * block_stride;
+    let q8_block_scale = dense_q8_sidecar_block_scale(&payload.packed_q8_bytes, block_offset);
+    let q_idx = block_offset + 2 + block_value_offset;
+    let q = payload.packed_q8_bytes.get(q_idx).copied().ok_or_else(|| {
+        BitNetError::Validation(format!(
+            "source-order Q8 q_proj row mapping proof q byte index {q_idx} is out of range"
+        ))
+    })? as i8;
+    Ok((block_index, block_value_offset, q8_block_scale, q, q8_block_scale * f32::from(q)))
+}
+
+fn dense_q8_source_order_qproj_row_mapping_proof_entry(
+    input_row: &[f32],
+    initial_bias: f32,
+    payload: &DenseLinearPackedQ8Payload,
+    candle_weight: &[f32],
+    source_input_dim: usize,
+    source_output_dim: usize,
+    output_index: usize,
+) -> Result<(f32, f32, String)> {
+    let mut mapped_sum = initial_bias;
+    let mut candle_sum = initial_bias;
+    let mut first_terms = Vec::new();
+    let mut max_abs_delta_term: Option<DenseQ8RowMappingTerm> = None;
+    for (input_index, input_value) in input_row.iter().enumerate() {
+        let source_order_weight_idx = input_index
+            .checked_mul(source_output_dim)
+            .and_then(|base| base.checked_add(output_index))
+            .ok_or_else(|| {
+                BitNetError::Validation(
+                    "source-order Q8 q_proj row mapping proof source index overflow".to_string(),
+                )
+            })?;
+        let runtime_weight_idx = output_index
+            .checked_mul(source_input_dim)
+            .and_then(|base| base.checked_add(input_index))
+            .ok_or_else(|| {
+                BitNetError::Validation(
+                    "source-order Q8 q_proj row mapping proof runtime index overflow".to_string(),
+                )
+            })?;
+        let (
+            source_q8_block_index,
+            source_q8_block_value_offset,
+            source_q8_block_scale,
+            source_q,
+            source_order_weight_value,
+        ) = dense_q8_payload_value_at(payload, source_order_weight_idx)?;
+        let (
+            runtime_q8_block_index,
+            runtime_q8_block_value_offset,
+            runtime_q8_block_scale,
+            runtime_q,
+            mapped_weight_value,
+        ) = dense_q8_payload_value_at(payload, runtime_weight_idx)?;
+        let candle_weight_idx = runtime_weight_idx;
+        let candle_weight_value = candle_weight.get(candle_weight_idx).copied().ok_or_else(|| {
+            BitNetError::Validation(format!(
+                "source-order Q8 q_proj row mapping proof Candle weight index {candle_weight_idx} is out of range"
+            ))
+        })?;
+        let mapped_contribution = mapped_weight_value * *input_value;
+        let candle_contribution = candle_weight_value * *input_value;
+        mapped_sum += mapped_contribution;
+        candle_sum += candle_contribution;
+        let contribution_delta_mapped_vs_candle = mapped_contribution - candle_contribution;
+        let term_kind = if first_terms.len() < 8 { Some("prefix") } else { None };
+        let term = DenseQ8RowMappingTerm {
+            term_kind: term_kind.unwrap_or("max_abs_contribution_delta"),
+            input_index,
+            source_order_weight_idx,
+            runtime_weight_idx,
+            candle_weight_idx,
+            source_q8_block_index,
+            source_q8_block_value_offset,
+            runtime_q8_block_index,
+            runtime_q8_block_value_offset,
+            source_q8_block_scale,
+            runtime_q8_block_scale,
+            source_q,
+            runtime_q,
+            source_order_weight_value,
+            mapped_weight_value,
+            candle_weight_value,
+            input_value: *input_value,
+            mapped_contribution,
+            candle_contribution,
+            contribution_delta_mapped_vs_candle,
+            mapped_partial_sum_after: mapped_sum,
+            candle_partial_sum_after: candle_sum,
+        };
+        if term_kind.is_some() {
+            first_terms.push(term);
+        } else {
+            let replace_max = match max_abs_delta_term.as_ref() {
+                Some(existing) => {
+                    contribution_delta_mapped_vs_candle.abs()
+                        > existing.contribution_delta_mapped_vs_candle.abs()
+                }
+                None => true,
+            };
+            if replace_max {
+                max_abs_delta_term = Some(term);
+            }
+        }
+    }
+    let mut terms_json = first_terms
+        .into_iter()
+        .map(|term| dense_q8_source_order_qproj_row_mapping_term_json(&term))
+        .collect::<Vec<_>>();
+    if let Some(term) = max_abs_delta_term {
+        terms_json.push(dense_q8_source_order_qproj_row_mapping_term_json(&term));
+    }
+    Ok((mapped_sum, candle_sum, terms_json.join(",")))
+}
+
+fn dense_q8_source_order_qproj_row_mapping_term_json(term: &DenseQ8RowMappingTerm) -> String {
+    format!(
+        "{{\"term_kind\":\"{}\",\"input_index\":{},\"source_order_weight_idx\":{},\"runtime_weight_idx\":{},\"candle_weight_idx\":{},\"source_q8_block_index\":{},\"source_q8_block_value_offset\":{},\"runtime_q8_block_index\":{},\"runtime_q8_block_value_offset\":{},\"source_q8_block_scale\":{},\"runtime_q8_block_scale\":{},\"source_q\":{},\"runtime_q\":{},\"source_order_weight_value\":{},\"mapped_weight_value\":{},\"candle_weight_value\":{},\"input_value\":{},\"mapped_contribution\":{},\"candle_contribution\":{},\"contribution_delta_mapped_vs_candle\":{},\"mapped_partial_sum_after\":{},\"candle_partial_sum_after\":{}}}",
+        term.term_kind,
+        term.input_index,
+        term.source_order_weight_idx,
+        term.runtime_weight_idx,
+        term.candle_weight_idx,
+        term.source_q8_block_index,
+        term.source_q8_block_value_offset,
+        term.runtime_q8_block_index,
+        term.runtime_q8_block_value_offset,
+        qwen_trace_number(f64::from(term.source_q8_block_scale)),
+        qwen_trace_number(f64::from(term.runtime_q8_block_scale)),
+        term.source_q,
+        term.runtime_q,
+        qwen_trace_number(f64::from(term.source_order_weight_value)),
+        qwen_trace_number(f64::from(term.mapped_weight_value)),
+        qwen_trace_number(f64::from(term.candle_weight_value)),
+        qwen_trace_number(f64::from(term.input_value)),
+        qwen_trace_number(f64::from(term.mapped_contribution)),
+        qwen_trace_number(f64::from(term.candle_contribution)),
+        qwen_trace_number(f64::from(term.contribution_delta_mapped_vs_candle)),
+        qwen_trace_number(f64::from(term.mapped_partial_sum_after)),
         qwen_trace_number(f64::from(term.candle_partial_sum_after))
     )
 }
@@ -6674,6 +6981,45 @@ mod tests {
         assert!(terms_json.contains("\"candle_weight_idx\":2"));
         assert!(terms_json.contains("\"source_order_weight_value\":1.000000000"));
         assert!(terms_json.contains("\"candle_weight_value\":1.000000000"));
+        Ok(())
+    }
+
+    #[test]
+    fn source_order_qproj_row_mapping_proof_reconciles_runtime_weight_rows() -> Result<()> {
+        let mut packed = Vec::new();
+        packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
+        for value in [1i8, 2, 3, 4, 5, 6] {
+            packed.push(value as u8);
+        }
+        packed.resize(34, 0);
+        let payload = DenseLinearPackedQ8Payload {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+            q8_block_size: 32,
+            q8_block_count: 1,
+            matrix_rows: 2,
+            matrix_cols: 3,
+        };
+        let input = [10.0f32, 20.0, 30.0];
+        let candle_weight = [0.5f32, 1.0, 1.5, 2.0, 2.5, 3.0];
+
+        let (mapped_output, candle_output, terms_json) =
+            dense_q8_source_order_qproj_row_mapping_proof_entry(
+                &input,
+                0.0,
+                &payload,
+                &candle_weight,
+                3,
+                2,
+                1,
+            )?;
+
+        assert_eq!(mapped_output, 160.0);
+        assert_eq!(candle_output, 160.0);
+        assert!(terms_json.contains("\"source_order_weight_idx\":1"));
+        assert!(terms_json.contains("\"runtime_weight_idx\":3"));
+        assert!(terms_json.contains("\"mapped_weight_value\":2.000000000"));
+        assert!(terms_json.contains("\"candle_weight_value\":2.000000000"));
         Ok(())
     }
 
