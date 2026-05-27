@@ -8627,8 +8627,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-144"
-status = "pr_open"
+status = "merged"
 pr = 810
+merged_at = "2026-05-27T00:43:53Z"
+merge_sha = "e14899edcfcb433ebedcf82fe5c2c8e597bf74dc"
 branch = "codex/slm-cpu-144-source-order-qproj-identity"
 stackable = false
 review_mode = "codex_premerge"
@@ -8661,6 +8663,55 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-143 refreshed exact Qwen3/Qwen2.5 strict CPU receipt evidence and kept source-order selector use fail-closed.",
   "SLM-CPU-144 may expose a usable source-order q_proj boundary identity or precisely block why the identity is still unavailable.",
+]
+must_not_claim = [
+  "The exact Qwen2.5 Q8_0 model binary is committed.",
+  "Runtime selection uses the source-order matvec prototype by default.",
+  "Allocation reduction or speedup is proven.",
+  "The packed-Q8 sidecar is promoted to default runtime.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-145"
+status = "ready"
+branch = "codex/slm-cpu-145-payload-runtime-qproj-capture"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-144"]
+acceptance = "Regenerate or precisely block the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU warm-session after-run receipts with both BITNET_DENSE_Q8_PAYLOAD_* and BITNET_DENSE_Q8_RUNTIME_* gates set for blk.0.attn_q.weight, then compare them against the existing before-run receipt oracles. A valid slice must preserve model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, fallback_used=false, and default eager_f32_candle runtime. It must expose the payload-bearing q_proj boundary identity if available, keep selector use blocked unless q_proj numeric evidence is attached and behavior is preserved, and precisely name any remaining payload binding, runtime input binding, trace identity, or q_proj numeric evidence blocker. It must not commit models/** or target/** artifacts, claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-144 fixed null payload-boundary receipt classification and precisely blocked source-order q_proj identity capture on missing payload gates.",
+  "SLM-CPU-145 may capture exact-model q_proj payload/runtime-gated receipts or precisely block the remaining boundary.",
 ]
 must_not_claim = [
   "The exact Qwen2.5 Q8_0 model binary is committed.",

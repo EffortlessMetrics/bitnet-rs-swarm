@@ -1,0 +1,22 @@
+timestamp = "2026-05-27T00:43:53Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-144"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 810
+branch = "codex/slm-cpu-144-source-order-qproj-identity"
+merge_sha = "e14899edcfcb433ebedcf82fe5c2c8e597bf74dc"
+summary = "Merged SLM-CPU-144 with null payload-boundary receipt classification and a source-order q_proj identity blocker artifact."
+notes = [
+  "The receipt classifier now treats payload_bearing_boundary=null as no payload boundary instead of an ambiguous payload-boundary identity gap.",
+  "The blocker artifact records that SLM-CPU-143 after-run commands enabled BITNET_DENSE_Q8_RUNTIME_* without also enabling BITNET_DENSE_Q8_PAYLOAD_* for blk.0.attn_q.weight.",
+  "Selector use remains blocked until exact-model receipts are recaptured with both payload and runtime gates plus q_proj numeric evidence.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-145"
+status = "ready"
+summary = "Recapture or precisely block exact Qwen3/Qwen2.5 q_proj payload/runtime-gated warm-session receipts."
