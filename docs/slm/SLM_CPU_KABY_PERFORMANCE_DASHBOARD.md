@@ -392,6 +392,22 @@ source-order/eager mismatch, not allocation reduction, timing improvement,
 speedup, sustained throughput, default-runtime promotion, Q4/Q5 support,
 server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
+SLM-CPU-151 classifies that captured mismatch with a local full-vector trace
+without committing the raw trace. The full 2048-value source-order candidate
+and eager q_proj oracle differ from index 0, and the sorted-value and
+sorted-absolute permutation probes still differ substantially
+(`sorted_abs_value_permutation_probe.rms_abs_diff=0.364230255`). The eager
+oracle also has a much larger L2 norm and extrema than the candidate
+(`21.865050542` vs `7.819040456` L2 norm), so a pure output-index permutation
+or hash/diff-construction issue is not sufficient to explain the mismatch. The
+next safe boundary is a small source-order q_proj accumulator audit for selected
+output indices, including Q8 block index, block scale, quantized byte, input
+value, partial sum order, and the corresponding eager oracle slice. This is
+still diagnostic evidence only; it does not promote the source-order candidate
+to runtime and does not claim allocation reduction, timing improvement, speedup,
+sustained throughput, default-runtime promotion, Q4/Q5 support,
+server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
+
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps

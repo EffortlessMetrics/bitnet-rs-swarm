@@ -8993,8 +8993,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-151"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-151-source-order-qproj-candidate-mismatch"
+pr = 825
+head_sha = "e0b1641010f0c1c4afa76acfc9cde0d82bb83702"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
