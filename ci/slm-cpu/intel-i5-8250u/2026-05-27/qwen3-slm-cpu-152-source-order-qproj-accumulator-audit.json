@@ -1,0 +1,228 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_accumulator_audit",
+  "tracking_item": "SLM-CPU-152",
+  "generated_at_utc": "2026-05-27T10:56:00Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_151_mismatch": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-151-source-order-qproj-candidate-mismatch.json",
+    "local_trace": "target/slm-cpu/qwen3-slm-cpu-152-source-order-qproj-accumulator-audit-trace.jsonl",
+    "local_trace_committed": false,
+    "local_warm_session": "target/slm-cpu/qwen3-slm-cpu-152-source-order-qproj-accumulator-audit-warm-session.json",
+    "local_warm_session_committed": false
+  },
+  "model": {
+    "architecture": "qwen3",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "format": "gguf",
+    "loader_mode": "real_gguf",
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "tokenizer": "gguf_metadata"
+  },
+  "backend": {
+    "fallback_used": false,
+    "requested_backend": "cpu",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust"
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "source_order_candidate_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1",
+    "accumulator_audit_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT=1",
+    "accumulator_indices": [
+      0,
+      1419,
+      1970
+    ],
+    "source_order_candidate_selected_for_runtime": false,
+    "default_runtime_preserved": true
+  },
+  "prompt_result": {
+    "prompt": "What is 2+2? Answer with only the number.",
+    "prompt_template": "qwen",
+    "no_think": true,
+    "generated_token_ids": [
+      17
+    ],
+    "decoded_text": "2",
+    "generated_ids_preserved_from_slm_cpu_150": true
+  },
+  "candidate_diff": {
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "input_rows": 1,
+    "candidate_len": 2048,
+    "eager_len": 2048,
+    "candidate_sha256_f32_le": "245bfb2a098ce31faad2b220a177a4449428dd0b8b555eb995012cecd549a7ac",
+    "eager_sha256_f32_le": "0dc0a727787796cd200a3e2edf536c61858745ca8e97f7c1a9633219316a877b",
+    "max_abs_diff_vs_eager": 5.735998631,
+    "mean_abs_diff_vs_eager": 0.280192134,
+    "rms_abs_diff_vs_eager": 0.516290998,
+    "first_diff_index": 0
+  },
+  "accumulator_audit": {
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "input_row": 0,
+    "q8_block_size": 32,
+    "entries": [
+      {
+        "output_index": 0,
+        "initial_bias": 0.0,
+        "candidate_output": -0.039782636,
+        "eager_output": 0.018396128,
+        "abs_diff_vs_eager": 0.058178764,
+        "partial_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "weight_idx": 0,
+            "q8_block_index": 0,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000294209,
+            "q": 11,
+            "input_value": 0.00725793,
+            "contribution": 0.000023489,
+            "partial_sum_after": 0.000023489
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "weight_idx": 2048,
+            "q8_block_index": 64,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000262976,
+            "q": 70,
+            "input_value": 0.655267537,
+            "contribution": 0.012062361,
+            "partial_sum_after": 0.012085849
+          },
+          {
+            "term_kind": "max_abs_contribution",
+            "input_index": 106,
+            "weight_idx": 217088,
+            "q8_block_index": 6784,
+            "q8_block_value_offset": 0,
+            "q8_block_scale": 0.000597,
+            "q": -127,
+            "input_value": 0.835196435,
+            "contribution": -0.063323773,
+            "partial_sum_after": -0.023949388
+          }
+        ]
+      },
+      {
+        "output_index": 1419,
+        "initial_bias": 0.0,
+        "candidate_output": -0.152995154,
+        "eager_output": -5.88899374,
+        "abs_diff_vs_eager": 5.735998631,
+        "partial_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "weight_idx": 1419,
+            "q8_block_index": 44,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.00058794,
+            "q": 29,
+            "input_value": 0.00725793,
+            "contribution": 0.00012375,
+            "partial_sum_after": 0.00012375
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "weight_idx": 3467,
+            "q8_block_index": 108,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.000213504,
+            "q": 40,
+            "input_value": 0.655267537,
+            "contribution": 0.005596085,
+            "partial_sum_after": 0.005719835
+          },
+          {
+            "term_kind": "max_abs_contribution",
+            "input_index": 133,
+            "weight_idx": 273803,
+            "q8_block_index": 8556,
+            "q8_block_value_offset": 11,
+            "q8_block_scale": 0.001675606,
+            "q": -88,
+            "input_value": 0.254400969,
+            "contribution": -0.037512265,
+            "partial_sum_after": -0.112775639
+          }
+        ]
+      },
+      {
+        "output_index": 1970,
+        "initial_bias": 0.0,
+        "candidate_output": 0.641220629,
+        "eager_output": 0.827744126,
+        "abs_diff_vs_eager": 0.186523497,
+        "partial_terms": [
+          {
+            "term_kind": "prefix",
+            "input_index": 0,
+            "weight_idx": 1970,
+            "q8_block_index": 61,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.000411272,
+            "q": -22,
+            "input_value": 0.00725793,
+            "contribution": -0.00006567,
+            "partial_sum_after": -0.00006567
+          },
+          {
+            "term_kind": "prefix",
+            "input_index": 1,
+            "weight_idx": 4018,
+            "q8_block_index": 125,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.000241041,
+            "q": 40,
+            "input_value": 0.655267537,
+            "contribution": 0.006317859,
+            "partial_sum_after": 0.006252189
+          },
+          {
+            "term_kind": "max_abs_contribution",
+            "input_index": 55,
+            "weight_idx": 114610,
+            "q8_block_index": 3581,
+            "q8_block_value_offset": 18,
+            "q8_block_scale": 0.000748158,
+            "q": 127,
+            "input_value": 0.634782374,
+            "contribution": 0.060314484,
+            "partial_sum_after": 0.184472144
+          }
+        ]
+      }
+    ]
+  },
+  "classification": {
+    "candidate_output_recomputed_from_audit": true,
+    "eager_oracle_still_differs": true,
+    "q8_payload_decode_for_candidate": "internally_self_consistent_for_selected_indices",
+    "remaining_boundary": "source_order_payload_interpretation_vs_eager_candle_weight_materialization",
+    "rationale": "The accumulator audit recomputes the source-order candidate outputs for selected indices and records Q8 block index, scale, q byte, input value, contribution, and partial sum order. Those audited sums match the candidate vector but still differ from the eager Candle q_proj oracle, especially output index 1419 where candidate=-0.152995154 and eager=-5.88899374.",
+    "next_safe_step": "Compare the audited source-order payload terms against the exact Candle-materialized q_proj row/column slice for the same output indices to decide whether the source-order GGUF payload interpretation or the eager weight materialization attribution is wrong."
+  }
+}

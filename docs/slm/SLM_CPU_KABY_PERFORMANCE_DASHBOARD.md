@@ -408,6 +408,21 @@ to runtime and does not claim allocation reduction, timing improvement, speedup,
 sustained throughput, default-runtime promotion, Q4/Q5 support,
 server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
+SLM-CPU-152 adds the next default-disabled accumulator audit surface for the
+same exact Qwen3 Q8_0 q_proj boundary. With
+`BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT=1`, the trace records
+selected output indices with Q8 block index, block scale, quantized byte, input
+value, contribution, and partial sum order. The i5-8250U artifact audits output
+indices `0`, `1419`, and `1970`; those audited sums recompute the source-order
+candidate vector, but the eager Candle q_proj oracle still differs, most sharply
+at output index `1419` (`candidate=-0.152995154`,
+`eager=-5.88899374`). This narrows the next boundary to source-order payload
+interpretation versus eager Candle weight materialization for the matching
+row/column slice. It is still diagnostic-only evidence and does not promote the
+candidate runtime or claim allocation reduction, timing improvement, speedup,
+sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or
+BitNet QK256 behavior.
+
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for
 the selected Qwen3 q_norm-input boundary and a real i5-8250U capture, then keeps
