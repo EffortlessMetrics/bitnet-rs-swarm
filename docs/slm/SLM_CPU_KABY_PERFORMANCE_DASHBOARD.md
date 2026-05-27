@@ -154,9 +154,33 @@ Qwen3 Q8_0 appliance profile: strict metadata, tokenizer authority,
 `fallback_used=false`, constrained corpus, multi-token determinism, warm-session
 receipt, operator profile, and bounded timing envelope.
 
+### Allocation Boundary Status
+
+SLM-CPU-160 records the first post-dashboard allocation/buffer-reuse boundary as
+blocked rather than changing runtime behavior. The high-level warm-session reuse
+fields are already present in committed receipts: session-owned buffers, prompt
+token buffers, generated-token buffers, timing buffers, stop-tail buffers, and
+bounded KV allocation are receipt-visible. The next lower boundary is
+`prompt_prefill.forward` / `model.forward` output storage, where current code
+classifies the residual block output-storage path as blocked by Candle-owned
+tensor add/output ownership.
+
+The blocker artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/slm-cpu-160-allocation-buffer-reuse-boundary-blocker.json
+```
+
+That artifact keeps the Qwen3/Qwen2.5 behavior oracle from SLM-CPU-158, records
+that the latest paired behavior receipts have `allocation_audit.enabled=false`,
+and names the missing evidence before any runtime allocation change: paired
+allocation-audit-enabled Qwen3 and Qwen2.5 before/after receipts, plus a concrete
+caller-output-storage shape contract for the exact Candle tensor boundary being
+changed.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-159. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-160. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny

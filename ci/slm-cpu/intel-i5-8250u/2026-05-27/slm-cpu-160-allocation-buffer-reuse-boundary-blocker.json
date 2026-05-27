@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_allocation_buffer_reuse_boundary_blocker",
+  "tracking_item": "SLM-CPU-160",
+  "generated_at_utc": "2026-05-27T22:10:00Z",
+  "decision": "blocked_before_runtime_allocation_change",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "default_runtime_promotion_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "dashboard": "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+    "qwen3_before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-158-before-warm-session.json",
+    "qwen3_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-158-after-warm-session.json",
+    "qwen25_before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-158-before-warm-session.json",
+    "qwen25_after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-158-after-warm-session.json",
+    "source_order_gate": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-158-source-order-qproj-runtime-binding-gate.json"
+  },
+  "behavior_oracle": {
+    "qwen3": {
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "generated_ids_preserved_in_source_order_gate": true,
+      "decoded_text_preserved_in_source_order_gate": true
+    },
+    "qwen25": {
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "generated_ids_preserved_in_source_order_gate": true,
+      "decoded_text_preserved_in_source_order_gate": true
+    }
+  },
+  "existing_reuse_evidence": {
+    "session_owned_buffers": true,
+    "prompt_token_buffer_reused": true,
+    "generated_token_buffer_reused": true,
+    "timing_buffers_reused": true,
+    "allocation_audit_buffers_reused": true,
+    "stop_tail_buffer_reused": true,
+    "kv_cache_allocation_policy": "max_prompt_plus_generation_bounded",
+    "logits_vec_extraction_bypassed_when_direct_greedy": true,
+    "note": "Committed warm-session receipts already prove the high-level reusable session buffers. SLM-CPU-160 is scoped to the next lower allocation boundary, not to re-claim these existing fields."
+  },
+  "blocker": {
+    "status": "blocked",
+    "blocked_boundary": "prompt_prefill.forward / model.forward output-storage reuse",
+    "exact_missing_evidence": [
+      "A paired Qwen3 Q8_0 allocation-audit-enabled before/after receipt for the exact runtime allocation change.",
+      "A paired Qwen2.5 Q8_0 allocation-audit-enabled before/after receipt for the exact runtime allocation change.",
+      "A shape contract proving which Candle-owned tensor output can safely be replaced by caller-owned storage without changing generated IDs or decoded text.",
+      "A per-boundary attribution receipt distinguishing prompt_prefill.forward, model.forward, final_norm.output, transformer.block.output, and lm_head/logits extraction after the proposed change."
+    ],
+    "current_receipt_gap": "The latest paired SLM-CPU-158 behavior receipts preserve generated IDs and provenance, but their aggregate allocation_audit.enabled field is false. They are sufficient behavior guards, not sufficient allocation-reduction proof.",
+    "code_surface_gap": "The current allocation audit classifies the residual block output-storage boundary as blocked by Candle tensor add/output ownership. Changing runtime allocation behavior before a caller-output-storage shape contract would be speculative.",
+    "next_safe_step": "Capture allocation-audit-enabled Qwen3 and Qwen2.5 before receipts for the current default runtime, define the exact caller-output-storage boundary to change, then rerun after receipts proving identical prompt IDs, generated IDs, decoded text, selected backend/kernel identity, dense hook identity, and fallback_used=false."
+  },
+  "acceptance": {
+    "valid_blocker_recorded": true,
+    "runtime_behavior_changed": false,
+    "qwen3_qwen25_behavior_oracle_preserved": true,
+    "allocation_reduction_claimed": false,
+    "speedup_claimed": false,
+    "sustained_throughput_claimed": false
+  }
+}

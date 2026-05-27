@@ -9568,7 +9568,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-160"
-status = "ready"
+status = "pr_open"
+pr = 843
 branch = "codex/slm-cpu-160-allocation-buffer-reuse-boundary"
 stackable = false
 review_mode = "codex_premerge"
