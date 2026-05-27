@@ -9045,8 +9045,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-152"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-152-source-order-qproj-accumulator-audit"
+pr = 827
+head_sha = "a178e650ab5c60ba3537b0fcd9c7c64732fda0a5"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

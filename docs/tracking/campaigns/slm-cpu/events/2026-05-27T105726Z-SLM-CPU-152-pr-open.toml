@@ -1,0 +1,17 @@
+timestamp = "2026-05-27T10:57:26Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-152"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 827
+branch = "codex/slm-cpu-152-source-order-qproj-accumulator-audit"
+head_sha = "a178e650ab5c60ba3537b0fcd9c7c64732fda0a5"
+summary = "Opened PR #827 with a default-disabled Qwen3 source-order q_proj accumulator audit."
+notes = [
+  "The PR adds a trace-only accumulator audit event gated by BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_ACCUMULATOR_AUDIT=1.",
+  "The i5-8250U artifact records selected output-index Q8 block index, scale, quantized byte, input value, contribution, and partial sum order while preserving eager_f32_candle runtime.",
+  "The evidence shows the audited source-order sums match the candidate vector but still diverge from the eager Candle q_proj oracle, narrowing the next boundary to source-order payload interpretation versus eager weight materialization.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
