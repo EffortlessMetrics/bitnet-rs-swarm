@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_identity_blocker",
+  "tracking_item": "SLM-CPU-144",
+  "status": "blocked_until_payload_gate_capture",
+  "summary": "SLM-CPU-143 preserved exact Qwen3/Qwen2.5 warm-session behavior, but it did not capture a real payload-bearing source-order q_proj boundary identity. The SLM-CPU-143 after-run commands enabled BITNET_DENSE_Q8_RUNTIME_* only; they did not enable BITNET_DENSE_Q8_PAYLOAD_* for blk.0.attn_q.weight, so the selection receipt serialized payload_bearing_boundary as null. The CLI receipt classifier also treated that JSON null field as if a payload boundary was present, which produced the misleading payload_boundary_present_without_source_order_identity status.",
+  "root_cause": {
+    "slm_cpu_143_capture_commands_missing_payload_gate": true,
+    "required_payload_env": {
+      "BITNET_DENSE_Q8_PAYLOAD_ENABLE": "1",
+      "BITNET_DENSE_Q8_PAYLOAD_TENSOR": "blk.0.attn_q.weight"
+    },
+    "runtime_env_alone_is_insufficient": true,
+    "receipt_classifier_null_payload_boundary_bug": true,
+    "correct_fail_closed_status_after_fix": "no_payload_boundary"
+  },
+  "implemented_fix": {
+    "scope": "receipt classification only",
+    "behavior": "payload_bearing_boundary=null is treated as no payload boundary, not as an ambiguous payload boundary with missing source-order identity",
+    "runtime_compute_enabled": false,
+    "default_runtime_changed": false,
+    "speedup_claim": false
+  },
+  "preserved_oracle_from_slm_cpu_143": {
+    "qwen3_model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "qwen25_model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "tokenizer_source": "gguf_metadata",
+    "tokenizer_strict": true,
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "prompt_ids_generated_ids_decoded_text_preserved": true,
+    "source_receipt_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-143-source-order-evidence-receipts.json"
+  },
+  "next_capture_command_requirements": {
+    "qwen3_after_run": [
+      "BITNET_DENSE_Q8_PAYLOAD_ENABLE=1",
+      "BITNET_DENSE_Q8_PAYLOAD_TENSOR=blk.0.attn_q.weight",
+      "BITNET_DENSE_Q8_RUNTIME_ENABLE=1",
+      "BITNET_DENSE_Q8_RUNTIME_TENSOR=blk.0.attn_q.weight"
+    ],
+    "qwen25_after_run": [
+      "BITNET_DENSE_Q8_PAYLOAD_ENABLE=1",
+      "BITNET_DENSE_Q8_PAYLOAD_TENSOR=blk.0.attn_q.weight",
+      "BITNET_DENSE_Q8_RUNTIME_ENABLE=1",
+      "BITNET_DENSE_Q8_RUNTIME_TENSOR=blk.0.attn_q.weight"
+    ],
+    "required_preservation_fields": [
+      "model.sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "dense_q8_hook.source_order_qproj_candidate_identity",
+      "dense_q8_hook.q_proj_numeric_evidence",
+      "fallback_used=false"
+    ]
+  },
+  "claim_boundary": {
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "default_runtime_promotion": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_safe_step": "Regenerate the exact Qwen3/Qwen2.5 after-run receipts with both BITNET_DENSE_Q8_PAYLOAD_* and BITNET_DENSE_Q8_RUNTIME_* gates set for blk.0.attn_q.weight, then compare against the existing before-run receipts. If payload-bearing q_proj identity appears, selector use still remains blocked until q_proj numeric evidence is attached and generated behavior is preserved."
+}
