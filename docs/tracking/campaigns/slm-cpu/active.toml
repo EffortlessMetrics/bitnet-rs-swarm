@@ -9568,8 +9568,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-160"
-status = "pr_open"
+status = "merged"
 pr = 843
+head_sha = "b893bb61f0fab6ce8c4c769028ad538ae8cb5f9a"
+merge_sha = "77cc20b1c9c751dfd735499b6c9ee585f7a80f9c"
+merged_at = "2026-05-27T22:28:23Z"
 branch = "codex/slm-cpu-160-allocation-buffer-reuse-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -9606,6 +9609,50 @@ may_claim = [
 ]
 must_not_claim = [
   "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-161"
+status = "ready"
+branch = "codex/slm-cpu-161-allocation-audit-baseline"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-160"]
+acceptance = "Consume the SLM-CPU-160 allocation/buffer-reuse blocker and capture or define the allocation-audit-enabled baseline needed before any runtime allocation behavior changes. A valid slice must produce Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU baseline evidence, or record the exact local artifact/cache blocker preventing that capture. The evidence must preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`. It must keep allocation-reduction, speedup, sustained-throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, and BitNet QK256 claims false."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-160 identified the exact missing allocation-audit-enabled baseline evidence before runtime allocation changes.",
+  "SLM-CPU-161 may capture that baseline evidence or record the exact blocker preventing capture.",
+]
+must_not_claim = [
+  "Runtime allocation behavior is changed without paired before/after strict CPU receipts.",
+  "Allocation reduction, speedup, or sustained throughput is proven.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
