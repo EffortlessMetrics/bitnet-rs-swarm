@@ -867,6 +867,7 @@ fn maybe_trace_dense_q8_source_order_qproj_accumulator_audit(
             input_row,
             initial_bias,
             payload,
+            source_input_dim,
             source_output_dim,
             output_index,
         )?;
@@ -1206,15 +1207,21 @@ fn dense_q8_source_order_qproj_accumulator_audit_entry(
     input_row: &[f32],
     initial_bias: f32,
     payload: &DenseLinearPackedQ8Payload,
+    source_input_dim: usize,
     source_output_dim: usize,
     output_index: usize,
 ) -> Result<(f32, String)> {
+    if output_index >= source_output_dim {
+        return Err(BitNetError::Validation(format!(
+            "source-order Q8 q_proj accumulator audit output index {output_index} is out of range for source output dim {source_output_dim}"
+        )));
+    }
     let block_stride = 2 + payload.q8_block_size;
     let mut sum = initial_bias;
     let mut first_terms = Vec::new();
     let mut max_abs_term: Option<DenseQ8AccumulatorTerm> = None;
     for (in_row, input_value) in input_row.iter().enumerate() {
-        let weight_idx = in_row * source_output_dim + output_index;
+        let weight_idx = output_index * source_input_dim + in_row;
         let block_idx = weight_idx / payload.q8_block_size;
         let block_value_offset = weight_idx % payload.q8_block_size;
         let block_offset = block_idx * block_stride;
@@ -1607,7 +1614,7 @@ fn dense_q8_source_order_qproj_matvec_into(
         for out_col in 0..source_output_dim {
             let mut sum = bias_values.map_or(0.0, |bias| bias[out_col]);
             for (in_row, input_value) in input_row.iter().enumerate().take(source_input_dim) {
-                let weight_idx = in_row * source_output_dim + out_col;
+                let weight_idx = out_col * source_input_dim + in_row;
                 let block_idx = weight_idx / payload.q8_block_size;
                 let block_value_offset = weight_idx % payload.q8_block_size;
                 let block_offset = block_idx * block_stride;
@@ -6923,7 +6930,7 @@ mod tests {
     }
 
     #[test]
-    fn source_order_qproj_candidate_matvec_uses_source_shape_contract() -> Result<()> {
+    fn source_order_qproj_candidate_matvec_uses_runtime_row_mapping() -> Result<()> {
         let mut packed = Vec::new();
         packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
         for value in [1i8, 2, 3, 4, 5, 6] {
@@ -6943,7 +6950,7 @@ mod tests {
 
         dense_q8_source_order_qproj_matvec_into(&input, None, &payload, 2, 3, &mut output)?;
 
-        assert_eq!(output, vec![45.0, 60.0, 75.0]);
+        assert_eq!(output, vec![25.0, 55.0, 85.0]);
         Ok(())
     }
 
@@ -6981,6 +6988,33 @@ mod tests {
         assert!(terms_json.contains("\"candle_weight_idx\":2"));
         assert!(terms_json.contains("\"source_order_weight_value\":1.000000000"));
         assert!(terms_json.contains("\"candle_weight_value\":1.000000000"));
+        Ok(())
+    }
+
+    #[test]
+    fn source_order_qproj_accumulator_audit_uses_runtime_row_mapping() -> Result<()> {
+        let mut packed = Vec::new();
+        packed.extend_from_slice(&f32_to_fp16(0.5).to_le_bytes());
+        for value in [1i8, 2, 3, 4, 5, 6] {
+            packed.push(value as u8);
+        }
+        packed.resize(34, 0);
+        let payload = DenseLinearPackedQ8Payload {
+            tensor_name: "blk.0.attn_q.weight".to_string(),
+            packed_q8_bytes: std::sync::Arc::from(packed.into_boxed_slice()),
+            q8_block_size: 32,
+            q8_block_count: 1,
+            matrix_rows: 2,
+            matrix_cols: 3,
+        };
+        let input = [10.0f32, 20.0, 30.0];
+
+        let (candidate_output, terms_json) =
+            dense_q8_source_order_qproj_accumulator_audit_entry(&input, 0.0, &payload, 3, 2, 1)?;
+
+        assert_eq!(candidate_output, 160.0);
+        assert!(terms_json.contains("\"weight_idx\":3"));
+        assert!(terms_json.contains("\"q\":4"));
         Ok(())
     }
 
