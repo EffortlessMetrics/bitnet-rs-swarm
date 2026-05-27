@@ -1,0 +1,18 @@
+timestamp = "2026-05-27T01:12:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-145"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 812
+branch = "codex/slm-cpu-145-payload-runtime-qproj-capture"
+head_sha = "b38060c17422b2f11f2a61d314779cadfa85d65a"
+summary = "Opened PR #812 with exact Qwen3/Qwen2.5 payload/runtime q_proj receipts."
+notes = [
+  "The PR captures both BITNET_DENSE_Q8_PAYLOAD_* and BITNET_DENSE_Q8_RUNTIME_* gated warm-session receipts for blk.0.attn_q.weight.",
+  "Qwen3 preserves generated IDs/text and exposes source-order q_proj identity, but runtime compute remains blocked by payload-order mismatch.",
+  "Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected.",
+  "Selector promotion remains blocked because q_proj numeric evidence is not attached.",
+  "No runtime selection promotion, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
