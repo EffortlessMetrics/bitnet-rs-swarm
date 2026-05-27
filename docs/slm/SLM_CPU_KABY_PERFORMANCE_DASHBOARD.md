@@ -70,6 +70,7 @@ OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj evidence receipt refresh | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-143-source-order-evidence-receipts.json` | Captures fresh current-main Qwen3/Qwen2.5 before/after strict CPU warm-session receipts with the SLM-CPU-142 fields present; generated behavior is preserved, but selector use remains blocked because source-order q_proj candidate identity is still not usable and q_proj numeric evidence is not captured |
 | Source-order q_proj identity blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-144-source-order-qproj-identity-blocker.json` | Classifies the SLM-CPU-143 source-order identity gap as a missing payload-gate capture plus a receipt-classifier null-boundary ambiguity; runtime selection remains disabled |
 | Payload/runtime q_proj capture | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-145-payload-runtime-qproj-capture.json` | Captures exact Qwen3/Qwen2.5 payload+runtime gated receipts for `blk.0.attn_q.weight`: Qwen3 exposes the source-order q_proj identity but remains fail-closed on payload-order mismatch, while Qwen2.5 preserves generated IDs/text with the opt-in packed q_proj path selected; selector promotion remains blocked because q_proj numeric evidence is not attached |
+| Payload/runtime q_proj numeric gate | `ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-qwen25-slm-cpu-146-qproj-numeric-evidence-gate.json` | Consumes the SLM-CPU-145 payload/runtime receipt oracles and precisely blocks selector promotion because the warm-session receipt surface still lacks attached q_proj f32 fingerprint/vector diff evidence |
 
 Qwen3 rows use:
 
@@ -337,6 +338,19 @@ not attach bounded q_proj numeric diff evidence for the runtime path. This is
 payload/runtime receipt evidence only, not a default-runtime promotion,
 allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5,
 server, accelerator, Qwen3.5, or BitNet QK256 claim.
+
+SLM-CPU-146 consumes those SLM-CPU-145 receipt oracles and records the current
+numeric-evidence gate without treating older diagnostic traces as a proxy for
+the payload/runtime warm-session path. The accepted SLM-CPU-125 tolerance policy
+still names the right bounded evidence shape, but SLM-CPU-145 warm-session
+receipts carry selector identity and behavior preservation only: they do not
+attach q_proj-output f32 fingerprints, bounded vector dumps, or before/after
+diff fields. The `run` command has q_proj trace dump flags, but
+`slm-warm-session` does not yet expose an equivalent trace surface, so the next
+safe step is an explicit warm-session q_proj numeric capture surface or artifact
+ingest path. Selector promotion remains blocked; no allocation, timing,
+speedup, sustained-throughput, default-runtime, Q4/Q5, server, accelerator,
+Qwen3.5, or BitNet QK256 claim is made.
 
 Earlier context through SLM-CPU-120: the shared q_proj-output sidecar
 transpose-order guard. It records the opt-in trace-only f32-le tensor fingerprint surface for

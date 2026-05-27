@@ -8728,7 +8728,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-146"
-status = "ready"
+status = "pr_open"
+pr = 814
+head_sha = "f6fe498a824b3c7fa7a045b5b2bc61aed58dbb0d"
 branch = "codex/slm-cpu-146-qproj-numeric-evidence-gate"
 stackable = false
 review_mode = "codex_premerge"
