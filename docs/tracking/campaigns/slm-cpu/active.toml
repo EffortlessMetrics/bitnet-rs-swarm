@@ -8941,10 +8941,12 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-150"
-status = "pr_open"
+status = "merged"
 branch = "codex/slm-cpu-150-source-order-qproj-candidate-capture"
 pr = 823
 head_sha = "9990215bdb751a5c400a15f535ffd4a636c9601f"
+merge_sha = "6593ae57ba3843a3d8c754d6639d149938439f87"
+merged_at = "2026-05-27T08:55:16Z"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -8976,6 +8978,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-149 precisely blocked Qwen3 source-order runtime evidence at the generation-time input binding and trace-attribution boundary.",
   "SLM-CPU-150 may add a default-disabled source-order q_proj candidate capture surface or record the exact blocker that prevents it.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The packed-Q8 sidecar or source-order candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-151"
+status = "ready"
+branch = "codex/slm-cpu-151-source-order-qproj-candidate-mismatch"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-150"]
+acceptance = "Classify or precisely block the Qwen3 source-order q_proj candidate/eager mismatch captured by SLM-CPU-150 for the exact Qwen3-0.6B Q8_0 `blk.0.attn_q.weight` / `layers.0.attention.q_proj.weight` layer-0 path. A valid slice must use the SLM-CPU-150 generation-time input binding and candidate/eager diff artifact to identify the next concrete root cause boundary, such as Q8_0 block-scale decode, source-order row accumulation, output-index orientation, eager oracle attribution, or candidate hash/diff construction. If the mismatch cannot be localized safely, emit a machine-checkable blocker naming the exact missing checkpoint, tensor slice, accumulator-order proof, or reference comparison. It must keep eager_f32_candle as the default runtime outside explicit gates and must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-150 added a default-disabled Qwen3 source-order q_proj candidate capture surface and i5-8250U evidence.",
+  "SLM-CPU-151 may classify the captured source-order candidate/eager mismatch or record the exact missing proof needed to localize it.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
