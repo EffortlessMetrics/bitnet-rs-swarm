@@ -1,0 +1,17 @@
+timestamp = "2026-05-27T22:13:23Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-160"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 843
+head_sha = "c3d5279f3b84762a0daab324c0622311e9da6dbb"
+branch = "codex/slm-cpu-160-allocation-buffer-reuse-boundary"
+summary = "Opened PR #843 recording the first Kaby allocation/buffer-reuse boundary as blocked before runtime behavior changes."
+notes = [
+  "The blocker artifact preserves the Qwen3/Qwen2.5 strict CPU behavior oracle from committed receipts.",
+  "The latest paired behavior receipts keep allocation_audit.enabled=false, so they are behavior guards but not allocation-reduction proof.",
+  "The exact missing evidence is paired allocation-audit-enabled Qwen3/Qwen2.5 before/after receipts plus a caller-output-storage shape contract for the Candle tensor boundary being changed.",
+  "No runtime allocation behavior, speedup, sustained throughput, Q4/Q5 support, default-runtime promotion, server or accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
