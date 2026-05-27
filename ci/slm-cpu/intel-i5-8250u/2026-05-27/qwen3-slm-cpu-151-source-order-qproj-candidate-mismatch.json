@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_source_order_qproj_candidate_mismatch",
+  "tracking_item": "SLM-CPU-151",
+  "generated_at_utc": "2026-05-27T09:38:26Z",
+  "claim_boundary": {
+    "speedup_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "default_runtime_promotion_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "source_artifacts": {
+    "slm_cpu_150_capture": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-150-source-order-qproj-candidate-capture.json",
+    "local_full_trace": "target/slm-cpu/qwen3-slm-cpu-151-source-order-qproj-candidate-full-trace.jsonl",
+    "local_full_trace_committed": false
+  },
+  "model": {
+    "architecture": "qwen3",
+    "file": "Qwen3-0.6B-Q8_0.gguf",
+    "format": "gguf",
+    "loader_mode": "real_gguf",
+    "repo": "Qwen/Qwen3-0.6B-GGUF",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "tokenizer": "gguf_metadata"
+  },
+  "backend": {
+    "fallback_used": false,
+    "requested_backend": "cpu",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust"
+  },
+  "runtime_boundary": {
+    "default_runtime": "eager_f32_candle",
+    "source_order_candidate_gate": "BITNET_QWEN_TRACE_SOURCE_ORDER_QPROJ_CANDIDATE=1",
+    "source_order_candidate_selected_for_runtime": false,
+    "default_runtime_preserved": true
+  },
+  "prompt_result": {
+    "prompt": "What is 2+2? Answer with only the number.",
+    "prompt_template": "qwen",
+    "no_think": true,
+    "generated_token_ids": [
+      17
+    ],
+    "decoded_text": "2",
+    "generated_ids_preserved_from_slm_cpu_150": true
+  },
+  "qproj_boundary": {
+    "layer": 0,
+    "source_tensor": "layers.0.attention.q_proj.weight",
+    "gguf_tensor": "blk.0.attn_q.weight",
+    "source_input_dim": 1024,
+    "source_output_dim": 2048,
+    "candidate_length": 2048,
+    "eager_length": 2048,
+    "candidate_hash": "5ce079a204b6ca95752040bb4a6cab8dab3aba21b3d951faf7da3355c16b86a0",
+    "eager_hash": "e8932b8d2fb84293772d267208bcc845416fc6eb30f42558e75e899e79260057"
+  },
+  "candidate_summary": {
+    "length": 2048,
+    "min": -0.567220271,
+    "max": 0.641220629,
+    "mean": 0.000079781,
+    "l2_norm": 7.819040456,
+    "max_abs": 0.641220629,
+    "max_abs_index": 1970,
+    "first_values": [
+      -0.039782636,
+      -0.376995832,
+      -0.016078848,
+      0.133092344,
+      0.00359172,
+      -0.047833532,
+      0.16597645,
+      0.134175122,
+      -0.096609987,
+      0.062967427,
+      0.227014616,
+      0.011546737,
+      0.174805999,
+      -0.082009017,
+      -0.159843683,
+      0.25547415
+    ]
+  },
+  "eager_summary": {
+    "length": 2048,
+    "min": -5.88899374,
+    "max": 4.723331928,
+    "mean": -0.00910614,
+    "l2_norm": 21.865050542,
+    "max_abs": 5.88899374,
+    "max_abs_index": 1419,
+    "first_values": [
+      0.018396128,
+      0.042186964,
+      -0.005154955,
+      -0.03664849,
+      -0.005128843,
+      0.023002211,
+      -0.004968455,
+      0.03098103,
+      0.013060447,
+      0.009471115,
+      0.016805675,
+      -0.064358138,
+      0.115870625,
+      -0.110202789,
+      -0.096234411,
+      -0.047085024
+    ]
+  },
+  "diff_metrics": {
+    "direct": {
+      "length": 2048,
+      "max_abs_diff": 5.735998586,
+      "mean_abs_diff": 0.280192134,
+      "rms_abs_diff": 0.516290997,
+      "first_diff_index": 0,
+      "cosine_similarity": -0.019564574,
+      "same_within_1e_4": 0,
+      "same_within_1e_3": 6,
+      "same_within_1e_2": 61
+    },
+    "sorted_value_permutation_probe": {
+      "length": 2048,
+      "max_abs_diff": 5.321773469,
+      "mean_abs_diff": 0.094458661,
+      "rms_abs_diff": 0.364545561,
+      "first_diff_index": 0,
+      "cosine_similarity": 0.781019558,
+      "same_within_1e_4": 3,
+      "same_within_1e_3": 35,
+      "same_within_1e_2": 593
+    },
+    "sorted_abs_value_permutation_probe": {
+      "length": 2048,
+      "max_abs_diff": 5.247773111,
+      "mean_abs_diff": 0.094445112,
+      "rms_abs_diff": 0.364230255,
+      "first_diff_index": 0,
+      "cosine_similarity": 0.782395886,
+      "same_within_1e_4": 4,
+      "same_within_1e_3": 22,
+      "same_within_1e_2": 578
+    }
+  },
+  "classification": {
+    "output_index_orientation_only": "ruled_out",
+    "candidate_hash_or_diff_construction_only": "ruled_out",
+    "next_root_cause_boundary": "q8_block_scale_decode_or_source_order_accumulation_or_eager_oracle_attribution",
+    "rationale": "The candidate and eager full 2048-value vectors differ directly from index 0, but their sorted-value and sorted-absolute distributions also differ substantially. The eager oracle has much larger extrema and L2 norm than the source-order candidate, so a pure output permutation or hash/diff construction issue is insufficient to explain the mismatch.",
+    "next_safe_step": "Capture a small source-order q_proj accumulator audit for selected output indices, including Q8 block index, block scale, quantized byte, input value, partial sum order, and the corresponding eager oracle slice."
+  },
+  "review_boundary": {
+    "raw_full_trace_committed": false,
+    "candidate_runtime_promoted": false,
+    "corpus_or_answer_quality_claim": false,
+    "performance_claim": false
+  }
+}
