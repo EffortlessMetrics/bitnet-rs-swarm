@@ -9304,7 +9304,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-157"
-status = "pr_open"
+status = "merged"
+pr = 837
+head_sha = "e276acb2035278405181a8b9a2e3b294ac9fe218"
+merge_sha = "da93284da891b017dd6a5d9292edc68d93d0635c"
+merged_at = "2026-05-27T19:20:00Z"
 branch = "codex/slm-cpu-157-source-order-qproj-receipt-pair"
 stackable = false
 review_mode = "codex_premerge"
@@ -9337,6 +9341,54 @@ forbidden_paths = [
 may_claim = [
   "SLM-CPU-156 recorded the source-order q_proj selector gate as fail-closed pending paired Qwen3 and Qwen2.5 before/after receipts.",
   "SLM-CPU-157 may capture or precisely block those paired selector-path behavior receipts.",
+]
+must_not_claim = [
+  "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
+  "The source-order q_proj candidate is promoted to default runtime.",
+  "Allocation reduction or speedup is proven.",
+  "Sustained 8250U throughput is proven.",
+  "Broad answer quality is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-158"
+status = "ready"
+branch = "codex/slm-cpu-158-source-order-qproj-runtime-binding-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-157"]
+acceptance = "Consume the SLM-CPU-157 paired receipt evidence and either add or precisely block the next default-disabled generation-time runtime binding for the exact Qwen3 source-order q_proj candidate. A valid slice must keep `eager_f32_candle` as the default runtime, require an explicit opt-in gate for any source-order q_proj runtime path, and preserve Qwen3 and Qwen2.5 strict CPU before/after receipt evidence for model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, q_proj numeric evidence, and `fallback_used=false`. It must not claim allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+may_claim = [
+  "SLM-CPU-157 captured paired Qwen3/Qwen2.5 selector-gate behavior receipts with prompt IDs, generated IDs, backend/kernel identity, q_proj numeric evidence, and fallback=false.",
+  "SLM-CPU-158 may add or precisely block a default-disabled runtime binding gate for the exact Qwen3 source-order q_proj candidate.",
 ]
 must_not_claim = [
   "The exact Qwen3 or Qwen2.5 Q8_0 model binary is committed.",
