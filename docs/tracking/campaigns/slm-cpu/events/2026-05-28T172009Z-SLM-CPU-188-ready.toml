@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T17:20:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-188"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-188-post-export-trace-artifact-capture"
+summary = "Queued post-export dense bias trace artifact capture after SLM-CPU-187."
+notes = [
+  "SLM-CPU-188 should consume SLM-CPU-187 and capture, or precisely block, the exact post-export Qwen3/Qwen2.5 model_init.linear_bias_finish trace artifacts and paired strict CPU receipts.",
+  "The item should preserve real_gguf loader mode, gguf_metadata strict tokenizer authority, selected_backend=cpu-rust, fallback_used=false, prompt IDs, generated IDs, decoded text, model SHA, and dense path identity.",
+  "No no-bias fast-path implementation, runtime selection change, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
