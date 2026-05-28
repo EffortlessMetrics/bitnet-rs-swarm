@@ -213,9 +213,26 @@ CPU behavior gate: model SHA, tokenizer authority, prompt/generated IDs,
 decoded text, selected CPU backend/kernel, and `fallback_used=false` must
 match before any later allocation-reduction PR can claim improvement.
 
+SLM-CPU-163 consumes that contract and records the first runtime-slice decision:
+the residual output storage change remains blocked by the current Candle API,
+not by missing Kaby evidence. The blocker artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-163-residual-output-storage-runtime-blocker.json
+```
+
+The source audit is specific to `candle-core 0.10.2`: `Tensor::add` returns
+`Result<Tensor>`, `broadcast_add` delegates to the owned `add` output path, and
+the local Candle source still notes the in-place/pre-allocated variant as a
+TODO. SLM-CPU-163 therefore leaves
+`runtime_allocation_behavior_changed=false`, requires a future `add_out` /
+`broadcast_add_out`-style API or verified backend-local equivalent, and keeps
+paired Qwen3/Qwen2.5 strict CPU before/after receipts as the gate before any
+allocation-reduction or speed claim.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-162. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-163. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny

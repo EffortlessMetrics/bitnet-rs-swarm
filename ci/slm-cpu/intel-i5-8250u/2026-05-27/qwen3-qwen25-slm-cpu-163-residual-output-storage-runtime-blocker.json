@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_allocation_runtime_blocker",
+  "claim": "slm_cpu_163_residual_output_storage_runtime_slice_blocked",
+  "campaign_item": "SLM-CPU-163",
+  "created_utc": "2026-05-28T00:45:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance",
+    "performance_claim": false
+  },
+  "inputs": {
+    "contract_item": "SLM-CPU-162",
+    "baseline_item": "SLM-CPU-161",
+    "qwen3_allocation_audit_baseline": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+    "qwen25_allocation_audit_baseline": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json"
+  },
+  "behavior_oracle": {
+    "models": [
+      "Qwen3-0.6B Q8_0",
+      "Qwen2.5-0.5B Q8_0"
+    ],
+    "must_preserve": [
+      "model_sha256",
+      "tokenizer_source",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend",
+      "selected_kernel",
+      "runtime_api",
+      "fallback_used=false"
+    ]
+  },
+  "boundary": {
+    "target": "residual_block_output_storage_boundary",
+    "output_surface": "transformer.block.output",
+    "current_code_path": "TransformerBlock::forward_impl computes (&feed_forward_output + residual)? and records TransformerForwardWorkspace.layer_output_surface",
+    "required_shape_contract": "caller-provided block output storage must have the same shape, dtype, and device as both residual input and branch output, and the receipt must record all three shapes before any storage reuse is enabled",
+    "ownership_contract": "TransformerForwardWorkspace may own reusable block output storage only after residual add can write into caller-provided output without aliasing residual input or branch output in a way that changes Candle semantics",
+    "runtime_slice_status": "runtime_slice_blocked_by_missing_caller_output_storage_api",
+    "runtime_allocation_behavior_changed": false
+  },
+  "candle_api_evidence": {
+    "workspace_candle_core_version": "0.10.2",
+    "public_blocking_ops": [
+      "Tensor::add(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>",
+      "std::ops::Add for Tensor/&Tensor delegates to Tensor::add and returns Result<Tensor>"
+    ],
+    "source_evidence": [
+      "candle-core-0.10.2/src/tensor.rs binary_op!(add, Add) returns Result<Tensor>",
+      "candle-core-0.10.2/src/tensor.rs broadcast_binary_op!(broadcast_add, add) delegates to owned Tensor::add output",
+      "candle-core-0.10.2/src/tensor.rs notes TODO: make an inplace version or a pre-allocated version"
+    ],
+    "required_missing_api": "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)",
+    "public_api_accepts_output_storage": false,
+    "backend_internal_in_place_api_exposed": false
+  },
+  "decision": {
+    "status": "blocked",
+    "summary": "No behavior-preserving runtime allocation slice is implemented for SLM-CPU-163 because the current Candle residual-add API only returns owned tensors. Replacing it would require either an output-storage API or a verified backend-local equivalent plus paired Qwen3/Qwen2.5 before/after receipts proving unchanged outputs and strict provenance.",
+    "next_safe_change": "Add or adopt a Candle residual-add caller-output-storage API, then rerun paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts before claiming allocation reduction or speedup."
+  },
+  "claim_boundaries": {
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "default_runtime_promotion_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

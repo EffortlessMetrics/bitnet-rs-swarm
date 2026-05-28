@@ -337,6 +337,17 @@ fn layer_output_storage_boundary_records_candle_residual_add_blocker() {
     assert_eq!(boundary.status, "layer_output_storage_blocked_by_candle_tensor_add_ops");
     assert!(boundary.residual_add_involved);
     assert!(!boundary.can_fill_caller_output_storage);
+    assert_eq!(
+        boundary.runtime_slice_status,
+        "runtime_slice_blocked_by_missing_caller_output_storage_api"
+    );
+    assert!(boundary.runtime_slice_blocker.contains("SLM-CPU-163"));
+    assert!(
+        boundary
+            .candle_api_evidence
+            .iter()
+            .any(|entry| entry.contains("broadcast_binary_op!(broadcast_add, add)"))
+    );
     assert!(
         boundary.reason.contains("residual-add")
             && boundary.reason.contains("caller-provided output-storage")
