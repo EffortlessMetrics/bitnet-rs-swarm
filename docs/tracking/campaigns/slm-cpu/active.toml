@@ -9873,7 +9873,7 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["SLM-CPU-166"]
-acceptance = "Consume the SLM-CPU-166 prompt/session buffer pre-sizing implementation and the committed SLM-CPU-161 allocation-audit baselines, then capture or precisely block a committed Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipt comparison that proves unchanged model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false` across the pre-sizing boundary. The slice must classify whether prompt/session buffer pre-sizing changed allocation-audit counters or only made capacity reuse receipt-visible, and it must name the next safe allocation hotspot before any runtime optimization claim. It must not claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+acceptance = "Define the post-SLM-CPU-166 prompt/session buffer pre-sizing receipt comparison gate and make it the next Kaby SLM performance-lane control point. The gate must require a later committed Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipt comparison proving unchanged model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false` across the pre-sizing boundary before any allocation or timing claim. This tracker slice must not itself claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
 commands = [
   "cargo run -p xtask --no-default-features -- campaign generate",
   "cargo run -p xtask --no-default-features -- campaign doctor",
@@ -9900,8 +9900,56 @@ evidence = [
 ]
 may_claim = [
   "SLM-CPU-166 pre-sizes resident warm-session prompt buffers from already-rendered/tokenized prompt metadata before the first prompt loop reset.",
-  "SLM-CPU-167 may capture the committed Qwen3/Qwen2.5 strict CPU receipt comparison needed before deciding the next allocation hotspot.",
-  "SLM-CPU-167 may record an exact local artifact/cache blocker instead of changing runtime behavior.",
+  "SLM-CPU-167 defines the committed Qwen3/Qwen2.5 strict CPU receipt comparison gate needed before deciding the next allocation hotspot.",
+  "SLM-CPU-168 is ready to capture that comparison evidence or record an exact local artifact/cache blocker.",
+]
+must_not_claim = [
+  "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-168"
+status = "ready"
+branch = "codex/slm-cpu-168-presizing-receipt-evidence"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-167"]
+acceptance = "Consume the SLM-CPU-167 receipt-comparison gate, SLM-CPU-166 prompt/session buffer pre-sizing implementation, and committed SLM-CPU-161 allocation-audit baselines, then capture or precisely block a committed Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipt comparison that proves unchanged model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false` across the pre-sizing boundary. The slice must classify whether prompt/session buffer pre-sizing changed allocation-audit counters or only made capacity reuse receipt-visible, and it must name the next safe allocation hotspot before any runtime optimization claim. It must not claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+]
+may_claim = [
+  "SLM-CPU-168 may capture the committed Qwen3/Qwen2.5 strict CPU receipt comparison needed before deciding the next allocation hotspot.",
+  "SLM-CPU-168 may record an exact local artifact/cache blocker instead of changing runtime behavior.",
 ]
 must_not_claim = [
   "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
