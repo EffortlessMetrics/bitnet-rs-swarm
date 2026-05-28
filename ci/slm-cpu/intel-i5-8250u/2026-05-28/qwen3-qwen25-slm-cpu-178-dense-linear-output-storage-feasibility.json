@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_dense_linear_output_storage_feasibility",
+  "claim": "dense_linear_output_storage_api_feasibility_classification",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-177",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-178 inspects the selected dense-linear output-storage sub-boundary only.",
+    "No runtime behavior changes are made in this slice.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made.",
+    "Any later runtime change must preserve paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict before/after model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false."
+  ],
+  "code_evidence": [
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2731-2786",
+      "evidence": "FeedForward::apply_linear selects QK256 only when raw QK256 data exists, otherwise calls maybe_forward_dense_q8_sidecar_linear and then falls back to candle_nn::Linear::forward(input), which returns an owned Tensor."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "3110-3144",
+      "evidence": "DenseLinearOutputStorageApiBoundary records weight/bias readability but marks dense_linear_output_storage_blocked_by_candle_tensor_ops because Tensor::matmul plus optional broadcast_add return owned tensors without caller-provided output storage."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "1725-1756",
+      "evidence": "The source-order Q8 sidecar helper can fill a local output slice, but the public runtime still constructs and returns a Candle Tensor with Tensor::from_vec."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "1818-1854",
+      "evidence": "The packed Q8 sidecar helper builds an output Vec and must still construct a returned Candle Tensor with Tensor::from_vec."
+    },
+    {
+      "path": "crates/bitnet-cli/src/allocation_audit.rs",
+      "lines": "297-393",
+      "evidence": "Warm-session allocation audit records feed_forward.down_proj.output as the first reusable allocation surface while can_fill_caller_output_storage=false."
+    }
+  ],
+  "feasibility_classification": {
+    "selected_sub_boundary": "dense_linear_output_storage_api_boundary",
+    "selected_surface": "feed_forward.down_proj.output",
+    "current_status": "blocked",
+    "runtime_candidate_available_now": false,
+    "reason": "The behavior-preserving production dense-linear path returns owned Candle Tensor outputs. Current backend-local helpers can fill temporary host slices or Vecs, but the transformer interface still requires a returned Tensor, and public Tensor construction takes owned storage rather than reusable caller-owned output storage.",
+    "read_side_access": {
+      "weight_accessible": true,
+      "bias_accessible": true,
+      "source": "DenseLinearOutputStorageApiBoundary::from_candle_linear"
+    },
+    "compute_side_blockers": [
+      {
+        "operation": "candle_nn::Linear::forward(&self, &Tensor) -> Result<Tensor>",
+        "blocker": "returns owned Tensor output"
+      },
+      {
+        "operation": "Tensor::matmul(&self, &Tensor) -> Result<Tensor>",
+        "blocker": "returns owned Tensor output and exposes no caller-provided output-storage parameter"
+      },
+      {
+        "operation": "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>",
+        "blocker": "returns owned Tensor output and exposes no caller-provided output-storage parameter for bias add"
+      },
+      {
+        "operation": "Tensor::from_vec(output, output_shape, device)",
+        "blocker": "constructs returned Tensor by consuming owned Vec storage, so caller-owned reusable storage cannot outlive the returned Tensor boundary"
+      }
+    ],
+    "backend_local_slice_feasibility": {
+      "can_fill_host_output_slice_inside_helper": true,
+      "can_reuse_that_slice_across_current_returned_tensor_boundary": false,
+      "why": "Current runtime consumers require Candle Tensor semantics immediately after dense linear output; helper-local output slices are consumed or copied into a returned Tensor before downstream use."
+    },
+    "no_bias_fast_path_feasibility": {
+      "potentially_useful_later": true,
+      "runtime_candidate_available_now": false,
+      "why": "A no-bias dense-linear path can skip broadcast_add only for biasless tensors, but matmul still returns an owned Tensor and therefore does not solve the output-storage boundary."
+    },
+    "safe_next_runtime_gate": {
+      "gate_name": "dense_linear_caller_output_storage_runtime_gate",
+      "required_api_or_design": [
+        "Candle matmul_out or equivalent API that fills caller-provided output storage while preserving Tensor semantics",
+        "Candle broadcast_add_out or equivalent API for optional bias without owned Tensor output",
+        "or a typed fused consumer that owns every downstream dense-linear consumer stage and avoids returned Tensor materialization"
+      ],
+      "required_receipts": [
+        "Qwen3-0.6B Q8_0 strict before/after warm-session receipt pair",
+        "Qwen2.5-0.5B-Instruct Q8_0 strict before/after warm-session receipt pair"
+      ],
+      "must_preserve": [
+        "model_sha256",
+        "strict_gguf_tokenizer_authority",
+        "prompt_ids",
+        "generated_ids",
+        "decoded_text",
+        "selected_cpu_backend",
+        "selected_cpu_kernel_identity",
+        "dense_hook_identity_where_applicable",
+        "fallback_used=false"
+      ],
+      "measurement_required_before_claim": [
+        "allocation counters for the exact dense-linear surface",
+        "prompt_prefill.forward and decode model.forward counters",
+        "timing fields for the affected warm-session phase",
+        "unchanged strict provenance and generated behavior"
+      ]
+    },
+    "selected_next_item": "SLM-CPU-179",
+    "selected_next_frontier": "dense_linear_caller_output_storage_runtime_gate",
+    "selected_next_frontier_reason": "SLM-CPU-178 finds no safe runtime candidate from current public APIs; the next useful slice should either define the runtime-disabled caller-output-storage gate in enough detail for implementation or record that the blocker must move upstream to Candle."
+  },
+  "must_not_claim": [
+    "SLM-CPU-178 changes runtime allocation behavior.",
+    "SLM-CPU-178 proves allocation reduction, timing improvement, speedup, or sustained throughput.",
+    "Dense-linear caller-output storage is implemented.",
+    "Candle Tensor matmul, broadcast_add, final-norm, residual-add, output-head, or model.forward caller-output-storage blockers are resolved.",
+    "A no-bias fast path solves the output-storage boundary.",
+    "Packed-Q8 or source-order sidecar paths are promoted to default runtime.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}

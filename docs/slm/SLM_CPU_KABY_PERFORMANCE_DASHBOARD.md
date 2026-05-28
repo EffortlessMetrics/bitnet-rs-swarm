@@ -85,6 +85,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Prompt-tokenize exact-identity cache | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json` | Seeds the resident warm-session exact-identity prompt-token cache during pre-sizing so byte-identical prompt-loop lookups hit for both Qwen3 and Qwen2.5, with paired strict receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, CPU backend identity, and fallback=false |
 | Post-prompt-tokenize frontier selection | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-176-post-prompt-tokenize-frontier.json` | Consumes the SLM-CPU-175 receipts and selects `model_forward_owned_tensor_allocation_boundary` as the next high-value frontier, while deferring small prompt setup evidence allocations and keeping SLM-CPU-175 claims scoped to byte-identical cache hits |
 | Model-forward allocation boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json` | Classifies the selected `model_forward_owned_tensor_allocation_boundary` as blocked by dense-linear, final-norm, residual-add, and model.forward owned Candle Tensor outputs, and selects dense-linear output-storage feasibility as the next sub-boundary without changing runtime behavior |
+| Dense-linear output-storage feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json` | Records that dense-linear weights and optional bias are readable, but production compute still returns owned Candle Tensor outputs; backend-local host slices cannot cross the returned-Tensor boundary, so a later runtime gate needs matmul/bias output-storage APIs or a fully typed fused consumer |
 
 Qwen3 rows use:
 
@@ -440,6 +441,23 @@ reuse remains blocked until those inner surfaces are solved or a fused consumer
 avoids returned-tensor materialization. SLM-CPU-177 therefore selects
 `dense_linear_output_storage_api_feasibility` for SLM-CPU-178 and keeps runtime
 behavior unchanged.
+
+SLM-CPU-178 inspects that feasibility boundary:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json
+```
+
+The read-side state is favorable: `candle_nn::Linear` exposes weight and optional
+bias tensors, and existing backend-local Q8 helpers can fill local host output
+slices or vectors. The production boundary is still not reusable, however,
+because `Linear::forward`, `Tensor::matmul`, optional bias `broadcast_add`, and
+the sidecar `Tensor::from_vec` construction all produce or consume owned Candle
+Tensor storage. SLM-CPU-178 therefore keeps runtime behavior unchanged and
+selects `dense_linear_caller_output_storage_runtime_gate` as the next frontier:
+either a real Candle `matmul_out`/`broadcast_add_out`-style API or a fully typed
+fused consumer must exist before paired Qwen3/Qwen2.5 receipts can claim even a
+bounded allocation improvement.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
