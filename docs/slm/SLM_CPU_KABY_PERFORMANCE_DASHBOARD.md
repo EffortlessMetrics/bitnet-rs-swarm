@@ -79,6 +79,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json` | Captures paired Qwen3/Qwen2.5 strict CPU before/after receipts with prompt IDs, generated IDs/text, backend/kernel identity, fallback=false, and q_proj numeric evidence; Qwen3 source-order candidate remains runtime-disabled/default-disabled and Qwen2.5 opt-in sidecar stays within the accepted `1e-4` q_proj tolerance, with no runtime promotion or performance claim |
 | Residual-add storage API decision | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json` | Consumes the SLM-CPU-169 frontier metadata and records the residual-add output-storage path as blocked until Candle exposes an `add_out` / `broadcast_add_out`-style API or a verified backend-local equivalent; no runtime allocation behavior changes or performance claims are made |
 | Post-residual allocation frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json` | Selects `prompt_tokenize` as the next measured Qwen3/Qwen2.5 allocation frontier not blocked by Candle residual-add caller-output-storage support; no runtime allocation behavior changes or performance claims are made |
+| Prompt-tokenize allocation contract | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json` | Defines the prompt identity, tokenizer provenance, rendered-prompt, and prompt-ID cache contract required before any prompt-tokenize runtime reuse or allocation claim |
 
 Qwen3 rows use:
 
@@ -325,6 +326,24 @@ safe slice to define a prompt-tokenize allocation contract that separates
 tokenizer-internal allocations from allocations that can be avoided by exact
 rendered-prompt and token-ID reuse, then requires paired Qwen3/Qwen2.5 strict
 CPU before/after receipts before any allocation, latency, or timing claim.
+
+SLM-CPU-172 defines that contract in:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json
+```
+
+The contract separates tokenizer-internal allocations, which remain classified
+until a tokenizer API exposes caller-owned output storage or cache hooks, from
+repo-owned reuse surfaces: rendered prompt text, prompt token IDs, and prompt
+token vector capacity. A future runtime slice must key reuse on model SHA,
+strict GGUF tokenizer source/authority, template family/source, Qwen no-think
+policy, raw and rendered prompt hashes, stop criteria, generation identity, and
+prompt ID hash. It must also record cache lookup/hit state and prompt-token
+buffer capacities in receipts. SLM-CPU-172 itself keeps
+`runtime_allocation_behavior_changed=false`; paired Qwen3/Qwen2.5 strict CPU
+before/after receipts are still required before any allocation, latency, or
+timing improvement claim.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
