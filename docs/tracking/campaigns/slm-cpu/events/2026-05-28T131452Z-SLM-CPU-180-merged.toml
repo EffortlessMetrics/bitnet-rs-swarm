@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T13:14:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-180"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 886
+merge_sha = "4463b647c1b41961134360837c701272430895d4"
+branch = "codex/slm-cpu-180-fused-dense-consumer-feasibility"
+summary = "Merged fused dense-consumer feasibility classification."
+notes = [
+  "SLM-CPU-180 classifies the selected feed_forward.down_proj.output fused-consumer path as too broad for a repo-owned runtime implementation.",
+  "The merged evidence keeps runtime unchanged and records that this allocation branch should move to exact output-storage dependency tracking before any runtime promotion.",
+  "No allocation reduction, timing improvement, speedup, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

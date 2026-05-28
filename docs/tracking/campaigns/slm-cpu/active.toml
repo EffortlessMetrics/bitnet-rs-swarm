@@ -10527,7 +10527,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-180"
-status = "ready"
+status = "merged"
+pr = 886
+merge_sha = "4463b647c1b41961134360837c701272430895d4"
 branch = "codex/slm-cpu-180-fused-dense-consumer-feasibility"
 stackable = false
 review_mode = "codex_premerge"
@@ -10570,6 +10572,57 @@ must_not_claim = [
   "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Candle output-storage blockers are resolved unless real API evidence proves it.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-181"
+status = "ready"
+branch = "codex/slm-cpu-181-output-storage-dependency-register"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-180"]
+acceptance = "Consume SLM-CPU-180 and record the exact output-storage dependencies blocking dense-linear, residual-add, final-norm, and model.forward allocation reuse. The slice must distinguish upstream Candle API gaps from repo-owned alternatives, name the dependency evidence required before any runtime promotion, and preserve the current runtime behavior. No runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-180 records the selected feed_forward.down_proj.output surface as too broad for a repo-owned typed fused dense-linear consumer because downstream Tensor semantics cross residual-add, trace/workspace identity, block output identity, and model.forward boundaries.",
+  "SLM-CPU-180 leaves runtime unchanged and records Candle matmul_out and broadcast_add_out style output-storage support as the safe dependency path for this branch.",
+]
+may_claim = [
+  "SLM-CPU-181 may catalog exact output-storage API dependencies and evidence gates for future Kaby dense allocation reuse.",
+  "SLM-CPU-181 may identify which dependencies are upstream Candle gaps and which alternatives remain repo-owned design notes.",
+]
+must_not_claim = [
+  "Any output-storage dependency is implemented or resolved.",
+  "Dense-linear caller-output storage is enabled by default.",
+  "A typed fused dense-linear consumer is implemented or selected by default.",
+  "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
   "Qwen3.5 or hybrid architecture support is in scope.",
