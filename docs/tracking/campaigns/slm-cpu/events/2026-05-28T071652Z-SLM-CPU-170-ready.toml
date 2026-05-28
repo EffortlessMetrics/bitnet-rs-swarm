@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T07:16:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-170"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-170-residual-add-storage-api-decision"
+summary = "Queued the next residual-add output-storage decision after SLM-CPU-169."
+notes = [
+  "SLM-CPU-169 names the exact missing residual-add caller-output-storage API before runtime allocation changes.",
+  "SLM-CPU-170 must either define an actionable integration path for transformer.block.output residual-add reuse or redirect to another measured Qwen3/Qwen2.5 allocation frontier.",
+  "Any allocation or timing improvement still requires paired strict Qwen3/Qwen2.5 before/after receipts preserving generated identity and fallback_used=false.",
+]
