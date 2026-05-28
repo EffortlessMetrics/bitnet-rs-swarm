@@ -11264,7 +11264,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-194"
-status = "ready"
+status = "merged"
+pr = 914
+merge_sha = "3b94b36a22ea8a06fb2a9293c03bfc6f86b8e072"
 branch = "codex/slm-cpu-194-no-bias-fastpath-implementation-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -11304,6 +11306,58 @@ must_not_claim = [
   "A no-bias dense linear fast path is implemented or selected by default.",
   "Runtime compute selection changes.",
   "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-195"
+status = "ready"
+branch = "codex/slm-cpu-195-no-bias-down-proj-candidate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-194"]
+acceptance = "Consume the SLM-CPU-194 no-bias fast-path implementation gate and either implement a runtime-disabled no-bias dense-linear candidate for the exact Qwen3 Q8_0 feed_forward.down_proj roles in layers 0..27 or record the exact Candle/API blocker preventing that implementation. A valid implementation must keep BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default and keep runtime selection off unless real before/after strict warm-session receipts prove unchanged generated IDs, decoded text, prompt IDs/hashes, model SHA, tokenizer source/strictness, selected_backend=cpu-rust, runtime_api=cpu, fallback_used=false, dense path identity, manifest SHA, role ID, and bias_present. No default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-194 defines the first eligible no-bias fast-path scope as Qwen3 Q8_0 feed_forward.down_proj layers 0..27.",
+  "SLM-CPU-194 keeps fast_path_compute_implemented=false, runtime_selection_enabled=false, and selected_path=eager_f32_candle until future receipt evidence exists.",
+  "SLM-CPU-194 excludes Qwen3 attention and output-head roles, and keeps Qwen2.5 attention q/k/v blocked because bias_present=true.",
+]
+may_claim = [
+  "SLM-CPU-195 may add a runtime-disabled no-bias dense-linear candidate for the exact Qwen3 feed_forward.down_proj role scope named by SLM-CPU-194.",
+  "SLM-CPU-195 may record an exact Candle/API blocker if that candidate cannot be implemented without changing runtime selection.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Runtime compute selection changes without real before/after strict warm-session receipts.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",

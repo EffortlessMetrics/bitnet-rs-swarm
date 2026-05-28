@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T21:20:47Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-195"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-195-no-bias-down-proj-candidate"
+summary = "Queued the runtime-disabled no-bias down-projection candidate slice."
+notes = [
+  "SLM-CPU-195 should consume the SLM-CPU-194 gate and either implement a runtime-disabled candidate for exact Qwen3 Q8_0 feed_forward.down_proj roles in layers 0..27 or record the exact Candle/API blocker.",
+  "The candidate must keep BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default and keep runtime selection off unless real before/after strict warm-session receipts prove unchanged generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, CPU backend/runtime, fallback=false, dense path identity, manifest SHA, role ID, and bias_present.",
+  "No default runtime change, allocation, timing, speedup, sustained throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
