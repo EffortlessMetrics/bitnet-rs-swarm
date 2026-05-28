@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T13:14:53Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-181"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-181-output-storage-dependency-register"
+summary = "Queued output-storage dependency register after SLM-CPU-180."
+notes = [
+  "SLM-CPU-181 should consume the SLM-CPU-180 fused-consumer feasibility result and catalog the exact output-storage dependencies blocking dense-linear, residual-add, final-norm, and model.forward allocation reuse.",
+  "The item should distinguish upstream Candle API gaps from repo-owned alternatives while preserving current runtime behavior.",
+  "No allocation reduction, timing improvement, speedup, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
