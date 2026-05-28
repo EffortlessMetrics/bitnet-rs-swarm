@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T20:25:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-193"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-193-no-bias-selector-preservation-receipts"
+summary = "Queued strict preservation receipts for the disabled no-bias selector audit hook."
+notes = [
+  "SLM-CPU-193 should consume the SLM-CPU-192 audit hook and capture before/after receipts proving the hook is present while compute selection remains unchanged.",
+  "Receipts must preserve generated IDs, decoded text, prompt IDs, model SHA, tokenizer authority, selected CPU backend/runtime, fallback=false, dense path identity, manifest SHA, role ID, bias_present, runtime gate name, and selected eager_f32_candle path.",
+  "No no-bias fast-path compute implementation, default runtime selection, allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]

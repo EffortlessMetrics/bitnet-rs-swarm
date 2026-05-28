@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T20:25:51Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-192"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 910
+merge_sha = "7d343f700f39696bb76098166a84337324672854"
+branch = "codex/slm-cpu-192-no-bias-selector-audit-hook"
+summary = "Merged disabled-by-default no-bias selector audit hook."
+notes = [
+  "SLM-CPU-192 adds DenseLinearNoBiasSelectorAudit and keeps BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default.",
+  "The hook reports eligible, biased, and unknown-bias decisions while preserving selected_path=eager_f32_candle and selected_kernel=dense-f32-candle-linear.",
+  "The merged slice does not implement, enable, or select a no-bias fast path and makes no allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

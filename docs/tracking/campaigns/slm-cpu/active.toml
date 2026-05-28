@@ -11154,7 +11154,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-192"
-status = "ready"
+status = "merged"
+pr = 910
+merge_sha = "7d343f700f39696bb76098166a84337324672854"
 branch = "codex/slm-cpu-192-no-bias-selector-audit-hook"
 stackable = false
 review_mode = "codex_premerge"
@@ -11193,6 +11195,58 @@ evidence = [
 may_claim = [
   "SLM-CPU-192 may add an audit-only no-bias selector decision hook.",
   "SLM-CPU-192 may emit before/after receipts proving unchanged outputs and strict identity while the hook remains disabled for compute selection.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
+  "Runtime compute selection changes.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-193"
+status = "ready"
+branch = "codex/slm-cpu-193-no-bias-selector-preservation-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-192"]
+acceptance = "Consume the SLM-CPU-192 disabled-by-default no-bias selector audit hook and capture before/after strict warm-session receipts proving the hook is present while compute selection remains unchanged. A valid slice must preserve generated IDs, decoded text, prompt IDs, model SHA, tokenizer source/strictness, selected_backend=cpu-rust, runtime_api=cpu, fallback_used=false, dense path identity, manifest SHA, role ID, bias_present, runtime gate name, runtime gate default disabled state, and selected eager_f32_candle path. No no-bias fast-path compute implementation, default runtime selection change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-192 added DenseLinearNoBiasSelectorAudit with BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default.",
+  "SLM-CPU-192 keeps selected_path=eager_f32_candle and selected_kernel=dense-f32-candle-linear for audit decisions.",
+  "SLM-CPU-192 records no runtime behavior change, default runtime change, allocation claim, timing claim, or speedup claim.",
+]
+may_claim = [
+  "SLM-CPU-193 may capture strict before/after receipts proving the SLM-CPU-192 audit hook is present and runtime compute selection remains unchanged.",
+  "SLM-CPU-193 may record audit decisions for exact role evidence while preserving strict CPU identity fields.",
 ]
 must_not_claim = [
   "A no-bias dense linear fast path is implemented or selected by default.",
