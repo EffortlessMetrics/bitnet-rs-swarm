@@ -1,0 +1,15 @@
+timestamp = "2026-05-28T05:00:57Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-166"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 856
+merge_sha = "fffb8d1c366fe7693ffff7dc20d268fabedec58e"
+branch = "codex/slm-cpu-166-session-buffer-presizing"
+summary = "Merged PR #856 for session-level prompt/session buffer pre-sizing."
+notes = [
+  "SLM-CPU-166 uses already-rendered/tokenized prompt metadata to pre-size resident warm-session prompt buffers before the first prompt loop reset.",
+  "The merged slice preserves Qwen3/Qwen2.5 strict CPU behavior oracles and does not claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
