@@ -1,0 +1,17 @@
+timestamp = "2026-05-28T00:00:37Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-162"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 847
+head_sha = "75a8b5f53753959a371f060126e5eb3ee6b00b9b"
+branch = "codex/slm-cpu-162-residual-output-storage-contract"
+summary = "Opened PR #847 defining the residual block output storage shape and ownership contract."
+notes = [
+  "The slice exposes residual_block_output_storage_contract in allocation-audit receipts before changing runtime allocation behavior.",
+  "The contract records shape/dtype/device requirements, TransformerForwardWorkspace ownership, behavior-preservation gates, and the Candle residual-add output-storage blocker.",
+  "The runtime remains deferred with runtime_allocation_behavior_changed=false and can_fill_layer_output_storage=false.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

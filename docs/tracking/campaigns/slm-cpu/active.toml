@@ -9662,7 +9662,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-162"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-162-residual-output-storage-contract"
 stackable = false
 review_mode = "codex_premerge"
