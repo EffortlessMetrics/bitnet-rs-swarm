@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T21:20:46Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-194"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 914
+merge_sha = "3b94b36a22ea8a06fb2a9293c03bfc6f86b8e072"
+branch = "codex/slm-cpu-194-no-bias-fastpath-implementation-gate"
+summary = "Merged the no-bias dense-linear fast-path implementation gate."
+notes = [
+  "SLM-CPU-194 consumes the SLM-CPU-193 preservation artifact and defines the first eligible role scope as Qwen3 Q8_0 feed_forward.down_proj layers 0..27.",
+  "The artifact keeps fast_path_compute_implemented=false, runtime_selection_enabled=false, selected_path=eager_f32_candle, and BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default.",
+  "The merged slice does not implement fast-path compute, change runtime selection, or claim allocation, timing, speedup, sustained throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
