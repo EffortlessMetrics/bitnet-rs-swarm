@@ -10580,7 +10580,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-181"
-status = "ready"
+status = "merged"
+pr = 888
+merge_sha = "05f01e674b7c8c354cdf72cf28e5f63f7d027b1c"
 branch = "codex/slm-cpu-181-output-storage-dependency-register"
 stackable = false
 review_mode = "codex_premerge"
@@ -10622,6 +10624,56 @@ must_not_claim = [
   "Dense-linear caller-output storage is enabled by default.",
   "A typed fused dense-linear consumer is implemented or selected by default.",
   "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-182"
+status = "ready"
+branch = "codex/slm-cpu-182-no-bias-dense-linear-frontier"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-181"]
+acceptance = "Consume SLM-CPU-181 and select the next measured Kaby performance frontier that is not blocked by Candle output-storage APIs: Q8_0 dense no-bias linear fast-path feasibility. The slice must inspect Qwen3 Q8_0 and Qwen2.5 Q8_0 dense-linear roles, identify which projection/output-head surfaces have no bias or already skip bias addition, record the exact runtime-disabled gate and paired strict receipt evidence required before any implementation, and preserve current runtime behavior. No runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-181 defers the output-storage branch until exact Candle APIs or a typed Tensor handoff contract exists.",
+  "The next safe performance frontier should avoid claiming allocation reuse and should instead classify a narrower dense-linear compute-path property that can be gated by paired Qwen3/Qwen2.5 receipts.",
+]
+may_claim = [
+  "SLM-CPU-182 may classify whether Qwen3/Qwen2.5 Q8_0 dense-linear roles expose no-bias fast-path opportunities.",
+  "SLM-CPU-182 may define a runtime-disabled gate and receipt requirements for a future no-bias dense linear fast path.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",

@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T13:53:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-182"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-182-no-bias-dense-linear-frontier"
+summary = "Queued Q8_0 no-bias dense-linear frontier after SLM-CPU-181."
+notes = [
+  "SLM-CPU-182 should avoid the blocked output-storage branch and classify whether Qwen3/Qwen2.5 Q8_0 dense-linear roles expose a no-bias fast-path opportunity.",
+  "The item may define a disabled gate and paired strict receipt requirements, but must not change runtime behavior or claim allocation/timing improvement.",
+  "No Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
