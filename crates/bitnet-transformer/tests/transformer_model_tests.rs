@@ -341,7 +341,7 @@ fn layer_output_storage_boundary_records_candle_residual_add_blocker() {
         boundary.runtime_slice_status,
         "runtime_slice_blocked_by_missing_caller_output_storage_api"
     );
-    assert!(boundary.runtime_slice_blocker.contains("SLM-CPU-163"));
+    assert!(boundary.runtime_slice_blocker.contains("requires an output-storage API"));
     assert!(
         boundary
             .candle_api_evidence
