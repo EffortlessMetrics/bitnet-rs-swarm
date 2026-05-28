@@ -9715,7 +9715,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-163"
-status = "ready"
+status = "pr_open"
 branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
 stackable = false
 review_mode = "codex_premerge"

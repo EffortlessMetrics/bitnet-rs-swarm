@@ -1,0 +1,17 @@
+timestamp = "2026-05-28T00:57:45Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-163"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 849
+head_sha = "50827b6ece1015c9185bfccb4c103124f09f4d0b"
+branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
+summary = "Opened PR #849 recording the residual output storage runtime slice as blocked by Candle's current Tensor residual-add API."
+notes = [
+  "The slice consumes SLM-CPU-162's residual_block_output_storage_boundary contract without changing runtime allocation behavior.",
+  "It records that candle-core 0.10.2 Tensor::add and broadcast_add return owned Result<Tensor> outputs and expose no caller-provided output-storage API.",
+  "The allocation audit and blocker artifact preserve runtime_allocation_behavior_changed=false and require a future add_out/broadcast_add_out-style API or verified backend-local equivalent before any allocation-reduction claim.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

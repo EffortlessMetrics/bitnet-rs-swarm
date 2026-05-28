@@ -11,8 +11,10 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use bitnet_transformer::{
     CANDLE_LOGITS_EXACT_BLOCKING_OPS, CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS,
     CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE, CANDLE_LOGITS_REQUIRED_MISSING_API,
-    CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS, CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
-    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API, LayerOutputStorageApiBoundary,
+    CANDLE_RESIDUAL_ADD_API_EVIDENCE, CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
+    CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE, CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+    CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER, CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS,
+    LayerOutputStorageApiBoundary,
 };
 
 static ALLOCATION_AUDIT_ENABLED: AtomicBool = AtomicBool::new(false);
@@ -323,6 +325,9 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "layer_output_shape_contract": layer_output_boundary.required_shape_contract,
                 "layer_output_ownership_contract": layer_output_boundary.ownership_contract,
                 "layer_output_behavior_preservation_gate": layer_output_boundary.behavior_preservation_gate,
+                "layer_output_runtime_slice_status": layer_output_boundary.runtime_slice_status,
+                "layer_output_runtime_slice_blocker": layer_output_boundary.runtime_slice_blocker,
+                "layer_output_candle_api_evidence": layer_output_boundary.candle_api_evidence,
                 "residual_block_output_storage_contract": {
                     "target": "residual_block_output_storage_boundary",
                     "status": "contract_defined_runtime_change_deferred",
@@ -337,6 +342,13 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                     "runtime_allocation_behavior_changed": false,
                     "can_fill_layer_output_storage": false,
                     "next_safe_change": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+                    "slm_cpu_163_runtime_slice": {
+                        "status": CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS,
+                        "blocker": CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER,
+                        "candle_api_evidence": CANDLE_RESIDUAL_ADD_API_EVIDENCE,
+                        "runtime_allocation_behavior_changed": false,
+                        "paired_before_after_receipts_required_before_claim": true,
+                    },
                 },
                 "final_norm_operation_family": "candle_nn::RmsNorm::forward",
                 "final_norm_operation_detail": "rms_norm",
@@ -790,6 +802,26 @@ mod tests {
         assert_eq!(contract["runtime_allocation_behavior_changed"], false);
         assert_eq!(contract["can_fill_layer_output_storage"], false);
         assert_eq!(contract["next_safe_change"], CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API);
+        assert_eq!(
+            boundary["layer_output_runtime_slice_status"],
+            CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS
+        );
+        assert_eq!(
+            boundary["layer_output_runtime_slice_blocker"],
+            CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER
+        );
+        assert_eq!(
+            contract["slm_cpu_163_runtime_slice"]["status"],
+            CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS
+        );
+        assert_eq!(
+            contract["slm_cpu_163_runtime_slice"]["runtime_allocation_behavior_changed"],
+            false
+        );
+        assert_eq!(
+            contract["slm_cpu_163_runtime_slice"]["paired_before_after_receipts_required_before_claim"],
+            true
+        );
         assert!(
             contract["required_shape_contract"]
                 .as_str()

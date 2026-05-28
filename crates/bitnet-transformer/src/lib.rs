@@ -3193,6 +3193,9 @@ pub struct LayerOutputStorageApiBoundary {
     pub status: &'static str,
     pub reason: &'static str,
     pub next_api_hook: &'static str,
+    pub runtime_slice_status: &'static str,
+    pub runtime_slice_blocker: &'static str,
+    pub candle_api_evidence: &'static [&'static str],
     pub required_shape_contract: &'static str,
     pub ownership_contract: &'static str,
     pub behavior_preservation_gate: &'static str,
@@ -3215,6 +3218,18 @@ pub const CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE: &str = "Result<Tensor>";
 
 pub const CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API: &str = "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)";
 
+pub const CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS: &str =
+    "runtime_slice_blocked_by_missing_caller_output_storage_api";
+
+pub const CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER: &str = "SLM-CPU-163 cannot safely change residual block output allocation behavior while Candle Tensor::add/broadcast_add only return owned Result<Tensor> outputs; implementing storage reuse here requires an output-storage API or a verified backend-local equivalent before paired Qwen3/Qwen2.5 receipts can prove unchanged generated IDs";
+
+pub const CANDLE_RESIDUAL_ADD_API_EVIDENCE: &[&str] = &[
+    "Cargo.lock resolves candle-core 0.10.2 for the current workspace",
+    "candle-core-0.10.2/src/tensor.rs binary_op!(add, Add) returns Result<Tensor>",
+    "candle-core-0.10.2/src/tensor.rs broadcast_binary_op!(broadcast_add, add) delegates to owned Tensor::add output",
+    "candle-core-0.10.2/src/tensor.rs notes TODO: make an inplace version or a pre-allocated version",
+];
+
 impl LayerOutputStorageApiBoundary {
     pub fn from_candle_residual_add(role: &'static str) -> Self {
         Self {
@@ -3222,6 +3237,9 @@ impl LayerOutputStorageApiBoundary {
             status: "layer_output_storage_blocked_by_candle_tensor_add_ops",
             reason: "TransformerBlock layer output is produced by Candle Tensor::add/broadcast_add residual-add operations whose public API returns owned Result<Tensor> values and exposes no caller-provided output-storage parameter",
             next_api_hook: CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+            runtime_slice_status: CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS,
+            runtime_slice_blocker: CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER,
+            candle_api_evidence: CANDLE_RESIDUAL_ADD_API_EVIDENCE,
             required_shape_contract: "caller-provided block output storage must have the same shape, dtype, and device as both residual input and branch output, and the receipt must record all three shapes before any storage reuse is enabled",
             ownership_contract: "TransformerForwardWorkspace may own reusable block output storage only after residual add can write into caller-provided output without aliasing residual input or branch output in a way that changes Candle semantics",
             behavior_preservation_gate: "Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts must preserve prompt IDs, generated IDs, decoded text, selected backend/kernel, tokenizer authority, model SHA, and fallback_used=false",
@@ -6742,6 +6760,14 @@ mod tests {
         assert!(boundary.ownership_contract.contains("TransformerForwardWorkspace"));
         assert!(boundary.behavior_preservation_gate.contains("Qwen3 Q8_0"));
         assert!(boundary.behavior_preservation_gate.contains("Qwen2.5 Q8_0"));
+        assert_eq!(
+            boundary.runtime_slice_status,
+            "runtime_slice_blocked_by_missing_caller_output_storage_api"
+        );
+        assert!(boundary.runtime_slice_blocker.contains("SLM-CPU-163"));
+        assert!(boundary.candle_api_evidence.contains(
+            &"candle-core-0.10.2/src/tensor.rs binary_op!(add, Add) returns Result<Tensor>"
+        ));
         assert!(!boundary.can_fill_caller_output_storage);
     }
 
