@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T16:46:27Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-186"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 898
+merge_sha = "ea1317b7b2f2c71e003924b28b588abdd56af586"
+branch = "codex/slm-cpu-186-dense-bias-manifest-trace-capture"
+summary = "Merged dense bias manifest trace capture blocker."
+notes = [
+  "SLM-CPU-186 records that committed traces predate SLM-CPU-185 feed-forward and output-head trace coverage.",
+  "The merged artifact records Qwen3 attention bias absence and Qwen2.5 attention q/k/v bias presence from pre-export traces, but blocks complete manifest capture until fresh post-export traces exist.",
+  "No no-bias fast-path implementation, runtime selection change, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

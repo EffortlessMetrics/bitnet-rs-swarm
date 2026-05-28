@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T16:46:28Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-187"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-187-post-export-trace-capture-prereq"
+summary = "Queued post-export trace capture prerequisites after SLM-CPU-186."
+notes = [
+  "SLM-CPU-187 should consume the SLM-CPU-186 blocker and define or capture the fresh post-export trace prerequisites for complete Qwen3/Qwen2.5 dense-linear bias role_records.",
+  "The item should name exact model artifacts, strict receipt identity, BITNET_QWEN_TRACE_JSONL command shape, and expected trace files needed before manifest derivation.",
+  "No no-bias fast-path implementation, runtime selection change, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
