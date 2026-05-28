@@ -494,6 +494,21 @@ handoff, and strict receipt/checkpoint identity, not just dense-linear output.
 SLM-CPU-180 leaves runtime unchanged and moves this branch to a Candle
 output-storage dependency or a future multi-stage typed Tensor-view design.
 
+SLM-CPU-181 records that dependency explicitly:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-181-output-storage-dependency-register.json
+```
+
+The register keeps the dense-linear caller-output-storage gate disabled and
+names the exact blockers before this branch can become runtime work:
+`Tensor::matmul_out` or equivalent, `Tensor::broadcast_add_out` / `add_out` or
+equivalent, LayerNorm/RMSNorm output-storage support, a typed Tensor handoff
+contract for repo-owned alternatives, and receipt-visible output-storage path
+identity. It classifies those as dependency evidence, not implemented behavior.
+No allocation reduction, timing improvement, speedup, Q4/Q5 support,
+accelerator path, Qwen3.5 support, or BitNet QK256 change is claimed.
+
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
@@ -1955,6 +1970,13 @@ block-output Tensor identity, and the next norm/model-forward handoff. That is
 larger than a dense-linear output-storage optimization, so this branch remains
 disabled until Candle output-storage APIs or a broader typed Tensor-view design
 exist.
+
+SLM-CPU-181 turns that into a dependency register rather than another runtime
+attempt. The current blockers are exact output-storage APIs for Candle matmul,
+residual/broadcast add, and norm outputs, plus a repo-owned typed Tensor handoff
+contract if the project chooses not to wait on those APIs. The register also
+requires future receipt-visible output-storage path identity and paired strict
+Qwen3/Qwen2.5 generated-ID preservation before any allocation or timing claim.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
