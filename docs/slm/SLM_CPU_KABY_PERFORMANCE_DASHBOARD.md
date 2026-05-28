@@ -96,6 +96,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Post-export dense bias trace capture | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-188-post-export-bias-trace-capture.json` | Captures post-export `model_init.linear_bias_finish` traces and paired strict warm-session receipts for Qwen3/Qwen2.5 Q8_0; Qwen3 records all selected dense-linear roles biasless, while Qwen2.5 records attention q/k/v bias present, keeping any blanket no-bias fast path fail-closed |
 | Dense bias role records manifest | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-189-dense-bias-role-records-manifest.json` | Derives 366 exact post-export role records from the captured Qwen3/Qwen2.5 traces and paired strict receipts; no runtime selector is enabled, and Qwen2.5 attention q/k/v bias presence blocks blanket no-bias selection |
 | No-bias selector policy gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-190-no-bias-selector-policy-gate.json` | Defines a runtime-disabled, fail-closed selector policy from the role records manifest: 294 biasless role records are eligible candidates, 72 biased Qwen2.5 attention q/k/v records are blocked, and no runtime path is selected |
+| No-bias selector dry run | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json` | Applies the disabled policy to all 366 role records and emits receipt-visible decisions: 294 roles are eligible future no-bias candidates, 72 Qwen2.5 attention q/k/v roles fail closed because bias is present, and runtime selection remains disabled |
 
 Qwen3 rows use:
 
@@ -2109,6 +2110,27 @@ strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text,
 selected CPU backend/runtime identity, dense path identity, manifest SHA,
 role ID, bias presence, and `fallback_used=false`. Missing, duplicate, unknown,
 contradictory, or `bias_present=true` role evidence fails closed.
+
+SLM-CPU-191 dry-runs that policy against every role record, still without
+selecting a runtime path:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json
+runtime_gate_name = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+runtime_selection_allowed_in_this_slice = false
+role_record_count = 366
+eligible_no_bias_candidates = 294
+blocked_fail_closed = 72
+blocked_because_bias_present_true = 72
+```
+
+The dry-run artifact records one decision per role with model SHA, strict
+receipt identity, manifest SHA, policy SHA, role ID, bias presence, trace file,
+receipt file, and selected decision. It is still evidence only: eligible roles
+are future candidates, and blocked roles remain fail-closed. No allocation,
+timing, speedup, sustained throughput, Q4/Q5, server, accelerator, Qwen3.5, or
+BitNet QK256 behavior is claimed.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
