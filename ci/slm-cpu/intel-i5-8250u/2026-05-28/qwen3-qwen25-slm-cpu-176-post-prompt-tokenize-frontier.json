@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_post_prompt_tokenize_frontier_selection",
+  "claim": "post_prompt_tokenize_frontier_classification",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-175",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-175 prompt-tokenize allocation and latency evidence is scoped only to byte-identical resident-session cache hits.",
+    "No sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is claimed here.",
+    "No runtime behavior changes are made in this slice.",
+    "No Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made."
+  ],
+  "slm_cpu_175_scope_check": {
+    "qwen3": {
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b",
+      "generated_ids": [
+        17,
+        151645
+      ],
+      "decoded_text": "2",
+      "fallback_used": false,
+      "selected_backend": "cpu-rust",
+      "after_prompt_loop_cache_results": [
+        "hit",
+        "hit"
+      ],
+      "after_first_prompt_tokenize_alloc_bytes": 168,
+      "after_first_prompt_tokenize_alloc_count": 1,
+      "after_first_prompt_tokenize_ms": 0.007
+    },
+    "qwen25": {
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "prompt_ids_sha256": "3ddaf1634401debb084ee44ff0db6a05c95077ae2a2102082ef91d3c5cfd2f10",
+      "generated_ids": [
+        19,
+        151645
+      ],
+      "decoded_text": "4",
+      "fallback_used": false,
+      "selected_backend": "cpu-rust",
+      "after_prompt_loop_cache_results": [
+        "hit",
+        "hit"
+      ],
+      "after_first_prompt_tokenize_alloc_bytes": 189,
+      "after_first_prompt_tokenize_alloc_count": 1,
+      "after_first_prompt_tokenize_ms": 0.009
+    }
+  },
+  "post_prompt_tokenize_hotspots": {
+    "qwen3_after_first_prompt": [
+      {
+        "component": "prompt_prefill.forward",
+        "alloc_bytes": 909929200,
+        "alloc_count": 918435,
+        "classification": "dominant_runtime_forward_allocation"
+      },
+      {
+        "component": "model.forward",
+        "alloc_bytes": 90599908,
+        "alloc_count": 52512,
+        "classification": "decode_runtime_forward_allocation"
+      },
+      {
+        "component": "model.logits_and_extract",
+        "alloc_bytes": 1217538,
+        "alloc_count": 36,
+        "classification": "output_head_logits_boundary"
+      },
+      {
+        "component": "prompt_setup.buffer_reset",
+        "alloc_bytes": 40464,
+        "alloc_count": 334,
+        "classification": "repo_owned_receipt_evidence_construction"
+      }
+    ],
+    "qwen25_after_first_prompt": [
+      {
+        "component": "prompt_prefill.forward",
+        "alloc_bytes": 473847232,
+        "alloc_count": 855631,
+        "classification": "dominant_runtime_forward_allocation"
+      },
+      {
+        "component": "model.forward",
+        "alloc_bytes": 37466028,
+        "alloc_count": 41760,
+        "classification": "decode_runtime_forward_allocation"
+      },
+      {
+        "component": "model.logits_and_extract",
+        "alloc_bytes": 1218226,
+        "alloc_count": 46,
+        "classification": "output_head_logits_boundary"
+      },
+      {
+        "component": "prompt_setup.buffer_reset",
+        "alloc_bytes": 40464,
+        "alloc_count": 334,
+        "classification": "repo_owned_receipt_evidence_construction"
+      }
+    ]
+  },
+  "frontier_decision": {
+    "selected_next_frontier": "model_forward_owned_tensor_allocation_boundary",
+    "selected_next_item": "SLM-CPU-177",
+    "reason": "After SLM-CPU-175, prompt-tokenize is reduced to one small cache-lookup allocation in the paired after receipts. The dominant remaining allocations across both Qwen3 and Qwen2.5 are prompt_prefill.forward and model.forward. Those are the highest-value performance frontier, but prior evidence shows they are constrained by owned Candle tensor outputs and residual/output-head boundaries, so the next slice should refresh the exact model.forward sub-boundary rather than optimize receipt-evidence construction.",
+    "repo_owned_small_frontier_deferred": {
+      "component": "prompt_setup.buffer_reset",
+      "reason": "The remaining 40464 bytes / 334 allocations are from repo-owned buffer reset evidence construction while capacities are already sufficient. This is actionable as instrumentation cleanup, but it is not the main runtime SLM performance limiter and should not distract from the forward/logits boundary."
+    },
+    "required_gate_before_runtime_change": "Any SLM-CPU-177 runtime candidate must preserve Qwen3 Q8_0 and Qwen2.5 Q8_0 strict before/after model SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false."
+  },
+  "must_not_claim": [
+    "SLM-CPU-175 proves broad end-to-end speedup.",
+    "Tokenizer-internal allocations are eliminated.",
+    "prompt_setup.buffer_reset is the dominant runtime inference frontier.",
+    "Candle residual-add or output-head caller-output-storage blockers are resolved.",
+    "Packed-Q8 or source-order sidecar paths are promoted to default runtime.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
