@@ -89,6 +89,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Dense-linear caller-output-storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json` | Defines the disabled gate, API capabilities, cross-model receipt requirements, and failure policy required before dense-linear caller-owned output storage can be enabled; runtime behavior remains unchanged |
 | Fused dense-consumer feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json` | Classifies a narrow repo-owned fused dense-linear consumer as too broad because it would need to own residual add, trace/workspace identity, block output identity, and next norm/model-forward Tensor semantics; runtime behavior remains unchanged |
 | No-bias dense-linear frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-182-no-bias-dense-linear-frontier.json` | Classifies no-bias dense-linear as a future disabled gate: existing strict Qwen3/Qwen2.5 receipts show zero sidecar bias materialization calls, but committed evidence does not prove every dense-linear role is biasless, and the no-bias path does not resolve the Candle owned-output Tensor boundary |
+| Dense bias manifest gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json` | Defines the fail-closed per-role bias-presence manifest or model-init trace required before any future no-bias dense-linear fast path; unknown or present bias blocks selection and runtime behavior remains unchanged |
 
 Qwen3 rows use:
 
@@ -1993,6 +1994,21 @@ feed-forward, and output-head roles still need exact model-init bias traces or
 tensor-manifest evidence before a no-bias fast path can be selected. The
 frontier therefore stays runtime-disabled and does not reopen the broader
 Candle output-storage blocker from SLM-CPU-181.
+
+SLM-CPU-183 converts that frontier into an explicit manifest gate:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json
+```
+
+The gate requires per-role/layer bias-presence records for attention,
+feed-forward, and output-head roles before any future no-bias dense-linear
+selector can run. Missing, unknown, or present bias evidence fails closed.
+Output-head roles must also record whether the selected path is a dedicated
+`lm_head`, tied embeddings, or a transposed head. This remains a manifest
+contract only: no runtime behavior changes, no no-bias fast path is selected,
+and no allocation, timing, speedup, sustained-throughput, Q4/Q5, accelerator,
+Qwen3.5, or BitNet QK256 claim is made.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
