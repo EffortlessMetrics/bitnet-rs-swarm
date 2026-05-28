@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T22:03:24Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-195"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 916
+merge_sha = "0695c391464d9cd866a1e7280d5e597b908af0d3"
+branch = "codex/slm-cpu-195-no-bias-down-proj-candidate"
+summary = "Merged the runtime-disabled no-bias down-projection candidate."
+notes = [
+  "SLM-CPU-195 adds a runtime-disabled candidate API for exact Qwen3 Q8_0 feed_forward.down_proj layers 0..27.",
+  "The candidate matches Candle no-bias Linear semantics in tests but is not wired into TransformerModel execution.",
+  "The merged slice keeps runtime_selection_enabled=false, selected_path=eager_f32_candle, and makes no allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
