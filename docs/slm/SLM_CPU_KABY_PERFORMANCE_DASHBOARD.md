@@ -80,6 +80,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Residual-add storage API decision | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json` | Consumes the SLM-CPU-169 frontier metadata and records the residual-add output-storage path as blocked until Candle exposes an `add_out` / `broadcast_add_out`-style API or a verified backend-local equivalent; no runtime allocation behavior changes or performance claims are made |
 | Post-residual allocation frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json` | Selects `prompt_tokenize` as the next measured Qwen3/Qwen2.5 allocation frontier not blocked by Candle residual-add caller-output-storage support; no runtime allocation behavior changes or performance claims are made |
 | Prompt-tokenize allocation contract | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json` | Defines the prompt identity, tokenizer provenance, rendered-prompt, and prompt-ID cache contract required before any prompt-tokenize runtime reuse or allocation claim |
+| Prompt-tokenize cache evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-173-prompt-tokenize-cache-evidence-fields.json` | Makes the SLM-CPU-172 prompt-tokenize cache contract receipt-visible without changing prompt tokenization behavior or claiming allocation/timing improvement |
 
 Qwen3 rows use:
 
@@ -344,6 +345,22 @@ buffer capacities in receipts. SLM-CPU-172 itself keeps
 `runtime_allocation_behavior_changed=false`; paired Qwen3/Qwen2.5 strict CPU
 before/after receipts are still required before any allocation, latency, or
 timing improvement claim.
+
+SLM-CPU-173 makes that contract receipt-visible in warm-session prompt receipts
+without changing prompt tokenization behavior:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-173-prompt-tokenize-cache-evidence-fields.json
+```
+
+Each prompt receipt now records a `prompt_tokenize_contract` object with the
+cache key hash, cache lookup result, rendered prompt hash, prompt IDs hash,
+tokenizer-internal allocation classification, repo-owned reuse surfaces, and
+prompt-token buffer capacity fields. Aggregate warm-session receipts also record
+the cache lookup policy and hit/miss counts. This is evidence plumbing only:
+`runtime_allocation_behavior_changed=false`, and paired Qwen3/Qwen2.5 strict CPU
+before/after receipts remain required before any allocation, latency, or timing
+improvement claim.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the

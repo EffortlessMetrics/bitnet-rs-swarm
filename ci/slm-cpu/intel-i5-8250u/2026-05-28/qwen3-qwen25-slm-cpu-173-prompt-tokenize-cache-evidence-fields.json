@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_prompt_tokenize_cache_evidence_fields",
+  "claim": "slm_cpu_173_prompt_tokenize_cache_evidence_fields",
+  "campaign_item": "SLM-CPU-173",
+  "created_utc": "2026-05-28T09:22:00Z",
+  "inputs": {
+    "contract": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json",
+    "code_surface": "crates/bitnet-cli/src/main.rs warm-session prompt receipt construction",
+    "test": "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli prompt_tokenize_contract_records_cache_evidence_fields"
+  },
+  "implementation": {
+    "runtime_prompt_tokenization_behavior_changed": false,
+    "receipt_fields_added": [
+      "prompt_tokenize_contract.version",
+      "prompt_tokenize_contract.cache_key_sha256",
+      "prompt_tokenize_contract.cache_lookup",
+      "prompt_tokenize_contract.cache_lookup_result",
+      "prompt_tokenize_contract.cache_hit",
+      "prompt_tokenize_contract.cache_entry_count",
+      "prompt_tokenize_contract.rendered_prompt_sha256",
+      "prompt_tokenize_contract.prompt_ids_sha256",
+      "prompt_tokenize_contract.tokenizer_internal_allocations_classified",
+      "prompt_tokenize_contract.repo_owned_reuse_surface",
+      "prompt_tokenize_contract.prompt_token_buffers.needed",
+      "prompt_tokenize_contract.prompt_token_buffers.previous_capacity",
+      "prompt_tokenize_contract.prompt_token_buffers.capacity",
+      "prompt_tokenize_contract.prompt_token_buffers.capacity_sufficient",
+      "prompt_tokenize_contract.runtime_allocation_behavior_changed",
+      "session_reuse.prompt_token_buffers.needed",
+      "session_reuse.prompt_token_buffers.previous_capacity",
+      "session_reuse.prompt_token_buffers.capacity",
+      "session_reuse.prompt_token_buffers.capacity_sufficient"
+    ],
+    "aggregate_fields_added": [
+      "prompt_tokenize_contract.cache_lookup",
+      "prompt_tokenize_contract.cache_hits",
+      "prompt_tokenize_contract.cache_misses",
+      "prompt_tokenize_contract.cache_entry_count",
+      "prompt_tokenize_contract.runtime_allocation_behavior_changed",
+      "prompt_tokenize_contract.paired_strict_before_after_receipts_required_before_allocation_claim"
+    ]
+  },
+  "cache_key_scope": {
+    "scope": "resident_warm_session_single_model_tokenizer",
+    "material_fields": [
+      "model_sha256",
+      "tokenizer_source",
+      "tokenizer_authority",
+      "tokenizer_strict",
+      "template_family",
+      "template_source",
+      "qwen_no_think",
+      "rendered_prompt_sha256",
+      "prompt_generation_identity_sha256",
+      "bos_policy",
+      "parse_special"
+    ],
+    "cache_key_sha256": "computed_from_cache_key_material_per_prompt"
+  },
+  "classification": {
+    "tokenizer_internal_allocations_classified": true,
+    "tokenizer_internal_allocation_policy": "classified_only_until_tokenizer_api_exposes_caller_owned_output_buffer_or_cache_hook",
+    "repo_owned_reuse_surface": [
+      "rendered_prompt_text",
+      "prompt_token_ids",
+      "prompt token vector capacity"
+    ],
+    "paired_strict_before_after_receipts_required_before_allocation_claim": true
+  },
+  "validation": {
+    "targeted_test": "passed",
+    "targeted_test_command": "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli prompt_tokenize_contract_records_cache_evidence_fields",
+    "runtime_receipts_captured": false,
+    "runtime_receipt_reason": "This slice makes evidence fields receipt-visible and preserves behavior; paired Qwen3/Qwen2.5 strict before/after receipts remain required before allocation or timing claims."
+  },
+  "claim_boundaries": {
+    "allocation_reduction_claimed": false,
+    "latency_improvement_claimed": false,
+    "timing_improvement_claimed": false,
+    "sustained_throughput_claimed": false,
+    "prompt_tokenization_behavior_changed": false,
+    "q4_or_q5_runtime_support_claimed": false,
+    "server_or_accelerator_claimed": false,
+    "qwen35_or_hybrid_claimed": false,
+    "bitnet_qk256_changed": false
+  }
+}
