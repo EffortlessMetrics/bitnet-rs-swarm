@@ -254,10 +254,8 @@ or sustained throughput without an explicit before/after receipt comparison.
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-167, the post-SLM-CPU-166
-prompt/session buffer pre-sizing receipt comparison gate. SLM-CPU-168 is the
-next ready slice for the actual committed Qwen3/Qwen2.5 receipt comparison
-evidence or a precise artifact/cache blocker.
+This refresh is current through the SLM-CPU-168 evidence slice for the
+post-SLM-CPU-166 prompt/session buffer pre-sizing receipt comparison gate.
 
 SLM-CPU-167 defines the next performance-lane gate. It does not change runtime
 behavior by itself; it requires SLM-CPU-168 or a later slice to commit a Qwen3
@@ -269,6 +267,18 @@ where applicable, and `fallback_used=false` before any later allocation or
 timing claim can use the pre-sizing slice as evidence. The gate must classify
 whether pre-sizing changed allocation-audit counters or only made capacity reuse
 receipt-visible, then name the next safe allocation hotspot.
+
+SLM-CPU-168 evidence now exists in
+`ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json`.
+It compares the committed SLM-CPU-161 Qwen3/Qwen2.5 allocation-audit baselines
+with post-SLM-CPU-166 warm-session receipts and preserves model SHA, GGUF
+tokenizer authority, prompt IDs, generated IDs, decoded text, CPU backend,
+prompt-level kernel identity, dense hook selection identity, and
+`fallback_used=false`. The comparison classifies prompt/session pre-sizing as
+receipt-visible resident capacity reuse: aggregate `prompt_setup` bytes fell,
+allocation counts changed, and the dominant hotspot remains
+`prompt_prefill.forward`. It makes no allocation-reduction, latency, speedup, or
+sustained-throughput claim.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
