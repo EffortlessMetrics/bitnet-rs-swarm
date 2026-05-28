@@ -81,6 +81,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Post-residual allocation frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json` | Selects `prompt_tokenize` as the next measured Qwen3/Qwen2.5 allocation frontier not blocked by Candle residual-add caller-output-storage support; no runtime allocation behavior changes or performance claims are made |
 | Prompt-tokenize allocation contract | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json` | Defines the prompt identity, tokenizer provenance, rendered-prompt, and prompt-ID cache contract required before any prompt-tokenize runtime reuse or allocation claim |
 | Prompt-tokenize cache evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-173-prompt-tokenize-cache-evidence-fields.json` | Makes the SLM-CPU-172 prompt-tokenize cache contract receipt-visible without changing prompt tokenization behavior or claiming allocation/timing improvement |
+| Prompt-tokenize paired receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-174-prompt-tokenize-paired-receipt-gate.json` | Defines the exact Qwen3/Qwen2.5 before/after receipt gate required before any prompt-tokenize allocation, latency, or timing claim |
 
 Qwen3 rows use:
 
@@ -361,6 +362,24 @@ the cache lookup policy and hit/miss counts. This is evidence plumbing only:
 `runtime_allocation_behavior_changed=false`, and paired Qwen3/Qwen2.5 strict CPU
 before/after receipts remain required before any allocation, latency, or timing
 improvement claim.
+
+SLM-CPU-174 turns that requirement into a concrete paired-receipt gate:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-174-prompt-tokenize-paired-receipt-gate.json
+```
+
+The gate requires paired before/after strict CPU warm-session receipts for both
+Qwen3-0.6B Q8_0 and Qwen2.5-0.5B-Instruct Q8_0 before any prompt-tokenize
+allocation, latency, or timing claim. The comparison must preserve model SHA,
+strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text,
+selected CPU backend/kernel identity, dense hook identity where applicable, and
+`fallback_used=false`. It also requires the SLM-CPU-173
+`prompt_tokenize_contract` fields, cache hit/miss evidence, allocation-audit
+availability, and prompt-token buffer capacity fields to be present. SLM-CPU-174
+is still a gate definition only: it records verified local model SHA observations
+and command templates, but it does not change prompt tokenization behavior or
+claim allocation, latency, timing, speedup, or sustained throughput improvement.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
