@@ -1,0 +1,18 @@
+timestamp = "2026-05-28T03:10:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-164"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 852
+head_sha = "82b448423c048584ee29b226dec66745a6d11f04"
+merge_sha = "9d3311dd3df7c18d43f575d36806c7b245103927"
+branch = "codex/slm-cpu-164-buffer-capacity-receipts"
+summary = "Merged PR #852 hardening warm-session prompt buffer capacity receipt evidence without claiming allocation reduction or throughput."
+notes = [
+  "The merged slice consumes the SLM-CPU-163 Candle residual-output storage blocker by moving to the prompt/session buffer capacity receipt boundary.",
+  "Receipt evidence now records per-buffer needed, previous, and resulting capacities plus grew/insufficient buffer lists.",
+  "Runtime claim boundaries remain unchanged: no allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator execution, Qwen3.5, or BitNet QK256 claim.",
+  "ripr, ripr static exposure, policy, campaign doctor, feature matrix, CI core, validation, and routed checks passed.",
+]
