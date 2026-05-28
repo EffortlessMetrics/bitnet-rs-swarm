@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T19:33:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-192"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-192-no-bias-selector-audit-hook"
+summary = "Queued disabled-by-default no-bias selector audit hook after SLM-CPU-191."
+notes = [
+  "SLM-CPU-192 should consume the dry-run decisions and add an audit-only selector decision hook without changing compute selection.",
+  "Before/after receipts must preserve generated IDs, decoded text, prompt IDs, model SHA, tokenizer authority, selected CPU backend/runtime, fallback=false, dense path identity, manifest SHA, role ID, and bias_present.",
+  "No no-bias fast-path compute implementation, default runtime selection, allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
