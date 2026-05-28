@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T11:06:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-175"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-175-prompt-tokenize-exact-identity-cache"
+summary = "Queued the first prompt-tokenize exact-identity cache candidate."
+notes = [
+  "SLM-CPU-175 may implement prompt-token ID reuse only for byte-identical prompt identity cache hits inside a resident warm session.",
+  "The slice must satisfy the SLM-CPU-174 paired Qwen3/Qwen2.5 strict before/after receipt gate before any allocation, latency, or timing claim.",
+  "No cross-model/tokenizer/template/stop-policy reuse, tokenizer-internal allocation elimination, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]

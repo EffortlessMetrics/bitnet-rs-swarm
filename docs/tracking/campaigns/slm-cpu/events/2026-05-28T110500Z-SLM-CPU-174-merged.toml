@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T11:05:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-174"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 874
+merge_sha = "8bb1e55cb054cfa4087856fd194985baf63ac582"
+branch = "codex/slm-cpu-174-prompt-tokenize-paired-receipt-gate"
+summary = "Closed the prompt-tokenize paired receipt gate after #874 merged."
+notes = [
+  "SLM-CPU-174 defines the exact Qwen3/Qwen2.5 strict before/after receipt gate required before prompt-tokenize allocation, latency, or timing claims.",
+  "The merged slice records verified local model SHA observations and command templates, but does not change prompt tokenization behavior.",
+  "No allocation reduction, latency improvement, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

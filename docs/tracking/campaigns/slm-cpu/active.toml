@@ -10219,7 +10219,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-174"
-status = "ready"
+status = "merged"
+pr = 874
+merge_sha = "8bb1e55cb054cfa4087856fd194985baf63ac582"
 branch = "codex/slm-cpu-174-prompt-tokenize-paired-receipt-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -10257,6 +10259,56 @@ may_claim = [
 must_not_claim = [
   "Prompt tokenization behavior changes without paired strict Qwen3/Qwen2.5 before/after receipts.",
   "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-175"
+status = "ready"
+branch = "codex/slm-cpu-175-prompt-tokenize-exact-identity-cache"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-174"]
+acceptance = "Implement the first prompt-tokenize exact-identity cache candidate for resident SLM warm sessions, limited to byte-identical prompt identity keys defined by SLM-CPU-172 and receipt-visible fields from SLM-CPU-173. The slice must capture paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts satisfying the SLM-CPU-174 gate, preserve model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`, and record cache hits/misses plus prompt_tokenize allocation counters where available before any allocation, latency, or timing claim."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli prompt_tokenize",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-174 defines the paired Qwen3/Qwen2.5 strict before/after receipt gate required before prompt-tokenize allocation, latency, or timing claims.",
+]
+may_claim = [
+  "SLM-CPU-175 may implement prompt-token ID reuse only for exact prompt identity cache hits inside a resident warm session.",
+  "SLM-CPU-175 may claim cache-hit behavior only when prompt IDs, generated IDs, decoded text, strict tokenizer provenance, backend/kernel identity, dense hook identity where applicable, and fallback=false are preserved in paired Qwen3/Qwen2.5 receipts.",
+]
+must_not_claim = [
+  "Allocation reduction, latency improvement, timing improvement, speedup, or sustained throughput is proven unless paired Qwen3/Qwen2.5 before/after receipts include the required SLM-CPU-174 allocation/timing evidence.",
+  "Prompt-tokenize cache reuse applies across model SHA, tokenizer authority, template, Qwen no-think policy, raw prompt, rendered prompt, stop policy, or generation identity changes.",
+  "Tokenizer-internal allocations are eliminated unless a tokenizer API with caller-owned output storage or equivalent cache hook is actually used and receipted.",
   "The Candle residual-add output-storage blocker is resolved.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
