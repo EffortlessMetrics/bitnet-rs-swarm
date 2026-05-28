@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T11:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-177"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 880
+merge_sha = "cc25e751ccf7680a6f4e41d31a992fbe8aba15f4"
+branch = "codex/slm-cpu-177-model-forward-allocation-boundary"
+summary = "Closed the model.forward owned-tensor allocation boundary after #880 merged."
+notes = [
+  "SLM-CPU-177 consumes the SLM-CPU-176 frontier decision and records the dominant prompt_prefill.forward and decode model.forward allocation surfaces from the paired Qwen3/Qwen2.5 receipts.",
+  "The merged slice classifies model.forward reuse as blocked by dense-linear, final-norm, residual-add, and model.forward owned Candle Tensor outputs.",
+  "The next selected sub-boundary is dense_linear_output_storage_api_feasibility; no runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

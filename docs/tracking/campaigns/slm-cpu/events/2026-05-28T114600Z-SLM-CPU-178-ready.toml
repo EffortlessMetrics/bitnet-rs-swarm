@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T11:46:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-178"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-178-dense-linear-output-storage-feasibility"
+summary = "Queued dense-linear output-storage feasibility after SLM-CPU-177."
+notes = [
+  "SLM-CPU-178 should consume the SLM-CPU-177 model.forward boundary and determine whether dense-linear caller-output storage is implementable from current APIs or blocked on exact missing Candle/output-storage semantics.",
+  "The item must distinguish backend-local caller-owned output buffers from returned owned Candle Tensor requirements.",
+  "No runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]

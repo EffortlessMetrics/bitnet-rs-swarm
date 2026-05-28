@@ -10372,7 +10372,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-177"
-status = "ready"
+status = "merged"
+pr = 880
+merge_sha = "cc25e751ccf7680a6f4e41d31a992fbe8aba15f4"
 branch = "codex/slm-cpu-177-model-forward-allocation-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -10412,6 +10414,55 @@ must_not_claim = [
   "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
   "Sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Candle residual-add, final-norm, output-head, or dense-linear caller-output-storage blockers are resolved unless real API evidence proves it.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-178"
+status = "ready"
+branch = "codex/slm-cpu-178-dense-linear-output-storage-feasibility"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-177"]
+acceptance = "Consume the SLM-CPU-177 model.forward allocation boundary and determine whether the selected dense-linear output-storage sub-boundary can move from blocker classification to a behavior-preserving runtime candidate. The slice must inspect the dense linear and Candle Tensor construction surfaces named by SLM-CPU-177, distinguish backend-local caller-owned output buffers from returned owned Candle Tensor requirements, and either name the exact runtime API/evidence gate for a later implementation or precisely block the change on missing Candle output-storage support. No runtime behavior changes, allocation/timing claims, or speedup claims are allowed without paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict before/after receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-177 classifies model.forward reuse as blocked by owned Candle tensor outputs and selects dense_linear_output_storage_api_feasibility as the next sub-boundary.",
+]
+may_claim = [
+  "SLM-CPU-178 may classify whether dense-linear caller-output storage is implementable from current APIs or blocked on exact missing Candle/output-storage semantics.",
+  "SLM-CPU-178 may define the paired Qwen3/Qwen2.5 strict receipt gate required before a later runtime implementation.",
+]
+must_not_claim = [
+  "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Candle residual-add, final-norm, output-head, model.forward, or dense-linear caller-output-storage blockers are resolved unless real API evidence proves it.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
