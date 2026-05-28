@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T06:40:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-169"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-169-prefill-forward-allocation-frontier"
+summary = "Queued the next Kaby SLM allocation frontier after SLM-CPU-168."
+notes = [
+  "SLM-CPU-168 preserved Qwen3/Qwen2.5 strict CPU generated identity across prompt/session pre-sizing and left prompt_prefill.forward as the dominant hotspot.",
+  "SLM-CPU-169 must either narrow or fix the prompt_prefill.forward allocation frontier with before/after receipts, or record an exact Candle/output-storage blocker.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed from the tracker item alone.",
+]

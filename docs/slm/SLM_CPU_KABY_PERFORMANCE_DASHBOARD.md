@@ -280,6 +280,13 @@ allocation counts changed, and the dominant hotspot remains
 `prompt_prefill.forward`. It makes no allocation-reduction, latency, speedup, or
 sustained-throughput claim.
 
+SLM-CPU-169 is the next ready Kaby performance slice. It must either narrow or
+fix the measured `prompt_prefill.forward` allocation frontier with strict
+Qwen3/Qwen2.5 before/after receipts, or record the exact Candle/output-storage
+blocker. It cannot claim allocation reduction, speedup, sustained throughput,
+runtime promotion, Q4/Q5, server or accelerator execution, Qwen3.5, or BitNet
+QK256 behavior without matching receipts.
+
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
