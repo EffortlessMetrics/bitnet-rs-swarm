@@ -39,9 +39,9 @@ use diagnostics::{
 };
 #[cfg(test)]
 use layer_builders::layer_norm_with_optional_bias;
-use layer_builders::{
-    linear_with_optional_bias, norm_with_optional_bias, optional_layer_norm_with_optional_bias,
-};
+#[cfg(test)]
+use layer_builders::linear_with_optional_bias;
+use layer_builders::{norm_with_optional_bias, optional_layer_norm_with_optional_bias};
 use qk256::{TIED_EMBED_QK256_KEY, qk256_inline_scale};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -96,7 +96,7 @@ fn qwen_trace_rms_norm_fused(
 struct LinearInitTrace<'a> {
     enabled: bool,
     init_start: Instant,
-    layer_idx: usize,
+    layer_idx: Option<usize>,
     device: &'a Device,
     scope: &'static str,
     name: &'static str,
@@ -116,10 +116,11 @@ fn qwen_trace_linear_init_event(
     fields_json: impl FnOnce() -> String,
 ) {
     qwen_trace_model_init_event(trace.enabled, stage, || {
+        let layer = trace.layer_idx.map_or_else(|| "null".to_string(), |layer| layer.to_string());
         format!(
             "\"elapsed_ms\":{},\"layer\":{},\"device\":\"{}\",\"scope\":\"{}\",\"linear\":\"{}\",{}",
             qwen_trace_elapsed_ms(trace.init_start),
-            trace.layer_idx,
+            layer,
             qwen_trace_device_kind(trace.device),
             trace.scope,
             trace.name,
@@ -2338,7 +2339,7 @@ impl MultiHeadAttention {
             LinearInitTrace {
                 enabled: trace_model_init,
                 init_start,
-                layer_idx,
+                layer_idx: Some(layer_idx),
                 device: &device,
                 scope: "attention",
                 name: "q_proj",
@@ -2351,7 +2352,7 @@ impl MultiHeadAttention {
             LinearInitTrace {
                 enabled: trace_model_init,
                 init_start,
-                layer_idx,
+                layer_idx: Some(layer_idx),
                 device: &device,
                 scope: "attention",
                 name: "k_proj",
@@ -2364,7 +2365,7 @@ impl MultiHeadAttention {
             LinearInitTrace {
                 enabled: trace_model_init,
                 init_start,
-                layer_idx,
+                layer_idx: Some(layer_idx),
                 device: &device,
                 scope: "attention",
                 name: "v_proj",
@@ -2377,7 +2378,7 @@ impl MultiHeadAttention {
             LinearInitTrace {
                 enabled: trace_model_init,
                 init_start,
-                layer_idx,
+                layer_idx: Some(layer_idx),
                 device: &device,
                 scope: "attention",
                 name: "o_proj",
@@ -2588,20 +2589,51 @@ pub struct FeedForward {
 
 impl FeedForward {
     pub fn new(config: &BitNetConfig, vb: VarBuilder, layer_idx: usize) -> Result<Self> {
+        let init_start = Instant::now();
+        let trace_model_init = qwen_trace_events_enabled();
+        let device = vb.device().clone();
         let hidden_size = config.model.hidden_size;
         let intermediate_size = config.model.intermediate_size;
 
         Ok(Self {
-            gate_proj: linear_with_optional_bias(
+            gate_proj: linear_with_optional_bias_traced(
                 hidden_size,
                 intermediate_size,
                 vb.pp("gate_proj"),
+                LinearInitTrace {
+                    enabled: trace_model_init,
+                    init_start,
+                    layer_idx: Some(layer_idx),
+                    device: &device,
+                    scope: "feed_forward",
+                    name: "gate_proj",
+                },
             )?,
-            up_proj: linear_with_optional_bias(hidden_size, intermediate_size, vb.pp("up_proj"))?,
-            down_proj: linear_with_optional_bias(
+            up_proj: linear_with_optional_bias_traced(
+                hidden_size,
+                intermediate_size,
+                vb.pp("up_proj"),
+                LinearInitTrace {
+                    enabled: trace_model_init,
+                    init_start,
+                    layer_idx: Some(layer_idx),
+                    device: &device,
+                    scope: "feed_forward",
+                    name: "up_proj",
+                },
+            )?,
+            down_proj: linear_with_optional_bias_traced(
                 intermediate_size,
                 hidden_size,
                 vb.pp("down_proj"),
+                LinearInitTrace {
+                    enabled: trace_model_init,
+                    init_start,
+                    layer_idx: Some(layer_idx),
+                    device: &device,
+                    scope: "feed_forward",
+                    name: "down_proj",
+                },
             )?,
             sub_layernorm: optional_layer_norm_with_optional_bias(
                 config.model.norm_type,
@@ -5782,10 +5814,19 @@ impl TransformerModel {
         qwen_trace_model_init_event(trace_model_init, "model_init.lm_head_start", || {
             format!("\"elapsed_ms\":{}", qwen_trace_elapsed_ms(init_start))
         });
-        let (lm_head, lm_head_weight, lm_head_transposed) = match linear_with_optional_bias(
+        let lm_head_trace = LinearInitTrace {
+            enabled: trace_model_init,
+            init_start,
+            layer_idx: None,
+            device: &device,
+            scope: "output_head",
+            name: "lm_head",
+        };
+        let (lm_head, lm_head_weight, lm_head_transposed) = match linear_with_optional_bias_traced(
             hidden_size,
             vocab_size,
             vb.pp("lm_head"),
+            lm_head_trace,
         ) {
             Ok(layer) => {
                 // Also get the weight tensor directly for transposed handling
@@ -5822,12 +5863,34 @@ impl TransformerModel {
                         vocab_size,
                         hidden_size
                     );
+                    qwen_trace_model_init_event(
+                        trace_model_init,
+                        "model_init.linear_bias_finish",
+                        || {
+                            format!(
+                                "\"elapsed_ms\":{},\"layer\":null,\"device\":\"{}\",\"scope\":\"output_head\",\"linear\":\"lm_head\",\"bias_ms\":0,\"present\":false,\"recovery_path\":\"direct_lm_head_or_output_weight\"",
+                                qwen_trace_elapsed_ms(init_start),
+                                qwen_trace_device_kind(&device)
+                            )
+                        },
+                    );
                     (Some(Linear::new(weight.clone(), None)), Some(weight), false)
                 }
                 Err(_) => match vb.get((hidden_size, vocab_size), "lm_head.weight") {
                     Ok(weight) => {
                         tracing::info!(
                             "LM head is stored transposed [hidden, vocab] - using direct matmul path"
+                        );
+                        qwen_trace_model_init_event(
+                            trace_model_init,
+                            "model_init.linear_bias_finish",
+                            || {
+                                format!(
+                                    "\"elapsed_ms\":{},\"layer\":null,\"device\":\"{}\",\"scope\":\"output_head\",\"linear\":\"lm_head\",\"bias_ms\":0,\"present\":false,\"recovery_path\":\"direct_transposed_lm_head_weight\"",
+                                    qwen_trace_elapsed_ms(init_start),
+                                    qwen_trace_device_kind(&device)
+                                )
+                            },
                         );
                         (None, Some(weight), true)
                     }
@@ -5841,12 +5904,34 @@ impl TransformerModel {
                                 hidden_size
                             );
                             let weight = weight.reshape((vocab_size, hidden_size))?;
+                            qwen_trace_model_init_event(
+                                trace_model_init,
+                                "model_init.linear_bias_finish",
+                                || {
+                                    format!(
+                                        "\"elapsed_ms\":{},\"layer\":null,\"device\":\"{}\",\"scope\":\"output_head\",\"linear\":\"lm_head\",\"bias_ms\":0,\"present\":false,\"recovery_path\":\"direct_transposed_output_weight_reshape\"",
+                                        qwen_trace_elapsed_ms(init_start),
+                                        qwen_trace_device_kind(&device)
+                                    )
+                                },
+                            );
                             (Some(Linear::new(weight.clone(), None)), Some(weight), false)
                         }
                         Err(_) => {
                             tracing::info!(
                                 "lm_head/output weight not found after linear construction failed ({err}); \
                                  will use tied weights"
+                            );
+                            qwen_trace_model_init_event(
+                                trace_model_init,
+                                "model_init.linear_bias_finish",
+                                || {
+                                    format!(
+                                        "\"elapsed_ms\":{},\"layer\":null,\"device\":\"{}\",\"scope\":\"output_head\",\"linear\":\"lm_head\",\"bias_ms\":0,\"present\":false,\"recovery_path\":\"tied_embedding_output_head\"",
+                                        qwen_trace_elapsed_ms(init_start),
+                                        qwen_trace_device_kind(&device)
+                                    )
+                                },
                             );
                             (None, None, false)
                         }
@@ -7025,7 +7110,8 @@ mod tests {
     }
 
     #[test]
-    fn exact_q8_sidecar_runtime_hook_declines_payload_order_mismatch() -> Result<()> {
+    fn exact_q8_sidecar_runtime_hook_selects_source_order_for_payload_order_mismatch() -> Result<()>
+    {
         let device = Device::Cpu;
         let weight = Tensor::from_slice(&[0.5f32, 1.0, 1.5, 2.0], (2, 2), &device)?;
         let linear = Linear::new(weight, None);
@@ -7067,20 +7153,21 @@ mod tests {
             SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
             descriptor,
         );
-        assert_eq!(boundary.selected_path, "eager_f32_candle");
+        assert_eq!(boundary.selected_path, "source_order_q8_0_qproj_matvec");
+        assert_eq!(boundary.selected_kernel, "dense-q8-source-order-qproj-matvec");
         assert!(boundary.sidecar_payload_contract_valid);
         assert!(!boundary.sidecar_payload_order_matches_runtime_shape);
         assert!(boundary.source_order_q8_matvec_candidate);
         assert_eq!(
             boundary.source_order_candidate_receipt_identity.as_deref(),
-            Some(
-                "layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_disabled"
-            )
+            Some("layers.0.attention.q_proj.weight:source_order_q8_0_qproj_matvec:runtime_enabled")
         );
         assert_eq!(boundary.source_order_input_dim, Some(2));
         assert_eq!(boundary.source_order_output_dim, Some(2));
-        assert!(!boundary.source_order_candidate_runtime_enabled);
+        assert!(boundary.source_order_candidate_runtime_enabled);
         assert!(!boundary.runtime_compute_enabled);
+        assert!(!boundary.eager_f32_runtime_preserved);
+        assert!(boundary.dense_runtime_replaced);
 
         let output = maybe_forward_dense_q8_sidecar_linear(
             &input,
@@ -7088,7 +7175,7 @@ mod tests {
             SLM_CPU_067_EXACT_Q8_RUNTIME_TENSOR,
             &hooks,
         )?;
-        assert!(output.is_none());
+        assert!(output.is_some());
         Ok(())
     }
 
