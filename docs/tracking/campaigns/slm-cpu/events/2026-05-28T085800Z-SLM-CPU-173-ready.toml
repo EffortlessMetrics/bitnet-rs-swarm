@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T08:58:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-173"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-173-prompt-tokenize-cache-evidence-fields"
+summary = "Queued prompt-tokenize cache evidence fields after SLM-CPU-172."
+notes = [
+  "SLM-CPU-173 should consume the SLM-CPU-172 prompt-tokenize allocation contract and make cache/evidence fields receipt-visible or add a runtime-disabled classifier.",
+  "The slice must not change prompt tokenization behavior without paired strict Qwen3/Qwen2.5 before/after receipts.",
+  "No allocation, latency, timing, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]
