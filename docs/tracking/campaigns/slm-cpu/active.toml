@@ -9969,7 +9969,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-169"
-status = "ready"
+status = "merged"
+pr = 864
+merge_sha = "c6fda28af704a0b4d75eda8d29953834c83cb36a"
 branch = "codex/slm-cpu-169-prefill-forward-allocation-frontier"
 stackable = false
 review_mode = "codex_premerge"
@@ -10010,6 +10012,53 @@ may_claim = [
 must_not_claim = [
   "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
   "The Candle residual-add output-storage blocker is resolved unless the exact API/runtime evidence proves it.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-170"
+status = "ready"
+branch = "codex/slm-cpu-170-residual-add-storage-api-decision"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-169"]
+acceptance = "Consume the SLM-CPU-169 receipt-visible prompt_prefill.forward frontier and choose the next behavior-preserving residual-add output-storage path. A valid slice must either define an actionable Candle/output-storage API integration plan for transformer.block.output residual-add reuse, or record why the lane must move to another measured Qwen3/Qwen2.5 allocation frontier before runtime changes. It must preserve the requirement that paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts prove unchanged model SHA, GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false` before any allocation or timing improvement claim."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-169 receipt metadata names `slm_cpu_169_frontier`, the exact missing residual-add output-storage API, and the no-runtime-change/no-claim boundary.",
+]
+may_claim = [
+  "SLM-CPU-170 may plan the next residual-add caller-output-storage integration point or explicitly redirect to another measured allocation frontier.",
+  "SLM-CPU-170 may record an exact API, tensor output-storage, or measurement blocker before any runtime allocation behavior changes.",
+]
+must_not_claim = [
+  "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved unless an implementation and paired strict receipts prove it.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",

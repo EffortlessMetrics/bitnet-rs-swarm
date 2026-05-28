@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T07:15:20Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-169"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 864
+merge_sha = "c6fda28af704a0b4d75eda8d29953834c83cb36a"
+branch = "codex/slm-cpu-169-prefill-forward-allocation-frontier"
+summary = "Merged the prompt_prefill.forward allocation frontier classification."
+notes = [
+  "SLM-CPU-169 records the current frontier as residual_block_output_storage_boundary.",
+  "The receipt-visible blocker is Candle residual-add / broadcast-add owned Tensor output without caller-provided output storage.",
+  "No runtime allocation behavior, speedup, throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim was made.",
+]
