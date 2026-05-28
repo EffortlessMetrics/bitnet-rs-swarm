@@ -254,8 +254,8 @@ or sustained throughput without an explicit before/after receipt comparison.
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-165 and queues SLM-CPU-166 as the
-bounded session-level prompt/session buffer pre-sizing implementation.
+This refresh is current through SLM-CPU-166, the bounded session-level
+prompt/session buffer pre-sizing implementation.
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
