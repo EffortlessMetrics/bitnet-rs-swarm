@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T17:20:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-187"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 900
+merge_sha = "74fd7745b6c4722640899f592c343e34eed22c4f"
+branch = "codex/slm-cpu-187-post-export-trace-capture-prereq"
+summary = "Merged post-export trace capture prerequisite artifact."
+notes = [
+  "SLM-CPU-187 names the exact Qwen3 and Qwen2.5 Q8_0 model identities, strict receipt inputs, BITNET_QWEN_TRACE_JSONL command shapes, and expected trace/receipt output paths.",
+  "The merged artifact records Qwen3 as present under models/slm and Qwen2.5 Q8_0 as missing from the current worktree model path, with prior verification evidence only.",
+  "No no-bias fast-path implementation, runtime selection change, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
