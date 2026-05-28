@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_prompt_tokenize_allocation_contract",
+  "claim": "slm_cpu_172_prompt_tokenize_allocation_contract",
+  "campaign_item": "SLM-CPU-172",
+  "created_utc": "2026-05-28T08:35:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance",
+    "performance_claim": false
+  },
+  "inputs": {
+    "selected_frontier_item": "SLM-CPU-171",
+    "selected_frontier_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json",
+    "allocation_comparison_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json",
+    "current_identity_surface": "crates/bitnet-cli/src/simple_generation/prompt.rs prompt_generation_identity"
+  },
+  "measured_frontier": {
+    "component": "prompt_tokenize",
+    "qwen3_after_alloc_bytes": 531768688,
+    "qwen3_after_alloc_count": 6386238,
+    "qwen25_after_alloc_bytes": 126649361,
+    "qwen25_after_alloc_count": 1520772,
+    "classification": "cross_model_measured_non_residual_frontier",
+    "runtime_allocation_behavior_changed": false
+  },
+  "allocation_contract": {
+    "contract_status": "defined_runtime_unchanged",
+    "frontier_owner": "bitnet-cli warm-session prompt preparation",
+    "tokenizer_internal_allocations": {
+      "status": "not_owned_by_repo_contract",
+      "examples": [
+        "tokenizer implementation internal merge/pre-tokenizer state",
+        "tokenizer implementation temporary token pieces",
+        "third-party tokenizer encode return allocation"
+      ],
+      "allowed_action": "Only measure and classify unless the tokenizer API exposes a behavior-preserving caller-owned output buffer or cache hook."
+    },
+    "repo_owned_reuse_opportunities": [
+      {
+        "surface": "rendered_prompt_text",
+        "safe_reuse_condition": "raw prompt, prompt template policy, Qwen no-think policy, tokenizer authority, stop policy, and generation identity are byte-for-byte identical under the prompt identity key"
+      },
+      {
+        "surface": "prompt_token_ids",
+        "safe_reuse_condition": "rendered_prompt_sha256 and prompt_generation_identity.identity_sha256 match and the previous token IDs are stored with the same strict tokenizer authority"
+      },
+      {
+        "surface": "prompt token vector capacity",
+        "safe_reuse_condition": "resident session buffer capacity is sufficient and receipt records previous_capacity, needed, final_capacity, and capacity_sufficient"
+      }
+    ],
+    "must_not_reuse_when": [
+      "model_sha256 differs",
+      "tokenizer.source differs",
+      "tokenizer.strict is not true",
+      "tokenizer.authority or tokenizer sha256 differs when present",
+      "prompt_template family or template source differs",
+      "qwen_no_think differs",
+      "raw prompt bytes differ",
+      "rendered prompt bytes differ",
+      "manual stop sequences or stop token IDs differ",
+      "generation parameters that affect prompt rendering or receipt identity differ"
+    ]
+  },
+  "required_prompt_identity_key": {
+    "model_sha256": "required",
+    "tokenizer_source": "required",
+    "tokenizer_authority": "required_when_available",
+    "tokenizer_sha256": "required_when_available",
+    "tokenizer_strict": "required_true",
+    "template_family": "required",
+    "template_source": "required",
+    "template_sha256": "required",
+    "qwen_no_think": "required_for_qwen_templates",
+    "raw_prompt_sha256": "required",
+    "rendered_prompt_sha256": "required",
+    "stop_criteria_sha256": "required",
+    "generation_params_sha256": "required",
+    "prompt_generation_identity_sha256": "required",
+    "prompt_ids_sha256": "required_for_cache_validation"
+  },
+  "required_receipt_fields_before_runtime_change": [
+    "prompt_tokenize_contract.version",
+    "prompt_tokenize_contract.cache_key_sha256",
+    "prompt_tokenize_contract.cache_lookup",
+    "prompt_tokenize_contract.cache_hit",
+    "prompt_tokenize_contract.rendered_prompt_sha256",
+    "prompt_tokenize_contract.prompt_ids_sha256",
+    "prompt_tokenize_contract.tokenizer_internal_allocations_classified",
+    "prompt_tokenize_contract.repo_owned_reuse_surface",
+    "prompt_tokenize_contract.runtime_allocation_behavior_changed",
+    "session_reuse.prompt_token_buffers.needed",
+    "session_reuse.prompt_token_buffers.previous_capacity",
+    "session_reuse.prompt_token_buffers.capacity",
+    "session_reuse.prompt_token_buffers.capacity_sufficient"
+  ],
+  "before_after_gate": {
+    "required_models": [
+      "qwen3-0.6b-q8_0",
+      "qwen2.5-0.5b-instruct-q8_0"
+    ],
+    "must_preserve": [
+      "model_sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "runtime_api=cpu",
+      "selected kernel identity",
+      "dense hook identity where applicable",
+      "fallback_used=false"
+    ],
+    "required_measurements": [
+      "before and after prompt_tokenize alloc_bytes",
+      "before and after prompt_tokenize alloc_count",
+      "cache hit/miss counts",
+      "prompt identity key equality result",
+      "per-prompt tokenization timing if available"
+    ]
+  },
+  "next_safe_runtime_slice": {
+    "status": "ready_after_contract",
+    "candidate_item": "SLM-CPU-173",
+    "candidate_scope": "prompt-tokenize exact-identity cache evidence fields or runtime-disabled cache classifier",
+    "runtime_change_allowed_now": false,
+    "reason": "This slice defines the contract only. Runtime token-ID reuse or cache-hit behavior must be introduced separately with explicit receipt fields and paired strict Qwen3/Qwen2.5 before/after evidence."
+  },
+  "claim_boundaries": {
+    "allocation_reduction_claim": false,
+    "latency_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "default_runtime_promotion_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
