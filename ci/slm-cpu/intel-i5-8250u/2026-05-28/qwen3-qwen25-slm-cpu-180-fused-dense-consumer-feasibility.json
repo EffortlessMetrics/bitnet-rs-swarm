@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_fused_dense_consumer_feasibility",
+  "claim": "typed_fused_dense_consumer_feasibility_classification",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-179",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-180 classifies whether a repo-owned typed fused dense-linear consumer is a narrow safe alternative to upstream Candle output-storage APIs.",
+    "No runtime behavior changes are made in this slice.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made."
+  ],
+  "consumed_gate": {
+    "source_item": "SLM-CPU-179",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json",
+    "gate_name": "dense_linear_caller_output_storage_runtime_gate",
+    "default_state": "disabled",
+    "candidate_selector_state": "not_selectable",
+    "first_allowed_surface": "feed_forward.down_proj.output"
+  },
+  "code_evidence": [
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2617-2709",
+      "evidence": "FeedForward::forward computes gate_proj, activation, up_proj, gated product, optional sub_layernorm, and down_proj, then returns an owned Tensor output."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2688-2700",
+      "evidence": "The selected surface is the down_proj Tensor returned by apply_linear and optionally recorded by TransformerForwardWorkspace before qwen_trace_tensor(\"mlp.down_proj\")."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2731-2786",
+      "evidence": "FeedForward::apply_linear can route QK256 or dense Q8 sidecar helpers, but the behavior-preserving fallback remains candle_nn::Linear::forward(input), which returns an owned Tensor."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "5409-5428",
+      "evidence": "TransformerBlock::forward consumes feed_forward_output immediately in Candle residual add (&feed_forward_output + residual), then records layer output storage boundary."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "6479-6496",
+      "evidence": "Model::forward later applies final_norm through a Candle norm op that returns an owned Tensor and records final norm output storage boundary."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "6515-6673",
+      "evidence": "Logits construction consumes normalized hidden states through lm_head/embedding matmul paths that require Tensor semantics and produce owned Tensor logits."
+    }
+  ],
+  "downstream_consumer_semantics": {
+    "selected_surface": "feed_forward.down_proj.output",
+    "immediate_consumer": "transformer.block.output residual add",
+    "required_semantics_to_own": [
+      {
+        "semantic": "dense_linear_output_shape_dtype_device",
+        "why_required": "Downstream residual add and tracing require the down_proj output Tensor shape, dtype, and device to match Candle semantics."
+      },
+      {
+        "semantic": "qwen_trace_mlp_down_proj_identity",
+        "why_required": "Existing diagnostic trace can record mlp.down_proj before residual add; a fused consumer must preserve trace identity or explicitly provide an equivalent receipt-safe trace surface."
+      },
+      {
+        "semantic": "workspace_down_proj_output_storage_boundary",
+        "why_required": "TransformerForwardWorkspace records the selected output-storage boundary from the down_proj Tensor."
+      },
+      {
+        "semantic": "residual_add_aliasing_and_broadcast_rules",
+        "why_required": "The next operation is Candle Tensor add between feed_forward_output and residual; a fused consumer must preserve Candle broadcasting, dtype, device, and aliasing behavior."
+      },
+      {
+        "semantic": "block_output_tensor_identity",
+        "why_required": "The block output is traced, used as source evidence, and becomes the next layer input or final model state."
+      },
+      {
+        "semantic": "next_layer_norm_or_final_norm_input",
+        "why_required": "Avoiding returned Tensor materialization would require the next layer norm or final norm to consume the fused output without changing math."
+      },
+      {
+        "semantic": "receipt_and_checkpoint_identity",
+        "why_required": "Strict before/after receipts and optional checkpoints must preserve generated IDs, decoded text, and any dense hook identity."
+      }
+    ]
+  },
+  "feasibility_classification": {
+    "repo_owned_typed_fused_consumer_feasible_now": false,
+    "runtime_candidate_available_now": false,
+    "classification": "too_broad_without_upstream_or_multi_stage_typed_tensor_view",
+    "reason": "A narrow dense-linear fused consumer cannot stop at feed_forward.down_proj.output because the next required behavior is Candle residual add and then norm/attention or final norm Tensor consumers. Owning enough downstream semantics to avoid returned Tensor materialization would cross from a dense-linear output-storage optimization into residual-add, norm, trace/workspace, and model.forward Tensor identity changes.",
+    "selected_path": "move_blocker_to_candle_output_storage_or_multi_stage_typed_tensor_view",
+    "why_not_local_runtime_gate": [
+      "The fused consumer would need to replace or wrap residual add, not only dense-linear output.",
+      "The fused consumer would need to preserve qwen_trace and workspace boundary identity for both down_proj output and block output.",
+      "The fused consumer would need a Tensor-compatible handoff into next-layer norm/final norm or else fuse additional model stages.",
+      "The required semantic surface is broader than SLM-CPU-179's dense-linear caller-output-storage gate."
+    ],
+    "acceptable_future_paths": [
+      {
+        "path": "upstream_or_adopted_candle_output_storage_api",
+        "status": "preferred_next_dependency",
+        "required_api": [
+          "Tensor::matmul_out or equivalent",
+          "Tensor::broadcast_add_out/add_out or equivalent",
+          "LayerNorm/RMSNorm output-storage API or equivalent"
+        ]
+      },
+      {
+        "path": "multi_stage_typed_tensor_view",
+        "status": "future_design_only",
+        "required_scope": [
+          "dense-linear output",
+          "residual add",
+          "trace/workspace identity",
+          "next norm input",
+          "strict receipt and checkpoint comparator"
+        ]
+      }
+    ]
+  },
+  "required_evidence_before_reconsidering": [
+    "An output-storage API for Candle matmul and residual add, or a repo-owned typed Tensor view that can safely hand off to residual add and norm consumers.",
+    "A fail-closed comparator proving Qwen3 Q8_0 and Qwen2.5 Q8_0 generated IDs and decoded text remain unchanged.",
+    "Receipt fields naming the selected dense-linear output-storage or fused-consumer path.",
+    "Allocation counters for feed_forward.down_proj.output, residual add, and model.forward before any allocation-reduction claim.",
+    "Phase timing fields for affected warm-session prompts before any timing claim."
+  ],
+  "runtime_status_after_slm_cpu_180": {
+    "gate_defined": true,
+    "gate_enabled": false,
+    "default_runtime": "unchanged",
+    "runtime_behavior_changed": false,
+    "repo_owned_fused_consumer_selected": false,
+    "requires_future_item": true,
+    "selected_next_frontier": "candle_output_storage_dependency_or_non_runtime_design_note",
+    "selected_next_frontier_reason": "The narrow repo-owned fused dense consumer is not a safe next runtime candidate; future work should either track/adopt real Candle output-storage APIs or explicitly defer this branch and return to another measured Kaby performance frontier."
+  },
+  "must_not_claim": [
+    "SLM-CPU-180 changes runtime allocation behavior.",
+    "SLM-CPU-180 enables dense-linear caller-output storage by default.",
+    "SLM-CPU-180 implements or selects a typed fused dense consumer.",
+    "SLM-CPU-180 proves allocation reduction, timing improvement, speedup, or sustained throughput.",
+    "Candle Tensor matmul, broadcast_add, final-norm, residual-add, output-head, or model.forward caller-output-storage blockers are resolved.",
+    "Packed-Q8 or source-order sidecar paths are promoted to default runtime.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
