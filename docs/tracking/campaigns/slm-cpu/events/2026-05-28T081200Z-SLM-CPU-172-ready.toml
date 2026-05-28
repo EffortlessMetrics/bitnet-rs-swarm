@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T08:12:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-172"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-172-prompt-tokenize-allocation-contract"
+summary = "Queued the prompt-tokenize allocation contract after SLM-CPU-171."
+notes = [
+  "SLM-CPU-172 must distinguish tokenizer-internal allocations from repo-owned prompt/rendered-template/token-ID reuse opportunities.",
+  "The contract must define exact prompt identity and strict tokenizer provenance fields before safe reuse can be attempted.",
+  "Any runtime behavior change still requires paired strict Qwen3/Qwen2.5 before/after receipts preserving generated identity and fallback_used=false.",
+]
