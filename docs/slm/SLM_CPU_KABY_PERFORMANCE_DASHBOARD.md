@@ -78,6 +78,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order q_proj selector gate | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-156-source-order-qproj-selector-gate.json` | Precisely blocks source-order q_proj selector promotion after SLM-CPU-155 because paired Qwen3/Qwen2.5 strict CPU before/after behavior receipts with q_proj numeric evidence are still required; `eager_f32_candle` remains the default runtime |
 | Source-order q_proj receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json` | Captures paired Qwen3/Qwen2.5 strict CPU before/after receipts with prompt IDs, generated IDs/text, backend/kernel identity, fallback=false, and q_proj numeric evidence; Qwen3 source-order candidate remains runtime-disabled/default-disabled and Qwen2.5 opt-in sidecar stays within the accepted `1e-4` q_proj tolerance, with no runtime promotion or performance claim |
 | Residual-add storage API decision | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json` | Consumes the SLM-CPU-169 frontier metadata and records the residual-add output-storage path as blocked until Candle exposes an `add_out` / `broadcast_add_out`-style API or a verified backend-local equivalent; no runtime allocation behavior changes or performance claims are made |
+| Post-residual allocation frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json` | Selects `prompt_tokenize` as the next measured Qwen3/Qwen2.5 allocation frontier not blocked by Candle residual-add caller-output-storage support; no runtime allocation behavior changes or performance claims are made |
 
 Qwen3 rows use:
 
@@ -305,6 +306,25 @@ selected CPU backend/kernel identity, dense hook identity where applicable, and
 allocation work to another measured Qwen3/Qwen2.5 frontier with an available
 behavior-preserving API surface. This is not a ripr blocker and no ripr issue is
 required.
+
+SLM-CPU-171 selects that next measured frontier rather than guessing. The
+selection artifact is:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-171-post-residual-allocation-frontier.json
+```
+
+The selected frontier is `prompt_tokenize`. It is smaller than
+`prompt_prefill.forward`, but unlike the residual-add path it is not blocked by
+Candle caller-output-storage support. In the SLM-CPU-168 allocation comparison
+it remains large on both accepted appliance models: Qwen3 records
+`531,768,688` post-change allocation bytes / `6,386,238` allocations, and
+Qwen2.5 records `126,649,361` post-change allocation bytes / `1,520,772`
+allocations. SLM-CPU-171 does not change runtime behavior. It sets the next
+safe slice to define a prompt-tokenize allocation contract that separates
+tokenizer-internal allocations from allocations that can be avoided by exact
+rendered-prompt and token-ID reuse, then requires paired Qwen3/Qwen2.5 strict
+CPU before/after receipts before any allocation, latency, or timing claim.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the

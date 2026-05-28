@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_post_residual_allocation_frontier",
+  "claim": "slm_cpu_171_post_residual_allocation_frontier_selected",
+  "campaign_item": "SLM-CPU-171",
+  "created_utc": "2026-05-28T08:25:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance",
+    "performance_claim": false
+  },
+  "inputs": {
+    "residual_add_decision_item": "SLM-CPU-170",
+    "residual_add_decision_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json",
+    "allocation_comparison_item": "SLM-CPU-168",
+    "allocation_comparison_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json"
+  },
+  "behavior_oracle": {
+    "must_preserve_before_any_runtime_change": [
+      "Qwen3-0.6B Q8_0 model SHA 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "Qwen2.5-0.5B-Instruct Q8_0 model SHA ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "runtime_api=cpu",
+      "selected kernel identity",
+      "dense hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "residual_add_status": {
+    "frontier": "residual_block_output_storage_boundary",
+    "component": "prompt_prefill.forward / transformer.block.output",
+    "status": "blocked",
+    "blocker": "Candle Tensor::add and Tensor::broadcast_add return owned Result<Tensor> outputs and expose no caller-provided output-storage parameter.",
+    "runtime_allocation_behavior_changed": false,
+    "may_resume_when": "An add_out/broadcast_add_out-style API or verified backend-local equivalent exists and paired Qwen3/Qwen2.5 strict CPU before/after receipts prove unchanged behavior."
+  },
+  "candidate_frontiers": [
+    {
+      "component": "prompt_prefill.forward",
+      "qwen3_after_alloc_bytes": 3841563374,
+      "qwen3_after_alloc_count": 4460335,
+      "qwen25_after_alloc_bytes": 840301570,
+      "qwen25_after_alloc_count": 1585975,
+      "classification": "dominant_but_blocked_by_residual_add_output_storage_api",
+      "selected": false,
+      "reason": "Still the largest measured frontier, but current safe runtime work would run into the SLM-CPU-170 Candle residual-add output-storage blocker."
+    },
+    {
+      "component": "model.forward",
+      "qwen3_after_alloc_bytes": 1901282684,
+      "qwen3_after_alloc_count": 1207776,
+      "qwen25_after_alloc_bytes": 299728224,
+      "qwen25_after_alloc_count": 334080,
+      "classification": "large_but_likely_entangled_with_candle_owned_tensor_outputs",
+      "selected": false,
+      "reason": "This remains model-math owned-output territory and should not be used as a bypass around the residual-add blocker without a narrower subcomponent receipt."
+    },
+    {
+      "component": "prompt_tokenize",
+      "qwen3_after_alloc_bytes": 531768688,
+      "qwen3_after_alloc_count": 6386238,
+      "qwen25_after_alloc_bytes": 126649361,
+      "qwen25_after_alloc_count": 1520772,
+      "classification": "cross_model_measured_non_residual_frontier",
+      "selected": true,
+      "reason": "The tokenizer frontier is large on both Qwen3 and Qwen2.5, independent of Candle residual-add output-storage, and aligned with the Kaby lane objective to keep tokenizer/session work out of the hot loop."
+    },
+    {
+      "component": "receipt_construction",
+      "qwen3_after_alloc_bytes": 958516,
+      "qwen3_after_alloc_count": 9834,
+      "qwen25_after_alloc_bytes": 320494,
+      "qwen25_after_alloc_count": 3276,
+      "classification": "measured_but_small",
+      "selected": false,
+      "reason": "This is measurable and repo-local, but it is much smaller than prompt_tokenize and should not displace the next performance frontier."
+    }
+  ],
+  "selected_frontier": {
+    "id": "prompt_tokenize_allocation_frontier",
+    "component": "prompt_tokenize",
+    "scope": "warm-session prompt rendering/tokenization path for strict GGUF-tokenizer Qwen3/Qwen2.5 CPU receipts",
+    "why_now": "It is the largest measured frontier that is not blocked by Candle residual-add caller-output-storage support.",
+    "next_required_slice": "Define the prompt_tokenize allocation frontier contract: identify which allocations are tokenizer-internal and which can be avoided by prompt/rendered-template/token-ID reuse, then require paired Qwen3/Qwen2.5 strict before/after receipts before any allocation or timing claim.",
+    "first_allowed_runtime_change": "Only after the contract exists: reuse already-rendered prompt text and token-ID vectors across repeated warm-session prompts where prompt identity matches exactly, without changing strict tokenizer provenance or prompt IDs.",
+    "runtime_allocation_behavior_changed": false
+  },
+  "claim_boundaries": {
+    "allocation_reduction_claim": false,
+    "latency_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "default_runtime_promotion_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
