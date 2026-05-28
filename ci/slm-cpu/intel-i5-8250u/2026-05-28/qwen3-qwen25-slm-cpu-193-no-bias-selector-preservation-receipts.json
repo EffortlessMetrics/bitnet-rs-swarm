@@ -1,0 +1,450 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_dense_linear_selector_preservation_receipts",
+  "claim": "audit_hook_present_compute_selection_unchanged_receipt_preservation",
+  "tracking_item": "SLM-CPU-193",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "allocation_reduction_claim": false,
+  "timing_improvement_claim": false,
+  "sustained_throughput_claim": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 no-bias selector audit hook receipt preservation after SLM-CPU-192",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json"
+  ],
+  "input_artifact_sha256": {
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json": "c21c07b7eafa17c3491f5efa738da445bf4c80c57d62bd73cc340978d4d2a1da",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json": "039e7ee00754299734a280728148dce670d11b4fc2ea1fb0992a381e5bb87e4b",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json": "c2425e227eddaf0fa5b110d66e4c05e9caef97d31e652f6689be5c52da5d25a2",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json": "1488a90fb827e8713c6965ca25f756459ed89b398dee8735c5185d74012e977e"
+  },
+  "runtime_gate": {
+    "name": "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE",
+    "default_enabled": false,
+    "runtime_selection_enabled": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear"
+  },
+  "audit_hook": {
+    "type": "DenseLinearNoBiasSelectorAudit",
+    "source": "crates/bitnet-transformer/src/lib.rs",
+    "tests": [
+      "no_bias_selector_audit_marks_biasless_role_eligible_without_runtime_selection",
+      "no_bias_selector_audit_blocks_biased_role_fail_closed",
+      "no_bias_selector_audit_blocks_unknown_bias_fail_closed"
+    ],
+    "preserves_eager_f32_candle": true,
+    "dense_runtime_replaced": false
+  },
+  "before_receipts": [
+    {
+      "receipt_path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json",
+      "receipt_sha256": "c21c07b7eafa17c3491f5efa738da445bf4c80c57d62bd73cc340978d4d2a1da",
+      "artifact_kind": "slm_cpu_warm_session",
+      "model": {
+        "architecture": "qwen3",
+        "family": "qwen",
+        "file": "Qwen3-0.6B-Q8_0.gguf",
+        "quant_format": "gguf",
+        "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "loader_mode": "real_gguf"
+      },
+      "tokenizer": {
+        "source": "gguf_metadata",
+        "strict": true,
+        "authority": "present",
+        "pretokenizer_authority": "present"
+      },
+      "backend": {
+        "fallback_reason": null,
+        "fallback_used": false,
+        "requested_backend": "cpu",
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust"
+      },
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "dense_path_identity": "eager_f32_candle",
+      "quality_summary": {
+        "fail_on_quality": false,
+        "failed_prompt_indices": [],
+        "min_distinct_generated_tokens": 1,
+        "min_generated_tokens": 1,
+        "passed": true
+      },
+      "prompt_generation_identity_sha256": "8e4b6aa212205044ea4b03c13c1015cc66c60291c27fe79362a7d828f29df524",
+      "prompt_count": 6,
+      "prompt_id_and_output_preservation": [
+        {
+          "case_id": "bounded_yes_no_water",
+          "repeat_index": 0,
+          "prompt_index": 0,
+          "prompt_ids_sha256": "8cc8c15968e209a2712fe87c1536989493b58c383d55b2e042158c41ad12b88f",
+          "rendered_prompt_sha256": "542f6f4d235dfb6ebcc5b535cf71fa8a356cc94511c4449509f8845845c0f840",
+          "generated_token_ids": [
+            9454,
+            11,
+            3015,
+            374,
+            6509,
+            14401,
+            13,
+            151645
+          ],
+          "decoded_text": "Yes, water is considered wet.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_yes_no_water",
+          "repeat_index": 1,
+          "prompt_index": 1,
+          "prompt_ids_sha256": "8cc8c15968e209a2712fe87c1536989493b58c383d55b2e042158c41ad12b88f",
+          "rendered_prompt_sha256": "542f6f4d235dfb6ebcc5b535cf71fa8a356cc94511c4449509f8845845c0f840",
+          "generated_token_ids": [
+            9454,
+            11,
+            3015,
+            374,
+            6509,
+            14401,
+            13,
+            151645
+          ],
+          "decoded_text": "Yes, water is considered wet.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_repeat_colors",
+          "repeat_index": 0,
+          "prompt_index": 2,
+          "prompt_ids_sha256": "369d93bec62b52e9caa2347da60f6b17db23a964ab233f047cf6e6248db4c27f",
+          "rendered_prompt_sha256": "25f070614e9cbae4889ac2c92711b9f132b3e20c5b680a743ec0fa0526bbb9c1",
+          "generated_token_ids": [
+            6033,
+            11,
+            6303,
+            11,
+            6176,
+            13,
+            151645
+          ],
+          "decoded_text": "Red, blue, green.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_repeat_colors",
+          "repeat_index": 1,
+          "prompt_index": 3,
+          "prompt_ids_sha256": "369d93bec62b52e9caa2347da60f6b17db23a964ab233f047cf6e6248db4c27f",
+          "rendered_prompt_sha256": "25f070614e9cbae4889ac2c92711b9f132b3e20c5b680a743ec0fa0526bbb9c1",
+          "generated_token_ids": [
+            6033,
+            11,
+            6303,
+            11,
+            6176,
+            13,
+            151645
+          ],
+          "decoded_text": "Red, blue, green.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_capital_france",
+          "repeat_index": 0,
+          "prompt_index": 4,
+          "prompt_ids_sha256": "1248daad1899dcb0690e2f4e21aebbe43df2c8e46c43c6bb0d2a1dadd8769711",
+          "rendered_prompt_sha256": "6190cfa53b00cdd377a1c41f2960eaf8ad81e7c64e731e7490550350bfc7370a",
+          "generated_token_ids": [
+            785,
+            6722,
+            315,
+            9625,
+            374,
+            3070,
+            59604,
+            334
+          ],
+          "decoded_text": "The capital of France is **Paris**",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_capital_france",
+          "repeat_index": 1,
+          "prompt_index": 5,
+          "prompt_ids_sha256": "1248daad1899dcb0690e2f4e21aebbe43df2c8e46c43c6bb0d2a1dadd8769711",
+          "rendered_prompt_sha256": "6190cfa53b00cdd377a1c41f2960eaf8ad81e7c64e731e7490550350bfc7370a",
+          "generated_token_ids": [
+            785,
+            6722,
+            315,
+            9625,
+            374,
+            3070,
+            59604,
+            334
+          ],
+          "decoded_text": "The capital of France is **Paris**",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        }
+      ]
+    },
+    {
+      "receipt_path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json",
+      "receipt_sha256": "039e7ee00754299734a280728148dce670d11b4fc2ea1fb0992a381e5bb87e4b",
+      "artifact_kind": "slm_cpu_warm_session",
+      "model": {
+        "architecture": "qwen2",
+        "family": "qwen",
+        "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+        "quant_format": "gguf",
+        "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "loader_mode": "real_gguf"
+      },
+      "tokenizer": {
+        "source": "gguf_metadata",
+        "strict": true,
+        "authority": "present",
+        "pretokenizer_authority": "present"
+      },
+      "backend": {
+        "fallback_reason": null,
+        "fallback_used": false,
+        "requested_backend": "cpu",
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust"
+      },
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "dense_path_identity": "eager_f32_candle",
+      "quality_summary": {
+        "fail_on_quality": false,
+        "failed_prompt_indices": [],
+        "min_distinct_generated_tokens": 1,
+        "min_generated_tokens": 1,
+        "passed": true
+      },
+      "prompt_generation_identity_sha256": "8e4b6aa212205044ea4b03c13c1015cc66c60291c27fe79362a7d828f29df524",
+      "prompt_count": 6,
+      "prompt_id_and_output_preservation": [
+        {
+          "case_id": "bounded_yes_no_water",
+          "repeat_index": 0,
+          "prompt_index": 0,
+          "prompt_ids_sha256": "4ce093e4214818d05ef2c8c60b447a8a9cb62fad4221a9e03972b2799bfd0ec1",
+          "rendered_prompt_sha256": "542f6f4d235dfb6ebcc5b535cf71fa8a356cc94511c4449509f8845845c0f840",
+          "generated_token_ids": [
+            9454,
+            13,
+            151645
+          ],
+          "decoded_text": "Yes.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_yes_no_water",
+          "repeat_index": 1,
+          "prompt_index": 1,
+          "prompt_ids_sha256": "4ce093e4214818d05ef2c8c60b447a8a9cb62fad4221a9e03972b2799bfd0ec1",
+          "rendered_prompt_sha256": "542f6f4d235dfb6ebcc5b535cf71fa8a356cc94511c4449509f8845845c0f840",
+          "generated_token_ids": [
+            9454,
+            13,
+            151645
+          ],
+          "decoded_text": "Yes.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_repeat_colors",
+          "repeat_index": 0,
+          "prompt_index": 2,
+          "prompt_ids_sha256": "ba6419eba8dc62aa145bdef7d2c8412d0393c00e4daca4a42d334043f3a7c427",
+          "rendered_prompt_sha256": "25f070614e9cbae4889ac2c92711b9f132b3e20c5b680a743ec0fa0526bbb9c1",
+          "generated_token_ids": [
+            785,
+            11504,
+            17133,
+            330,
+            1151,
+            6303,
+            6176,
+            1
+          ],
+          "decoded_text": "The repeated phrase \"red blue green\"",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_repeat_colors",
+          "repeat_index": 1,
+          "prompt_index": 3,
+          "prompt_ids_sha256": "ba6419eba8dc62aa145bdef7d2c8412d0393c00e4daca4a42d334043f3a7c427",
+          "rendered_prompt_sha256": "25f070614e9cbae4889ac2c92711b9f132b3e20c5b680a743ec0fa0526bbb9c1",
+          "generated_token_ids": [
+            785,
+            11504,
+            17133,
+            330,
+            1151,
+            6303,
+            6176,
+            1
+          ],
+          "decoded_text": "The repeated phrase \"red blue green\"",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_capital_france",
+          "repeat_index": 0,
+          "prompt_index": 4,
+          "prompt_ids_sha256": "bd4fa122a5c3d397acf8780d32bc7b5edc46101d817270def385ad05380fa11a",
+          "rendered_prompt_sha256": "6190cfa53b00cdd377a1c41f2960eaf8ad81e7c64e731e7490550350bfc7370a",
+          "generated_token_ids": [
+            785,
+            6722,
+            315,
+            9625,
+            374,
+            12095,
+            13,
+            151645
+          ],
+          "decoded_text": "The capital of France is Paris.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        },
+        {
+          "case_id": "bounded_capital_france",
+          "repeat_index": 1,
+          "prompt_index": 5,
+          "prompt_ids_sha256": "bd4fa122a5c3d397acf8780d32bc7b5edc46101d817270def385ad05380fa11a",
+          "rendered_prompt_sha256": "6190cfa53b00cdd377a1c41f2960eaf8ad81e7c64e731e7490550350bfc7370a",
+          "generated_token_ids": [
+            785,
+            6722,
+            315,
+            9625,
+            374,
+            12095,
+            13,
+            151645
+          ],
+          "decoded_text": "The capital of France is Paris.",
+          "quality_gate_passed": true,
+          "fallback_used": false
+        }
+      ]
+    }
+  ],
+  "after_audit_overlay_receipts": [
+    {
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "source_before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json",
+      "audit_hook_present": true,
+      "runtime_gate_name": "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE",
+      "runtime_gate_default_enabled": false,
+      "runtime_selection_enabled": false,
+      "selected_path_after_overlay": "eager_f32_candle",
+      "selected_kernel_after_overlay": "dense-f32-candle-linear",
+      "model_sha256_preserved": true,
+      "tokenizer_source_preserved": true,
+      "tokenizer_strict_preserved": true,
+      "backend_preserved": true,
+      "fallback_false_preserved": true,
+      "prompt_ids_preserved_by_sha256": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "sample_audit_decision": {
+        "model_id": "qwen3-0.6b-q8_0",
+        "role_id": "layers.0.attention.q_proj",
+        "bias_present": false,
+        "decision": "eligible_no_bias_candidate",
+        "reason": "bias_present_false_and_receipt_identity_matches_policy",
+        "runtime_selection_enabled": false,
+        "manifest_sha256": "77709b76cdc1c1d51a8af86a2ee9caf752f6da13742daca3dee0dff505a168fd"
+      }
+    },
+    {
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "source_before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json",
+      "audit_hook_present": true,
+      "runtime_gate_name": "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE",
+      "runtime_gate_default_enabled": false,
+      "runtime_selection_enabled": false,
+      "selected_path_after_overlay": "eager_f32_candle",
+      "selected_kernel_after_overlay": "dense-f32-candle-linear",
+      "model_sha256_preserved": true,
+      "tokenizer_source_preserved": true,
+      "tokenizer_strict_preserved": true,
+      "backend_preserved": true,
+      "fallback_false_preserved": true,
+      "prompt_ids_preserved_by_sha256": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "sample_audit_decision": {
+        "model_id": "qwen2.5-0.5b-instruct-q8_0",
+        "role_id": "layers.0.attention.q_proj",
+        "bias_present": true,
+        "decision": "blocked_fail_closed",
+        "reason": "bias_present_true_blocks_no_bias_selector",
+        "runtime_selection_enabled": false,
+        "manifest_sha256": "77709b76cdc1c1d51a8af86a2ee9caf752f6da13742daca3dee0dff505a168fd"
+      }
+    }
+  ],
+  "preservation_verdict": {
+    "passed": true,
+    "models_checked": [
+      "qwen3-0.6b-q8_0",
+      "qwen2.5-0.5b-instruct-q8_0"
+    ],
+    "prompt_ids_preserved_by_sha256": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_backend_preserved": "cpu-rust",
+    "runtime_api_preserved": "cpu",
+    "fallback_used_preserved": false,
+    "dense_path_identity_preserved": "eager_f32_candle",
+    "runtime_gate_default_disabled": true,
+    "runtime_selection_enabled": false,
+    "blanket_no_bias_selector_allowed": false,
+    "blanket_no_bias_selector_blocker": "Qwen2.5 attention q_proj, k_proj, and v_proj have bias_present=true."
+  },
+  "claim_boundary": [
+    "SLM-CPU-193 is an audit/preservation receipt slice only; it does not rerun or change dense compute.",
+    "The after_audit_overlay_receipts bind the SLM-CPU-192 hook contract to existing strict warm-session receipts and preserve identity fields.",
+    "Qwen3 biasless roles remain future candidates only; Qwen2.5 attention q/k/v roles remain fail-closed because bias_present=true.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior is claimed."
+  ],
+  "recommended_next_item": {
+    "id": "SLM-CPU-194",
+    "summary": "Define the next safe no-bias fast-path implementation gate, limited to roles with bias_present=false and requiring real before/after strict receipts before runtime selection."
+  },
+  "must_not_claim": [
+    "A no-bias dense linear fast path is implemented or selected by default.",
+    "Runtime compute selection changes.",
+    "Runtime allocation behavior changes.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}

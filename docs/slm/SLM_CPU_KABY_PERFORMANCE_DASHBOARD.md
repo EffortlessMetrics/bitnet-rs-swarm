@@ -3134,6 +3134,34 @@ prove allocation reduction, claim speedup, claim sustained 8250U throughput,
 broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
 or BitNet QK256/I2_S paths.
 
+## SLM-CPU-193 No-Bias Selector Preservation Receipts
+
+SLM-CPU-193 binds the SLM-CPU-192 disabled-by-default no-bias selector audit
+hook to existing strict Qwen3/Qwen2.5 Q8_0 warm-session receipts:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-193-no-bias-selector-preservation-receipts.json
+runtime_gate = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+preservation_verdict.passed = true
+```
+
+The receipt overlay preserves the strict identity fields from the paired
+warm-session receipts: model SHA, GGUF tokenizer authority, prompt ID hashes,
+generated token IDs, decoded text, selected CPU backend/runtime, dense path
+identity, and `fallback_used=false`. It also records a representative eligible
+Qwen3 no-bias role and a representative fail-closed Qwen2.5 biased role while
+keeping blanket no-bias selection blocked.
+
+This is an audit/preservation slice only. It does not rerun model inference,
+change compute selection, enable a no-bias fast path, prove allocation
+reduction, claim timing improvement or speedup, claim sustained throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
