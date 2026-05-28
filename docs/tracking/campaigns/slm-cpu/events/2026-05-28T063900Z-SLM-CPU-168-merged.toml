@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T06:39:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-168"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 862
+merge_sha = "4424930bd62edc7b62070ae733a38c39055ee933"
+branch = "codex/slm-cpu-168-presizing-receipt-evidence"
+summary = "Merged the post-SLM-CPU-166 prompt/session pre-sizing receipt comparison evidence."
+notes = [
+  "The merged evidence includes Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU warm-session receipts captured after SLM-CPU-166 prompt/session buffer pre-sizing.",
+  "The comparison artifact preserves model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false against the committed SLM-CPU-161 baselines.",
+  "The slice classifies pre-sizing as receipt-visible capacity reuse only and keeps prompt_prefill.forward as the next safe allocation hotspot without claiming allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]

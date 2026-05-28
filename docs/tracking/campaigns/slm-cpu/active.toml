@@ -9915,8 +9915,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-168"
-status = "pr_open"
+status = "merged"
 pr = 862
+merge_sha = "4424930bd62edc7b62070ae733a38c39055ee933"
 branch = "codex/slm-cpu-168-presizing-receipt-evidence"
 stackable = false
 review_mode = "codex_premerge"
@@ -9959,6 +9960,56 @@ may_claim = [
 must_not_claim = [
   "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
   "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-169"
+status = "ready"
+branch = "codex/slm-cpu-169-prefill-forward-allocation-frontier"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-168"]
+acceptance = "Consume the SLM-CPU-168 Qwen3/Qwen2.5 strict CPU receipt comparison and either implement or precisely block the next prompt_prefill.forward allocation frontier. A valid implementation must narrow the residual_block_output_storage_boundary or another measured prompt_prefill.forward subcomponent, preserve Qwen3 Q8_0 and Qwen2.5 Q8_0 model SHA, GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`, and emit before/after receipts before claiming any allocation or timing improvement. A valid blocker must name the exact missing API, tensor output-storage limitation, or measurement gap needed before changing runtime allocation behavior. The slice must not claim sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json",
+]
+may_claim = [
+  "SLM-CPU-169 may identify the next prompt_prefill.forward allocation frontier from committed Qwen3/Qwen2.5 evidence.",
+  "SLM-CPU-169 may implement a narrow allocation fix only if strict before/after receipts preserve generated identity and fallback_used=false.",
+  "SLM-CPU-169 may record an exact Candle/output-storage blocker instead of changing runtime behavior.",
+]
+must_not_claim = [
+  "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved unless the exact API/runtime evidence proves it.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
