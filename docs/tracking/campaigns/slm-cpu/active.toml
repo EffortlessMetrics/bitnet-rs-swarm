@@ -10999,7 +10999,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-189"
-status = "ready"
+status = "merged"
+pr = 904
+merge_sha = "2ada4316b7a27848a4b93467d4c506b2ac048bab"
 branch = "codex/slm-cpu-189-dense-bias-role-records-manifest"
 stackable = false
 review_mode = "codex_premerge"
@@ -11038,6 +11040,56 @@ may_claim = [
 must_not_claim = [
   "A no-bias dense linear fast path is implemented or selected by default.",
   "All Qwen3/Qwen2.5 dense-linear roles are biasless.",
+  "Runtime selection changes.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-190"
+status = "ready"
+branch = "codex/slm-cpu-190-no-bias-selector-policy-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-189"]
+acceptance = "Consume the SLM-CPU-189 dense-linear bias role_records manifest and define the exact fail-closed no-bias dense-linear selector policy before any implementation. A valid policy must name which Qwen3/Qwen2.5 roles are eligible candidates, which roles are explicitly blocked by bias_present=true, which receipt fields must be preserved before/after any future selector, and which runtime identity fields must be emitted if a selector is later implemented. The policy must keep the selector runtime-disabled by default and must record that Qwen2.5 attention q/k/v bias_present=true blocks any blanket no-bias selector. No no-bias fast-path implementation, runtime selection change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-189 derives 366 dense-linear bias role records from exact post-export Qwen3/Qwen2.5 traces and paired receipts.",
+  "SLM-CPU-189 records Qwen3 selected dense-linear roles as bias_present=false.",
+  "SLM-CPU-189 records Qwen2.5 attention q/k/v as bias_present=true, blocking any blanket no-bias dense-linear selector.",
+]
+may_claim = [
+  "SLM-CPU-190 may define a runtime-disabled, fail-closed no-bias selector policy gate from exact manifest evidence.",
+  "SLM-CPU-190 may identify role-specific eligible and blocked roles for future implementation.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
   "Runtime selection changes.",
   "Runtime allocation behavior changes.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
