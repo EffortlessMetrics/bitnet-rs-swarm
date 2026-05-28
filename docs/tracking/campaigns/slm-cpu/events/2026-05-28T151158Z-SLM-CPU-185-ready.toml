@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T15:11:58Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-185"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-185-model-init-bias-manifest-trace-export"
+summary = "Queued model-init bias manifest trace export after SLM-CPU-184."
+notes = [
+  "SLM-CPU-185 should add or precisely block the export surface needed to emit per-role/layer dense-linear bias role_records for Qwen3/Qwen2.5 Q8_0.",
+  "The item should bind any exported manifest to model SHA, tokenizer authority, selected backend/kernel identity, and fallback=false.",
+  "No no-bias fast-path implementation, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
