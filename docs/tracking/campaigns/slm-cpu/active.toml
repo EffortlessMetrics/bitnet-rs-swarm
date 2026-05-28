@@ -9765,3 +9765,51 @@ must_not_claim = [
   "Qwen3.5 or hybrid architecture support is in scope.",
   "BitNet QK256/I2_S kernels are modified.",
 ]
+
+[[work_item]]
+id = "SLM-CPU-164"
+status = "ready"
+branch = "codex/slm-cpu-164-buffer-capacity-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-163"]
+acceptance = "Consume the SLM-CPU-163 Candle residual-output storage blocker and queue the next safe Kaby Lake SLM allocation slice at the warm-session prompt/session buffer capacity receipt boundary. A valid implementation must either make prompt/session buffer pre-sizing and reuse more receipt-visible, or record the exact missing before/after allocation evidence needed before changing runtime buffer behavior. Any runtime behavior change must preserve paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipt identity for model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel, dense hook identity where applicable, and `fallback_used=false`. It must not claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-163-residual-output-storage-runtime-blocker.json",
+]
+may_claim = [
+  "SLM-CPU-163 recorded that residual output storage reuse remains blocked by Candle 0.10.2 owned residual-add outputs.",
+  "SLM-CPU-164 may harden prompt/session buffer capacity and reuse receipt evidence as the next safe allocation boundary outside the blocked residual-add path.",
+  "SLM-CPU-164 may record an exact blocker instead of changing runtime behavior.",
+]
+must_not_claim = [
+  "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
