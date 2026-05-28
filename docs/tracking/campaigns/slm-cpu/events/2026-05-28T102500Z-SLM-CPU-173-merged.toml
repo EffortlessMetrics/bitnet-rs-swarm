@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T10:25:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-173"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 872
+merge_sha = "4b7624382133a3b36d87f48c42c2f84d50003a7d"
+branch = "codex/slm-cpu-173-prompt-tokenize-cache-evidence-fields"
+summary = "Closed prompt-tokenize cache evidence fields after #872 merged."
+notes = [
+  "SLM-CPU-173 made prompt-tokenize cache/evidence fields receipt-visible in warm-session prompt receipts.",
+  "The merged slice preserved runtime behavior and did not claim allocation reduction, latency improvement, timing improvement, speedup, or sustained throughput.",
+  "The paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipt gate remains required before any prompt-tokenize allocation, latency, or timing claim.",
+]

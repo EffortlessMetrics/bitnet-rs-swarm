@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T10:26:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-174"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-174-prompt-tokenize-paired-receipt-gate"
+summary = "Queued paired receipt gate for prompt-tokenize allocation evidence."
+notes = [
+  "SLM-CPU-174 should consume the SLM-CPU-173 prompt-tokenize cache/evidence fields and capture or define the paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipt gate.",
+  "If real GGUF artifacts are unavailable, the slice must record exact missing artifact paths or commands and keep runtime behavior unchanged.",
+  "No allocation reduction, latency improvement, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]
