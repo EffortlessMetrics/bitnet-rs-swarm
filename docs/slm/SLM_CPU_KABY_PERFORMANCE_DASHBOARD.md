@@ -2028,6 +2028,26 @@ zero counters in one strict path. The no-bias branch therefore remains
 fail-closed until a real model-init trace export or tensor manifest records
 `role_records` with positive bias presence/absence and output-head mode.
 
+SLM-CPU-185 through SLM-CPU-187 narrow that blocker without changing runtime
+selection. SLM-CPU-185 adds feed-forward and output-head
+`model_init.linear_bias_finish` trace coverage, SLM-CPU-186 records that older
+committed traces predate that coverage, and SLM-CPU-187 fixes the remaining
+operator prerequisite surface:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-187-post-export-trace-capture-prereq.json
+```
+
+The prerequisite artifact names the exact Qwen3 and Qwen2.5 Q8_0 model
+identities, strict receipt fields, `BITNET_QWEN_TRACE_JSONL` command shapes, and
+expected post-export trace/receipt paths needed before a complete dense-linear
+bias `role_records` manifest can be derived. The current worktree has the Qwen3
+GGUF under `models/slm`, but the Qwen2.5 Q8_0 artifact is only represented by
+prior verification evidence and must be supplied at the exact required path, or
+an equivalent operator path, before capture. The no-bias branch remains
+fail-closed: no runtime selection change, no allocation/timing claim, no Q4/Q5,
+no accelerator/server claim, no Qwen3.5, and no BitNet QK256 work.
+
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
 runtime behavior. The current dense standard GGUF load path eagerly dequantizes
