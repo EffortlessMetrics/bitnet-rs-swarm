@@ -3193,6 +3193,9 @@ pub struct LayerOutputStorageApiBoundary {
     pub status: &'static str,
     pub reason: &'static str,
     pub next_api_hook: &'static str,
+    pub required_shape_contract: &'static str,
+    pub ownership_contract: &'static str,
+    pub behavior_preservation_gate: &'static str,
     pub residual_add_involved: bool,
     pub can_fill_caller_output_storage: bool,
     pub exact_blocking_ops: &'static [&'static str],
@@ -3219,6 +3222,9 @@ impl LayerOutputStorageApiBoundary {
             status: "layer_output_storage_blocked_by_candle_tensor_add_ops",
             reason: "TransformerBlock layer output is produced by Candle Tensor::add/broadcast_add residual-add operations whose public API returns owned Result<Tensor> values and exposes no caller-provided output-storage parameter",
             next_api_hook: CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+            required_shape_contract: "caller-provided block output storage must have the same shape, dtype, and device as both residual input and branch output, and the receipt must record all three shapes before any storage reuse is enabled",
+            ownership_contract: "TransformerForwardWorkspace may own reusable block output storage only after residual add can write into caller-provided output without aliasing residual input or branch output in a way that changes Candle semantics",
+            behavior_preservation_gate: "Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts must preserve prompt IDs, generated IDs, decoded text, selected backend/kernel, tokenizer authority, model SHA, and fallback_used=false",
             residual_add_involved: true,
             can_fill_caller_output_storage: false,
             exact_blocking_ops: CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS,
@@ -6732,6 +6738,10 @@ mod tests {
             boundary.required_missing_api,
             "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)"
         );
+        assert!(boundary.required_shape_contract.contains("same shape, dtype, and device"));
+        assert!(boundary.ownership_contract.contains("TransformerForwardWorkspace"));
+        assert!(boundary.behavior_preservation_gate.contains("Qwen3 Q8_0"));
+        assert!(boundary.behavior_preservation_gate.contains("Qwen2.5 Q8_0"));
         assert!(!boundary.can_fill_caller_output_storage);
     }
 

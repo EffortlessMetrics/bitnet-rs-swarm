@@ -12,7 +12,7 @@ use bitnet_transformer::{
     CANDLE_LOGITS_EXACT_BLOCKING_OPS, CANDLE_LOGITS_FUSED_SELECTION_BLOCKING_OPS,
     CANDLE_LOGITS_PUBLIC_API_RETURN_TYPE, CANDLE_LOGITS_REQUIRED_MISSING_API,
     CANDLE_RESIDUAL_ADD_EXACT_BLOCKING_OPS, CANDLE_RESIDUAL_ADD_PUBLIC_API_RETURN_TYPE,
-    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+    CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API, LayerOutputStorageApiBoundary,
 };
 
 static ALLOCATION_AUDIT_ENABLED: AtomicBool = AtomicBool::new(false);
@@ -235,6 +235,8 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
             .then_with(|| right.alloc_count.cmp(&left.alloc_count))
             .then_with(|| left.component.cmp(right.component))
     });
+    let layer_output_boundary =
+        LayerOutputStorageApiBoundary::from_candle_residual_add("transformer.block.output");
 
     serde_json::json!({
         "enabled": true,
@@ -318,6 +320,24 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                 "layer_output_required_missing_api": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
                 "layer_output_public_api_accepts_output_storage": false,
                 "layer_output_backend_internal_in_place_api_exposed": false,
+                "layer_output_shape_contract": layer_output_boundary.required_shape_contract,
+                "layer_output_ownership_contract": layer_output_boundary.ownership_contract,
+                "layer_output_behavior_preservation_gate": layer_output_boundary.behavior_preservation_gate,
+                "residual_block_output_storage_contract": {
+                    "target": "residual_block_output_storage_boundary",
+                    "status": "contract_defined_runtime_change_deferred",
+                    "storage_owner": "TransformerForwardWorkspace",
+                    "output_surface": "transformer.block.output",
+                    "residual_input_shape_source": "TransformerForwardWorkspace.layer_output_surface.residual_input_shape",
+                    "branch_output_shape_source": "TransformerForwardWorkspace.layer_output_surface.branch_output_shape",
+                    "output_shape_source": "TransformerForwardWorkspace.layer_output_surface.last_shape",
+                    "required_shape_contract": layer_output_boundary.required_shape_contract,
+                    "ownership_contract": layer_output_boundary.ownership_contract,
+                    "behavior_preservation_gate": layer_output_boundary.behavior_preservation_gate,
+                    "runtime_allocation_behavior_changed": false,
+                    "can_fill_layer_output_storage": false,
+                    "next_safe_change": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+                },
                 "final_norm_operation_family": "candle_nn::RmsNorm::forward",
                 "final_norm_operation_detail": "rms_norm",
                 "final_norm_input_accessible": true,
@@ -725,5 +745,70 @@ mod tests {
             "no public Candle output-head projection API fuses lm_head matmul with argmax/top-k or writes into caller-provided output storage"
         );
         assert_eq!(boundary["required_missing_api"], CANDLE_LOGITS_REQUIRED_MISSING_API);
+    }
+
+    #[test]
+    fn warm_session_prompt_allocation_audit_exposes_residual_output_storage_contract() {
+        let forward_sample = [AllocationAuditSnapshot {
+            alloc_count: 5,
+            alloc_bytes: 4096,
+            dealloc_count: 2,
+            dealloc_bytes: 1024,
+        }];
+        let empty = [];
+        let zero = AllocationAuditSnapshot::default();
+
+        let audit = warm_session_prompt_allocation_audit_json(WarmSessionPromptAllocationAudit {
+            enabled: true,
+            requested_backend: "cpu",
+            prompt_tokenize: zero,
+            prompt_setup: zero,
+            prompt_setup_breakdown: WarmSessionPromptSetupAllocationAudit {
+                buffer_reset: zero,
+                token_seed: zero,
+                kv_cache: zero,
+                sampler_setup: zero,
+            },
+            prompt_prefill: &forward_sample,
+            prompt_prefill_embed: &empty,
+            prompt_prefill_forward: &forward_sample,
+            decode_total: &empty,
+            embed: &empty,
+            forward: &empty,
+            logits: &empty,
+            sample: &empty,
+            token_vector_update: &empty,
+            token_decode: &empty,
+            stop_tail_update: &empty,
+            receipt_construction: zero,
+        });
+
+        let boundary = &audit["prompt_prefill_breakdown"]["forward_boundary"];
+        let contract = &boundary["residual_block_output_storage_contract"];
+        assert_eq!(contract["target"], "residual_block_output_storage_boundary");
+        assert_eq!(contract["status"], "contract_defined_runtime_change_deferred");
+        assert_eq!(contract["runtime_allocation_behavior_changed"], false);
+        assert_eq!(contract["can_fill_layer_output_storage"], false);
+        assert_eq!(contract["next_safe_change"], CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API);
+        assert!(
+            contract["required_shape_contract"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("same shape, dtype, and device")
+        );
+        assert!(
+            contract["ownership_contract"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("TransformerForwardWorkspace")
+        );
+        assert!(
+            contract["behavior_preservation_gate"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("Qwen3 Q8_0")
+        );
+        assert_eq!(boundary["layer_output_shape_contract"], contract["required_shape_contract"]);
+        assert_eq!(boundary["layer_output_ownership_contract"], contract["ownership_contract"]);
     }
 }

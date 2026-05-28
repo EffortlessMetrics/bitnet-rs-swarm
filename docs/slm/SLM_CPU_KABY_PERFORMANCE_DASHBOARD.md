@@ -200,9 +200,22 @@ allocation reduction, speedup, sustained throughput, Q4/Q5 support, default
 runtime promotion, server/accelerator execution, Qwen3.5 support, or BitNet
 QK256 changes.
 
+SLM-CPU-162 turns that blocker into an explicit receipt-visible contract before
+changing runtime allocation behavior. New allocation-audit receipts name
+`residual_block_output_storage_contract` under
+`prompt_prefill_breakdown.forward_boundary`, with the required shape contract
+that reusable block output storage must match residual input, branch output,
+and block output shape/dtype/device. The contract also records
+`TransformerForwardWorkspace` as the future storage owner, keeps
+`runtime_allocation_behavior_changed=false`, keeps
+`can_fill_layer_output_storage=false`, and preserves the Qwen3/Qwen2.5 strict
+CPU behavior gate: model SHA, tokenizer authority, prompt/generated IDs,
+decoded text, selected CPU backend/kernel, and `fallback_used=false` must
+match before any later allocation-reduction PR can claim improvement.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-161. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-162. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
