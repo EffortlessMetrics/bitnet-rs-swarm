@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T07:50:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-171"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-171-post-residual-allocation-frontier"
+summary = "Queued the next post-residual-add allocation frontier selection item."
+notes = [
+  "SLM-CPU-170 leaves residual-add output-storage runtime changes blocked on Candle/API support.",
+  "SLM-CPU-171 must choose another measured Qwen3/Qwen2.5 allocation frontier with an available behavior-preserving API surface, or record the exact blocker.",
+  "Any runtime allocation change still requires paired strict Qwen3/Qwen2.5 before/after receipts preserving generated identity, strict provenance, and fallback_used=false before claiming improvement.",
+]

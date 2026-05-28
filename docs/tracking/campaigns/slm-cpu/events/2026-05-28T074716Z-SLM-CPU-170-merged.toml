@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T07:47:16Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-170"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 866
+merge_sha = "a244ce9997a5e2abd8f292a8ff572f29af94248b"
+branch = "codex/slm-cpu-170-residual-add-storage-api-decision"
+summary = "Merged the residual-add output-storage API decision artifact."
+notes = [
+  "SLM-CPU-170 records transformer.block.output residual-add reuse as blocked until Candle exposes an add_out/broadcast_add_out-style API or a verified backend-local equivalent exists.",
+  "The artifact defines the future integration plan and keeps runtime allocation behavior unchanged.",
+  "No allocation reduction, latency improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, BitNet QK256, or ripr blocker claim was made.",
+]
