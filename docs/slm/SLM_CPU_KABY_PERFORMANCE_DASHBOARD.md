@@ -254,8 +254,8 @@ or sustained throughput without an explicit before/after receipt comparison.
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-166, the bounded session-level
-prompt/session buffer pre-sizing implementation.
+This refresh is current through SLM-CPU-167, the post-SLM-CPU-166
+prompt/session buffer pre-sizing receipt comparison gate.
 
 SLM-CPU-167 is the next ready performance-lane gate. It does not change runtime
 behavior by itself; it requires a committed Qwen3 Q8_0 and Qwen2.5 Q8_0 strict

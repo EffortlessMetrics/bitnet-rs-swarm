@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T05:37:19Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-167"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 858
+branch = "codex/slm-cpu-167-presizing-receipt-comparison"
+merge_sha = "fdf8f4275abf5658e86174c5bfccc48c9277621b"
+summary = "Merged PR #858 with the post-SLM-CPU-166 prompt/session pre-sizing receipt comparison gate."
+notes = [
+  "SLM-CPU-167 queues the committed Qwen3/Qwen2.5 strict CPU receipt comparison required before using the pre-sizing slice as allocation or timing evidence.",
+  "The merge is tracker-only and does not change runtime behavior.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]

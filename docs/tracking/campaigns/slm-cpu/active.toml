@@ -9863,8 +9863,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-167"
-status = "pr_open"
+status = "merged"
 pr = 858
+merge_sha = "fdf8f4275abf5658e86174c5bfccc48c9277621b"
+merged_at = "2026-05-28T05:37:19Z"
 branch = "codex/slm-cpu-167-presizing-receipt-comparison"
 stackable = false
 review_mode = "codex_premerge"
