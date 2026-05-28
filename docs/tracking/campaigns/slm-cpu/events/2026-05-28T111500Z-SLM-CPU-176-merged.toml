@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T11:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-176"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 878
+merge_sha = "bfa26c25e48e69dad14f9e856e692297e909f4ec"
+branch = "codex/slm-cpu-176-post-prompt-tokenize-frontier"
+summary = "Closed the post-prompt-tokenize frontier selection after #878 merged."
+notes = [
+  "SLM-CPU-176 consumes the SLM-CPU-175 prompt-tokenize cache receipts and keeps those allocation/latency claims scoped to byte-identical resident-session cache hits.",
+  "The merged slice selects model_forward_owned_tensor_allocation_boundary as the next high-value frontier because prompt_prefill.forward and model.forward dominate the paired after receipts.",
+  "No runtime behavior change, sustained throughput, broad decode/prefill/model-load speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
