@@ -3325,6 +3325,39 @@ the default runtime, prove allocation reduction, claim timing improvement or
 speedup, claim sustained throughput, broaden Q4/Q5 support, or touch server,
 GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-199 No-Bias Runtime Descriptor Contract
+
+SLM-CPU-199 defines the manifest-bound descriptor contract that SLM-CPU-198
+identified as missing before any no-bias runtime experiment can be safely
+attempted:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-199-no-bias-runtime-descriptor-contract.json
+contract record = bitnet_transformer::DenseLinearNoBiasRuntimeDescriptorContract
+source preflight = bitnet_transformer::DenseLinearNoBiasRuntimeSelectionPreflight
+ready decision = descriptor_contract_ready_runtime_disabled
+blocked decision = blocked_fail_closed
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate path = qwen3_feed_forward_down_proj_no_bias_candidate
+candidate kernel = dense-f32-no-bias-matmul-candidate
+```
+
+The contract carries the exact identity that a future `FeedForward::apply_linear`
+gate must preserve in receipts: model SHA, quant format, manifest SHA, role ID,
+layer, scope, linear, `bias_present=false`, candidate path/kernel, selected
+path/kernel, runtime gate state, and `fallback_used=false`. It fails closed when
+descriptor fields are missing, receipt identity fields are missing, quant format
+is not Q8_0, bias evidence is unknown or true, or the source preflight is not
+receipt-gate selectable.
+
+This slice still does not execute the no-bias candidate, change default runtime
+selection, prove generated ID/text preservation for a runtime experiment, prove
+allocation reduction, claim timing improvement or speedup, claim sustained
+throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620,
+Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
