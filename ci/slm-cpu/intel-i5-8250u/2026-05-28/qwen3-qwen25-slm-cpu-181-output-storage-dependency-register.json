@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_output_storage_dependency_register",
+  "claim": "output_storage_dependency_register",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-180",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-181 records the exact output-storage dependencies that block runtime allocation reuse across dense-linear, residual-add, final-norm, and model.forward boundaries.",
+    "This is a dependency register, not an implementation slice.",
+    "No runtime behavior changes are made in this slice.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made."
+  ],
+  "consumed_classification": {
+    "source_item": "SLM-CPU-180",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json",
+    "classification": "too_broad_without_upstream_or_multi_stage_typed_tensor_view",
+    "selected_next_frontier": "candle_output_storage_dependency_or_non_runtime_design_note",
+    "runtime_candidate_available_now": false,
+    "repo_owned_typed_fused_consumer_feasible_now": false
+  },
+  "dependency_register": [
+    {
+      "dependency_id": "candle_tensor_matmul_out",
+      "kind": "upstream_candle_api_gap",
+      "current_surface": "Tensor::matmul / candle_nn::Linear::forward",
+      "needed_surface": "Tensor::matmul_out or equivalent caller-owned output storage API",
+      "blocked_boundaries": [
+        "dense-linear q_proj/k_proj/v_proj/o_proj output",
+        "feed_forward gate_proj/up_proj/down_proj output",
+        "lm_head or tied output-head projection"
+      ],
+      "why_required": "Current Candle matmul and Linear::forward return owned Tensor storage. Reusing caller-owned output storage for dense linear outputs requires an API that writes matmul results into verified storage without changing shape, dtype, device, broadcast, or autograd-free CPU semantics.",
+      "repo_owned_alternative": "narrow packed-Q8/source-order helper inside an exact tensor evidence boundary",
+      "repo_owned_alternative_status": "only acceptable for scoped sidecar experiments; not a general model.forward allocation-reuse solution",
+      "evidence_required_before_runtime_promotion": [
+        "API evidence that the output-storage matmul preserves Candle numerical behavior for Qwen3 Q8_0 and Qwen2.5 Q8_0",
+        "paired before/after strict warm-session receipts preserving prompt IDs, generated IDs, decoded text, model SHA, tokenizer source, selected CPU backend/kernel, dense path identity, and fallback_used=false",
+        "allocation counters isolating the affected dense-linear output boundary",
+        "phase timing fields for affected warm-session prompts before any timing claim"
+      ]
+    },
+    {
+      "dependency_id": "candle_tensor_broadcast_add_out",
+      "kind": "upstream_candle_api_gap",
+      "current_surface": "Tensor add / broadcast_add through Candle Tensor operators",
+      "needed_surface": "Tensor::broadcast_add_out, Tensor::add_out, or equivalent caller-owned residual-add output API",
+      "blocked_boundaries": [
+        "post-attention residual add",
+        "post-MLP residual add",
+        "block output handoff to next layer or final norm"
+      ],
+      "why_required": "SLM-CPU-180 shows feed_forward.down_proj.output is immediately consumed by the block residual add. Avoiding a returned dense-linear Tensor is not enough if residual add still materializes a fresh owned Tensor.",
+      "repo_owned_alternative": "multi-stage typed Tensor view or fused residual-add consumer",
+      "repo_owned_alternative_status": "future design only; too broad for the current dense-linear caller-output-storage gate",
+      "evidence_required_before_runtime_promotion": [
+        "explicit shape, dtype, device, aliasing, and broadcast semantics for residual add output storage",
+        "trace/workspace identity preservation for both down_proj output and block output",
+        "paired Qwen3/Qwen2.5 strict generated-ID preservation receipts",
+        "allocation counters proving the residual-add allocation boundary is affected"
+      ]
+    },
+    {
+      "dependency_id": "candle_norm_out",
+      "kind": "upstream_candle_or_repo_norm_api_gap",
+      "current_surface": "LayerNorm/RMSNorm forward paths returning owned Tensor outputs",
+      "needed_surface": "LayerNorm/RMSNorm output-storage API or a repo-owned strict CPU norm implementation with caller-owned output storage",
+      "blocked_boundaries": [
+        "attention_norm output",
+        "post_attention_layernorm output",
+        "final_norm output before lm_head/model.forward logits"
+      ],
+      "why_required": "The model.forward allocation chain crosses norm boundaries after residual adds and before dense projections. Dense-linear output reuse does not remove allocation churn if the next norm still returns an owned Tensor and becomes the next projection input.",
+      "repo_owned_alternative": "strict CPU RMSNorm/LayerNorm implementation with explicit output buffer and reference parity receipts",
+      "repo_owned_alternative_status": "possible future runtime slice, but not implemented or selected here",
+      "evidence_required_before_runtime_promotion": [
+        "per-model norm variant identity for Qwen3 and Qwen2.5",
+        "before/after generated-ID preservation receipts",
+        "checkpoint or tensor-summary parity against current Candle norm outputs",
+        "allocation counters for norm output boundaries"
+      ]
+    },
+    {
+      "dependency_id": "typed_tensor_view_or_owned_handoff",
+      "kind": "repo_owned_design_dependency",
+      "current_surface": "owned Candle Tensor handoff between transformer stages",
+      "needed_surface": "typed Tensor view/handoff design that preserves Candle-compatible shape, dtype, device, aliasing, trace, workspace, and receipt identity",
+      "blocked_boundaries": [
+        "feed_forward.down_proj.output to residual add",
+        "block output to next layer input",
+        "final norm output to output-head logits",
+        "Model::forward return semantics"
+      ],
+      "why_required": "A repo-owned fused consumer would need to cross several Tensor identity boundaries. Without a typed handoff design, replacing owned Tensor returns risks changing traces, workspace recording, stop-policy visibility, or receipt/checkpoint comparability.",
+      "repo_owned_alternative": "multi-stage typed Tensor view",
+      "repo_owned_alternative_status": "non-runtime design note until exact API contract and paired strict receipts exist",
+      "evidence_required_before_runtime_promotion": [
+        "documented type contract for shape, dtype, device, aliasing, lifetime, and trace identity",
+        "explicit fallback behavior when the typed view cannot be produced",
+        "paired Qwen3/Qwen2.5 strict warm-session before/after receipts",
+        "no generated-ID, decoded-text, prompt-ID, tokenizer-source, model-SHA, backend/kernel, or fallback-status drift"
+      ]
+    },
+    {
+      "dependency_id": "receipt_fields_for_output_storage_path",
+      "kind": "repo_owned_receipt_dependency",
+      "current_surface": "strict receipts record model/tokenizer/backend/fallback and dense hook identity where present",
+      "needed_surface": "receipt-visible selected output-storage path and allocation-boundary identity for any future output-storage runtime promotion",
+      "blocked_boundaries": [
+        "dense-linear output-storage gate",
+        "residual-add output-storage gate",
+        "norm output-storage gate",
+        "model.forward allocation-reuse claim"
+      ],
+      "why_required": "Any optimization must prove unchanged generated behavior and expose the selected path. A hidden output-storage fallback would weaken the Kaby appliance proof discipline.",
+      "repo_owned_alternative": "extend the existing strict receipt shape only when a runtime candidate exists",
+      "repo_owned_alternative_status": "future implementation prerequisite",
+      "evidence_required_before_runtime_promotion": [
+        "requested and selected output-storage path identifiers",
+        "fallback_used and fallback_reason for output-storage selection",
+        "allocation-boundary counters for before/after comparison",
+        "paired Qwen3/Qwen2.5 generated-ID preservation receipts"
+      ]
+    }
+  ],
+  "dependency_summary": {
+    "upstream_candle_gaps": [
+      "Tensor::matmul_out or equivalent",
+      "Tensor::broadcast_add_out / Tensor::add_out or equivalent",
+      "LayerNorm/RMSNorm output-storage API or equivalent"
+    ],
+    "repo_owned_design_dependencies": [
+      "typed Tensor view / owned handoff contract",
+      "receipt-visible output-storage path identity",
+      "allocation-boundary counters for dense-linear, residual-add, norm, and model.forward boundaries"
+    ],
+    "recommended_next_action": "Do not promote dense-linear caller-output storage from the current gate. Either wait for/adopt exact Candle output-storage APIs with receipts, or open a separate non-runtime design item for typed Tensor handoff semantics. Continue measured Kaby performance work on other frontiers only when paired strict Qwen3/Qwen2.5 receipts preserve behavior."
+  },
+  "runtime_status_after_slm_cpu_181": {
+    "gate_defined": true,
+    "gate_enabled": false,
+    "default_runtime": "unchanged",
+    "runtime_behavior_changed": false,
+    "allocation_reduction_claimed": false,
+    "timing_improvement_claimed": false,
+    "requires_future_item": true,
+    "selected_next_frontier": "defer_output_storage_until_api_or_design_contract_exists"
+  },
+  "must_not_claim": [
+    "SLM-CPU-181 implements or resolves Candle output-storage APIs.",
+    "SLM-CPU-181 changes runtime allocation behavior.",
+    "SLM-CPU-181 enables dense-linear caller-output storage by default.",
+    "SLM-CPU-181 implements or selects a typed fused dense consumer.",
+    "SLM-CPU-181 proves allocation reduction, timing improvement, speedup, or sustained throughput.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
