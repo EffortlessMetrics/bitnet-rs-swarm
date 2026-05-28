@@ -1,0 +1,18 @@
+timestamp = "2026-05-28T01:38:21Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-163"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 849
+head_sha = "0c4f53efb7fcf7367b144aa5f0d43049e53d0d00"
+merge_sha = "494a04009f1f30e2e0c4d6cba99050365e0ac7ef"
+branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
+summary = "Merged PR #849 recording the residual output storage runtime slice as blocked by Candle's current residual-add API."
+notes = [
+  "The merged slice consumes the SLM-CPU-162 residual block output storage contract and records the current Candle 0.10.2 API blocker.",
+  "Runtime allocation behavior remains unchanged with runtime_allocation_behavior_changed=false and no allocation-reduction or speed claim.",
+  "The blocker artifact identifies that Tensor::add and broadcast_add return owned Result<Tensor> outputs and expose no caller-provided output-storage API.",
+  "ripr and ripr static exposure passed; the only CI intervention was the repo runner-routing allow-github-hosted label for no_idle_runner.",
+]

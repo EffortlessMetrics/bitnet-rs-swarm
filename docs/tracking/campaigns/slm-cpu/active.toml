@@ -9715,7 +9715,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-163"
-status = "pr_open"
+status = "merged"
+pr = 849
+head_sha = "0c4f53efb7fcf7367b144aa5f0d43049e53d0d00"
+merge_sha = "494a04009f1f30e2e0c4d6cba99050365e0ac7ef"
+merged_at = "2026-05-28T01:37:37Z"
 branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
 stackable = false
 review_mode = "codex_premerge"
