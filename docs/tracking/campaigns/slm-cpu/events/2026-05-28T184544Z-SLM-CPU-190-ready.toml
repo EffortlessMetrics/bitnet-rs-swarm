@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T18:45:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-190"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-190-no-bias-selector-policy-gate"
+summary = "Queued runtime-disabled no-bias selector policy gate after SLM-CPU-189."
+notes = [
+  "SLM-CPU-190 should consume the SLM-CPU-189 role_records manifest and define the exact fail-closed no-bias dense-linear selector policy.",
+  "The policy must identify eligible roles, biased blocked roles, required before/after receipt fields, and future runtime identity fields.",
+  "The selector remains runtime-disabled by default; no allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
