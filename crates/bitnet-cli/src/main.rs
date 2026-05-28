@@ -8954,6 +8954,7 @@ async fn run_slm_warm_session(
     let sampler_reuse_policy = warm_session_sampler_reuse_policy(sampler_reuse_enabled);
     let kv_cache_reuse_policy = "single_kv_cache_cleared_per_prompt_for_prompt_isolation";
     let mut kv_cache_max_seq_len = 1usize;
+    let mut max_prompt_token_count = 0usize;
     for prompt_input in &prompt_inputs {
         let formatted_prompt = apply_qwen_no_think_prompt_policy(
             template_type,
@@ -8966,12 +8967,22 @@ async fn run_slm_warm_session(
             template_type.parse_special(),
         )?;
         ensure_non_empty_generation_context(&mut prompt_tokens, tokenizer.as_ref())?;
+        max_prompt_token_count = max_prompt_token_count.max(prompt_tokens.len());
         kv_cache_max_seq_len = kv_cache_max_seq_len.max(bounded_generation_kv_cache_len(
             prompt_tokens.len(),
             max_new_tokens,
             config.model.max_position_embeddings,
         )?);
     }
+    let prompt_buffer_pre_sizing_alloc_start = AllocationAuditSnapshot::current();
+    let prompt_buffer_pre_sizing = session_buffers.pre_size(
+        max_prompt_token_count,
+        max_new_tokens,
+        max_stop_len,
+        logits_capacity,
+    );
+    let prompt_buffer_pre_sizing_alloc =
+        AllocationAuditSnapshot::delta_since(prompt_buffer_pre_sizing_alloc_start);
     let kv_cache_estimated_bytes =
         KVCache::estimated_f32_bytes_for_max_seq_len(&config, 1, kv_cache_max_seq_len)?;
     let kv_cache_session_alloc_start = AllocationAuditSnapshot::current();
@@ -9480,6 +9491,9 @@ async fn run_slm_warm_session(
                 "stop_policy_precomputed_once": true,
                 "stop_sequence_count": all_stop_sequences.len(),
                 "stop_token_id_count": all_stop_ids.len(),
+                "prompt_buffer_pre_sized_before_prompt_loop": true,
+                "prompt_buffer_pre_sizing_source": "already_rendered_tokenized_warm_session_prompt_metadata",
+                "prompt_buffer_pre_sizing": prompt_buffer_pre_sizing.clone(),
                 "buffer_reuse_evidence": buffer_reuse_evidence,
             },
             "operator_ux": {
@@ -9696,6 +9710,9 @@ async fn run_slm_warm_session(
             "stop_policy_precomputed_once": true,
             "stop_sequence_count": all_stop_sequences.len(),
             "stop_token_id_count": all_stop_ids.len(),
+            "prompt_buffer_pre_sized_before_prompt_loop": true,
+            "prompt_buffer_pre_sizing_source": "already_rendered_tokenized_warm_session_prompt_metadata",
+            "prompt_buffer_pre_sizing": prompt_buffer_pre_sizing,
         },
         "corpus": slm_warm_session_corpus_receipt(corpus_path.as_deref(), corpus.as_ref(), corpus_repeat_runs),
         "generation": {
@@ -9828,6 +9845,9 @@ async fn run_slm_warm_session(
             "kv_cache_max_seq_len": kv_cache_max_seq_len,
             "kv_cache_model_max_position_embeddings": config.model.max_position_embeddings,
             "kv_cache_estimated_f32_bytes": kv_cache_estimated_bytes.to_string(),
+            "prompt_buffer_pre_sizing": allocation_samples_json(std::slice::from_ref(
+                &prompt_buffer_pre_sizing_alloc,
+            )),
         },
         "claim_boundary": {
             "warm_session_flow": true,
@@ -10176,6 +10196,45 @@ struct WarmSessionPromptBuffers {
 
 #[cfg(feature = "full-cli")]
 impl WarmSessionPromptBuffers {
+    fn pre_size(
+        &mut self,
+        prompt_token_capacity: usize,
+        max_new_tokens: usize,
+        max_stop_len: usize,
+        logits_capacity: usize,
+    ) -> serde_json::Value {
+        let token_capacity = prompt_token_capacity.saturating_add(max_new_tokens);
+        let evidence_before = WarmSessionPromptBufferReuseEvidence::capture_before(
+            self,
+            token_capacity,
+            prompt_token_capacity.saturating_sub(1),
+            max_new_tokens,
+            max_stop_len,
+            logits_capacity,
+        );
+        reserve_warm_session_prompt_buffer_capacity(
+            self,
+            token_capacity,
+            prompt_token_capacity.saturating_sub(1),
+            max_new_tokens,
+            max_stop_len,
+            logits_capacity,
+        );
+        let mut evidence = evidence_before.capture_after(self);
+        if let Some(object) = evidence.as_object_mut() {
+            object.insert("pre_sized_before_prompt_loop".to_string(), serde_json::json!(true));
+            object.insert(
+                "pre_sizing_source".to_string(),
+                serde_json::json!("already_rendered_tokenized_warm_session_prompt_metadata"),
+            );
+            object.insert(
+                "pre_sizing_scope".to_string(),
+                serde_json::json!("resident_warm_session_prompt_buffers"),
+            );
+        }
+        evidence
+    }
+
     fn reset(
         &mut self,
         prompt_token_capacity: usize,
@@ -10192,36 +10251,14 @@ impl WarmSessionPromptBuffers {
             max_stop_len,
             logits_capacity,
         );
-        reserve_total_capacity(&mut self.tokens, token_capacity);
-        reserve_total_capacity(&mut self.generated_tokens, max_new_tokens);
-        reserve_total_capacity(&mut self.decode_step_ms, max_new_tokens);
-        reserve_total_capacity(&mut self.embed_step_ms, max_new_tokens);
-        reserve_total_capacity(&mut self.forward_step_ms, max_new_tokens);
-        reserve_total_capacity(&mut self.logits_step_ms, max_new_tokens);
-        reserve_total_capacity(&mut self.sample_step_ms, max_new_tokens);
-        reserve_total_capacity(&mut self.token_decode_step_ms, max_new_tokens);
-        reserve_total_capacity(
-            &mut self.prefill_step_allocs,
+        reserve_warm_session_prompt_buffer_capacity(
+            self,
+            token_capacity,
             prompt_token_capacity.saturating_sub(1),
+            max_new_tokens,
+            max_stop_len,
+            logits_capacity,
         );
-        reserve_total_capacity(
-            &mut self.prefill_embed_step_allocs,
-            prompt_token_capacity.saturating_sub(1),
-        );
-        reserve_total_capacity(
-            &mut self.prefill_forward_step_allocs,
-            prompt_token_capacity.saturating_sub(1),
-        );
-        reserve_total_capacity(&mut self.decode_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.embed_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.forward_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.logits_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.sample_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.token_vector_update_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.token_decode_step_allocs, max_new_tokens);
-        reserve_total_capacity(&mut self.stop_tail_update_allocs, max_new_tokens);
-        reserve_string_total_capacity(&mut self.stop_tail, max_stop_len.saturating_add(16));
-        reserve_total_capacity(&mut self.logits_scratch, logits_capacity);
 
         self.tokens.clear();
         self.generated_tokens.clear();
@@ -10247,6 +10284,38 @@ impl WarmSessionPromptBuffers {
 
         evidence_before.capture_after(self)
     }
+}
+
+#[cfg(feature = "full-cli")]
+fn reserve_warm_session_prompt_buffer_capacity(
+    buffers: &mut WarmSessionPromptBuffers,
+    token_capacity: usize,
+    prefill_sample_capacity: usize,
+    max_new_tokens: usize,
+    max_stop_len: usize,
+    logits_capacity: usize,
+) {
+    reserve_total_capacity(&mut buffers.tokens, token_capacity);
+    reserve_total_capacity(&mut buffers.generated_tokens, max_new_tokens);
+    reserve_total_capacity(&mut buffers.decode_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.embed_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.forward_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.logits_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.sample_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.token_decode_step_ms, max_new_tokens);
+    reserve_total_capacity(&mut buffers.prefill_step_allocs, prefill_sample_capacity);
+    reserve_total_capacity(&mut buffers.prefill_embed_step_allocs, prefill_sample_capacity);
+    reserve_total_capacity(&mut buffers.prefill_forward_step_allocs, prefill_sample_capacity);
+    reserve_total_capacity(&mut buffers.decode_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.embed_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.forward_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.logits_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.sample_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.token_vector_update_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.token_decode_step_allocs, max_new_tokens);
+    reserve_total_capacity(&mut buffers.stop_tail_update_allocs, max_new_tokens);
+    reserve_string_total_capacity(&mut buffers.stop_tail, max_stop_len.saturating_add(16));
+    reserve_total_capacity(&mut buffers.logits_scratch, logits_capacity);
 }
 
 #[derive(Clone, Debug)]
@@ -18280,6 +18349,46 @@ mod tests {
             second["buffer_capacity_details"]["token_decode_step_allocs"]["capacity_grew"],
             serde_json::json!(false)
         );
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn warm_session_prompt_buffers_pre_size_before_prompt_loop() {
+        let mut buffers = WarmSessionPromptBuffers::default();
+
+        let pre_size = buffers.pre_size(8, 4, 3, 16);
+        assert_eq!(pre_size["pre_sized_before_prompt_loop"], true);
+        assert_eq!(
+            pre_size["pre_sizing_source"],
+            "already_rendered_tokenized_warm_session_prompt_metadata"
+        );
+        assert_eq!(pre_size["capacity_sufficient_for_prompt"], true);
+        assert_eq!(pre_size["reset_reused_existing_capacity"], false);
+        assert_eq!(pre_size["buffer_capacity_details"]["tokens"]["needed"], serde_json::json!(12));
+        assert_eq!(
+            pre_size["buffer_capacity_details"]["prefill_forward_step_allocs"]["needed"],
+            serde_json::json!(7)
+        );
+        assert!(
+            pre_size["capacity_grew_buffers"]
+                .as_array()
+                .is_some_and(|values| values.iter().any(|value| value == "tokens"))
+        );
+
+        let first_prompt = buffers.reset(8, 4, 3, 16);
+        assert_eq!(first_prompt["capacity_sufficient_for_prompt"], true);
+        assert_eq!(first_prompt["reset_reused_existing_capacity"], true);
+        assert_eq!(
+            first_prompt["capacity_grew_buffers"].as_array().map(std::vec::Vec::len),
+            Some(0)
+        );
+        assert_eq!(
+            first_prompt["insufficient_buffers"].as_array().map(std::vec::Vec::len),
+            Some(0)
+        );
+        assert_eq!(first_prompt["token_capacity_grew"], false);
+        assert_eq!(first_prompt["generated_token_capacity_grew"], false);
+        assert_eq!(first_prompt["logits_capacity_grew"], false);
     }
 
     #[test]
