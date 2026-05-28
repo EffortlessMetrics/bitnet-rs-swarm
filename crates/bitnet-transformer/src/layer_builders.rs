@@ -4,9 +4,12 @@
 //! decisions into attention, feed-forward, and model assembly code.
 
 use bitnet_common::config::NormType;
-use candle_nn::{LayerNorm, Linear, VarBuilder};
+#[cfg(test)]
+use candle_nn::Linear;
+use candle_nn::{LayerNorm, VarBuilder};
 
 /// Helper to create linear layers with optional bias tensors.
+#[cfg(test)]
 pub(crate) fn linear_with_optional_bias(
     in_dim: usize,
     out_dim: usize,

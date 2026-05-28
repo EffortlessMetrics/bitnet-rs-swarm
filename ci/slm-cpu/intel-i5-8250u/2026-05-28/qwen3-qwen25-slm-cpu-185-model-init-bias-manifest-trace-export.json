@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_model_init_bias_manifest_trace_export",
+  "claim": "model_init_bias_manifest_trace_export_surface",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 strict CPU warm-session performance lane after SLM-CPU-184",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-185 adds the missing model-init trace export surface needed to derive per-role/layer dense-linear bias role records.",
+    "This slice does not capture a fresh Qwen3 or Qwen2.5 hardware manifest artifact.",
+    "This slice does not implement, select, or enable a no-bias dense-linear fast path.",
+    "This slice does not change default runtime behavior or model output behavior.",
+    "This slice does not claim allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior."
+  ],
+  "implemented_trace_surface": {
+    "source_file": "crates/bitnet-transformer/src/lib.rs",
+    "trace_env": "BITNET_QWEN_TRACE_JSONL",
+    "event_kind": "qwen_trace_event",
+    "event_stage": "model_init.linear_bias_finish",
+    "role_record_source": "model_init_trace",
+    "fields_emitted": [
+      "layer",
+      "device",
+      "scope",
+      "linear",
+      "present",
+      "bias_ms",
+      "dtype",
+      "dims",
+      "recovery_path"
+    ],
+    "coverage_added": [
+      {
+        "role_group": "attention",
+        "status": "already_traced_before_this_slice",
+        "roles": [
+          "q_proj",
+          "k_proj",
+          "v_proj",
+          "o_proj"
+        ]
+      },
+      {
+        "role_group": "feed_forward",
+        "status": "trace_export_added",
+        "roles": [
+          "gate_proj",
+          "up_proj",
+          "down_proj"
+        ]
+      },
+      {
+        "role_group": "output_head",
+        "status": "trace_export_added",
+        "roles": [
+          "lm_head",
+          "direct_lm_head_or_output_weight",
+          "direct_transposed_lm_head_weight",
+          "direct_transposed_output_weight_reshape",
+          "tied_embedding_output_head"
+        ]
+      }
+    ]
+  },
+  "manifest_derivation_policy": {
+    "accepted_source": "model_init.linear_bias_finish trace events",
+    "role_id_mapping": [
+      {
+        "scope": "attention",
+        "linear": "q_proj|k_proj|v_proj|o_proj",
+        "role_id": "layers.{layer}.attention.{linear}",
+        "layer_required": true
+      },
+      {
+        "scope": "feed_forward",
+        "linear": "gate_proj|up_proj|down_proj",
+        "role_id": "layers.{layer}.feed_forward.{linear}",
+        "layer_required": true
+      },
+      {
+        "scope": "output_head",
+        "linear": "lm_head",
+        "role_id": "output_head.lm_head",
+        "layer_required": false
+      }
+    ],
+    "fail_closed_conditions": [
+      "Any required attention or feed_forward role is missing for any layer.",
+      "Any required role has present missing, null, or unknown.",
+      "Any selected role has present=true unless a later selector explicitly supports bias and proves behavior.",
+      "Output-head mode cannot be derived from lm_head_finish or recovery_path.",
+      "The exported manifest is not bound to model SHA, tokenizer source/strictness, selected backend, and fallback=false in a paired strict receipt."
+    ]
+  },
+  "runtime_selection": {
+    "no_bias_fast_path_enabled": false,
+    "selector_changed": false,
+    "default_dense_path": "unchanged",
+    "required_before_any_future_selection": [
+      "Fresh Qwen3 Q8_0 trace-derived role_records manifest.",
+      "Fresh Qwen2.5 Q8_0 trace-derived role_records manifest.",
+      "Strict before/after receipts preserving prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, selected backend/kernel, dense path identity, and fallback=false.",
+      "Receipt-visible no-bias selector identity and bias materialization counters."
+    ]
+  },
+  "validation": {
+    "local_compile_gate": "cargo test --locked -p bitnet-transformer --no-default-features --features cpu --lib --no-run",
+    "local_compile_gate_passed": true,
+    "fresh_hardware_manifest_captured": false,
+    "reason_hardware_manifest_not_captured": "SLM-CPU-185 adds the trace export surface only; the next slice must run exact Qwen3/Qwen2.5 hardware traces and derive role_records artifacts."
+  },
+  "recommended_next_item": {
+    "frontier": "dense_bias_manifest_trace_capture",
+    "recommended_action": "Run Qwen3 and Qwen2.5 strict CPU model-init traces with BITNET_QWEN_TRACE_JSONL, derive role_records from model_init.linear_bias_finish events, bind them to strict receipts, and keep the no-bias selector disabled unless every selected role proves bias_present=false."
+  },
+  "must_not_claim": [
+    "SLM-CPU-185 captures complete Qwen3/Qwen2.5 role_records manifests.",
+    "SLM-CPU-185 proves all Qwen3/Qwen2.5 dense-linear roles are biasless.",
+    "SLM-CPU-185 implements or selects a no-bias dense-linear fast path.",
+    "SLM-CPU-185 changes runtime allocation behavior.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
