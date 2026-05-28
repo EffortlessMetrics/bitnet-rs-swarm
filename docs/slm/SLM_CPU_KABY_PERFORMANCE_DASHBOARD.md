@@ -83,6 +83,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Prompt-tokenize cache evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-173-prompt-tokenize-cache-evidence-fields.json` | Makes the SLM-CPU-172 prompt-tokenize cache contract receipt-visible without changing prompt tokenization behavior or claiming allocation/timing improvement |
 | Prompt-tokenize paired receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-174-prompt-tokenize-paired-receipt-gate.json` | Defines the exact Qwen3/Qwen2.5 before/after receipt gate required before any prompt-tokenize allocation, latency, or timing claim |
 | Prompt-tokenize exact-identity cache | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json` | Seeds the resident warm-session exact-identity prompt-token cache during pre-sizing so byte-identical prompt-loop lookups hit for both Qwen3 and Qwen2.5, with paired strict receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, CPU backend identity, and fallback=false |
+| Post-prompt-tokenize frontier selection | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-176-post-prompt-tokenize-frontier.json` | Consumes the SLM-CPU-175 receipts and selects `model_forward_owned_tensor_allocation_boundary` as the next high-value frontier, while deferring small prompt setup evidence allocations and keeping SLM-CPU-175 claims scoped to byte-identical cache hits |
 
 Qwen3 rows use:
 
@@ -401,6 +402,24 @@ Qwen2.5 drops from `126653209` bytes / `1520826` allocations to `189` bytes /
 `1` allocation. This is scoped to exact prompt-token cache hits in the paired
 warm-session receipts; it is not a sustained throughput, decode, prefill,
 model-load, server, accelerator, cross-quant, or broad SLM quality claim.
+
+SLM-CPU-176 then classifies the post-prompt-tokenize frontier:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-176-post-prompt-tokenize-frontier.json
+```
+
+After SLM-CPU-175, prompt-tokenize is down to one small cache-lookup allocation
+in the paired after receipts. The dominant remaining allocation surfaces are
+`prompt_prefill.forward` and `model.forward`: Qwen3 records `909929200` bytes /
+`918435` allocations in `prompt_prefill.forward` and `90599908` bytes /
+`52512` allocations in decode `model.forward`, while Qwen2.5 records
+`473847232` bytes / `855631` allocations and `37466028` bytes / `41760`
+allocations respectively. The next selected frontier is therefore
+`model_forward_owned_tensor_allocation_boundary`. The smaller
+`prompt_setup.buffer_reset` surface is deferred because its `40464` bytes /
+`334` allocations are receipt/evidence construction while prompt buffers are
+already capacity-sufficient; it is not the main runtime SLM limiter.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
