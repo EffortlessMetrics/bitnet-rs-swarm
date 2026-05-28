@@ -342,7 +342,18 @@ pub(crate) fn warm_session_prompt_allocation_audit_json(
                     "runtime_allocation_behavior_changed": false,
                     "can_fill_layer_output_storage": false,
                     "next_safe_change": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
-                    "slm_cpu_163_runtime_slice": {
+                    "slm_cpu_169_frontier": {
+                        "status": "blocked_by_missing_caller_output_storage_api",
+                        "evidence_source": "SLM-CPU-168 Qwen3/Qwen2.5 strict CPU receipt comparison preserved generated identity and left prompt_prefill.forward as the next allocation hotspot",
+                        "dominant_hotspot": "prompt_prefill.forward",
+                        "frontier": "residual_block_output_storage_boundary",
+                        "exact_missing_api": CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API,
+                        "tensor_output_storage_limitation": "Candle Tensor::add and Tensor::broadcast_add return owned Result<Tensor> outputs and expose no caller-provided output-storage parameter for transformer.block.output residual-add reuse",
+                        "runtime_allocation_behavior_changed": false,
+                        "paired_before_after_receipts_required_before_claim": true,
+                        "no_claim": "no allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed",
+                    },
+                    "runtime_slice": {
                         "status": CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS,
                         "blocker": CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER,
                         "candle_api_evidence": CANDLE_RESIDUAL_ADD_API_EVIDENCE,
@@ -524,7 +535,7 @@ fn warm_session_next_optimization_target(
     let (target, rationale, status) = match component {
         "prompt_prefill" => (
             "residual_block_output_storage_boundary",
-            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and SLM-CPU-088 now narrows the residual-add / transformer.block.output caller-output-storage blocker before changing dense math",
+            "prompt prefill dominates aggregate allocation counters; prompt_prefill.forward is the measured subcomponent, and SLM-CPU-169 records that the residual-add / transformer.block.output frontier is blocked by Candle owned Tensor outputs before changing dense math",
             "layer_output_storage_blocked_by_candle_tensor_add_ops",
         ),
         "prompt_prefill.forward" => (
@@ -810,16 +821,22 @@ mod tests {
             boundary["layer_output_runtime_slice_blocker"],
             CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER
         );
-        assert_eq!(
-            contract["slm_cpu_163_runtime_slice"]["status"],
-            CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS
+        let frontier = &contract["slm_cpu_169_frontier"];
+        assert_eq!(frontier["dominant_hotspot"], "prompt_prefill.forward");
+        assert_eq!(frontier["frontier"], "residual_block_output_storage_boundary");
+        assert_eq!(frontier["exact_missing_api"], CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API);
+        assert_eq!(frontier["runtime_allocation_behavior_changed"], false);
+        assert_eq!(frontier["paired_before_after_receipts_required_before_claim"], true);
+        assert!(
+            frontier["tensor_output_storage_limitation"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("no caller-provided output-storage parameter")
         );
+        assert_eq!(contract["runtime_slice"]["status"], CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS);
+        assert_eq!(contract["runtime_slice"]["runtime_allocation_behavior_changed"], false);
         assert_eq!(
-            contract["slm_cpu_163_runtime_slice"]["runtime_allocation_behavior_changed"],
-            false
-        );
-        assert_eq!(
-            contract["slm_cpu_163_runtime_slice"]["paired_before_after_receipts_required_before_claim"],
+            contract["runtime_slice"]["paired_before_after_receipts_required_before_claim"],
             true
         );
         assert!(

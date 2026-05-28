@@ -3221,7 +3221,7 @@ pub const CANDLE_RESIDUAL_ADD_REQUIRED_MISSING_API: &str = "Tensor residual-add 
 pub const CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_STATUS: &str =
     "runtime_slice_blocked_by_missing_caller_output_storage_api";
 
-pub const CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER: &str = "SLM-CPU-163 cannot safely change residual block output allocation behavior while Candle Tensor::add/broadcast_add only return owned Result<Tensor> outputs; implementing storage reuse here requires an output-storage API or a verified backend-local equivalent before paired Qwen3/Qwen2.5 receipts can prove unchanged generated IDs";
+pub const CANDLE_RESIDUAL_ADD_RUNTIME_SLICE_BLOCKER: &str = "Kaby SLM residual block output allocation behavior cannot safely change while Candle Tensor::add/broadcast_add only return owned Result<Tensor> outputs; implementing storage reuse here requires an output-storage API or a verified backend-local equivalent before paired Qwen3/Qwen2.5 receipts can prove unchanged generated IDs";
 
 pub const CANDLE_RESIDUAL_ADD_API_EVIDENCE: &[&str] = &[
     "Cargo.lock resolves candle-core 0.10.2 for the current workspace",
@@ -6764,7 +6764,7 @@ mod tests {
             boundary.runtime_slice_status,
             "runtime_slice_blocked_by_missing_caller_output_storage_api"
         );
-        assert!(boundary.runtime_slice_blocker.contains("SLM-CPU-163"));
+        assert!(boundary.runtime_slice_blocker.contains("requires an output-storage API"));
         assert!(boundary.candle_api_evidence.contains(
             &"candle-core-0.10.2/src/tensor.rs binary_op!(add, Add) returns Result<Tensor>"
         ));
