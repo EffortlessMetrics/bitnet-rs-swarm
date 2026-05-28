@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T14:49:02Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-184"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-184-dense-bias-manifest-capture"
+summary = "Queued dense bias manifest capture after SLM-CPU-183."
+notes = [
+  "SLM-CPU-184 should capture, or precisely block, the Qwen3/Qwen2.5 Q8_0 dense-linear bias-presence manifest required by the SLM-CPU-183 gate.",
+  "The item should use existing model-init trace or tensor-manifest surfaces where available and cover attention, feed-forward, and output-head roles.",
+  "No runtime behavior change, no-bias fast-path implementation, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]

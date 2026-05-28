@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T14:49:01Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-183"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 892
+merge_sha = "1f05ff0a8492edd79fc05a81016b902cc01cc8c5"
+branch = "codex/slm-cpu-183-dense-bias-manifest-gate"
+summary = "Merged dense bias manifest gate."
+notes = [
+  "SLM-CPU-183 defines the fail-closed per-role bias-presence manifest or model-init trace required before any future no-bias dense-linear fast path.",
+  "The merged slice covers attention, feed-forward, and output-head evidence requirements for Qwen3/Qwen2.5 Q8_0 and keeps runtime behavior unchanged.",
+  "No no-bias dense-linear implementation, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
