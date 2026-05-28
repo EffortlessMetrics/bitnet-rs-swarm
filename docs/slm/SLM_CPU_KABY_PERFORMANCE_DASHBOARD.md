@@ -92,6 +92,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Dense bias manifest gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json` | Defines the fail-closed per-role bias-presence manifest or model-init trace required before any future no-bias dense-linear fast path; unknown or present bias blocks selection and runtime behavior remains unchanged |
 | Dense bias manifest capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json` | Blocks manifest capture from committed evidence because model-init trace code and aggregate bias counters are not a complete per-role Qwen3/Qwen2.5 bias-presence manifest; no runtime selection changes |
 | Model-init bias manifest trace export | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-185-model-init-bias-manifest-trace-export.json` | Adds the missing trace export coverage for feed-forward and output-head dense-linear bias presence so future exact-model traces can derive per-role/layer `role_records`; runtime selection and no-bias fast paths remain disabled |
+| Dense bias manifest trace capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-186-dense-bias-manifest-trace-capture-blocker.json` | Reviews committed pre-export traces, records Qwen3 attention bias absence and Qwen2.5 attention q/k/v bias presence, and blocks complete manifest capture until fresh post-export Qwen3/Qwen2.5 traces cover feed-forward and output-head roles |
 
 Qwen3 rows use:
 

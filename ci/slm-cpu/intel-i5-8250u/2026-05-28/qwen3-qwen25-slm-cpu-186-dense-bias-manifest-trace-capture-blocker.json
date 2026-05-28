@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_dense_bias_manifest_trace_capture_blocker",
+  "claim": "dense_bias_manifest_trace_capture_blocked",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 strict CPU warm-session performance lane after SLM-CPU-185",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-185-model-init-bias-manifest-trace-export.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-120-after-transpose-guard-trace.jsonl",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-qproj-output-trace.jsonl"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-186 consumes the SLM-CPU-185 trace export surface and committed trace evidence only.",
+    "Committed traces predate the SLM-CPU-185 feed-forward and output-head trace coverage, so they cannot produce complete post-SLM-CPU-185 role_records.",
+    "This slice records a precise fail-closed blocker instead of deriving an incomplete manifest.",
+    "This slice does not implement, select, or enable a no-bias dense-linear fast path.",
+    "This slice does not change runtime behavior or default runtime selection.",
+    "This slice does not claim allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior."
+  ],
+  "consumed_trace_surface": {
+    "source_item": "SLM-CPU-185",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-185-model-init-bias-manifest-trace-export.json",
+    "event_stage": "model_init.linear_bias_finish",
+    "role_record_source": "model_init_trace",
+    "coverage_added_by_source_item": [
+      "feed_forward.gate_proj",
+      "feed_forward.up_proj",
+      "feed_forward.down_proj",
+      "output_head.lm_head",
+      "output_head recovery paths"
+    ],
+    "fresh_post_export_trace_required": true
+  },
+  "committed_trace_review": [
+    {
+      "model_family": "qwen3",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "trace_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen3-slm-cpu-120-after-transpose-guard-trace.jsonl",
+      "trace_predates_slm_cpu_185": true,
+      "usable_as_complete_manifest": false,
+      "event_counts": {
+        "attention.q_proj.present_false": 28,
+        "attention.k_proj.present_false": 28,
+        "attention.v_proj.present_false": 28,
+        "attention.o_proj.present_false": 28,
+        "feed_forward.events": 0,
+        "output_head.events": 0
+      },
+      "finding": "Committed Qwen3 trace evidence covers attention bias absence for 28 layers only; feed-forward and output-head role events are missing from this pre-SLM-CPU-185 trace."
+    },
+    {
+      "model_family": "qwen2.5",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "trace_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-26/qwen25-slm-cpu-119-after-qproj-output-trace.jsonl",
+      "trace_predates_slm_cpu_185": true,
+      "usable_as_complete_manifest": false,
+      "event_counts": {
+        "attention.q_proj.present_true": 24,
+        "attention.k_proj.present_true": 24,
+        "attention.v_proj.present_true": 24,
+        "attention.o_proj.present_false": 24,
+        "feed_forward.events": 0,
+        "output_head.events": 0
+      },
+      "finding": "Committed Qwen2.5 trace evidence proves attention q/k/v bias tensors are present for 24 layers, so any future no-bias selector must be per-role and fail closed for those roles; feed-forward and output-head role events are still missing from this pre-SLM-CPU-185 trace."
+    }
+  ],
+  "manifest_capture_status": {
+    "qwen3_q8_0": "blocked_missing_post_slm_cpu_185_complete_trace",
+    "qwen25_q8_0": "blocked_missing_post_slm_cpu_185_complete_trace_and_attention_bias_present",
+    "cross_model_gate": "fail_closed",
+    "reason": "No committed post-SLM-CPU-185 strict CPU trace artifacts contain complete model_init.linear_bias_finish role records for every required attention, feed-forward, and output-head role across both Qwen3 and Qwen2.5 Q8_0."
+  },
+  "missing_evidence": [
+    {
+      "field": "qwen3.role_records[].feed_forward",
+      "why_required": "Feed-forward gate/up/down roles must have positive bias_present true/false evidence per layer before any no-bias selector can consider those roles."
+    },
+    {
+      "field": "qwen3.role_records[].output_head",
+      "why_required": "The exact Qwen3 output-head mode and bias policy must be explicit before any output-head no-bias decision."
+    },
+    {
+      "field": "qwen25.role_records[].feed_forward",
+      "why_required": "Feed-forward gate/up/down roles must have positive bias_present true/false evidence per layer before any no-bias selector can consider those roles."
+    },
+    {
+      "field": "qwen25.role_records[].output_head",
+      "why_required": "The exact Qwen2.5 output-head mode and bias policy must be explicit before any output-head no-bias decision."
+    },
+    {
+      "field": "paired_strict_receipts.bias_manifest_artifact",
+      "why_required": "Any future selector proof must bind behavior-preserving receipts to the exact manifest artifact and SHA."
+    },
+    {
+      "field": "paired_strict_receipts.no_bias_selector_identity",
+      "why_required": "Before/after receipts must prove whether the no-bias selector was disabled, enabled, or declined and preserve generated IDs/text."
+    }
+  ],
+  "fail_closed_result": {
+    "role_records_manifest_captured": false,
+    "no_bias_manifest_gate_satisfied": false,
+    "no_bias_fast_path_selectable": false,
+    "default_runtime_changed": false,
+    "blocked_on": [
+      "fresh post-SLM-CPU-185 Qwen3 Q8_0 trace-derived role_records manifest",
+      "fresh post-SLM-CPU-185 Qwen2.5 Q8_0 trace-derived role_records manifest",
+      "explicit per-role handling for Qwen2.5 attention q/k/v bias_present=true",
+      "paired strict before/after receipts binding manifest identity to generated IDs/text and fallback=false",
+      "receipt-visible no-bias selector identity and bias materialization counters"
+    ]
+  },
+  "recommended_next_item": {
+    "frontier": "post_export_trace_capture",
+    "recommended_action": "Run exact Qwen3 and Qwen2.5 strict CPU warm-session traces on current main with BITNET_QWEN_TRACE_JSONL enabled, derive complete role_records from model_init.linear_bias_finish events, and keep no-bias selector behavior disabled unless every selected role has bias_present=false and paired receipts preserve generated IDs/text.",
+    "runtime_selection_allowed": false
+  },
+  "must_not_claim": [
+    "SLM-CPU-186 captures complete Qwen3/Qwen2.5 role_records manifests.",
+    "SLM-CPU-186 proves all Qwen3/Qwen2.5 dense-linear roles are biasless.",
+    "SLM-CPU-186 implements or selects a no-bias dense-linear fast path.",
+    "SLM-CPU-186 changes runtime allocation behavior.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
