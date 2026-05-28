@@ -9915,7 +9915,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-168"
-status = "ready"
+status = "pr_open"
+pr = 862
 branch = "codex/slm-cpu-168-presizing-receipt-evidence"
 stackable = false
 review_mode = "codex_premerge"

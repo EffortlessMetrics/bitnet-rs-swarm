@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T06:19:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-168"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 862
+branch = "codex/slm-cpu-168-presizing-receipt-evidence"
+head_sha = "8d7360ae80d3175f88d6053385ac8714d1aa623f"
+summary = "Opened the post-SLM-CPU-166 prompt/session pre-sizing receipt evidence PR."
+notes = [
+  "The PR commits Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU warm-session receipts captured after SLM-CPU-166 prompt/session buffer pre-sizing.",
+  "The comparison artifact preserves model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false across the pre-sizing boundary.",
+  "The slice classifies prompt/session pre-sizing as receipt-visible capacity reuse only; no allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
