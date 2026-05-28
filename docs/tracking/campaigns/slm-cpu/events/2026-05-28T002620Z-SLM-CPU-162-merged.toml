@@ -1,0 +1,24 @@
+timestamp = "2026-05-28T00:26:20Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-162"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 847
+branch = "codex/slm-cpu-162-residual-output-storage-contract"
+head_sha = "988aee6eee74c01370f0015ad45b3f0db1a369e8"
+merge_sha = "08e5c3141ea77b344a8827867ee42e8bf4c3da25"
+summary = "Merged PR #847 defining the residual block output storage shape and ownership contract required before runtime allocation behavior changes."
+notes = [
+  "The merged slice exposes residual_block_output_storage_contract in allocation-audit receipts under prompt_prefill_breakdown.forward_boundary.",
+  "The contract records the required shape, ownership, and behavior-preservation gates for TransformerForwardWorkspace block output storage.",
+  "Runtime allocation behavior remains unchanged: no storage reuse, no allocation reduction claim, no speedup claim, and no sustained throughput claim.",
+  "No Q4/Q5 runtime support, default-runtime promotion, server or accelerator execution, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
+
+[[next_item]]
+item = "SLM-CPU-163"
+status = "ready"
+branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
+summary = "Implement one behavior-preserving residual output storage runtime slice, or record the exact Candle/tensor API blocker preventing implementation."
