@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T10:35:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-175"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 876
+merge_sha = "5f7b4f95d1397c64e059232d2effe8d6d9795ac2"
+branch = "codex/slm-cpu-175-prompt-tokenize-exact-identity-cache"
+summary = "Closed the exact-identity prompt-token cache candidate after #876 merged."
+notes = [
+  "SLM-CPU-175 seeds the resident warm-session prompt-token cache during prompt-buffer pre-sizing and reuses token IDs for byte-identical prompt-loop lookups.",
+  "The merged slice captured paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, selected cpu-rust backend identity, dense hook identity where applicable, and fallback_used=false.",
+  "The prompt-tokenize allocation and latency evidence is scoped to exact resident-session cache hits only; no sustained throughput, broad decode/prefill/model-load speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
