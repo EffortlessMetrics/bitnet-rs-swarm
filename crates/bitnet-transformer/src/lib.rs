@@ -437,6 +437,94 @@ pub struct DenseLinearRuntimeHookBoundary {
     pub next_receipt_gate: &'static str,
 }
 
+/// Audit-only no-bias dense-linear selector decision.
+///
+/// This is deliberately separate from the runtime hook descriptor. It reports
+/// whether a manifest role is a future no-bias candidate, but it never selects
+/// compute and always preserves the eager F32 Candle path.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasSelectorAudit {
+    pub role_id: String,
+    pub model_sha256: String,
+    pub manifest_sha256: String,
+    pub bias_present: Option<bool>,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_default_enabled: bool,
+    pub runtime_selection_enabled: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub eager_f32_runtime_preserved: bool,
+    pub dense_runtime_replaced: bool,
+    pub speedup_claim: bool,
+    pub generated_id_preservation_required_before_runtime_use: bool,
+    pub fail_closed_conditions: Vec<&'static str>,
+}
+
+impl DenseLinearNoBiasSelectorAudit {
+    pub const RUNTIME_GATE_NAME: &'static str = "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE";
+
+    pub fn from_role_evidence(
+        role_id: impl Into<String>,
+        model_sha256: impl Into<String>,
+        manifest_sha256: impl Into<String>,
+        bias_present: Option<bool>,
+    ) -> Self {
+        let (decision, reason, fail_closed_conditions) = match bias_present {
+            Some(false) => (
+                "eligible_no_bias_candidate_runtime_disabled",
+                "bias_present_false_and_audit_hook_preserves_eager_f32",
+                Vec::new(),
+            ),
+            Some(true) => (
+                "blocked_fail_closed",
+                "bias_present_true_blocks_no_bias_selector",
+                vec!["bias_present_true"],
+            ),
+            None => (
+                "blocked_fail_closed",
+                "unknown_bias_present_blocks_no_bias_selector",
+                vec!["unknown_bias_present"],
+            ),
+        };
+        Self {
+            role_id: role_id.into(),
+            model_sha256: model_sha256.into(),
+            manifest_sha256: manifest_sha256.into(),
+            bias_present,
+            decision,
+            reason,
+            runtime_gate_name: Self::RUNTIME_GATE_NAME,
+            runtime_gate_default_enabled: false,
+            runtime_selection_enabled: false,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            eager_f32_runtime_preserved: true,
+            dense_runtime_replaced: false,
+            speedup_claim: false,
+            generated_id_preservation_required_before_runtime_use: true,
+            fail_closed_conditions,
+        }
+    }
+
+    pub fn preserves_eager_f32(&self) -> bool {
+        !self.runtime_selection_enabled
+            && self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.eager_f32_runtime_preserved
+            && !self.dense_runtime_replaced
+            && !self.speedup_claim
+    }
+
+    pub fn is_eligible_future_candidate(&self) -> bool {
+        self.decision == "eligible_no_bias_candidate_runtime_disabled"
+            && self.bias_present == Some(false)
+            && self.fail_closed_conditions.is_empty()
+            && self.preserves_eager_f32()
+    }
+}
+
 impl DenseLinearRuntimeHookBoundary {
     pub fn eager_f32(tensor_name: impl Into<String>) -> Self {
         Self {

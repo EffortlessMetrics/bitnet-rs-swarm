@@ -14,8 +14,8 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
-    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
+    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
     LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, TransformerForwardWorkspace,
     TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
@@ -624,6 +624,62 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
     assert!(!boundary.dense_runtime_replaced);
     assert!(boundary.preserves_eager_f32());
     Ok(())
+}
+
+#[test]
+fn no_bias_selector_audit_marks_biasless_role_eligible_without_runtime_selection() {
+    let audit = DenseLinearNoBiasSelectorAudit::from_role_evidence(
+        "layers.0.attention.o_proj",
+        "sha256:model",
+        "sha256:manifest",
+        Some(false),
+    );
+
+    assert_eq!(audit.runtime_gate_name, "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE");
+    assert!(!audit.runtime_gate_default_enabled);
+    assert!(!audit.runtime_selection_enabled);
+    assert_eq!(audit.decision, "eligible_no_bias_candidate_runtime_disabled");
+    assert_eq!(audit.selected_path, "eager_f32_candle");
+    assert_eq!(audit.selected_kernel, "dense-f32-candle-linear");
+    assert!(audit.fail_closed_conditions.is_empty());
+    assert!(audit.preserves_eager_f32());
+    assert!(audit.is_eligible_future_candidate());
+    assert!(audit.generated_id_preservation_required_before_runtime_use);
+    assert!(!audit.speedup_claim);
+}
+
+#[test]
+fn no_bias_selector_audit_blocks_biased_role_fail_closed() {
+    let audit = DenseLinearNoBiasSelectorAudit::from_role_evidence(
+        "layers.0.attention.q_proj",
+        "sha256:model",
+        "sha256:manifest",
+        Some(true),
+    );
+
+    assert_eq!(audit.decision, "blocked_fail_closed");
+    assert_eq!(audit.reason, "bias_present_true_blocks_no_bias_selector");
+    assert_eq!(audit.fail_closed_conditions, vec!["bias_present_true"]);
+    assert!(!audit.runtime_selection_enabled);
+    assert!(audit.preserves_eager_f32());
+    assert!(!audit.is_eligible_future_candidate());
+}
+
+#[test]
+fn no_bias_selector_audit_blocks_unknown_bias_fail_closed() {
+    let audit = DenseLinearNoBiasSelectorAudit::from_role_evidence(
+        "layers.0.feed_forward.gate_proj",
+        "sha256:model",
+        "sha256:manifest",
+        None,
+    );
+
+    assert_eq!(audit.decision, "blocked_fail_closed");
+    assert_eq!(audit.reason, "unknown_bias_present_blocks_no_bias_selector");
+    assert_eq!(audit.fail_closed_conditions, vec!["unknown_bias_present"]);
+    assert!(!audit.runtime_selection_enabled);
+    assert!(audit.preserves_eager_f32());
+    assert!(!audit.is_eligible_future_candidate());
 }
 
 #[test]
