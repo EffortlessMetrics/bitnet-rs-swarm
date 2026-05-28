@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T16:01:29Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-185"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 896
+merge_sha = "a856422e2ff48738860e9c40739da2c4d69c3004"
+branch = "codex/slm-cpu-185-model-init-bias-manifest-trace-export"
+summary = "Merged model-init bias manifest trace export support."
+notes = [
+  "SLM-CPU-185 added model-init dense-linear bias trace export support for feed-forward and output-head roles.",
+  "The merged slice keeps runtime selection unchanged by default and does not capture a fresh Qwen3/Qwen2.5 hardware bias manifest.",
+  "No no-bias fast-path implementation, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

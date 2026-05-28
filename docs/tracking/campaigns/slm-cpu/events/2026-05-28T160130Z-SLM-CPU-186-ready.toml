@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T16:01:30Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-186"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-186-dense-bias-manifest-trace-capture"
+summary = "Queued trace-derived dense bias manifest capture after SLM-CPU-185."
+notes = [
+  "SLM-CPU-186 should consume the SLM-CPU-185 model-init trace surface to capture or precisely block exact Qwen3/Qwen2.5 Q8_0 dense-linear bias role_records.",
+  "The item should bind any captured manifest to strict model SHA, tokenizer authority, selected backend/kernel identity, and fallback=false evidence.",
+  "No no-bias fast-path implementation, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
