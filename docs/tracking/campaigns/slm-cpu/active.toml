@@ -10169,7 +10169,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-173"
-status = "ready"
+status = "merged"
+pr = 872
+merge_sha = "4b7624382133a3b36d87f48c42c2f84d50003a7d"
 branch = "codex/slm-cpu-173-prompt-tokenize-cache-evidence-fields"
 stackable = false
 review_mode = "codex_premerge"
@@ -10203,6 +10205,54 @@ evidence = [
 may_claim = [
   "SLM-CPU-173 may make prompt-tokenize cache/evidence fields receipt-visible, or record a runtime-disabled classifier for those fields.",
   "SLM-CPU-173 may define the repo-owned reuse surface needed before prompt-token-ID reuse is attempted.",
+]
+must_not_claim = [
+  "Prompt tokenization behavior changes without paired strict Qwen3/Qwen2.5 before/after receipts.",
+  "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-174"
+status = "ready"
+branch = "codex/slm-cpu-174-prompt-tokenize-paired-receipt-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-173"]
+acceptance = "Consume the SLM-CPU-173 prompt-tokenize cache/evidence fields and capture or define the paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipt gate needed before any prompt-tokenize allocation, latency, or timing claim. The slice must preserve model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`; if the real GGUF artifacts are unavailable, it must record the exact missing artifact paths/commands and keep runtime behavior unchanged."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-173 makes prompt-tokenize cache/evidence fields receipt-visible while preserving runtime behavior and requiring paired strict before/after receipts before allocation, latency, or timing claims.",
+]
+may_claim = [
+  "SLM-CPU-174 may define or capture the paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipt gate for prompt-tokenize allocation evidence.",
+  "SLM-CPU-174 may record exact missing real GGUF artifact paths or commands if the paired receipt capture cannot be completed in-repo.",
 ]
 must_not_claim = [
   "Prompt tokenization behavior changes without paired strict Qwen3/Qwen2.5 before/after receipts.",
