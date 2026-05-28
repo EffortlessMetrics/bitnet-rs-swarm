@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T12:19:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-179"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-179-dense-linear-caller-output-storage-runtime-gate"
+summary = "Queued the disabled dense-linear caller-output-storage runtime gate after SLM-CPU-178."
+notes = [
+  "SLM-CPU-179 should consume the SLM-CPU-178 feasibility classification and define the exact disabled gate, API evidence, and receipt conditions for future dense-linear caller-owned output storage.",
+  "The item must preserve current runtime behavior by default and require paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict before/after receipts before runtime promotion.",
+  "No allocation reduction, timing improvement, speedup, sustained throughput, default-runtime promotion, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]

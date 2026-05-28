@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T12:18:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-178"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 882
+merge_sha = "a404fba15401da2cf95d90687620a6a33698bc44"
+branch = "codex/slm-cpu-178-dense-linear-output-storage-feasibility"
+summary = "Closed dense-linear output-storage feasibility after #882 merged."
+notes = [
+  "SLM-CPU-178 records dense-linear output storage as blocked by the current returned owned Candle Tensor boundary.",
+  "Backend-local source-order and packed-Q8 helper paths can fill local output buffers, but the current public runtime boundary still returns owned Tensors.",
+  "The next selected frontier is dense_linear_caller_output_storage_runtime_gate; no runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
