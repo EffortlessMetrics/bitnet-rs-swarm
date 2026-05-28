@@ -1,0 +1,15 @@
+timestamp = "2026-05-28T03:37:23Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-165"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 854
+head_sha = "e5013a68b84cea719a985ea02f55060173bb1294"
+branch = "codex/slm-cpu-165-session-buffer-presizing-gate"
+summary = "Opened PR #854 to queue the next Kaby Lake SLM prompt/session buffer pre-sizing gate."
+notes = [
+  "The slice consumes SLM-CPU-164 buffer capacity receipt hardening and keeps the next performance boundary gated by paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU receipts.",
+  "No runtime behavior changes, allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

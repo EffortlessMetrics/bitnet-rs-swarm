@@ -230,9 +230,30 @@ TODO. SLM-CPU-163 therefore leaves
 paired Qwen3/Qwen2.5 strict CPU before/after receipts as the gate before any
 allocation-reduction or speed claim.
 
+SLM-CPU-164 moves around that blocked Candle residual-add surface and hardens
+the warm-session prompt/session buffer capacity receipt boundary. The receipt
+now records per-buffer `needed`, `previous_capacity`, `capacity`,
+`capacity_grew`, and `capacity_sufficient` details for prompt tokens,
+generated-token vectors, timing vectors, allocation-audit sample vectors,
+stop-tail storage, and logits scratch storage. It also records explicit
+`capacity_grew_buffers`, `insufficient_buffers`, and
+`all_buffers_capacity_sufficient` lists. This makes first-prompt capacity
+growth and subsequent prompt reuse machine-checkable without claiming
+allocation reduction or speed.
+
+The next queued boundary is SLM-CPU-165: session-level prompt/buffer pre-sizing
+from already-rendered/tokenized warm-session prompt metadata. A runtime change
+is allowed only with paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU
+before/after receipts that preserve model SHA, tokenizer authority, prompt IDs,
+generated IDs, decoded text, selected CPU backend/kernel identity, dense hook
+identity where applicable, and `fallback_used=false`. If that evidence is not
+available, the slice should record the exact blocker rather than pre-sizing
+buffers speculatively.
+
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-163. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-164 and queues SLM-CPU-165 as the next
+safe prompt/session buffer pre-sizing gate. SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny
