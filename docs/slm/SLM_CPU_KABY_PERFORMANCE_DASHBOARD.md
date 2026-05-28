@@ -3162,6 +3162,37 @@ reduction, claim timing improvement or speedup, claim sustained throughput,
 broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
 or BitNet QK256/I2_S paths.
 
+## SLM-CPU-194 No-Bias Fast-Path Implementation Gate
+
+SLM-CPU-194 defines the first safe no-bias dense-linear implementation gate
+without adding or selecting a new compute path:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-194-no-bias-fastpath-implementation-gate.json
+status = gate_defined_runtime_disabled
+runtime_gate = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+runtime_selection_enabled = false
+first eligible scope = Qwen3 Q8_0 feed_forward.down_proj layers 0..27
+selected role count = 28
+```
+
+The first gate is deliberately narrow. It starts with Qwen3
+`feed_forward.down_proj` roles because they are no-bias dense-linear roles and
+avoid attention head reshaping, q/k/v bias differences, and output-head
+token-selection semantics. Qwen2.5 attention q/k/v remains fail-closed because
+those roles have `bias_present=true`.
+
+Future runtime use still requires paired strict before/after warm-session
+receipts proving unchanged prompt IDs, generated IDs, decoded text, model SHA,
+GGUF tokenizer authority, selected CPU backend/runtime, dense path identity,
+manifest SHA, role ID, `bias_present`, and `fallback_used=false`.
+
+This slice does not implement a no-bias fast path, change the default runtime,
+prove allocation reduction, claim timing improvement or speedup, claim
+sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
