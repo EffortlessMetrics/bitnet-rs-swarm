@@ -82,6 +82,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Prompt-tokenize allocation contract | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-172-prompt-tokenize-allocation-contract.json` | Defines the prompt identity, tokenizer provenance, rendered-prompt, and prompt-ID cache contract required before any prompt-tokenize runtime reuse or allocation claim |
 | Prompt-tokenize cache evidence fields | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-173-prompt-tokenize-cache-evidence-fields.json` | Makes the SLM-CPU-172 prompt-tokenize cache contract receipt-visible without changing prompt tokenization behavior or claiming allocation/timing improvement |
 | Prompt-tokenize paired receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-174-prompt-tokenize-paired-receipt-gate.json` | Defines the exact Qwen3/Qwen2.5 before/after receipt gate required before any prompt-tokenize allocation, latency, or timing claim |
+| Prompt-tokenize exact-identity cache | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json` | Seeds the resident warm-session exact-identity prompt-token cache during pre-sizing so byte-identical prompt-loop lookups hit for both Qwen3 and Qwen2.5, with paired strict receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, CPU backend identity, and fallback=false |
 
 Qwen3 rows use:
 
@@ -380,6 +381,26 @@ availability, and prompt-token buffer capacity fields to be present. SLM-CPU-174
 is still a gate definition only: it records verified local model SHA observations
 and command templates, but it does not change prompt tokenization behavior or
 claim allocation, latency, timing, speedup, or sustained throughput improvement.
+
+SLM-CPU-175 consumes that gate with a narrow exact-identity runtime cache
+candidate:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json
+```
+
+The implementation seeds the same resident warm-session prompt-token cache while
+pre-sizing prompt buffers, then reuses the cached token IDs in the prompt loop
+when the rendered prompt, BOS policy, and special-token parsing policy are
+byte-identical. The paired Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts preserve model
+SHA, strict GGUF tokenizer authority, prompt-ID hashes, generated IDs, decoded
+text, selected `cpu-rust` backend identity, and `fallback_used=false`. For the
+first repeated proof prompt, Qwen3 prompt-tokenize allocation counters drop from
+`177264200` bytes / `2128850` allocations to `168` bytes / `1` allocation, and
+Qwen2.5 drops from `126653209` bytes / `1520826` allocations to `189` bytes /
+`1` allocation. This is scoped to exact prompt-token cache hits in the paired
+warm-session receipts; it is not a sustained throughput, decode, prefill,
+model-load, server, accelerator, cross-quant, or broad SLM quality claim.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the

@@ -8968,11 +8968,15 @@ async fn run_slm_warm_session(
             template_type.apply(&prompt_input.prompt, system_prompt.as_deref()),
             no_think,
         )?;
-        let mut prompt_tokens = tokenizer.encode(
+        let bos_policy = template_type.should_add_bos();
+        let parse_special = template_type.parse_special();
+        let (encoded_prompt_tokens, _) = prompt_token_cache.get_or_insert_with(
             &formatted_prompt,
-            template_type.should_add_bos(),
-            template_type.parse_special(),
+            bos_policy,
+            parse_special,
+            || Ok(tokenizer.encode(&formatted_prompt, bos_policy, parse_special)?),
         )?;
+        let mut prompt_tokens = encoded_prompt_tokens.to_vec();
         ensure_non_empty_generation_context(&mut prompt_tokens, tokenizer.as_ref())?;
         max_prompt_token_count = max_prompt_token_count.max(prompt_tokens.len());
         kv_cache_max_seq_len = kv_cache_max_seq_len.max(bounded_generation_kv_cache_len(
@@ -9116,6 +9120,7 @@ async fn run_slm_warm_session(
             parse_special,
             cache_hit: prompt_token_cache_hit,
             cache_entry_count: prompt_token_cache.entry_count(),
+            runtime_allocation_behavior_changed: prompt_token_cache_hit,
             prompt_token_buffers: &prompt_token_buffers,
         });
 
@@ -9767,7 +9772,7 @@ async fn run_slm_warm_session(
             "cache_misses": prompt_token_cache.misses,
             "cache_entry_count": prompt_token_cache.entry_count(),
             "cache_hit": prompt_token_cache.hits > 0,
-            "runtime_allocation_behavior_changed": false,
+            "runtime_allocation_behavior_changed": prompt_token_cache.hits > 0,
             "tokenizer_internal_allocations_classified": true,
             "repo_owned_reuse_surface": [
                 "rendered_prompt_text",
@@ -9775,7 +9780,7 @@ async fn run_slm_warm_session(
                 "prompt token vector capacity",
             ],
             "paired_strict_before_after_receipts_required_before_allocation_claim": true,
-            "claim": "receipt_visible_prompt_tokenize_cache_evidence_only",
+            "claim": "exact_identity_prompt_token_cache_candidate",
         },
         "model": {
             "repo": model_repo.as_str(),
@@ -10196,6 +10201,7 @@ struct PromptTokenizeContractInput<'a> {
     parse_special: bool,
     cache_hit: bool,
     cache_entry_count: usize,
+    runtime_allocation_behavior_changed: bool,
     prompt_token_buffers: &'a serde_json::Value,
 }
 
@@ -10236,7 +10242,7 @@ fn prompt_tokenize_contract_json(input: PromptTokenizeContractInput<'_>) -> serd
             "prompt token vector capacity",
         ],
         "prompt_token_buffers": input.prompt_token_buffers,
-        "runtime_allocation_behavior_changed": false,
+        "runtime_allocation_behavior_changed": input.runtime_allocation_behavior_changed,
         "paired_strict_before_after_receipts_required_before_allocation_claim": true,
     })
 }
@@ -18560,6 +18566,35 @@ mod tests {
 
     #[test]
     #[cfg(feature = "full-cli")]
+    fn warm_session_prompt_token_cache_can_seed_from_pre_sizing_pass() -> Result<()> {
+        let mut cache = WarmSessionPromptTokenCache::default();
+        let mut encode_calls = 0usize;
+
+        let (pre_sizing_tokens, pre_sizing_hit) =
+            cache.get_or_insert_with("prompt", false, true, || {
+                encode_calls += 1;
+                Ok(vec![4, 5, 6])
+            })?;
+        assert_eq!(pre_sizing_tokens, &[4, 5, 6]);
+        assert!(!pre_sizing_hit);
+
+        let (prompt_loop_tokens, prompt_loop_hit) =
+            cache.get_or_insert_with("prompt", false, true, || {
+                encode_calls += 1;
+                Ok(vec![9])
+            })?;
+        assert_eq!(prompt_loop_tokens, &[4, 5, 6]);
+        assert!(prompt_loop_hit);
+
+        assert_eq!(encode_calls, 1);
+        assert_eq!(cache.hits, 1);
+        assert_eq!(cache.misses, 1);
+        assert_eq!(cache.entry_count(), 1);
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
     fn prompt_tokenize_contract_records_cache_evidence_fields() {
         let buffer_evidence = serde_json::json!({
             "buffer_capacity_details": {
@@ -18588,6 +18623,7 @@ mod tests {
             parse_special: true,
             cache_hit: true,
             cache_entry_count: 3,
+            runtime_allocation_behavior_changed: true,
             prompt_token_buffers: &prompt_token_buffers,
         });
 
@@ -18597,7 +18633,7 @@ mod tests {
         assert_eq!(contract["cache_lookup_result"], "hit");
         assert_eq!(contract["rendered_prompt_sha256"], "rendered-sha");
         assert_eq!(contract["prompt_ids_sha256"], "ids-sha");
-        assert_eq!(contract["runtime_allocation_behavior_changed"], false);
+        assert_eq!(contract["runtime_allocation_behavior_changed"], true);
         assert_eq!(contract["tokenizer_internal_allocations_classified"], true);
         assert_eq!(contract["prompt_token_buffers"]["needed"], serde_json::json!(12));
         assert_eq!(contract["prompt_token_buffers"]["previous_capacity"], serde_json::json!(8));
