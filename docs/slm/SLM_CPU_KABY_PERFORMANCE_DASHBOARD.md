@@ -241,19 +241,22 @@ stop-tail storage, and logits scratch storage. It also records explicit
 growth and subsequent prompt reuse machine-checkable without claiming
 allocation reduction or speed.
 
-The next queued boundary is SLM-CPU-165: session-level prompt/buffer pre-sizing
-from already-rendered/tokenized warm-session prompt metadata. A runtime change
-is allowed only with paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU
-before/after receipts that preserve model SHA, tokenizer authority, prompt IDs,
-generated IDs, decoded text, selected CPU backend/kernel identity, dense hook
-identity where applicable, and `fallback_used=false`. If that evidence is not
-available, the slice should record the exact blocker rather than pre-sizing
-buffers speculatively.
+SLM-CPU-165 closed the pre-sizing gate and SLM-CPU-166 implements the narrow
+runtime boundary: the warm-session command pre-scans already-rendered/tokenized
+prompt metadata and reserves resident prompt/session buffers before the first
+prompt loop reset. The aggregate session receipt and each per-prompt
+`session_reuse` block record the pre-sizing source, capacity sufficiency, and
+that prompt-loop resets reused existing capacity. Paired Qwen3 Q8_0 and Qwen2.5
+Q8_0 strict CPU after-change receipts preserve model SHA, tokenizer authority,
+prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity,
+and `fallback_used=false`. This does not claim allocation reduction, speedup,
+or sustained throughput without an explicit before/after receipt comparison.
 
 ## Dashboard Refresh State
 
-This refresh is current through SLM-CPU-164 and queues SLM-CPU-165 as the next
-safe prompt/session buffer pre-sizing gate. SLM-CPU-121 records that Qwen3
+This refresh is current through SLM-CPU-165 and queues SLM-CPU-166 as the
+bounded session-level prompt/session buffer pre-sizing implementation.
+SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
 layer-0 `attention.q_proj_output_pre_optional_qnorm` fingerprint after
 allocating only the prompt-plus-generation KV capacity required by the tiny

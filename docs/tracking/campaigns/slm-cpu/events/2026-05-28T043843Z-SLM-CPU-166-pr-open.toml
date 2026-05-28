@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T04:38:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-166"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 856
+head_sha = "fe95d574c14c0f33075761301a2e016ecf461014"
+branch = "codex/slm-cpu-166-session-buffer-presizing"
+summary = "Opened PR #856 to implement the warm-session prompt/session buffer pre-sizing boundary."
+notes = [
+  "Opened runtime slice to pre-size resident warm-session prompt/session buffers from already-rendered/tokenized prompt metadata before the first prompt loop reset while preserving Qwen3/Qwen2.5 strict CPU behavior oracles and claim boundaries.",
+]
