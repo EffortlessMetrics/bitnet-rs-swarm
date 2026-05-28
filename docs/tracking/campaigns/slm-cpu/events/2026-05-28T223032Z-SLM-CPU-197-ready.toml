@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T22:30:32Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-197"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-197-no-bias-runtime-selection-preflight"
+summary = "Queued disabled-by-default no-bias runtime-selection preflight."
+notes = [
+  "SLM-CPU-197 should consume the SLM-CPU-196 preservation overlay and add a narrow preflight/audit surface for exact Qwen3 Q8_0 feed_forward.down_proj layers 0..27.",
+  "The preflight may report whether BITNET_DENSE_NO_BIAS_LINEAR_ENABLE=1 would select the candidate for those exact roles.",
+  "No default runtime selection, candidate execution in normal inference, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
