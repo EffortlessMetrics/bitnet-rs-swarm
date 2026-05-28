@@ -3810,6 +3810,13 @@ fn compute_sha256_bytes(bytes: &[u8]) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+fn compute_sha256_json_value(value: &serde_json::Value) -> String {
+    match serde_json::to_vec(value) {
+        Ok(bytes) => compute_sha256_bytes(&bytes),
+        Err(error) => compute_sha256_bytes(error.to_string().as_bytes()),
+    }
+}
+
 fn greedy_top1_token_id(logits: &[f32]) -> Option<u32> {
     logits
         .iter()
@@ -9090,6 +9097,27 @@ async fn run_slm_warm_session(
         let mut direct_greedy_logits_steps = 0usize;
         let mut logits_vec_extraction_steps = 0usize;
         let mut logits_scratch_reuse_steps = 0usize;
+        let prompt_ids_sha256 = compute_sha256_json_value(&serde_json::json!(tokens.as_slice()));
+        let prompt_token_buffers = prompt_token_buffer_contract_json(&buffer_reuse_evidence);
+        let prompt_tokenize_contract = prompt_tokenize_contract_json(PromptTokenizeContractInput {
+            model_sha256: model_sha256.as_str(),
+            tokenizer_source: tokenizer_source_str,
+            tokenizer_authority: pretokenizer_authority,
+            tokenizer_strict,
+            template_family: &template_type.to_string(),
+            template_source: "bitnet-prompt-templates-core",
+            qwen_no_think: no_think,
+            rendered_prompt_sha256: rendered_prompt_sha256.as_str(),
+            prompt_ids_sha256: prompt_ids_sha256.as_str(),
+            prompt_generation_identity_sha256: prompt_generation_identity
+                .get("identity_sha256")
+                .and_then(serde_json::Value::as_str),
+            bos_policy,
+            parse_special,
+            cache_hit: prompt_token_cache_hit,
+            cache_entry_count: prompt_token_cache.entry_count(),
+            prompt_token_buffers: &prompt_token_buffers,
+        });
 
         let prefill_start = std::time::Instant::now();
         let mut prefill_token_count = 0usize;
@@ -9373,6 +9401,7 @@ async fn run_slm_warm_session(
                 "stop_token_ids": &all_stop_ids,
             },
             "prompt_generation_identity": prompt_generation_identity.clone(),
+            "prompt_tokenize_contract": prompt_tokenize_contract.clone(),
             "text": generated_text,
             "tokens": {
                 "prompt": prompt_token_count,
@@ -9488,6 +9517,7 @@ async fn run_slm_warm_session(
                 "prompt_token_cache_enabled": true,
                 "prompt_token_cache_hit": prompt_token_cache_hit,
                 "prompt_token_cache_entry_count": prompt_token_cache.entry_count(),
+                "prompt_token_buffers": prompt_token_buffers,
                 "stop_policy_precomputed_once": true,
                 "stop_sequence_count": all_stop_sequences.len(),
                 "stop_token_id_count": all_stop_ids.len(),
@@ -9592,6 +9622,7 @@ async fn run_slm_warm_session(
                 "fallback_used": backend_identity.fallback_used,
             },
             "session_reuse": prompt_receipt["session_reuse"].clone(),
+            "prompt_tokenize_contract": prompt_receipt["prompt_tokenize_contract"].clone(),
             "metal_phase_contributions": prompt_receipt
                 .get("metal_phase_contributions")
                 .cloned()
@@ -9727,6 +9758,25 @@ async fn run_slm_warm_session(
             "qwen_no_think": no_think,
         },
         "prompt_generation_identity": prompt_generation_identity,
+        "prompt_tokenize_contract": {
+            "version": "1.0.0",
+            "scope": "resident_warm_session_prompt_tokenize_cache_evidence",
+            "cache_lookup": true,
+            "cache_policy": WarmSessionPromptTokenCache::POLICY,
+            "cache_hits": prompt_token_cache.hits,
+            "cache_misses": prompt_token_cache.misses,
+            "cache_entry_count": prompt_token_cache.entry_count(),
+            "cache_hit": prompt_token_cache.hits > 0,
+            "runtime_allocation_behavior_changed": false,
+            "tokenizer_internal_allocations_classified": true,
+            "repo_owned_reuse_surface": [
+                "rendered_prompt_text",
+                "prompt_token_ids",
+                "prompt token vector capacity",
+            ],
+            "paired_strict_before_after_receipts_required_before_allocation_claim": true,
+            "claim": "receipt_visible_prompt_tokenize_cache_evidence_only",
+        },
         "model": {
             "repo": model_repo.as_str(),
             "file": model_file.as_str(),
@@ -10128,6 +10178,90 @@ struct WarmSessionPromptTokenCacheKey {
     rendered_prompt: String,
     bos_policy: bool,
     parse_special: bool,
+}
+
+#[cfg(feature = "full-cli")]
+struct PromptTokenizeContractInput<'a> {
+    model_sha256: &'a str,
+    tokenizer_source: &'a str,
+    tokenizer_authority: &'a str,
+    tokenizer_strict: bool,
+    template_family: &'a str,
+    template_source: &'a str,
+    qwen_no_think: bool,
+    rendered_prompt_sha256: &'a str,
+    prompt_ids_sha256: &'a str,
+    prompt_generation_identity_sha256: Option<&'a str>,
+    bos_policy: bool,
+    parse_special: bool,
+    cache_hit: bool,
+    cache_entry_count: usize,
+    prompt_token_buffers: &'a serde_json::Value,
+}
+
+#[cfg(feature = "full-cli")]
+fn prompt_tokenize_contract_json(input: PromptTokenizeContractInput<'_>) -> serde_json::Value {
+    let cache_key_material = serde_json::json!({
+        "scope": "resident_warm_session_single_model_tokenizer",
+        "model_sha256": input.model_sha256,
+        "tokenizer_source": input.tokenizer_source,
+        "tokenizer_authority": input.tokenizer_authority,
+        "tokenizer_strict": input.tokenizer_strict,
+        "template_family": input.template_family,
+        "template_source": input.template_source,
+        "qwen_no_think": input.qwen_no_think,
+        "rendered_prompt_sha256": input.rendered_prompt_sha256,
+        "prompt_generation_identity_sha256": input.prompt_generation_identity_sha256,
+        "bos_policy": input.bos_policy,
+        "parse_special": input.parse_special,
+    });
+    let cache_key_sha256 = compute_sha256_json_value(&cache_key_material);
+
+    serde_json::json!({
+        "version": "1.0.0",
+        "scope": "resident_warm_session_prompt_tokenize_cache_evidence",
+        "cache_key_sha256": cache_key_sha256,
+        "cache_key_material": cache_key_material,
+        "cache_lookup": true,
+        "cache_lookup_result": if input.cache_hit { "hit" } else { "miss" },
+        "cache_hit": input.cache_hit,
+        "cache_entry_count": input.cache_entry_count,
+        "rendered_prompt_sha256": input.rendered_prompt_sha256,
+        "prompt_ids_sha256": input.prompt_ids_sha256,
+        "tokenizer_internal_allocations_classified": true,
+        "tokenizer_internal_allocation_policy": "classified_only_until_tokenizer_api_exposes_caller_owned_output_buffer_or_cache_hook",
+        "repo_owned_reuse_surface": [
+            "rendered_prompt_text",
+            "prompt_token_ids",
+            "prompt token vector capacity",
+        ],
+        "prompt_token_buffers": input.prompt_token_buffers,
+        "runtime_allocation_behavior_changed": false,
+        "paired_strict_before_after_receipts_required_before_allocation_claim": true,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn prompt_token_buffer_contract_json(
+    buffer_reuse_evidence: &serde_json::Value,
+) -> serde_json::Value {
+    let token_details = &buffer_reuse_evidence["buffer_capacity_details"]["tokens"];
+    serde_json::json!({
+        "needed": token_details.get("needed").cloned().unwrap_or(serde_json::Value::Null),
+        "previous_capacity": token_details
+            .get("previous_capacity")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null),
+        "capacity": token_details.get("capacity").cloned().unwrap_or(serde_json::Value::Null),
+        "capacity_sufficient": token_details
+            .get("capacity_sufficient")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null),
+        "capacity_grew": token_details
+            .get("capacity_grew")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null),
+    })
 }
 
 #[cfg(feature = "full-cli")]
@@ -18422,6 +18556,54 @@ mod tests {
         assert_eq!(cache.misses, 2);
         assert_eq!(cache.entry_count(), 2);
         Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn prompt_tokenize_contract_records_cache_evidence_fields() {
+        let buffer_evidence = serde_json::json!({
+            "buffer_capacity_details": {
+                "tokens": {
+                    "needed": 12,
+                    "previous_capacity": 8,
+                    "capacity": 16,
+                    "capacity_sufficient": true,
+                    "capacity_grew": true
+                }
+            }
+        });
+        let prompt_token_buffers = prompt_token_buffer_contract_json(&buffer_evidence);
+        let contract = prompt_tokenize_contract_json(PromptTokenizeContractInput {
+            model_sha256: "model-sha",
+            tokenizer_source: "gguf_metadata",
+            tokenizer_authority: "gguf_metadata:qwen-bpe",
+            tokenizer_strict: true,
+            template_family: "qwen",
+            template_source: "bitnet-prompt-templates-core",
+            qwen_no_think: true,
+            rendered_prompt_sha256: "rendered-sha",
+            prompt_ids_sha256: "ids-sha",
+            prompt_generation_identity_sha256: Some("identity-sha"),
+            bos_policy: false,
+            parse_special: true,
+            cache_hit: true,
+            cache_entry_count: 3,
+            prompt_token_buffers: &prompt_token_buffers,
+        });
+
+        assert_eq!(contract["version"], "1.0.0");
+        assert_eq!(contract["cache_lookup"], true);
+        assert_eq!(contract["cache_hit"], true);
+        assert_eq!(contract["cache_lookup_result"], "hit");
+        assert_eq!(contract["rendered_prompt_sha256"], "rendered-sha");
+        assert_eq!(contract["prompt_ids_sha256"], "ids-sha");
+        assert_eq!(contract["runtime_allocation_behavior_changed"], false);
+        assert_eq!(contract["tokenizer_internal_allocations_classified"], true);
+        assert_eq!(contract["prompt_token_buffers"]["needed"], serde_json::json!(12));
+        assert_eq!(contract["prompt_token_buffers"]["previous_capacity"], serde_json::json!(8));
+        assert_eq!(contract["prompt_token_buffers"]["capacity"], serde_json::json!(16));
+        assert_eq!(contract["prompt_token_buffers"]["capacity_sufficient"], true);
+        assert!(contract["cache_key_sha256"].as_str().is_some_and(|value| value.len() == 64));
     }
 
     #[test]
