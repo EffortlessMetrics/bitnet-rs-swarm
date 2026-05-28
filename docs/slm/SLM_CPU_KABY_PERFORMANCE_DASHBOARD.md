@@ -3256,6 +3256,38 @@ selection, prove allocation reduction, claim timing improvement or speedup,
 claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-197 No-Bias Runtime-Selection Preflight
+
+SLM-CPU-197 adds a disabled-by-default preflight/audit surface for the
+SLM-CPU-195 no-bias down-projection candidate. It can report whether an exact
+Qwen3 Q8_0 `feed_forward.down_proj` role would be selectable in a future
+receipt-gated experiment, but normal inference still preserves the eager F32
+Candle path:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-197-no-bias-runtime-selection-preflight.json
+preflight record = bitnet_transformer::DenseLinearNoBiasRuntimeSelectionPreflight
+runtime_gate = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate path = qwen3_feed_forward_down_proj_no_bias_candidate
+candidate kernel = dense-f32-no-bias-matmul-candidate
+```
+
+The preflight fails closed when the gate is not requested, when paired strict
+before/after warm-session receipts are missing, or when the role is outside the
+exact Qwen3 Q8_0 down-projection scope. If the gate is requested and receipts
+are present, the result is still only
+`would_select_candidate_in_receipt_gated_experiment`; normal inference remains
+unmodified.
+
+This slice does not run fresh inference, enable candidate runtime selection in
+normal inference, prove allocation reduction, claim timing improvement or
+speedup, claim sustained throughput, broaden Q4/Q5 support, or touch server,
+GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

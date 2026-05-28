@@ -14,13 +14,14 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasSelectorAudit,
-    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
-    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasRuntimeSelectionPreflight,
+    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
+    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
     LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
     TransformerForwardWorkspace, TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
-    dense_linear_no_bias_candidate_forward, dense_q8_sidecar_fused_consumer_boundary,
+    dense_linear_no_bias_candidate_forward, dense_linear_no_bias_runtime_gate_requested,
+    dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
     dense_q8_sidecar_q_norm_input_proof_gate,
     dense_q8_sidecar_q_norm_input_receipt_comparator_gate,
@@ -763,6 +764,107 @@ fn no_bias_candidate_forward_matches_candle_no_bias_linear_but_is_not_runtime_se
     assert!(err.to_string().contains("requires bias_present=false"));
 
     Ok(())
+}
+
+#[test]
+fn no_bias_runtime_selection_preflight_preserves_default_runtime() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        7,
+        "layers.7.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, false, false);
+
+    assert_eq!(preflight.runtime_gate_name, "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE");
+    assert!(!preflight.runtime_gate_default_enabled);
+    assert!(!preflight.runtime_gate_requested_enabled);
+    assert!(!preflight.paired_strict_receipts_present);
+    assert_eq!(preflight.selected_path, "eager_f32_candle");
+    assert_eq!(preflight.selected_kernel, "dense-f32-candle-linear");
+    assert!(!preflight.normal_inference_runtime_selection_enabled);
+    assert!(!preflight.would_select_candidate_in_receipt_gated_experiment);
+    assert_eq!(preflight.decision, "default_disabled_preserves_eager_f32");
+    assert!(preflight.fail_closed_conditions.contains(&"runtime_gate_not_requested"));
+    assert!(preflight.fail_closed_conditions.contains(&"paired_strict_receipts_missing"));
+    assert!(preflight.preserves_normal_inference());
+    assert!(!preflight.allocation_reduction_claim);
+    assert!(!preflight.timing_improvement_claim);
+    assert!(!preflight.speedup_claim);
+}
+
+#[test]
+fn no_bias_runtime_selection_preflight_reports_receipt_gated_experiment_only() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        27,
+        "layers.27.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+
+    assert_eq!(preflight.decision, "would_select_candidate_in_receipt_gated_experiment");
+    assert_eq!(
+        preflight.reason,
+        "exact_qwen3_q8_down_proj_candidate_gate_requested_and_receipts_present"
+    );
+    assert!(preflight.runtime_gate_requested_enabled);
+    assert!(preflight.paired_strict_receipts_present);
+    assert!(preflight.would_select_candidate_in_receipt_gated_experiment);
+    assert!(!preflight.normal_inference_runtime_selection_enabled);
+    assert!(preflight.fail_closed_conditions.is_empty());
+    assert!(preflight.preserves_normal_inference());
+    assert!(preflight.required_receipt_fields_before_runtime_use.contains(&"generated_ids"));
+    assert!(preflight.required_receipt_fields_before_runtime_use.contains(&"fallback_used"));
+}
+
+#[test]
+fn no_bias_runtime_selection_preflight_blocks_bad_scope_or_missing_receipts() {
+    let bad_scope = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        28,
+        "layers.28.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let blocked_scope =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&bad_scope, true, true);
+
+    assert_eq!(blocked_scope.decision, "blocked_fail_closed");
+    assert!(blocked_scope.fail_closed_conditions.contains(&"layer_outside_qwen3_0_6b_range"));
+    assert!(!blocked_scope.would_select_candidate_in_receipt_gated_experiment);
+    assert!(!blocked_scope.normal_inference_runtime_selection_enabled);
+    assert!(blocked_scope.preserves_normal_inference());
+
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        0,
+        "layers.0.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let blocked_receipts =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, false);
+
+    assert_eq!(blocked_receipts.decision, "blocked_before_after_receipts_missing");
+    assert!(blocked_receipts.fail_closed_conditions.contains(&"paired_strict_receipts_missing"));
+    assert!(!blocked_receipts.would_select_candidate_in_receipt_gated_experiment);
+}
+
+#[test]
+fn no_bias_runtime_gate_requested_parser_is_explicit() {
+    for enabled in [Some("1"), Some("true"), Some("TRUE"), Some(" yes "), Some("on")] {
+        assert!(dense_linear_no_bias_runtime_gate_requested(enabled));
+    }
+    for disabled in [None, Some(""), Some("0"), Some("false"), Some("off"), Some("maybe")] {
+        assert!(!dense_linear_no_bias_runtime_gate_requested(disabled));
+    }
 }
 
 #[test]
