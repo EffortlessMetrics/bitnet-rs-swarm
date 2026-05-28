@@ -10946,7 +10946,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-188"
-status = "ready"
+status = "merged"
+pr = 902
+merge_sha = "f8bfef9f4c54048e839d9f10112d97230963ba70"
 branch = "codex/slm-cpu-188-post-export-trace-artifact-capture"
 stackable = false
 review_mode = "codex_premerge"
@@ -10985,6 +10987,57 @@ must_not_claim = [
   "A complete Qwen3/Qwen2.5 dense-linear bias role_records manifest exists unless exact post-export traces and paired strict receipts are present.",
   "A no-bias dense linear fast path is implemented or selected by default.",
   "All Qwen3/Qwen2.5 dense-linear roles are proven biasless unless exact manifest evidence is present.",
+  "Runtime selection changes.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-189"
+status = "ready"
+branch = "codex/slm-cpu-189-dense-bias-role-records-manifest"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-188"]
+acceptance = "Consume the SLM-CPU-188 post-export Qwen3/Qwen2.5 Q8_0 trace files and paired strict CPU receipts and derive an exact dense-linear bias role_records manifest for attention, feed-forward, and output-head roles. A valid manifest must bind every role record to model SHA, trace file, receipt file, layer where applicable, scope, linear role, bias_present=true/false, source evidence line or event index, tokenizer source/strictness, selected_backend=cpu-rust, runtime_api=cpu, fallback_used=false, prompt IDs present, generated IDs present, decoded text present, and unchanged dense path identity. The manifest must fail closed for missing, duplicate, unknown, or contradictory role evidence, and must explicitly record that Qwen2.5 attention q/k/v bias_present=true blocks any blanket no-bias dense-linear selector. No no-bias fast-path implementation, runtime selection change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-188 captures post-export Qwen3 and Qwen2.5 model_init.linear_bias_finish trace JSONL files.",
+  "SLM-CPU-188 captures paired strict warm-session receipts preserving real_gguf loader mode, gguf_metadata tokenizer source, tokenizer_strict=true, selected_backend=cpu-rust, runtime_api=cpu, fallback_used=false, prompt IDs, generated IDs, and decoded text.",
+  "SLM-CPU-188 records Qwen3 selected dense-linear roles as bias_present=false and Qwen2.5 attention q/k/v as bias_present=true.",
+]
+may_claim = [
+  "SLM-CPU-189 may derive a dense-linear bias role_records manifest from exact post-export Qwen3/Qwen2.5 traces and paired receipts.",
+  "SLM-CPU-189 may record that Qwen2.5 attention q/k/v bias presence blocks a blanket no-bias dense-linear selector.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
+  "All Qwen3/Qwen2.5 dense-linear roles are biasless.",
   "Runtime selection changes.",
   "Runtime allocation behavior changes.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
