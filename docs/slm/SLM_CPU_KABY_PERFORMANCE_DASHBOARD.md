@@ -84,6 +84,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Prompt-tokenize paired receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-174-prompt-tokenize-paired-receipt-gate.json` | Defines the exact Qwen3/Qwen2.5 before/after receipt gate required before any prompt-tokenize allocation, latency, or timing claim |
 | Prompt-tokenize exact-identity cache | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-175-prompt-tokenize-exact-identity-cache.json` | Seeds the resident warm-session exact-identity prompt-token cache during pre-sizing so byte-identical prompt-loop lookups hit for both Qwen3 and Qwen2.5, with paired strict receipts preserving model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, CPU backend identity, and fallback=false |
 | Post-prompt-tokenize frontier selection | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-176-post-prompt-tokenize-frontier.json` | Consumes the SLM-CPU-175 receipts and selects `model_forward_owned_tensor_allocation_boundary` as the next high-value frontier, while deferring small prompt setup evidence allocations and keeping SLM-CPU-175 claims scoped to byte-identical cache hits |
+| Model-forward allocation boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json` | Classifies the selected `model_forward_owned_tensor_allocation_boundary` as blocked by dense-linear, final-norm, residual-add, and model.forward owned Candle Tensor outputs, and selects dense-linear output-storage feasibility as the next sub-boundary without changing runtime behavior |
 
 Qwen3 rows use:
 
@@ -420,6 +421,25 @@ allocations respectively. The next selected frontier is therefore
 `prompt_setup.buffer_reset` surface is deferred because its `40464` bytes /
 `334` allocations are receipt/evidence construction while prompt buffers are
 already capacity-sufficient; it is not the main runtime SLM limiter.
+
+SLM-CPU-177 records that boundary explicitly:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json
+```
+
+Both Qwen3 and Qwen2.5 after-receipts report
+`model_forward_output_storage_api_surface_present_reuse_blocked_by_candle_tensor_ops`.
+The current instrumentation names `feed_forward.down_proj.output` as the first
+reusable allocation surface, but runtime reuse is still blocked at the
+`dense_linear_output_storage_api_boundary`. The downstream owned-output blockers
+remain unchanged: final norm is blocked by Candle norm ops that return owned
+tensors, residual block output is blocked by Candle tensor add/broadcast-add
+ops with no caller-provided output storage API, and full `model.forward` output
+reuse remains blocked until those inner surfaces are solved or a fused consumer
+avoids returned-tensor materialization. SLM-CPU-177 therefore selects
+`dense_linear_output_storage_api_feasibility` for SLM-CPU-178 and keeps runtime
+behavior unchanged.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
