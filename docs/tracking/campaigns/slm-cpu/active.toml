@@ -9662,7 +9662,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-162"
-status = "pr_open"
+status = "merged"
+pr = 847
+head_sha = "988aee6eee74c01370f0015ad45b3f0db1a369e8"
+merge_sha = "08e5c3141ea77b344a8827867ee42e8bf4c3da25"
+merged_at = "2026-05-28T00:26:20Z"
 branch = "codex/slm-cpu-162-residual-output-storage-contract"
 stackable = false
 review_mode = "codex_premerge"
@@ -9702,6 +9706,55 @@ may_claim = [
 must_not_claim = [
   "Runtime allocation behavior is changed without paired before/after strict CPU receipts.",
   "Allocation reduction, speedup, or sustained throughput is proven.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-163"
+status = "ready"
+branch = "codex/slm-cpu-163-residual-output-storage-runtime-slice"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-162"]
+acceptance = "Consume the SLM-CPU-162 residual_block_output_storage_boundary shape/ownership contract and either implement the first behavior-preserving runtime allocation slice at that boundary, or record the exact remaining Candle/tensor API blocker preventing implementation. Any runtime behavior change must include paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts preserving model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel, dense hook identity where applicable, and `fallback_used=false`. It must not claim allocation reduction, speedup, sustained throughput, Q4/Q5 runtime support, default-runtime promotion, server/accelerator execution, Qwen3.5, or BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+]
+may_claim = [
+  "SLM-CPU-162 defined the residual_block_output_storage_boundary shape, ownership, and behavior-preservation contract required before runtime allocation changes.",
+  "SLM-CPU-163 may implement one behavior-preserving runtime allocation slice at that boundary if paired Qwen3/Qwen2.5 strict CPU receipts prove unchanged outputs and provenance.",
+  "SLM-CPU-163 may record an exact blocker instead of changing runtime behavior.",
+]
+must_not_claim = [
+  "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
