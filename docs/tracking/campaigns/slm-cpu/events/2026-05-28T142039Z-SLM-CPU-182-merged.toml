@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T14:20:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-182"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 890
+merge_sha = "93fa0f85d596c3b245d315fcea32c92846947bee"
+branch = "codex/slm-cpu-182-no-bias-dense-linear-frontier"
+summary = "Merged no-bias dense-linear frontier classification."
+notes = [
+  "SLM-CPU-182 classifies no-bias dense-linear as a future runtime-disabled gate, not an implementation.",
+  "The merged slice records that existing strict Qwen3/Qwen2.5 receipts show zero sidecar bias materialization calls, but do not prove every dense-linear role is biasless.",
+  "No runtime behavior change, allocation reduction, timing improvement, speedup, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
