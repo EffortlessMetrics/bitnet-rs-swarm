@@ -255,18 +255,20 @@ or sustained throughput without an explicit before/after receipt comparison.
 ## Dashboard Refresh State
 
 This refresh is current through SLM-CPU-167, the post-SLM-CPU-166
-prompt/session buffer pre-sizing receipt comparison gate.
+prompt/session buffer pre-sizing receipt comparison gate. SLM-CPU-168 is the
+next ready slice for the actual committed Qwen3/Qwen2.5 receipt comparison
+evidence or a precise artifact/cache blocker.
 
-SLM-CPU-167 is the next ready performance-lane gate. It does not change runtime
-behavior by itself; it requires a committed Qwen3 Q8_0 and Qwen2.5 Q8_0 strict
-CPU receipt comparison for the SLM-CPU-166 pre-sizing boundary, or a
-machine-checkable artifact/cache blocker. That comparison must preserve model
-SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU
-backend/kernel identity, dense hook identity where applicable, and
-`fallback_used=false` before any later allocation or timing claim can use the
-pre-sizing slice as evidence. The gate must classify whether pre-sizing changed
-allocation-audit counters or only made capacity reuse receipt-visible, then name
-the next safe allocation hotspot.
+SLM-CPU-167 defines the next performance-lane gate. It does not change runtime
+behavior by itself; it requires SLM-CPU-168 or a later slice to commit a Qwen3
+Q8_0 and Qwen2.5 Q8_0 strict CPU receipt comparison for the SLM-CPU-166
+pre-sizing boundary, or a machine-checkable artifact/cache blocker. That
+comparison must preserve model SHA, tokenizer authority, prompt IDs, generated
+IDs, decoded text, selected CPU backend/kernel identity, dense hook identity
+where applicable, and `fallback_used=false` before any later allocation or
+timing claim can use the pre-sizing slice as evidence. The gate must classify
+whether pre-sizing changed allocation-audit counters or only made capacity reuse
+receipt-visible, then name the next safe allocation hotspot.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the

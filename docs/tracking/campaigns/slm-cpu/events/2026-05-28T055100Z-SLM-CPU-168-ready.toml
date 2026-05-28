@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T05:51:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-168"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-168-presizing-receipt-evidence"
+summary = "Queued the actual post-SLM-CPU-167 prompt/session pre-sizing receipt evidence slice."
+notes = [
+  "SLM-CPU-167 defined the receipt comparison gate; SLM-CPU-168 is the first slice allowed to capture or precisely block the committed Qwen3/Qwen2.5 strict CPU comparison evidence.",
+  "The slice must preserve model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and fallback_used=false.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
