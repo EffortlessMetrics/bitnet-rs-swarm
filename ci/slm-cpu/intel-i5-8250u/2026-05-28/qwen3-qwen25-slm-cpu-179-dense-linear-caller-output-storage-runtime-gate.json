@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_dense_linear_caller_output_storage_runtime_gate",
+  "claim": "runtime_disabled_dense_linear_caller_output_storage_gate_contract",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-178",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-179 defines the disabled dense-linear caller-output-storage runtime gate only.",
+    "No runtime behavior changes are made in this slice.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made.",
+    "The gate cannot be enabled until both API capability and paired strict Qwen3/Qwen2.5 before/after receipt evidence exist."
+  ],
+  "consumed_classification": {
+    "source_item": "SLM-CPU-178",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "selected_sub_boundary": "dense_linear_output_storage_api_boundary",
+    "selected_surface": "feed_forward.down_proj.output",
+    "source_status": "blocked",
+    "reason": "SLM-CPU-178 found that dense-linear read-side state is inspectable, but production compute returns owned Candle Tensor outputs and helper-local output slices cannot cross the returned-Tensor boundary."
+  },
+  "runtime_gate": {
+    "gate_name": "dense_linear_caller_output_storage_runtime_gate",
+    "default_state": "disabled",
+    "runtime_candidate_available_now": false,
+    "runtime_selector_default": "existing_candle_linear_forward",
+    "candidate_selector_state": "not_selectable",
+    "first_allowed_surface": "feed_forward.down_proj.output",
+    "first_allowed_phase": "trace_or_receipt_gated_experiment_only",
+    "enablement_policy": "all_required_conditions_must_pass",
+    "required_api_capabilities": [
+      {
+        "capability": "matmul_out_or_equivalent",
+        "status": "missing",
+        "reason": "Tensor::matmul returns an owned Tensor and exposes no caller-provided output storage parameter."
+      },
+      {
+        "capability": "bias_add_out_or_equivalent",
+        "status": "missing",
+        "reason": "Tensor::broadcast_add returns an owned Tensor and exposes no caller-provided output storage parameter for optional dense-linear bias."
+      },
+      {
+        "capability": "returned_tensor_view_over_reusable_storage_or_fused_consumer",
+        "status": "missing",
+        "reason": "Tensor::from_vec consumes owned Vec storage, and downstream transformer stages currently require Candle Tensor semantics after dense-linear output."
+      },
+      {
+        "capability": "typed_fused_consumer_owning_all_downstream_dense_linear_consumers",
+        "status": "missing",
+        "reason": "No typed fused consumer currently owns the post-dense-linear Tensor consumers, residual/norm boundaries, trace identity, and receipt-safe generated behavior."
+      }
+    ],
+    "allowed_future_implementation_shapes": [
+      "Candle exposes matmul_out and broadcast_add_out style APIs that fill caller-provided output storage while preserving Tensor semantics.",
+      "The repo adds a typed fused dense-linear consumer that owns every downstream consumer stage and avoids returned Tensor materialization.",
+      "A backend-local helper remains trace-only or receipt-gated until the strict cross-model evidence gate proves unchanged generated behavior."
+    ],
+    "explicit_non_solutions": [
+      "Skipping bias in a no-bias tensor path does not solve matmul's owned Tensor output.",
+      "Filling a helper-local Vec or host slice does not solve the returned Candle Tensor boundary.",
+      "Promoting source-order or packed-Q8 helper paths to default runtime is not allowed by this gate.",
+      "A single-model receipt is not enough to enable the gate."
+    ]
+  },
+  "required_receipt_gate_before_enablement": {
+    "models": [
+      {
+        "model_id": "qwen3_0_6b_q8_0",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "required_pair": "strict_before_after_warm_session_receipts"
+      },
+      {
+        "model_id": "qwen2_5_0_5b_instruct_q8_0",
+        "model_sha256": "recorded_in_existing_qwen25_receipts",
+        "required_pair": "strict_before_after_warm_session_receipts"
+      }
+    ],
+    "must_preserve": [
+      "model_sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "selected_kernel_or_dense_path_identity",
+      "dense_hook_identity_where_applicable",
+      "fallback_used=false",
+      "prompt_template",
+      "qwen_no_think_policy",
+      "stop_reason"
+    ],
+    "measurement_fields_required_before_any_improvement_claim": [
+      "allocation counters for feed_forward.down_proj.output",
+      "prompt_prefill.forward allocation counters",
+      "decode model.forward allocation counters",
+      "phase timing for affected warm-session prompts",
+      "thread count",
+      "memory footprint",
+      "storage context",
+      "thermal/power fields as measured or explicitly unavailable"
+    ],
+    "failure_policy": [
+      "If either model changes generated_ids, decoded_text, backend identity, tokenizer authority, or fallback status, the gate remains disabled.",
+      "If allocation counters or timing fields are absent, the gate may preserve behavior but cannot claim allocation or timing improvement.",
+      "If API capability is still missing, the gate remains disabled even if a helper-local output slice exists."
+    ]
+  },
+  "runtime_status_after_slm_cpu_179": {
+    "gate_defined": true,
+    "gate_enabled": false,
+    "default_runtime": "unchanged",
+    "runtime_behavior_changed": false,
+    "requires_future_item": true,
+    "selected_next_frontier": "candle_output_storage_or_typed_fused_dense_consumer_evidence",
+    "selected_next_frontier_reason": "The disabled gate is now explicit; future work must either produce real output-storage APIs or a typed fused consumer plus paired strict receipt evidence before runtime promotion."
+  },
+  "must_not_claim": [
+    "SLM-CPU-179 changes runtime allocation behavior.",
+    "SLM-CPU-179 enables dense-linear caller-output storage by default.",
+    "SLM-CPU-179 proves allocation reduction, timing improvement, speedup, or sustained throughput.",
+    "Candle Tensor matmul, broadcast_add, final-norm, residual-add, output-head, or model.forward caller-output-storage blockers are resolved.",
+    "A no-bias fast path solves the output-storage boundary.",
+    "Packed-Q8 or source-order sidecar paths are promoted to default runtime.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
