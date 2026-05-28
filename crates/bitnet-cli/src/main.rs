@@ -18254,9 +18254,7 @@ mod tests {
         assert!(
             first["capacity_grew_buffers"]
                 .as_array()
-                .expect("capacity_grew_buffers must be an array")
-                .iter()
-                .any(|value| value == "logits_scratch")
+                .is_some_and(|values| values.iter().any(|value| value == "logits_scratch"))
         );
 
         buffers.tokens.extend_from_slice(&[1, 2, 3]);
@@ -18276,20 +18274,8 @@ mod tests {
         assert_eq!(second["stop_tail_capacity_grew"], false);
         assert_eq!(second["logits_capacity_grew"], false);
         assert_eq!(second["all_buffers_capacity_sufficient"], true);
-        assert_eq!(
-            second["capacity_grew_buffers"]
-                .as_array()
-                .expect("capacity_grew_buffers must be an array")
-                .len(),
-            0
-        );
-        assert_eq!(
-            second["insufficient_buffers"]
-                .as_array()
-                .expect("insufficient_buffers must be an array")
-                .len(),
-            0
-        );
+        assert_eq!(second["capacity_grew_buffers"].as_array().map(std::vec::Vec::len), Some(0));
+        assert_eq!(second["insufficient_buffers"].as_array().map(std::vec::Vec::len), Some(0));
         assert_eq!(
             second["buffer_capacity_details"]["token_decode_step_allocs"]["capacity_grew"],
             serde_json::json!(false)
