@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T08:10:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-171"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 868
+merge_sha = "a89179b522082b8650b7523d0966cb9d537fd580"
+branch = "codex/slm-cpu-171-post-residual-allocation-frontier"
+summary = "Merged the post-residual allocation frontier selection artifact."
+notes = [
+  "SLM-CPU-171 selects prompt_tokenize as the next measured Qwen3/Qwen2.5 allocation frontier not blocked by Candle residual-add caller-output-storage support.",
+  "The artifact records exact Qwen3 and Qwen2.5 allocation counters from SLM-CPU-168.",
+  "No runtime allocation behavior, allocation reduction, latency improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim was made.",
+]

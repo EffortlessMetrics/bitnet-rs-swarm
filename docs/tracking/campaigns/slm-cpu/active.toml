@@ -10069,7 +10069,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-171"
-status = "ready"
+status = "merged"
+pr = 868
 branch = "codex/slm-cpu-171-post-residual-allocation-frontier"
 stackable = false
 review_mode = "codex_premerge"
@@ -10108,6 +10109,54 @@ may_claim = [
 ]
 must_not_claim = [
   "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-172"
+status = "ready"
+branch = "codex/slm-cpu-172-prompt-tokenize-allocation-contract"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-171"]
+acceptance = "Consume the SLM-CPU-171 selected `prompt_tokenize` frontier and define a machine-checkable prompt-tokenize allocation contract for the Kaby Qwen3/Qwen2.5 strict CPU lane. The contract must distinguish tokenizer-internal allocations from repo-owned prompt/rendered-template/token-ID reuse opportunities, define the exact prompt identity and strict tokenizer provenance fields needed for safe reuse, and keep runtime behavior unchanged unless paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts preserve model SHA, GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-171 selects prompt_tokenize as the largest measured Qwen3/Qwen2.5 frontier that is not blocked by Candle residual-add caller-output-storage support.",
+]
+may_claim = [
+  "SLM-CPU-172 may define the prompt-tokenize reuse contract and exact receipt fields needed before runtime changes.",
+  "SLM-CPU-172 may record tokenizer-internal allocation blockers or missing measurement fields.",
+]
+must_not_claim = [
+  "Allocation reduction, latency improvement, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
+  "Prompt-tokenize runtime behavior changed without paired strict Qwen3/Qwen2.5 before/after receipts.",
   "The Candle residual-add output-storage blocker is resolved.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
