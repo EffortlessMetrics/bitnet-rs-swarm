@@ -9915,7 +9915,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-168"
-status = "ready"
+status = "pr_open"
+pr = 862
 branch = "codex/slm-cpu-168-presizing-receipt-evidence"
 stackable = false
 review_mode = "codex_premerge"
@@ -9946,10 +9947,14 @@ forbidden_paths = [
 evidence = [
   "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
   "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json",
 ]
 may_claim = [
-  "SLM-CPU-168 may capture the committed Qwen3/Qwen2.5 strict CPU receipt comparison needed before deciding the next allocation hotspot.",
-  "SLM-CPU-168 may record an exact local artifact/cache blocker instead of changing runtime behavior.",
+  "SLM-CPU-168 captures committed Qwen3/Qwen2.5 strict CPU receipt comparison evidence for the SLM-CPU-166 prompt/session pre-sizing boundary.",
+  "SLM-CPU-168 proves model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity, and fallback_used=false are preserved across the pre-sizing boundary.",
+  "SLM-CPU-168 classifies prompt/session buffer pre-sizing as capacity reuse made receipt-visible, with prompt_prefill.forward still the next safe allocation hotspot.",
 ]
 must_not_claim = [
   "Allocation reduction, speedup, or sustained throughput is proven without explicit before/after receipt evidence.",
