@@ -1,0 +1,13 @@
+timestamp = "2026-05-28T23:34:41Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-199"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-199-no-bias-runtime-descriptor-contract"
+summary = "Queued the manifest-bound no-bias runtime descriptor contract."
+notes = [
+  "SLM-CPU-199 should consume the SLM-CPU-198 blocker and define how exact Qwen3 Q8_0 feed_forward.down_proj no-bias role identity reaches the FeedForward apply-linear boundary and receipts.",
+  "The slice must keep normal inference on eager_f32_candle by default and must not execute the candidate or claim preserved generated IDs without fresh before/after strict receipts.",
+]

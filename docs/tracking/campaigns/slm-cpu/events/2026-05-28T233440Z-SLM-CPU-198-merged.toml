@@ -1,0 +1,15 @@
+timestamp = "2026-05-28T23:34:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-198"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 922
+merge_sha = "e0eded352e86bc2c58c0350a42dda6e99888d375"
+branch = "codex/slm-cpu-198-no-bias-runtime-experiment-gate"
+summary = "Merged the no-bias runtime experiment gate blocker artifact."
+notes = [
+  "SLM-CPU-198 consumed the SLM-CPU-197 runtime-selection preflight and recorded that runtime selection remains blocked until a manifest-bound no-bias descriptor and fresh before/after strict warm-session receipts exist.",
+  "Normal inference remains eager_f32_candle with dense-f32-candle-linear; no runtime selection, allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim was made.",
+]
