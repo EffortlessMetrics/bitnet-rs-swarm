@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T05:27:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-167"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-167-presizing-receipt-comparison"
+summary = "Queued the post-SLM-CPU-166 prompt/session pre-sizing receipt comparison gate."
+notes = [
+  "SLM-CPU-167 must consume the SLM-CPU-166 pre-sizing implementation and committed SLM-CPU-161 allocation-audit baselines before any allocation or timing claim.",
+  "The next slice must either capture Qwen3/Qwen2.5 strict CPU receipt comparison evidence with unchanged generated IDs and fallback_used=false, or record the exact artifact/cache blocker.",
+  "The gate preserves the Kaby claim boundary: no speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]

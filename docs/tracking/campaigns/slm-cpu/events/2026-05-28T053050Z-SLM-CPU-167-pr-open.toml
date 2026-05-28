@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T05:30:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-167"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 858
+branch = "codex/slm-cpu-167-presizing-receipt-comparison"
+head_sha = "68166f04d6e6996adc8c7c07a7cb52676c8b0d99"
+summary = "Opened PR #858 to queue the post-SLM-CPU-166 prompt/session pre-sizing receipt comparison gate."
+notes = [
+  "The PR is tracker-only and adds no runtime behavior change.",
+  "SLM-CPU-167 requires a committed Qwen3/Qwen2.5 strict CPU receipt comparison or exact artifact/cache blocker before any allocation or timing claim.",
+  "No allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 behavior is claimed.",
+]
