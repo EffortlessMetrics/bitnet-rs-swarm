@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T10:36:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-176"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-176-post-prompt-tokenize-frontier"
+summary = "Queued the post-prompt-tokenize frontier selection after SLM-CPU-175."
+notes = [
+  "SLM-CPU-176 should consume SLM-CPU-175 receipts and select the next safe repo-owned Kaby Qwen3/Qwen2.5 allocation or timing frontier.",
+  "The item may classify prompt-tokenize evidence only within the byte-identical resident-session cache-hit scope proven by SLM-CPU-175.",
+  "No runtime change, sustained throughput, broad decode/prefill/model-load speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]
