@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T20:55:25Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-194"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-194-no-bias-fastpath-implementation-gate"
+summary = "Queued first no-bias dense-linear fast-path implementation gate."
+notes = [
+  "SLM-CPU-194 should consume the SLM-CPU-193 preservation artifact and define the first safe role-scoped no-bias dense-linear fast-path implementation gate.",
+  "The gate must keep BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled by default and require real before/after strict warm-session receipts before any runtime use.",
+  "No fast-path compute implementation, default runtime selection, allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
