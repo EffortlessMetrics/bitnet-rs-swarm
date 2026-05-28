@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_dense_bias_manifest_capture_blocker",
+  "claim": "dense_bias_manifest_capture_blocked",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 strict CPU warm-session performance lane after SLM-CPU-183",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-182-no-bias-dense-linear-frontier.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-184 attempts to consume the SLM-CPU-183 manifest gate using committed evidence only.",
+    "Committed evidence is insufficient to capture a full Qwen3/Qwen2.5 Q8_0 per-role bias-presence manifest.",
+    "This slice precisely blocks the no-bias fast-path branch on missing role manifest artifacts.",
+    "This slice does not implement, select, or enable a no-bias dense-linear fast path.",
+    "This slice does not change runtime behavior or default runtime selection.",
+    "This slice does not claim allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior."
+  ],
+  "consumed_gate": {
+    "source_item": "SLM-CPU-183",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json",
+    "gate_name": "q8_dense_no_bias_manifest_gate",
+    "default_enabled": false,
+    "runtime_selectable_now": false,
+    "required_decision": "capture_or_block_exact_qwen3_qwen25_q8_dense_bias_manifest"
+  },
+  "evidence_review": [
+    {
+      "evidence_surface": "model_init.linear_bias_finish trace code",
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "171-183",
+      "finding": "The code can emit model-init bias finish events with bias present true or false.",
+      "usable_as_manifest_now": false,
+      "reason": "No committed Qwen3/Qwen2.5 artifact in this slice contains a complete role_records array derived from this trace for every attention, feed-forward, and output-head role."
+    },
+    {
+      "evidence_surface": "strict Qwen3/Qwen2.5 warm-session receipts",
+      "paths": [
+        "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+        "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+        "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+        "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+      ],
+      "finding": "These receipts preserve model/tokenizer/backend/fallback identity and record zero sidecar bias materialization calls in the selected committed runs.",
+      "usable_as_manifest_now": false,
+      "reason": "Bias materialization counters are aggregate runtime counters, not per-role/layer positive absence evidence."
+    },
+    {
+      "evidence_surface": "older sidecar/candidate receipts",
+      "paths": [
+        "ci/slm-cpu/intel-i5-8250u/2026-05-22/qwen3-slm-cpu-077-post-bridge-packed-q8-sidecar-warm-session.json",
+        "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-158-after-warm-session.json"
+      ],
+      "finding": "Some candidate receipts record non-zero bias_materialization_calls when sidecar/candidate paths materialize bias values.",
+      "usable_as_manifest_now": false,
+      "reason": "This reinforces the fail-closed policy: absence of materialization in one strict path cannot prove every dense-linear role is biasless."
+    },
+    {
+      "evidence_surface": "SLM-CPU-178 read-side inspection",
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+      "finding": "Dense-linear weights and optional bias are readable, but output storage is still blocked by owned Candle Tensor semantics.",
+      "usable_as_manifest_now": false,
+      "reason": "Readability and bias_accessible metadata do not enumerate every model role or prove bias absence per layer."
+    }
+  ],
+  "manifest_capture_status": {
+    "qwen3_q8_0": "blocked_missing_complete_role_manifest",
+    "qwen25_q8_0": "blocked_missing_complete_role_manifest",
+    "cross_model_gate": "fail_closed",
+    "reason": "No committed evidence artifact provides role_records for every required attention, feed-forward, and output-head role with positive bias_present true/false values and output_head_mode."
+  },
+  "missing_fields": [
+    {
+      "field": "role_records[].role_id",
+      "why_required": "Identifies the exact canonical dense-linear role and layer selected by any future no-bias selector."
+    },
+    {
+      "field": "role_records[].role_family",
+      "why_required": "Separates attention, feed-forward, and output-head semantics for fail-closed allowlisting."
+    },
+    {
+      "field": "role_records[].weight_name",
+      "why_required": "Ties manifest evidence to the exact GGUF or canonical source tensor."
+    },
+    {
+      "field": "role_records[].weight_shape",
+      "why_required": "Proves the role record matches the runtime matrix selected by the dense path."
+    },
+    {
+      "field": "role_records[].weight_quant_format",
+      "why_required": "Keeps the gate scoped to Q8_0 and prevents accidental Q4/Q5 inference."
+    },
+    {
+      "field": "role_records[].bias_present",
+      "why_required": "Positive true/false bias evidence is the gate condition; omitted, null, or unknown fails closed."
+    },
+    {
+      "field": "role_records[].bias_tensor_name",
+      "why_required": "Records the exact present bias tensor or null when absence is proven."
+    },
+    {
+      "field": "role_records[].bias_shape",
+      "why_required": "Prevents treating a mismatched or unrelated bias tensor as valid role evidence."
+    },
+    {
+      "field": "role_records[].bias_source",
+      "why_required": "Distinguishes model-init trace, tensor manifest, absent-in-GGUF, and present-in-GGUF evidence."
+    },
+    {
+      "field": "role_records[].output_head_mode",
+      "why_required": "Output-head roles may be dedicated lm_head, tied embeddings, or transposed head paths and cannot share one bias decision."
+    },
+    {
+      "field": "manifest_source_sha256",
+      "why_required": "Lets paired receipts bind behavior proof to a specific manifest artifact."
+    },
+    {
+      "field": "generated_from_commit",
+      "why_required": "Keeps the manifest tied to the loader/model-init code that produced it."
+    }
+  ],
+  "required_role_coverage": [
+    {
+      "model_family": "qwen3",
+      "quant_format": "Q8_0",
+      "required_attention_roles": "q_proj, k_proj, v_proj, o_proj for every layer",
+      "required_feed_forward_roles": "gate_proj, up_proj, down_proj for every layer",
+      "required_output_head_roles": "the exact selected output-head path only",
+      "status": "blocked_missing_manifest"
+    },
+    {
+      "model_family": "qwen2.5",
+      "quant_format": "Q8_0",
+      "required_attention_roles": "q_proj, k_proj, v_proj, o_proj for every layer",
+      "required_feed_forward_roles": "gate_proj, up_proj, down_proj for every layer",
+      "required_output_head_roles": "the exact selected output-head path only",
+      "status": "blocked_missing_manifest"
+    }
+  ],
+  "fail_closed_result": {
+    "no_bias_manifest_gate_satisfied": false,
+    "no_bias_fast_path_selectable": false,
+    "default_runtime_changed": false,
+    "blocked_on": [
+      "complete Qwen3 Q8_0 role_records manifest",
+      "complete Qwen2.5 Q8_0 role_records manifest",
+      "paired strict receipts binding manifest identity to generated IDs/text and fallback=false",
+      "receipt-visible no-bias selector identity and bias materialization counters"
+    ]
+  },
+  "recommended_next_item": {
+    "id": "SLM-CPU-185",
+    "frontier": "model_init_bias_manifest_trace_export",
+    "recommended_action": "Add or use a trace export surface that emits per-role/layer dense-linear bias presence into a manifest artifact, then rerun Qwen3/Qwen2.5 strict receipt validation without enabling no-bias runtime selection.",
+    "allowed_kind": "trace_export_or_precise_blocker",
+    "runtime_selection_allowed": false
+  },
+  "must_not_claim": [
+    "SLM-CPU-184 captures a complete Qwen3/Qwen2.5 dense-linear bias manifest.",
+    "SLM-CPU-184 proves all Qwen3/Qwen2.5 dense-linear roles are biasless.",
+    "SLM-CPU-184 implements or selects a no-bias dense-linear fast path.",
+    "SLM-CPU-184 changes runtime allocation behavior.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}

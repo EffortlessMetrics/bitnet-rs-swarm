@@ -90,6 +90,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Fused dense-consumer feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json` | Classifies a narrow repo-owned fused dense-linear consumer as too broad because it would need to own residual add, trace/workspace identity, block output identity, and next norm/model-forward Tensor semantics; runtime behavior remains unchanged |
 | No-bias dense-linear frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-182-no-bias-dense-linear-frontier.json` | Classifies no-bias dense-linear as a future disabled gate: existing strict Qwen3/Qwen2.5 receipts show zero sidecar bias materialization calls, but committed evidence does not prove every dense-linear role is biasless, and the no-bias path does not resolve the Candle owned-output Tensor boundary |
 | Dense bias manifest gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-183-dense-bias-manifest-gate.json` | Defines the fail-closed per-role bias-presence manifest or model-init trace required before any future no-bias dense-linear fast path; unknown or present bias blocks selection and runtime behavior remains unchanged |
+| Dense bias manifest capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json` | Blocks manifest capture from committed evidence because model-init trace code and aggregate bias counters are not a complete per-role Qwen3/Qwen2.5 bias-presence manifest; no runtime selection changes |
 
 Qwen3 rows use:
 
@@ -2009,6 +2010,21 @@ Output-head roles must also record whether the selected path is a dedicated
 contract only: no runtime behavior changes, no no-bias fast path is selected,
 and no allocation, timing, speedup, sustained-throughput, Q4/Q5, accelerator,
 Qwen3.5, or BitNet QK256 claim is made.
+
+SLM-CPU-184 checks whether committed evidence can satisfy that gate:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json
+```
+
+It cannot yet. The code has a `model_init.linear_bias_finish` trace surface and
+receipts expose aggregate bias materialization counters, but neither is a
+complete per-role/layer manifest for all Qwen3/Qwen2.5 attention, feed-forward,
+and output-head roles. Some older sidecar/candidate receipts also show non-zero
+bias materialization calls, so the lane cannot infer role-wide bias absence from
+zero counters in one strict path. The no-bias branch therefore remains
+fail-closed until a real model-init trace export or tensor manifest records
+`role_records` with positive bias presence/absence and output-head mode.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
