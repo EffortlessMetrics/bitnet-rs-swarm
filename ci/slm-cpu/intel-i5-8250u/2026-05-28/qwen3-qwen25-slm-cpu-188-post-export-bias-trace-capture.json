@@ -1,0 +1,200 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_post_export_dense_bias_trace_capture",
+  "claim": "post_export_model_init_linear_bias_finish_traces_captured",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 post-export dense-linear bias trace capture after SLM-CPU-187",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-187-post-export-trace-capture-prereq.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-185-model-init-bias-manifest-trace-export.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-188 captures post-export model_init.linear_bias_finish trace files and paired strict warm-session receipts for Qwen3 and Qwen2.5 Q8_0.",
+    "This slice records evidence needed for dense-linear bias role_records derivation; it does not implement, select, or enable a no-bias dense-linear fast path.",
+    "This slice does not change runtime behavior, generated IDs, decoded text, prompt IDs, tokenizer authority, backend/kernel identity, dense path identity, or fallback status.",
+    "This slice does not claim allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior."
+  ],
+  "capture_completed": true,
+  "model_captures": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "family": "qwen3",
+      "model_path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "expected_bytes": 639446688,
+      "model_path_status": "present_at_required_local_path",
+      "trace_file": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-trace.jsonl",
+      "receipt_file": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json",
+      "per_prompt_receipt_dir": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt-prompts",
+      "strict_receipt_identity": {
+        "loader_mode": "real_gguf",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "selected_backend": "cpu-rust",
+        "runtime_api": "cpu",
+        "fallback_used": false,
+        "prompt_ids_present": true,
+        "generated_ids_present": true,
+        "decoded_text_present": true
+      },
+      "trace_coverage": {
+        "finish_events": 197,
+        "attention": {
+          "q_proj": {
+            "count": 28,
+            "bias_present": false
+          },
+          "k_proj": {
+            "count": 28,
+            "bias_present": false
+          },
+          "v_proj": {
+            "count": 28,
+            "bias_present": false
+          },
+          "o_proj": {
+            "count": 28,
+            "bias_present": false
+          }
+        },
+        "feed_forward": {
+          "gate_proj": {
+            "count": 28,
+            "bias_present": false
+          },
+          "up_proj": {
+            "count": 28,
+            "bias_present": false
+          },
+          "down_proj": {
+            "count": 28,
+            "bias_present": false
+          }
+        },
+        "output_head": {
+          "lm_head": {
+            "count": 1,
+            "bias_present": false,
+            "recovery_path": "tied_embedding_output_head"
+          }
+        },
+        "missing_present_fields": 0,
+        "missing_layer_fields_for_layer_roles": 0
+      }
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "family": "qwen2.5",
+      "model_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+      "required_local_path": "models/slm/qwen2.5-0.5b-instruct-q8_0.gguf",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "expected_bytes": 675710816,
+      "model_path_status": "captured_from_equivalent_verified_operator_path_required_local_path_absent",
+      "trace_file": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-trace.jsonl",
+      "receipt_file": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json",
+      "per_prompt_receipt_dir": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt-prompts",
+      "strict_receipt_identity": {
+        "loader_mode": "real_gguf",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "selected_backend": "cpu-rust",
+        "runtime_api": "cpu",
+        "fallback_used": false,
+        "prompt_ids_present": true,
+        "generated_ids_present": true,
+        "decoded_text_present": true
+      },
+      "trace_coverage": {
+        "finish_events": 169,
+        "attention": {
+          "q_proj": {
+            "count": 24,
+            "bias_present": true
+          },
+          "k_proj": {
+            "count": 24,
+            "bias_present": true
+          },
+          "v_proj": {
+            "count": 24,
+            "bias_present": true
+          },
+          "o_proj": {
+            "count": 24,
+            "bias_present": false
+          }
+        },
+        "feed_forward": {
+          "gate_proj": {
+            "count": 24,
+            "bias_present": false
+          },
+          "up_proj": {
+            "count": 24,
+            "bias_present": false
+          },
+          "down_proj": {
+            "count": 24,
+            "bias_present": false
+          }
+        },
+        "output_head": {
+          "lm_head": {
+            "count": 1,
+            "bias_present": false,
+            "recovery_path": null,
+            "direct_lm_head_weight_used": true
+          }
+        },
+        "missing_present_fields": 0,
+        "missing_layer_fields_for_layer_roles": 0
+      }
+    }
+  ],
+  "role_records_manifest_status": {
+    "trace_inputs_available": true,
+    "paired_strict_receipts_available": true,
+    "ready_for_manifest_derivation": true,
+    "manifest_derived_in_this_slice": false,
+    "no_bias_fast_path_selectable": false,
+    "no_bias_fast_path_blocker": "Qwen2.5 attention q_proj, k_proj, and v_proj record bias_present=true, so any future selector must be role-specific and fail closed for biased roles."
+  },
+  "commands_run": [
+    {
+      "model_id": "qwen3-0.6b-q8_0",
+      "environment": {
+        "BITNET_STRICT_MODE": "1",
+        "BITNET_DISABLE_MINIMAL_LOADER": "1",
+        "BITNET_QWEN_TRACE_JSONL": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-trace.jsonl",
+        "RAYON_NUM_THREADS": "4"
+      },
+      "command": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- --device cpu slm-warm-session --model models/slm/Qwen3-0.6B-Q8_0.gguf --prompt-template qwen --corpus ci/quality/slm-warm-session-corpus.yaml --strict-loader --strict-tokenizer --json-out ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json"
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "environment": {
+        "BITNET_STRICT_MODE": "1",
+        "BITNET_DISABLE_MINIMAL_LOADER": "1",
+        "BITNET_QWEN_TRACE_JSONL": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-trace.jsonl",
+        "RAYON_NUM_THREADS": "4"
+      },
+      "command": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- --device cpu slm-warm-session --model target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf --prompt-template qwen --corpus ci/quality/slm-warm-session-corpus.yaml --strict-loader --strict-tokenizer --json-out ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json"
+    }
+  ],
+  "recommended_next_item": {
+    "frontier": "dense_bias_role_records_manifest_derivation",
+    "recommended_action": "Derive exact Qwen3/Qwen2.5 dense-linear bias role_records from the captured post-export traces and bind the manifest to the paired strict receipts before any no-bias runtime selector is considered."
+  },
+  "must_not_claim": [
+    "SLM-CPU-188 implements or selects a no-bias dense-linear fast path.",
+    "All Qwen3/Qwen2.5 dense-linear roles are biasless.",
+    "Runtime selection or generated output behavior changed.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}
