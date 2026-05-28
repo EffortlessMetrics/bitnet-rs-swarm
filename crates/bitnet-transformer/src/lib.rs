@@ -525,6 +525,153 @@ impl DenseLinearNoBiasSelectorAudit {
     }
 }
 
+pub const SLM_CPU_195_QWEN3_Q8_MODEL_SHA256: &str =
+    "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031";
+pub const SLM_CPU_195_QWEN3_DOWN_PROJ_LAYER_COUNT: usize = 28;
+pub const SLM_CPU_195_NO_BIAS_CANDIDATE_PATH: &str =
+    "qwen3_feed_forward_down_proj_no_bias_candidate";
+pub const SLM_CPU_195_NO_BIAS_CANDIDATE_KERNEL: &str = "dense-f32-no-bias-matmul-candidate";
+
+/// Runtime-disabled no-bias dense-linear candidate for the SLM-CPU-195 slice.
+///
+/// This records that the exact Qwen3 Q8_0 `feed_forward.down_proj` role can be
+/// computed without a bias add, but it does not select that candidate for model
+/// execution. Runtime still uses the existing eager F32 Candle linear path until
+/// a later PR supplies before/after warm-session receipts proving identical
+/// generated IDs and decoded text.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasFastPathCandidate {
+    pub role_id: String,
+    pub model_sha256: String,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_default_enabled: bool,
+    pub runtime_selection_enabled: bool,
+    pub candidate_compute_implemented: bool,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub eager_f32_runtime_preserved: bool,
+    pub dense_runtime_replaced: bool,
+    pub speedup_claim: bool,
+    pub generated_id_preservation_required_before_runtime_use: bool,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub required_receipt_fields_before_runtime_use: Vec<&'static str>,
+}
+
+impl DenseLinearNoBiasFastPathCandidate {
+    pub fn qwen3_down_proj(
+        layer_idx: usize,
+        role_id: impl Into<String>,
+        model_sha256: impl Into<String>,
+        manifest_sha256: impl Into<String>,
+        bias_present: Option<bool>,
+    ) -> Self {
+        let role_id = role_id.into();
+        let model_sha256 = model_sha256.into();
+        let expected_role_id = format!("layers.{layer_idx}.feed_forward.down_proj");
+        let mut fail_closed_conditions = Vec::new();
+        if layer_idx >= SLM_CPU_195_QWEN3_DOWN_PROJ_LAYER_COUNT {
+            fail_closed_conditions.push("layer_outside_qwen3_0_6b_range");
+        }
+        if role_id != expected_role_id {
+            fail_closed_conditions.push("role_not_qwen3_feed_forward_down_proj");
+        }
+        if model_sha256 != SLM_CPU_195_QWEN3_Q8_MODEL_SHA256 {
+            fail_closed_conditions.push("model_sha_not_qwen3_0_6b_q8_0");
+        }
+        match bias_present {
+            Some(false) => {}
+            Some(true) => fail_closed_conditions.push("bias_present_true"),
+            None => fail_closed_conditions.push("unknown_bias_present"),
+        }
+
+        let eligible = fail_closed_conditions.is_empty();
+        Self {
+            role_id,
+            model_sha256,
+            manifest_sha256: manifest_sha256.into(),
+            layer_idx,
+            scope: "feed_forward",
+            linear: "down_proj",
+            bias_present,
+            decision: if eligible {
+                "candidate_compute_available_runtime_disabled"
+            } else {
+                "blocked_fail_closed"
+            },
+            reason: if eligible {
+                "exact_qwen3_q8_down_proj_bias_false_candidate_preserves_eager_runtime"
+            } else {
+                "candidate_scope_or_bias_evidence_failed_closed"
+            },
+            runtime_gate_name: DenseLinearNoBiasSelectorAudit::RUNTIME_GATE_NAME,
+            runtime_gate_default_enabled: false,
+            runtime_selection_enabled: false,
+            candidate_compute_implemented: eligible,
+            candidate_path: SLM_CPU_195_NO_BIAS_CANDIDATE_PATH,
+            candidate_kernel: SLM_CPU_195_NO_BIAS_CANDIDATE_KERNEL,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            eager_f32_runtime_preserved: true,
+            dense_runtime_replaced: false,
+            speedup_claim: false,
+            generated_id_preservation_required_before_runtime_use: true,
+            fail_closed_conditions,
+            required_receipt_fields_before_runtime_use: vec![
+                "model_sha256",
+                "tokenizer.source",
+                "tokenizer.strict",
+                "selected_backend",
+                "runtime_api",
+                "fallback_used",
+                "prompt_ids_hash",
+                "generated_ids",
+                "decoded_text",
+                "dense_path_identity",
+                "manifest_sha256",
+                "role_id",
+                "bias_present",
+            ],
+        }
+    }
+
+    pub fn is_runtime_disabled_candidate(&self) -> bool {
+        self.decision == "candidate_compute_available_runtime_disabled"
+            && self.candidate_compute_implemented
+            && !self.runtime_selection_enabled
+            && self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.eager_f32_runtime_preserved
+            && !self.dense_runtime_replaced
+            && !self.speedup_claim
+            && self.fail_closed_conditions.is_empty()
+    }
+}
+
+/// Candidate no-bias matmul used by tests and future receipt-gated runtime work.
+///
+/// This function is intentionally not wired into transformer execution. It is
+/// a narrow implementation surface for roles whose manifest proves
+/// `bias_present=false`; callers must keep runtime selection disabled until
+/// before/after receipts prove behavior preservation.
+pub fn dense_linear_no_bias_candidate_forward(
+    input: &Tensor,
+    linear: &Linear,
+) -> candle_core::Result<Tensor> {
+    if linear.bias().is_some() {
+        candle_core::bail!("no-bias dense-linear candidate requires bias_present=false");
+    }
+    input.matmul(&linear.weight().t()?)
+}
+
 impl DenseLinearRuntimeHookBoundary {
     pub fn eager_f32(tensor_name: impl Into<String>) -> Self {
         Self {
