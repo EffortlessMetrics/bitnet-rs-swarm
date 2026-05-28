@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T11:16:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-177"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-177-model-forward-allocation-boundary"
+summary = "Queued the model.forward owned-tensor allocation boundary after SLM-CPU-176."
+notes = [
+  "SLM-CPU-177 should consume the SLM-CPU-176 frontier decision and identify the first actionable model.forward sub-boundary or the exact missing API/evidence that blocks runtime changes.",
+  "The item must distinguish Candle-owned tensor output blockers from repo-owned buffer/cache opportunities.",
+  "No runtime change, sustained throughput, broad decode/prefill/model-load speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]

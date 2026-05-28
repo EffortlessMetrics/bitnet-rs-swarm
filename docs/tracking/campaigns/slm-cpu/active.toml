@@ -10321,7 +10321,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-176"
-status = "ready"
+status = "merged"
+pr = 878
+merge_sha = "bfa26c25e48e69dad14f9e856e692297e909f4ec"
 branch = "codex/slm-cpu-176-post-prompt-tokenize-frontier"
 stackable = false
 review_mode = "codex_premerge"
@@ -10361,6 +10363,55 @@ must_not_claim = [
   "Prompt-token cache reuse applies across model SHA, tokenizer authority, template, Qwen no-think policy, raw prompt, rendered prompt, stop policy, or generation identity changes.",
   "Tokenizer-internal allocations are eliminated.",
   "The Candle residual-add output-storage blocker is resolved.",
+  "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-177"
+status = "ready"
+branch = "codex/slm-cpu-177-model-forward-allocation-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-176"]
+acceptance = "Consume the SLM-CPU-176 frontier decision and define the exact model.forward owned-tensor allocation boundary for the Kaby Qwen3/Qwen2.5 strict CPU lane. The slice must identify the dominant prompt_prefill.forward and decode model.forward allocation surfaces, distinguish Candle-owned tensor output blockers from repo-owned buffer/cache opportunities, name the first actionable sub-boundary or the exact missing API/evidence blocking runtime changes, and keep behavior unchanged unless paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict before/after receipts preserve model SHA, strict GGUF tokenizer authority, prompt/generated IDs, decoded text, selected CPU backend/kernel identity, dense hook identity where applicable, and `fallback_used=false`."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-176 selected model_forward_owned_tensor_allocation_boundary as the next high-value frontier after prompt-tokenize cache hits reduced prompt-tokenize to small cache-lookup allocations.",
+]
+may_claim = [
+  "SLM-CPU-177 may classify model.forward and prompt_prefill.forward allocation surfaces and select or block the first actionable sub-boundary.",
+  "SLM-CPU-177 may recommend a later runtime slice only if the required paired Qwen3/Qwen2.5 strict before/after receipt gate is explicit.",
+]
+must_not_claim = [
+  "Runtime allocation behavior changes without paired Qwen3/Qwen2.5 strict before/after receipts.",
+  "Sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Candle residual-add, final-norm, output-head, or dense-linear caller-output-storage blockers are resolved unless real API evidence proves it.",
   "Source-order or packed-Q8 sidecar paths are promoted to default runtime.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
