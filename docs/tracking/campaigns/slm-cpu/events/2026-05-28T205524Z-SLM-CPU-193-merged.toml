@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T20:55:24Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-193"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 912
+merge_sha = "ac35e8db3"
+branch = "codex/slm-cpu-193-no-bias-selector-preservation-receipts"
+summary = "Merged no-bias selector audit hook preservation receipts."
+notes = [
+  "SLM-CPU-193 binds the disabled SLM-CPU-192 audit hook to existing strict Qwen3/Qwen2.5 Q8_0 warm-session receipt identity.",
+  "The artifact preserves model SHA, GGUF tokenizer authority, prompt ID hashes, generated token IDs, decoded text, selected CPU backend/runtime, dense path identity, and fallback=false.",
+  "The merged slice does not rerun inference, change compute selection, enable a no-bias fast path, or claim allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
