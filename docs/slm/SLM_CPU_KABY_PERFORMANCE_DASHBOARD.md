@@ -93,6 +93,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Dense bias manifest capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-184-dense-bias-manifest-capture-blocker.json` | Blocks manifest capture from committed evidence because model-init trace code and aggregate bias counters are not a complete per-role Qwen3/Qwen2.5 bias-presence manifest; no runtime selection changes |
 | Model-init bias manifest trace export | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-185-model-init-bias-manifest-trace-export.json` | Adds the missing trace export coverage for feed-forward and output-head dense-linear bias presence so future exact-model traces can derive per-role/layer `role_records`; runtime selection and no-bias fast paths remain disabled |
 | Dense bias manifest trace capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-186-dense-bias-manifest-trace-capture-blocker.json` | Reviews committed pre-export traces, records Qwen3 attention bias absence and Qwen2.5 attention q/k/v bias presence, and blocks complete manifest capture until fresh post-export Qwen3/Qwen2.5 traces cover feed-forward and output-head roles |
+| Post-export dense bias trace capture | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-188-post-export-bias-trace-capture.json` | Captures post-export `model_init.linear_bias_finish` traces and paired strict warm-session receipts for Qwen3/Qwen2.5 Q8_0; Qwen3 records all selected dense-linear roles biasless, while Qwen2.5 records attention q/k/v bias present, keeping any blanket no-bias fast path fail-closed |
 
 Qwen3 rows use:
 
@@ -2028,7 +2029,7 @@ zero counters in one strict path. The no-bias branch therefore remains
 fail-closed until a real model-init trace export or tensor manifest records
 `role_records` with positive bias presence/absence and output-head mode.
 
-SLM-CPU-185 through SLM-CPU-187 narrow that blocker without changing runtime
+SLM-CPU-185 through SLM-CPU-188 narrow that blocker without changing runtime
 selection. SLM-CPU-185 adds feed-forward and output-head
 `model_init.linear_bias_finish` trace coverage, SLM-CPU-186 records that older
 committed traces predate that coverage, and SLM-CPU-187 fixes the remaining
@@ -2047,6 +2048,28 @@ prior verification evidence and must be supplied at the exact required path, or
 an equivalent operator path, before capture. The no-bias branch remains
 fail-closed: no runtime selection change, no allocation/timing claim, no Q4/Q5,
 no accelerator/server claim, no Qwen3.5, and no BitNet QK256 work.
+
+SLM-CPU-188 consumes that prerequisite surface and captures the real
+post-export trace/receipt bundle:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-188-post-export-bias-trace-capture.json
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-trace.jsonl
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-188-post-export-bias-receipt.json
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-trace.jsonl
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-188-post-export-bias-receipt.json
+```
+
+The Qwen3 trace records 197 `model_init.linear_bias_finish` events: 28 each
+for attention q/k/v/o and feed-forward gate/up/down, plus one tied output-head
+event. Every recorded Qwen3 role has `present=false`.
+
+The Qwen2.5 trace records 169 `model_init.linear_bias_finish` events: 24 each
+for attention q/k/v/o and feed-forward gate/up/down, plus one direct output-head
+event. Qwen2.5 attention q/k/v roles record `present=true`; attention o,
+feed-forward roles, and output-head bias record `present=false`. This means the
+trace inputs and paired receipts are ready for a bias `role_records` manifest,
+but no blanket no-bias dense-linear fast path is selectable.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
