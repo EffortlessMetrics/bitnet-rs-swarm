@@ -672,6 +672,121 @@ pub fn dense_linear_no_bias_candidate_forward(
     input.matmul(&linear.weight().t()?)
 }
 
+/// Disabled-by-default preflight for future no-bias runtime selection.
+///
+/// This is an audit surface only. It can report that an exact Qwen3 Q8_0
+/// down-projection candidate would be selectable in a receipt-gated experiment,
+/// but normal inference still selects the eager F32 Candle path.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasRuntimeSelectionPreflight {
+    pub role_id: String,
+    pub model_sha256: String,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_default_enabled: bool,
+    pub runtime_gate_requested_enabled: bool,
+    pub paired_strict_receipts_present: bool,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub would_select_candidate_in_receipt_gated_experiment: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub eager_f32_runtime_preserved: bool,
+    pub generated_id_preservation_required_before_runtime_use: bool,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub required_receipt_fields_before_runtime_use: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+impl DenseLinearNoBiasRuntimeSelectionPreflight {
+    pub fn from_candidate(
+        candidate: &DenseLinearNoBiasFastPathCandidate,
+        runtime_gate_requested_enabled: bool,
+        paired_strict_receipts_present: bool,
+    ) -> Self {
+        let mut fail_closed_conditions = candidate.fail_closed_conditions.clone();
+        if !runtime_gate_requested_enabled {
+            fail_closed_conditions.push("runtime_gate_not_requested");
+        }
+        if !paired_strict_receipts_present {
+            fail_closed_conditions.push("paired_strict_receipts_missing");
+        }
+
+        let would_select_candidate_in_receipt_gated_experiment = candidate
+            .is_runtime_disabled_candidate()
+            && runtime_gate_requested_enabled
+            && paired_strict_receipts_present;
+
+        let (decision, reason) = if would_select_candidate_in_receipt_gated_experiment {
+            (
+                "would_select_candidate_in_receipt_gated_experiment",
+                "exact_qwen3_q8_down_proj_candidate_gate_requested_and_receipts_present",
+            )
+        } else if !candidate.is_runtime_disabled_candidate() {
+            ("blocked_fail_closed", "candidate_scope_or_bias_evidence_failed_closed")
+        } else if !runtime_gate_requested_enabled {
+            ("default_disabled_preserves_eager_f32", "runtime_gate_not_requested")
+        } else {
+            (
+                "blocked_before_after_receipts_missing",
+                "paired_strict_warm_session_receipts_required_before_runtime_selection",
+            )
+        };
+
+        Self {
+            role_id: candidate.role_id.clone(),
+            model_sha256: candidate.model_sha256.clone(),
+            manifest_sha256: candidate.manifest_sha256.clone(),
+            layer_idx: candidate.layer_idx,
+            runtime_gate_name: candidate.runtime_gate_name,
+            runtime_gate_default_enabled: false,
+            runtime_gate_requested_enabled,
+            paired_strict_receipts_present,
+            candidate_path: candidate.candidate_path,
+            candidate_kernel: candidate.candidate_kernel,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            normal_inference_runtime_selection_enabled: false,
+            would_select_candidate_in_receipt_gated_experiment,
+            decision,
+            reason,
+            eager_f32_runtime_preserved: true,
+            generated_id_preservation_required_before_runtime_use: true,
+            fail_closed_conditions,
+            required_receipt_fields_before_runtime_use: candidate
+                .required_receipt_fields_before_runtime_use
+                .clone(),
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        !self.runtime_gate_default_enabled
+            && !self.normal_inference_runtime_selection_enabled
+            && self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.eager_f32_runtime_preserved
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+pub fn dense_linear_no_bias_runtime_gate_requested(value: Option<&str>) -> bool {
+    matches!(
+        value.map(str::trim).map(str::to_ascii_lowercase).as_deref(),
+        Some("1" | "true" | "yes" | "on")
+    )
+}
+
 impl DenseLinearRuntimeHookBoundary {
     pub fn eager_f32(tensor_name: impl Into<String>) -> Self {
         Self {
