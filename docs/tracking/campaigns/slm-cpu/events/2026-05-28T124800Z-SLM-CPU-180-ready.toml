@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T12:48:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-180"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-180-fused-dense-consumer-feasibility"
+summary = "Queued fused dense-consumer feasibility after SLM-CPU-179."
+notes = [
+  "SLM-CPU-180 should consume the disabled gate from SLM-CPU-179 and decide whether a repo-owned typed fused dense-linear consumer is feasible before waiting on upstream Candle output-storage APIs.",
+  "The item must name every downstream Tensor semantic a fused consumer would need to own, or record that the blocker moves to upstream Candle matmul_out/broadcast_add_out support.",
+  "No runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed from queueing this item.",
+]

@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T12:47:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-179"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 884
+merge_sha = "00b2f6f10279c729123943d77fecfd4b204ece9d"
+branch = "codex/slm-cpu-179-dense-linear-caller-output-storage-runtime-gate"
+summary = "Closed the disabled dense-linear caller-output-storage runtime gate after #884 merged."
+notes = [
+  "SLM-CPU-179 defines dense_linear_caller_output_storage_runtime_gate as disabled by default and not selectable from current runtime dispatch.",
+  "The merged slice requires real matmul_out/broadcast_add_out-style APIs or a typed fused consumer plus paired Qwen3/Qwen2.5 strict before/after receipts before runtime promotion.",
+  "No runtime behavior change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
