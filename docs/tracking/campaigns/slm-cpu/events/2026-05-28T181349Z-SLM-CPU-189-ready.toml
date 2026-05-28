@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T18:13:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-189"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-189-dense-bias-role-records-manifest"
+summary = "Queued dense bias role_records manifest derivation after SLM-CPU-188."
+notes = [
+  "SLM-CPU-189 should consume the SLM-CPU-188 post-export trace files and paired strict receipts.",
+  "The item should derive an exact dense-linear bias role_records manifest and fail closed on missing, duplicate, unknown, or contradictory role evidence.",
+  "The manifest must record that Qwen2.5 attention q/k/v bias_present=true blocks any blanket no-bias dense-linear selector.",
+]
