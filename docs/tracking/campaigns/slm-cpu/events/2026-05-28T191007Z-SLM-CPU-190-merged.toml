@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T19:10:07Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-190"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 906
+merge_sha = "acd052a4e"
+branch = "codex/slm-cpu-190-no-bias-selector-policy-gate"
+summary = "Merged runtime-disabled no-bias selector policy gate."
+notes = [
+  "SLM-CPU-190 derives a fail-closed selector policy from the SLM-CPU-189 role_records manifest.",
+  "The policy records 294 biasless eligible role records and 72 biased blocked role records.",
+  "The merged slice keeps the selector disabled by default and makes no no-bias fast-path, runtime selection, allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

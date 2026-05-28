@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T19:10:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-191"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-191-no-bias-selector-dry-run-receipts"
+summary = "Queued runtime-disabled no-bias selector dry-run receipt surface after SLM-CPU-190."
+notes = [
+  "SLM-CPU-191 should consume the SLM-CPU-190 fail-closed selector policy and emit dry-run selector decisions for eligible and blocked roles.",
+  "The dry run must preserve strict receipt identity for model SHA, GGUF tokenizer authority, selected CPU backend/runtime, fallback=false, prompt IDs, generated IDs, decoded text, dense path identity, manifest SHA, role ID, and bias_present.",
+  "Runtime selector behavior remains disabled; no allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
