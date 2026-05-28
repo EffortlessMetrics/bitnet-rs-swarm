@@ -10739,7 +10739,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-184"
-status = "ready"
+status = "merged"
+pr = 894
+merge_sha = "3899d9bd595f99b70d14194535ff30eaa8602d77"
 branch = "codex/slm-cpu-184-dense-bias-manifest-capture"
 stackable = false
 review_mode = "codex_premerge"
@@ -10775,6 +10777,55 @@ evidence = [
 may_claim = [
   "SLM-CPU-184 may capture a real Qwen3/Qwen2.5 Q8_0 dense-linear bias-presence manifest if existing trace or manifest surfaces provide the required fields.",
   "SLM-CPU-184 may precisely block manifest capture by naming the missing trace or tensor-manifest fields.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
+  "All Qwen3/Qwen2.5 dense-linear roles are proven biasless unless exact manifest evidence is present.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-185"
+status = "ready"
+branch = "codex/slm-cpu-185-model-init-bias-manifest-trace-export"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-184"]
+acceptance = "Consume SLM-CPU-184 and add, or precisely block, a model-init dense-linear bias manifest trace export surface that can produce per-role/layer role_records for Qwen3/Qwen2.5 Q8_0 attention, feed-forward, and output-head roles. A valid implementation must keep runtime selection unchanged by default, bind the exported manifest to model SHA/tokenizer/backend/fallback identity, and fail closed when any role has unknown or present bias evidence. A valid blocker must name the exact missing trace, loader, or artifact-export field preventing manifest emission. No no-bias fast-path implementation, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-184 blocks dense bias manifest capture because committed artifacts do not contain complete Qwen3/Qwen2.5 per-role role_records.",
+  "SLM-CPU-184 identifies model-init trace export or tensor-manifest export as the next required evidence surface.",
+]
+may_claim = [
+  "SLM-CPU-185 may add or precisely block the export surface needed to emit model-init dense-linear bias role_records.",
+  "SLM-CPU-185 may define receipt binding for the exported manifest identity.",
 ]
 must_not_claim = [
   "A no-bias dense linear fast path is implemented or selected by default.",

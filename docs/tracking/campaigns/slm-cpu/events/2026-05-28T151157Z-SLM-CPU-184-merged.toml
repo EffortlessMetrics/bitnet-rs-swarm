@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T15:11:57Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-184"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 894
+merge_sha = "3899d9bd595f99b70d14194535ff30eaa8602d77"
+branch = "codex/slm-cpu-184-dense-bias-manifest-capture"
+summary = "Merged dense bias manifest capture blocker."
+notes = [
+  "SLM-CPU-184 records that committed evidence does not contain complete Qwen3/Qwen2.5 per-role dense-linear bias role_records.",
+  "The merged slice blocks the no-bias branch on missing model-init trace or tensor-manifest export evidence.",
+  "No runtime behavior change, no-bias fast-path implementation, allocation reduction, timing improvement, speedup, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
