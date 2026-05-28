@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T14:20:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-183"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-183-dense-bias-manifest-gate"
+summary = "Queued dense bias manifest gate after SLM-CPU-182."
+notes = [
+  "SLM-CPU-183 should define the exact model-init trace or tensor-manifest evidence required before any no-bias dense-linear fast-path implementation.",
+  "The item should cover attention, feed-forward, and output-head roles for Qwen3/Qwen2.5 Q8_0 and fail closed when bias presence is unknown or present.",
+  "No runtime behavior change, no-bias fast-path implementation, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]

@@ -10633,7 +10633,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-182"
-status = "ready"
+status = "merged"
+pr = 890
+merge_sha = "93fa0f85d596c3b245d315fcea32c92846947bee"
 branch = "codex/slm-cpu-182-no-bias-dense-linear-frontier"
 stackable = false
 review_mode = "codex_premerge"
@@ -10672,6 +10674,58 @@ may_claim = [
 ]
 must_not_claim = [
   "A no-bias dense linear fast path is implemented or selected by default.",
+  "Runtime allocation behavior changes.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-183"
+status = "ready"
+branch = "codex/slm-cpu-183-dense-bias-manifest-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-182"]
+acceptance = "Consume SLM-CPU-182 and define the exact Qwen3/Qwen2.5 Q8_0 dense-linear bias-presence manifest gate required before any no-bias dense-linear fast-path implementation. The slice must identify the model-init trace or tensor-manifest fields needed for attention, feed-forward, and output-head roles, define fail-closed behavior when bias presence is unknown or present, and preserve current runtime behavior. No runtime behavior change, no-bias fast-path implementation, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-182 classifies no-bias dense-linear as a future disabled gate rather than an implementation.",
+  "Existing Qwen3/Qwen2.5 receipts show zero sidecar bias materialization calls, but they do not prove every dense-linear role is biasless.",
+  "The next safe slice should make bias-presence evidence explicit before any role-specific no-bias fast path can be implemented.",
+]
+may_claim = [
+  "SLM-CPU-183 may define the bias-presence manifest or model-init trace gate required before a future no-bias dense-linear fast path.",
+  "SLM-CPU-183 may classify exact attention, feed-forward, and output-head bias-evidence requirements for Qwen3/Qwen2.5 Q8_0.",
+]
+must_not_claim = [
+  "A no-bias dense linear fast path is implemented or selected by default.",
+  "All Qwen3/Qwen2.5 dense-linear roles are proven biasless unless exact manifest evidence is present.",
   "Runtime allocation behavior changes.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
