@@ -77,6 +77,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Source-order mapped q_proj candidate | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-155-source-order-mapped-qproj-candidate.json` | Applies the SLM-CPU-154 runtime row mapping to the default-disabled Qwen3 source-order q_proj candidate; the trace-gated candidate matches the eager q_proj oracle within tolerance, while `eager_f32_candle` remains the default runtime |
 | Source-order q_proj selector gate | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-156-source-order-qproj-selector-gate.json` | Precisely blocks source-order q_proj selector promotion after SLM-CPU-155 because paired Qwen3/Qwen2.5 strict CPU before/after behavior receipts with q_proj numeric evidence are still required; `eager_f32_candle` remains the default runtime |
 | Source-order q_proj receipt pair | `ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-qwen25-slm-cpu-157-source-order-qproj-receipt-pair.json` | Captures paired Qwen3/Qwen2.5 strict CPU before/after receipts with prompt IDs, generated IDs/text, backend/kernel identity, fallback=false, and q_proj numeric evidence; Qwen3 source-order candidate remains runtime-disabled/default-disabled and Qwen2.5 opt-in sidecar stays within the accepted `1e-4` q_proj tolerance, with no runtime promotion or performance claim |
+| Residual-add storage API decision | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json` | Consumes the SLM-CPU-169 frontier metadata and records the residual-add output-storage path as blocked until Candle exposes an `add_out` / `broadcast_add_out`-style API or a verified backend-local equivalent; no runtime allocation behavior changes or performance claims are made |
 
 Qwen3 rows use:
 
@@ -280,12 +281,30 @@ allocation counts changed, and the dominant hotspot remains
 `prompt_prefill.forward`. It makes no allocation-reduction, latency, speedup, or
 sustained-throughput claim.
 
-SLM-CPU-169 is the next ready Kaby performance slice. It must either narrow or
-fix the measured `prompt_prefill.forward` allocation frontier with strict
-Qwen3/Qwen2.5 before/after receipts, or record the exact Candle/output-storage
-blocker. It cannot claim allocation reduction, speedup, sustained throughput,
-runtime promotion, Q4/Q5, server or accelerator execution, Qwen3.5, or BitNet
-QK256 behavior without matching receipts.
+SLM-CPU-169 then makes the `prompt_prefill.forward` frontier receipt-visible
+under `slm_cpu_169_frontier`. It keeps runtime allocation behavior unchanged
+and names the exact residual-add output-storage blocker: Candle
+`Tensor::add` / `Tensor::broadcast_add` return owned `Result<Tensor>` outputs
+and expose no caller-provided output-storage parameter for
+`transformer.block.output` residual-add reuse.
+
+SLM-CPU-170 consumes that frontier and records the API decision in:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-170-residual-add-storage-api-decision.json
+```
+
+The decision is intentionally conservative. The residual-add path has a
+concrete integration plan, but no runtime allocation behavior should change
+until Candle exposes an `add_out` / `broadcast_add_out`-style API or a verified
+backend-local equivalent exists. Any future implementation still needs paired
+Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts preserving model
+SHA, GGUF tokenizer authority, prompt IDs, generated IDs, decoded text,
+selected CPU backend/kernel identity, dense hook identity where applicable, and
+`fallback_used=false`. Until that proof exists, the lane should move runtime
+allocation work to another measured Qwen3/Qwen2.5 frontier with an available
+behavior-preserving API surface. This is not a ripr blocker and no ripr issue is
+required.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
