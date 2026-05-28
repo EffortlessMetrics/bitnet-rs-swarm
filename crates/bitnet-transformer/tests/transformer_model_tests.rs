@@ -14,12 +14,13 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
-    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasSelectorAudit,
+    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
+    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
-    LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, TransformerForwardWorkspace,
-    TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
-    dense_q8_sidecar_fused_consumer_boundary,
+    LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+    TransformerForwardWorkspace, TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
+    dense_linear_no_bias_candidate_forward, dense_q8_sidecar_fused_consumer_boundary,
     dense_q8_sidecar_fused_q_projection_consumer_contract,
     dense_q8_sidecar_q_norm_input_proof_gate,
     dense_q8_sidecar_q_norm_input_receipt_comparator_gate,
@@ -30,7 +31,7 @@ use bitnet_transformer::{
     dense_q8_sidecar_typed_fused_q_projection_implementation_gate,
     dense_q8_sidecar_typed_q_norm_rope_consumer_gate,
 };
-use candle_core::{DType, Device, Tensor};
+use candle_core::{DType, Device, Module, Tensor};
 use candle_nn::{LayerNorm, Linear, VarBuilder};
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -680,6 +681,88 @@ fn no_bias_selector_audit_blocks_unknown_bias_fail_closed() {
     assert!(!audit.runtime_selection_enabled);
     assert!(audit.preserves_eager_f32());
     assert!(!audit.is_eligible_future_candidate());
+}
+
+#[test]
+fn no_bias_fastpath_candidate_accepts_exact_qwen3_down_proj_scope_runtime_disabled() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        0,
+        "layers.0.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "sha256:manifest",
+        Some(false),
+    );
+
+    assert_eq!(candidate.decision, "candidate_compute_available_runtime_disabled");
+    assert_eq!(candidate.scope, "feed_forward");
+    assert_eq!(candidate.linear, "down_proj");
+    assert!(candidate.candidate_compute_implemented);
+    assert!(!candidate.runtime_gate_default_enabled);
+    assert!(!candidate.runtime_selection_enabled);
+    assert_eq!(candidate.selected_path, "eager_f32_candle");
+    assert_eq!(candidate.selected_kernel, "dense-f32-candle-linear");
+    assert_eq!(candidate.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
+    assert_eq!(candidate.candidate_kernel, "dense-f32-no-bias-matmul-candidate");
+    assert!(candidate.fail_closed_conditions.is_empty());
+    assert!(candidate.is_runtime_disabled_candidate());
+    assert!(candidate.required_receipt_fields_before_runtime_use.contains(&"generated_ids"));
+    assert!(candidate.required_receipt_fields_before_runtime_use.contains(&"decoded_text"));
+    assert!(!candidate.speedup_claim);
+}
+
+#[test]
+fn no_bias_fastpath_candidate_blocks_wrong_scope_or_bias_fail_closed() {
+    let biased_attention = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        0,
+        "layers.0.attention.q_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "sha256:manifest",
+        Some(true),
+    );
+    assert_eq!(biased_attention.decision, "blocked_fail_closed");
+    assert!(
+        biased_attention.fail_closed_conditions.contains(&"role_not_qwen3_feed_forward_down_proj")
+    );
+    assert!(biased_attention.fail_closed_conditions.contains(&"bias_present_true"));
+    assert!(!biased_attention.runtime_selection_enabled);
+    assert!(!biased_attention.is_runtime_disabled_candidate());
+
+    let unknown_model = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        28,
+        "layers.28.feed_forward.down_proj",
+        "sha256:not-qwen3",
+        "sha256:manifest",
+        None,
+    );
+    assert!(unknown_model.fail_closed_conditions.contains(&"layer_outside_qwen3_0_6b_range"));
+    assert!(unknown_model.fail_closed_conditions.contains(&"model_sha_not_qwen3_0_6b_q8_0"));
+    assert!(unknown_model.fail_closed_conditions.contains(&"unknown_bias_present"));
+    assert!(!unknown_model.runtime_selection_enabled);
+    assert_eq!(unknown_model.selected_path, "eager_f32_candle");
+}
+
+#[test]
+fn no_bias_candidate_forward_matches_candle_no_bias_linear_but_is_not_runtime_selected()
+-> anyhow::Result<()> {
+    let device = Device::Cpu;
+    let weight = Tensor::from_slice(&[1.0f32, 2.0, 3.0, 4.0], (2, 2), &device)?;
+    let input = Tensor::from_slice(&[5.0f32, 6.0], (1, 2), &device)?;
+    let linear = Linear::new(weight, None);
+
+    let candidate = dense_linear_no_bias_candidate_forward(&input, &linear)?;
+    let eager = linear.forward(&input)?;
+
+    assert_eq!(candidate.to_vec2::<f32>()?, eager.to_vec2::<f32>()?);
+    assert_eq!(candidate.to_vec2::<f32>()?, vec![vec![17.0, 39.0]]);
+
+    let blocked = Linear::new(
+        Tensor::from_slice(&[1.0f32, 2.0, 3.0, 4.0], (2, 2), &device)?,
+        Some(Tensor::zeros(2, DType::F32, &device)?),
+    );
+    let err = dense_linear_no_bias_candidate_forward(&input, &blocked).unwrap_err();
+    assert!(err.to_string().contains("requires bias_present=false"));
+
+    Ok(())
 }
 
 #[test]

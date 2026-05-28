@@ -3193,6 +3193,40 @@ prove allocation reduction, claim timing improvement or speedup, claim
 sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-195 No-Bias Down-Projection Candidate
+
+SLM-CPU-195 adds the first runtime-disabled no-bias dense-linear candidate for
+the SLM-CPU-194 scope:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-195-no-bias-down-proj-candidate.json
+candidate scope = Qwen3 Q8_0 feed_forward.down_proj layers 0..27
+candidate API = bitnet_transformer::dense_linear_no_bias_candidate_forward
+candidate kernel = dense-f32-no-bias-matmul-candidate
+runtime_gate = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The candidate computes the no-bias linear surface as
+`input.matmul(linear.weight().t())` and fails closed if the `Linear` has a bias.
+It is not wired into `TransformerModel` execution and does not alter the
+selected runtime path. Role selection remains exact and fail-closed: only
+Qwen3 Q8_0 `feed_forward.down_proj` roles in layers 0..27 with
+`bias_present=false` are eligible candidate records.
+
+Runtime use still requires paired strict before/after warm-session receipts
+proving unchanged prompt IDs, generated IDs, decoded text, model SHA, GGUF
+tokenizer authority, selected CPU backend/runtime, dense path identity,
+manifest SHA, role ID, `bias_present`, and `fallback_used=false`.
+
+This slice does not change default runtime selection, prove allocation
+reduction, claim timing improvement or speedup, claim sustained throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
