@@ -10187,6 +10187,7 @@ impl WarmSessionPromptBuffers {
         let evidence_before = WarmSessionPromptBufferReuseEvidence::capture_before(
             self,
             token_capacity,
+            prompt_token_capacity.saturating_sub(1),
             max_new_tokens,
             max_stop_len,
             logits_capacity,
@@ -10266,6 +10267,41 @@ struct WarmSessionPromptBufferReuseEvidence {
     decode_allocation_sample_capacity: usize,
     stop_tail_capacity: usize,
     logits_capacity: usize,
+    buffer_capacities: Vec<WarmSessionBufferCapacityEvidence>,
+}
+
+#[derive(Clone, Debug)]
+#[cfg(feature = "full-cli")]
+struct WarmSessionBufferCapacityEvidence {
+    name: &'static str,
+    needed: usize,
+    previous_capacity: usize,
+    capacity: usize,
+}
+
+#[cfg(feature = "full-cli")]
+impl WarmSessionBufferCapacityEvidence {
+    fn new(name: &'static str, needed: usize, previous_capacity: usize) -> Self {
+        Self { name, needed, previous_capacity, capacity: previous_capacity }
+    }
+
+    fn capacity_grew(&self) -> bool {
+        self.capacity > self.previous_capacity
+    }
+
+    fn capacity_sufficient(&self) -> bool {
+        self.capacity >= self.needed
+    }
+
+    fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "needed": self.needed,
+            "previous_capacity": self.previous_capacity,
+            "capacity": self.capacity,
+            "capacity_grew": self.capacity_grew(),
+            "capacity_sufficient": self.capacity_sufficient(),
+        })
+    }
 }
 
 #[cfg(feature = "full-cli")]
@@ -10273,6 +10309,7 @@ impl WarmSessionPromptBufferReuseEvidence {
     fn capture_before(
         buffers: &WarmSessionPromptBuffers,
         token_capacity_needed: usize,
+        prefill_sample_capacity_needed: usize,
         generated_token_capacity_needed: usize,
         max_stop_len: usize,
         logits_capacity_needed: usize,
@@ -10293,6 +10330,113 @@ impl WarmSessionPromptBufferReuseEvidence {
             decode_allocation_sample_capacity: buffers.decode_step_allocs.capacity(),
             stop_tail_capacity: buffers.stop_tail.capacity(),
             logits_capacity: buffers.logits_scratch.capacity(),
+            buffer_capacities: vec![
+                WarmSessionBufferCapacityEvidence::new(
+                    "tokens",
+                    token_capacity_needed,
+                    buffers.tokens.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "generated_tokens",
+                    generated_token_capacity_needed,
+                    buffers.generated_tokens.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "decode_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.decode_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "embed_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.embed_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "forward_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.forward_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "logits_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.logits_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "sample_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.sample_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "token_decode_step_ms",
+                    generated_token_capacity_needed,
+                    buffers.token_decode_step_ms.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "prefill_step_allocs",
+                    prefill_sample_capacity_needed,
+                    buffers.prefill_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "prefill_embed_step_allocs",
+                    prefill_sample_capacity_needed,
+                    buffers.prefill_embed_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "prefill_forward_step_allocs",
+                    prefill_sample_capacity_needed,
+                    buffers.prefill_forward_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "decode_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.decode_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "embed_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.embed_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "forward_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.forward_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "logits_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.logits_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "sample_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.sample_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "token_vector_update_allocs",
+                    generated_token_capacity_needed,
+                    buffers.token_vector_update_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "token_decode_step_allocs",
+                    generated_token_capacity_needed,
+                    buffers.token_decode_step_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "stop_tail_update_allocs",
+                    generated_token_capacity_needed,
+                    buffers.stop_tail_update_allocs.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "stop_tail",
+                    max_stop_len.saturating_add(16),
+                    buffers.stop_tail.capacity(),
+                ),
+                WarmSessionBufferCapacityEvidence::new(
+                    "logits_scratch",
+                    logits_capacity_needed,
+                    buffers.logits_scratch.capacity(),
+                ),
+            ],
         }
     }
 
@@ -10304,19 +10448,82 @@ impl WarmSessionPromptBufferReuseEvidence {
         self.decode_allocation_sample_capacity = buffers.decode_step_allocs.capacity();
         self.stop_tail_capacity = buffers.stop_tail.capacity();
         self.logits_capacity = buffers.logits_scratch.capacity();
+        self.set_buffer_capacity("tokens", buffers.tokens.capacity());
+        self.set_buffer_capacity("generated_tokens", buffers.generated_tokens.capacity());
+        self.set_buffer_capacity("decode_step_ms", buffers.decode_step_ms.capacity());
+        self.set_buffer_capacity("embed_step_ms", buffers.embed_step_ms.capacity());
+        self.set_buffer_capacity("forward_step_ms", buffers.forward_step_ms.capacity());
+        self.set_buffer_capacity("logits_step_ms", buffers.logits_step_ms.capacity());
+        self.set_buffer_capacity("sample_step_ms", buffers.sample_step_ms.capacity());
+        self.set_buffer_capacity("token_decode_step_ms", buffers.token_decode_step_ms.capacity());
+        self.set_buffer_capacity("prefill_step_allocs", buffers.prefill_step_allocs.capacity());
+        self.set_buffer_capacity(
+            "prefill_embed_step_allocs",
+            buffers.prefill_embed_step_allocs.capacity(),
+        );
+        self.set_buffer_capacity(
+            "prefill_forward_step_allocs",
+            buffers.prefill_forward_step_allocs.capacity(),
+        );
+        self.set_buffer_capacity("decode_step_allocs", buffers.decode_step_allocs.capacity());
+        self.set_buffer_capacity("embed_step_allocs", buffers.embed_step_allocs.capacity());
+        self.set_buffer_capacity("forward_step_allocs", buffers.forward_step_allocs.capacity());
+        self.set_buffer_capacity("logits_step_allocs", buffers.logits_step_allocs.capacity());
+        self.set_buffer_capacity("sample_step_allocs", buffers.sample_step_allocs.capacity());
+        self.set_buffer_capacity(
+            "token_vector_update_allocs",
+            buffers.token_vector_update_allocs.capacity(),
+        );
+        self.set_buffer_capacity(
+            "token_decode_step_allocs",
+            buffers.token_decode_step_allocs.capacity(),
+        );
+        self.set_buffer_capacity(
+            "stop_tail_update_allocs",
+            buffers.stop_tail_update_allocs.capacity(),
+        );
+        self.set_buffer_capacity("stop_tail", buffers.stop_tail.capacity());
+        self.set_buffer_capacity("logits_scratch", buffers.logits_scratch.capacity());
         self.to_json()
     }
 
+    fn set_buffer_capacity(&mut self, name: &str, capacity: usize) {
+        if let Some(buffer) = self.buffer_capacities.iter_mut().find(|entry| entry.name == name) {
+            buffer.capacity = capacity;
+        }
+    }
+
+    fn buffer_capacity_grew(&self, name: &str) -> bool {
+        self.buffer_capacities
+            .iter()
+            .find(|entry| entry.name == name)
+            .is_some_and(WarmSessionBufferCapacityEvidence::capacity_grew)
+    }
+
     fn to_json(&self) -> serde_json::Value {
-        let token_capacity_grew = self.token_capacity > self.previous_token_capacity;
-        let generated_token_capacity_grew =
-            self.generated_token_capacity > self.previous_generated_token_capacity;
-        let stop_tail_capacity_grew = self.stop_tail_capacity > self.previous_stop_tail_capacity;
-        let logits_capacity_grew = self.logits_capacity > self.previous_logits_capacity;
-        let reset_reused_existing_capacity = !(token_capacity_grew
-            || generated_token_capacity_grew
-            || stop_tail_capacity_grew
-            || logits_capacity_grew);
+        let token_capacity_grew = self.buffer_capacity_grew("tokens");
+        let generated_token_capacity_grew = self.buffer_capacity_grew("generated_tokens");
+        let stop_tail_capacity_grew = self.buffer_capacity_grew("stop_tail");
+        let logits_capacity_grew = self.buffer_capacity_grew("logits_scratch");
+        let capacity_grew_buffers = self
+            .buffer_capacities
+            .iter()
+            .filter(|entry| entry.capacity_grew())
+            .map(|entry| entry.name)
+            .collect::<Vec<_>>();
+        let insufficient_buffers = self
+            .buffer_capacities
+            .iter()
+            .filter(|entry| !entry.capacity_sufficient())
+            .map(|entry| entry.name)
+            .collect::<Vec<_>>();
+        let buffer_capacity_details = self
+            .buffer_capacities
+            .iter()
+            .map(|entry| (entry.name.to_string(), entry.to_json()))
+            .collect::<serde_json::Map<_, _>>();
+        let reset_reused_existing_capacity = capacity_grew_buffers.is_empty();
+        let all_buffers_capacity_sufficient = insufficient_buffers.is_empty();
 
         serde_json::json!({
             "token_capacity_needed": self.token_capacity_needed,
@@ -10338,10 +10545,11 @@ impl WarmSessionPromptBufferReuseEvidence {
             "previous_stop_tail_capacity": self.previous_stop_tail_capacity,
             "stop_tail_capacity_needed": self.stop_tail_capacity_needed,
             "stop_tail_capacity_grew": stop_tail_capacity_grew,
-            "capacity_sufficient_for_prompt": self.token_capacity >= self.token_capacity_needed
-                && self.generated_token_capacity >= self.generated_token_capacity_needed
-                && self.stop_tail_capacity >= self.stop_tail_capacity_needed
-                && self.logits_capacity >= self.logits_capacity_needed,
+            "buffer_capacity_details": buffer_capacity_details,
+            "capacity_grew_buffers": capacity_grew_buffers,
+            "insufficient_buffers": insufficient_buffers,
+            "all_buffers_capacity_sufficient": all_buffers_capacity_sufficient,
+            "capacity_sufficient_for_prompt": all_buffers_capacity_sufficient,
             "reset_reused_existing_capacity": reset_reused_existing_capacity,
             "buffers_cleared_without_reallocation": reset_reused_existing_capacity,
         })
@@ -18033,6 +18241,21 @@ mod tests {
         assert_eq!(first["reset_reused_existing_capacity"], false);
         assert_eq!(first["token_capacity_grew"], true);
         assert_eq!(first["generated_token_capacity_grew"], true);
+        assert_eq!(first["all_buffers_capacity_sufficient"], true);
+        assert_eq!(first["buffer_capacity_details"]["tokens"]["needed"], serde_json::json!(12));
+        assert_eq!(
+            first["buffer_capacity_details"]["prefill_forward_step_allocs"]["needed"],
+            serde_json::json!(7)
+        );
+        assert_eq!(
+            first["buffer_capacity_details"]["logits_scratch"]["needed"],
+            serde_json::json!(16)
+        );
+        assert!(
+            first["capacity_grew_buffers"]
+                .as_array()
+                .is_some_and(|values| values.iter().any(|value| value == "logits_scratch"))
+        );
 
         buffers.tokens.extend_from_slice(&[1, 2, 3]);
         buffers.generated_tokens.extend_from_slice(&[4, 5]);
@@ -18050,6 +18273,13 @@ mod tests {
         assert_eq!(second["generated_token_capacity_grew"], false);
         assert_eq!(second["stop_tail_capacity_grew"], false);
         assert_eq!(second["logits_capacity_grew"], false);
+        assert_eq!(second["all_buffers_capacity_sufficient"], true);
+        assert_eq!(second["capacity_grew_buffers"].as_array().map(std::vec::Vec::len), Some(0));
+        assert_eq!(second["insufficient_buffers"].as_array().map(std::vec::Vec::len), Some(0));
+        assert_eq!(
+            second["buffer_capacity_details"]["token_decode_step_allocs"]["capacity_grew"],
+            serde_json::json!(false)
+        );
     }
 
     #[test]

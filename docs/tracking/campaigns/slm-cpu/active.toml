@@ -9768,7 +9768,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-164"
-status = "ready"
+status = "pr_open"
+pr = 852
 branch = "codex/slm-cpu-164-buffer-capacity-receipts"
 stackable = false
 review_mode = "codex_premerge"

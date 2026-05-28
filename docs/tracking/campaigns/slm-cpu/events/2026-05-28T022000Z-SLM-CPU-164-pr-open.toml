@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T02:20:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-164"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 852
+head_sha = "350225d981ca6dd17af5f1fa8a8aedc5e1505e9a"
+branch = "codex/slm-cpu-164-buffer-capacity-receipts"
+summary = "Opened PR #852 to harden warm-session prompt/session buffer capacity receipt evidence."
+notes = [
+  "The PR preserves runtime behavior while adding per-buffer capacity details, growth lists, and insufficiency lists to warm-session buffer reuse evidence.",
+  "The receipt surface remains a proof aid only: no allocation reduction, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+  "The focused warm-session buffer test passed; a broader bitnet-cli suite run still has unrelated Mac/Lunar Lake receipt/catalog failures.",
+]
