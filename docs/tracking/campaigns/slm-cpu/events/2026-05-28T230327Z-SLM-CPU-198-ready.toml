@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T23:03:27Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-198"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-198-no-bias-runtime-experiment-gate"
+summary = "Queued the first receipt-gated no-bias runtime experiment boundary."
+notes = [
+  "SLM-CPU-198 should consume the SLM-CPU-197 preflight and either wire an explicit-gate runtime experiment for exact Qwen3 Q8_0 feed_forward.down_proj roles or record the exact blocker.",
+  "Any experiment must require BITNET_DENSE_NO_BIAS_LINEAR_ENABLE=1 and fresh before/after strict warm-session receipts preserving prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, backend/runtime identity, and fallback=false.",
+  "No default runtime selection, allocation/timing improvement, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
