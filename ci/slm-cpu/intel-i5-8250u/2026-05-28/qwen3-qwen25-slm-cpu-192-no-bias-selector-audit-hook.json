@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_dense_linear_selector_audit_hook",
+  "claim": "disabled_by_default_no_bias_selector_audit_hook_defined",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 no-bias dense-linear selector audit hook after SLM-CPU-191",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json"
+  ],
+  "dry_run_sha256": "c2425e227eddaf0fa5b110d66e4c05e9caef97d31e652f6689be5c52da5d25a2",
+  "runtime_gate_name": "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE",
+  "runtime_gate_default_enabled": false,
+  "runtime_selection_enabled": false,
+  "selected_path": "eager_f32_candle",
+  "selected_kernel": "dense-f32-candle-linear",
+  "audit_hook_type": "DenseLinearNoBiasSelectorAudit",
+  "audit_hook_source": "crates/bitnet-transformer/src/lib.rs",
+  "audit_hook_tests": [
+    "no_bias_selector_audit_marks_biasless_role_eligible_without_runtime_selection",
+    "no_bias_selector_audit_blocks_biased_role_fail_closed",
+    "no_bias_selector_audit_blocks_unknown_bias_fail_closed"
+  ],
+  "decision_contract": {
+    "eligible_no_bias_candidate_runtime_disabled": {
+      "condition": "bias_present == false",
+      "runtime_selection_enabled": false,
+      "selected_path": "eager_f32_candle",
+      "selected_kernel": "dense-f32-candle-linear",
+      "speedup_claim": false
+    },
+    "blocked_fail_closed_bias_present_true": {
+      "condition": "bias_present == true",
+      "fail_closed_conditions": [
+        "bias_present_true"
+      ],
+      "runtime_selection_enabled": false
+    },
+    "blocked_fail_closed_unknown_bias_present": {
+      "condition": "bias_present == null or missing",
+      "fail_closed_conditions": [
+        "unknown_bias_present"
+      ],
+      "runtime_selection_enabled": false
+    }
+  },
+  "receipt_preservation_required_before_runtime_selection": [
+    "model.sha256",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "selected_backend=cpu-rust",
+    "runtime_api=cpu",
+    "fallback_used=false",
+    "prompt IDs",
+    "generated IDs",
+    "decoded text",
+    "dense path identity",
+    "manifest sha256",
+    "role id",
+    "bias_present"
+  ],
+  "dry_run_summary": {
+    "role_record_count": 366,
+    "eligible_no_bias_candidates": 294,
+    "blocked_fail_closed": 72,
+    "blocked_because_bias_present_true": 72,
+    "blanket_no_bias_selector_allowed": false,
+    "blanket_no_bias_selector_blocker": "Qwen2.5 attention q_proj, k_proj, and v_proj have bias_present=true.",
+    "by_model": {
+      "qwen2.5-0.5b-instruct-q8_0": {
+        "blocked_fail_closed": 72,
+        "eligible_no_bias_candidate": 97
+      },
+      "qwen3-0.6b-q8_0": {
+        "eligible_no_bias_candidate": 197
+      }
+    }
+  },
+  "claim_boundary": [
+    "SLM-CPU-192 defines an audit-only no-bias selector boundary; it does not implement, select, or enable a no-bias dense-linear fast path.",
+    "The audit hook reports eligible or fail-closed decisions and always preserves eager F32 Candle compute.",
+    "Qwen2.5 attention q_proj, k_proj, and v_proj roles remain blocked because bias_present=true.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 behavior is claimed."
+  ],
+  "recommended_next_item": {
+    "id": "SLM-CPU-193",
+    "summary": "Capture before/after strict warm-session receipts with the audit hook present but compute selection unchanged."
+  },
+  "must_not_claim": [
+    "A no-bias dense linear fast path is implemented or selected by default.",
+    "Runtime compute selection changes.",
+    "Runtime allocation behavior changes.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}

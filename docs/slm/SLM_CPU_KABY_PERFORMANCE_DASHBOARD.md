@@ -97,6 +97,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Dense bias role records manifest | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-189-dense-bias-role-records-manifest.json` | Derives 366 exact post-export role records from the captured Qwen3/Qwen2.5 traces and paired strict receipts; no runtime selector is enabled, and Qwen2.5 attention q/k/v bias presence blocks blanket no-bias selection |
 | No-bias selector policy gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-190-no-bias-selector-policy-gate.json` | Defines a runtime-disabled, fail-closed selector policy from the role records manifest: 294 biasless role records are eligible candidates, 72 biased Qwen2.5 attention q/k/v records are blocked, and no runtime path is selected |
 | No-bias selector dry run | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json` | Applies the disabled policy to all 366 role records and emits receipt-visible decisions: 294 roles are eligible future no-bias candidates, 72 Qwen2.5 attention q/k/v roles fail closed because bias is present, and runtime selection remains disabled |
+| No-bias selector audit hook | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json` | Adds a typed audit-only `DenseLinearNoBiasSelectorAudit` boundary: biasless roles are future candidates, biased or unknown roles fail closed, and the selected path remains `eager_f32_candle` / `dense-f32-candle-linear` |
 
 Qwen3 rows use:
 
@@ -2131,6 +2132,24 @@ receipt file, and selected decision. It is still evidence only: eligible roles
 are future candidates, and blocked roles remain fail-closed. No allocation,
 timing, speedup, sustained throughput, Q4/Q5, server, accelerator, Qwen3.5, or
 BitNet QK256 behavior is claimed.
+
+SLM-CPU-192 adds the audit-only typed boundary used by later receipts:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json
+audit_hook_type = DenseLinearNoBiasSelectorAudit
+runtime_gate_name = BITNET_DENSE_NO_BIAS_LINEAR_ENABLE
+runtime_gate_default_enabled = false
+runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The hook can report role decisions from exact bias evidence, but it is not a
+compute selector. Biasless roles are reported as
+`eligible_no_bias_candidate_runtime_disabled`; present or unknown bias fails
+closed. The next required proof step is before/after strict warm-session
+receipts with the audit hook present and generated IDs/text unchanged.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
