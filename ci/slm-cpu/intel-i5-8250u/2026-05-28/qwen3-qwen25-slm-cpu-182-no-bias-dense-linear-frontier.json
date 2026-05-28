@@ -1,0 +1,171 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_dense_linear_frontier",
+  "claim": "no_bias_dense_linear_frontier_classification",
+  "speedup_claim": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 strict CPU warm-session performance lane after SLM-CPU-181",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-181-output-storage-dependency-register.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  ],
+  "claim_boundary": [
+    "SLM-CPU-182 classifies the no-bias dense-linear fast-path frontier only.",
+    "This slice does not implement or select a no-bias dense-linear fast path.",
+    "This slice does not resolve the Candle output-storage blocker from SLM-CPU-181.",
+    "No runtime behavior changes are made in this slice.",
+    "No allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5, server, GPU/NPU/OpenVINO/UHD 620, Qwen3.5, or BitNet QK256 claim is made."
+  ],
+  "consumed_classification": {
+    "source_item": "SLM-CPU-181",
+    "source_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-181-output-storage-dependency-register.json",
+    "classification": "output_storage_dependency_register_keeps_dense_linear_output_storage_disabled",
+    "selected_next_frontier": "q8_dense_no_bias_linear_fast_path_feasibility",
+    "runtime_candidate_available_now": false
+  },
+  "code_evidence": [
+    {
+      "path": "crates/bitnet-transformer/src/layer_builders.rs",
+      "lines": "10-25",
+      "evidence": "linear_with_optional_bias loads weight and treats missing bias as None, explicitly avoiding zero-bias tensor materialization and a runtime add for dense GGUF weights that omit bias."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "131-194",
+      "evidence": "linear_with_optional_bias_traced records model-init bias presence through model_init.linear_bias_finish with present true or false, then constructs Linear::new(weight, bias)."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2334-2377",
+      "evidence": "Attention q_proj, k_proj, v_proj, and o_proj are constructed through linear_with_optional_bias_traced, so model-init tracing can distinguish present bias from missing-bias no-bias roles."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "2595-2606",
+      "evidence": "Feed-forward gate_proj, up_proj, and down_proj are constructed through linear_with_optional_bias and can represent missing bias as None."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "5775",
+      "evidence": "The lm_head Linear construction uses linear_with_optional_bias when a dedicated lm_head Linear is selected; output-head/tied-head handling has additional orientation-specific paths and therefore needs role-specific evidence."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "760-776, 1710-1794",
+      "evidence": "Dense Q8 sidecar helpers accept optional bias and skip initial bias by using zero when bias is None, but still materialize bias values when bias exists."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "232-318",
+      "evidence": "Instrumentation records bias_materialization_calls, bias_materialization_ns, and bias_values_materialized, which are required counters for any future no-bias fast-path receipt."
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "lines": "3112-3142",
+      "evidence": "DenseLinearOutputStorageApiBoundary exposes optional bias shape and bias_accessible=true for Candle Linear read-side inspection, but still marks caller-output storage unavailable."
+    }
+  ],
+  "receipt_evidence": [
+    {
+      "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+      "evidence": "The strict Qwen3 presizing receipt records bias_materialization_calls=0, bias_materialization_ns=0, and bias_values_materialized=0 while preserving strict GGUF tokenizer authority, cpu-rust, generated IDs, and fallback_used=false."
+    },
+    {
+      "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+      "evidence": "The strict Qwen2.5 presizing receipt records bias_materialization_calls=0, bias_materialization_ns=0, and bias_values_materialized=0 while preserving strict tokenizer/backend/fallback provenance."
+    },
+    {
+      "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+      "evidence": "The SLM-CPU-175 Qwen3 after receipt keeps bias_materialization_calls=0 and bias_values_materialized=0 after prompt-tokenize cache work; this is not proof that every dense-linear role is biasless."
+    },
+    {
+      "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json",
+      "evidence": "The SLM-CPU-175 Qwen2.5 after receipt keeps bias_materialization_calls=0 and bias_values_materialized=0 after prompt-tokenize cache work; this is not proof that every dense-linear role is biasless."
+    },
+    {
+      "artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json",
+      "evidence": "SLM-CPU-178 already classifies no_bias_fast_path_feasibility as potentially useful later but runtime_candidate_available_now=false because no-bias skipping does not solve the owned Tensor output-storage boundary."
+    }
+  ],
+  "role_classification": [
+    {
+      "role_family": "attention.q_proj/k_proj/v_proj/o_proj",
+      "current_construction": "linear_with_optional_bias_traced",
+      "no_bias_representation_supported": true,
+      "current_evidence_status": "needs_model_init_bias_trace_or_tensor_manifest",
+      "classification": "future_gate_candidate_only",
+      "reason": "The constructor and trace surface can represent bias absence, but this artifact does not include a current model-wide Qwen3/Qwen2.5 manifest proving every attention projection role is biasless."
+    },
+    {
+      "role_family": "feed_forward.gate_proj/up_proj/down_proj",
+      "current_construction": "linear_with_optional_bias",
+      "no_bias_representation_supported": true,
+      "current_evidence_status": "needs_model_init_bias_trace_or_tensor_manifest",
+      "classification": "future_gate_candidate_only",
+      "reason": "The constructor supports missing-bias no-bias Linear roles, but selected workspace output-storage boundary evidence currently reports bias_accessible=true for feed_forward.down_proj.output read-side inspection. That is not safe no-bias proof."
+    },
+    {
+      "role_family": "lm_head/output_head",
+      "current_construction": "linear_with_optional_bias_or_orientation_specific_output_head_path",
+      "no_bias_representation_supported": true,
+      "current_evidence_status": "needs_output_head_bias_manifest",
+      "classification": "defer_until_role_specific_output_head_evidence",
+      "reason": "Output-head handling may use dedicated lm_head Linear, tied embeddings, or orientation-specific weight paths. A no-bias fast path needs exact role identity and bias-presence evidence for the selected output-head path."
+    },
+    {
+      "role_family": "dense_q8_sidecar_helpers",
+      "current_construction": "optional_bias_host_values_passed_to_sidecar",
+      "no_bias_representation_supported": true,
+      "current_evidence_status": "counter_visible_but_not_model_manifested",
+      "classification": "implementation_candidate_after_manifest_gate",
+      "reason": "Sidecar helpers can compute with absent bias by starting from zero, and receipts expose bias materialization counters. A runtime path is still unsafe until exact role bias absence and behavior-preserving receipt pairs exist."
+    }
+  ],
+  "runtime_disabled_gate": {
+    "gate_name": "q8_dense_no_bias_linear_fast_path_gate",
+    "default_enabled": false,
+    "runtime_selectable_now": false,
+    "scope_if_implemented_later": "role-specific dense-linear compute path that skips bias materialization/add only when the selected role is proven biasless",
+    "enable_conditions": [
+      "A model-init trace or tensor manifest proves exact bias absence for each selected Qwen3 Q8_0 and Qwen2.5 Q8_0 dense-linear role.",
+      "The selected role is recorded explicitly, such as attention.q_proj, attention.k_proj, attention.v_proj, attention.o_proj, feed_forward.gate_proj, feed_forward.up_proj, feed_forward.down_proj, or lm_head.",
+      "Paired strict before/after receipts preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel, dense path identity, and fallback_used=false.",
+      "Receipts record requested and selected dense no-bias path identity plus fallback_used and fallback_reason for the no-bias selector.",
+      "Receipts record bias_materialization_calls, bias_materialization_ns, and bias_values_materialized for the selected role before and after.",
+      "No speedup, timing improvement, or allocation reduction is claimed without phase timing and allocation counters tied to the selected role."
+    ],
+    "fail_closed_conditions": [
+      "Bias presence is unknown for the selected role.",
+      "A bias tensor is present for the selected role.",
+      "The selected role is lm_head/output_head and the exact output-head orientation/tied-head path is unknown.",
+      "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer authority, backend/kernel identity, or fallback status differ between before and after receipts.",
+      "The runtime path cannot emit no-bias dense path identity and bias materialization counters."
+    ]
+  },
+  "classification": {
+    "selected_frontier": "q8_dense_no_bias_linear_fast_path_feasibility",
+    "runtime_candidate_available_now": false,
+    "safe_to_implement_without_manifest": false,
+    "reason": "Current code can represent no-bias Linear roles and receipts show zero sidecar bias materialization calls in existing strict Qwen3/Qwen2.5 runs, but the committed artifacts do not prove every relevant dense-linear role is biasless. The no-bias fast path also does not resolve the broader Candle owned-output Tensor boundary from SLM-CPU-181.",
+    "recommended_next_item": "SLM-CPU-183",
+    "recommended_next_frontier": "q8_dense_bias_manifest_gate",
+    "recommended_next_action": "Capture or require a model-init bias-presence manifest for exact Qwen3/Qwen2.5 dense-linear roles before any no-bias fast-path implementation."
+  },
+  "must_not_claim": [
+    "SLM-CPU-182 implements or selects a no-bias dense-linear fast path.",
+    "SLM-CPU-182 proves every Qwen3/Qwen2.5 dense-linear role is biasless.",
+    "SLM-CPU-182 changes runtime allocation behavior.",
+    "SLM-CPU-182 resolves Candle output-storage blockers.",
+    "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status change.",
+    "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+    "Q4_K_M or Q4_K_S runtime support exists.",
+    "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+    "Qwen3.5 or hybrid architecture support is in scope.",
+    "BitNet QK256/I2_S kernels are modified."
+  ]
+}

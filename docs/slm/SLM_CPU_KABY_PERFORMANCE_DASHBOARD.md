@@ -88,6 +88,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Dense-linear output-storage feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json` | Records that dense-linear weights and optional bias are readable, but production compute still returns owned Candle Tensor outputs; backend-local host slices cannot cross the returned-Tensor boundary, so a later runtime gate needs matmul/bias output-storage APIs or a fully typed fused consumer |
 | Dense-linear caller-output-storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json` | Defines the disabled gate, API capabilities, cross-model receipt requirements, and failure policy required before dense-linear caller-owned output storage can be enabled; runtime behavior remains unchanged |
 | Fused dense-consumer feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json` | Classifies a narrow repo-owned fused dense-linear consumer as too broad because it would need to own residual add, trace/workspace identity, block output identity, and next norm/model-forward Tensor semantics; runtime behavior remains unchanged |
+| No-bias dense-linear frontier | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-182-no-bias-dense-linear-frontier.json` | Classifies no-bias dense-linear as a future disabled gate: existing strict Qwen3/Qwen2.5 receipts show zero sidecar bias materialization calls, but committed evidence does not prove every dense-linear role is biasless, and the no-bias path does not resolve the Candle owned-output Tensor boundary |
 
 Qwen3 rows use:
 
@@ -1977,6 +1978,21 @@ residual/broadcast add, and norm outputs, plus a repo-owned typed Tensor handoff
 contract if the project chooses not to wait on those APIs. The register also
 requires future receipt-visible output-storage path identity and paired strict
 Qwen3/Qwen2.5 generated-ID preservation before any allocation or timing claim.
+
+SLM-CPU-182 then checks the narrower no-bias dense-linear frontier:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-182-no-bias-dense-linear-frontier.json
+```
+
+That route is not implementation-ready. The code can represent missing-bias
+linear roles without materializing zero-bias tensors, and existing strict
+Qwen3/Qwen2.5 receipts record zero sidecar bias materialization calls. Those
+receipts are not a model-wide bias-presence manifest, though. Attention,
+feed-forward, and output-head roles still need exact model-init bias traces or
+tensor-manifest evidence before a no-bias fast path can be selected. The
+frontier therefore stays runtime-disabled and does not reopen the broader
+Candle output-storage blocker from SLM-CPU-181.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
