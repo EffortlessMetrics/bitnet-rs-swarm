@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "artifact_kind": "slm_cpu_residual_add_storage_api_decision",
+  "claim": "slm_cpu_170_residual_add_storage_api_decision",
+  "campaign_item": "SLM-CPU-170",
+  "created_utc": "2026-05-28T08:05:00Z",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "strict_cpu_slm_proof_appliance",
+    "performance_claim": false
+  },
+  "inputs": {
+    "source_item": "SLM-CPU-169",
+    "source_pr": 864,
+    "source_merge_sha": "c6fda28af704a0b4d75eda8d29953834c83cb36a",
+    "source_frontier": "prompt_prefill.forward",
+    "source_metadata_key": "slm_cpu_169_frontier",
+    "qwen3_presizing_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-slm-cpu-168-presizing-receipt.json",
+    "qwen25_presizing_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen25-slm-cpu-168-presizing-receipt.json",
+    "comparison_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-168-presizing-receipt-comparison.json"
+  },
+  "behavior_oracle": {
+    "models": [
+      {
+        "id": "qwen3-0.6b-q8_0",
+        "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031"
+      },
+      {
+        "id": "qwen2.5-0.5b-instruct-q8_0",
+        "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e"
+      }
+    ],
+    "must_preserve_before_any_runtime_change": [
+      "model_sha256",
+      "tokenizer.source=gguf_metadata",
+      "tokenizer.strict=true",
+      "prompt_ids",
+      "generated_ids",
+      "decoded_text",
+      "selected_backend=cpu-rust",
+      "runtime_api=cpu",
+      "selected_kernel identity",
+      "dense hook identity where applicable",
+      "fallback_used=false"
+    ]
+  },
+  "residual_add_boundary": {
+    "target": "residual_block_output_storage_boundary",
+    "output_surface": "transformer.block.output",
+    "measured_parent_component": "prompt_prefill.forward",
+    "current_status": "blocked_by_candle_owned_tensor_output_api",
+    "runtime_allocation_behavior_changed": false,
+    "can_fill_layer_output_storage": false,
+    "required_missing_api": "Tensor residual-add API accepting caller-provided output storage, e.g. add_out/broadcast_add_out(&self, rhs, &mut output)",
+    "known_public_blocking_ops": [
+      "Tensor::add(&self, &Tensor) -> Result<Tensor>",
+      "Tensor::broadcast_add(&self, &Tensor) -> Result<Tensor>",
+      "std::ops::Add for Tensor/&Tensor delegates to Tensor::add and returns Result<Tensor>"
+    ],
+    "why_no_runtime_slice": "The current public Candle residual-add surface returns owned Tensor outputs. Reusing TransformerForwardWorkspace-owned block output storage would require writing the residual-add result into caller-provided storage without aliasing residual input or branch output in a way that changes Candle semantics."
+  },
+  "api_integration_plan": {
+    "status": "planned_blocked_until_api_exists",
+    "upstream_component": "candle-core Tensor add/broadcast_add output-storage API or verified backend-local equivalent",
+    "repo_local_prerequisites": [
+      "Add a narrow TransformerForwardWorkspace-owned block output storage slot keyed by shape, dtype, and device.",
+      "Thread the caller-provided output storage only through the transformer.block.output residual-add boundary.",
+      "Keep the existing owned-output Candle path as the default until before/after receipts pass.",
+      "Record receipt metadata for residual input shape, branch output shape, block output shape, dtype, device, selected residual-add path, and fallback status.",
+      "Run paired Qwen3 Q8_0 and Qwen2.5 Q8_0 strict CPU before/after receipts with allocation audit enabled.",
+      "Require unchanged model SHA, tokenizer authority, prompt/generated IDs, decoded text, selected backend/kernel identity, dense hook identity where applicable, and fallback_used=false before any allocation or timing improvement claim."
+    ],
+    "accepted_output_storage_api_shape": {
+      "operation": "residual_add_out",
+      "lhs": "residual input Tensor",
+      "rhs": "feed-forward branch output Tensor",
+      "output": "caller-provided Tensor storage owned by TransformerForwardWorkspace",
+      "required_guards": [
+        "same shape",
+        "same dtype",
+        "same device",
+        "no unsafe aliasing of lhs/rhs/output unless backend semantics explicitly allow it",
+        "strict receipts prove generated identity is unchanged"
+      ]
+    }
+  },
+  "lane_decision": {
+    "decision": "do_not_change_residual_add_runtime_behavior_yet",
+    "reason": "The residual-add output-storage path has a concrete API contract but no available public Candle API or verified backend-local equivalent in this workspace.",
+    "next_safe_work": "Move runtime allocation work to another measured Qwen3/Qwen2.5 allocation frontier with an available behavior-preserving API surface, or return to residual-add only after an add_out/broadcast_add_out-style API can be adopted and proven with paired strict receipts.",
+    "ripr_issue_required": false,
+    "ripr_issue_reason": "No ripr failure is involved in this blocker; CI ripr coverage belongs to PR hygiene, while the residual-add blocker is a Candle tensor output-storage API gap."
+  },
+  "claim_boundaries": {
+    "allocation_reduction_claim": false,
+    "latency_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "default_runtime_promotion_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
