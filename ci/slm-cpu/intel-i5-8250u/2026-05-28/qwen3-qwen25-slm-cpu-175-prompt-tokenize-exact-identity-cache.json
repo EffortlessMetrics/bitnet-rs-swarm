@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_prompt_tokenize_exact_identity_cache",
+  "claim": "exact_identity_prompt_token_cache_candidate",
+  "speedup_claim": false,
+  "allocation_reduction_claim": true,
+  "latency_improvement_claim": true,
+  "sustained_throughput_claim": false,
+  "scope": "resident warm-session prompt tokenization for byte-identical rendered prompt identity on i5-8250U",
+  "host": {
+    "id": "intel-i5-8250u",
+    "role": "slow strict SLM CPU proof appliance",
+    "claim_boundary": [
+      "no sustained throughput claim",
+      "no Q4/Q5 quant claim",
+      "no server claim",
+      "no GPU/NPU/OpenVINO/UHD 620 claim",
+      "no Qwen3.5 claim",
+      "no BitNet QK256 claim"
+    ]
+  },
+  "implementation": {
+    "cache_policy": "rendered_prompt_token_ids_reused_across_repeated_warm_session_prompts",
+    "cache_scope": "resident_warm_session_single_model_tokenizer",
+    "key_material": [
+      "rendered_prompt",
+      "bos_policy",
+      "parse_special"
+    ],
+    "receipt_identity_material": [
+      "model_sha256",
+      "tokenizer_source",
+      "tokenizer_strict",
+      "template_family",
+      "template_source",
+      "qwen_no_think",
+      "rendered_prompt_sha256",
+      "prompt_generation_identity_sha256"
+    ],
+    "runtime_change": "The warm-session pre-sizing pass now seeds the exact-identity prompt-token cache so the prompt loop can reuse token IDs for the first byte-identical prompt as well as repeats.",
+    "safety_gate": "Paired strict Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after receipts must preserve model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel, dense hook identity where applicable, and fallback_used=false."
+  },
+  "receipts": {
+    "qwen3_before": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-before.json",
+    "qwen3_after": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen3-after.json",
+    "qwen25_before": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-before.json",
+    "qwen25_after": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json"
+  },
+  "models": {
+    "qwen3": {
+      "model_file": "Qwen3-0.6B-Q8_0.gguf",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "dense_hook_identity_preserved": true,
+      "rendered_prompt_sha256": "c69de50806e09199ab4d098ce5a3292fa4873819362d32493a1577258cf8e5b1",
+      "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b",
+      "generated_ids_before": [
+        17,
+        151645
+      ],
+      "generated_ids_after": [
+        17,
+        151645
+      ],
+      "decoded_text_before": "2",
+      "decoded_text_after": "2",
+      "identity_preserved": true,
+      "before": {
+        "aggregate_cache_hits": 1,
+        "aggregate_cache_misses": 1,
+        "aggregate_cache_entries": 1,
+        "aggregate_runtime_allocation_behavior_changed": false,
+        "prompt_lookup_results": [
+          "miss",
+          "hit"
+        ],
+        "prompt0_tokenize_ms": 1518.88,
+        "prompt1_tokenize_ms": 0.048,
+        "prompt0_prompt_tokenize_alloc_bytes": 177264200,
+        "prompt0_prompt_tokenize_alloc_count": 2128850,
+        "prompt1_prompt_tokenize_alloc_bytes": 168,
+        "prompt1_prompt_tokenize_alloc_count": 1
+      },
+      "after": {
+        "aggregate_cache_hits": 3,
+        "aggregate_cache_misses": 1,
+        "aggregate_cache_entries": 1,
+        "aggregate_runtime_allocation_behavior_changed": true,
+        "prompt_lookup_results": [
+          "hit",
+          "hit"
+        ],
+        "prompt0_tokenize_ms": 0.007,
+        "prompt1_tokenize_ms": 0.007,
+        "prompt0_prompt_tokenize_alloc_bytes": 168,
+        "prompt0_prompt_tokenize_alloc_count": 1,
+        "prompt1_prompt_tokenize_alloc_bytes": 168,
+        "prompt1_prompt_tokenize_alloc_count": 1
+      }
+    },
+    "qwen25": {
+      "model_file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "dense_hook_identity_preserved": true,
+      "rendered_prompt_sha256": "317c2ad2cc47894024efade77f0e71869aee8f89d229814eaa1ae9f3ab1254d4",
+      "prompt_ids_sha256": "3ddaf1634401debb084ee44ff0db6a05c95077ae2a2102082ef91d3c5cfd2f10",
+      "generated_ids_before": [
+        19,
+        151645
+      ],
+      "generated_ids_after": [
+        19,
+        151645
+      ],
+      "decoded_text_before": "4",
+      "decoded_text_after": "4",
+      "identity_preserved": true,
+      "before": {
+        "aggregate_cache_hits": 1,
+        "aggregate_cache_misses": 1,
+        "aggregate_cache_entries": 1,
+        "aggregate_runtime_allocation_behavior_changed": false,
+        "prompt_lookup_results": [
+          "miss",
+          "hit"
+        ],
+        "prompt0_tokenize_ms": 1028.581,
+        "prompt1_tokenize_ms": 0.032,
+        "prompt0_prompt_tokenize_alloc_bytes": 126653209,
+        "prompt0_prompt_tokenize_alloc_count": 1520826,
+        "prompt1_prompt_tokenize_alloc_bytes": 189,
+        "prompt1_prompt_tokenize_alloc_count": 1
+      },
+      "after": {
+        "aggregate_cache_hits": 3,
+        "aggregate_cache_misses": 1,
+        "aggregate_cache_entries": 1,
+        "aggregate_runtime_allocation_behavior_changed": true,
+        "prompt_lookup_results": [
+          "hit",
+          "hit"
+        ],
+        "prompt0_tokenize_ms": 0.009,
+        "prompt1_tokenize_ms": 0.007,
+        "prompt0_prompt_tokenize_alloc_bytes": 189,
+        "prompt0_prompt_tokenize_alloc_count": 1,
+        "prompt1_prompt_tokenize_alloc_bytes": 189,
+        "prompt1_prompt_tokenize_alloc_count": 1
+      }
+    }
+  },
+  "validation": {
+    "paired_receipt_gate_satisfied": true,
+    "model_sha_preserved": true,
+    "strict_gguf_tokenizer_authority_preserved": true,
+    "prompt_ids_preserved": true,
+    "generated_ids_preserved": true,
+    "decoded_text_preserved": true,
+    "selected_cpu_backend_preserved": true,
+    "fallback_used_false": true,
+    "prompt_loop_cache_hit_for_first_prompt_after_change": true,
+    "prompt_tokenize_allocation_counter_reduction_observed": true,
+    "prompt_tokenize_timing_reduction_observed": true,
+    "claim_boundary": "The observed allocation and prompt-tokenize timing reductions are scoped only to byte-identical prompt-token cache hits in these paired warm-session receipts; no sustained throughput, decode, prefill, model-load, server, accelerator, or cross-quant claim is made."
+  }
+}
