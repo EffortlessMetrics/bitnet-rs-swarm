@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T03:56:13Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-165"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 854
+merge_sha = "681148617f36624fa854493d6f471ec2a2913924"
+summary = "Merged PR #854 to queue the Kaby Lake SLM prompt/session buffer pre-sizing gate."
+notes = [
+  "The merge records the next safe Kaby Lake SLM allocation boundary after SLM-CPU-164 buffer capacity receipt hardening.",
+  "No runtime behavior change, allocation reduction, speedup, sustained throughput, Q4/Q5 runtime, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

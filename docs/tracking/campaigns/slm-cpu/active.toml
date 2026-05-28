@@ -9817,7 +9817,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-165"
-status = "pr_open"
+status = "merged"
 pr = 854
 branch = "codex/slm-cpu-165-session-buffer-presizing-gate"
 stackable = false
