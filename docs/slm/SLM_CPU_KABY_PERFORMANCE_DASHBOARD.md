@@ -87,6 +87,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Model-forward allocation boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-177-model-forward-allocation-boundary.json` | Classifies the selected `model_forward_owned_tensor_allocation_boundary` as blocked by dense-linear, final-norm, residual-add, and model.forward owned Candle Tensor outputs, and selects dense-linear output-storage feasibility as the next sub-boundary without changing runtime behavior |
 | Dense-linear output-storage feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-178-dense-linear-output-storage-feasibility.json` | Records that dense-linear weights and optional bias are readable, but production compute still returns owned Candle Tensor outputs; backend-local host slices cannot cross the returned-Tensor boundary, so a later runtime gate needs matmul/bias output-storage APIs or a fully typed fused consumer |
 | Dense-linear caller-output-storage gate | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-179-dense-linear-caller-output-storage-runtime-gate.json` | Defines the disabled gate, API capabilities, cross-model receipt requirements, and failure policy required before dense-linear caller-owned output storage can be enabled; runtime behavior remains unchanged |
+| Fused dense-consumer feasibility | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json` | Classifies a narrow repo-owned fused dense-linear consumer as too broad because it would need to own residual add, trace/workspace identity, block output identity, and next norm/model-forward Tensor semantics; runtime behavior remains unchanged |
 
 Qwen3 rows use:
 
@@ -476,6 +477,22 @@ text, CPU backend/dense path identity, stop policy, and `fallback_used=false`.
 Without allocation counters and timing fields for the affected warm-session
 phase, the gate may prove behavior but cannot claim allocation or timing
 improvement.
+
+SLM-CPU-180 checks whether the gate can be satisfied by a repo-owned typed fused
+dense consumer before waiting on Candle output-storage APIs:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-180-fused-dense-consumer-feasibility.json
+```
+
+That route is not narrow enough today. The selected `feed_forward.down_proj.output`
+surface is consumed immediately by Candle residual add, trace/workspace recording,
+block-output identity, and then next-layer norm or final-norm Tensor consumers. A
+local fused consumer would therefore need to own residual-add aliasing and
+broadcast semantics, qwen trace identity, workspace boundary identity, next norm
+handoff, and strict receipt/checkpoint identity, not just dense-linear output.
+SLM-CPU-180 leaves runtime unchanged and moves this branch to a Candle
+output-storage dependency or a future multi-stage typed Tensor-view design.
 
 SLM-CPU-121 records that Qwen3
 Q8_0 strict CPU generation now reaches post-guard receipt emission and the
@@ -1930,6 +1947,14 @@ before future runtime work can attempt caller-owned dense-linear output storage
 without weakening the Qwen3/Qwen2.5 strict receipt oracle. It does not claim a
 speedup, sustained throughput, Q4/Q5 runtime support, accelerator execution,
 Qwen3.5 support, or BitNet QK256 changes.
+
+SLM-CPU-180 closes the local fused-consumer branch for now: the first consumer
+after `feed_forward.down_proj.output` is the block residual add, and avoiding the
+returned Tensor there would also require owning trace/workspace identity,
+block-output Tensor identity, and the next norm/model-forward handoff. That is
+larger than a dense-linear output-storage optimization, so this branch remains
+disabled until Candle output-storage APIs or a broader typed Tensor-view design
+exist.
 
 SLM-CPU-042 moves the next target from reusable output storage to the first
 Q8_0 dense linear locality boundary that can be inspected without changing
