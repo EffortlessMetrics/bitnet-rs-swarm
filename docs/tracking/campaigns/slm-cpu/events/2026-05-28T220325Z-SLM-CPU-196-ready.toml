@@ -1,0 +1,14 @@
+timestamp = "2026-05-28T22:03:25Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-196"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-196-no-bias-candidate-preservation-receipts"
+summary = "Queued preservation receipts for the no-bias down-projection candidate."
+notes = [
+  "SLM-CPU-196 should bind the SLM-CPU-195 candidate artifact to strict Qwen3/Qwen2.5 warm-session identity evidence.",
+  "The slice must prove the candidate API is present while runtime selection still uses eager_f32_candle and dense-f32-candle-linear.",
+  "No runtime candidate selection, default runtime change, allocation, timing, speedup, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is in scope.",
+]
