@@ -1,0 +1,16 @@
+timestamp = "2026-05-28T13:53:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-181"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 888
+merge_sha = "05f01e674b7c8c354cdf72cf28e5f63f7d027b1c"
+branch = "codex/slm-cpu-181-output-storage-dependency-register"
+summary = "Merged output-storage dependency register."
+notes = [
+  "SLM-CPU-181 records exact output-storage blockers for dense-linear, residual-add, final-norm, and model.forward allocation reuse.",
+  "The merged slice distinguishes upstream Candle matmul/add/norm output-storage gaps from repo-owned typed Tensor handoff and receipt dependencies.",
+  "No runtime behavior change, allocation reduction, timing improvement, speedup, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
