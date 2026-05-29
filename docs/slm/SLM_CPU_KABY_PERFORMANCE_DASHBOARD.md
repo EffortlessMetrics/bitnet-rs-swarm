@@ -102,6 +102,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias apply-linear receipt capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-207-no-bias-apply-linear-receipt-capture-blocker.json` | Verifies the explicit Qwen3 and Qwen2.5 Q8_0 model paths are present by SHA, but blocks fresh before/after capture because `slm-warm-session` currently passes `None` into the no-bias apply-linear gate emitter; long receipt runs would not populate the required descriptor/callsite or digest-bound gate fields |
 | No-bias apply-linear gate wiring | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json` | Wires a real digest-bound no-bias apply-linear gate object into eligible Qwen3/Qwen2.5 Q8_0 warm-session aggregates while keeping candidate execution disabled and blocking on fresh before/after receipts |
 | No-bias apply-linear receipt pairs | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json` | Captures fresh explicit-path Qwen3/Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired gate, preserving model/tokenizer/runtime/path/kernel/digest identity while candidate execution and normal runtime selection remain disabled |
+| No-bias candidate off/on receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-215-no-bias-candidate-off-on-receipt-gate.json` | Defines the exact candidate-off/candidate-on receipt-pair gate for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; the gate remains fail-closed because no candidate-on strict warm-session receipt exists |
 
 Qwen3 rows use:
 
@@ -3883,6 +3884,39 @@ Candidate execution still requires an explicit runtime gate plus candidate-off
 and candidate-on strict warm-session receipts proving prompt IDs, generated IDs,
 and decoded text are preserved. This slice makes no allocation, timing, speedup,
 sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.
+
+## SLM-CPU-215 No-Bias Candidate Off/On Receipt Gate
+
+SLM-CPU-215 consumes the per-callsite selector attachment point and defines the
+receipt-pair gate that must pass before any no-bias apply-linear candidate
+execution can be attempted.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-215-no-bias-candidate-off-on-receipt-gate.json
+decision = candidate_off_on_receipt_pair_gate_defined_fail_closed
+reason = candidate_off_on_receipt_pair_incomplete
+remaining_blocker = candidate_on_strict_warm_session_receipt_artifact
+boundary = bitnet_transformer::DenseLinearNoBiasCandidateOffOnReceiptPairGate
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The gate is scoped only to Qwen3 Q8_0 and Qwen2.5 Q8_0
+`feed_forward.down_proj`. Existing candidate-off evidence carries real GGUF
+model SHA, strict GGUF tokenizer authority, `runtime_api=cpu`,
+`selected_backend=cpu-rust`, `fallback_used=false`, selected path/kernel,
+candidate path/kernel, prompt IDs, generated IDs, decoded text, and exact
+per-callsite identity through the SLM-CPU-214 boundary. The missing evidence is
+a candidate-on strict warm-session receipt preserving the same IDs and decoded
+text under the explicit gate.
+
+This slice does not execute the no-bias candidate, change default runtime,
+claim generated-ID preservation for candidate-on execution, claim allocation or
+timing improvement, claim speedup or sustained throughput, broaden Q4/Q5 support,
+or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
