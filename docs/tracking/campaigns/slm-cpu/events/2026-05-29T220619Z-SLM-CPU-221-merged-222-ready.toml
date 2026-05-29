@@ -1,0 +1,17 @@
+timestamp = "2026-05-29T22:06:19Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-221"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 983
+head_sha = "5a5a09493a93c4712c6ecbe5dc94b44970ede274"
+merge_sha = "ea921c7ba0c5f44cc2dec2678a751770134558f8"
+branch = "codex/slm-cpu-221-no-bias-receipt-gated-candidate-execution-blocker"
+summary = "Merged SLM-CPU-221 no-bias receipt-gated candidate execution blocker boundary and queued SLM-CPU-222."
+notes = [
+  "SLM-CPU-221 records DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary after the SLM-CPU-220 candidate-off/on strict receipt boundary.",
+  "The merged artifact keeps candidate execution and normal runtime selection disabled while preserving the default eager_f32_candle path.",
+  "SLM-CPU-222 is ready to capture or block a real same-callsite candidate-off/candidate-on strict receipt artifact pair before any candidate execution attempt.",
+]
