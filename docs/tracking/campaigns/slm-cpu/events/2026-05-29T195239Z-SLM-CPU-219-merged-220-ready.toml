@@ -1,0 +1,23 @@
+timestamp = "2026-05-29T19:52:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-219"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 974
+head_sha = "3e7d3141cdd00c7d1516505de8e38c11f49b4dc8"
+merge_sha = "905661479200f02887405141ecce34481fccad3e"
+branch = "codex/slm-cpu-219-no-bias-same-callsite-receipt-emitter"
+summary = "Merged SLM-CPU-219 same-callsite no-bias receipt-emitter boundary and queued SLM-CPU-220."
+notes = [
+  "SLM-CPU-219 records DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary after the SLM-CPU-218 runtime owner boundary.",
+  "The merged slice keeps candidate execution and normal runtime selection disabled and records fresh same-callsite candidate-off/candidate-on strict receipts as the remaining blocker.",
+  "SLM-CPU-220 is ready to capture or precisely block fresh same-callsite strict receipt evidence without making allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.",
+]
+
+[[actions]]
+item = "SLM-CPU-220"
+action = "ready"
+branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
+summary = "Queue the fresh same-callsite no-bias candidate-off/on strict receipt slice."
