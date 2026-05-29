@@ -218,9 +218,31 @@ Candidates:
 
 For `bitnet-rs-swarm` current lane:
 
-- Keep route as `CX53 -> CX43 -> GitHub-hosted`
 - Do **not** add CPX42 to current BitNet Rust Small lane
 - Defer CPX42 until a true BitNet Tiny lane exists
+
+### Self-hosted-only override (accepted)
+
+`bitnet-rs-swarm` has moved to **self-hosted-only CI with no GitHub-hosted
+fallback**, recorded in
+[BITNET-ADR-0008](../adr/BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md).
+For this repo specifically:
+
+- The route is `CX53 -> CX43` with **no hosted fallback lane**; when no trusted
+  self-hosted runner is idle the router emits `blocked` and the normalized
+  result fails closed.
+- Every `runs-on` targets a self-hosted label array; no `ubuntu-*`/`macos-*`/
+  `windows-*` hosted aliases remain.
+- The fleet is **linux-x64 only** today. Lanes needing macOS, Windows, linux
+  ARM64, or GPU runners are **dormant**: they must stay non-required and must
+  not start on an ordinary `pull_request`/`merge_group` (opt-in via label,
+  `workflow_dispatch`, `schedule`, or tag/release only) until those runners are
+  provisioned.
+
+This override supersedes, **for `bitnet-rs-swarm` only**, the "hosted fallback
+preserved" checklist item and the "hosted fallback removed" /
+"release/publish/signing workflows touched" stop conditions below. The general
+multi-repo guidance in this plan is unchanged for other repos.
 
 ## Branch protection rule
 
@@ -242,8 +264,10 @@ Do not merge when any are true:
 - normalized result is missing conditional needs
 - fork PR can route to self-hosted
 - hosted fallback removed
+  (exempted for `bitnet-rs-swarm` by the self-hosted-only override / BITNET-ADR-0008)
 - branch protection changed in same PR
 - release/publish/signing workflows touched
+  (exempted for `bitnet-rs-swarm` by the self-hosted-only override / BITNET-ADR-0008)
 - source-affecting changes bypass the repo-specific cutover, promotion, or sync
   policy
 

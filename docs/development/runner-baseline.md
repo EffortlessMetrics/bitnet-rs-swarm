@@ -4,23 +4,31 @@ First evidence of the `EM CI Routed Rust` lane on `EffortlessMetrics/bitnet-rs-s
 
 ## Workflow
 
-`.github/workflows/em-ci-routed-rust.yml` routes the small BitNet Rust lane:
+`.github/workflows/em-ci-routed-rust.yml` routes the small BitNet Rust lane.
+
+> **Self-hosted-only update (BITNET-ADR-0008).** The GitHub-hosted fallback lane
+> has been removed. Coordination jobs (route, result) now run on
+> `[self-hosted, linux, x64]` rather than `ubuntu-latest`, since this swarm repo
+> is self-hosted-only. The diagram below reflects the current routing.
 
 ```
-Route BitNet Rust Small  (ubuntu-latest, gh api orgs/.../actions/runners)
-  ├─ target=cx53    → BitNet Rust Small on CX53          (self-hosted, docker em-ci-rust:1.95)
-  ├─ target=cx43    → BitNet Rust Small on CX43          (self-hosted, docker em-ci-rust:1.95)
-  └─ target=github  → BitNet Rust Small on GitHub Hosted (ubuntu-latest fallback)
+Route BitNet Rust Small  (self-hosted linux x64, gh api orgs/.../actions/runners)
+  ├─ target=cx53     → BitNet Rust Small on CX53   (self-hosted, docker em-ci-rust:1.95)
+  ├─ target=cx43     → BitNet Rust Small on CX43   (self-hosted, docker em-ci-rust:1.95)
+  ├─ target=blocked  → no idle trusted runner; normalized result fails closed
+  └─ fork PR         → blocked (fork_pr_self_hosted_untrusted); never self-hosted
 
-BitNet Rust Small Result  (ubuntu-latest, normalized gate)
+BitNet Rust Small Result  (self-hosted linux x64, normalized gate)
 ```
 
 The router selects CX53 when an org runner with labels
 `em-ci, cx53, rust-small, trusted-pr` is `online` and `busy=false`.
 If no CX53 runner is idle, it selects CX43 when an org runner with labels
 `em-ci, cx43, rust-small, trusted-pr` is `online` and `busy=false`.
-On token missing, API failure, or parse failure the router fails open to
-`target=github` and emits `router_error=true`.
+There is no hosted fallback: when no trusted runner is idle the router emits
+`target=blocked` / `reason=no_idle_runner` and the normalized result fails
+closed. Fork PRs are blocked from self-hosted execution
+(`fork_pr_self_hosted_untrusted`).
 
 ## First-run evidence (2026-05-17/18)
 
@@ -53,8 +61,8 @@ Persistent mounts: `/mnt/ci-cache/{cargo-home,sccache}`, ephemeral
 When enabled, branch protection on `main` should require **only**
 `BitNet Rust Small Result`. Do not require the conditional implementation
 lanes (`Route BitNet Rust Small`, `BitNet Rust Small on CX53`,
-`BitNet Rust Small on CX43`, `BitNet Rust Small on GitHub Hosted`) — they are
-not always present in a single run.
+`BitNet Rust Small on CX43`) — they are not always present in a single run.
+The GitHub-hosted fallback lane has been removed (BITNET-ADR-0008).
 
 ## What is intentionally not yet wired
 
