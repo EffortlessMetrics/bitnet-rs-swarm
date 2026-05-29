@@ -4102,6 +4102,39 @@ runtime selection, does not claim generated-ID preservation for a candidate-on
 path, and does not make allocation, timing, speedup, sustained-throughput,
 Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.
 
+## SLM-CPU-222 No-Bias Strict Receipt Artifact Pair Boundary
+
+SLM-CPU-222 consumes the SLM-CPU-221 receipt-gated candidate execution boundary
+and records the missing strict same-callsite candidate-off/candidate-on
+artifact pair as the remaining blocker. The artifact pair must bind explicit
+gate identity, descriptor identity, `FeedForward::apply_linear`
+owner/callsite identity, prompt/generated/text preservation,
+`runtime_api=cpu`, `selected_backend=cpu-rust`, `fallback=false`, and default
+`eager_f32_candle` preservation before any later candidate execution
+enablement slice.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-222-no-bias-strict-receipt-artifact-pair.json
+decision = blocked_fail_closed
+reason = receipt_gated_candidate_execution_boundary_incomplete
+remaining_blocker = same_callsite_candidate_off_on_strict_receipt_artifact_pair
+boundary = bitnet_transformer::DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptArtifactPairBoundary
+receipt_gated_candidate_execution_boundary_ready = false
+strict_artifact_pair_ready = false
+candidate_off_strict_receipt_artifact_present = false
+candidate_on_strict_receipt_artifact_present = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not capture a real candidate-on preservation receipt, does not
+execute the no-bias candidate, does not change default runtime selection, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
