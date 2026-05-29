@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T05:46:46Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-207"
+event = "in_progress"
+actor = "codex"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-207-no-bias-apply-linear-receipt-capture"
+summary = "Queued explicit-path no-bias apply-linear before/after receipt capture after SLM-CPU-206."
+notes = [
+  "SLM-CPU-207 should use the verified Qwen3 canonical path and exact Qwen2.5 cache path from SLM-CPU-206.",
+  "The item must capture fresh strict before/after receipts or record the precise command/runtime blocker.",
+  "Candidate execution, default runtime changes, model binaries, allocation/timing/speedup claims, Q4/Q5, server/accelerator, Qwen3.5, and BitNet QK256 remain out of scope.",
+]
