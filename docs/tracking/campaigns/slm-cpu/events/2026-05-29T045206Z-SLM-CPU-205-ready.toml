@@ -1,0 +1,13 @@
+timestamp = "2026-05-29T04:52:06Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-205"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-205-kaby-performance-dashboard-evidence"
+summary = "Queued Kaby SLM performance dashboard evidence consolidation."
+notes = [
+  "SLM-CPU-205 should consolidate existing strict Qwen3 Q8_0 and Qwen2.5 Q8_0 Kaby receipts into a dashboard-ready timing, memory, storage, thermal/power, and thread-count evidence summary.",
+  "The slice may recommend a default thread count only from existing receipt evidence and must not implement a new runtime optimization or make a new speedup/sustained-throughput claim.",
+]
