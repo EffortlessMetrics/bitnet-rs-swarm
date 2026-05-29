@@ -8,6 +8,7 @@ on:
       - "crates/bitnet-kernels/src/cpu/**"
       - "crates/bitnet-kernels/tests/**"
       - ".github/workflows/apple-silicon.yml"
+  workflow_dispatch: {}
 
 concurrency:
   group: apple-silicon-${{ github.event.pull_request.number || github.ref }}
@@ -23,6 +24,15 @@ env:
 jobs:
   build-test-macos:
     name: Build & Test (macOS ARM64)
+    # macOS/ARM64 self-hosted runners are not provisioned for this swarm repo
+    # (linux-x64 only). Per BITNET-ADR-0008 this lane stays dormant and must not
+    # start on an ordinary pull_request or main push, or it would queue forever
+    # on a missing runner. Opt in explicitly via workflow_dispatch or a label.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'apple-silicon')
+      || contains(github.event.pull_request.labels.*.name, 'macos')
+      || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 30
     steps:
@@ -60,6 +70,13 @@ jobs:
   metal-tests:
     name: Metal Tests (macOS ARM64)
     needs: build-test-macos
+    # Dormant alongside build-test-macos (see BITNET-ADR-0008). Guarded directly
+    # as well so it never starts on an ordinary pull_request or main push.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'apple-silicon')
+      || contains(github.event.pull_request.labels.*.name, 'macos')
+      || contains(github.event.pull_request.labels.*.name, 'full-ci')
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 30
     steps:
