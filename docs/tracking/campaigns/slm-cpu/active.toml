@@ -12255,8 +12255,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-212"
-status = "ready"
-branch = "codex/slm-cpu-212-no-bias-candidate-on-off-receipts"
+status = "pr_open"
+pr = 951
+branch = "codex/slm-cpu-212-no-bias-candidate-on-off-blocker"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

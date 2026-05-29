@@ -1,0 +1,15 @@
+timestamp = "2026-05-29T12:00:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-212"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 951
+branch = "codex/slm-cpu-212-no-bias-candidate-on-off-blocker"
+summary = "Opened SLM-CPU-212 no-bias candidate-on/off receipt blocker PR."
+notes = [
+  "PR #951 records that the receipt-bound selector descriptor exists, but warm-session receipt identity is not propagated into the dense-linear runtime hook registry.",
+  "Candidate-off/candidate-on strict warm-session receipts remain blocked until the runtime selector can see model/tokenizer/backend/fallback/digest identity at the exact apply-linear callsite.",
+  "Candidate execution, default runtime changes, allocation/timing/speedup claims, Q4/Q5, server/accelerator execution, Qwen3.5, and BitNet QK256 remain out of scope.",
+]
