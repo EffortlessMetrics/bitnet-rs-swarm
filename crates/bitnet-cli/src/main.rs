@@ -9655,8 +9655,20 @@ async fn run_slm_warm_session(
             bitnet_transformer::dense_q8_sidecar_instrumentation_snapshot(),
             &dense_q8_hook_selection,
         );
+    let dense_no_bias_apply_linear_gate_record =
+        slm_warm_session_no_bias_apply_linear_gate_for_session(
+            &model_path,
+            model_sha256.as_str(),
+            &model_architecture,
+            backend_identity.runtime_api.as_str(),
+            backend_identity.selected_backend.as_str(),
+            backend_identity.fallback_used,
+            &prompt_summaries,
+        );
     let dense_no_bias_apply_linear_gate =
-        slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(None);
+        slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(
+            dense_no_bias_apply_linear_gate_record.as_ref(),
+        );
 
     let total_session_ms = elapsed_ms(session_start);
     let speed_summary = speed_accumulator.receipt(
@@ -11278,6 +11290,123 @@ fn slm_warm_session_determinism_receipt(
 }
 
 #[cfg(feature = "full-cli")]
+fn slm_warm_session_no_bias_apply_linear_gate_for_session(
+    model_path: &std::path::Path,
+    model_sha256: &str,
+    model_architecture: &str,
+    runtime_api: &str,
+    selected_backend: &str,
+    fallback_used: bool,
+    prompt_summaries: &[serde_json::Value],
+) -> Option<bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate> {
+    if prompt_summaries.is_empty()
+        || dense_slm_quant_format(model_path) != "Q8_0"
+        || !matches!(model_architecture, "qwen2" | "qwen3")
+        || runtime_api != "cpu"
+        || selected_backend != "cpu-rust"
+        || fallback_used
+    {
+        return None;
+    }
+
+    let prompt_id_digests = prompt_summaries
+        .iter()
+        .map(|summary| {
+            summary
+                .pointer("/prompt_tokenize_contract/prompt_ids_sha256")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null)
+        })
+        .collect::<Vec<_>>();
+    let generated_ids = prompt_summaries
+        .iter()
+        .map(|summary| {
+            summary.get("generated_token_ids").cloned().unwrap_or(serde_json::Value::Null)
+        })
+        .collect::<Vec<_>>();
+    let decoded_text = prompt_summaries
+        .iter()
+        .map(|summary| summary.get("text").cloned().unwrap_or(serde_json::Value::Null))
+        .collect::<Vec<_>>();
+
+    let prompt_ids_digest = compute_sha256_json_value(&serde_json::json!(prompt_id_digests));
+    let generated_ids_digest = compute_sha256_json_value(&serde_json::json!(generated_ids));
+    let decoded_text_digest = compute_sha256_json_value(&serde_json::json!(decoded_text));
+    if prompt_ids_digest.is_empty()
+        || generated_ids_digest.is_empty()
+        || decoded_text_digest.is_empty()
+    {
+        return None;
+    }
+
+    let (candidate_path, tensor_name, role_id, manifest_material) = match model_architecture {
+        "qwen3" => (
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+            "layers.0.feed_forward.down_proj.weight",
+            "layers.0.feed_forward.down_proj",
+            serde_json::json!({
+                "model_sha256": model_sha256,
+                "model_architecture": model_architecture,
+                "role_id": "layers.0.feed_forward.down_proj",
+                "bias_present": false,
+                "source": "slm-warm-session-receipt-gate"
+            }),
+        ),
+        "qwen2" => (
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+            "layers.0.feed_forward.down_proj.weight",
+            "layers.0.feed_forward.down_proj",
+            serde_json::json!({
+                "model_sha256": model_sha256,
+                "model_architecture": model_architecture,
+                "role_id": "layers.0.feed_forward.down_proj",
+                "bias_present": false,
+                "source": "slm-warm-session-receipt-gate"
+            }),
+        ),
+        _ => return None,
+    };
+
+    Some(bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+        tensor_name: tensor_name.to_string(),
+        role_id: role_id.to_string(),
+        model_sha256: model_sha256.to_string(),
+        quant_format: "Q8_0",
+        manifest_sha256: compute_sha256_json_value(&manifest_material),
+        layer_idx: 0,
+        scope: "feed_forward",
+        linear: "down_proj",
+        bias_present: Some(false),
+        runtime_gate_name: "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+        runtime_gate_requested_enabled: false,
+        selected_path: "eager_f32_candle",
+        selected_kernel: "dense-f32-candle-linear",
+        candidate_path,
+        candidate_kernel: "dense-f32-candle-linear-no-bias-candidate",
+        runtime_api: "cpu",
+        selected_backend: "cpu-rust",
+        fallback_used: false,
+        before_after_receipts_present: false,
+        descriptor_callsite_identity_preserved: true,
+        prompt_ids_digest_preserved: true,
+        generated_ids_digest_preserved: true,
+        decoded_text_digest_preserved: true,
+        prompt_ids_digest,
+        generated_ids_digest,
+        decoded_text_digest,
+        normal_inference_runtime_selection_enabled: false,
+        candidate_execution_enabled: false,
+        decision: "blocked_pending_before_after_warm_session_receipts",
+        reason: "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured",
+        remaining_runtime_selection_blocker: "fresh_qwen3_qwen25_before_after_warm_session_receipts",
+        fail_closed_conditions: vec!["before_after_receipts_missing"],
+        allocation_reduction_claim: false,
+        timing_improvement_claim: false,
+        speedup_claim: false,
+    })
+}
+
+#[cfg(feature = "full-cli")]
 fn slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(
     gate: Option<&bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate>,
 ) -> serde_json::Value {
@@ -11352,6 +11481,15 @@ fn slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(
         "decoded_text_digest_preserved": gate
             .map(|gate| gate.decoded_text_digest_preserved)
             .unwrap_or(false),
+        "prompt_ids_digest": gate
+            .map(|gate| serde_json::Value::String(gate.prompt_ids_digest.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "generated_ids_digest": gate
+            .map(|gate| serde_json::Value::String(gate.generated_ids_digest.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "decoded_text_digest": gate
+            .map(|gate| serde_json::Value::String(gate.decoded_text_digest.clone()))
+            .unwrap_or(serde_json::Value::Null),
         "runtime_api": gate.map(|gate| gate.runtime_api).unwrap_or("cpu"),
         "selected_backend": gate.map(|gate| gate.selected_backend).unwrap_or("cpu-rust"),
         "selected_path": gate.map(|gate| gate.selected_path).unwrap_or("eager_f32_candle"),
@@ -16115,6 +16253,9 @@ mod tests {
             prompt_ids_digest_preserved: true,
             generated_ids_digest_preserved: true,
             decoded_text_digest_preserved: true,
+            prompt_ids_digest: "prompt-digest".to_string(),
+            generated_ids_digest: "generated-digest".to_string(),
+            decoded_text_digest: "decoded-digest".to_string(),
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
             decision: "before_after_receipt_gate_ready_runtime_disabled",
@@ -16134,6 +16275,9 @@ mod tests {
         assert_eq!(receipt["prompt_ids_digest_preserved"], true);
         assert_eq!(receipt["generated_ids_digest_preserved"], true);
         assert_eq!(receipt["decoded_text_digest_preserved"], true);
+        assert_eq!(receipt["prompt_ids_digest"], "prompt-digest");
+        assert_eq!(receipt["generated_ids_digest"], "generated-digest");
+        assert_eq!(receipt["decoded_text_digest"], "decoded-digest");
         assert_eq!(receipt["model_sha256"], "qwen3-sha");
         assert_eq!(receipt["quant_format"], "Q8_0");
         assert_eq!(receipt["manifest_sha256"], "manifest-sha");
@@ -16149,6 +16293,100 @@ mod tests {
         assert_eq!(receipt["allocation_reduction_claim"], false);
         assert_eq!(receipt["timing_improvement_claim"], false);
         assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_apply_linear_gate_binds_qwen3_session_identity() {
+        let prompt_summaries = vec![serde_json::json!({
+            "prompt_tokenize_contract": {
+                "prompt_ids_sha256": "sha256:prompt"
+            },
+            "generated_token_ids": [19],
+            "text": "4"
+        })];
+
+        let Some(gate) = slm_warm_session_no_bias_apply_linear_gate_for_session(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "cpu",
+            "cpu-rust",
+            false,
+            &prompt_summaries,
+        ) else {
+            assert!(false, "qwen3 q8 cpu session should produce a fail-closed gate object");
+            return;
+        };
+
+        assert_eq!(gate.model_sha256, "qwen3-sha");
+        assert_eq!(gate.quant_format, "Q8_0");
+        assert_eq!(gate.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
+        assert_eq!(gate.runtime_api, "cpu");
+        assert_eq!(gate.selected_backend, "cpu-rust");
+        assert!(!gate.fallback_used);
+        assert!(!gate.before_after_receipts_present);
+        assert!(gate.prompt_ids_digest_preserved);
+        assert!(gate.generated_ids_digest_preserved);
+        assert!(gate.decoded_text_digest_preserved);
+        assert!(!gate.prompt_ids_digest.is_empty());
+        assert!(!gate.generated_ids_digest.is_empty());
+        assert!(!gate.decoded_text_digest.is_empty());
+        assert_eq!(gate.decision, "blocked_pending_before_after_warm_session_receipts");
+        assert_eq!(
+            gate.remaining_runtime_selection_blocker,
+            "fresh_qwen3_qwen25_before_after_warm_session_receipts"
+        );
+        assert!(gate.fail_closed_conditions.contains(&"before_after_receipts_missing"));
+        assert!(!gate.candidate_execution_enabled);
+        assert!(!gate.allocation_reduction_claim);
+        assert!(!gate.timing_improvement_claim);
+        assert!(!gate.speedup_claim);
+
+        let receipt = slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(Some(&gate));
+        assert_eq!(receipt["decision"], "blocked_pending_before_after_warm_session_receipts");
+        assert_eq!(receipt["prompt_ids_digest"], gate.prompt_ids_digest);
+        assert_eq!(receipt["generated_ids_digest"], gate.generated_ids_digest);
+        assert_eq!(receipt["decoded_text_digest"], gate.decoded_text_digest);
+        assert_eq!(receipt["before_after_receipts_present"], false);
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_apply_linear_gate_rejects_non_q8_or_fallback() {
+        let prompt_summaries = vec![serde_json::json!({
+            "prompt_tokenize_contract": {
+                "prompt_ids_sha256": "sha256:prompt"
+            },
+            "generated_token_ids": [19],
+            "text": "4"
+        })];
+
+        assert!(
+            slm_warm_session_no_bias_apply_linear_gate_for_session(
+                std::path::Path::new("models/slm/Qwen3-0.6B-Q4_K_M.gguf"),
+                "qwen3-sha",
+                "qwen3",
+                "cpu",
+                "cpu-rust",
+                false,
+                &prompt_summaries,
+            )
+            .is_none()
+        );
+        assert!(
+            slm_warm_session_no_bias_apply_linear_gate_for_session(
+                std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+                "qwen3-sha",
+                "qwen3",
+                "cpu",
+                "cpu-rust",
+                true,
+                &prompt_summaries,
+            )
+            .is_none()
+        );
     }
 
     #[test]

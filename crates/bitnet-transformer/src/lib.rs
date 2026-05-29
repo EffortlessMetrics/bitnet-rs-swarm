@@ -988,9 +988,9 @@ pub struct DenseLinearNoBiasApplyLinearReceiptBoundary {
     pub runtime_api: &'static str,
     pub selected_backend: &'static str,
     pub fallback_used: bool,
-    pub prompt_ids_digest: &'static str,
-    pub generated_ids_digest: &'static str,
-    pub decoded_text_digest: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
     pub receipt_fields_present: bool,
     pub required_receipt_fields: Vec<&'static str>,
     pub normal_inference_runtime_selection_enabled: bool,
@@ -1029,6 +1029,9 @@ pub struct DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
     pub prompt_ids_digest_preserved: bool,
     pub generated_ids_digest_preserved: bool,
     pub decoded_text_digest_preserved: bool,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
     pub normal_inference_runtime_selection_enabled: bool,
     pub candidate_execution_enabled: bool,
     pub decision: &'static str,
@@ -1133,11 +1136,14 @@ impl DenseLinearNoBiasApplyLinearReceiptBoundary {
         runtime_api: &'static str,
         selected_backend: &'static str,
         fallback_used: bool,
-        prompt_ids_digest: &'static str,
-        generated_ids_digest: &'static str,
-        decoded_text_digest: &'static str,
+        prompt_ids_digest: impl Into<String>,
+        generated_ids_digest: impl Into<String>,
+        decoded_text_digest: impl Into<String>,
         receipt_fields_present: bool,
     ) -> Self {
+        let prompt_ids_digest = prompt_ids_digest.into();
+        let generated_ids_digest = generated_ids_digest.into();
+        let decoded_text_digest = decoded_text_digest.into();
         let mut fail_closed_conditions = boundary.fail_closed_conditions.clone();
         if !boundary.callsite_descriptor_observed
             || boundary.decision != "descriptor_observed_at_apply_linear_runtime_disabled"
@@ -1422,6 +1428,9 @@ impl DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
             prompt_ids_digest_preserved,
             generated_ids_digest_preserved,
             decoded_text_digest_preserved,
+            prompt_ids_digest: before.prompt_ids_digest.clone(),
+            generated_ids_digest: before.generated_ids_digest.clone(),
+            decoded_text_digest: before.decoded_text_digest.clone(),
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
             decision,
