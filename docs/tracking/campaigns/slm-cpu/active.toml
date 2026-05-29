@@ -12138,8 +12138,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-210"
-status = "pr_open"
+status = "merged"
 pr = 947
+head_sha = "874c5a30c794e1c7b3e5ebe5b1d4684371e9af8f"
+merge_sha = "077fd3a2286b61b3905f7ef86e758c8cbea62ee3"
 branch = "codex/slm-cpu-210-no-bias-apply-linear-runtime-experiment"
 stackable = false
 review_mode = "codex_premerge"
@@ -12180,6 +12182,61 @@ may_claim = [
   "SLM-CPU-210 may add an explicit runtime-gated experiment boundary for exact feed_forward.down_proj no-bias apply-linear candidate roles.",
   "SLM-CPU-210 may capture candidate-off/candidate-on strict receipt pairs if the explicit gate and all receipt identity fields match.",
   "SLM-CPU-210 may record an exact blocker if candidate execution cannot be safely wired or proven.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for a no-bias runtime experiment without fresh candidate-off/candidate-on receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-211"
+status = "ready"
+branch = "codex/slm-cpu-211-receipt-bound-no-bias-selector-descriptor"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-210"]
+acceptance = "Consume the SLM-CPU-210 runtime selector blocker and add, or precisely block, a receipt-bound no-bias apply-linear selector descriptor that can carry the SLM-CPU-209 model/tokenizer/backend/fallback/digest identity into the exact FeedForward::apply_linear callsite for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj candidate roles. A valid implementation must keep candidate execution disabled by default and may only expose a fail-closed descriptor contract unless fresh candidate-off/candidate-on strict warm-session receipt pairs prove preserved model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, selected path/kernel, candidate path/kernel, and per-callsite descriptor identity. A valid blocker must name the exact missing descriptor propagation, lifetime, CLI command, receipt field, or Qwen2.5 candidate policy. No model binary may be committed, and no default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-210 records that FeedForward::apply_linear currently receives tensor/callsite hook data but not receipt-bound model/tokenizer/backend/fallback/digest selector identity.",
+  "SLM-CPU-209 supplies Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs preserving generated IDs and decoded text while candidate execution remains disabled.",
+  "The current DenseLinearRuntimeHookDescriptor does not carry model SHA, architecture, quant format, tokenizer source/strictness, runtime_api, selected_backend, fallback_used, prompt/generated/text digests, manifest SHA, before/after receipt-pair identity, or per-callsite candidate execution receipt identity.",
+]
+may_claim = [
+  "SLM-CPU-211 may define a receipt-bound selector descriptor for exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj no-bias candidate roles.",
+  "SLM-CPU-211 may keep the descriptor runtime-disabled and fail-closed until candidate-off/candidate-on receipts exist.",
+  "SLM-CPU-211 may record an exact blocker if descriptor propagation cannot be safely wired.",
 ]
 must_not_claim = [
   "A model binary is committed.",
