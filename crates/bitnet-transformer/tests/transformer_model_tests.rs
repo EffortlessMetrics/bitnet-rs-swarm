@@ -14,9 +14,10 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasRuntimeSelectionPreflight,
-    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
-    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasRuntimeDescriptorContract,
+    DenseLinearNoBiasRuntimeSelectionPreflight, DenseLinearNoBiasSelectorAudit,
+    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
+    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
     LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
     TransformerForwardWorkspace, TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
@@ -865,6 +866,82 @@ fn no_bias_runtime_gate_requested_parser_is_explicit() {
     for disabled in [None, Some(""), Some("0"), Some("false"), Some("off"), Some("maybe")] {
         assert!(!dense_linear_no_bias_runtime_gate_requested(disabled));
     }
+}
+
+#[test]
+fn no_bias_runtime_descriptor_contract_carries_manifest_bound_identity_runtime_disabled() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        13,
+        "layers.13.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight,
+        "Q8_0",
+        Some(false),
+        true,
+        true,
+    );
+
+    assert_eq!(contract.decision, "descriptor_contract_ready_runtime_disabled");
+    assert_eq!(contract.model_sha256, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256);
+    assert_eq!(contract.quant_format, "Q8_0");
+    assert_eq!(contract.manifest_sha256, "manifest-sha256");
+    assert_eq!(contract.role_id, "layers.13.feed_forward.down_proj");
+    assert_eq!(contract.layer_idx, 13);
+    assert_eq!(contract.scope, "feed_forward");
+    assert_eq!(contract.linear, "down_proj");
+    assert_eq!(contract.bias_present, Some(false));
+    assert_eq!(contract.runtime_gate_name, "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE");
+    assert!(contract.runtime_gate_requested_enabled);
+    assert!(contract.descriptor_fields_present);
+    assert!(contract.receipt_identity_fields_present);
+    assert_eq!(contract.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
+    assert_eq!(contract.candidate_kernel, "dense-f32-no-bias-matmul-candidate");
+    assert_eq!(contract.selected_path, "eager_f32_candle");
+    assert_eq!(contract.selected_kernel, "dense-f32-candle-linear");
+    assert!(!contract.normal_inference_runtime_selection_enabled);
+    assert!(contract.descriptor_ready_for_future_receipt_gate);
+    assert!(contract.fail_closed_conditions.is_empty());
+    assert!(contract.preserves_normal_inference());
+    assert!(contract.required_descriptor_fields.contains(&"fallback_used"));
+    assert!(contract.required_receipt_fields_before_runtime_use.contains(&"generated_ids"));
+    assert!(!contract.fallback_used_required);
+    assert!(!contract.allocation_reduction_claim);
+    assert!(!contract.timing_improvement_claim);
+    assert!(!contract.speedup_claim);
+}
+
+#[test]
+fn no_bias_runtime_descriptor_contract_fails_closed_before_compute() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        0,
+        "layers.0.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, false);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight, "Q4_K_M", None, false, false,
+    );
+
+    assert_eq!(contract.decision, "blocked_fail_closed");
+    assert_eq!(contract.reason, "manifest_bound_no_bias_descriptor_identity_incomplete");
+    assert!(contract.fail_closed_conditions.contains(&"quant_format_not_q8_0"));
+    assert!(contract.fail_closed_conditions.contains(&"unknown_bias_present"));
+    assert!(contract.fail_closed_conditions.contains(&"descriptor_fields_missing"));
+    assert!(contract.fail_closed_conditions.contains(&"receipt_identity_fields_missing"));
+    assert!(contract.fail_closed_conditions.contains(&"preflight_not_receipt_gate_selectable"));
+    assert!(contract.fail_closed_conditions.contains(&"paired_strict_receipts_missing"));
+    assert!(!contract.descriptor_ready_for_future_receipt_gate);
+    assert!(!contract.normal_inference_runtime_selection_enabled);
+    assert!(contract.preserves_normal_inference());
 }
 
 #[test]

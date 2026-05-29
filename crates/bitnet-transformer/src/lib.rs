@@ -787,6 +787,149 @@ pub fn dense_linear_no_bias_runtime_gate_requested(value: Option<&str>) -> bool 
     )
 }
 
+/// Manifest-bound no-bias runtime descriptor contract for SLM-CPU-199.
+///
+/// This is still a contract/audit surface, not a compute selector. It carries
+/// the exact role identity that a future receipt-gated runtime experiment must
+/// preserve before `FeedForward::apply_linear` can select the no-bias candidate.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasRuntimeDescriptorContract {
+    pub role_id: String,
+    pub model_sha256: String,
+    pub quant_format: &'static str,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_default_enabled: bool,
+    pub runtime_gate_requested_enabled: bool,
+    pub descriptor_fields_present: bool,
+    pub receipt_identity_fields_present: bool,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub descriptor_ready_for_future_receipt_gate: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub required_descriptor_fields: Vec<&'static str>,
+    pub required_receipt_fields_before_runtime_use: Vec<&'static str>,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub fallback_used_required: bool,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+impl DenseLinearNoBiasRuntimeDescriptorContract {
+    pub fn from_preflight(
+        preflight: &DenseLinearNoBiasRuntimeSelectionPreflight,
+        quant_format: &'static str,
+        bias_present: Option<bool>,
+        descriptor_fields_present: bool,
+        receipt_identity_fields_present: bool,
+    ) -> Self {
+        let mut fail_closed_conditions = Vec::new();
+        if quant_format != "Q8_0" {
+            fail_closed_conditions.push("quant_format_not_q8_0");
+        }
+        match bias_present {
+            Some(false) => {}
+            Some(true) => fail_closed_conditions.push("bias_present_true"),
+            None => fail_closed_conditions.push("unknown_bias_present"),
+        }
+        if !descriptor_fields_present {
+            fail_closed_conditions.push("descriptor_fields_missing");
+        }
+        if !receipt_identity_fields_present {
+            fail_closed_conditions.push("receipt_identity_fields_missing");
+        }
+        if !preflight.would_select_candidate_in_receipt_gated_experiment {
+            fail_closed_conditions.push("preflight_not_receipt_gate_selectable");
+        }
+        if !preflight.preserves_normal_inference() {
+            fail_closed_conditions.push("preflight_does_not_preserve_normal_inference");
+        }
+        for condition in &preflight.fail_closed_conditions {
+            if !fail_closed_conditions.contains(condition) {
+                fail_closed_conditions.push(condition);
+            }
+        }
+
+        let descriptor_ready_for_future_receipt_gate = fail_closed_conditions.is_empty();
+        let (decision, reason) = if descriptor_ready_for_future_receipt_gate {
+            (
+                "descriptor_contract_ready_runtime_disabled",
+                "manifest_bound_no_bias_descriptor_identity_complete",
+            )
+        } else {
+            ("blocked_fail_closed", "manifest_bound_no_bias_descriptor_identity_incomplete")
+        };
+
+        Self {
+            role_id: preflight.role_id.clone(),
+            model_sha256: preflight.model_sha256.clone(),
+            quant_format,
+            manifest_sha256: preflight.manifest_sha256.clone(),
+            layer_idx: preflight.layer_idx,
+            scope: "feed_forward",
+            linear: "down_proj",
+            bias_present,
+            runtime_gate_name: preflight.runtime_gate_name,
+            runtime_gate_default_enabled: false,
+            runtime_gate_requested_enabled: preflight.runtime_gate_requested_enabled,
+            descriptor_fields_present,
+            receipt_identity_fields_present,
+            candidate_path: preflight.candidate_path,
+            candidate_kernel: preflight.candidate_kernel,
+            selected_path: preflight.selected_path,
+            selected_kernel: preflight.selected_kernel,
+            normal_inference_runtime_selection_enabled: false,
+            descriptor_ready_for_future_receipt_gate,
+            decision,
+            reason,
+            required_descriptor_fields: vec![
+                "model_sha256",
+                "quant_format",
+                "manifest_sha256",
+                "role_id",
+                "layer",
+                "scope",
+                "linear",
+                "bias_present",
+                "candidate_path",
+                "candidate_kernel",
+                "selected_path",
+                "selected_kernel",
+                "runtime_gate_state",
+                "fallback_used",
+            ],
+            required_receipt_fields_before_runtime_use: preflight
+                .required_receipt_fields_before_runtime_use
+                .clone(),
+            fail_closed_conditions,
+            fallback_used_required: false,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        !self.runtime_gate_default_enabled
+            && !self.normal_inference_runtime_selection_enabled
+            && self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && !self.fallback_used_required
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
 impl DenseLinearRuntimeHookBoundary {
     pub fn eager_f32(tensor_name: impl Into<String>) -> Self {
         Self {
