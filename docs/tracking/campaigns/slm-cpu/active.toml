@@ -12371,8 +12371,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-214"
-status = "pr_open"
+status = "merged"
 pr = 955
+merge_sha = "96be70551ee7371b1394a69ffcf0128de1548175"
 branch = "codex/slm-cpu-214-no-bias-selector-attachment-point"
 stackable = false
 review_mode = "codex_premerge"
@@ -12419,6 +12420,61 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes.",
   "Generated IDs are preserved for candidate-on execution without fresh candidate-off/candidate-on strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-215"
+status = "ready"
+branch = "codex/slm-cpu-215-no-bias-candidate-off-on-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-214"]
+acceptance = "Consume the SLM-CPU-214 per-callsite selector attachment point and capture or define the exact candidate-off/candidate-on no-bias receipt pair gate for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj. Candidate execution may only be attempted under an explicit gate and exact per-callsite descriptor identity; if execution cannot be safely wired, record a blocker naming the missing CLI flag, callsite emitter, receipt field, runtime hook ownership, or candidate-on artifact. Any successful receipt pair must prove identical model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, selected path/kernel, candidate path/kernel, and per-callsite identity. No model binary may be committed, no default runtime may change, and no allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-214 defines DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary as the safer attachment point.",
+  "Candidate execution remains disabled until explicit gate and candidate-off/candidate-on receipts prove generated IDs and decoded text are preserved.",
+  "Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj remain the bounded candidate scope.",
+]
+may_claim = [
+  "SLM-CPU-215 may capture candidate-off/candidate-on no-bias receipt pairs under an explicit gate.",
+  "SLM-CPU-215 may record a blocker if candidate-on execution or receipt emission cannot be safely wired.",
+  "SLM-CPU-215 may prove generated-ID and decoded-text preservation for the exact candidate scope only.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
