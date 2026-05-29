@@ -1,0 +1,24 @@
+timestamp = "2026-05-29T09:50:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-210"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 947
+head_sha = "874c5a30c794e1c7b3e5ebe5b1d4684371e9af8f"
+merge_sha = "077fd3a2286b61b3905f7ef86e758c8cbea62ee3"
+branch = "codex/slm-cpu-210-no-bias-apply-linear-runtime-experiment"
+summary = "Merged SLM-CPU-210 no-bias apply-linear runtime experiment blocker and queued SLM-CPU-211."
+notes = [
+  "PR #947 records that FeedForward::apply_linear lacks receipt-bound model/tokenizer/backend/fallback/digest selector identity needed to safely execute the no-bias candidate under the SLM-CPU-209 contract.",
+  "Candidate execution and normal runtime selection remain disabled; default eager_f32_candle and selected_kernel=dense-f32-candle-linear remain unchanged.",
+  "SLM-CPU-211 is ready to define or precisely block the receipt-bound selector descriptor needed before any candidate-off/candidate-on runtime experiment.",
+]
+
+[[next_item]]
+id = "SLM-CPU-211"
+status = "ready"
+branch = "codex/slm-cpu-211-receipt-bound-no-bias-selector-descriptor"
+blocked_by = ["SLM-CPU-210"]
+summary = "Queue the receipt-bound no-bias apply-linear selector descriptor after SLM-CPU-210."
