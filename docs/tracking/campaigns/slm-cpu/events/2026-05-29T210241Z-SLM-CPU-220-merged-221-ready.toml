@@ -1,0 +1,17 @@
+timestamp = "2026-05-29T21:02:41Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-220"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 978
+head_sha = "a7e3ab8d0ca426437d15d23046ac6910c24f1881"
+merge_sha = "21b859c6c829c9a7ba154d2407842189cfb34319"
+branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
+summary = "Merged SLM-CPU-220 no-bias candidate-off/on strict receipt boundary and queued SLM-CPU-221."
+notes = [
+  "SLM-CPU-220 records DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The merged artifact keeps candidate execution and normal runtime selection disabled while naming missing same-callsite candidate-off/candidate-on strict artifacts, owner/callsite identity binding, and prompt/generated/text preservation as fail-closed blockers.",
+  "SLM-CPU-221 is ready to consume this boundary and either record the exact remaining receipt-gated execution blocker or prove that the strict identity artifact set is present while preserving default eager_f32_candle behavior.",
+]
