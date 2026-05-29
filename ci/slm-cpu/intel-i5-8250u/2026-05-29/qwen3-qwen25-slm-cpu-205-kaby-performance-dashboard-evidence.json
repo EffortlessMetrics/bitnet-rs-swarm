@@ -1,0 +1,409 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_kaby_performance_dashboard_evidence",
+  "tracking_item": "SLM-CPU-205",
+  "decision": "dashboard_evidence_consolidated_no_runtime_change",
+  "summary": "Consolidates existing strict i5-8250U Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts into a machine-readable Kaby performance dashboard evidence bundle. This artifact recommends the existing 4-thread operator default only from committed receipt evidence and makes no new runtime, allocation-reduction, timing-improvement, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim.",
+  "host": {
+    "machine_id": "intel-i5-8250u",
+    "cpu_model": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel",
+    "arch": "x86_64",
+    "features": [
+      "avx2",
+      "avx",
+      "fma",
+      "sse4.2",
+      "sse2"
+    ],
+    "requested_thread_counts_with_receipts": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "input_artifacts": [
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-thread-timing-envelope.json",
+      "sha256": "9063e7c14890df08f4eaa34e8db026adc8da943162fcc10a4754ea2cd7570243",
+      "role": "Qwen3 1/2/4/8-thread bounded warm-session timing envelope"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-thread-timing-envelope-validation.json",
+      "sha256": "b31216176381ecc89ad09798e76da1587845cc21bfe6471cf0a94e8c0522855e",
+      "role": "Qwen3 thread-envelope validation for strict provenance, quality, determinism, and fallback=false"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-operator-profile.json",
+      "sha256": "1d55fb98810030d72e5105c02c91de23227b55e0efe78c4695e0ec08226ea56b",
+      "role": "Qwen3 4-thread operator profile with warm-session timing, memory, storage, and unsupported-path context"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-second-model-sanity.json",
+      "sha256": "601fcd1eb0240484c98f070f905d72c11873b4ff1edc4879f953693a3a7d6ef8",
+      "role": "Qwen2.5 bounded second-model strict CPU sanity evidence"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+      "sha256": "4dc4b5004162396ac0cd1a7991ee03004c56bee79ad7f8ac5f7c4e617d110cb7",
+      "role": "Qwen3 allocation-audit baseline before later allocation work"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen25-slm-cpu-161-allocation-audit-baseline.json",
+      "sha256": "b819d29cf405580dfe8a62e0c1a76bcb088f8a63a9b909ca20fc2ca55f987cef",
+      "role": "Qwen2.5 allocation-audit baseline before later allocation work"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-before.json",
+      "sha256": "09ce09c885f6103ef94a01422c3edf2b2e4b99a41484a2bc9c845bd8461867d3",
+      "role": "Qwen2.5 prompt-tokenize exact-identity cache before receipt"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json",
+      "sha256": "a5131d91c1c927fd679fad7e69687d1b7cd8fbfac6943e81199100122a93ac5d",
+      "role": "Qwen2.5 prompt-tokenize exact-identity cache after receipt"
+    }
+  ],
+  "models": {
+    "qwen3_0_6b_q8_0": {
+      "role": "primary_kaby_appliance_profile",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "architecture": "qwen3",
+      "family": "qwen",
+      "quant_format": "Q8_0",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "operator_profile": {
+        "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-operator-profile.json",
+        "threads": 4,
+        "model_loaded_once": true,
+        "tokenizer_loaded_once": true,
+        "model_load_ms": 37531.292,
+        "model_sha256_ms": 5144.338,
+        "tokenizer_load_ms": 780.975,
+        "total_session_ms": 141643.848,
+        "warm_prompt_wall_ms": 98140.65,
+        "prefill_ms": 66958.577,
+        "decode_total_ms": 26077.955,
+        "sampling_ms": 322.081,
+        "tokenize_ms": 4695.223,
+        "first_token_mean_ms": 12709.333,
+        "first_token_p95_ms": 13931.0,
+        "steady_decode_mean_tok_s": 1.833,
+        "warm_prompt_generated_tok_s": 0.469,
+        "cold_session_generated_tok_s": 0.325,
+        "decode_generated_tok_s": 1.764,
+        "prompt_count": 6,
+        "prompt_tokens": 176,
+        "generated_tokens": 46,
+        "quality_passed": true,
+        "determinism_passed": true
+      },
+      "memory": {
+        "available": true,
+        "resident_memory_bytes": 3045429248,
+        "virtual_memory_bytes": 3036508160,
+        "source": "sysinfo_current_process"
+      },
+      "storage": {
+        "available": true,
+        "total_bytes": 999103131648,
+        "available_bytes": 45233147904,
+        "mount": "C:\\",
+        "source": "sysinfo_disk"
+      },
+      "thermal": {
+        "fields_present": true,
+        "measured": false,
+        "temperature_c": null,
+        "source": "not_sampled_in_slm_cpu_warm_session"
+      },
+      "power": {
+        "fields_present": true,
+        "measured": false,
+        "mode": null,
+        "source": "not_sampled_in_slm_cpu_warm_session"
+      },
+      "allocation_audit_baseline": {
+        "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-27/qwen3-slm-cpu-161-allocation-audit-baseline.json",
+        "enabled": true,
+        "dominant_hotspot": "prompt_prefill",
+        "dominant_alloc_bytes": 3841712294,
+        "dominant_alloc_count": 4462715,
+        "next_optimization_target": "residual_block_output_storage_boundary",
+        "next_target_status": "layer_output_storage_blocked_by_candle_tensor_add_ops"
+      }
+    },
+    "qwen25_0_5b_instruct_q8_0": {
+      "role": "bounded_second_model_sanity",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "architecture": "qwen2",
+      "family": "qwen",
+      "quant_format": "Q8_0",
+      "loader_mode": "real_gguf",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "selected_backend": "cpu-rust",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "sanity_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-16/qwen25-second-model-sanity.json",
+      "sanity_case": {
+        "case_id": "math_2_plus_2_brief",
+        "answer_contains": "4",
+        "prompt_template": "qwen2.5",
+        "generated_token_ids": [
+          198,
+          17,
+          10,
+          17,
+          16819,
+          220,
+          19,
+          13
+        ],
+        "quality_passed": true,
+        "first_token_latency_ms": 12077,
+        "total_ms": 15187
+      },
+      "warm_session_receipt": {
+        "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json",
+        "threads": 4,
+        "model_loaded_once": true,
+        "tokenizer_loaded_once": true,
+        "model_load_ms": 63128.052,
+        "model_sha256_ms": 8003.807,
+        "tokenizer_load_ms": 1312.709,
+        "total_session_ms": 113814.947,
+        "prompt_count": 2,
+        "generated_token_ids": [
+          19,
+          151645
+        ],
+        "decoded_text": "4",
+        "determinism_passed": true
+      },
+      "memory": {
+        "available": true,
+        "resident_memory_bytes": 2804137984,
+        "virtual_memory_bytes": 2793189376,
+        "source": "sysinfo_current_process"
+      },
+      "storage": {
+        "available": true,
+        "available_bytes": 57377693696,
+        "source": "sysinfo_disk"
+      },
+      "thermal": {
+        "fields_present": true,
+        "measured": false,
+        "temperature_c": null,
+        "source": "not_sampled_in_slm_cpu_warm_session"
+      },
+      "power": {
+        "fields_present": true,
+        "measured": false,
+        "mode": null,
+        "source": "not_sampled_in_slm_cpu_warm_session"
+      },
+      "allocation_audit_baseline": {
+        "receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-28/slm-cpu-175-qwen25-after.json",
+        "enabled": true,
+        "dominant_hotspot": "prompt_prefill",
+        "dominant_alloc_bytes": 947766046,
+        "dominant_alloc_count": 1712403,
+        "prompt_tokenize_after_cache_alloc_bytes": 378,
+        "prompt_tokenize_after_cache_alloc_count": 2,
+        "next_optimization_target": "residual_block_output_storage_boundary",
+        "next_target_status": "layer_output_storage_blocked_by_candle_tensor_add_ops"
+      }
+    },
+    "smollm2_360m_instruct_q8_0": {
+      "role": "governed_fail_closed_breadth_candidate",
+      "evidence": [
+        "ci/slm-cpu/windows-9950x3d-rtx5070ti/2026-05-16/smollm2-360m-wrong-first-token-diagnosis.json",
+        "ci/slm-cpu/windows-9950x3d-rtx5070ti/2026-05-16/smollm2-360m-reference-comparator-contract.json"
+      ],
+      "status": "not_answer_ready_for_kaby_dashboard",
+      "reason": "Existing SmolLM2 evidence is not an i5-8250U answer-ready performance receipt and remains governed fail-closed before CPU answer readiness or accelerator planning."
+    }
+  },
+  "thread_envelope": {
+    "source": "ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-thread-timing-envelope.json",
+    "validation": {
+      "all_receipts_present": true,
+      "all_quality_passed": true,
+      "all_determinism_passed": true,
+      "all_fallback_false": true,
+      "generated_ids_stable_across_thread_counts": true
+    },
+    "runs": [
+      {
+        "threads": 1,
+        "total_session_ms": 137179.478,
+        "warm_prompt_wall_ms": 94609.006,
+        "prefill_ms": 65837.089,
+        "decode_total_ms": 23650.743,
+        "first_token_mean_ms": 12311.833,
+        "first_token_p95_ms": 14077.0,
+        "steady_decode_mean_tok_s": 1.931,
+        "warm_prompt_generated_tok_s": 0.486,
+        "cold_session_generated_tok_s": 0.335
+      },
+      {
+        "threads": 2,
+        "total_session_ms": 136826.761,
+        "warm_prompt_wall_ms": 95562.894,
+        "prefill_ms": 65459.825,
+        "decode_total_ms": 23672.087,
+        "first_token_mean_ms": 12405.667,
+        "first_token_p95_ms": 13865.0,
+        "steady_decode_mean_tok_s": 1.898,
+        "warm_prompt_generated_tok_s": 0.481,
+        "cold_session_generated_tok_s": 0.336
+      },
+      {
+        "threads": 4,
+        "total_session_ms": 135679.052,
+        "warm_prompt_wall_ms": 94416.265,
+        "prefill_ms": 64733.698,
+        "decode_total_ms": 23725.19,
+        "first_token_mean_ms": 12328.333,
+        "first_token_p95_ms": 13187.0,
+        "steady_decode_mean_tok_s": 1.963,
+        "warm_prompt_generated_tok_s": 0.487,
+        "cold_session_generated_tok_s": 0.339
+      },
+      {
+        "threads": 8,
+        "total_session_ms": 136190.928,
+        "warm_prompt_wall_ms": 94979.978,
+        "prefill_ms": 65590.721,
+        "decode_total_ms": 24318.391,
+        "first_token_mean_ms": 12332.833,
+        "first_token_p95_ms": 13690.0,
+        "steady_decode_mean_tok_s": 1.907,
+        "warm_prompt_generated_tok_s": 0.484,
+        "cold_session_generated_tok_s": 0.338
+      }
+    ]
+  },
+  "dashboard_field_matrix": {
+    "cold_load": {
+      "status": "recorded",
+      "sources": [
+        "qwen3.operator_profile.model_load_ms",
+        "qwen25.warm_session_receipt.model_load_ms",
+        "qwen3.thread_envelope.runs[].model_load_ms"
+      ]
+    },
+    "warm_session_load_once": {
+      "status": "recorded",
+      "sources": [
+        "qwen3.operator_profile.model_loaded_once",
+        "qwen25.warm_session_receipt.model_loaded_once"
+      ]
+    },
+    "prefill": {
+      "status": "recorded_for_qwen3_thread_envelope_and_operator_profile",
+      "sources": [
+        "qwen3.thread_envelope.runs[].prefill_ms",
+        "qwen3.operator_profile.prefill_ms"
+      ]
+    },
+    "first_token_latency": {
+      "status": "recorded",
+      "sources": [
+        "qwen3.thread_envelope.runs[].first_token_mean_ms",
+        "qwen3.operator_profile.first_token_mean_ms",
+        "qwen25.sanity_case.first_token_latency_ms"
+      ]
+    },
+    "steady_decode": {
+      "status": "recorded_for_qwen3_thread_envelope_and_operator_profile",
+      "sources": [
+        "qwen3.thread_envelope.runs[].steady_decode_mean_tok_s",
+        "qwen3.operator_profile.steady_decode_mean_tok_s"
+      ]
+    },
+    "per_prompt_timing": {
+      "status": "recorded_in_warm_session_receipts",
+      "sources": [
+        "qwen3.operator_profile.prompts[]",
+        "qwen25.warm_session_receipt.prompts[]"
+      ]
+    },
+    "allocation_counters": {
+      "status": "recorded_where_allocation_audit_enabled",
+      "sources": [
+        "qwen3.allocation_audit_baseline",
+        "qwen25.allocation_audit_baseline"
+      ]
+    },
+    "memory_footprint": {
+      "status": "recorded",
+      "sources": [
+        "qwen3.operator_profile.memory",
+        "qwen25.warm_session_receipt.memory"
+      ]
+    },
+    "storage_context": {
+      "status": "recorded",
+      "sources": [
+        "qwen3.operator_profile.storage",
+        "qwen25.warm_session_receipt.storage"
+      ]
+    },
+    "thermal_power": {
+      "status": "fields_present_but_unavailable",
+      "sources": [
+        "qwen3.operator_profile.thermal",
+        "qwen3.operator_profile.power",
+        "qwen25.warm_session_receipt.thermal",
+        "qwen25.warm_session_receipt.power"
+      ]
+    },
+    "thread_counts_1_2_4_8": {
+      "status": "recorded_for_qwen3",
+      "source": "qwen3.thread_envelope"
+    }
+  },
+  "operator_default_recommendation": {
+    "recommended_threads": 4,
+    "evidence_scope": "Qwen3-0.6B Q8_0 i5-8250U bounded thread envelope plus 4-thread operator profile",
+    "reason": "4 threads has the best recorded total session time and best recorded steady-decode mean tok/s in the committed 1/2/4/8-thread Qwen3 envelope while generated IDs, decoded text, strict tokenizer authority, backend identity, and fallback=false remain stable.",
+    "limitations": [
+      "Thermal and power fields are present but unavailable, so this is not a sustained-throughput claim.",
+      "The recommendation is scoped to the recorded i5-8250U Qwen3 Q8_0 receipts and does not claim broad hardware or model-family performance.",
+      "Qwen2.5 evidence is a bounded second-model sanity and allocation/timing context, not a 1/2/4/8-thread envelope."
+    ]
+  },
+  "claim_boundary": {
+    "new_runtime_selection": false,
+    "generated_id_drift_claim_without_receipts": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_accelerator_execution": false,
+    "qwen35_support": false,
+    "bitnet_qk256_behavior_change": false
+  },
+  "validation_expectations": [
+    "artifact_kind == slm_cpu_kaby_performance_dashboard_evidence",
+    "tracking_item == SLM-CPU-205",
+    "claim_boundary.speedup_claim == false",
+    "claim_boundary.sustained_throughput_claim == false",
+    "models.qwen3_0_6b_q8_0.fallback_used == false",
+    "models.qwen25_0_5b_instruct_q8_0.fallback_used == false",
+    "operator_default_recommendation.recommended_threads == 4"
+  ]
+}
