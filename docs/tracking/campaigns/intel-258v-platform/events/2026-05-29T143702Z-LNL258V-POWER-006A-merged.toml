@@ -1,0 +1,20 @@
+timestamp = "2026-05-29T14:37:02Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006A"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 956
+branch = "codex/lunar-lake/LNL258V-POWER-006A-battery-preflight-harness"
+head_sha = "6b8e2f36f70e59fdb354ab91688714e794e556d3"
+merge_sha = "802e468316f35348115fd46b141425577aeaeb0c"
+merged_at = "2026-05-29T14:37:02Z"
+actor = "codex"
+summary = "Closed LNL258V-POWER-006A after PR #956 merged."
+notes = [
+  "PR #956 added the no-inference `bitnet lunar-lake low-power-harness` command and runbook update for low_power battery preflight.",
+  "The merged harness records power scheme, BatteryStatus, estimated charge, AC inference, thermal availability, and the required low_power route/profile receipt matrix before any route sample can run.",
+  "The committed receipt records the current AC/charging preflight as blocked with model_inference_allowed=false, model_inference_executed=false, and route_sample_execution_started=false.",
+  "LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, valid route samples, energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage are collected.",
+  "No route promotion, speedup claim, power-advantage claim, native accelerator claim, battery-mode route sample claim, model-inference claim, or BitNet QK256/I2_S behavior-change claim is made.",
+]
