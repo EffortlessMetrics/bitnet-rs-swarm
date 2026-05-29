@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T17:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-215"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 958
+merge_sha = "ec59e91fb1f0122283dc2a148de22fbb5af09e41"
+branch = "codex/slm-cpu-215-no-bias-candidate-off-on-receipts"
+summary = "Merged SLM-CPU-215 no-bias candidate off/on receipt-pair gate and queued SLM-CPU-216."
+notes = [
+  "PR #958 defines DenseLinearNoBiasCandidateOffOnReceiptPairGate as a fail-closed gate over the SLM-CPU-214 per-callsite boundary.",
+  "Candidate execution and normal runtime selection remain disabled; the default runtime remains eager_f32_candle when no explicit gate is present.",
+  "SLM-CPU-216 is ready to capture explicit-gated candidate-on behavior evidence or record the exact remaining runtime attachment blocker.",
+]

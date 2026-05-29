@@ -12429,9 +12429,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-215"
-status = "pr_open"
+status = "merged"
 pr = 958
-head_sha = "fcab5a86d36fe28ae5cf87fcaff2900d1d9eabe8"
+merge_sha = "ec59e91fb1f0122283dc2a148de22fbb5af09e41"
 branch = "codex/slm-cpu-215-no-bias-candidate-off-on-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -12477,6 +12477,61 @@ must_not_claim = [
   "A model binary is committed.",
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-216"
+status = "ready"
+branch = "codex/slm-cpu-216-no-bias-candidate-on-evidence"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-215"]
+acceptance = "Capture the first explicit-gated no-bias candidate-on behavior evidence, or record the exact remaining runtime attachment blocker, for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj. Candidate-on evidence must preserve identical model SHA, strict GGUF tokenizer authority, prompt IDs, generated IDs, decoded text, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, selected path/kernel, candidate path/kernel, and per-callsite descriptor identity versus candidate-off evidence. The default runtime must remain eager_f32_candle when the gate is absent. If candidate-on execution cannot be safely attempted, the blocker must name the missing CLI/env gate, apply_linear attachment point, receipt field, or runtime ownership boundary. No timing, allocation, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-215 defines a fail-closed candidate-off/candidate-on receipt-pair gate.",
+  "SLM-CPU-215 records that candidate-on strict warm-session evidence is still missing and candidate execution remains disabled.",
+  "Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj remain the bounded candidate scope.",
+]
+may_claim = [
+  "SLM-CPU-216 may capture explicit-gated candidate-on no-bias behavior evidence for the bounded feed_forward.down_proj scope.",
+  "SLM-CPU-216 may record the exact runtime attachment blocker if candidate-on execution still cannot be safely attempted.",
+  "SLM-CPU-216 may prove generated-ID and decoded-text preservation for the exact candidate-off/on pair only.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
