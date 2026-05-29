@@ -47,8 +47,21 @@ jobs:
 
       - name: Install OpenCL headers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+          set -eu
+          if [ -e /usr/include/CL/cl.h ] || [ -e /usr/local/include/CL/cl.h ]; then
+            echo "OpenCL headers already present on runner image"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update
+            apt-get install -y ocl-icd-opencl-dev opencl-headers
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+          else
+            echo "::error::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable"
+            exit 1
+          fi
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
@@ -82,8 +95,21 @@ jobs:
 
       - name: Install OpenCL headers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+          set -eu
+          if [ -e /usr/include/CL/cl.h ] || [ -e /usr/local/include/CL/cl.h ]; then
+            echo "OpenCL headers already present on runner image"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update
+            apt-get install -y ocl-icd-opencl-dev opencl-headers
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+          else
+            echo "::error::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable"
+            exit 1
+          fi
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
