@@ -12543,7 +12543,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-217"
-status = "ready"
+status = "pr_open"
+pr = 969
 branch = "codex/slm-cpu-217-no-bias-candidate-runtime-attachment"
 stackable = false
 review_mode = "codex_premerge"

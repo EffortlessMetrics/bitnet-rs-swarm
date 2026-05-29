@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T21:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-217"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 969
+head_sha = "f9ddb565d9a51385f14df694fd18c04b2706096a"
+branch = "codex/slm-cpu-217-no-bias-candidate-runtime-attachment"
+summary = "Opened SLM-CPU-217 no-bias candidate runtime attachment gate PR."
+notes = [
+  "PR #969 consumes the SLM-CPU-216 behavior evidence gate and defines the explicit candidate-on apply-linear runtime attachment boundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The slice records the remaining blocker as the missing candidate runtime owner / candidate-on receipt emitter while keeping eager_f32_candle as the default runtime.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
