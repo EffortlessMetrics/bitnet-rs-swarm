@@ -611,6 +611,7 @@ fn dense_q8_runtime_hooks_from_sidecars(
                 source_order_input_dim: source_order_contract.source_input_dim,
                 source_order_output_dim: source_order_contract.source_output_dim,
                 runtime_compute_enabled,
+                receipt_bound_no_bias_selector: None,
             },
         );
     }

@@ -3755,6 +3755,39 @@ reduction, claim timing improvement or speedup, claim sustained throughput,
 broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or
 BitNet QK256/I2_S paths.
 
+## SLM-CPU-211 Receipt-Bound No-Bias Selector Descriptor
+
+SLM-CPU-211 consumes the SLM-CPU-210 selector blocker by adding a fail-closed
+receipt-bound selector descriptor surface:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-211-receipt-bound-no-bias-selector-descriptor.json
+descriptor = bitnet_transformer::DenseLinearNoBiasReceiptBoundSelectorDescriptor
+carrier = bitnet_transformer::DenseLinearRuntimeHookDescriptor.receipt_bound_no_bias_selector
+callsite = bitnet_transformer::FeedForward::apply_linear
+decision = receipt_bound_selector_descriptor_added_runtime_disabled
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The descriptor can carry the SLM-CPU-209 model SHA, architecture, quant format,
+strict GGUF tokenizer authority, runtime API, selected backend, fallback status,
+prompt/generated/text digests, manifest digest, before/after receipt-pair
+identity, candidate path/kernel, and exact `feed_forward.down_proj` callsite
+identity for Qwen3 Q8_0 and Qwen2.5 Q8_0. It remains runtime-disabled and
+fail-closed if any receipt identity is missing, if Qwen2.5 candidate policy is
+absent, if fallback is used, or if selected path/kernel drift away from the
+eager F32 Candle baseline.
+
+This is not a runtime-selection PR. It does not execute the no-bias candidate,
+change default inference, claim generated-ID preservation for candidate-on
+execution, claim allocation or timing improvement, claim speedup or sustained
+throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620,
+Qwen3.5, or BitNet QK256/I2_S paths. The next runtime gate still requires fresh
+candidate-off/candidate-on strict warm-session receipts.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

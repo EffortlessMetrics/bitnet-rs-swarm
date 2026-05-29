@@ -405,6 +405,7 @@ pub struct DenseLinearRuntimeHookDescriptor {
     pub source_order_input_dim: Option<usize>,
     pub source_order_output_dim: Option<usize>,
     pub runtime_compute_enabled: bool,
+    pub receipt_bound_no_bias_selector: Option<DenseLinearNoBiasReceiptBoundSelectorDescriptor>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1043,6 +1044,51 @@ pub struct DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasReceiptBoundSelectorDescriptor {
+    pub tensor_name: String,
+    pub role_id: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_requested_enabled: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub before_after_receipts_present: bool,
+    pub before_after_receipt_pair_identity: String,
+    pub descriptor_callsite_identity_preserved: bool,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub prompt_ids_digest_preserved: bool,
+    pub generated_ids_digest_preserved: bool,
+    pub decoded_text_digest_preserved: bool,
+    pub qwen2_candidate_policy_present: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub descriptor_ready_for_apply_linear_callsite: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -1433,6 +1479,153 @@ impl DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
             decoded_text_digest: before.decoded_text_digest.clone(),
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasReceiptBoundSelectorDescriptor {
+    pub fn from_before_after_gate(
+        gate: &DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate,
+        model_architecture: &'static str,
+        tokenizer_source: &'static str,
+        tokenizer_strict: bool,
+        before_after_receipt_pair_identity: impl Into<String>,
+        qwen2_candidate_policy_present: bool,
+    ) -> Self {
+        let before_after_receipt_pair_identity = before_after_receipt_pair_identity.into();
+        let mut fail_closed_conditions = gate.fail_closed_conditions.clone();
+        if !matches!(model_architecture, "qwen3" | "qwen2") {
+            fail_closed_conditions.push("model_architecture_not_qwen2_or_qwen3");
+        }
+        if model_architecture == "qwen2" && !qwen2_candidate_policy_present {
+            fail_closed_conditions.push("qwen2_candidate_policy_missing");
+        }
+        if gate.quant_format != "Q8_0" {
+            fail_closed_conditions.push("quant_format_not_q8_0");
+        }
+        if tokenizer_source != "gguf_metadata" {
+            fail_closed_conditions.push("tokenizer_source_not_gguf_metadata");
+        }
+        if !tokenizer_strict {
+            fail_closed_conditions.push("tokenizer_not_strict");
+        }
+        if gate.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if gate.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if gate.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+        if !gate.before_after_receipts_present {
+            fail_closed_conditions.push("before_after_receipts_missing");
+        }
+        if !gate.descriptor_callsite_identity_preserved {
+            fail_closed_conditions.push("descriptor_callsite_identity_not_preserved");
+        }
+        if !gate.prompt_ids_digest_preserved || gate.prompt_ids_digest.is_empty() {
+            fail_closed_conditions.push("prompt_ids_digest_not_preserved");
+        }
+        if !gate.generated_ids_digest_preserved || gate.generated_ids_digest.is_empty() {
+            fail_closed_conditions.push("generated_ids_digest_not_preserved");
+        }
+        if !gate.decoded_text_digest_preserved || gate.decoded_text_digest.is_empty() {
+            fail_closed_conditions.push("decoded_text_digest_not_preserved");
+        }
+        if before_after_receipt_pair_identity.is_empty() {
+            fail_closed_conditions.push("before_after_receipt_pair_identity_missing");
+        }
+        if gate.selected_path != "eager_f32_candle" {
+            fail_closed_conditions.push("selected_path_not_eager_f32_candle");
+        }
+        if gate.selected_kernel != "dense-f32-candle-linear" {
+            fail_closed_conditions.push("selected_kernel_not_dense_f32_candle_linear");
+        }
+        if gate.normal_inference_runtime_selection_enabled {
+            fail_closed_conditions.push("normal_inference_runtime_selection_enabled");
+        }
+        if gate.candidate_execution_enabled {
+            fail_closed_conditions.push("candidate_execution_enabled");
+        }
+        if !gate.preserves_normal_inference() {
+            fail_closed_conditions.push("normal_inference_not_preserved");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let descriptor_ready_for_apply_linear_callsite = fail_closed_conditions.is_empty();
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if descriptor_ready_for_apply_linear_callsite {
+                (
+                    "receipt_bound_selector_descriptor_ready_runtime_disabled",
+                    "slm_cpu_209_identity_can_reach_apply_linear_selector",
+                    "fresh_candidate_off_on_strict_warm_session_receipts_before_runtime_execution",
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "receipt_bound_selector_descriptor_identity_incomplete",
+                    "receipt_bound_descriptor_identity_or_candidate_policy",
+                )
+            };
+
+        Self {
+            tensor_name: gate.tensor_name.clone(),
+            role_id: gate.role_id.clone(),
+            model_sha256: gate.model_sha256.clone(),
+            model_architecture,
+            quant_format: gate.quant_format,
+            tokenizer_source,
+            tokenizer_strict,
+            manifest_sha256: gate.manifest_sha256.clone(),
+            layer_idx: gate.layer_idx,
+            scope: gate.scope,
+            linear: gate.linear,
+            bias_present: gate.bias_present,
+            runtime_gate_name: gate.runtime_gate_name,
+            runtime_gate_requested_enabled: gate.runtime_gate_requested_enabled,
+            selected_path: gate.selected_path,
+            selected_kernel: gate.selected_kernel,
+            candidate_path: gate.candidate_path,
+            candidate_kernel: gate.candidate_kernel,
+            runtime_api: gate.runtime_api,
+            selected_backend: gate.selected_backend,
+            fallback_used: gate.fallback_used,
+            before_after_receipts_present: gate.before_after_receipts_present,
+            before_after_receipt_pair_identity,
+            descriptor_callsite_identity_preserved: gate.descriptor_callsite_identity_preserved,
+            prompt_ids_digest: gate.prompt_ids_digest.clone(),
+            generated_ids_digest: gate.generated_ids_digest.clone(),
+            decoded_text_digest: gate.decoded_text_digest.clone(),
+            prompt_ids_digest_preserved: gate.prompt_ids_digest_preserved,
+            generated_ids_digest_preserved: gate.generated_ids_digest_preserved,
+            decoded_text_digest_preserved: gate.decoded_text_digest_preserved,
+            qwen2_candidate_policy_present,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            descriptor_ready_for_apply_linear_callsite,
             decision,
             reason,
             remaining_runtime_selection_blocker,
@@ -8025,6 +8218,7 @@ mod tests {
                 source_order_input_dim: None,
                 source_order_output_dim: None,
                 runtime_compute_enabled: true,
+                receipt_bound_no_bias_selector: None,
             },
         );
 
@@ -8105,6 +8299,7 @@ mod tests {
                 source_order_input_dim: None,
                 source_order_output_dim: None,
                 runtime_compute_enabled: false,
+                receipt_bound_no_bias_selector: None,
             },
         );
 
@@ -8161,6 +8356,7 @@ mod tests {
                 source_order_input_dim: Some(2),
                 source_order_output_dim: Some(2),
                 runtime_compute_enabled: true,
+                receipt_bound_no_bias_selector: None,
             },
         );
 
@@ -8382,6 +8578,7 @@ mod tests {
                 source_order_input_dim: None,
                 source_order_output_dim: None,
                 runtime_compute_enabled: true,
+                receipt_bound_no_bias_selector: None,
             },
         );
 
@@ -8462,6 +8659,7 @@ mod tests {
                 source_order_input_dim: None,
                 source_order_output_dim: None,
                 runtime_compute_enabled: true,
+                receipt_bound_no_bias_selector: None,
             },
         );
 
@@ -9501,5 +9699,149 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    fn slm_cpu_211_test_gate(
+        model_sha256: &str,
+        candidate_path: &'static str,
+    ) -> DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+        DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+            tensor_name: "layers.0.feed_forward.down_proj.weight".to_string(),
+            role_id: "layers.0.feed_forward.down_proj".to_string(),
+            model_sha256: model_sha256.to_string(),
+            quant_format: "Q8_0",
+            manifest_sha256: "sha256:manifest".to_string(),
+            layer_idx: 0,
+            scope: "feed_forward",
+            linear: "down_proj",
+            bias_present: Some(false),
+            runtime_gate_name: "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+            runtime_gate_requested_enabled: false,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            candidate_path,
+            candidate_kernel: "dense-f32-candle-linear-no-bias-candidate",
+            runtime_api: "cpu",
+            selected_backend: "cpu-rust",
+            fallback_used: false,
+            before_after_receipts_present: true,
+            descriptor_callsite_identity_preserved: true,
+            prompt_ids_digest_preserved: true,
+            generated_ids_digest_preserved: true,
+            decoded_text_digest_preserved: true,
+            prompt_ids_digest: "sha256:prompt".to_string(),
+            generated_ids_digest: "sha256:generated".to_string(),
+            decoded_text_digest: "sha256:text".to_string(),
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision: "before_after_receipt_gate_ready_runtime_disabled",
+            reason: "strict_warm_session_identity_preserved",
+            remaining_runtime_selection_blocker: "candidate_execution_still_disabled_until_explicit_runtime_selection_pr",
+            fail_closed_conditions: Vec::new(),
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    #[test]
+    fn no_bias_apply_linear_receipt_bound_selector_carries_qwen3_identity_runtime_disabled() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+
+        assert_eq!(descriptor.decision, "receipt_bound_selector_descriptor_ready_runtime_disabled");
+        assert_eq!(descriptor.model_architecture, "qwen3");
+        assert_eq!(descriptor.tokenizer_source, "gguf_metadata");
+        assert!(descriptor.tokenizer_strict);
+        assert!(descriptor.descriptor_ready_for_apply_linear_callsite);
+        assert!(descriptor.preserves_normal_inference());
+        assert!(!descriptor.candidate_execution_enabled);
+        assert!(!descriptor.normal_inference_runtime_selection_enabled);
+        assert!(!descriptor.allocation_reduction_claim);
+        assert!(!descriptor.timing_improvement_claim);
+        assert!(!descriptor.speedup_claim);
+
+        let hook = DenseLinearRuntimeHookDescriptor {
+            tensor_name: descriptor.tensor_name.clone(),
+            role: "FeedForwardDown".to_string(),
+            sidecar_payload_sha256: None,
+            packed_q8_payload: None,
+            payload_order_matches_runtime_shape: false,
+            source_order_q8_matvec_candidate: false,
+            source_order_input_dim: None,
+            source_order_output_dim: None,
+            runtime_compute_enabled: false,
+            receipt_bound_no_bias_selector: Some(descriptor.clone()),
+        };
+        assert!(!hook.runtime_compute_enabled);
+        assert_eq!(
+            hook.receipt_bound_no_bias_selector
+                .as_ref()
+                .map(|selector| selector.model_sha256.as_str()),
+            Some(SLM_CPU_195_QWEN3_Q8_MODEL_SHA256)
+        );
+    }
+
+    #[test]
+    fn no_bias_apply_linear_receipt_bound_selector_carries_qwen25_identity_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let gate =
+            slm_cpu_211_test_gate(qwen25_sha, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen2",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen25:before-after",
+            true,
+        );
+
+        assert_eq!(descriptor.decision, "receipt_bound_selector_descriptor_ready_runtime_disabled");
+        assert_eq!(descriptor.model_architecture, "qwen2");
+        assert_eq!(descriptor.model_sha256, qwen25_sha);
+        assert!(descriptor.qwen2_candidate_policy_present);
+        assert!(descriptor.descriptor_ready_for_apply_linear_callsite);
+        assert!(descriptor.preserves_normal_inference());
+        assert!(!descriptor.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_apply_linear_receipt_bound_selector_fails_closed_on_missing_identity() {
+        let mut gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        gate.fallback_used = true;
+        gate.prompt_ids_digest.clear();
+
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate, "qwen2", "unknown", false, "", false,
+        );
+
+        assert_eq!(descriptor.decision, "blocked_fail_closed");
+        assert!(!descriptor.descriptor_ready_for_apply_linear_callsite);
+        assert!(descriptor.fail_closed_conditions.contains(&"fallback_used"));
+        assert!(descriptor.fail_closed_conditions.contains(&"prompt_ids_digest_not_preserved"));
+        assert!(descriptor.fail_closed_conditions.contains(&"tokenizer_source_not_gguf_metadata"));
+        assert!(descriptor.fail_closed_conditions.contains(&"tokenizer_not_strict"));
+        assert!(
+            descriptor
+                .fail_closed_conditions
+                .contains(&"before_after_receipt_pair_identity_missing")
+        );
+        assert!(descriptor.fail_closed_conditions.contains(&"qwen2_candidate_policy_missing"));
+        assert_eq!(descriptor.selected_path, "eager_f32_candle");
+        assert_eq!(descriptor.selected_kernel, "dense-f32-candle-linear");
+        assert!(!descriptor.candidate_execution_enabled);
     }
 }
