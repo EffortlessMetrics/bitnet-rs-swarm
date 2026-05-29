@@ -3788,6 +3788,38 @@ throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620,
 Qwen3.5, or BitNet QK256/I2_S paths. The next runtime gate still requires fresh
 candidate-off/candidate-on strict warm-session receipts.
 
+## SLM-CPU-212 No-Bias Candidate-On Receipt Blocker
+
+SLM-CPU-212 consumes the SLM-CPU-211 descriptor surface and records that the
+first candidate-off/candidate-on strict warm-session receipt pair is still
+blocked at session-to-runtime propagation:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-212-no-bias-candidate-on-off-receipt-blocker.json
+decision = blocked_missing_receipt_bound_selector_propagation_to_runtime_hooks
+hook_field = DenseLinearRuntimeHookDescriptor.receipt_bound_no_bias_selector
+hook_construction = bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars
+warm_session_gate = bitnet_cli::slm_warm_session_no_bias_apply_linear_gate_for_session
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The warm-session gate has the model/tokenizer/backend/fallback and
+prompt/generated/text digest identity after prompt execution, but the model
+dense-linear hook registry is built from sidecar descriptors before that
+identity exists and currently carries `receipt_bound_no_bias_selector = null`.
+Therefore `FeedForward::apply_linear` still cannot prove the SLM-CPU-209
+receipt identity at candidate execution time.
+
+The next safe slice is a session-scoped selector propagation boundary or a
+per-callsite candidate execution receipt emitter. It must remain fail-closed
+until the explicit runtime gate is requested and candidate-off/candidate-on
+strict warm-session receipts prove generated IDs and decoded text are preserved.
+This blocker makes no allocation, timing, speedup, sustained throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claim.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

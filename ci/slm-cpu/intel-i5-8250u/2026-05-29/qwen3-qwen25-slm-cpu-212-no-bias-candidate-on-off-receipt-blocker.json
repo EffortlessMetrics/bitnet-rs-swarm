@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_candidate_on_off_receipt_blocker",
+  "tracking_item": "SLM-CPU-212",
+  "consumes_tracking_items": [
+    "SLM-CPU-209",
+    "SLM-CPU-211"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "blocked_missing_receipt_bound_selector_propagation_to_runtime_hooks",
+  "summary": "SLM-CPU-211 defines a receipt-bound no-bias selector descriptor and DenseLinearRuntimeHookDescriptor can carry it, but candidate-off/candidate-on strict warm-session receipts cannot be captured yet because the warm-session receipt gate identity is not propagated into the model's dense-linear runtime hook registry. Model hooks are built from GGUF sidecars before prompt/generated/text digests exist and currently set receipt_bound_no_bias_selector=null, so FeedForward::apply_linear cannot prove the SLM-CPU-209 identity at candidate execution time.",
+  "source_artifacts": {
+    "receipt_pairs": {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json",
+      "tracking_item": "SLM-CPU-209",
+      "decision": "fresh_explicit_path_qwen3_qwen25_receipt_pairs_captured_candidate_disabled"
+    },
+    "selector_descriptor": {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-211-receipt-bound-no-bias-selector-descriptor.json",
+      "tracking_item": "SLM-CPU-211",
+      "decision": "receipt_bound_selector_descriptor_added_runtime_disabled"
+    }
+  },
+  "validated_existing_surfaces": {
+    "candidate_compute_function_present": true,
+    "candidate_compute_function": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "receipt_bound_selector_descriptor_present": true,
+    "receipt_bound_selector_descriptor_type": "bitnet_transformer::DenseLinearNoBiasReceiptBoundSelectorDescriptor",
+    "runtime_hook_can_carry_selector": true,
+    "runtime_hook_selector_field": "bitnet_transformer::DenseLinearRuntimeHookDescriptor.receipt_bound_no_bias_selector",
+    "warm_session_gate_identity_present": true,
+    "warm_session_gate_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+    "default_selected_path": "eager_f32_candle",
+    "default_selected_kernel": "dense-f32-candle-linear",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false
+  },
+  "runtime_propagation_observation": {
+    "hook_construction_callsite": "bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars",
+    "hook_selector_value": null,
+    "hook_selector_reason": "model-loading sidecar descriptors do not have prompt/generated/text digest identity",
+    "warm_session_gate_callsite": "bitnet_cli::slm_warm_session_no_bias_apply_linear_gate_for_session",
+    "warm_session_gate_identity_available_after_prompt_run": true,
+    "apply_linear_callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "apply_linear_current_inputs": [
+      "input",
+      "linear",
+      "proj_name",
+      "raw_tensors",
+      "dense_linear_hooks"
+    ],
+    "missing_for_candidate_on_receipts": [
+      "propagate DenseLinearNoBiasReceiptBoundSelectorDescriptor from warm-session receipt identity into DenseLinearRuntimeHookRegistry",
+      "bind descriptor lifetime to exact prompt/generated/text digests after prompt execution or define a per-callsite candidate execution receipt emitted after execution",
+      "select candidate only when explicit runtime gate is requested and descriptor identity matches the current model/session",
+      "capture candidate-off and candidate-on strict warm-session receipts proving generated IDs and decoded text are preserved",
+      "keep default eager_f32_candle path when no descriptor is present"
+    ]
+  },
+  "models_blocked": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    }
+  },
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-213",
+    "scope": "define a session-scoped no-bias selector propagation boundary or per-callsite candidate execution receipt emitter that can attach DenseLinearNoBiasReceiptBoundSelectorDescriptor identity after prompt digests are known",
+    "must_remain_fail_closed_until": [
+      "explicit runtime gate is requested",
+      "descriptor identity matches model SHA, architecture, quant format, tokenizer authority, runtime_api, selected_backend, fallback=false, and prompt/generated/text digests",
+      "candidate-off/candidate-on strict warm-session receipts preserve generated IDs and decoded text"
+    ]
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "candidate_on_receipt_captured": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}
