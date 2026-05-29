@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_candidate_off_on_receipt_pair_gate",
+  "tracking_item": "SLM-CPU-215",
+  "consumes_tracking_items": [
+    "SLM-CPU-209",
+    "SLM-CPU-214"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "candidate_off_on_receipt_pair_gate_defined_fail_closed",
+  "reason": "candidate_off_on_receipt_pair_incomplete",
+  "remaining_runtime_selection_blocker": "candidate_on_strict_warm_session_receipt_artifact",
+  "summary": "SLM-CPU-215 defines the exact candidate-off/candidate-on receipt-pair gate that must be satisfied before any no-bias apply-linear candidate execution can be attempted. Existing Qwen3 and Qwen2.5 Q8_0 strict warm-session receipt pairs prove candidate-off identity through the per-callsite emitter boundary, but no candidate-on strict warm-session receipt exists yet. Candidate execution and normal runtime selection remain disabled.",
+  "boundary_type": "bitnet_transformer::DenseLinearNoBiasCandidateOffOnReceiptPairGate",
+  "attachment_point": {
+    "previous_boundary_type": "bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary",
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "scope": "feed_forward.down_proj",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate"
+  },
+  "models_scoped": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_off_receipt_present": true,
+      "candidate_on_receipt_present": false,
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "decision": "candidate_off_on_receipt_pair_gate_defined_fail_closed"
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_off_receipt_present": true,
+      "candidate_on_receipt_present": false,
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "decision": "candidate_off_on_receipt_pair_gate_defined_fail_closed"
+    }
+  },
+  "required_for_candidate_execution": [
+    "explicit runtime gate requested",
+    "per-callsite descriptor identity present",
+    "candidate-off strict warm-session receipt present",
+    "candidate-on strict warm-session receipt present",
+    "prompt IDs preserved",
+    "generated IDs preserved",
+    "decoded text preserved",
+    "selected backend and fallback status preserved",
+    "selected path/kernel and candidate path/kernel receipt-visible"
+  ],
+  "fail_closed_conditions": [
+    "candidate_on_receipt_missing"
+  ],
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-216",
+    "scope": "capture explicit-gated candidate-on receipt evidence or block on the exact runtime hook needed to produce it; timing/allocation claims remain out of scope until behavior parity exists"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "candidate_on_receipt_captured": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}
