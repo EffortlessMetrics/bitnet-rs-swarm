@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_runtime_experiment_blocker",
+  "tracking_item": "SLM-CPU-210",
+  "consumes_tracking_items": [
+    "SLM-CPU-209"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "blocked_missing_runtime_selector_identity",
+  "summary": "SLM-CPU-209 supplies fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs through the wired no-bias apply-linear gate. Candidate execution remains blocked because FeedForward::apply_linear receives only the dense tensor name, Candle Linear, raw tensors, and DenseLinearRuntimeHookRegistry; it does not receive the full SLM-CPU-209 receipt identity needed to safely select a no-bias runtime candidate at the callsite.",
+  "source_receipt_pair_artifact": {
+    "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json",
+    "tracking_item": "SLM-CPU-209",
+    "decision": "fresh_explicit_path_qwen3_qwen25_receipt_pairs_captured_candidate_disabled"
+  },
+  "validated_existing_surfaces": {
+    "candidate_compute_function_present": true,
+    "candidate_compute_function": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "runtime_gate_parser_present": true,
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+    "receipt_gate_type_present": true,
+    "receipt_gate_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+    "before_after_receipt_pairs_present": true,
+    "default_selected_path": "eager_f32_candle",
+    "default_selected_kernel": "dense-f32-candle-linear",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false
+  },
+  "models_consumed_from_slm_cpu_209": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "role_id": "layers.0.feed_forward.down_proj",
+      "tensor_name": "layers.0.feed_forward.down_proj.weight",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-before.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-after.json",
+      "before_after_generated_ids_preserved": true,
+      "before_after_decoded_text_preserved": true
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "role_id": "layers.0.feed_forward.down_proj",
+      "tensor_name": "layers.0.feed_forward.down_proj.weight",
+      "before_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-before.json",
+      "after_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-after.json",
+      "before_after_generated_ids_preserved": true,
+      "before_after_decoded_text_preserved": true
+    }
+  },
+  "runtime_callsite_observation": {
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "current_inputs": [
+      "input",
+      "linear",
+      "proj_name",
+      "raw_tensors",
+      "dense_linear_hooks"
+    ],
+    "current_descriptor_type": "bitnet_transformer::DenseLinearRuntimeHookDescriptor",
+    "current_descriptor_fields": [
+      "tensor_name",
+      "role",
+      "sidecar_payload_sha256",
+      "packed_q8_payload",
+      "payload_order_matches_runtime_shape",
+      "source_order_q8_matvec_candidate",
+      "source_order_input_dim",
+      "source_order_output_dim",
+      "runtime_compute_enabled"
+    ],
+    "missing_for_safe_candidate_execution": [
+      "model_sha256",
+      "model_architecture",
+      "quant_format",
+      "tokenizer_source",
+      "tokenizer_strict",
+      "runtime_api",
+      "selected_backend",
+      "fallback_used",
+      "prompt_ids_digest",
+      "generated_ids_digest",
+      "decoded_text_digest",
+      "manifest_sha256",
+      "before_after_receipt_pair_identity",
+      "per_callsite_candidate_execution_receipt"
+    ]
+  },
+  "blocker": {
+    "status": "blocked_fail_closed",
+    "reason": "runtime_candidate_selection_would_require_receipt_identity_not_available_at_apply_linear_callsite",
+    "remaining_runtime_selection_blockers": [
+      "propagate receipt-bound model/tokenizer/backend/fallback identity into the dense-linear runtime selector",
+      "bind per-callsite descriptor identity to the SLM-CPU-209 before/after receipt-pair contract",
+      "define exact Qwen2.5 no-bias candidate policy in transformer runtime, not only CLI receipt fields",
+      "capture candidate-off/candidate-on strict warm-session receipt pairs after any explicit-gate candidate execution is wired",
+      "emit per-callsite candidate execution receipt fields proving selected path/kernel and generated ID preservation"
+    ],
+    "safe_next_slice": "Add a receipt-bound runtime selector descriptor that carries the SLM-CPU-209 identity fields to FeedForward::apply_linear, or keep candidate execution disabled until an equivalent per-callsite selector contract exists."
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}

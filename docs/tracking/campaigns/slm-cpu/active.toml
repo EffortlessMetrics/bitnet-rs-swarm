@@ -12138,7 +12138,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-210"
-status = "ready"
+status = "pr_open"
+pr = 947
 branch = "codex/slm-cpu-210-no-bias-apply-linear-runtime-experiment"
 stackable = false
 review_mode = "codex_premerge"
@@ -12173,6 +12174,7 @@ evidence = [
   "SLM-CPU-209 captures fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired no-bias apply-linear gate.",
   "The SLM-CPU-209 pair artifact preserves model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false.",
   "Candidate execution and normal runtime selection remain disabled in SLM-CPU-209; explicit candidate-on receipt evidence remains the next blocker before any runtime-selection discussion.",
+  "PR #947 records that FeedForward::apply_linear lacks the receipt-bound model/tokenizer/backend/fallback/digest selector identity needed to safely execute the no-bias candidate under the SLM-CPU-209 contract.",
 ]
 may_claim = [
   "SLM-CPU-210 may add an explicit runtime-gated experiment boundary for exact feed_forward.down_proj no-bias apply-linear candidate roles.",
