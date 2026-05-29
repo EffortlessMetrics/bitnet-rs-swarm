@@ -1,0 +1,20 @@
+timestamp = "2026-05-29T05:19:27Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-205"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 936
+merge_sha = "b2fc524297f727f533774e7920236ca564da2928"
+branch = "codex/slm-cpu-205-kaby-performance-dashboard-evidence"
+summary = "Merged the Kaby i5-8250U SLM performance dashboard evidence consolidation."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-205-kaby-performance-dashboard-evidence.json",
+  "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+]
+notes = [
+  "The SLM-CPU-205 artifact consolidates existing strict Qwen3 Q8_0 and Qwen2.5 Q8_0 receipt evidence into a machine-readable dashboard summary.",
+  "The 4-thread operator default recommendation is scoped to committed i5-8250U Qwen3 thread-envelope and operator-profile receipts.",
+  "No new runtime optimization, allocation reduction, timing improvement, speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
