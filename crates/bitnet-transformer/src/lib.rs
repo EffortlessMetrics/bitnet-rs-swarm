@@ -1127,6 +1127,42 @@ pub struct DenseLinearNoBiasSelectorPropagationBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub descriptor_ready_for_apply_linear_callsite: bool,
+    pub per_callsite_receipt_emitter_present: bool,
+    pub per_callsite_identity_matches_descriptor: bool,
+    pub explicit_runtime_gate_requested: bool,
+    pub candidate_off_on_receipts_present: bool,
+    pub generated_id_preservation_proven: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -1772,6 +1808,134 @@ impl DenseLinearNoBiasSelectorPropagationBoundary {
                 .descriptor_ready_for_apply_linear_callsite,
             can_attach_after_prompt_digests_known,
             can_attach_before_same_prompt_candidate_execution,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary {
+    pub fn from_receipt_bound_selector_descriptor(
+        descriptor: &DenseLinearNoBiasReceiptBoundSelectorDescriptor,
+        tensor_name: impl Into<String>,
+        callsite_identity: impl Into<String>,
+        explicit_runtime_gate_requested: bool,
+        candidate_off_on_receipts_present: bool,
+        generated_id_preservation_proven: bool,
+    ) -> Self {
+        let tensor_name = tensor_name.into();
+        let callsite_identity = callsite_identity.into();
+        let mut fail_closed_conditions = descriptor.fail_closed_conditions.clone();
+        if !descriptor.descriptor_ready_for_apply_linear_callsite {
+            fail_closed_conditions.push("receipt_bound_selector_descriptor_not_ready");
+        }
+        if tensor_name != descriptor.tensor_name {
+            fail_closed_conditions.push("callsite_tensor_name_mismatch");
+        }
+        if callsite_identity.is_empty() {
+            fail_closed_conditions.push("callsite_identity_missing");
+        }
+        if !descriptor.preserves_normal_inference() {
+            fail_closed_conditions.push("descriptor_does_not_preserve_normal_inference");
+        }
+        if descriptor.prompt_ids_digest.is_empty() {
+            fail_closed_conditions.push("prompt_ids_digest_missing");
+        }
+        if descriptor.generated_ids_digest.is_empty() {
+            fail_closed_conditions.push("generated_ids_digest_missing");
+        }
+        if descriptor.decoded_text_digest.is_empty() {
+            fail_closed_conditions.push("decoded_text_digest_missing");
+        }
+        if !explicit_runtime_gate_requested {
+            fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+        }
+        if !candidate_off_on_receipts_present {
+            fail_closed_conditions.push("candidate_off_on_receipts_missing");
+        }
+        if !generated_id_preservation_proven {
+            fail_closed_conditions.push("generated_id_preservation_not_proven");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let per_callsite_identity_matches_descriptor = tensor_name == descriptor.tensor_name
+            && !callsite_identity.is_empty()
+            && descriptor.descriptor_ready_for_apply_linear_callsite;
+        let per_callsite_receipt_emitter_present = per_callsite_identity_matches_descriptor;
+
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if per_callsite_identity_matches_descriptor
+                && explicit_runtime_gate_requested
+                && candidate_off_on_receipts_present
+                && generated_id_preservation_proven
+                && fail_closed_conditions.is_empty()
+            {
+                (
+                    "per_callsite_candidate_receipt_emitter_ready_runtime_disabled",
+                    "descriptor_identity_reaches_apply_linear_callsite_with_receipt_fields",
+                    "candidate_execution_enablement_pr_with_strict_off_on_receipts",
+                )
+            } else if per_callsite_identity_matches_descriptor {
+                (
+                    "per_callsite_candidate_receipt_emitter_defined_fail_closed",
+                    "descriptor_identity_reaches_apply_linear_but_candidate_on_proof_is_incomplete",
+                    "explicit_gate_and_candidate_off_on_generated_id_preservation_receipts",
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "descriptor_identity_does_not_match_apply_linear_callsite",
+                    "per_callsite_descriptor_identity",
+                )
+            };
+
+        Self {
+            tensor_name,
+            callsite_identity,
+            model_sha256: descriptor.model_sha256.clone(),
+            model_architecture: descriptor.model_architecture,
+            quant_format: descriptor.quant_format,
+            tokenizer_source: descriptor.tokenizer_source,
+            tokenizer_strict: descriptor.tokenizer_strict,
+            runtime_api: descriptor.runtime_api,
+            selected_backend: descriptor.selected_backend,
+            fallback_used: descriptor.fallback_used,
+            selected_path: descriptor.selected_path,
+            selected_kernel: descriptor.selected_kernel,
+            candidate_path: descriptor.candidate_path,
+            candidate_kernel: descriptor.candidate_kernel,
+            prompt_ids_digest: descriptor.prompt_ids_digest.clone(),
+            generated_ids_digest: descriptor.generated_ids_digest.clone(),
+            decoded_text_digest: descriptor.decoded_text_digest.clone(),
+            descriptor_ready_for_apply_linear_callsite: descriptor
+                .descriptor_ready_for_apply_linear_callsite,
+            per_callsite_receipt_emitter_present,
+            per_callsite_identity_matches_descriptor,
+            explicit_runtime_gate_requested,
+            candidate_off_on_receipts_present,
+            generated_id_preservation_proven,
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
             decision,
@@ -10126,5 +10290,123 @@ mod tests {
         );
         assert!(boundary.preserves_normal_inference());
         assert!(!boundary.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_emitter_binds_descriptor_identity_runtime_disabled() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                "layers.0.feed_forward.down_proj.weight",
+                "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+                false,
+                false,
+                false,
+            );
+
+        assert_eq!(emitter.decision, "per_callsite_candidate_receipt_emitter_defined_fail_closed");
+        assert!(emitter.per_callsite_receipt_emitter_present);
+        assert!(emitter.per_callsite_identity_matches_descriptor);
+        assert_eq!(emitter.model_architecture, "qwen3");
+        assert_eq!(emitter.tokenizer_source, "gguf_metadata");
+        assert!(emitter.tokenizer_strict);
+        assert_eq!(emitter.runtime_api, "cpu");
+        assert_eq!(emitter.selected_backend, "cpu-rust");
+        assert!(!emitter.fallback_used);
+        assert!(emitter.fail_closed_conditions.contains(&"explicit_runtime_gate_not_requested"));
+        assert!(emitter.fail_closed_conditions.contains(&"candidate_off_on_receipts_missing"));
+        assert!(emitter.fail_closed_conditions.contains(&"generated_id_preservation_not_proven"));
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+        assert!(!emitter.allocation_reduction_claim);
+        assert!(!emitter.timing_improvement_claim);
+        assert!(!emitter.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_emitter_can_model_ready_attachment_without_execution() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(
+            emitter.decision,
+            "per_callsite_candidate_receipt_emitter_ready_runtime_disabled"
+        );
+        assert!(emitter.fail_closed_conditions.is_empty());
+        assert!(emitter.explicit_runtime_gate_requested);
+        assert!(emitter.candidate_off_on_receipts_present);
+        assert!(emitter.generated_id_preservation_proven);
+        assert!(emitter.per_callsite_receipt_emitter_present);
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_emitter_rejects_wrong_tensor_or_missing_identity() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                "layers.0.feed_forward.up_proj.weight",
+                "",
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(emitter.decision, "blocked_fail_closed");
+        assert!(!emitter.per_callsite_receipt_emitter_present);
+        assert!(!emitter.per_callsite_identity_matches_descriptor);
+        assert!(emitter.fail_closed_conditions.contains(&"callsite_tensor_name_mismatch"));
+        assert!(emitter.fail_closed_conditions.contains(&"callsite_identity_missing"));
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
     }
 }

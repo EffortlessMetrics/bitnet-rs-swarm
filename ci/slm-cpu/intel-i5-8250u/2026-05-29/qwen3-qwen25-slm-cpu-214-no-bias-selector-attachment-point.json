@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_selector_attachment_point",
+  "tracking_item": "SLM-CPU-214",
+  "consumes_tracking_items": [
+    "SLM-CPU-211",
+    "SLM-CPU-212",
+    "SLM-CPU-213"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "per_callsite_candidate_receipt_emitter_defined_fail_closed",
+  "reason": "descriptor_identity_reaches_apply_linear_but_candidate_on_proof_is_incomplete",
+  "remaining_runtime_selection_blocker": "explicit_gate_and_candidate_off_on_generated_id_preservation_receipts",
+  "summary": "SLM-CPU-214 defines the first safe no-bias selector attachment point as a per-callsite candidate receipt emitter boundary. This avoids mutating the model hook registry with prompt-bound identity and binds DenseLinearNoBiasReceiptBoundSelectorDescriptor to the exact FeedForward::apply_linear tensor/callsite identity. Candidate execution remains disabled until explicit gate plus candidate-off/candidate-on strict warm-session receipts prove generated IDs and decoded text are preserved.",
+  "attachment_point": {
+    "strategy": "per_callsite_candidate_receipt_emitter",
+    "session_scoped_hook_mutation_selected": false,
+    "why_not_session_mutation": "Prompt/generated/text digest identity is prompt-bound and appears after warm-session prompt execution; mutating the shared dense hook registry risks stale identity crossing prompt boundaries unless a stricter session-owned registry lifetime is introduced.",
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "descriptor_type": "bitnet_transformer::DenseLinearNoBiasReceiptBoundSelectorDescriptor",
+    "boundary_type": "bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary",
+    "required_callsite_identity": [
+      "tensor_name",
+      "callsite_identity",
+      "model_sha256",
+      "model_architecture",
+      "quant_format=Q8_0",
+      "tokenizer_source=gguf_metadata",
+      "tokenizer_strict=true",
+      "runtime_api=cpu",
+      "selected_backend=cpu-rust",
+      "fallback_used=false",
+      "prompt_ids_digest",
+      "generated_ids_digest",
+      "decoded_text_digest",
+      "selected_path=eager_f32_candle",
+      "selected_kernel=dense-f32-candle-linear",
+      "candidate_path",
+      "candidate_kernel"
+    ]
+  },
+  "models_scoped": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    }
+  },
+  "required_before_candidate_execution": [
+    "explicit runtime gate requested",
+    "candidate-off strict warm-session receipt captured",
+    "candidate-on strict warm-session receipt captured",
+    "prompt IDs preserved",
+    "generated IDs preserved",
+    "decoded text preserved",
+    "selected backend and fallback status preserved",
+    "candidate path and kernel visible in the receipt"
+  ],
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-215",
+    "scope": "capture candidate-off/candidate-on no-bias receipts through the per-callsite emitter for Qwen3 and Qwen2.5 Q8_0, with candidate execution still explicit-gated and no speed claim"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "candidate_on_receipt_captured": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}
