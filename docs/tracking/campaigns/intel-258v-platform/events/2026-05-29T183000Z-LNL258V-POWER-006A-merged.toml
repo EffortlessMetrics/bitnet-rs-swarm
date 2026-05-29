@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T18:30:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006A"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 956
+merge_sha = "802e46831a1b133f6582e192ccbd707455bf1d0b"
+branch = "codex/lunar-lake/LNL258V-POWER-006A-battery-preflight-harness"
+summary = "Merged LNL258V-POWER-006A Lunar Lake low-power battery preflight harness."
+notes = [
+  "PR #956 adds a no-inference low-power preflight/run-harness command and receipt for the Intel 258V lane.",
+  "The committed receipt records the current AC/charging state and keeps model_inference_allowed=false and model_inference_executed=false.",
+  "LNL258V-POWER-006 remains blocked until real battery-mode route/profile evidence is collected.",
+]
