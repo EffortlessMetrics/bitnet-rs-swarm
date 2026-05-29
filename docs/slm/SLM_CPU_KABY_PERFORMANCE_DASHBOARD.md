@@ -4011,6 +4011,36 @@ and does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
 server/accelerator, Qwen3.5, or BitNet QK256 claims. SLM-CPU-219 can safely
 consume this boundary to wire or block the same-callsite receipt emitter.
 
+## SLM-CPU-219 No-Bias Same-Callsite Receipt Emitter Boundary
+
+SLM-CPU-219 consumes the SLM-CPU-218 runtime owner boundary and records the
+same-callsite receipt-emitter boundary for the Qwen3/Qwen2.5 Q8_0
+`feed_forward.down_proj` no-bias candidate. The boundary is now local to
+`FeedForward::apply_linear`, but it remains fail-closed because fresh strict
+candidate-off and candidate-on receipts still have to prove owner identity,
+prompt IDs, generated IDs, and decoded text before any execution PR can be
+considered.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-219-no-bias-same-callsite-receipt-emitter.json
+decision = same_callsite_candidate_receipt_emitter_defined_fail_closed
+reason = same_callsite_candidate_off_on_receipts_incomplete
+remaining_blocker = fresh_candidate_off_on_strict_receipts
+boundary = bitnet_transformer::DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime, does not claim generated-ID preservation for candidate-on execution,
+and does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. SLM-CPU-220 can consume
+this boundary to capture fresh candidate-off/candidate-on receipts or record
+the exact strict-receipt artifact blocker.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

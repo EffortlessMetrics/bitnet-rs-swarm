@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_same_callsite_receipt_emitter_boundary",
+  "tracking_item": "SLM-CPU-219",
+  "consumes_tracking_items": [
+    "SLM-CPU-218"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "same_callsite_candidate_receipt_emitter_defined_fail_closed",
+  "reason": "same_callsite_candidate_off_on_receipts_incomplete",
+  "remaining_runtime_selection_blocker": "fresh_candidate_off_on_strict_receipts",
+  "summary": "SLM-CPU-219 consumes the SLM-CPU-218 FeedForward::apply_linear runtime owner boundary and records the same-callsite no-bias candidate receipt-emitter boundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj. The boundary is now local to the owner callsite, but fresh strict candidate-off and candidate-on warm-session receipts still have to prove owner identity, prompt IDs, generated IDs, and decoded text before any candidate execution PR can be considered. Default runtime remains eager_f32_candle and candidate execution remains disabled.",
+  "boundary_type": "bitnet_transformer::DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary",
+  "source_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-218-no-bias-runtime-owner-boundary.json"
+  ],
+  "same_callsite_receipt_emitter_boundary": {
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "scope": "feed_forward.down_proj",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "runtime_owner_boundary_defined": true,
+    "apply_linear_runtime_owner_present": true,
+    "owner_has_apply_linear_inputs": true,
+    "owner_has_linear_weight_access": true,
+    "candidate_compute_callable": true,
+    "same_callsite_candidate_receipt_emitter_present": true,
+    "candidate_off_strict_receipt_present": false,
+    "candidate_on_strict_receipt_present": false,
+    "strict_receipts_bind_owner_identity": false,
+    "prompt_ids_preserved": false,
+    "generated_ids_preserved": false,
+    "decoded_text_preserved": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false
+  },
+  "models_scoped": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "decision": "same_callsite_candidate_receipt_emitter_defined_fail_closed"
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "decision": "same_callsite_candidate_receipt_emitter_defined_fail_closed"
+    }
+  },
+  "required_before_candidate_execution": [
+    "candidate-off strict warm-session receipt present",
+    "candidate-on strict warm-session receipt present",
+    "strict receipts bind FeedForward::apply_linear owner and callsite identity",
+    "prompt IDs preserved",
+    "generated IDs preserved",
+    "decoded text preserved",
+    "runtime_api=cpu preserved",
+    "selected_backend=cpu-rust preserved",
+    "fallback_used=false preserved",
+    "selected path/kernel and candidate path/kernel receipt-visible"
+  ],
+  "fail_closed_conditions": [
+    "candidate_off_strict_receipt_missing",
+    "candidate_on_strict_receipt_missing",
+    "strict_receipts_do_not_bind_runtime_owner_identity",
+    "prompt_ids_preservation_receipt_missing",
+    "generated_ids_preservation_receipt_missing",
+    "decoded_text_preservation_receipt_missing"
+  ],
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-220",
+    "scope": "capture fresh same-callsite candidate-off/candidate-on strict receipts or record the exact receipt artifact blocker before enabling any candidate execution"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}

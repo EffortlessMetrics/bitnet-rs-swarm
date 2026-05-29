@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T19:12:26Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-219"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 974
+head_sha = "96c286ada186350edd530e86ce389550a7519837"
+branch = "codex/slm-cpu-219-no-bias-same-callsite-receipt-emitter"
+summary = "Opened SLM-CPU-219 no-bias same-callsite receipt-emitter boundary PR."
+notes = [
+  "PR #974 consumes the SLM-CPU-218 runtime owner boundary and records DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The slice records the remaining blocker as fresh same-callsite candidate-off/candidate-on strict receipts that bind owner identity, prompt IDs, generated IDs, and decoded text.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

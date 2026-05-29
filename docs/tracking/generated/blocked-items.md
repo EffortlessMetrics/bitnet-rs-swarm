@@ -982,7 +982,7 @@
 | slm-cpu | SLM-CPU-216 | SLM-CPU-215 | merged |
 | slm-cpu | SLM-CPU-217 | SLM-CPU-216 | merged |
 | slm-cpu | SLM-CPU-218 | SLM-CPU-217 | merged |
-| slm-cpu | SLM-CPU-219 | SLM-CPU-218 | ready |
+| slm-cpu | SLM-CPU-219 | SLM-CPU-218 | pr_open |
 | slm-cpu | SLM-CPU-165 | SLM-CPU-164 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
