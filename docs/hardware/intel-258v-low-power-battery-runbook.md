@@ -38,6 +38,29 @@ Stop if Windows reports an AC or charging status. The CLI currently treats
 `BatteryStatus=2/6/7/8/9/11` as AC/charging blocker states. Also stop if the
 telemetry receipt below reports `ac_power_inferred=true`.
 
+Run the no-inference preflight/run-harness receipt before any model command:
+
+```powershell
+target/debug/bitnet.exe lunar-lake low-power-harness `
+  --artifact-root ci/hardware/intel-258v/2026-05-08 `
+  --json-out lunar-lake-low-power-run-harness.json `
+  --created-utc <preflight-utc> `
+  --strict
+```
+
+Continue only if the harness records:
+
+- `battery_preflight_passed=true`;
+- `model_inference_allowed=true`;
+- `model_inference_executed=false`;
+- `route_sample_execution_started=false`;
+- `power_scheme` and `battery_status` are present;
+- missing thermal sensors are recorded in `thermal_sensor_status` or measured
+  temperatures are present.
+
+If `--strict` exits nonzero, keep the receipt as blocker evidence and do not
+run any route/profile sample command.
+
 Before unplugging for the physical run, emit the machine-readable plan receipt
 from the current committed blocker evidence:
 
@@ -82,7 +105,17 @@ If strict mode fails after writing a blocked receipt, do not rename it to the
 
 ## Route/Profile Samples
 
-Run the low-power route/profile matrix on battery for these route identities:
+The run harness names the full evidence matrix:
+
+- power modes: AC balanced, AC performance if available, battery balanced,
+  battery performance if available, and battery saver if available;
+- routes: `dense_slm_default_cpu`, OpenVINO GPU
+  (`dense_slm_openvino_gpu_candidate`), and OpenVINO NPU
+  (`dense_slm_openvino_npu_candidate`);
+- profiles: `ask_short`, `ask_normal`, `warm_resident`, and `low_power`.
+
+For `POWER-006`, run the low-power route/profile matrix on battery for these
+route identities:
 
 | Route | Backend | Status Before POWER-006 |
 |---|---|---|
