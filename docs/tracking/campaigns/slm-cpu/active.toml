@@ -11535,7 +11535,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-199"
-status = "ready"
+status = "merged"
+pr = 924
+merge_sha = "ca050982506b830d6838e17f984804e601e032a0"
 branch = "codex/slm-cpu-199-no-bias-runtime-descriptor-contract"
 stackable = false
 review_mode = "codex_premerge"
@@ -11573,6 +11575,59 @@ evidence = [
 may_claim = [
   "SLM-CPU-199 may define the manifest-bound no-bias runtime descriptor contract needed before future runtime selection.",
   "SLM-CPU-199 may add validation helpers or audit artifacts proving descriptor decisions fail closed before compute.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Normal inference executes the no-bias candidate.",
+  "Runtime compute selection changes by default.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-200"
+status = "ready"
+branch = "codex/slm-cpu-200-no-bias-apply-linear-audit-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-199"]
+acceptance = "Consume the SLM-CPU-199 manifest-bound no-bias runtime descriptor contract and add the next safe FeedForward apply-linear audit boundary without executing the no-bias candidate. A valid slice must show how an exact Qwen3 Q8_0 feed_forward.down_proj descriptor decision would be observed at the dense tensor callsite, preserve selected_path=eager_f32_candle and selected_kernel=dense-f32-candle-linear by default, fail closed when descriptor identity, receipt identity, quant, role, layer, scope, linear, bias_present, runtime gate, or fallback evidence is missing or invalid, and emit an audit artifact naming the remaining blocker before runtime selection. No candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-199 defines DenseLinearNoBiasRuntimeDescriptorContract and records descriptor_ready_for_future_receipt_gate while runtime remains disabled.",
+  "SLM-CPU-199 validates manifest-bound role identity fields and fail-closed behavior before compute.",
+  "SLM-CPU-199 keeps normal inference on eager_f32_candle and records no runtime candidate execution or preservation receipt claim.",
+]
+may_claim = [
+  "SLM-CPU-200 may add an audit boundary showing how a manifest-bound descriptor decision reaches the FeedForward apply-linear callsite.",
+  "SLM-CPU-200 may record the remaining runtime-selection blocker after descriptor observation is available.",
 ]
 must_not_claim = [
   "The no-bias dense linear candidate is selected by default.",
