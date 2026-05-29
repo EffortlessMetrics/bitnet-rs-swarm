@@ -1332,6 +1332,60 @@ pub struct DenseLinearNoBiasCandidateRuntimeOwnerInputs {
     pub decoded_text_preserved: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub runtime_owner_boundary_defined: bool,
+    pub apply_linear_runtime_owner_present: bool,
+    pub owner_has_apply_linear_inputs: bool,
+    pub owner_has_linear_weight_access: bool,
+    pub candidate_compute_callable: bool,
+    pub same_callsite_candidate_receipt_emitter_present: bool,
+    pub candidate_off_strict_receipt_present: bool,
+    pub candidate_on_strict_receipt_present: bool,
+    pub strict_receipts_bind_owner_identity: bool,
+    pub prompt_ids_preserved: bool,
+    pub generated_ids_preserved: bool,
+    pub decoded_text_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs {
+    pub same_callsite_candidate_receipt_emitter_present: bool,
+    pub candidate_off_strict_receipt_present: bool,
+    pub candidate_on_strict_receipt_present: bool,
+    pub strict_receipts_bind_owner_identity: bool,
+    pub prompt_ids_preserved: bool,
+    pub generated_ids_preserved: bool,
+    pub decoded_text_preserved: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -2732,6 +2786,190 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
                 .same_callsite_candidate_on_receipt_emitter_wired,
             candidate_off_on_strict_receipts_present: inputs
                 .candidate_off_on_strict_receipts_present,
+            prompt_ids_preserved: inputs.prompt_ids_preserved,
+            generated_ids_preserved: inputs.generated_ids_preserved,
+            decoded_text_preserved: inputs.decoded_text_preserved,
+            default_runtime_path_preserved,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary {
+    pub fn from_runtime_owner_boundary(
+        owner: &DenseLinearNoBiasCandidateRuntimeOwnerBoundary,
+        inputs: DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs,
+    ) -> Self {
+        let mut fail_closed_conditions: Vec<_> = owner
+            .fail_closed_conditions
+            .iter()
+            .copied()
+            .filter(|condition| {
+                !matches!(
+                    *condition,
+                    "same_callsite_candidate_on_receipt_emitter_missing"
+                        | "candidate_off_on_strict_receipts_missing"
+                        | "prompt_ids_preservation_receipt_missing"
+                        | "generated_ids_preservation_receipt_missing"
+                        | "decoded_text_preservation_receipt_missing"
+                )
+            })
+            .collect();
+        let runtime_owner_boundary_defined = matches!(
+            owner.decision,
+            "candidate_runtime_owner_defined_fail_closed"
+                | "candidate_runtime_owner_and_receipt_emitter_ready_runtime_disabled"
+        ) && owner
+            .candidate_runtime_attachment_boundary_defined
+            && owner.apply_linear_runtime_owner_present
+            && owner.owner_has_apply_linear_inputs
+            && owner.owner_has_linear_weight_access
+            && owner.candidate_compute_callable;
+        let default_runtime_path_preserved = owner.preserves_normal_inference()
+            && owner.default_runtime_path_preserved
+            && owner.selected_path == "eager_f32_candle"
+            && owner.selected_kernel == "dense-f32-candle-linear";
+
+        if !runtime_owner_boundary_defined {
+            fail_closed_conditions.push("candidate_runtime_owner_boundary_not_defined");
+        }
+        if !inputs.same_callsite_candidate_receipt_emitter_present {
+            fail_closed_conditions.push("same_callsite_candidate_receipt_emitter_missing");
+        }
+        if !inputs.candidate_off_strict_receipt_present {
+            fail_closed_conditions.push("candidate_off_strict_receipt_missing");
+        }
+        if !inputs.candidate_on_strict_receipt_present {
+            fail_closed_conditions.push("candidate_on_strict_receipt_missing");
+        }
+        if !inputs.strict_receipts_bind_owner_identity {
+            fail_closed_conditions.push("strict_receipts_do_not_bind_runtime_owner_identity");
+        }
+        if !inputs.prompt_ids_preserved {
+            fail_closed_conditions.push("prompt_ids_preservation_receipt_missing");
+        }
+        if !inputs.generated_ids_preserved {
+            fail_closed_conditions.push("generated_ids_preservation_receipt_missing");
+        }
+        if !inputs.decoded_text_preserved {
+            fail_closed_conditions.push("decoded_text_preservation_receipt_missing");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if owner.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if owner.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if owner.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let owner_ready = runtime_owner_boundary_defined
+            && default_runtime_path_preserved
+            && owner.runtime_api == "cpu"
+            && owner.selected_backend == "cpu-rust"
+            && !owner.fallback_used;
+        let receipt_ready = owner_ready
+            && inputs.same_callsite_candidate_receipt_emitter_present
+            && inputs.candidate_off_strict_receipt_present
+            && inputs.candidate_on_strict_receipt_present
+            && inputs.strict_receipts_bind_owner_identity
+            && inputs.prompt_ids_preserved
+            && inputs.generated_ids_preserved
+            && inputs.decoded_text_preserved
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) = if receipt_ready {
+            (
+                "same_callsite_candidate_receipt_emitter_ready_runtime_disabled",
+                "same_callsite_candidate_off_on_receipts_preserve_runtime_owner_identity",
+                "candidate_execution_enablement_requires_explicit_receipt_gated_pr",
+            )
+        } else if owner_ready && inputs.same_callsite_candidate_receipt_emitter_present {
+            let blocker = if !inputs.candidate_off_strict_receipt_present
+                || !inputs.candidate_on_strict_receipt_present
+            {
+                "fresh_candidate_off_on_strict_receipts"
+            } else if !inputs.strict_receipts_bind_owner_identity {
+                "strict_receipts_bind_owner_identity"
+            } else {
+                "prompt_generated_text_preservation_receipts"
+            };
+            (
+                "same_callsite_candidate_receipt_emitter_defined_fail_closed",
+                "same_callsite_candidate_off_on_receipts_incomplete",
+                blocker,
+            )
+        } else if owner_ready {
+            (
+                "same_callsite_candidate_receipt_emitter_blocked_fail_closed",
+                "same_callsite_candidate_receipt_emitter_missing",
+                "same_callsite_candidate_receipt_emitter",
+            )
+        } else {
+            (
+                "blocked_fail_closed",
+                "candidate_runtime_owner_boundary_incomplete",
+                "candidate_runtime_owner_boundary",
+            )
+        };
+
+        Self {
+            tensor_name: owner.tensor_name.clone(),
+            callsite_identity: owner.callsite_identity.clone(),
+            model_sha256: owner.model_sha256.clone(),
+            model_architecture: owner.model_architecture,
+            quant_format: owner.quant_format,
+            tokenizer_source: owner.tokenizer_source,
+            tokenizer_strict: owner.tokenizer_strict,
+            runtime_api: owner.runtime_api,
+            selected_backend: owner.selected_backend,
+            fallback_used: owner.fallback_used,
+            selected_path: owner.selected_path,
+            selected_kernel: owner.selected_kernel,
+            candidate_path: owner.candidate_path,
+            candidate_kernel: owner.candidate_kernel,
+            prompt_ids_digest: owner.prompt_ids_digest.clone(),
+            generated_ids_digest: owner.generated_ids_digest.clone(),
+            decoded_text_digest: owner.decoded_text_digest.clone(),
+            runtime_owner_boundary_defined,
+            apply_linear_runtime_owner_present: owner.apply_linear_runtime_owner_present,
+            owner_has_apply_linear_inputs: owner.owner_has_apply_linear_inputs,
+            owner_has_linear_weight_access: owner.owner_has_linear_weight_access,
+            candidate_compute_callable: owner.candidate_compute_callable,
+            same_callsite_candidate_receipt_emitter_present: inputs
+                .same_callsite_candidate_receipt_emitter_present,
+            candidate_off_strict_receipt_present: inputs.candidate_off_strict_receipt_present,
+            candidate_on_strict_receipt_present: inputs.candidate_on_strict_receipt_present,
+            strict_receipts_bind_owner_identity: inputs.strict_receipts_bind_owner_identity,
             prompt_ids_preserved: inputs.prompt_ids_preserved,
             generated_ids_preserved: inputs.generated_ids_preserved,
             decoded_text_preserved: inputs.decoded_text_preserved,
@@ -11788,5 +12026,236 @@ mod tests {
         );
         assert!(owner.preserves_normal_inference());
         assert!(!owner.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_same_callsite_receipt_emitter_boundary_records_fresh_receipt_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                false,
+                false,
+                false,
+            );
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: false,
+                    candidate_off_on_strict_receipts_present: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
+            );
+
+        let emitter =
+            DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary::from_runtime_owner_boundary(
+                &owner,
+                DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs {
+                    same_callsite_candidate_receipt_emitter_present: true,
+                    candidate_off_strict_receipt_present: false,
+                    candidate_on_strict_receipt_present: false,
+                    strict_receipts_bind_owner_identity: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
+            );
+
+        assert_eq!(emitter.decision, "same_callsite_candidate_receipt_emitter_defined_fail_closed");
+        assert_eq!(
+            emitter.remaining_runtime_selection_blocker,
+            "fresh_candidate_off_on_strict_receipts"
+        );
+        assert!(emitter.runtime_owner_boundary_defined);
+        assert!(emitter.same_callsite_candidate_receipt_emitter_present);
+        assert!(!emitter.candidate_off_strict_receipt_present);
+        assert!(!emitter.candidate_on_strict_receipt_present);
+        assert!(!emitter.strict_receipts_bind_owner_identity);
+        assert!(!emitter.prompt_ids_preserved);
+        assert!(!emitter.generated_ids_preserved);
+        assert!(!emitter.decoded_text_preserved);
+        assert!(
+            !emitter
+                .fail_closed_conditions
+                .contains(&"same_callsite_candidate_on_receipt_emitter_missing")
+        );
+        assert!(
+            !emitter.fail_closed_conditions.contains(&"candidate_off_on_strict_receipts_missing")
+        );
+        assert!(emitter.fail_closed_conditions.contains(&"candidate_off_strict_receipt_missing"));
+        assert!(emitter.fail_closed_conditions.contains(&"candidate_on_strict_receipt_missing"));
+        assert!(
+            emitter
+                .fail_closed_conditions
+                .contains(&"strict_receipts_do_not_bind_runtime_owner_identity")
+        );
+        assert!(
+            emitter.fail_closed_conditions.contains(&"generated_ids_preservation_receipt_missing")
+        );
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+        assert!(!emitter.allocation_reduction_claim);
+        assert!(!emitter.timing_improvement_claim);
+        assert!(!emitter.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_same_callsite_receipt_emitter_boundary_models_ready_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: true,
+                    candidate_off_on_strict_receipts_present: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
+            );
+
+        let emitter =
+            DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary::from_runtime_owner_boundary(
+                &owner,
+                DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs {
+                    same_callsite_candidate_receipt_emitter_present: true,
+                    candidate_off_strict_receipt_present: true,
+                    candidate_on_strict_receipt_present: true,
+                    strict_receipts_bind_owner_identity: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
+            );
+
+        assert_eq!(
+            emitter.decision,
+            "same_callsite_candidate_receipt_emitter_ready_runtime_disabled"
+        );
+        assert_eq!(emitter.model_architecture, "qwen2");
+        assert_eq!(emitter.model_sha256, qwen25_sha);
+        assert_eq!(emitter.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        assert!(emitter.runtime_owner_boundary_defined);
+        assert!(emitter.apply_linear_runtime_owner_present);
+        assert!(emitter.owner_has_apply_linear_inputs);
+        assert!(emitter.owner_has_linear_weight_access);
+        assert!(emitter.candidate_compute_callable);
+        assert!(emitter.same_callsite_candidate_receipt_emitter_present);
+        assert!(emitter.candidate_off_strict_receipt_present);
+        assert!(emitter.candidate_on_strict_receipt_present);
+        assert!(emitter.strict_receipts_bind_owner_identity);
+        assert!(emitter.prompt_ids_preserved);
+        assert!(emitter.generated_ids_preserved);
+        assert!(emitter.decoded_text_preserved);
+        assert!(emitter.fail_closed_conditions.is_empty());
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_same_callsite_receipt_emitter_boundary_rejects_missing_emitter() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: true,
+                    candidate_off_on_strict_receipts_present: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
+            );
+
+        let emitter =
+            DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary::from_runtime_owner_boundary(
+                &owner,
+                DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs {
+                    same_callsite_candidate_receipt_emitter_present: false,
+                    candidate_off_strict_receipt_present: true,
+                    candidate_on_strict_receipt_present: true,
+                    strict_receipts_bind_owner_identity: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
+            );
+
+        assert_eq!(emitter.decision, "same_callsite_candidate_receipt_emitter_blocked_fail_closed");
+        assert_eq!(
+            emitter.remaining_runtime_selection_blocker,
+            "same_callsite_candidate_receipt_emitter"
+        );
+        assert!(emitter.runtime_owner_boundary_defined);
+        assert!(!emitter.same_callsite_candidate_receipt_emitter_present);
+        assert!(
+            emitter
+                .fail_closed_conditions
+                .contains(&"same_callsite_candidate_receipt_emitter_missing")
+        );
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
     }
 }
