@@ -1,0 +1,20 @@
+timestamp = "2026-05-29T05:46:45Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-206"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 939
+merge_sha = "0c400f434c252f66b62bcc269131199bcbb3d69f"
+branch = "codex/slm-cpu-206-no-bias-apply-linear-receipt-prereq-refresh"
+summary = "Merged the no-bias apply-linear prerequisite refresh."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-206-no-bias-apply-linear-prereq-refresh.json",
+  "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+]
+notes = [
+  "SLM-CPU-206 verifies Qwen3 Q8_0 at the canonical models/slm path and exact Qwen2.5 Q8_0 in local target caches by accepted SHA256.",
+  "Qwen2.5 remains absent from the canonical models/slm path, no model binary is committed, and fresh before/after warm-session receipts are not captured in this slice.",
+  "No candidate execution, runtime promotion, allocation/timing/speedup claim, sustained-throughput claim, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]

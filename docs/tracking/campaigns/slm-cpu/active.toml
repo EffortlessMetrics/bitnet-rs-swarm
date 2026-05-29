@@ -11917,8 +11917,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-206"
-status = "ready"
+status = "merged"
 branch = "codex/slm-cpu-206-no-bias-apply-linear-receipt-prereq-refresh"
+pr = 939
+merge_sha = "0c400f434c252f66b62bcc269131199bcbb3d69f"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -11952,6 +11954,56 @@ evidence = [
 may_claim = [
   "SLM-CPU-206 may record exact artifact availability or missing-prerequisite status for the disabled no-bias apply-linear receipt-pair gate.",
   "SLM-CPU-206 may capture strict before/after receipts only if the exact required model artifacts are available and candidate execution remains disabled.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for a new runtime experiment without fresh receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-207"
+status = "ready"
+branch = "codex/slm-cpu-207-no-bias-apply-linear-receipt-capture"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-206"]
+acceptance = "Consume the SLM-CPU-206 prerequisite refresh and capture or precisely block fresh Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts using explicit verified model paths for the disabled no-bias apply-linear gate. Valid receipts must preserve exact model SHA, quant format, tokenizer authority, prompt IDs/hash, generated IDs/hash, decoded text/hash, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false while candidate execution remains disabled. No model binary may be committed, and no candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-206 verifies Qwen3 Q8_0 at the canonical models/slm path and Qwen2.5 Q8_0 in local target caches by accepted SHA256.",
+  "SLM-CPU-206 did not capture before/after receipts and did not commit model binaries.",
+  "The next safe step is explicit-path receipt capture, or a precise runtime/command blocker if capture cannot be completed.",
+]
+may_claim = [
+  "SLM-CPU-207 may capture fresh strict before/after receipt pairs using explicit verified model paths while candidate execution remains disabled.",
+  "SLM-CPU-207 may record a precise command, runtime, or artifact blocker if receipt capture cannot complete.",
 ]
 must_not_claim = [
   "A model binary is committed.",
