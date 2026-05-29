@@ -3982,6 +3982,35 @@ preservation for candidate-on execution, and does not make allocation, timing,
 speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet
 QK256 claims.
 
+## SLM-CPU-218 No-Bias Candidate Runtime Owner Boundary
+
+SLM-CPU-218 consumes the SLM-CPU-217 attachment boundary and records
+`FeedForward::apply_linear` as the fail-closed owner boundary for a future
+explicitly gated no-bias candidate call. The owner boundary has the callsite
+inputs, `Linear` weight access, and callable no-bias candidate surface needed
+for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`, but it still lacks a
+same-callsite candidate-on receipt emitter and fresh strict candidate-off/on
+receipts.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-218-no-bias-runtime-owner-boundary.json
+decision = candidate_runtime_owner_defined_fail_closed
+reason = same_callsite_candidate_on_receipt_emission_incomplete
+remaining_blocker = same_callsite_candidate_on_receipt_emitter
+boundary = bitnet_transformer::DenseLinearNoBiasCandidateRuntimeOwnerBoundary
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The boundary does not execute the no-bias candidate, does not change default
+runtime, does not claim generated-ID preservation for candidate-on execution,
+and does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. SLM-CPU-219 can safely
+consume this boundary to wire or block the same-callsite receipt emitter.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

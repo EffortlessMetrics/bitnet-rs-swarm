@@ -1277,6 +1277,48 @@ pub struct DenseLinearNoBiasCandidateRuntimeAttachmentBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub candidate_runtime_attachment_boundary_defined: bool,
+    pub explicit_runtime_gate_requested: bool,
+    pub apply_linear_runtime_owner_present: bool,
+    pub owner_has_apply_linear_inputs: bool,
+    pub owner_has_linear_weight_access: bool,
+    pub candidate_compute_callable: bool,
+    pub same_callsite_candidate_on_receipt_emitter_wired: bool,
+    pub candidate_off_on_strict_receipts_present: bool,
+    pub prompt_ids_preserved: bool,
+    pub generated_ids_preserved: bool,
+    pub decoded_text_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -2481,6 +2523,211 @@ impl DenseLinearNoBiasCandidateRuntimeAttachmentBoundary {
             candidate_runtime_owner_present,
             candidate_receipt_emitter_wired,
             candidate_compute_callable,
+            default_runtime_path_preserved,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
+    pub fn from_runtime_attachment_boundary(
+        attachment: &DenseLinearNoBiasCandidateRuntimeAttachmentBoundary,
+        apply_linear_runtime_owner_present: bool,
+        owner_has_apply_linear_inputs: bool,
+        owner_has_linear_weight_access: bool,
+        candidate_compute_callable: bool,
+        same_callsite_candidate_on_receipt_emitter_wired: bool,
+        candidate_off_on_strict_receipts_present: bool,
+        prompt_ids_preserved: bool,
+        generated_ids_preserved: bool,
+        decoded_text_preserved: bool,
+    ) -> Self {
+        let mut fail_closed_conditions: Vec<_> = attachment
+            .fail_closed_conditions
+            .iter()
+            .copied()
+            .filter(|condition| {
+                !matches!(
+                    *condition,
+                    "candidate_runtime_owner_missing"
+                        | "candidate_receipt_emitter_not_wired"
+                        | "candidate_compute_not_callable"
+                )
+            })
+            .collect();
+        let candidate_runtime_attachment_boundary_defined = matches!(
+            attachment.decision,
+            "candidate_runtime_attachment_ready_runtime_disabled"
+                | "candidate_runtime_attachment_defined_fail_closed"
+        ) && attachment
+            .candidate_on_behavior_gate_ready
+            && attachment.explicit_runtime_gate_requested
+            && attachment.apply_linear_candidate_attachment_wired;
+        let default_runtime_path_preserved = attachment.preserves_normal_inference()
+            && attachment.default_runtime_path_preserved
+            && attachment.selected_path == "eager_f32_candle"
+            && attachment.selected_kernel == "dense-f32-candle-linear";
+
+        if !candidate_runtime_attachment_boundary_defined {
+            fail_closed_conditions.push("candidate_runtime_attachment_boundary_not_defined");
+        }
+        if !attachment.explicit_runtime_gate_requested {
+            fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+        }
+        if !apply_linear_runtime_owner_present {
+            fail_closed_conditions.push("apply_linear_runtime_owner_missing");
+        }
+        if !owner_has_apply_linear_inputs {
+            fail_closed_conditions.push("runtime_owner_missing_apply_linear_inputs");
+        }
+        if !owner_has_linear_weight_access {
+            fail_closed_conditions.push("runtime_owner_missing_linear_weight_access");
+        }
+        if !candidate_compute_callable {
+            fail_closed_conditions.push("candidate_compute_not_callable");
+        }
+        if !same_callsite_candidate_on_receipt_emitter_wired {
+            fail_closed_conditions.push("same_callsite_candidate_on_receipt_emitter_missing");
+        }
+        if !candidate_off_on_strict_receipts_present {
+            fail_closed_conditions.push("candidate_off_on_strict_receipts_missing");
+        }
+        if !prompt_ids_preserved {
+            fail_closed_conditions.push("prompt_ids_preservation_receipt_missing");
+        }
+        if !generated_ids_preserved {
+            fail_closed_conditions.push("generated_ids_preservation_receipt_missing");
+        }
+        if !decoded_text_preserved {
+            fail_closed_conditions.push("decoded_text_preservation_receipt_missing");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if attachment.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if attachment.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if attachment.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let owner_ready = candidate_runtime_attachment_boundary_defined
+            && attachment.explicit_runtime_gate_requested
+            && apply_linear_runtime_owner_present
+            && owner_has_apply_linear_inputs
+            && owner_has_linear_weight_access
+            && candidate_compute_callable
+            && default_runtime_path_preserved
+            && attachment.runtime_api == "cpu"
+            && attachment.selected_backend == "cpu-rust"
+            && !attachment.fallback_used;
+        let receipt_ready = owner_ready
+            && same_callsite_candidate_on_receipt_emitter_wired
+            && candidate_off_on_strict_receipts_present
+            && prompt_ids_preserved
+            && generated_ids_preserved
+            && decoded_text_preserved
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) = if receipt_ready {
+            (
+                "candidate_runtime_owner_and_receipt_emitter_ready_runtime_disabled",
+                "same_callsite_candidate_on_receipt_emission_preserves_default_runtime",
+                "candidate_execution_enablement_requires_explicit_receipt_gated_pr",
+            )
+        } else if owner_ready {
+            let blocker = if !same_callsite_candidate_on_receipt_emitter_wired {
+                "same_callsite_candidate_on_receipt_emitter"
+            } else if !candidate_off_on_strict_receipts_present {
+                "candidate_off_on_strict_receipts"
+            } else {
+                "prompt_generated_text_preservation_receipts"
+            };
+            (
+                "candidate_runtime_owner_defined_fail_closed",
+                "same_callsite_candidate_on_receipt_emission_incomplete",
+                blocker,
+            )
+        } else if candidate_runtime_attachment_boundary_defined {
+            let blocker = if !apply_linear_runtime_owner_present {
+                "apply_linear_runtime_owner"
+            } else if !owner_has_apply_linear_inputs {
+                "apply_linear_input_ownership"
+            } else if !owner_has_linear_weight_access {
+                "linear_weight_ownership"
+            } else {
+                "candidate_compute_callable"
+            };
+            (
+                "candidate_runtime_owner_blocked_fail_closed",
+                "apply_linear_runtime_owner_incomplete",
+                blocker,
+            )
+        } else {
+            (
+                "blocked_fail_closed",
+                "candidate_runtime_attachment_boundary_incomplete",
+                "candidate_runtime_attachment_boundary",
+            )
+        };
+
+        Self {
+            tensor_name: attachment.tensor_name.clone(),
+            callsite_identity: attachment.callsite_identity.clone(),
+            model_sha256: attachment.model_sha256.clone(),
+            model_architecture: attachment.model_architecture,
+            quant_format: attachment.quant_format,
+            tokenizer_source: attachment.tokenizer_source,
+            tokenizer_strict: attachment.tokenizer_strict,
+            runtime_api: attachment.runtime_api,
+            selected_backend: attachment.selected_backend,
+            fallback_used: attachment.fallback_used,
+            selected_path: attachment.selected_path,
+            selected_kernel: attachment.selected_kernel,
+            candidate_path: attachment.candidate_path,
+            candidate_kernel: attachment.candidate_kernel,
+            prompt_ids_digest: attachment.prompt_ids_digest.clone(),
+            generated_ids_digest: attachment.generated_ids_digest.clone(),
+            decoded_text_digest: attachment.decoded_text_digest.clone(),
+            candidate_runtime_attachment_boundary_defined,
+            explicit_runtime_gate_requested: attachment.explicit_runtime_gate_requested,
+            apply_linear_runtime_owner_present,
+            owner_has_apply_linear_inputs,
+            owner_has_linear_weight_access,
+            candidate_compute_callable,
+            same_callsite_candidate_on_receipt_emitter_wired,
+            candidate_off_on_strict_receipts_present,
+            prompt_ids_preserved,
+            generated_ids_preserved,
+            decoded_text_preserved,
             default_runtime_path_preserved,
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
@@ -11358,5 +11605,175 @@ mod tests {
         );
         assert!(attachment.preserves_normal_inference());
         assert!(!attachment.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_candidate_runtime_owner_boundary_records_receipt_emitter_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                false,
+                false,
+                false,
+            );
+
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                true,
+                true,
+                true,
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+            );
+
+        assert_eq!(owner.decision, "candidate_runtime_owner_defined_fail_closed");
+        assert_eq!(
+            owner.remaining_runtime_selection_blocker,
+            "same_callsite_candidate_on_receipt_emitter"
+        );
+        assert!(owner.candidate_runtime_attachment_boundary_defined);
+        assert!(owner.apply_linear_runtime_owner_present);
+        assert!(owner.owner_has_apply_linear_inputs);
+        assert!(owner.owner_has_linear_weight_access);
+        assert!(owner.candidate_compute_callable);
+        assert!(!owner.same_callsite_candidate_on_receipt_emitter_wired);
+        assert!(!owner.candidate_off_on_strict_receipts_present);
+        assert!(!owner.prompt_ids_preserved);
+        assert!(!owner.generated_ids_preserved);
+        assert!(!owner.decoded_text_preserved);
+        assert!(!owner.fail_closed_conditions.contains(&"candidate_runtime_owner_missing"));
+        assert!(
+            owner
+                .fail_closed_conditions
+                .contains(&"same_callsite_candidate_on_receipt_emitter_missing")
+        );
+        assert!(owner.fail_closed_conditions.contains(&"candidate_off_on_strict_receipts_missing"));
+        assert!(owner.preserves_normal_inference());
+        assert!(!owner.candidate_execution_enabled);
+        assert!(!owner.normal_inference_runtime_selection_enabled);
+        assert!(!owner.allocation_reduction_claim);
+        assert!(!owner.timing_improvement_claim);
+        assert!(!owner.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_candidate_runtime_owner_boundary_models_ready_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(
+            owner.decision,
+            "candidate_runtime_owner_and_receipt_emitter_ready_runtime_disabled"
+        );
+        assert_eq!(owner.model_architecture, "qwen2");
+        assert_eq!(owner.model_sha256, qwen25_sha);
+        assert_eq!(owner.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        assert!(owner.candidate_runtime_attachment_boundary_defined);
+        assert!(owner.apply_linear_runtime_owner_present);
+        assert!(owner.same_callsite_candidate_on_receipt_emitter_wired);
+        assert!(owner.candidate_off_on_strict_receipts_present);
+        assert!(owner.prompt_ids_preserved);
+        assert!(owner.generated_ids_preserved);
+        assert!(owner.decoded_text_preserved);
+        assert!(owner.fail_closed_conditions.is_empty());
+        assert!(owner.preserves_normal_inference());
+        assert!(!owner.candidate_execution_enabled);
+        assert!(!owner.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_candidate_runtime_owner_boundary_rejects_missing_owner_inputs() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                false,
+                false,
+                false,
+                false,
+                true,
+                true,
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(owner.decision, "candidate_runtime_owner_blocked_fail_closed");
+        assert_eq!(owner.remaining_runtime_selection_blocker, "apply_linear_runtime_owner");
+        assert!(!owner.apply_linear_runtime_owner_present);
+        assert!(!owner.owner_has_apply_linear_inputs);
+        assert!(!owner.owner_has_linear_weight_access);
+        assert!(!owner.candidate_compute_callable);
+        assert!(owner.fail_closed_conditions.contains(&"apply_linear_runtime_owner_missing"));
+        assert!(
+            owner.fail_closed_conditions.contains(&"runtime_owner_missing_apply_linear_inputs")
+        );
+        assert!(owner.preserves_normal_inference());
+        assert!(!owner.candidate_execution_enabled);
     }
 }
