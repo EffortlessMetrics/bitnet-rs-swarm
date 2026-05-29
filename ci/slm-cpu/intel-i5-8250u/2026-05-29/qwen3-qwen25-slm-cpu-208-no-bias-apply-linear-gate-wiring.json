@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_gate_wiring",
+  "tracking_item": "SLM-CPU-208",
+  "consumes_tracking_items": [
+    "SLM-CPU-207"
+  ],
+  "decision": "gate_object_wired_runtime_disabled_before_after_receipts_missing",
+  "summary": "SLM-CPU-208 replaces the SLM-CPU-207 placeholder None emitter path with a real DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate object for eligible Qwen3/Qwen2.5 Q8_0 cpu-rust warm-session aggregates. The gate binds model SHA, Q8_0 quant format, manifest digest, role/tensor identity, prompt/generated/text digests, cpu-rust backend identity, eager_f32_candle selected path, no-bias candidate identity, runtime-gate state, and fallback=false. It remains fail-closed because fresh before/after warm-session receipt pairs have not yet been captured through this wired boundary.",
+  "source_changes": [
+    {
+      "path": "crates/bitnet-cli/src/main.rs",
+      "change": "slm-warm-session aggregate now constructs slm_warm_session_no_bias_apply_linear_gate_for_session(...) and passes the resulting gate into slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(...) when eligible"
+    },
+    {
+      "path": "crates/bitnet-transformer/src/lib.rs",
+      "change": "DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate now carries the actual prompt_ids_digest, generated_ids_digest, and decoded_text_digest strings in addition to preservation booleans"
+    }
+  ],
+  "eligible_session_requirements": {
+    "quant_format": "Q8_0",
+    "model_architecture": [
+      "qwen2",
+      "qwen3"
+    ],
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "prompt_summaries_present": true
+  },
+  "wired_gate_identity": {
+    "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+    "quant_format": "Q8_0",
+    "layer": 0,
+    "scope": "feed_forward",
+    "linear": "down_proj",
+    "tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "role_id": "layers.0.feed_forward.down_proj",
+    "bias_present": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_paths": [
+      "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "qwen25_feed_forward_down_proj_no_bias_candidate"
+    ],
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+    "runtime_gate_requested_enabled": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "candidate_execution_enabled": false
+  },
+  "receipt_fields_now_bindable": [
+    "model_sha256",
+    "quant_format",
+    "manifest_sha256",
+    "role_id",
+    "layer",
+    "scope",
+    "linear",
+    "bias_present=false",
+    "tensor_name",
+    "selected_path=eager_f32_candle",
+    "selected_kernel=dense-f32-candle-linear",
+    "candidate_path",
+    "candidate_kernel",
+    "runtime_gate_state",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "fallback=false",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest"
+  ],
+  "fail_closed_status": {
+    "before_after_receipts_present": false,
+    "descriptor_callsite_identity_preserved": true,
+    "prompt_ids_digest_preserved": true,
+    "generated_ids_digest_preserved": true,
+    "decoded_text_digest_preserved": true,
+    "decision": "blocked_pending_before_after_warm_session_receipts",
+    "reason": "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured",
+    "remaining_runtime_selection_blocker": "fresh_qwen3_qwen25_before_after_warm_session_receipts",
+    "fail_closed_conditions": [
+      "before_after_receipts_missing"
+    ]
+  },
+  "tests": [
+    {
+      "command": "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+      "status": "passed"
+    }
+  ],
+  "next_safe_step": {
+    "tracking_item": "SLM-CPU-209",
+    "description": "Run explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts through the newly wired gate object, keeping the no-bias candidate disabled and proving generated IDs/text plus digest-bound gate identity before any runtime-selection discussion."
+  },
+  "claim_boundary": {
+    "model_binary_committed": false,
+    "candidate_execution_disabled": true,
+    "default_runtime_changed": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "generated_id_preservation_claim_for_no_bias_candidate": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

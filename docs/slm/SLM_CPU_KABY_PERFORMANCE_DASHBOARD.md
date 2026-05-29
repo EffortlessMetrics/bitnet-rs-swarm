@@ -100,6 +100,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias selector dry run | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json` | Applies the disabled policy to all 366 role records and emits receipt-visible decisions: 294 roles are eligible future no-bias candidates, 72 Qwen2.5 attention q/k/v roles fail closed because bias is present, and runtime selection remains disabled |
 | No-bias selector audit hook | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json` | Adds a typed audit-only `DenseLinearNoBiasSelectorAudit` boundary: biasless roles are future candidates, biased or unknown roles fail closed, and the selected path remains `eager_f32_candle` / `dense-f32-candle-linear` |
 | No-bias apply-linear receipt capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-207-no-bias-apply-linear-receipt-capture-blocker.json` | Verifies the explicit Qwen3 and Qwen2.5 Q8_0 model paths are present by SHA, but blocks fresh before/after capture because `slm-warm-session` currently passes `None` into the no-bias apply-linear gate emitter; long receipt runs would not populate the required descriptor/callsite or digest-bound gate fields |
+| No-bias apply-linear gate wiring | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json` | Wires a real digest-bound no-bias apply-linear gate object into eligible Qwen3/Qwen2.5 Q8_0 warm-session aggregates while keeping candidate execution disabled and blocking on fresh before/after receipts |
 
 Qwen3 rows use:
 
@@ -3637,6 +3638,47 @@ selection, prove generated-ID preservation for a no-bias experiment, claim
 allocation reduction, claim timing improvement or speedup, claim sustained
 throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO,
 UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+## SLM-CPU-208 No-Bias Apply-Linear Gate Wiring
+
+SLM-CPU-208 consumes the SLM-CPU-207 source-level blocker by constructing a real
+`DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate` object for eligible
+Qwen3/Qwen2.5 Q8_0 `cpu-rust` warm-session aggregates and passing it to the
+aggregate no-bias apply-linear receipt emitter:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json
+decision = gate_object_wired_runtime_disabled_before_after_receipts_missing
+eligible_quant = Q8_0
+eligible_architectures = qwen2, qwen3
+runtime_api = cpu
+selected_backend = cpu-rust
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_execution_enabled = false
+default_runtime_changed = false
+```
+
+The gate now binds model SHA, quant format, manifest digest, role/tensor
+identity, prompt/generated/text digests, backend identity, selected path/kernel,
+candidate path/kernel, runtime-gate state, and `fallback_used=false`. It remains
+fail-closed because fresh before/after strict warm-session receipt pairs have
+not yet been captured through this wired boundary:
+
+```text
+before_after_receipts_present = false
+decision = blocked_pending_before_after_warm_session_receipts
+remaining_runtime_selection_blocker = fresh_qwen3_qwen25_before_after_warm_session_receipts
+fail_closed_conditions = before_after_receipts_missing
+```
+
+The next safe slice is to rerun explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0
+before/after strict warm-session receipts through this wired gate object while
+candidate execution remains disabled. This slice does not execute the no-bias
+candidate, change default runtime selection, prove generated-ID preservation for
+a no-bias experiment, claim allocation reduction, claim timing improvement or
+speedup, claim sustained throughput, broaden Q4/Q5 support, or touch server,
+GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
