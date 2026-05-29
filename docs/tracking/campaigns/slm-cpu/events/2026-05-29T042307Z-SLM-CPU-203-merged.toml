@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T04:23:07Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-203"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 932
+merge_sha = "0d923ffe479c48c72d7facaa6c872117e0a6119d"
+branch = "codex/slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate"
+summary = "Merged the no-bias apply-linear receipt-emitter gate."
+notes = [
+  "SLM-CPU-203 wires the disabled no-bias apply-linear gate surface into strict warm-session aggregate receipts as dense_no_bias_apply_linear_gate.",
+  "The merged slice keeps candidate execution disabled, normal inference on eager_f32_candle, fallback=false, and makes no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+

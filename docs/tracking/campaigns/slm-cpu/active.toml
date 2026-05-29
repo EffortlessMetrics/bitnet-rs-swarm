@@ -11755,7 +11755,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-203"
-status = "ready"
+status = "merged"
+pr = 932
+merge_sha = "0d923ffe479c48c72d7facaa6c872117e0a6119d"
 branch = "codex/slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate"
 stackable = false
 review_mode = "codex_premerge"
@@ -11794,6 +11796,60 @@ evidence = [
 may_claim = [
   "SLM-CPU-203 may add receipt-emitter fields for the disabled no-bias apply-linear before/after gate.",
   "SLM-CPU-203 may record an exact blocker if the warm-session receipt emitter cannot yet carry all required no-bias gate identity fields.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Normal inference executes the no-bias candidate.",
+  "Runtime compute selection changes by default.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-204"
+status = "ready"
+branch = "codex/slm-cpu-204-no-bias-apply-linear-runtime-receipt-pairs"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-203"]
+acceptance = "Consume the SLM-CPU-203 warm-session receipt-emitter gate and capture or precisely block fresh Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs carrying the disabled no-bias apply-linear gate fields. A valid slice must preserve exact model SHA, quant format, tokenizer authority, prompt IDs/hash, generated IDs/hash, decoded text/hash, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false while candidate execution remains disabled. If real receipt pairs cannot be captured in-repo, the item must record the exact missing model/artifact/runtime inputs. No candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear_gate",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-203 wires the disabled no-bias apply-linear before/after gate surface into strict warm-session aggregate receipts.",
+  "SLM-CPU-203 records fresh Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after warm-session receipts with no-bias gate fields as the remaining blocker.",
+  "Normal inference remains selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, with candidate execution disabled.",
+]
+may_claim = [
+  "SLM-CPU-204 may capture strict before/after warm-session receipt pairs carrying the disabled no-bias apply-linear gate fields.",
+  "SLM-CPU-204 may record an exact blocker if the real Qwen3/Qwen2.5 model artifacts or receipt-pair inputs are unavailable.",
 ]
 must_not_claim = [
   "The no-bias dense linear candidate is selected by default.",
