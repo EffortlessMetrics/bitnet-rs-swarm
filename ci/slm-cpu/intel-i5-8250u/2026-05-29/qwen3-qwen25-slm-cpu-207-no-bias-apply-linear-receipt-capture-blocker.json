@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_receipt_capture_blocker",
+  "tracking_item": "SLM-CPU-207",
+  "consumes_tracking_items": [
+    "SLM-CPU-206"
+  ],
+  "decision": "blocked_emitter_passes_none_for_no_bias_apply_linear_gate",
+  "summary": "SLM-CPU-207 verified the exact Qwen3 Q8_0 and Qwen2.5 Q8_0 model artifacts needed for explicit-path warm-session receipt capture, but blocks fresh before/after receipt capture because the current slm-warm-session aggregate emitter always calls the no-bias apply-linear receipt gate with None. Fresh warm-session runs would preserve normal CPU inference behavior but cannot populate the required model-bound descriptor/callsite identity, prompt/generated/text digests, or no-bias apply-linear before/after gate fields.",
+  "input_artifacts": [
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-206-no-bias-apply-linear-prereq-refresh.json",
+      "role": "SLM-CPU-206 prerequisite refresh"
+    }
+  ],
+  "required_models": [
+    {
+      "model_id": "Qwen3-0.6B-Q8_0",
+      "quant_format": "Q8_0",
+      "explicit_model_path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "path_present": true,
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "expected_sha256_match": true,
+      "committed_model_binary": false
+    },
+    {
+      "model_id": "qwen2.5-0.5b-instruct-q8_0",
+      "quant_format": "Q8_0",
+      "explicit_model_path": "target/slm-cpu-140/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+      "path_present": true,
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "expected_sha256_match": true,
+      "committed_model_binary": false,
+      "artifact_available_only_via_uncommitted_target_cache": true
+    }
+  ],
+  "source_inspection": {
+    "warm_session_aggregate_callsite": {
+      "path": "crates/bitnet-cli/src/main.rs",
+      "line": 9659,
+      "code": "slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(None);",
+      "effect": "aggregate warm-session receipts cannot receive a real DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate"
+    },
+    "receipt_emitter_function": {
+      "path": "crates/bitnet-cli/src/main.rs",
+      "line": 11281,
+      "function": "slm_warm_session_no_bias_apply_linear_receipt_emitter_gate",
+      "effect_when_gate_is_none": "before_after_receipts_present=false, descriptor_callsite_identity_preserved=false, prompt/generated/text digest preservation=false, and model/role/tensor fields remain null"
+    }
+  },
+  "capture_decision": {
+    "fresh_before_after_receipts_captured": false,
+    "capture_attempted": false,
+    "capture_attempted_reason": "Static source inspection shows the required no-bias apply-linear gate object is not wired into slm-warm-session receipts. Running long Qwen3 and Qwen2.5 before/after sessions now would emit the same disabled placeholder gate and would not satisfy SLM-CPU-207 acceptance.",
+    "explicit_model_paths_verified": true,
+    "normal_cpu_inference_expected_preserved": true,
+    "candidate_execution_enabled": false,
+    "default_runtime_changed": false
+  },
+  "required_receipt_fields_status": [
+    {
+      "field": "model_sha256",
+      "status": "available_in_warm_session_aggregate_model_section_but_not_bound_to_no_bias_apply_linear_gate"
+    },
+    {
+      "field": "quant_format",
+      "status": "available_from_verified_model_identity_but_not_bound_to_no_bias_apply_linear_gate"
+    },
+    {
+      "field": "tokenizer_authority",
+      "status": "available_in_normal_strict_receipts_but_not_enough_without_gate_identity"
+    },
+    {
+      "field": "prompt_ids_digest",
+      "status": "blocked_missing_gate_object"
+    },
+    {
+      "field": "generated_ids_digest",
+      "status": "blocked_missing_gate_object"
+    },
+    {
+      "field": "decoded_text_digest",
+      "status": "blocked_missing_gate_object"
+    },
+    {
+      "field": "descriptor_callsite_identity",
+      "status": "blocked_missing_gate_object"
+    },
+    {
+      "field": "candidate_path",
+      "status": "placeholder_available_only"
+    },
+    {
+      "field": "candidate_kernel",
+      "status": "placeholder_available_only"
+    },
+    {
+      "field": "runtime_gate_state",
+      "status": "placeholder_disabled_state_available_but_not_model_bound"
+    }
+  ],
+  "normal_inference_runtime_selection": {
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+    "runtime_gate_requested_enabled": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "fallback_used": false
+  },
+  "remaining_blocker": {
+    "id": "wire_no_bias_apply_linear_gate_object_into_slm_warm_session_receipts",
+    "description": "Construct and pass a real DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate, or an equivalent receipt-safe boundary object, into the warm-session aggregate for exact Qwen3/Qwen2.5 before/after runs. The object must bind model SHA, quant format, manifest or role identity, tensor name, role/layer/scope/linear, bias_present=false where applicable, selected path/kernel, candidate path/kernel, runtime gate state, prompt/generated/text digests, descriptor/callsite identity, runtime_api=cpu, selected_backend=cpu-rust, and fallback=false while keeping candidate execution disabled.",
+    "next_safe_step": "Add a narrow receipt-emitter wiring slice, then run explicit-path Qwen3 and Qwen2.5 before/after strict warm-session receipts. Do not enable the no-bias candidate or claim allocation/timing improvements."
+  },
+  "claim_boundary": {
+    "model_binary_committed": false,
+    "candidate_execution_disabled": true,
+    "default_runtime_changed": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
