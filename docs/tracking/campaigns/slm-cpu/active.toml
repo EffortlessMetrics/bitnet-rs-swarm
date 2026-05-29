@@ -12716,9 +12716,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-220"
-status = "pr_open"
+status = "merged"
 pr = 978
 head_sha = "a7e3ab8d0ca426437d15d23046ac6910c24f1881"
+merge_sha = "21b859c6c829c9a7ba154d2407842189cfb34319"
 branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -12759,6 +12760,62 @@ may_claim = [
   "SLM-CPU-220 may capture or block fresh same-callsite candidate-off/candidate-on strict receipts for bounded no-bias evidence.",
   "SLM-CPU-220 may prove strict receipt identity for prompt IDs, generated IDs, decoded text, runtime_api=cpu, selected_backend=cpu-rust, and fallback=false.",
   "SLM-CPU-220 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without fresh same-callsite strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-221"
+status = "ready"
+branch = "codex/slm-cpu-221-no-bias-receipt-gated-candidate-execution-blocker"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-220"]
+acceptance = "Consume the SLM-CPU-220 candidate-off/on strict receipt boundary and either record the exact remaining blocker for a receipt-gated no-bias candidate execution attempt, or prove that the explicit gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, candidate-off/on strict artifact pair, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and default eager_f32_candle preservation are all present before keeping candidate execution runtime-disabled for a later enablement PR. No default runtime change, candidate execution by default, timing claim, allocation claim, speedup claim, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 change is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-220 defines DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary.",
+  "SLM-CPU-220 keeps candidate execution and normal runtime selection disabled.",
+  "SLM-CPU-220 records missing same-callsite candidate-off/candidate-on strict artifacts, owner/callsite identity binding, and prompt/generated/text preservation as fail-closed blockers.",
+]
+may_claim = [
+  "SLM-CPU-221 may identify the exact receipt-gated candidate execution blocker after SLM-CPU-220.",
+  "SLM-CPU-221 may prove that all strict identity artifacts are present while keeping candidate execution runtime-disabled for a later explicit enablement PR.",
+  "SLM-CPU-221 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
 ]
 must_not_claim = [
   "A model binary is committed.",
