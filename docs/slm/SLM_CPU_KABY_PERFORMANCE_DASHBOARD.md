@@ -4041,6 +4041,38 @@ server/accelerator, Qwen3.5, or BitNet QK256 claims. SLM-CPU-220 can consume
 this boundary to capture fresh candidate-off/candidate-on receipts or record
 the exact strict-receipt artifact blocker.
 
+## SLM-CPU-220 No-Bias Candidate-Off/On Strict Receipt Boundary
+
+SLM-CPU-220 consumes the SLM-CPU-219 same-callsite receipt-emitter boundary and
+records the strict candidate-off/candidate-on evidence gate that must pass
+before any no-bias `FeedForward::apply_linear` execution PR. The owner callsite
+boundary is present, but the fresh off/on strict artifact pair is not present
+yet, the pair does not bind owner/callsite identity, and prompt/generated/text
+preservation is not proven by same-callsite artifacts.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-220-no-bias-candidate-off-on-strict-receipts.json
+decision = same_callsite_candidate_off_on_strict_receipts_blocked_fail_closed
+reason = same_callsite_candidate_off_on_strict_receipt_artifacts_incomplete
+remaining_blocker = candidate_on_strict_receipt_artifact
+boundary = bitnet_transformer::DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary
+same_callsite_receipt_emitter_ready = true
+candidate_off_strict_receipt_artifact_present = false
+candidate_on_strict_receipt_artifact_present = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not enable candidate execution, does not change the default
+runtime, does not claim candidate-on generated-ID preservation, and does not
+make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. The next safe slice must
+either capture the required strict off/on artifact pair or keep the execution
+attempt fail-closed with the exact missing evidence recorded.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

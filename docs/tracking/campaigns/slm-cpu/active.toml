@@ -12716,7 +12716,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-220"
-status = "ready"
+status = "pr_open"
+pr = 978
+head_sha = "a7e3ab8d0ca426437d15d23046ac6910c24f1881"
 branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
 stackable = false
 review_mode = "codex_premerge"

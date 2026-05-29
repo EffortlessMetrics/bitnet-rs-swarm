@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T20:20:51Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-220"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 978
+head_sha = "a7e3ab8d0ca426437d15d23046ac6910c24f1881"
+branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
+summary = "Opened SLM-CPU-220 no-bias candidate-off/on strict receipt boundary PR."
+notes = [
+  "PR #978 consumes the SLM-CPU-219 same-callsite receipt-emitter boundary and records DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The slice records the remaining blocker as missing same-callsite candidate-off/candidate-on strict artifacts that bind owner/callsite identity and preserve prompt IDs, generated IDs, and decoded text.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
