@@ -1,0 +1,13 @@
+timestamp = "2026-05-29T00:06:46Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-200"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-200-no-bias-apply-linear-audit-boundary"
+summary = "Queued the FeedForward apply-linear no-bias descriptor audit boundary."
+notes = [
+  "SLM-CPU-200 should consume the SLM-CPU-199 descriptor contract and show how descriptor decisions reach the FeedForward apply-linear callsite without executing the no-bias candidate.",
+  "The slice must preserve eager_f32_candle by default and fail closed until descriptor identity, receipt identity, runtime gate, fallback, and before/after strict receipt evidence are complete.",
+]
