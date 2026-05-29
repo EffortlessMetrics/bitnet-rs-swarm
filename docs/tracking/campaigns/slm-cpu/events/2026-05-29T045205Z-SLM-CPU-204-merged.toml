@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T04:52:05Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-204"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 934
+merge_sha = "c88d6d8fbc327044d15152cecb25cf280cbbf158"
+branch = "codex/slm-cpu-204-no-bias-apply-linear-runtime-receipt-pairs"
+summary = "Merged the no-bias apply-linear runtime receipt-pair blocker."
+notes = [
+  "SLM-CPU-204 records that Qwen3 Q8_0 is present and hashed but the required Qwen2.5 Q8_0 GGUF is missing from the worktree.",
+  "The slice keeps no-bias candidate execution disabled, preserves eager_f32_candle as the normal path, and makes no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+

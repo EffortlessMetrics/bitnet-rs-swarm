@@ -11811,7 +11811,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-204"
-status = "ready"
+status = "merged"
+pr = 934
+merge_sha = "c88d6d8fbc327044d15152cecb25cf280cbbf158"
 branch = "codex/slm-cpu-204-no-bias-apply-linear-runtime-receipt-pairs"
 stackable = false
 review_mode = "codex_premerge"
@@ -11857,6 +11859,54 @@ must_not_claim = [
   "Runtime compute selection changes by default.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-205"
+status = "ready"
+branch = "codex/slm-cpu-205-kaby-performance-dashboard-evidence"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-204"]
+acceptance = "Consolidate the Kaby i5-8250U SLM performance evidence from existing strict Qwen3 Q8_0 and Qwen2.5 Q8_0 receipts into a dashboard-ready machine-readable summary. The slice must enumerate cold load, warm-session load-once, prefill, first-token latency, steady decode, per-prompt timing, allocation counters where available, memory footprint, storage context, thermal/power fields as measured or explicitly unavailable, and 1/2/4/8-thread evidence where receipts exist. It may recommend a default thread count only from recorded evidence and must preserve the strict proof boundary: no new runtime selection, no generated-ID drift claim without receipts, no allocation/timing/speedup claim beyond the cited receipts, no sustained-throughput claim, no Q4/Q5 runtime support, no server/accelerator execution, no Qwen3.5, and no BitNet QK256 behavior."
+commands = [
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-204 confirms the no-bias apply-linear receipt-pair gate is blocked until the missing Qwen2.5 Q8_0 model artifact is available for fresh paired receipts.",
+  "The Kaby lane already has strict Qwen3 Q8_0 appliance receipts, Qwen2.5 second-model sanity evidence, warm-session receipts, thread/timing envelope receipts, memory/storage context, and explicit unsupported-path boundaries.",
+  "The next safe performance-lane step is evidence consolidation and default-thread selection from receipts, not runtime optimization.",
+]
+may_claim = [
+  "SLM-CPU-205 may summarize existing Kaby i5-8250U timing, memory, storage, thermal/power, and thread-count evidence.",
+  "SLM-CPU-205 may recommend a default thread count if the recommendation is directly backed by existing 1/2/4/8-thread receipts.",
+]
+must_not_claim = [
+  "A new runtime optimization is implemented.",
+  "Generated IDs are preserved for a new runtime experiment without fresh receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is newly proven beyond cited receipt evidence.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
   "Qwen3.5 or hybrid architecture support is in scope.",
