@@ -1,0 +1,17 @@
+timestamp = "2026-05-29T16:01:22Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-077"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 964
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-077-current-main"
+head_sha = "550088467d701ae71af1f1e0872158123a56e26e"
+actor = "codex"
+summary = "Opened PR #964 for the current-main no-inference Lunar Lake audit refresh."
+notes = [
+  "The PR refreshes source_revision to ae356cf344fefce0eeb54ef67ef09a511ae28227.",
+  "The audit/checklist record #962/#963 as audit/checklist and tracker-closeout state only.",
+  "Live current-main validate/regress/compare strict checks passed from committed artifacts.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power evidence and benchmark-qualified power advantage.",
+]
