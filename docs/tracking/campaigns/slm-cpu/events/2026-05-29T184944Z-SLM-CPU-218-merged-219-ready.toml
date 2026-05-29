@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T18:49:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-218"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 971
+merge_sha = "44afa8e5840a0bec9963e35f135bd6bf746c020c"
+branch = "codex/slm-cpu-218-no-bias-runtime-owner-boundary"
+summary = "Merged SLM-CPU-218 no-bias candidate runtime owner boundary and queued SLM-CPU-219."
+notes = [
+  "PR #971 defines DenseLinearNoBiasCandidateRuntimeOwnerBoundary and records FeedForward::apply_linear as the fail-closed runtime owner boundary.",
+  "The merged slice keeps candidate execution and normal runtime selection disabled, preserves eager_f32_candle as the default path, and records same_callsite_candidate_on_receipt_emitter / strict off-on receipts as remaining blockers.",
+  "SLM-CPU-219 is ready to wire or precisely block the same-callsite candidate-on receipt emitter needed for strict off/on evidence.",
+]
