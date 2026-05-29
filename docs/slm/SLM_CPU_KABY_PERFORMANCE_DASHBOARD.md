@@ -3853,6 +3853,37 @@ claim allocation or timing improvement, claim speedup or sustained throughput,
 broaden Q4/Q5 runtime support, or touch server, GPU, NPU, OpenVINO, UHD 620,
 Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-214 No-Bias Selector Attachment Point
+
+SLM-CPU-214 consumes the selector propagation boundary and selects the safer
+attachment strategy: a per-callsite candidate receipt emitter, not a
+session-scoped mutation of the shared model hook registry.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-214-no-bias-selector-attachment-point.json
+decision = per_callsite_candidate_receipt_emitter_defined_fail_closed
+reason = descriptor_identity_reaches_apply_linear_but_candidate_on_proof_is_incomplete
+remaining_blocker = explicit_gate_and_candidate_off_on_generated_id_preservation_receipts
+callsite = bitnet_transformer::FeedForward::apply_linear
+boundary = bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The per-callsite boundary binds the receipt-bound selector descriptor to the
+exact dense tensor name and callsite identity while carrying model SHA,
+architecture, Q8_0 quant format, strict GGUF tokenizer authority,
+`runtime_api=cpu`, `selected_backend=cpu-rust`, `fallback_used=false`,
+prompt/generated/text digests, selected path/kernel, and candidate path/kernel.
+This avoids prompt-bound identity leaking through a shared session hook registry.
+
+Candidate execution still requires an explicit runtime gate plus candidate-off
+and candidate-on strict warm-session receipts proving prompt IDs, generated IDs,
+and decoded text are preserved. This slice makes no allocation, timing, speedup,
+sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

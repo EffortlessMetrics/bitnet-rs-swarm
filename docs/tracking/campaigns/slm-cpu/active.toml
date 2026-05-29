@@ -12371,7 +12371,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-214"
-status = "ready"
+status = "pr_open"
+pr = 955
 branch = "codex/slm-cpu-214-no-bias-selector-attachment-point"
 stackable = false
 review_mode = "codex_premerge"
