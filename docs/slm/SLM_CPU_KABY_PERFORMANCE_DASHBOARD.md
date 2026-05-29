@@ -4073,6 +4073,35 @@ server/accelerator, Qwen3.5, or BitNet QK256 claims. The next safe slice must
 either capture the required strict off/on artifact pair or keep the execution
 attempt fail-closed with the exact missing evidence recorded.
 
+## SLM-CPU-221 No-Bias Receipt-Gated Candidate Execution Blocker
+
+SLM-CPU-221 consumes the SLM-CPU-220 candidate-off/on strict receipt boundary
+and records the next receipt-gated execution preflight. The execution attempt
+is still blocked because the same-callsite candidate-off/candidate-on strict
+artifact pair is incomplete. The boundary can model a future explicit
+candidate attempt, but normal inference and candidate execution both remain
+runtime-disabled here.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-221-no-bias-receipt-gated-candidate-execution-blocker.json
+decision = blocked_fail_closed
+reason = off_on_strict_receipt_boundary_incomplete
+remaining_blocker = same_callsite_candidate_off_on_strict_receipts
+boundary = bitnet_transformer::DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary
+off_on_strict_receipt_boundary_ready = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim generated-ID preservation for a candidate-on
+path, and does not make allocation, timing, speedup, sustained-throughput,
+Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
