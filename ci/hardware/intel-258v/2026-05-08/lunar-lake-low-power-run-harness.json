@@ -12,8 +12,8 @@
   "model_inference_executed": false,
   "route_sample_execution_started": false,
   "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
-  "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=91",
-  "estimated_charge_percent": 91,
+  "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=95",
+  "estimated_charge_percent": 95,
   "ac_power_inferred": true,
   "thermal_sensor_status": "thermal_zones_visible_temperature_values_unavailable",
   "thermal_context": {
