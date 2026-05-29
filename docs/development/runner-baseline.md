@@ -13,22 +13,25 @@ First evidence of the `EM CI Routed Rust` lane on `EffortlessMetrics/bitnet-rs-s
 
 ```
 Route BitNet Rust Small  (self-hosted linux x64, gh api orgs/.../actions/runners)
-  ├─ target=cx53     → BitNet Rust Small on CX53   (self-hosted, docker em-ci-rust:1.95)
-  ├─ target=cx43     → BitNet Rust Small on CX43   (self-hosted, docker em-ci-rust:1.95)
-  ├─ target=blocked  → no idle trusted runner; normalized result fails closed
+  ├─ target=cx53     → BitNet Rust Small on CX53   (idle cx53, or busy-but-online cx53)
+  ├─ target=cx43     → BitNet Rust Small on CX43   (idle cx43, or busy-but-online cx43)
+  ├─ target=blocked  → no trusted runner online (no_online_runner); result fails closed
   └─ fork PR         → blocked (fork_pr_self_hosted_untrusted); never self-hosted
 
 BitNet Rust Small Result  (self-hosted linux x64, normalized gate)
 ```
 
-The router selects CX53 when an org runner with labels
-`em-ci, cx53, rust-small, trusted-pr` is `online` and `busy=false`.
-If no CX53 runner is idle, it selects CX43 when an org runner with labels
-`em-ci, cx43, rust-small, trusted-pr` is `online` and `busy=false`.
-There is no hosted fallback: when no trusted runner is idle the router emits
-`target=blocked` / `reason=no_idle_runner` and the normalized result fails
-closed. Fork PRs are blocked from self-hosted execution
-(`fork_pr_self_hosted_untrusted`).
+The router prefers an idle runner: it selects CX53 when an org runner with
+labels `em-ci, cx53, rust-small, trusted-pr` is `online` and `busy=false`, else
+CX43 on the same basis. **When no runner is idle but the cx43/cx53 pool is still
+online (just busy), the router routes to that pool anyway** (reason
+`cx43_busy_queued` / `cx53_busy_queued`) and lets GitHub queue the job until a
+runner frees — there is no hosted fallback to absorb the load, so queuing is the
+correct behavior instead of failing closed on momentary busyness. The router
+emits `target=blocked` / `reason=no_online_runner` only when no trusted runner
+is online at all (a genuine outage). Fork PRs, a missing/invalid token, and
+runner-API/parse failures still fail closed and are never routed to a hosted
+runner.
 
 ## First-run evidence (2026-05-17/18)
 

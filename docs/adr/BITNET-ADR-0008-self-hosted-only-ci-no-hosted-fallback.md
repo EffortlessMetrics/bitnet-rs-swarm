@@ -39,11 +39,15 @@ GitHub-hosted fallback**:
    `ubuntu-*`, `macos-*`, or `windows-*` hosted aliases remain.
 2. The EM routed Rust router (`em-ci-routed-rust.yml`) drops the
    `rust-small-github` fallback job and the `allow-github-hosted` /
-   `ci-budget-ack` escape hatch. When no trusted self-hosted runner is idle, the
-   router emits an explicit `blocked` reason (`no_idle_runner`) and the
-   normalized result fails closed rather than silently routing to hosted.
-3. Fork PRs are never granted self-hosted execution. The router emits
-   `blocked` / `fork_pr_self_hosted_untrusted` for them instead of routing to a
+   `ci-budget-ack` escape hatch. Because there is no hosted fallback to absorb
+   load, the router **queues rather than fails on a busy fleet**: it routes to
+   an idle `cx53`/`cx43` runner when one exists, otherwise to a busy-but-online
+   `cx43`/`cx53` pool (reason `cx43_busy_queued` / `cx53_busy_queued`) so GitHub
+   queues the job until a runner frees. It emits `blocked` (`no_online_runner`)
+   only when no trusted runner is online at all — a genuine outage, not load.
+3. Fork PRs, a missing/invalid `EM_RUNNER_READ_TOKEN`, and runner-API/parse
+   failures still fail closed (`blocked` / `fork_pr_self_hosted_untrusted`,
+   `token_missing`, `runner_api_failed`, `parse_failed`) instead of routing to a
    hosted runner.
 4. `policy/ci-lane-whitelist.toml` runner multipliers and lane runner keys are
    expressed in self-hosted identities (`self_hosted_linux_x64`,

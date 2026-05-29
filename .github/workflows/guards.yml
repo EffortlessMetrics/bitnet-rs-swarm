@@ -1,6 +1,17 @@
 name: Guards
 on:
   pull_request:
+    # Only run the heavy guards job on PRs that touch CI guard surfaces. This
+    # mirrors the push paths filter so ordinary code-only PRs do not occupy a
+    # self-hosted runner with a guards build that has nothing to guard.
+    paths:
+      - '.github/**'
+      - 'scripts/**'
+      - 'tools/bitnet-task/**'
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
   push:
     branches: [main]
     paths:
