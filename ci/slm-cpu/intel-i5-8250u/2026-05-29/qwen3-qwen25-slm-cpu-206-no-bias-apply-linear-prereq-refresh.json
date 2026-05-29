@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_prereq_refresh",
+  "tracking_item": "SLM-CPU-206",
+  "consumes_tracking_items": [
+    "SLM-CPU-204",
+    "SLM-CPU-205"
+  ],
+  "decision": "verified_cache_artifact_available_canonical_qwen25_path_missing_receipts_not_captured",
+  "summary": "Refreshes the SLM-CPU-204 no-bias apply-linear receipt-pair prerequisite after SLM-CPU-205. Qwen3 Q8_0 is present at the canonical models/slm path and Qwen2.5 Q8_0 is present in local target caches with the accepted SHA256, but Qwen2.5 is still absent from the canonical models/slm path and no model binary is committed. Fresh before/after warm-session receipt pairs are not captured in this slice.",
+  "input_artifacts": [
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-204-no-bias-apply-linear-runtime-receipt-pairs.json",
+      "sha256": "5e9895bf72df22edef5aa19f07874a5d13bcfa6a1d9408f07b035872a2a56330",
+      "role": "SLM-CPU-204 missing-artifact blocker"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-205-kaby-performance-dashboard-evidence.json",
+      "sha256": "b6943d39723c57f8025e5b63fb3e050c14f5d45de0e6dca2606f1d8535babb49",
+      "role": "SLM-CPU-205 dashboard evidence consolidation"
+    }
+  ],
+  "required_models": [
+    {
+      "model_id": "Qwen3-0.6B-Q8_0",
+      "quant_format": "Q8_0",
+      "canonical_path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "canonical_path_present": true,
+      "verified_paths": [
+        {
+          "path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+          "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+          "expected_sha256_match": true
+        }
+      ],
+      "artifact_available_for_receipt_capture": true
+    },
+    {
+      "model_id": "Qwen2.5-0.5B-Instruct-Q8_0",
+      "quant_format": "Q8_0",
+      "canonical_path": "models/slm/Qwen2.5-0.5B-Instruct-Q8_0.gguf",
+      "canonical_path_present": false,
+      "accepted_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "verified_paths": [
+        {
+          "path": "target/slm-cpu-140/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+          "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "expected_sha256_match": true,
+          "committed_path": false
+        },
+        {
+          "path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+          "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "expected_sha256_match": true,
+          "committed_path": false
+        }
+      ],
+      "artifact_available_for_receipt_capture": true,
+      "artifact_available_only_via_uncommitted_target_cache": true
+    }
+  ],
+  "receipt_pair_capture": {
+    "captured": false,
+    "capture_attempted": false,
+    "capture_attempted_reason": "This SLM-CPU-206 slice is scoped to prerequisite refresh. It verifies exact local artifact availability without committing model binaries, but does not run the long before/after warm-session receipt capture.",
+    "required_before_after_receipts": [
+      "qwen3_q8_before_receipt",
+      "qwen3_q8_after_receipt",
+      "qwen25_q8_before_receipt",
+      "qwen25_q8_after_receipt"
+    ],
+    "remaining_capture_prerequisites": [
+      "Run fresh Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts using explicit model paths.",
+      "Keep BITNET_DENSE_NO_BIAS_LINEAR_ENABLE disabled unless a later runtime-selection item explicitly enables an experiment with receipts.",
+      "Preserve prompt IDs/hash, generated IDs/hash, decoded text/hash, model SHA, quant format, tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, descriptor/callsite identity, runtime gate state, and fallback=false.",
+      "Do not commit model binaries or target/cache outputs."
+    ]
+  },
+  "required_receipt_fields": [
+    "model_sha256",
+    "quant_format",
+    "tokenizer_authority",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "selected_path=eager_f32_candle",
+    "selected_kernel=dense-f32-candle-linear",
+    "candidate_path",
+    "candidate_kernel",
+    "descriptor_callsite_identity",
+    "runtime_gate_state",
+    "fallback=false"
+  ],
+  "normal_inference_runtime_selection": {
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+    "runtime_gate_requested_enabled": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "fallback_used": false
+  },
+  "prerequisite_status": {
+    "qwen3_canonical_artifact_verified": true,
+    "qwen25_exact_cache_artifact_verified": true,
+    "qwen25_canonical_models_slm_path_present": false,
+    "model_binaries_committed": false,
+    "fresh_before_after_receipts_present": false,
+    "ready_for_next_receipt_capture_slice_with_explicit_model_paths": true
+  },
+  "claim_boundary": {
+    "candidate_execution_disabled": true,
+    "default_runtime_changed": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
