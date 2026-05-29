@@ -12081,7 +12081,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-209"
-status = "ready"
+status = "pr_open"
+pr = 945
 branch = "codex/slm-cpu-209-no-bias-apply-linear-receipt-pairs"
 stackable = false
 review_mode = "codex_premerge"

@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T09:09:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-209"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 945
+head_sha = "9f7d3a953cba6a4d98fc7127531f0baf68e4409b"
+branch = "codex/slm-cpu-209-no-bias-apply-linear-receipt-pairs"
+summary = "Opened SLM-CPU-209 receipt-pair capture PR."
+notes = [
+  "PR #945 captures fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs through the wired no-bias apply-linear gate.",
+  "The receipts preserve model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, runtime gate state, and fallback=false.",
+  "Candidate execution, default runtime changes, allocation/timing/speedup claims, Q4/Q5, server/accelerator execution, Qwen3.5, and BitNet QK256 remain out of scope.",
+]
