@@ -23,7 +23,7 @@ concurrency:
 jobs:
   link-check:
     name: Check Documentation Links
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
 
     steps:

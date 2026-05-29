@@ -15,7 +15,7 @@ concurrency:
 jobs:
   guards-nightly:
     name: Guards (nightly)
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -61,21 +61,18 @@ jobs:
           fi
           echo "✅ All cargo/cross use --locked"
 
-      # Non-blocking informational check for new ubuntu-latest usage
-      - name: Info - Check for new ubuntu-latest usage (non-blocking)
+      # Non-blocking informational check for hosted runner usage
+      - name: Info - Check for hosted runner usage (non-blocking)
         continue-on-error: true
         run: |
-          # Approved allowlist: security, coverage, compatibility (intentional floaters)
-          new_latest=$(rg -n 'runs-on:\s*ubuntu-latest' .github/workflows \
-            | grep -Ev '(security\.yml|coverage\.yml|compatibility\.yml|ci-reporting\.yml\.disabled)' || true)
-          if [ -n "$new_latest" ]; then
-            echo "⚠️  Found ubuntu-latest usage outside approved allowlist:"
-            echo "$new_latest"
+          hosted_runs=$(rg -n 'runs-on:\s*(ubuntu|macos|windows)-' .github/workflows || true)
+          if [ -n "$hosted_runs" ]; then
+            echo "⚠️  Found hosted runner usage:"
+            echo "$hosted_runs"
             echo ""
-            echo "Policy: Default to ubuntu-22.04 for reproducibility."
-            echo "If ubuntu-latest is intentional, add to allowlist and document in PR."
+            echo "Policy: use self-hosted runner labels for workflow jobs."
           else
-            echo "✅ No unexpected ubuntu-latest usage"
+            echo "✅ No hosted runner usage"
           fi
 
       - name: Info – receipt excludes present (non-blocking)

@@ -43,7 +43,7 @@ jobs:
   # the same on PR HEAD and main, so PR-only regressions are surfaced on merge.
   cargo-tests:
     name: Cargo Tests (smoke)
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
     if: >-
       github.ref == 'refs/heads/main' ||
@@ -80,7 +80,7 @@ jobs:
 
   property-tests:
     name: Greedy Parity Tests
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 45
     # Only run the model-download-heavy job on schedule or manual dispatch
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -244,7 +244,7 @@ jobs:
 
   cross-system-parity:
     name: Cross-System Parity (Optional)
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 60
     if: github.event_name == 'workflow_dispatch'
 

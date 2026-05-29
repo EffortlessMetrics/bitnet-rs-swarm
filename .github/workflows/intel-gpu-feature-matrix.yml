@@ -30,7 +30,7 @@ env:
 jobs:
   feature-matrix:
     name: "Feature ${{ matrix.label }}"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -92,7 +92,7 @@ jobs:
 
   opencl-compile-check:
     name: OpenCL Compilation Check
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
@@ -124,7 +124,7 @@ jobs:
 
   doc-check:
     name: Documentation Check
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4

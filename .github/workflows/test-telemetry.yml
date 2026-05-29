@@ -37,7 +37,7 @@ env:
 jobs:
   route-test-telemetry:
     name: Route Test Telemetry
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -82,7 +82,7 @@ jobs:
     name: Test Telemetry (JUnit + slow tests)
     needs: route-test-telemetry
     if: needs.route-test-telemetry.outputs.selected == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 25
     continue-on-error: true
 

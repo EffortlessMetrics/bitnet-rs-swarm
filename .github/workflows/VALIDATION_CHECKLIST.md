@@ -159,7 +159,7 @@ gh run watch
 gh run download <run-id>
 
 # Download specific artifact
-gh run download <run-id> -n ubuntu-latest-validation-tools
+gh run download <run-id> -n self-hosted-linux-validation-tools
 ```
 
 ### Manual Workflow Dispatch

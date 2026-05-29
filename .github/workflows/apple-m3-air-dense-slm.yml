@@ -74,7 +74,7 @@ jobs:
   staged-message:
     name: Staged hardware workflow is not active
     if: ${{ inputs.enable_run != true }}
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     steps:
       - name: Explain staged status
         run: |

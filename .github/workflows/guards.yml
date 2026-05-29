@@ -19,7 +19,7 @@ concurrency:
 jobs:
   guards:
     name: Guards
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     env:
       CARGO_TERM_COLOR: always
