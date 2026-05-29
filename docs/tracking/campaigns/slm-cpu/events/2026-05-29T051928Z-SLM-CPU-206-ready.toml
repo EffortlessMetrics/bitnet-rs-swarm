@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T05:19:28Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-206"
+event = "in_progress"
+actor = "codex"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-206-no-bias-apply-linear-receipt-prereq-refresh"
+summary = "Queued the next no-bias apply-linear receipt-pair prerequisite refresh after SLM-CPU-205."
+notes = [
+  "SLM-CPU-206 resumes from the SLM-CPU-204 exact blocker and SLM-CPU-205 dashboard evidence.",
+  "The item may verify exact Qwen3/Qwen2.5 artifact availability or record the precise missing prerequisite before any disabled no-bias apply-linear receipt-pair claim.",
+  "The item keeps model binaries, candidate execution, runtime promotion, allocation/timing/speedup claims, Q4/Q5, server/accelerator, Qwen3.5, and BitNet QK256 out of scope.",
+]
