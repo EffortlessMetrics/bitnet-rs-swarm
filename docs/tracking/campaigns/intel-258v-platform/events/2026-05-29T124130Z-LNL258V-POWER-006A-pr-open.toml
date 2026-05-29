@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T12:41:30Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006A"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 956
+branch = "codex/lunar-lake/LNL258V-POWER-006A-battery-preflight-harness"
+head_sha = "a5c7589f9853fe5f7d77765652cf44edacae02c5"
+actor = "codex"
+summary = "Opened PR #956 for the no-inference Lunar Lake low-power battery preflight harness."
+notes = [
+  "PR #956 adds `bitnet lunar-lake low-power-harness` to record power scheme, battery status, estimated charge, thermal availability, and the POWER-006 route/profile/power-mode matrix before route samples can run.",
+  "The local harness receipt records the current AC/charging state as blocker evidence with battery_preflight_passed=false, model_inference_allowed=false, model_inference_executed=false, and route_sample_execution_started=false.",
+  "The PR preserves no route promotion, speedup claim, power-advantage claim, native accelerator claim, or BitNet QK256/I2_S behavior-change claim.",
+]

@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "lunar_lake_low_power_run_harness",
+  "proof_stage": "battery_mode_preflight_blocked_no_inference_no_promotion_change",
+  "created_utc": "2026-05-29T12:40:00Z",
+  "machine_id": "intel-258v",
+  "artifact_root": "ci/hardware/intel-258v/2026-05-08",
+  "operator_runbook": "docs/hardware/intel-258v-low-power-battery-runbook.md",
+  "telemetry_scope": "low_power_power_mode_preflight_run_harness",
+  "battery_preflight_passed": false,
+  "model_inference_allowed": false,
+  "model_inference_executed": false,
+  "route_sample_execution_started": false,
+  "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=100",
+  "estimated_charge_percent": 100,
+  "ac_power_inferred": true,
+  "thermal_sensor_status": "thermal_zones_visible_temperature_values_unavailable",
+  "thermal_context": {
+    "source": "windows_perf_thermal_zone",
+    "thermal_zones_visible": 2,
+    "temperatures_celsius": []
+  },
+  "run_matrix": {
+    "power_modes": [
+      "AC balanced",
+      "AC performance if available",
+      "battery balanced",
+      "battery performance if available",
+      "battery saver if available"
+    ],
+    "routes": [
+      {
+        "route_label": "dense_slm_default_cpu",
+        "route_id": "dense_slm_default_cpu",
+        "device_arg": "cpu"
+      },
+      {
+        "route_label": "openvino_gpu",
+        "route_id": "dense_slm_openvino_gpu_candidate",
+        "device_arg": "gpu"
+      },
+      {
+        "route_label": "openvino_npu",
+        "route_id": "dense_slm_openvino_npu_candidate",
+        "device_arg": "openvino-npu"
+      }
+    ],
+    "profiles": [
+      "ask_short",
+      "ask_normal",
+      "warm_resident",
+      "low_power"
+    ]
+  },
+  "required_receipt_fields": [
+    "route_id",
+    "profile",
+    "power_mode",
+    "battery_status",
+    "estimated_charge_before",
+    "estimated_charge_after",
+    "elapsed_wall_ms",
+    "first_token_ms",
+    "decode_total_ms",
+    "tokens_per_second",
+    "total_response_ms",
+    "answer_gate_passed",
+    "fallback_used",
+    "thermal_context",
+    "power_context",
+    "route_decision_impact"
+  ],
+  "command_sequence": [
+    {
+      "step": "battery_preflight_harness",
+      "purpose": "Record power scheme, battery status, charge estimate, and thermal availability before any route sample can run.",
+      "command": [
+        "target/debug/bitnet.exe lunar-lake low-power-harness --artifact-root ci/hardware/intel-258v/2026-05-08 --json-out lunar-lake-low-power-run-harness.json --created-utc <preflight-utc> --strict"
+      ],
+      "continue_if": [
+        "battery_preflight_passed=true",
+        "model_inference_allowed=true",
+        "ac_power_inferred=false"
+      ],
+      "stop_if": [
+        "strict mode exits nonzero because AC, charging, or unknown power state prevents battery preflight",
+        "model_inference_allowed=false"
+      ]
+    },
+    {
+      "step": "battery_start_receipt",
+      "purpose": "Capture the before telemetry sample after the harness has passed.",
+      "command": [
+        "target/debug/bitnet.exe lunar-lake telemetry-context --artifact-root ci/hardware/intel-258v/2026-05-08 --require-battery --json-out lunar-lake-low-power-battery-before.json --created-utc <battery-run-start-utc> --strict"
+      ],
+      "continue_if": [
+        "capture_requirements.requirement_satisfied=true",
+        "power.ac_power_inferred=false"
+      ],
+      "stop_if": [
+        "before telemetry is AC, charging, or cannot identify battery mode"
+      ]
+    },
+    {
+      "step": "route_profile_matrix",
+      "purpose": "Run only after the harness and before telemetry prove battery mode; each receipt must add the required power/thermal/timing fields.",
+      "command": [
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_short --route dense_slm_default_cpu --device cpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_short-dense_slm_default_cpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_short --route dense_slm_openvino_gpu_candidate --device gpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_short-openvino_gpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_short --route dense_slm_openvino_npu_candidate --device openvino-npu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_short-openvino_npu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_normal --route dense_slm_default_cpu --device cpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_normal-dense_slm_default_cpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_normal --route dense_slm_openvino_gpu_candidate --device gpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_normal-openvino_gpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile ask_normal --route dense_slm_openvino_npu_candidate --device openvino-npu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-ask_normal-openvino_npu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile warm_resident --route dense_slm_default_cpu --device cpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-warm_resident-dense_slm_default_cpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile warm_resident --route dense_slm_openvino_gpu_candidate --device gpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-warm_resident-openvino_gpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile warm_resident --route dense_slm_openvino_npu_candidate --device openvino-npu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-warm_resident-openvino_npu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_default_cpu --device cpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-low_power-dense_slm_default_cpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_openvino_gpu_candidate --device gpu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-low_power-openvino_gpu.json",
+        "target/debug/bitnet.exe lunar-lake ask --artifact-root ci/hardware/intel-258v/2026-05-08 --operator-receipt lunar-lake-operator-readiness.json --promotion-ledger lunar-lake-route-promotion.json --route-profile-comparison lunar-lake-route-profile-comparison.json --profile low_power --route dense_slm_openvino_npu_candidate --device openvino-npu --prompt \"What is 2+2? Answer with just the number.\" --expect-contains 4 --max-new-tokens 8 --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-<power-mode-slug>-low_power-openvino_npu.json"
+      ],
+      "continue_if": [
+        "all route/profile receipts record fallback_used=false or classify the failure as blocker evidence",
+        "each receipt includes route_id, profile, power_mode, battery_status, timing, thermal_context, power_context, and route_decision_impact"
+      ],
+      "stop_if": [
+        "battery_preflight_passed=false",
+        "fallback_used=true",
+        "a receipt omits required power, thermal, timing, answer-gate, or route-decision fields"
+      ]
+    }
+  ],
+  "blockers": [
+    "battery-mode telemetry sample required but current power context indicates AC power",
+    "thermal zones are visible but measured temperature values are unavailable"
+  ],
+  "claim_boundary": {
+    "new_inference_executed": false,
+    "route_promotion_changed": false,
+    "speedup_claim": false,
+    "power_advantage_claim": false,
+    "acceleration_claim": false,
+    "native_npu_inference_claim": false,
+    "bitnet_qk256_i2s_behavior_changed": false,
+    "hidden_fallback_allowed": false
+  }
+}
