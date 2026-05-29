@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T09:12:01Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-210"
+event = "in_progress"
+actor = "codex"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-210-no-bias-apply-linear-runtime-experiment"
+summary = "Queued the explicit-gate no-bias apply-linear runtime experiment after SLM-CPU-209."
+notes = [
+  "SLM-CPU-210 should consume the SLM-CPU-209 before/after strict receipt pairs and either wire or precisely block the first explicit runtime-gated no-bias apply-linear candidate execution experiment.",
+  "Default runtime must remain eager_f32_candle and candidate execution may only occur when the explicit runtime gate is requested and all descriptor/callsite/model/quant/tokenizer/backend/fallback/digest evidence matches.",
+  "No model binary, default runtime change, allocation/timing/speedup claim, sustained-throughput claim, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed.",
+]

@@ -1,0 +1,25 @@
+timestamp = "2026-05-29T09:12:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-209"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 945
+head_sha = "46deab6b6af9a2e4bb9117ba194b6b110846ffcf"
+merge_sha = "5bbea6dd0e0425d444c9359b2fc4c124bc59c594"
+branch = "codex/slm-cpu-209-no-bias-apply-linear-receipt-pairs"
+summary = "Merged fresh no-bias apply-linear before/after receipt-pair evidence."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-before.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-after.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-before.json",
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-after.json",
+  "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+]
+notes = [
+  "SLM-CPU-209 captures fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs through the SLM-CPU-208 wired no-bias apply-linear gate.",
+  "The pair artifact preserves model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false.",
+  "Candidate execution and normal runtime selection remain disabled; SLM-CPU-209 makes no allocation, timing, speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

@@ -12081,8 +12081,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-209"
-status = "pr_open"
+status = "merged"
 pr = 945
+head_sha = "46deab6b6af9a2e4bb9117ba194b6b110846ffcf"
+merge_sha = "5bbea6dd0e0425d444c9359b2fc4c124bc59c594"
 branch = "codex/slm-cpu-209-no-bias-apply-linear-receipt-pairs"
 stackable = false
 review_mode = "codex_premerge"
@@ -12127,6 +12129,61 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled.",
   "A default runtime path changes.",
   "Generated IDs are preserved for a no-bias runtime experiment without fresh receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-210"
+status = "ready"
+branch = "codex/slm-cpu-210-no-bias-apply-linear-runtime-experiment"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-209"]
+acceptance = "Consume the SLM-CPU-209 before/after strict warm-session receipt pairs and either wire or precisely block the first explicit-gate no-bias apply-linear runtime experiment for exact Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj candidate roles. A valid implementation may execute the candidate only when the explicit runtime gate is requested and all descriptor/callsite/model/quant/tokenizer/backend/fallback/digest evidence matches the SLM-CPU-209 receipt-pair contract; default runtime must remain eager_f32_candle, selected_kernel=dense-f32-candle-linear, and fallback=false. A valid evidence slice must capture candidate-off/candidate-on strict receipt pairs or record the exact missing runtime wiring, descriptor, command, or receipt field. No model binary may be committed, and no default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-209 captures fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired no-bias apply-linear gate.",
+  "The SLM-CPU-209 pair artifact preserves model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false.",
+  "Candidate execution and normal runtime selection remain disabled in SLM-CPU-209; explicit candidate-on receipt evidence remains the next blocker before any runtime-selection discussion.",
+]
+may_claim = [
+  "SLM-CPU-210 may add an explicit runtime-gated experiment boundary for exact feed_forward.down_proj no-bias apply-linear candidate roles.",
+  "SLM-CPU-210 may capture candidate-off/candidate-on strict receipt pairs if the explicit gate and all receipt identity fields match.",
+  "SLM-CPU-210 may record an exact blocker if candidate execution cannot be safely wired or proven.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for a no-bias runtime experiment without fresh candidate-off/candidate-on receipts.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
