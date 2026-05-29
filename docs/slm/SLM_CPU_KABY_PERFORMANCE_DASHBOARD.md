@@ -10,6 +10,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 
 | Evidence | Path | Role |
 | --- | --- | --- |
+| SLM-CPU-205 machine-readable dashboard evidence | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-205-kaby-performance-dashboard-evidence.json` | Consolidates committed Qwen3 and Qwen2.5 i5-8250U timing, memory, storage, thermal/power, allocation, and thread-count evidence without changing runtime behavior |
 | Thread envelope | `ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-thread-timing-envelope.json` | 1, 2, 4, and 8 thread warm-session timing comparison |
 | Thread validation | `ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-thread-timing-envelope-validation.json` | Validates strict provenance, quality, determinism, and no fallback across thread counts |
 | Operator profile | `ci/slm-cpu/intel-i5-8250u/2026-05-15/qwen3-operator-profile.json` | Default operator evidence with process memory, storage/free-space, warm-session timing, and unsupported-path fields |
@@ -120,6 +121,24 @@ This is the current Kaby Lake proof-appliance profile, not a general hardware
 claim. The values below are copied from committed receipts and remain scoped to
 the recorded i5-8250U host, model artifacts, corpus, backend, and thread
 settings.
+
+SLM-CPU-205 records the same profile as a machine-readable consolidation
+artifact:
+
+```text
+ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-205-kaby-performance-dashboard-evidence.json
+```
+
+That artifact consumes the existing strict Qwen3 Q8_0 appliance receipts,
+Qwen2.5 Q8_0 second-model sanity and allocation receipts, the 1/2/4/8-thread
+Qwen3 envelope, memory and storage context, and thermal/power fields as
+explicitly unavailable. It keeps the default thread recommendation scoped to
+recorded evidence: 4 threads had the best total session time and best
+steady-decode mean in the committed Qwen3 envelope while generated IDs,
+decoded text, strict tokenizer authority, backend identity, and
+`fallback_used=false` remained stable. This is not a new timing improvement,
+speedup, sustained-throughput, Q4/Q5, server, accelerator, Qwen3.5, or BitNet
+QK256 claim.
 
 | Surface | Current Evidence | Interpretation |
 | --- | --- | --- |
