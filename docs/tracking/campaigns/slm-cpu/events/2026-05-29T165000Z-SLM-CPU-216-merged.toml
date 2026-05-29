@@ -1,0 +1,15 @@
+timestamp = "2026-05-29T165000Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-216"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 965
+merge_sha = "97d46b864345e4683824e3dc17fa9580970c6bb2"
+branch = "codex/slm-cpu-216-no-bias-candidate-on-evidence"
+summary = "Merged the no-bias candidate-on behavior evidence gate."
+notes = [
+  "SLM-CPU-216 adds DenseLinearNoBiasCandidateOnBehaviorEvidenceGate and records the remaining candidate_on_apply_linear_runtime_attachment_point blocker.",
+  "The merged slice keeps candidate execution disabled, preserves the default eager_f32_candle path, and makes no timing, allocation, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
