@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T04:23:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-204"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-204-no-bias-apply-linear-runtime-receipt-pairs"
+summary = "Queued no-bias apply-linear runtime receipt-pair capture."
+notes = [
+  "SLM-CPU-204 should consume the SLM-CPU-203 receipt-emitter gate and capture or precisely block fresh Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs carrying the disabled no-bias apply-linear gate fields.",
+  "The slice must keep candidate execution disabled and preserve normal inference identity until fresh strict receipts prove generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, and fallback=false are unchanged.",
+]
+
