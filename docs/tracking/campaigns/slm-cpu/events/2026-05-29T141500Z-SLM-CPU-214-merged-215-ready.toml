@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T14:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-214"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 955
+merge_sha = "96be70551ee7371b1394a69ffcf0128de1548175"
+branch = "codex/slm-cpu-214-no-bias-selector-attachment-point"
+summary = "Merged SLM-CPU-214 no-bias selector attachment point and queued SLM-CPU-215."
+notes = [
+  "PR #955 defines DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary as the safer attachment point.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "SLM-CPU-215 is ready to capture candidate-off/candidate-on no-bias receipts or record the exact remaining blocker.",
+]
