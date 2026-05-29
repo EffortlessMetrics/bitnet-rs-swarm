@@ -12255,8 +12255,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-212"
-status = "pr_open"
+status = "merged"
 pr = 951
+merge_sha = "439af07124953125dc521d2927d17b22239eef8f"
 branch = "codex/slm-cpu-212-no-bias-candidate-on-off-blocker"
 stackable = false
 review_mode = "codex_premerge"
@@ -12297,6 +12298,62 @@ may_claim = [
   "SLM-CPU-212 may wire an explicit candidate-on experiment only under receipt-bound descriptor identity.",
   "SLM-CPU-212 may capture candidate-off/candidate-on strict warm-session receipt pairs for Qwen3/Qwen2.5 Q8_0 no-bias down-proj roles.",
   "SLM-CPU-212 may record an exact blocker if candidate-on execution or receipt emission cannot be safely wired.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for candidate-on execution without fresh candidate-off/candidate-on strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-213"
+status = "ready"
+branch = "codex/slm-cpu-213-selector-propagation-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-212"]
+acceptance = "Consume the SLM-CPU-212 blocker and define either a session-scoped no-bias selector propagation boundary or a per-callsite candidate execution receipt emitter that can attach DenseLinearNoBiasReceiptBoundSelectorDescriptor identity after prompt/generated/text digests are known. The slice must keep candidate execution disabled unless an explicit gate and exact descriptor identity prove model SHA, architecture, quant format, strict tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt/generated/text digests, selected path/kernel, candidate path/kernel, and per-callsite identity. A valid blocker must name the exact missing lifetime, mutation point, CLI command, receipt field, or hook registry ownership needed before candidate-on execution. No model binary may be committed, no default runtime may change, and no allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-212 records that the warm-session gate has digest identity after prompt execution, but the model dense-linear hook registry is built before those digests exist.",
+  "SLM-CPU-211 added DenseLinearNoBiasReceiptBoundSelectorDescriptor and an optional DenseLinearRuntimeHookDescriptor carrier while keeping runtime disabled.",
+  "Candidate-off/candidate-on strict warm-session receipts remain missing.",
+]
+may_claim = [
+  "SLM-CPU-213 may define a session-scoped selector propagation boundary or per-callsite candidate execution receipt emitter.",
+  "SLM-CPU-213 may keep candidate execution disabled and fail-closed while proving where descriptor identity can be attached.",
+  "SLM-CPU-213 may record an exact blocker if descriptor identity cannot be safely propagated.",
 ]
 must_not_claim = [
   "A model binary is committed.",

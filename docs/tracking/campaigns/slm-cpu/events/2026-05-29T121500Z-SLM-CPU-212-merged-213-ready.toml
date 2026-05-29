@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T12:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-212"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 951
+merge_sha = "439af07124953125dc521d2927d17b22239eef8f"
+branch = "codex/slm-cpu-212-no-bias-candidate-on-off-blocker"
+summary = "Merged SLM-CPU-212 no-bias candidate-on/off receipt blocker and queued SLM-CPU-213."
+notes = [
+  "PR #951 records that warm-session receipt identity is not propagated into the dense-linear runtime hook registry, so candidate-on receipts remain blocked.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "SLM-CPU-213 is ready to define a session-scoped selector propagation boundary or per-callsite candidate execution receipt emitter, or record an exact blocker.",
+]
