@@ -103,6 +103,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias apply-linear gate wiring | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json` | Wires a real digest-bound no-bias apply-linear gate object into eligible Qwen3/Qwen2.5 Q8_0 warm-session aggregates while keeping candidate execution disabled and blocking on fresh before/after receipts |
 | No-bias apply-linear receipt pairs | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json` | Captures fresh explicit-path Qwen3/Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired gate, preserving model/tokenizer/runtime/path/kernel/digest identity while candidate execution and normal runtime selection remain disabled |
 | No-bias candidate off/on receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-215-no-bias-candidate-off-on-receipt-gate.json` | Defines the exact candidate-off/candidate-on receipt-pair gate for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; the gate remains fail-closed because no candidate-on strict warm-session receipt exists |
+| No-bias candidate-on behavior evidence gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-216-no-bias-candidate-on-behavior-evidence-gate.json` | Defines the fail-closed behavior-evidence boundary after the receipt-pair gate; candidate execution remains disabled because `FeedForward::apply_linear` lacks a candidate-on runtime attachment point and complete strict receipt fields |
 
 Qwen3 rows use:
 
@@ -3912,6 +3913,39 @@ candidate path/kernel, prompt IDs, generated IDs, decoded text, and exact
 per-callsite identity through the SLM-CPU-214 boundary. The missing evidence is
 a candidate-on strict warm-session receipt preserving the same IDs and decoded
 text under the explicit gate.
+
+This slice does not execute the no-bias candidate, change default runtime,
+claim generated-ID preservation for candidate-on execution, claim allocation or
+timing improvement, claim speedup or sustained throughput, broaden Q4/Q5 support,
+or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths.
+
+## SLM-CPU-216 No-Bias Candidate-On Behavior Evidence Gate
+
+SLM-CPU-216 consumes the SLM-CPU-215 receipt-pair gate and records the next
+candidate-on behavior boundary. The first candidate-on attempt still fails
+closed before runtime selection because `FeedForward::apply_linear` has no
+candidate-on attachment point that can emit the strict warm-session receipt
+fields required by the lane.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-216-no-bias-candidate-on-behavior-evidence-gate.json
+decision = candidate_on_behavior_evidence_gate_defined_fail_closed
+reason = candidate_on_behavior_evidence_or_runtime_attachment_incomplete
+remaining_blocker = candidate_on_apply_linear_runtime_attachment_point
+boundary = bitnet_transformer::DenseLinearNoBiasCandidateOnBehaviorEvidenceGate
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The boundary keeps the exact SLM-CPU-216 scope: Qwen3 Q8_0 and Qwen2.5 Q8_0
+`feed_forward.down_proj`, strict GGUF tokenizer authority, `runtime_api=cpu`,
+`selected_backend=cpu-rust`, `fallback_used=false`, and receipt-visible selected
+and candidate path/kernel identity. It does not turn on the candidate path. It
+names the missing attachment point and receipt fields required before a later
+slice may capture candidate-off/candidate-on behavior evidence.
 
 This slice does not execute the no-bias candidate, change default runtime,
 claim generated-ID preservation for candidate-on execution, claim allocation or
