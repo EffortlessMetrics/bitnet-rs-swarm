@@ -1319,6 +1319,19 @@ pub struct DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+    pub apply_linear_runtime_owner_present: bool,
+    pub owner_has_apply_linear_inputs: bool,
+    pub owner_has_linear_weight_access: bool,
+    pub candidate_compute_callable: bool,
+    pub same_callsite_candidate_on_receipt_emitter_wired: bool,
+    pub candidate_off_on_strict_receipts_present: bool,
+    pub prompt_ids_preserved: bool,
+    pub generated_ids_preserved: bool,
+    pub decoded_text_preserved: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -2554,15 +2567,7 @@ impl DenseLinearNoBiasCandidateRuntimeAttachmentBoundary {
 impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
     pub fn from_runtime_attachment_boundary(
         attachment: &DenseLinearNoBiasCandidateRuntimeAttachmentBoundary,
-        apply_linear_runtime_owner_present: bool,
-        owner_has_apply_linear_inputs: bool,
-        owner_has_linear_weight_access: bool,
-        candidate_compute_callable: bool,
-        same_callsite_candidate_on_receipt_emitter_wired: bool,
-        candidate_off_on_strict_receipts_present: bool,
-        prompt_ids_preserved: bool,
-        generated_ids_preserved: bool,
-        decoded_text_preserved: bool,
+        inputs: DenseLinearNoBiasCandidateRuntimeOwnerInputs,
     ) -> Self {
         let mut fail_closed_conditions: Vec<_> = attachment
             .fail_closed_conditions
@@ -2596,31 +2601,31 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
         if !attachment.explicit_runtime_gate_requested {
             fail_closed_conditions.push("explicit_runtime_gate_not_requested");
         }
-        if !apply_linear_runtime_owner_present {
+        if !inputs.apply_linear_runtime_owner_present {
             fail_closed_conditions.push("apply_linear_runtime_owner_missing");
         }
-        if !owner_has_apply_linear_inputs {
+        if !inputs.owner_has_apply_linear_inputs {
             fail_closed_conditions.push("runtime_owner_missing_apply_linear_inputs");
         }
-        if !owner_has_linear_weight_access {
+        if !inputs.owner_has_linear_weight_access {
             fail_closed_conditions.push("runtime_owner_missing_linear_weight_access");
         }
-        if !candidate_compute_callable {
+        if !inputs.candidate_compute_callable {
             fail_closed_conditions.push("candidate_compute_not_callable");
         }
-        if !same_callsite_candidate_on_receipt_emitter_wired {
+        if !inputs.same_callsite_candidate_on_receipt_emitter_wired {
             fail_closed_conditions.push("same_callsite_candidate_on_receipt_emitter_missing");
         }
-        if !candidate_off_on_strict_receipts_present {
+        if !inputs.candidate_off_on_strict_receipts_present {
             fail_closed_conditions.push("candidate_off_on_strict_receipts_missing");
         }
-        if !prompt_ids_preserved {
+        if !inputs.prompt_ids_preserved {
             fail_closed_conditions.push("prompt_ids_preservation_receipt_missing");
         }
-        if !generated_ids_preserved {
+        if !inputs.generated_ids_preserved {
             fail_closed_conditions.push("generated_ids_preservation_receipt_missing");
         }
-        if !decoded_text_preserved {
+        if !inputs.decoded_text_preserved {
             fail_closed_conditions.push("decoded_text_preservation_receipt_missing");
         }
         if !default_runtime_path_preserved {
@@ -2641,20 +2646,20 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
 
         let owner_ready = candidate_runtime_attachment_boundary_defined
             && attachment.explicit_runtime_gate_requested
-            && apply_linear_runtime_owner_present
-            && owner_has_apply_linear_inputs
-            && owner_has_linear_weight_access
-            && candidate_compute_callable
+            && inputs.apply_linear_runtime_owner_present
+            && inputs.owner_has_apply_linear_inputs
+            && inputs.owner_has_linear_weight_access
+            && inputs.candidate_compute_callable
             && default_runtime_path_preserved
             && attachment.runtime_api == "cpu"
             && attachment.selected_backend == "cpu-rust"
             && !attachment.fallback_used;
         let receipt_ready = owner_ready
-            && same_callsite_candidate_on_receipt_emitter_wired
-            && candidate_off_on_strict_receipts_present
-            && prompt_ids_preserved
-            && generated_ids_preserved
-            && decoded_text_preserved
+            && inputs.same_callsite_candidate_on_receipt_emitter_wired
+            && inputs.candidate_off_on_strict_receipts_present
+            && inputs.prompt_ids_preserved
+            && inputs.generated_ids_preserved
+            && inputs.decoded_text_preserved
             && fail_closed_conditions.is_empty();
 
         let (decision, reason, remaining_runtime_selection_blocker) = if receipt_ready {
@@ -2664,9 +2669,9 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
                 "candidate_execution_enablement_requires_explicit_receipt_gated_pr",
             )
         } else if owner_ready {
-            let blocker = if !same_callsite_candidate_on_receipt_emitter_wired {
+            let blocker = if !inputs.same_callsite_candidate_on_receipt_emitter_wired {
                 "same_callsite_candidate_on_receipt_emitter"
-            } else if !candidate_off_on_strict_receipts_present {
+            } else if !inputs.candidate_off_on_strict_receipts_present {
                 "candidate_off_on_strict_receipts"
             } else {
                 "prompt_generated_text_preservation_receipts"
@@ -2677,11 +2682,11 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
                 blocker,
             )
         } else if candidate_runtime_attachment_boundary_defined {
-            let blocker = if !apply_linear_runtime_owner_present {
+            let blocker = if !inputs.apply_linear_runtime_owner_present {
                 "apply_linear_runtime_owner"
-            } else if !owner_has_apply_linear_inputs {
+            } else if !inputs.owner_has_apply_linear_inputs {
                 "apply_linear_input_ownership"
-            } else if !owner_has_linear_weight_access {
+            } else if !inputs.owner_has_linear_weight_access {
                 "linear_weight_ownership"
             } else {
                 "candidate_compute_callable"
@@ -2719,15 +2724,17 @@ impl DenseLinearNoBiasCandidateRuntimeOwnerBoundary {
             decoded_text_digest: attachment.decoded_text_digest.clone(),
             candidate_runtime_attachment_boundary_defined,
             explicit_runtime_gate_requested: attachment.explicit_runtime_gate_requested,
-            apply_linear_runtime_owner_present,
-            owner_has_apply_linear_inputs,
-            owner_has_linear_weight_access,
-            candidate_compute_callable,
-            same_callsite_candidate_on_receipt_emitter_wired,
-            candidate_off_on_strict_receipts_present,
-            prompt_ids_preserved,
-            generated_ids_preserved,
-            decoded_text_preserved,
+            apply_linear_runtime_owner_present: inputs.apply_linear_runtime_owner_present,
+            owner_has_apply_linear_inputs: inputs.owner_has_apply_linear_inputs,
+            owner_has_linear_weight_access: inputs.owner_has_linear_weight_access,
+            candidate_compute_callable: inputs.candidate_compute_callable,
+            same_callsite_candidate_on_receipt_emitter_wired: inputs
+                .same_callsite_candidate_on_receipt_emitter_wired,
+            candidate_off_on_strict_receipts_present: inputs
+                .candidate_off_on_strict_receipts_present,
+            prompt_ids_preserved: inputs.prompt_ids_preserved,
+            generated_ids_preserved: inputs.generated_ids_preserved,
+            decoded_text_preserved: inputs.decoded_text_preserved,
             default_runtime_path_preserved,
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
@@ -11631,15 +11638,17 @@ mod tests {
         let owner =
             DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
                 &attachment,
-                true,
-                true,
-                true,
-                true,
-                false,
-                false,
-                false,
-                false,
-                false,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: false,
+                    candidate_off_on_strict_receipts_present: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
             );
 
         assert_eq!(owner.decision, "candidate_runtime_owner_defined_fail_closed");
@@ -11697,15 +11706,17 @@ mod tests {
         let owner =
             DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
                 &attachment,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: true,
+                    candidate_off_on_strict_receipts_present: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
             );
 
         assert_eq!(
@@ -11752,15 +11763,17 @@ mod tests {
         let owner =
             DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
                 &attachment,
-                false,
-                false,
-                false,
-                false,
-                true,
-                true,
-                true,
-                true,
-                true,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: false,
+                    owner_has_apply_linear_inputs: false,
+                    owner_has_linear_weight_access: false,
+                    candidate_compute_callable: false,
+                    same_callsite_candidate_on_receipt_emitter_wired: true,
+                    candidate_off_on_strict_receipts_present: true,
+                    prompt_ids_preserved: true,
+                    generated_ids_preserved: true,
+                    decoded_text_preserved: true,
+                },
             );
 
         assert_eq!(owner.decision, "candidate_runtime_owner_blocked_fail_closed");
