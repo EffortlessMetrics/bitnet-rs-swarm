@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T07:58:58Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-209"
+event = "in_progress"
+actor = "codex"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-209-no-bias-apply-linear-receipt-pairs"
+summary = "Queued explicit-path no-bias apply-linear before/after receipt capture after SLM-CPU-208."
+notes = [
+  "SLM-CPU-209 should capture or precisely block fresh explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired no-bias apply-linear gate.",
+  "Valid evidence must preserve model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, descriptor/callsite identity, digest-bound gate identity, runtime gate state, and fallback=false.",
+  "Candidate execution, default runtime changes, model binaries, allocation/timing/speedup claims, Q4/Q5, server/accelerator, Qwen3.5, and BitNet QK256 remain out of scope.",
+]

@@ -1,0 +1,22 @@
+timestamp = "2026-05-29T07:58:57Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-208"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 943
+head_sha = "c981a673f17ddb9a4acba0400a5e8d095bb3abf2"
+merge_sha = "da891cf6c0ec333e395faef24c49d9de3876c4cf"
+branch = "codex/slm-cpu-208-no-bias-apply-linear-gate-wiring"
+summary = "Merged the no-bias apply-linear receipt gate wiring slice."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json",
+  "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+]
+notes = [
+  "SLM-CPU-208 wires a real digest-bound DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate into eligible Qwen3/Qwen2.5 Q8_0 cpu-rust warm-session aggregates.",
+  "Candidate execution remains disabled, default runtime selection remains eager_f32_candle, selected_kernel remains dense-f32-candle-linear, and fallback=false remains required.",
+  "Fresh Qwen3 and Qwen2.5 before/after warm-session receipts through the wired gate remain the next blocker before any no-bias runtime-selection discussion.",
+  "No candidate execution, runtime promotion, allocation/timing/speedup claim, sustained-throughput claim, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
