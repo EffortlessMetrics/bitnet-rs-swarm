@@ -3394,6 +3394,44 @@ selection, prove allocation reduction, claim timing improvement or speedup,
 claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-201 No-Bias Apply-Linear Receipt Boundary
+
+SLM-CPU-201 consumes the SLM-CPU-200 apply-linear audit boundary and defines
+the receipt-emission surface required before any future no-bias runtime
+experiment can select the Qwen3 Q8_0 `feed_forward.down_proj` candidate:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-201-no-bias-apply-linear-receipt-boundary.json
+receipt record = bitnet_transformer::DenseLinearNoBiasApplyLinearReceiptBoundary
+source audit record = bitnet_transformer::DenseLinearNoBiasApplyLinearAuditBoundary
+ready decision = receipt_emission_boundary_ready_runtime_disabled
+blocked decision = blocked_fail_closed
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+```
+
+The required receipt identity now names the model SHA, quant format, manifest
+SHA, role ID, layer, scope, linear role, `bias_present=false`, callsite tensor,
+selected eager path/kernel, candidate path/kernel, runtime gate state,
+`runtime_api=cpu`, `selected_backend=cpu-rust`, `fallback=false`, prompt ID
+digest, generated ID digest, and decoded text digest. The boundary fails closed
+if the apply-linear descriptor was not observed, if CPU/backend/fallback
+identity is wrong, or if any prompt/generated/text receipt identity is missing.
+
+Runtime selection remains blocked on wiring this boundary into strict
+warm-session receipt emission and capturing fresh before/after receipts proving
+unchanged prompt IDs, generated IDs, decoded text, model SHA, GGUF tokenizer
+authority, backend/runtime identity, dense path identity, role ID, layer,
+scope, linear, selected path/kernel, candidate path/kernel, runtime gate state,
+and `fallback_used=false`.
+
+This slice does not execute the no-bias candidate, change default runtime
+selection, prove allocation reduction, claim timing improvement or speedup,
+claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

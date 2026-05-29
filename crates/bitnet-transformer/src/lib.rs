@@ -966,6 +966,44 @@ pub struct DenseLinearNoBiasApplyLinearAuditBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasApplyLinearReceiptBoundary {
+    pub tensor_name: String,
+    pub role_id: String,
+    pub model_sha256: String,
+    pub quant_format: &'static str,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_requested_enabled: bool,
+    pub descriptor_decision: &'static str,
+    pub callsite_descriptor_observed: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub prompt_ids_digest: &'static str,
+    pub generated_ids_digest: &'static str,
+    pub decoded_text_digest: &'static str,
+    pub receipt_fields_present: bool,
+    pub required_receipt_fields: Vec<&'static str>,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -1030,6 +1068,136 @@ impl DenseLinearNoBiasApplyLinearAuditBoundary {
             selected_kernel: "dense-f32-candle-linear",
             candidate_path: contract.candidate_path,
             candidate_kernel: contract.candidate_kernel,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasApplyLinearReceiptBoundary {
+    pub fn from_apply_linear_boundary(
+        boundary: &DenseLinearNoBiasApplyLinearAuditBoundary,
+        runtime_api: &'static str,
+        selected_backend: &'static str,
+        fallback_used: bool,
+        prompt_ids_digest: &'static str,
+        generated_ids_digest: &'static str,
+        decoded_text_digest: &'static str,
+        receipt_fields_present: bool,
+    ) -> Self {
+        let mut fail_closed_conditions = boundary.fail_closed_conditions.clone();
+        if !boundary.callsite_descriptor_observed
+            || boundary.decision != "descriptor_observed_at_apply_linear_runtime_disabled"
+        {
+            fail_closed_conditions.push("apply_linear_descriptor_not_observed");
+        }
+        if runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+        if prompt_ids_digest.is_empty() {
+            fail_closed_conditions.push("prompt_ids_digest_missing");
+        }
+        if generated_ids_digest.is_empty() {
+            fail_closed_conditions.push("generated_ids_digest_missing");
+        }
+        if decoded_text_digest.is_empty() {
+            fail_closed_conditions.push("decoded_text_digest_missing");
+        }
+        if !receipt_fields_present {
+            fail_closed_conditions.push("receipt_fields_missing");
+        }
+        if !boundary.preserves_normal_inference() {
+            fail_closed_conditions.push("apply_linear_boundary_does_not_preserve_eager_f32");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let receipt_identity_ready = fail_closed_conditions.is_empty();
+        let (decision, reason, remaining_runtime_selection_blocker) = if receipt_identity_ready {
+            (
+                "receipt_emission_boundary_ready_runtime_disabled",
+                "descriptor_callsite_identity_receipt_visible",
+                "fresh_before_after_strict_warm_session_receipts",
+            )
+        } else {
+            (
+                "blocked_fail_closed",
+                "descriptor_callsite_receipt_identity_incomplete",
+                "descriptor_callsite_receipt_identity",
+            )
+        };
+
+        Self {
+            tensor_name: boundary.tensor_name.clone(),
+            role_id: boundary.role_id.clone(),
+            model_sha256: boundary.model_sha256.clone(),
+            quant_format: boundary.quant_format,
+            manifest_sha256: boundary.manifest_sha256.clone(),
+            layer_idx: boundary.layer_idx,
+            scope: boundary.scope,
+            linear: boundary.linear,
+            bias_present: boundary.bias_present,
+            runtime_gate_name: boundary.runtime_gate_name,
+            runtime_gate_requested_enabled: boundary.runtime_gate_requested_enabled,
+            descriptor_decision: boundary.descriptor_decision,
+            callsite_descriptor_observed: boundary.callsite_descriptor_observed,
+            selected_path: boundary.selected_path,
+            selected_kernel: boundary.selected_kernel,
+            candidate_path: boundary.candidate_path,
+            candidate_kernel: boundary.candidate_kernel,
+            runtime_api,
+            selected_backend,
+            fallback_used,
+            prompt_ids_digest,
+            generated_ids_digest,
+            decoded_text_digest,
+            receipt_fields_present,
+            required_receipt_fields: vec![
+                "model_sha256",
+                "quant_format",
+                "manifest_sha256",
+                "role_id",
+                "layer",
+                "scope",
+                "linear",
+                "bias_present=false",
+                "tensor_name",
+                "selected_path=eager_f32_candle",
+                "selected_kernel=dense-f32-candle-linear",
+                "candidate_path",
+                "candidate_kernel",
+                "runtime_gate_state",
+                "runtime_api=cpu",
+                "selected_backend=cpu-rust",
+                "fallback=false",
+                "prompt_ids_digest",
+                "generated_ids_digest",
+                "decoded_text_digest",
+            ],
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
             decision,
