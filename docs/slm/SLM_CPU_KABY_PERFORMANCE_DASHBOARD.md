@@ -3358,6 +3358,42 @@ allocation reduction, claim timing improvement or speedup, claim sustained
 throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620,
 Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-200 No-Bias Apply-Linear Audit Boundary
+
+SLM-CPU-200 consumes the SLM-CPU-199 descriptor contract and adds the
+apply-linear audit boundary needed before any future FeedForward runtime
+selector can be considered:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-200-no-bias-apply-linear-audit-boundary.json
+audit record = bitnet_transformer::DenseLinearNoBiasApplyLinearAuditBoundary
+source descriptor = bitnet_transformer::DenseLinearNoBiasRuntimeDescriptorContract
+observed decision = descriptor_observed_at_apply_linear_runtime_disabled
+blocked decision = blocked_fail_closed
+callsite tensor = layers.3.feed_forward.down_proj.weight
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The audit boundary proves that an exact Qwen3 Q8_0 `feed_forward.down_proj`
+descriptor can be matched to the dense tensor callsite while still preserving
+the eager F32 Candle runtime. It fails closed if the tensor callsite does not
+match the descriptor role, if the runtime gate is not requested, or if the
+source descriptor already records fail-closed conditions.
+
+Runtime selection remains blocked on descriptor/receipt emission wiring and
+fresh paired strict warm-session receipts proving unchanged prompt IDs,
+generated IDs, decoded text, model SHA, GGUF tokenizer authority, selected CPU
+backend/runtime, dense path identity, role ID, layer, scope, linear,
+`bias_present=false`, selected path/kernel, and `fallback_used=false`.
+
+This slice does not execute the no-bias candidate, change default runtime
+selection, prove allocation reduction, claim timing improvement or speedup,
+claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
