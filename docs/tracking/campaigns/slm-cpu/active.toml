@@ -11700,7 +11700,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-202"
-status = "ready"
+status = "merged"
+pr = 930
+merge_sha = "8adc4773c967b26627583eb305ca217c862aadc7"
 branch = "codex/slm-cpu-202-no-bias-apply-linear-before-after-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -11738,6 +11740,60 @@ evidence = [
 may_claim = [
   "SLM-CPU-202 may wire strict before/after receipt evidence for the disabled no-bias apply-linear candidate boundary.",
   "SLM-CPU-202 may record an exact blocker if the current receipt emitter cannot yet carry all required identity and behavior-preservation fields.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Normal inference executes the no-bias candidate.",
+  "Runtime compute selection changes by default.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-203"
+status = "ready"
+branch = "codex/slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-202"]
+acceptance = "Consume the SLM-CPU-202 before/after receipt comparison gate and either wire the disabled no-bias apply-linear gate fields into the strict warm-session receipt emitter or record the exact receipt-emitter blocker. A valid slice must make receipt output capable of carrying descriptor/callsite identity, before/after receipt-pair presence, model SHA, quant format, tokenizer authority, prompt IDs/hash, generated IDs/hash, decoded text/hash, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, runtime gate state, and fallback=false for Qwen3 Q8_0 and Qwen2.5 Q8_0 while candidate execution remains disabled. No candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli warm_session",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-202 adds DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate and compares before/after receipt-boundary identity while runtime candidate execution remains disabled.",
+  "SLM-CPU-202 keeps selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, runtime_api=cpu, selected_backend=cpu-rust, and fallback=false as the only valid normal inference state.",
+  "SLM-CPU-202 records real Qwen3 Q8_0 and Qwen2.5 Q8_0 strict warm-session receipt-pair capture through the receipt emitter as the next blocker.",
+]
+may_claim = [
+  "SLM-CPU-203 may add receipt-emitter fields for the disabled no-bias apply-linear before/after gate.",
+  "SLM-CPU-203 may record an exact blocker if the warm-session receipt emitter cannot yet carry all required no-bias gate identity fields.",
 ]
 must_not_claim = [
   "The no-bias dense linear candidate is selected by default.",

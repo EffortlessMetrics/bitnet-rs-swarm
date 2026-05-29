@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T02:56:49Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-203"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate"
+summary = "Queued the no-bias apply-linear receipt-emitter gate."
+notes = [
+  "SLM-CPU-203 should consume the SLM-CPU-202 before/after gate and either wire disabled no-bias apply-linear gate fields into strict warm-session receipts or record the exact emitter blocker.",
+  "The slice must keep candidate execution disabled and preserve normal inference identity until fresh strict receipts prove generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, and fallback=false are unchanged.",
+]
+

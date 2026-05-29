@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T02:56:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-202"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 930
+merge_sha = "8adc4773c967b26627583eb305ca217c862aadc7"
+branch = "codex/slm-cpu-202-no-bias-apply-linear-before-after-receipts"
+summary = "Merged the no-bias apply-linear before/after receipt comparison gate."
+notes = [
+  "SLM-CPU-202 adds DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate and fails closed on descriptor/callsite, runtime/backend/fallback, or prompt/generated/text digest drift.",
+  "The merged slice keeps candidate execution disabled, normal inference on eager_f32_candle, fallback=false, and makes no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+
