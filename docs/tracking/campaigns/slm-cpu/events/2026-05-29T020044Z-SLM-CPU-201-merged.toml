@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T02:00:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-201"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 928
+merge_sha = "091c8d157b3e5df7f1b84e87f2d2ffea1150a117"
+branch = "codex/slm-cpu-201-no-bias-apply-linear-receipt-boundary"
+summary = "Merged the no-bias apply-linear receipt-emission boundary."
+notes = [
+  "SLM-CPU-201 adds DenseLinearNoBiasApplyLinearReceiptBoundary and makes descriptor/callsite identity receipt-visible before any future no-bias runtime selection.",
+  "The merged slice keeps candidate execution disabled, normal inference on eager_f32_candle, fallback=false, and makes no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+
