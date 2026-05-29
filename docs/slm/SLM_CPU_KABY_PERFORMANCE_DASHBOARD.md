@@ -3574,6 +3574,36 @@ allocation reduction, claim timing improvement or speedup, claim sustained
 throughput, broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO,
 UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-206 No-Bias Apply-Linear Prerequisite Refresh
+
+SLM-CPU-206 refreshes the SLM-CPU-204 model-artifact prerequisite after the
+Kaby performance dashboard consolidation:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-206-no-bias-apply-linear-prereq-refresh.json
+decision = verified_cache_artifact_available_canonical_qwen25_path_missing_receipts_not_captured
+qwen3_canonical_artifact_verified = true
+qwen3_sha256 = 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031
+qwen25_exact_cache_artifact_verified = true
+qwen25_sha256 = ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e
+qwen25_canonical_models_slm_path_present = false
+fresh_before_after_receipts_present = false
+```
+
+The important change from SLM-CPU-204 is narrower evidence: the exact Qwen2.5
+Q8_0 artifact is available in local uncommitted `target` caches and matches
+the accepted SHA, but it is still absent from the canonical `models/slm` path.
+No model binary is committed. Fresh before/after strict warm-session receipt
+pairs remain a later slice and must use explicit model paths while preserving
+model SHA, tokenizer authority, prompt/generated IDs, decoded text, CPU
+backend identity, `selected_path=eager_f32_candle`, candidate/gate identity,
+and `fallback_used=false`.
+
+This slice does not execute the no-bias candidate, change default runtime
+selection, prove allocation reduction, claim timing improvement or speedup,
+claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
