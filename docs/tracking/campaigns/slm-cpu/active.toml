@@ -12486,7 +12486,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-216"
-status = "ready"
+status = "pr_open"
+pr = 965
 branch = "codex/slm-cpu-216-no-bias-candidate-on-evidence"
 stackable = false
 review_mode = "codex_premerge"
