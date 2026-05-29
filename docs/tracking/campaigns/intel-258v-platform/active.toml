@@ -14905,6 +14905,63 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "LNL258V-GOAL-AUDIT-077"
+status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-077-current-main"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-GOAL-AUDIT-076"]
+acceptance = "Refresh the no-inference Lunar Lake excellence audit and prompt-to-artifact checklist to current swarm main after LNL258V-GOAL-AUDIT-076/#962 and closeout #963, so source_revision points at ae356cf344fefce0eeb54ef67ef09a511ae28227, the audit/checklist record #962/#963 as audit and tracker-closeout state only, and the live current-main validate/regress/compare plus AC-blocked low-power-harness checks are summarized without adding route evidence. Preserve LNL258V-POWER-006 as blocked and preserve no new inference, model load, fallback behavior change, route promotion, speedup, power-advantage evidence, battery-mode route samples, measured-temperature proof, native accelerator proof, broad quality, dense-SLM-as-BitNet proof, full BitNet accelerator inference, production QK256 dispatch policy, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json > $env:TEMP/lnl-excellence-audit-077.json",
+  "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json > $env:TEMP/lnl-goal-artifact-checklist-077.json",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'ae356cf344fefce0eeb54ef67ef09a511ae28227' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'post_963_checkpoint_delta' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json -Raw | Select-String 'validate --strict, regress --strict, and compare --strict all pass' | Out-Null\"",
+  "powershell -NoProfile -Command \"Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'LNL258V-GOAL-AUDIT-076/#962 plus closeout #963' | Out-Null; Get-Content ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json -Raw | Select-String 'route_sample_execution_started=false' | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/hardware/intel-258v/2026-05-08/lunar-lake-excellence-audit.json",
+  "ci/hardware/intel-258v/2026-05-08/lunar-lake-goal-artifact-checklist.json",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "scripts/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+]
+may_claim = [
+  "The Lunar Lake audit and prompt-to-artifact checklist are refreshed to current swarm main through GOAL-AUDIT-076 closeout #963.",
+  "LNL258V-GOAL-AUDIT-076/#962 plus closeout #963 are recorded as no-inference audit/checklist and tracker-closeout state only.",
+  "Current-main validate/regress/compare strict checks pass from committed artifacts, while low_power remains blocked.",
+  "The live AC/charging low-power-harness check failed closed before inference with model_inference_allowed=false and route_sample_execution_started=false.",
+  "LNL258V-POWER-006 remains the active blocker for real battery-mode low_power telemetry, valid route samples, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
+]
+must_not_claim = [
+  "New successful Lunar Lake inference was run by this audit refresh.",
+  "A model was loaded by this audit refresh.",
+  "Battery-mode route/profile samples were collected.",
+  "Lunar Lake fallback behavior changed.",
+  "A Lunar Lake route was newly promoted.",
+  "OpenVINO GPU or NPU speedup is newly claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "Battery-mode low_power evidence is available.",
+  "Measured temperature evidence is available.",
+  "Native OpenCL or native NPU execution is proven for Lunar Lake.",
+  "Broad dense SLM quality is proven.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "Full BitNet accelerator inference is proven.",
+  "Production QK256 dispatch policy changed.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
 id = "LNL258V-POWER-006A"
 status = "merged"
 pr = 956
