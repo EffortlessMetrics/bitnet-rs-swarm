@@ -3432,6 +3432,42 @@ selection, prove allocation reduction, claim timing improvement or speedup,
 claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-202 No-Bias Apply-Linear Before/After Receipt Gate
+
+SLM-CPU-202 consumes the SLM-CPU-201 receipt boundary and adds the next
+before/after strict warm-session receipt comparison gate, still with candidate
+execution disabled:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-202-no-bias-apply-linear-before-after-receipts.json
+receipt gate record = bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate
+input record = bitnet_transformer::DenseLinearNoBiasApplyLinearReceiptBoundary
+ready decision = before_after_receipt_gate_ready_runtime_disabled
+blocked decision = blocked_fail_closed
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+```
+
+The gate compares two receipt-boundary records and fails closed unless
+descriptor/callsite identity, model SHA, quant format, manifest SHA, role ID,
+layer, scope, linear role, `bias_present=false`, selected eager path/kernel,
+candidate path/kernel, `runtime_api=cpu`, `selected_backend=cpu-rust`,
+`fallback=false`, prompt ID digest, generated ID digest, and decoded-text digest
+are all present and preserved across the before/after pair.
+
+This slice defines the comparison gate rather than capturing fresh runtime
+receipts. Runtime selection remains blocked on real Qwen3 Q8_0 and Qwen2.5 Q8_0
+strict warm-session receipt pairs that carry the gate fields through the
+receipt emitter. Candidate execution remains disabled until a later explicit
+runtime-selection PR supplies those receipts.
+
+This slice does not execute the no-bias candidate, change default runtime
+selection, prove allocation reduction, claim timing improvement or speedup,
+claim sustained throughput, broaden Q4/Q5 support, or touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
