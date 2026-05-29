@@ -20715,8 +20715,8 @@ mod tests {
     }
 
     #[test]
-    fn low_power_run_harness_blocks_ac_before_inference() {
-        let temp = tempfile::tempdir().expect("tempdir");
+    fn low_power_run_harness_blocks_ac_before_inference() -> Result<()> {
+        let temp = tempfile::tempdir()?;
         let receipt = build_low_power_run_harness_from_parts(
             temp.path(),
             "2026-05-29T12:30:00Z".to_string(),
@@ -20766,16 +20766,17 @@ mod tests {
             .command_sequence
             .iter()
             .find(|step| step.step == "route_profile_matrix")
-            .expect("route profile matrix step");
+            .context("missing route profile matrix step")?;
         assert!(matrix_step.stop_if.iter().any(|stop| stop == "battery_preflight_passed=false"));
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.power_advantage_claim);
+        Ok(())
     }
 
     #[test]
-    fn low_power_run_harness_allows_matrix_only_after_battery_preflight() {
-        let temp = tempfile::tempdir().expect("tempdir");
+    fn low_power_run_harness_allows_matrix_only_after_battery_preflight() -> Result<()> {
+        let temp = tempfile::tempdir()?;
         let receipt = build_low_power_run_harness_from_parts(
             temp.path(),
             "2026-05-29T12:35:00Z".to_string(),
@@ -20825,12 +20826,13 @@ mod tests {
             .command_sequence
             .iter()
             .find(|step| step.step == "route_profile_matrix")
-            .expect("route profile matrix step");
+            .context("missing route profile matrix step")?;
         assert!(matrix_step.command.iter().any(|command| {
             command.contains("--profile low_power")
                 && command.contains("--route dense_slm_openvino_npu_candidate")
                 && command.contains("--device openvino-npu")
         }));
+        Ok(())
     }
 
     #[test]
