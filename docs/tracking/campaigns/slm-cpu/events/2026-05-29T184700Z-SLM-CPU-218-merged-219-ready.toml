@@ -1,0 +1,23 @@
+timestamp = "2026-05-29T18:47:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-218"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 971
+merge_sha = "44afa8e58"
+branch = "codex/slm-cpu-218-no-bias-runtime-owner-boundary"
+summary = "Merged SLM-CPU-218 no-bias runtime owner boundary and queued SLM-CPU-219."
+notes = [
+  "SLM-CPU-218 defines FeedForward::apply_linear as the no-bias candidate runtime owner boundary after the SLM-CPU-217 attachment boundary.",
+  "The merged slice records same-callsite candidate-on receipt emission and fresh strict candidate-off/on receipts as the remaining fail-closed blockers.",
+  "Candidate execution remains disabled and the default eager_f32_candle runtime remains unchanged.",
+  "No allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_ready]]
+item = "SLM-CPU-219"
+status = "ready"
+branch = "codex/slm-cpu-219-no-bias-same-callsite-receipt-emitter"
+summary = "Next slice may wire or precisely block the same-callsite no-bias candidate-off/on receipt emitter."
