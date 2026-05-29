@@ -11590,7 +11590,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-200"
-status = "ready"
+status = "merged"
+pr = 926
+merge_sha = "7262cad35f0b399238bc6c978a36c4756c5893cd"
 branch = "codex/slm-cpu-200-no-bias-apply-linear-audit-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -11628,6 +11630,59 @@ evidence = [
 may_claim = [
   "SLM-CPU-200 may add an audit boundary showing how a manifest-bound descriptor decision reaches the FeedForward apply-linear callsite.",
   "SLM-CPU-200 may record the remaining runtime-selection blocker after descriptor observation is available.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Normal inference executes the no-bias candidate.",
+  "Runtime compute selection changes by default.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-201"
+status = "ready"
+branch = "codex/slm-cpu-201-no-bias-apply-linear-receipt-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-200"]
+acceptance = "Consume the SLM-CPU-200 FeedForward apply-linear audit boundary and define the exact receipt-emission boundary required before any Qwen3 Q8_0 feed_forward.down_proj no-bias candidate can be runtime-selected. A valid slice must make the descriptor/callsite identity receipt-visible for model SHA, quant format, manifest SHA, role ID, layer, scope, linear, bias_present=false, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, runtime gate state, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt IDs/hash, generated IDs, and decoded text, while keeping candidate execution disabled and normal inference on eager_f32_candle. No candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-200 adds DenseLinearNoBiasApplyLinearAuditBoundary and shows exact Qwen3 feed_forward.down_proj descriptor identity can be observed at the dense tensor callsite.",
+  "SLM-CPU-200 keeps selected_path=eager_f32_candle and selected_kernel=dense-f32-candle-linear while candidate execution remains disabled.",
+  "SLM-CPU-200 records receipt emission wiring plus fresh before/after strict warm-session receipts as the remaining runtime-selection blocker.",
+]
+may_claim = [
+  "SLM-CPU-201 may define or add a receipt/audit boundary for descriptor and callsite identity emission before future runtime selection.",
+  "SLM-CPU-201 may record the exact fields and blockers required for later before/after strict warm-session receipts.",
 ]
 must_not_claim = [
   "The no-bias dense linear candidate is selected by default.",

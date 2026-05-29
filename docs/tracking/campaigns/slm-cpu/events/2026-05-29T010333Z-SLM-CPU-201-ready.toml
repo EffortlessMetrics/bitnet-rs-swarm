@@ -1,0 +1,14 @@
+timestamp = "2026-05-29T01:03:33Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-201"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-201-no-bias-apply-linear-receipt-boundary"
+summary = "Queued the no-bias apply-linear receipt-emission boundary."
+notes = [
+  "SLM-CPU-201 should consume the SLM-CPU-200 apply-linear audit boundary and make descriptor/callsite identity receipt-visible before any future runtime selection.",
+  "The slice must keep candidate execution disabled and normal inference on eager_f32_candle until fresh before/after strict warm-session receipts prove unchanged behavior.",
+]
+
