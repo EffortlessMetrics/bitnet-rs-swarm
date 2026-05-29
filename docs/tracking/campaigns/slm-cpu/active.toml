@@ -12657,8 +12657,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-219"
-status = "ready"
+status = "pr_open"
+pr = 974
 branch = "codex/slm-cpu-219-no-bias-same-callsite-receipt-emitter"
+head_sha = "96c286ada186350edd530e86ce389550a7519837"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
