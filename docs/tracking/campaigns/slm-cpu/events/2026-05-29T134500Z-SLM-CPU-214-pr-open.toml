@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T13:45:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-214"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 955
+head_sha = "8d55bf49ec152cc359a1c9757478326640270153"
+branch = "codex/slm-cpu-214-no-bias-selector-attachment-point"
+summary = "Opened SLM-CPU-214 no-bias selector attachment point PR."
+notes = [
+  "PR #955 defines a per-callsite candidate receipt emitter boundary for receipt-bound no-bias selector identity.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "No generated-ID preservation, allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
