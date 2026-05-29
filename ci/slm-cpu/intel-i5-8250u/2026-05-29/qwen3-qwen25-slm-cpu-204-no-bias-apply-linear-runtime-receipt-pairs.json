@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_runtime_receipt_pairs",
+  "tracking_item": "SLM-CPU-204",
+  "consumes_tracking_item": "SLM-CPU-203",
+  "scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 disabled no-bias apply-linear before/after warm-session receipt pairs",
+  "decision": "blocked_missing_required_model_artifact",
+  "reason": "fresh_qwen3_qwen25_before_after_warm_session_receipt_pairs_cannot_be_captured_because_qwen25_q8_0_model_artifact_is_not_present_in_this_worktree",
+  "input_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-202-no-bias-apply-linear-before-after-receipts.json"
+  ],
+  "input_artifact_sha256": {
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-203-no-bias-apply-linear-receipt-emitter-gate.json": "f7ccd0d56142cc048b5f95719a806290cbfcd088a5ad887a3bcb1e263d6ae19a",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-202-no-bias-apply-linear-before-after-receipts.json": "626270a1d3083fd08590a3282d50aa8fdf40bf0fe5ee1bb820838d0cdf6c569f"
+  },
+  "required_models": [
+    {
+      "model_id": "Qwen3-0.6B-Q8_0",
+      "quant_format": "Q8_0",
+      "expected_path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "present_in_worktree": true,
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031"
+    },
+    {
+      "model_id": "Qwen2.5-0.5B-Instruct-Q8_0",
+      "quant_format": "Q8_0",
+      "expected_path": "models/slm/Qwen2.5-0.5B-Instruct-Q8_0.gguf",
+      "present_in_worktree": false,
+      "sha256": null
+    }
+  ],
+  "receipt_pair_capture": {
+    "qwen3_q8_before_receipt": null,
+    "qwen3_q8_after_receipt": null,
+    "qwen25_q8_before_receipt": null,
+    "qwen25_q8_after_receipt": null,
+    "captured": false,
+    "capture_attempted": false,
+    "capture_attempted_reason": "SLM-CPU-204 requires paired Qwen3 and Qwen2.5 Q8_0 before/after strict warm-session receipts; the Qwen2.5 Q8_0 GGUF is absent, so partial Qwen3-only evidence would not satisfy the gate."
+  },
+  "required_receipt_fields": [
+    "model_sha256",
+    "quant_format",
+    "tokenizer_authority",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "selected_path=eager_f32_candle",
+    "selected_kernel=dense-f32-candle-linear",
+    "candidate_path",
+    "candidate_kernel",
+    "descriptor_callsite_identity",
+    "runtime_gate_state",
+    "fallback=false"
+  ],
+  "preservation_evidence": {
+    "model_sha_preserved": false,
+    "quant_format_preserved": false,
+    "tokenizer_authority_preserved": false,
+    "prompt_ids_digest_preserved": false,
+    "generated_ids_digest_preserved": false,
+    "decoded_text_digest_preserved": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "descriptor_callsite_identity_preserved": false,
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+    "runtime_gate_requested_enabled": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "fallback_used": false
+  },
+  "missing_inputs": [
+    {
+      "input": "models/slm/Qwen2.5-0.5B-Instruct-Q8_0.gguf",
+      "reason": "required Qwen2.5 Q8_0 model artifact is absent from this worktree"
+    },
+    {
+      "input": "fresh_qwen3_q8_before_after_warm_session_receipts_with_dense_no_bias_apply_linear_gate",
+      "reason": "not captured because the paired Qwen2.5 side of the required evidence gate is unavailable"
+    },
+    {
+      "input": "fresh_qwen25_q8_before_after_warm_session_receipts_with_dense_no_bias_apply_linear_gate",
+      "reason": "cannot be captured without the Qwen2.5 Q8_0 GGUF"
+    }
+  ],
+  "fail_closed_conditions": [
+    "qwen25_q8_model_artifact_missing",
+    "qwen3_q8_before_after_receipt_pair_not_captured",
+    "qwen25_q8_before_after_receipt_pair_not_captured",
+    "descriptor_callsite_identity_not_proven_for_runtime_receipt_pairs",
+    "prompt_ids_digest_not_proven_for_runtime_receipt_pairs",
+    "generated_ids_digest_not_proven_for_runtime_receipt_pairs",
+    "decoded_text_digest_not_proven_for_runtime_receipt_pairs"
+  ],
+  "remaining_runtime_selection_blocker": "fresh_qwen3_qwen25_before_after_warm_session_receipt_pairs_with_no_bias_gate_fields_missing",
+  "normal_inference_preserved": true,
+  "candidate_execution_enabled": false,
+  "normal_inference_runtime_selection_enabled": false,
+  "runtime_behavior_changed": false,
+  "default_runtime_changed": false,
+  "allocation_reduction_claim": false,
+  "timing_improvement_claim": false,
+  "speedup_claim": false,
+  "sustained_throughput_claim": false,
+  "claim_boundary": {
+    "candidate_execution_disabled": true,
+    "default_runtime_changed": false,
+    "no_allocation_reduction_claim": true,
+    "no_timing_improvement_claim": true,
+    "no_speedup_claim": true,
+    "no_sustained_throughput_claim": true,
+    "no_q4_q5_runtime_support": true,
+    "no_server_or_accelerator_claim": true,
+    "no_qwen35_claim": true,
+    "no_bitnet_qk256_claim": true
+  }
+}
