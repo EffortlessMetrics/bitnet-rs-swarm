@@ -14846,9 +14846,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-006A"
-status = "pr_open"
+status = "merged"
 pr = 956
-head_sha = "a5c7589f9853fe5f7d77765652cf44edacae02c5"
+merge_sha = "802e468316f35348115fd46b141425577aeaeb0c"
+head_sha = "6b8e2f36f70e59fdb354ab91688714e794e556d3"
 branch = "codex/lunar-lake/LNL258V-POWER-006A-battery-preflight-harness"
 stackable = false
 review_mode = "codex_premerge"
