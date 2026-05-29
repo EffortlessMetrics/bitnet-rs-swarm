@@ -12543,7 +12543,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-217"
-status = "pr_open"
+status = "merged"
 pr = 969
 branch = "codex/slm-cpu-217-no-bias-candidate-runtime-attachment"
 stackable = false
@@ -12585,6 +12585,62 @@ may_claim = [
   "SLM-CPU-217 may define the explicit no-bias candidate runtime attachment boundary for the bounded feed_forward.down_proj scope.",
   "SLM-CPU-217 may record the exact runtime ownership blocker if candidate-on execution still cannot be safely attempted.",
   "SLM-CPU-217 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-218"
+status = "ready"
+branch = "codex/slm-cpu-218-no-bias-runtime-owner-boundary"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-217"]
+acceptance = "Consume the SLM-CPU-217 candidate runtime attachment boundary and either add the candidate runtime owner / candidate-on receipt emitter needed for same-callsite no-bias apply-linear evidence, or record the exact remaining ownership blocker. Candidate execution must remain disabled unless explicit gate identity, descriptor identity, strict candidate-off/on receipts, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and default eager_f32_candle preservation are all present. No default runtime change, timing claim, allocation claim, speedup claim, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 change is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-217 defines DenseLinearNoBiasCandidateRuntimeAttachmentBoundary.",
+  "SLM-CPU-217 records candidate_runtime_owner and candidate_on_receipt_emitter as the remaining fail-closed blockers.",
+  "Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj remain the bounded candidate scope.",
+]
+may_claim = [
+  "SLM-CPU-218 may define the candidate runtime owner or receipt-emitter boundary needed for same-callsite candidate-on evidence.",
+  "SLM-CPU-218 may record the exact remaining blocker if same-callsite candidate-on receipt emission still cannot be safely attempted.",
+  "SLM-CPU-218 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
 ]
 must_not_claim = [
   "A model binary is committed.",
