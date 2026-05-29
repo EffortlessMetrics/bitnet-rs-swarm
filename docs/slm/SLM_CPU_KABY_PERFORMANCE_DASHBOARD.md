@@ -4102,6 +4102,41 @@ runtime selection, does not claim generated-ID preservation for a candidate-on
 path, and does not make allocation, timing, speedup, sustained-throughput,
 Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.
 
+## SLM-CPU-222 No-Bias Strict Receipt Artifact Pair Boundary
+
+SLM-CPU-222 consumes the SLM-CPU-221 receipt-gated candidate execution boundary
+and records the strict same-callsite artifact-pair requirements that must be met
+before a later no-bias `FeedForward::apply_linear` execution attempt can be
+considered. The current artifact remains fail-closed because the receipt-gated
+candidate execution boundary is still incomplete; no off/on artifact pair is
+present or bound to the gate, descriptor, owner/callsite, prompt, generated, and
+decoded-text identities.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-222-no-bias-strict-receipt-artifact-pair.json
+decision = blocked_fail_closed
+reason = receipt_gated_candidate_execution_boundary_incomplete
+remaining_blocker = receipt_gated_candidate_execution_boundary
+boundary = bitnet_transformer::DenseLinearNoBiasStrictReceiptArtifactPairBoundary
+receipt_gated_candidate_execution_boundary_ready = false
+candidate_off_strict_receipt_artifact_present = false
+candidate_on_strict_receipt_artifact_present = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. The next safe slice must
+produce the missing strict candidate-off/candidate-on same-callsite artifact
+pair or keep runtime candidate execution fail-closed with the exact missing
+artifact evidence recorded.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

@@ -1485,6 +1485,74 @@ pub struct DenseLinearNoBiasReceiptGatedCandidateExecutionInputs {
     pub default_runtime_path_preserved: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasStrictReceiptArtifactPairBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub receipt_gated_candidate_execution_boundary_ready: bool,
+    pub candidate_off_strict_receipt_artifact_path: Option<String>,
+    pub candidate_on_strict_receipt_artifact_path: Option<String>,
+    pub candidate_off_strict_receipt_artifact_present: bool,
+    pub candidate_on_strict_receipt_artifact_present: bool,
+    pub candidate_off_receipt_binds_gate_identity: bool,
+    pub candidate_on_receipt_binds_gate_identity: bool,
+    pub candidate_off_receipt_binds_descriptor_identity: bool,
+    pub candidate_on_receipt_binds_descriptor_identity: bool,
+    pub candidate_off_receipt_binds_owner_callsite_identity: bool,
+    pub candidate_on_receipt_binds_owner_callsite_identity: bool,
+    pub candidate_off_on_same_callsite_identity: bool,
+    pub candidate_off_on_same_prompt_digest: bool,
+    pub candidate_off_on_same_generated_digest: bool,
+    pub candidate_off_on_same_decoded_text_digest: bool,
+    pub candidate_off_on_same_model_backend_identity: bool,
+    pub default_runtime_path_preserved: bool,
+    pub candidate_execution_attempt_allowed: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasStrictReceiptArtifactPairInputs {
+    pub candidate_off_strict_receipt_artifact_path: Option<&'static str>,
+    pub candidate_on_strict_receipt_artifact_path: Option<&'static str>,
+    pub candidate_off_strict_receipt_artifact_present: bool,
+    pub candidate_on_strict_receipt_artifact_present: bool,
+    pub candidate_off_receipt_binds_gate_identity: bool,
+    pub candidate_on_receipt_binds_gate_identity: bool,
+    pub candidate_off_receipt_binds_descriptor_identity: bool,
+    pub candidate_on_receipt_binds_descriptor_identity: bool,
+    pub candidate_off_receipt_binds_owner_callsite_identity: bool,
+    pub candidate_on_receipt_binds_owner_callsite_identity: bool,
+    pub candidate_off_on_same_callsite_identity: bool,
+    pub candidate_off_on_same_prompt_digest: bool,
+    pub candidate_off_on_same_generated_digest: bool,
+    pub candidate_off_on_same_decoded_text_digest: bool,
+    pub candidate_off_on_same_model_backend_identity: bool,
+    pub default_runtime_path_preserved: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -3417,6 +3485,240 @@ impl DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary {
             descriptor_identity_present: inputs.descriptor_identity_present,
             owner_callsite_identity_present: inputs.owner_callsite_identity_present,
             prompt_generated_text_digests_bound,
+            default_runtime_path_preserved,
+            candidate_execution_attempt_allowed,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasStrictReceiptArtifactPairBoundary {
+    pub fn from_receipt_gated_candidate_execution_boundary(
+        boundary: &DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary,
+        inputs: DenseLinearNoBiasStrictReceiptArtifactPairInputs,
+    ) -> Self {
+        let mut fail_closed_conditions = boundary.fail_closed_conditions.clone();
+        let receipt_gated_candidate_execution_boundary_ready = boundary.decision
+            == "receipt_gated_candidate_execution_prereqs_ready_runtime_disabled"
+            && boundary.candidate_execution_attempt_allowed
+            && boundary.explicit_gate_identity_present
+            && boundary.descriptor_identity_present
+            && boundary.owner_callsite_identity_present
+            && boundary.prompt_generated_text_digests_bound
+            && boundary.preserves_normal_inference();
+
+        let candidate_off_strict_receipt_artifact_path = inputs
+            .candidate_off_strict_receipt_artifact_path
+            .filter(|path| !path.is_empty())
+            .map(str::to_owned);
+        let candidate_on_strict_receipt_artifact_path = inputs
+            .candidate_on_strict_receipt_artifact_path
+            .filter(|path| !path.is_empty())
+            .map(str::to_owned);
+        let candidate_off_strict_receipt_artifact_present = inputs
+            .candidate_off_strict_receipt_artifact_present
+            && candidate_off_strict_receipt_artifact_path.is_some();
+        let candidate_on_strict_receipt_artifact_present = inputs
+            .candidate_on_strict_receipt_artifact_present
+            && candidate_on_strict_receipt_artifact_path.is_some();
+        let default_runtime_path_preserved = inputs.default_runtime_path_preserved
+            && boundary.default_runtime_path_preserved
+            && boundary.selected_path == "eager_f32_candle"
+            && boundary.selected_kernel == "dense-f32-candle-linear"
+            && boundary.preserves_normal_inference();
+
+        if !receipt_gated_candidate_execution_boundary_ready {
+            fail_closed_conditions.push("receipt_gated_candidate_execution_boundary_not_ready");
+        }
+        if !candidate_off_strict_receipt_artifact_present {
+            fail_closed_conditions.push("candidate_off_strict_receipt_artifact_missing");
+        }
+        if !candidate_on_strict_receipt_artifact_present {
+            fail_closed_conditions.push("candidate_on_strict_receipt_artifact_missing");
+        }
+        if !inputs.candidate_off_receipt_binds_gate_identity {
+            fail_closed_conditions.push("candidate_off_receipt_does_not_bind_gate_identity");
+        }
+        if !inputs.candidate_on_receipt_binds_gate_identity {
+            fail_closed_conditions.push("candidate_on_receipt_does_not_bind_gate_identity");
+        }
+        if !inputs.candidate_off_receipt_binds_descriptor_identity {
+            fail_closed_conditions.push("candidate_off_receipt_does_not_bind_descriptor_identity");
+        }
+        if !inputs.candidate_on_receipt_binds_descriptor_identity {
+            fail_closed_conditions.push("candidate_on_receipt_does_not_bind_descriptor_identity");
+        }
+        if !inputs.candidate_off_receipt_binds_owner_callsite_identity {
+            fail_closed_conditions
+                .push("candidate_off_receipt_does_not_bind_owner_callsite_identity");
+        }
+        if !inputs.candidate_on_receipt_binds_owner_callsite_identity {
+            fail_closed_conditions
+                .push("candidate_on_receipt_does_not_bind_owner_callsite_identity");
+        }
+        if !inputs.candidate_off_on_same_callsite_identity {
+            fail_closed_conditions.push("candidate_off_on_callsite_identity_mismatch");
+        }
+        if !inputs.candidate_off_on_same_prompt_digest {
+            fail_closed_conditions.push("candidate_off_on_prompt_digest_mismatch");
+        }
+        if !inputs.candidate_off_on_same_generated_digest {
+            fail_closed_conditions.push("candidate_off_on_generated_digest_mismatch");
+        }
+        if !inputs.candidate_off_on_same_decoded_text_digest {
+            fail_closed_conditions.push("candidate_off_on_decoded_text_digest_mismatch");
+        }
+        if !inputs.candidate_off_on_same_model_backend_identity {
+            fail_closed_conditions.push("candidate_off_on_model_backend_identity_mismatch");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if boundary.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if boundary.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if boundary.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let candidate_execution_attempt_allowed = receipt_gated_candidate_execution_boundary_ready
+            && candidate_off_strict_receipt_artifact_present
+            && candidate_on_strict_receipt_artifact_present
+            && inputs.candidate_off_receipt_binds_gate_identity
+            && inputs.candidate_on_receipt_binds_gate_identity
+            && inputs.candidate_off_receipt_binds_descriptor_identity
+            && inputs.candidate_on_receipt_binds_descriptor_identity
+            && inputs.candidate_off_receipt_binds_owner_callsite_identity
+            && inputs.candidate_on_receipt_binds_owner_callsite_identity
+            && inputs.candidate_off_on_same_callsite_identity
+            && inputs.candidate_off_on_same_prompt_digest
+            && inputs.candidate_off_on_same_generated_digest
+            && inputs.candidate_off_on_same_decoded_text_digest
+            && inputs.candidate_off_on_same_model_backend_identity
+            && default_runtime_path_preserved
+            && boundary.runtime_api == "cpu"
+            && boundary.selected_backend == "cpu-rust"
+            && !boundary.fallback_used
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if candidate_execution_attempt_allowed {
+                (
+                    "same_callsite_strict_receipt_artifact_pair_ready_runtime_disabled",
+                    "strict_artifact_pair_binds_gate_descriptor_owner_and_preserves_outputs",
+                    "candidate_execution_enablement_requires_separate_receipt_gated_pr",
+                )
+            } else if receipt_gated_candidate_execution_boundary_ready {
+                let blocker = if !candidate_on_strict_receipt_artifact_present {
+                    "candidate_on_strict_receipt_artifact"
+                } else if !candidate_off_strict_receipt_artifact_present {
+                    "candidate_off_strict_receipt_artifact"
+                } else if !inputs.candidate_off_receipt_binds_gate_identity
+                    || !inputs.candidate_on_receipt_binds_gate_identity
+                {
+                    "strict_receipts_bind_gate_identity"
+                } else if !inputs.candidate_off_receipt_binds_descriptor_identity
+                    || !inputs.candidate_on_receipt_binds_descriptor_identity
+                {
+                    "strict_receipts_bind_descriptor_identity"
+                } else if !inputs.candidate_off_receipt_binds_owner_callsite_identity
+                    || !inputs.candidate_on_receipt_binds_owner_callsite_identity
+                    || !inputs.candidate_off_on_same_callsite_identity
+                {
+                    "strict_receipts_bind_owner_callsite_identity"
+                } else if !inputs.candidate_off_on_same_model_backend_identity {
+                    "strict_receipts_bind_model_backend_identity"
+                } else if !inputs.candidate_off_on_same_prompt_digest
+                    || !inputs.candidate_off_on_same_generated_digest
+                    || !inputs.candidate_off_on_same_decoded_text_digest
+                {
+                    "strict_receipts_preserve_prompt_generated_text_digests"
+                } else {
+                    "default_runtime_path_preservation"
+                };
+                (
+                    "same_callsite_strict_receipt_artifact_pair_blocked_fail_closed",
+                    "same_callsite_strict_receipt_artifact_pair_incomplete",
+                    blocker,
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "receipt_gated_candidate_execution_boundary_incomplete",
+                    "receipt_gated_candidate_execution_boundary",
+                )
+            };
+
+        Self {
+            tensor_name: boundary.tensor_name.clone(),
+            callsite_identity: boundary.callsite_identity.clone(),
+            model_sha256: boundary.model_sha256.clone(),
+            model_architecture: boundary.model_architecture,
+            quant_format: boundary.quant_format,
+            tokenizer_source: boundary.tokenizer_source,
+            tokenizer_strict: boundary.tokenizer_strict,
+            runtime_api: boundary.runtime_api,
+            selected_backend: boundary.selected_backend,
+            fallback_used: boundary.fallback_used,
+            selected_path: boundary.selected_path,
+            selected_kernel: boundary.selected_kernel,
+            candidate_path: boundary.candidate_path,
+            candidate_kernel: boundary.candidate_kernel,
+            prompt_ids_digest: boundary.prompt_ids_digest.clone(),
+            generated_ids_digest: boundary.generated_ids_digest.clone(),
+            decoded_text_digest: boundary.decoded_text_digest.clone(),
+            receipt_gated_candidate_execution_boundary_ready,
+            candidate_off_strict_receipt_artifact_path,
+            candidate_on_strict_receipt_artifact_path,
+            candidate_off_strict_receipt_artifact_present,
+            candidate_on_strict_receipt_artifact_present,
+            candidate_off_receipt_binds_gate_identity: inputs
+                .candidate_off_receipt_binds_gate_identity,
+            candidate_on_receipt_binds_gate_identity: inputs
+                .candidate_on_receipt_binds_gate_identity,
+            candidate_off_receipt_binds_descriptor_identity: inputs
+                .candidate_off_receipt_binds_descriptor_identity,
+            candidate_on_receipt_binds_descriptor_identity: inputs
+                .candidate_on_receipt_binds_descriptor_identity,
+            candidate_off_receipt_binds_owner_callsite_identity: inputs
+                .candidate_off_receipt_binds_owner_callsite_identity,
+            candidate_on_receipt_binds_owner_callsite_identity: inputs
+                .candidate_on_receipt_binds_owner_callsite_identity,
+            candidate_off_on_same_callsite_identity: inputs.candidate_off_on_same_callsite_identity,
+            candidate_off_on_same_prompt_digest: inputs.candidate_off_on_same_prompt_digest,
+            candidate_off_on_same_generated_digest: inputs.candidate_off_on_same_generated_digest,
+            candidate_off_on_same_decoded_text_digest: inputs
+                .candidate_off_on_same_decoded_text_digest,
+            candidate_off_on_same_model_backend_identity: inputs
+                .candidate_off_on_same_model_backend_identity,
             default_runtime_path_preserved,
             candidate_execution_attempt_allowed,
             normal_inference_runtime_selection_enabled: false,
@@ -13221,5 +13523,271 @@ mod tests {
         assert!(!execution.allocation_reduction_claim);
         assert!(!execution.timing_improvement_claim);
         assert!(!execution.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_strict_receipt_artifact_pair_records_execution_boundary_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+        let attachment =
+            DenseLinearNoBiasCandidateRuntimeAttachmentBoundary::from_candidate_on_behavior_gate(
+                &behavior_gate,
+                true,
+                true,
+                false,
+                false,
+                false,
+            );
+        let owner =
+            DenseLinearNoBiasCandidateRuntimeOwnerBoundary::from_runtime_attachment_boundary(
+                &attachment,
+                DenseLinearNoBiasCandidateRuntimeOwnerInputs {
+                    apply_linear_runtime_owner_present: true,
+                    owner_has_apply_linear_inputs: true,
+                    owner_has_linear_weight_access: true,
+                    candidate_compute_callable: true,
+                    same_callsite_candidate_on_receipt_emitter_wired: false,
+                    candidate_off_on_strict_receipts_present: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
+            );
+        let emitter =
+            DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterBoundary::from_runtime_owner_boundary(
+                &owner,
+                DenseLinearNoBiasSameCallsiteCandidateReceiptEmitterInputs {
+                    same_callsite_candidate_receipt_emitter_present: true,
+                    candidate_off_strict_receipt_present: false,
+                    candidate_on_strict_receipt_present: false,
+                    strict_receipts_bind_owner_identity: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
+            );
+        let receipts =
+            DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary::from_same_callsite_receipt_emitter_boundary(
+                &emitter,
+                DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptInputs {
+                    candidate_off_strict_receipt_artifact_present: false,
+                    candidate_on_strict_receipt_artifact_present: false,
+                    candidate_off_receipt_binds_owner_identity: false,
+                    candidate_on_receipt_binds_owner_identity: false,
+                    candidate_off_on_same_callsite_identity: false,
+                    prompt_ids_preserved: false,
+                    generated_ids_preserved: false,
+                    decoded_text_preserved: false,
+                },
+            );
+        let execution =
+            DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary::from_off_on_strict_receipt_boundary(
+                &receipts,
+                DenseLinearNoBiasReceiptGatedCandidateExecutionInputs {
+                    explicit_gate_identity_present: true,
+                    descriptor_identity_present: true,
+                    owner_callsite_identity_present: true,
+                    prompt_generated_text_digests_bound: true,
+                    explicit_candidate_execution_gate_requested: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        let artifact_pair =
+            DenseLinearNoBiasStrictReceiptArtifactPairBoundary::from_receipt_gated_candidate_execution_boundary(
+                &execution,
+                DenseLinearNoBiasStrictReceiptArtifactPairInputs {
+                    candidate_off_strict_receipt_artifact_path: None,
+                    candidate_on_strict_receipt_artifact_path: None,
+                    candidate_off_strict_receipt_artifact_present: false,
+                    candidate_on_strict_receipt_artifact_present: false,
+                    candidate_off_receipt_binds_gate_identity: false,
+                    candidate_on_receipt_binds_gate_identity: false,
+                    candidate_off_receipt_binds_descriptor_identity: false,
+                    candidate_on_receipt_binds_descriptor_identity: false,
+                    candidate_off_receipt_binds_owner_callsite_identity: false,
+                    candidate_on_receipt_binds_owner_callsite_identity: false,
+                    candidate_off_on_same_callsite_identity: false,
+                    candidate_off_on_same_prompt_digest: false,
+                    candidate_off_on_same_generated_digest: false,
+                    candidate_off_on_same_decoded_text_digest: false,
+                    candidate_off_on_same_model_backend_identity: false,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(artifact_pair.decision, "blocked_fail_closed");
+        assert_eq!(
+            artifact_pair.remaining_runtime_selection_blocker,
+            "receipt_gated_candidate_execution_boundary"
+        );
+        assert!(!artifact_pair.receipt_gated_candidate_execution_boundary_ready);
+        assert!(!artifact_pair.candidate_execution_attempt_allowed);
+        assert!(
+            artifact_pair
+                .fail_closed_conditions
+                .contains(&"receipt_gated_candidate_execution_boundary_not_ready")
+        );
+        assert!(
+            artifact_pair
+                .fail_closed_conditions
+                .contains(&"candidate_on_strict_receipt_artifact_missing")
+        );
+        assert!(artifact_pair.preserves_normal_inference());
+        assert!(!artifact_pair.candidate_execution_enabled);
+        assert!(!artifact_pair.normal_inference_runtime_selection_enabled);
+        assert!(!artifact_pair.allocation_reduction_claim);
+        assert!(!artifact_pair.timing_improvement_claim);
+        assert!(!artifact_pair.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_strict_receipt_artifact_pair_blocks_missing_candidate_on_artifact() {
+        let receipts = slm_cpu_220_ready_off_on_boundary(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let execution =
+            DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary::from_off_on_strict_receipt_boundary(
+                &receipts,
+                DenseLinearNoBiasReceiptGatedCandidateExecutionInputs {
+                    explicit_gate_identity_present: true,
+                    descriptor_identity_present: true,
+                    owner_callsite_identity_present: true,
+                    prompt_generated_text_digests_bound: true,
+                    explicit_candidate_execution_gate_requested: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        let artifact_pair =
+            DenseLinearNoBiasStrictReceiptArtifactPairBoundary::from_receipt_gated_candidate_execution_boundary(
+                &execution,
+                DenseLinearNoBiasStrictReceiptArtifactPairInputs {
+                    candidate_off_strict_receipt_artifact_path: Some("ci/slm-cpu/qwen3-candidate-off.json"),
+                    candidate_on_strict_receipt_artifact_path: None,
+                    candidate_off_strict_receipt_artifact_present: true,
+                    candidate_on_strict_receipt_artifact_present: false,
+                    candidate_off_receipt_binds_gate_identity: true,
+                    candidate_on_receipt_binds_gate_identity: false,
+                    candidate_off_receipt_binds_descriptor_identity: true,
+                    candidate_on_receipt_binds_descriptor_identity: false,
+                    candidate_off_receipt_binds_owner_callsite_identity: true,
+                    candidate_on_receipt_binds_owner_callsite_identity: false,
+                    candidate_off_on_same_callsite_identity: false,
+                    candidate_off_on_same_prompt_digest: true,
+                    candidate_off_on_same_generated_digest: false,
+                    candidate_off_on_same_decoded_text_digest: false,
+                    candidate_off_on_same_model_backend_identity: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(
+            artifact_pair.decision,
+            "same_callsite_strict_receipt_artifact_pair_blocked_fail_closed"
+        );
+        assert_eq!(
+            artifact_pair.remaining_runtime_selection_blocker,
+            "candidate_on_strict_receipt_artifact"
+        );
+        assert!(artifact_pair.receipt_gated_candidate_execution_boundary_ready);
+        assert!(artifact_pair.candidate_off_strict_receipt_artifact_present);
+        assert!(!artifact_pair.candidate_on_strict_receipt_artifact_present);
+        assert_eq!(
+            artifact_pair.candidate_off_strict_receipt_artifact_path.as_deref(),
+            Some("ci/slm-cpu/qwen3-candidate-off.json")
+        );
+        assert!(!artifact_pair.candidate_execution_attempt_allowed);
+        assert!(
+            artifact_pair
+                .fail_closed_conditions
+                .contains(&"candidate_on_strict_receipt_artifact_missing")
+        );
+        assert!(artifact_pair.preserves_normal_inference());
+        assert!(!artifact_pair.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_strict_receipt_artifact_pair_models_ready_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let receipts = slm_cpu_220_ready_off_on_boundary(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+        let execution =
+            DenseLinearNoBiasReceiptGatedCandidateExecutionBoundary::from_off_on_strict_receipt_boundary(
+                &receipts,
+                DenseLinearNoBiasReceiptGatedCandidateExecutionInputs {
+                    explicit_gate_identity_present: true,
+                    descriptor_identity_present: true,
+                    owner_callsite_identity_present: true,
+                    prompt_generated_text_digests_bound: true,
+                    explicit_candidate_execution_gate_requested: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        let artifact_pair =
+            DenseLinearNoBiasStrictReceiptArtifactPairBoundary::from_receipt_gated_candidate_execution_boundary(
+                &execution,
+                DenseLinearNoBiasStrictReceiptArtifactPairInputs {
+                    candidate_off_strict_receipt_artifact_path: Some("ci/slm-cpu/qwen25-candidate-off.json"),
+                    candidate_on_strict_receipt_artifact_path: Some("ci/slm-cpu/qwen25-candidate-on.json"),
+                    candidate_off_strict_receipt_artifact_present: true,
+                    candidate_on_strict_receipt_artifact_present: true,
+                    candidate_off_receipt_binds_gate_identity: true,
+                    candidate_on_receipt_binds_gate_identity: true,
+                    candidate_off_receipt_binds_descriptor_identity: true,
+                    candidate_on_receipt_binds_descriptor_identity: true,
+                    candidate_off_receipt_binds_owner_callsite_identity: true,
+                    candidate_on_receipt_binds_owner_callsite_identity: true,
+                    candidate_off_on_same_callsite_identity: true,
+                    candidate_off_on_same_prompt_digest: true,
+                    candidate_off_on_same_generated_digest: true,
+                    candidate_off_on_same_decoded_text_digest: true,
+                    candidate_off_on_same_model_backend_identity: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(
+            artifact_pair.decision,
+            "same_callsite_strict_receipt_artifact_pair_ready_runtime_disabled"
+        );
+        assert_eq!(artifact_pair.model_architecture, "qwen2");
+        assert_eq!(artifact_pair.model_sha256, qwen25_sha);
+        assert_eq!(artifact_pair.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        assert!(artifact_pair.receipt_gated_candidate_execution_boundary_ready);
+        assert!(artifact_pair.candidate_off_strict_receipt_artifact_present);
+        assert!(artifact_pair.candidate_on_strict_receipt_artifact_present);
+        assert!(artifact_pair.candidate_off_receipt_binds_gate_identity);
+        assert!(artifact_pair.candidate_on_receipt_binds_gate_identity);
+        assert!(artifact_pair.candidate_off_receipt_binds_descriptor_identity);
+        assert!(artifact_pair.candidate_on_receipt_binds_descriptor_identity);
+        assert!(artifact_pair.candidate_off_receipt_binds_owner_callsite_identity);
+        assert!(artifact_pair.candidate_on_receipt_binds_owner_callsite_identity);
+        assert!(artifact_pair.candidate_off_on_same_callsite_identity);
+        assert!(artifact_pair.candidate_off_on_same_prompt_digest);
+        assert!(artifact_pair.candidate_off_on_same_generated_digest);
+        assert!(artifact_pair.candidate_off_on_same_decoded_text_digest);
+        assert!(artifact_pair.candidate_off_on_same_model_backend_identity);
+        assert!(artifact_pair.candidate_execution_attempt_allowed);
+        assert!(artifact_pair.fail_closed_conditions.is_empty());
+        assert!(artifact_pair.preserves_normal_inference());
+        assert!(!artifact_pair.candidate_execution_enabled);
+        assert!(!artifact_pair.normal_inference_runtime_selection_enabled);
+        assert!(!artifact_pair.allocation_reduction_claim);
+        assert!(!artifact_pair.timing_improvement_claim);
+        assert!(!artifact_pair.speedup_claim);
     }
 }
