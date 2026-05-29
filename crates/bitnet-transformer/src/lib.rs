@@ -930,6 +930,129 @@ impl DenseLinearNoBiasRuntimeDescriptorContract {
     }
 }
 
+/// Apply-linear audit boundary for a manifest-bound no-bias descriptor.
+///
+/// This boundary models the last check before a future `FeedForward` runtime
+/// selector. It proves whether the descriptor identity matches the dense tensor
+/// callsite, but it still preserves eager F32 Candle execution.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasApplyLinearAuditBoundary {
+    pub tensor_name: String,
+    pub role_id: String,
+    pub model_sha256: String,
+    pub quant_format: &'static str,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_requested_enabled: bool,
+    pub descriptor_decision: &'static str,
+    pub descriptor_ready_for_future_receipt_gate: bool,
+    pub callsite_descriptor_observed: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+impl DenseLinearNoBiasApplyLinearAuditBoundary {
+    pub fn from_descriptor_contract(
+        tensor_name: impl Into<String>,
+        contract: &DenseLinearNoBiasRuntimeDescriptorContract,
+        runtime_gate_requested_enabled: bool,
+    ) -> Self {
+        let tensor_name = tensor_name.into();
+        let expected_tensor_name =
+            format!("layers.{}.{}.{}.weight", contract.layer_idx, contract.scope, contract.linear);
+        let mut fail_closed_conditions = contract.fail_closed_conditions.clone();
+        if tensor_name != expected_tensor_name {
+            fail_closed_conditions.push("tensor_name_not_descriptor_role");
+        }
+        if contract.role_id
+            != format!("layers.{}.{}.{}", contract.layer_idx, contract.scope, contract.linear)
+        {
+            fail_closed_conditions.push("role_id_not_descriptor_role");
+        }
+        if !runtime_gate_requested_enabled {
+            fail_closed_conditions.push("runtime_gate_not_requested");
+        }
+        if contract.selected_path != "eager_f32_candle"
+            || contract.selected_kernel != "dense-f32-candle-linear"
+            || !contract.preserves_normal_inference()
+        {
+            fail_closed_conditions.push("descriptor_does_not_preserve_eager_f32");
+        }
+
+        let callsite_descriptor_observed = fail_closed_conditions.is_empty();
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if callsite_descriptor_observed {
+                (
+                    "descriptor_observed_at_apply_linear_runtime_disabled",
+                    "exact_qwen3_down_proj_descriptor_matches_dense_tensor_callsite",
+                    "fresh_before_after_strict_warm_session_receipts_and_receipt_emission_wiring",
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "descriptor_identity_or_gate_not_valid_for_apply_linear_callsite",
+                    "descriptor_callsite_identity_or_runtime_gate",
+                )
+            };
+
+        Self {
+            tensor_name,
+            role_id: contract.role_id.clone(),
+            model_sha256: contract.model_sha256.clone(),
+            quant_format: contract.quant_format,
+            manifest_sha256: contract.manifest_sha256.clone(),
+            layer_idx: contract.layer_idx,
+            scope: contract.scope,
+            linear: contract.linear,
+            bias_present: contract.bias_present,
+            runtime_gate_name: contract.runtime_gate_name,
+            runtime_gate_requested_enabled,
+            descriptor_decision: contract.decision,
+            descriptor_ready_for_future_receipt_gate: contract
+                .descriptor_ready_for_future_receipt_gate,
+            callsite_descriptor_observed,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            candidate_path: contract.candidate_path,
+            candidate_kernel: contract.candidate_kernel,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
 impl DenseLinearRuntimeHookBoundary {
     pub fn eager_f32(tensor_name: impl Into<String>) -> Self {
         Self {

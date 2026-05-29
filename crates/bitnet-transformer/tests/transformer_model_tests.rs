@@ -14,10 +14,10 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasRuntimeDescriptorContract,
-    DenseLinearNoBiasRuntimeSelectionPreflight, DenseLinearNoBiasSelectorAudit,
-    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
-    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasApplyLinearAuditBoundary, DenseLinearNoBiasFastPathCandidate,
+    DenseLinearNoBiasRuntimeDescriptorContract, DenseLinearNoBiasRuntimeSelectionPreflight,
+    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
+    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
     LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
     TransformerForwardWorkspace, TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
@@ -942,6 +942,93 @@ fn no_bias_runtime_descriptor_contract_fails_closed_before_compute() {
     assert!(!contract.descriptor_ready_for_future_receipt_gate);
     assert!(!contract.normal_inference_runtime_selection_enabled);
     assert!(contract.preserves_normal_inference());
+}
+
+#[test]
+fn no_bias_apply_linear_audit_boundary_observes_descriptor_without_runtime_selection() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        3,
+        "layers.3.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight,
+        "Q8_0",
+        Some(false),
+        true,
+        true,
+    );
+    let boundary = DenseLinearNoBiasApplyLinearAuditBoundary::from_descriptor_contract(
+        "layers.3.feed_forward.down_proj.weight",
+        &contract,
+        true,
+    );
+
+    assert_eq!(boundary.decision, "descriptor_observed_at_apply_linear_runtime_disabled");
+    assert_eq!(boundary.reason, "exact_qwen3_down_proj_descriptor_matches_dense_tensor_callsite");
+    assert_eq!(boundary.tensor_name, "layers.3.feed_forward.down_proj.weight");
+    assert_eq!(boundary.role_id, "layers.3.feed_forward.down_proj");
+    assert_eq!(boundary.layer_idx, 3);
+    assert_eq!(boundary.scope, "feed_forward");
+    assert_eq!(boundary.linear, "down_proj");
+    assert_eq!(boundary.bias_present, Some(false));
+    assert!(boundary.runtime_gate_requested_enabled);
+    assert_eq!(boundary.descriptor_decision, "descriptor_contract_ready_runtime_disabled");
+    assert!(boundary.descriptor_ready_for_future_receipt_gate);
+    assert!(boundary.callsite_descriptor_observed);
+    assert_eq!(boundary.selected_path, "eager_f32_candle");
+    assert_eq!(boundary.selected_kernel, "dense-f32-candle-linear");
+    assert_eq!(boundary.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
+    assert_eq!(boundary.candidate_kernel, "dense-f32-no-bias-matmul-candidate");
+    assert!(!boundary.normal_inference_runtime_selection_enabled);
+    assert!(!boundary.candidate_execution_enabled);
+    assert_eq!(
+        boundary.remaining_runtime_selection_blocker,
+        "fresh_before_after_strict_warm_session_receipts_and_receipt_emission_wiring"
+    );
+    assert!(boundary.fail_closed_conditions.is_empty());
+    assert!(boundary.preserves_normal_inference());
+    assert!(!boundary.allocation_reduction_claim);
+    assert!(!boundary.timing_improvement_claim);
+    assert!(!boundary.speedup_claim);
+}
+
+#[test]
+fn no_bias_apply_linear_audit_boundary_fails_closed_for_wrong_callsite_or_gate() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        3,
+        "layers.3.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight,
+        "Q8_0",
+        Some(false),
+        true,
+        true,
+    );
+    let boundary = DenseLinearNoBiasApplyLinearAuditBoundary::from_descriptor_contract(
+        "layers.3.feed_forward.up_proj.weight",
+        &contract,
+        false,
+    );
+
+    assert_eq!(boundary.decision, "blocked_fail_closed");
+    assert_eq!(boundary.reason, "descriptor_identity_or_gate_not_valid_for_apply_linear_callsite");
+    assert!(boundary.fail_closed_conditions.contains(&"tensor_name_not_descriptor_role"));
+    assert!(boundary.fail_closed_conditions.contains(&"runtime_gate_not_requested"));
+    assert!(!boundary.callsite_descriptor_observed);
+    assert!(!boundary.normal_inference_runtime_selection_enabled);
+    assert!(!boundary.candidate_execution_enabled);
+    assert!(boundary.preserves_normal_inference());
 }
 
 #[test]
