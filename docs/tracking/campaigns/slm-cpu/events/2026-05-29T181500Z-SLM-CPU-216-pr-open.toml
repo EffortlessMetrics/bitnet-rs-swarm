@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T18:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-216"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 965
+head_sha = "1f6016132e8f31a667fd0ab39ff729be015944b6"
+branch = "codex/slm-cpu-216-no-bias-candidate-on-evidence"
+summary = "Opened SLM-CPU-216 no-bias candidate-on behavior evidence gate PR."
+notes = [
+  "PR #965 defines DenseLinearNoBiasCandidateOnBehaviorEvidenceGate after the SLM-CPU-215 candidate off/on receipt-pair gate.",
+  "The slice records the remaining candidate-on blocker as the missing FeedForward::apply_linear runtime attachment point and complete strict receipt fields.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

@@ -1201,6 +1201,45 @@ pub struct DenseLinearNoBiasCandidateOffOnReceiptPairGate {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasCandidateOnBehaviorEvidenceGate {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub candidate_off_on_pair_gate_ready: bool,
+    pub candidate_on_behavior_evidence_present: bool,
+    pub candidate_on_runtime_attachment_point_present: bool,
+    pub candidate_on_receipt_fields_complete: bool,
+    pub explicit_runtime_gate_requested: bool,
+    pub prompt_ids_preserved: bool,
+    pub generated_ids_preserved: bool,
+    pub decoded_text_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -2126,6 +2165,163 @@ impl DenseLinearNoBiasCandidateOffOnReceiptPairGate {
             && self.runtime_api == "cpu"
             && self.selected_backend == "cpu-rust"
             && !self.fallback_used
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasCandidateOnBehaviorEvidenceGate {
+    pub fn from_candidate_off_on_pair_gate(
+        pair_gate: &DenseLinearNoBiasCandidateOffOnReceiptPairGate,
+        candidate_on_behavior_evidence_present: bool,
+        candidate_on_runtime_attachment_point_present: bool,
+        candidate_on_receipt_fields_complete: bool,
+    ) -> Self {
+        let mut fail_closed_conditions = pair_gate.fail_closed_conditions.clone();
+        let candidate_off_on_pair_gate_ready = pair_gate.decision
+            == "candidate_off_on_receipt_pair_gate_ready_runtime_disabled"
+            && pair_gate.fail_closed_conditions.is_empty();
+        let default_runtime_path_preserved = pair_gate.selected_path == "eager_f32_candle"
+            && pair_gate.selected_kernel == "dense-f32-candle-linear"
+            && pair_gate.preserves_normal_inference();
+
+        if !candidate_off_on_pair_gate_ready {
+            fail_closed_conditions.push("candidate_off_on_pair_gate_not_ready");
+        }
+        if !candidate_on_behavior_evidence_present {
+            fail_closed_conditions.push("candidate_on_behavior_evidence_missing");
+        }
+        if !candidate_on_runtime_attachment_point_present {
+            fail_closed_conditions.push("candidate_on_runtime_attachment_point_missing");
+        }
+        if !candidate_on_receipt_fields_complete {
+            fail_closed_conditions.push("candidate_on_receipt_fields_incomplete");
+        }
+        if !pair_gate.explicit_runtime_gate_requested {
+            fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+        }
+        if !pair_gate.prompt_ids_preserved {
+            fail_closed_conditions.push("prompt_ids_not_preserved");
+        }
+        if !pair_gate.generated_ids_preserved {
+            fail_closed_conditions.push("generated_ids_not_preserved");
+        }
+        if !pair_gate.decoded_text_preserved {
+            fail_closed_conditions.push("decoded_text_not_preserved");
+        }
+        if pair_gate.prompt_ids_digest.is_empty() {
+            fail_closed_conditions.push("prompt_ids_digest_missing");
+        }
+        if pair_gate.generated_ids_digest.is_empty() {
+            fail_closed_conditions.push("generated_ids_digest_missing");
+        }
+        if pair_gate.decoded_text_digest.is_empty() {
+            fail_closed_conditions.push("decoded_text_digest_missing");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if pair_gate.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if pair_gate.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if pair_gate.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let candidate_on_behavior_evidence_ready = candidate_off_on_pair_gate_ready
+            && candidate_on_behavior_evidence_present
+            && candidate_on_runtime_attachment_point_present
+            && candidate_on_receipt_fields_complete
+            && pair_gate.explicit_runtime_gate_requested
+            && pair_gate.prompt_ids_preserved
+            && pair_gate.generated_ids_preserved
+            && pair_gate.decoded_text_preserved
+            && default_runtime_path_preserved
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if candidate_on_behavior_evidence_ready {
+                (
+                    "candidate_on_behavior_evidence_ready_runtime_disabled",
+                    "candidate_on_behavior_preserves_strict_warm_session_identity",
+                    "candidate_execution_enablement_pr_must_consume_behavior_evidence_gate",
+                )
+            } else if candidate_off_on_pair_gate_ready {
+                let blocker = if !candidate_on_runtime_attachment_point_present {
+                    "candidate_on_apply_linear_runtime_attachment_point"
+                } else if !candidate_on_receipt_fields_complete {
+                    "candidate_on_strict_receipt_fields"
+                } else {
+                    "candidate_on_strict_warm_session_receipt_artifact"
+                };
+                (
+                    "candidate_on_behavior_evidence_gate_defined_fail_closed",
+                    "candidate_on_behavior_evidence_or_runtime_attachment_incomplete",
+                    blocker,
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "candidate_off_on_pair_gate_incomplete",
+                    "candidate_off_on_receipt_pair_gate",
+                )
+            };
+
+        Self {
+            tensor_name: pair_gate.tensor_name.clone(),
+            callsite_identity: pair_gate.callsite_identity.clone(),
+            model_sha256: pair_gate.model_sha256.clone(),
+            model_architecture: pair_gate.model_architecture,
+            quant_format: pair_gate.quant_format,
+            tokenizer_source: pair_gate.tokenizer_source,
+            tokenizer_strict: pair_gate.tokenizer_strict,
+            runtime_api: pair_gate.runtime_api,
+            selected_backend: pair_gate.selected_backend,
+            fallback_used: pair_gate.fallback_used,
+            selected_path: pair_gate.selected_path,
+            selected_kernel: pair_gate.selected_kernel,
+            candidate_path: pair_gate.candidate_path,
+            candidate_kernel: pair_gate.candidate_kernel,
+            prompt_ids_digest: pair_gate.prompt_ids_digest.clone(),
+            generated_ids_digest: pair_gate.generated_ids_digest.clone(),
+            decoded_text_digest: pair_gate.decoded_text_digest.clone(),
+            candidate_off_on_pair_gate_ready,
+            candidate_on_behavior_evidence_present,
+            candidate_on_runtime_attachment_point_present,
+            candidate_on_receipt_fields_complete,
+            explicit_runtime_gate_requested: pair_gate.explicit_runtime_gate_requested,
+            prompt_ids_preserved: pair_gate.prompt_ids_preserved,
+            generated_ids_preserved: pair_gate.generated_ids_preserved,
+            decoded_text_preserved: pair_gate.decoded_text_preserved,
+            default_runtime_path_preserved,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
             && !self.normal_inference_runtime_selection_enabled
             && !self.candidate_execution_enabled
             && !self.allocation_reduction_claim
@@ -10228,6 +10424,35 @@ mod tests {
         }
     }
 
+    fn slm_cpu_216_ready_pair_gate(
+        model_sha256: &str,
+        model_architecture: &'static str,
+        candidate_path: &'static str,
+    ) -> DenseLinearNoBiasCandidateOffOnReceiptPairGate {
+        let gate = slm_cpu_211_test_gate(model_sha256, candidate_path);
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            model_architecture,
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:before-after",
+            true,
+        );
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+                true,
+                true,
+                true,
+            );
+
+        DenseLinearNoBiasCandidateOffOnReceiptPairGate::from_per_callsite_emitter(
+            &emitter, true, true, true, true, true,
+        )
+    }
+
     #[test]
     fn no_bias_apply_linear_receipt_bound_selector_carries_qwen3_identity_runtime_disabled() {
         let gate = slm_cpu_211_test_gate(
@@ -10706,5 +10931,135 @@ mod tests {
         assert!(pair_gate.fail_closed_conditions.contains(&"generated_ids_not_preserved"));
         assert!(pair_gate.preserves_normal_inference());
         assert!(!pair_gate.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_candidate_on_behavior_gate_blocks_missing_runtime_attachment() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, false, false, false,
+            );
+
+        assert_eq!(
+            behavior_gate.decision,
+            "candidate_on_behavior_evidence_gate_defined_fail_closed"
+        );
+        assert_eq!(
+            behavior_gate.remaining_runtime_selection_blocker,
+            "candidate_on_apply_linear_runtime_attachment_point"
+        );
+        assert!(behavior_gate.candidate_off_on_pair_gate_ready);
+        assert!(!behavior_gate.candidate_on_behavior_evidence_present);
+        assert!(!behavior_gate.candidate_on_runtime_attachment_point_present);
+        assert!(!behavior_gate.candidate_on_receipt_fields_complete);
+        assert!(
+            behavior_gate
+                .fail_closed_conditions
+                .contains(&"candidate_on_behavior_evidence_missing")
+        );
+        assert!(
+            behavior_gate
+                .fail_closed_conditions
+                .contains(&"candidate_on_runtime_attachment_point_missing")
+        );
+        assert!(
+            behavior_gate
+                .fail_closed_conditions
+                .contains(&"candidate_on_receipt_fields_incomplete")
+        );
+        assert!(behavior_gate.preserves_normal_inference());
+        assert!(!behavior_gate.candidate_execution_enabled);
+        assert!(!behavior_gate.normal_inference_runtime_selection_enabled);
+        assert!(!behavior_gate.allocation_reduction_claim);
+        assert!(!behavior_gate.timing_improvement_claim);
+        assert!(!behavior_gate.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_candidate_on_behavior_gate_models_ready_evidence_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+
+        assert_eq!(behavior_gate.decision, "candidate_on_behavior_evidence_ready_runtime_disabled");
+        assert_eq!(
+            behavior_gate.reason,
+            "candidate_on_behavior_preserves_strict_warm_session_identity"
+        );
+        assert_eq!(behavior_gate.model_architecture, "qwen2");
+        assert_eq!(behavior_gate.model_sha256, qwen25_sha);
+        assert_eq!(behavior_gate.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        assert!(behavior_gate.candidate_off_on_pair_gate_ready);
+        assert!(behavior_gate.candidate_on_behavior_evidence_present);
+        assert!(behavior_gate.candidate_on_runtime_attachment_point_present);
+        assert!(behavior_gate.candidate_on_receipt_fields_complete);
+        assert!(behavior_gate.prompt_ids_preserved);
+        assert!(behavior_gate.generated_ids_preserved);
+        assert!(behavior_gate.decoded_text_preserved);
+        assert!(behavior_gate.default_runtime_path_preserved);
+        assert!(behavior_gate.fail_closed_conditions.is_empty());
+        assert!(behavior_gate.preserves_normal_inference());
+        assert!(!behavior_gate.candidate_execution_enabled);
+        assert!(!behavior_gate.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_candidate_on_behavior_gate_rejects_incomplete_pair_gate() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+                true,
+                true,
+                true,
+            );
+        let pair_gate = DenseLinearNoBiasCandidateOffOnReceiptPairGate::from_per_callsite_emitter(
+            &emitter, true, false, true, true, true,
+        );
+
+        let behavior_gate =
+            DenseLinearNoBiasCandidateOnBehaviorEvidenceGate::from_candidate_off_on_pair_gate(
+                &pair_gate, true, true, true,
+            );
+
+        assert_eq!(behavior_gate.decision, "blocked_fail_closed");
+        assert_eq!(
+            behavior_gate.remaining_runtime_selection_blocker,
+            "candidate_off_on_receipt_pair_gate"
+        );
+        assert!(!behavior_gate.candidate_off_on_pair_gate_ready);
+        assert!(
+            behavior_gate.fail_closed_conditions.contains(&"candidate_off_on_pair_gate_not_ready")
+        );
+        assert!(behavior_gate.fail_closed_conditions.contains(&"candidate_on_receipt_missing"));
+        assert!(behavior_gate.preserves_normal_inference());
+        assert!(!behavior_gate.candidate_execution_enabled);
     }
 }
