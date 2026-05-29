@@ -1,0 +1,23 @@
+timestamp = "2026-05-29T21:01:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-220"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 978
+head_sha = "08eb118753a87c99127f9e16e42c3e89c8295477"
+merge_sha = "21b859c6c829c9a7ba154d2407842189cfb34319"
+branch = "codex/slm-cpu-220-no-bias-candidate-off-on-strict-receipts"
+summary = "Merged SLM-CPU-220 no-bias candidate-off/on strict receipt boundary and queued SLM-CPU-221."
+notes = [
+  "PR #978 records DenseLinearNoBiasSameCallsiteCandidateOffOnStrictReceiptBoundary after the SLM-CPU-219 same-callsite receipt-emitter boundary.",
+  "The merged slice keeps candidate execution and normal inference runtime selection disabled and records candidate_on_strict_receipt_artifact as the remaining runtime-selection blocker.",
+  "SLM-CPU-221 is ready to capture or precisely block the explicit receipt-gated candidate execution attempt without making allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.",
+]
+
+[[actions]]
+item = "SLM-CPU-221"
+action = "ready"
+branch = "codex/slm-cpu-221-no-bias-receipt-gated-candidate-execution"
+summary = "Queue the explicit receipt-gated no-bias candidate execution attempt slice."
