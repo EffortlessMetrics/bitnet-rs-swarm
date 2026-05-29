@@ -1,0 +1,358 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_apply_linear_receipt_pairs",
+  "tracking_item": "SLM-CPU-209",
+  "consumes_tracking_items": [
+    "SLM-CPU-208"
+  ],
+  "generated_at_utc": "2026-05-29T08:44:50Z",
+  "host": {
+    "machine": "intel-i5-8250u",
+    "cpu_model": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+    "physical_cores": 4,
+    "logical_processors": 8,
+    "rayon_num_threads": 4,
+    "power_mode": "Balanced"
+  },
+  "decision": "fresh_explicit_path_qwen3_qwen25_receipt_pairs_captured_candidate_disabled",
+  "summary": "Fresh strict warm-session before/after receipts were captured for explicit-path Qwen3 Q8_0 and Qwen2.5 Q8_0 through the SLM-CPU-208 wired no-bias apply-linear gate. Model SHA, quant format, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, candidate path/kernel, descriptor/callsite identity, runtime gate state, and fallback=false are preserved. Candidate execution and normal runtime selection remain disabled.",
+  "environment": {
+    "BITNET_STRICT_MODE": "1",
+    "BITNET_DISABLE_MINIMAL_LOADER": "1",
+    "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME": "0",
+    "RAYON_NUM_THREADS": "4"
+  },
+  "receipt_pairs": {
+    "qwen3_q8_0": {
+      "before": {
+        "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-before.json",
+        "sha256": "5179acb30999ee01c3f21bcc86db795e1e52b9e92846e0c850c830e635efdbb8",
+        "model": {
+          "architecture": "qwen3",
+          "repo": "Qwen/Qwen3-0.6B-GGUF",
+          "file": "Qwen3-0.6B-Q8_0.gguf",
+          "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+          "quant_format": null,
+          "loader_mode": "real_gguf"
+        },
+        "tokenizer": {
+          "source": "gguf_metadata",
+          "strict": true
+        },
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "generation": {
+          "prompt_template": "qwen",
+          "qwen_no_think": true,
+          "deterministic": true,
+          "max_new_tokens": 1,
+          "temperature": 0.0,
+          "greedy": null
+        },
+        "first_prompt": {
+          "generated_token_ids": [
+            17
+          ],
+          "decoded_text": "2",
+          "prompt_ids_digest": "ebba2490dc867a1b172e91cf726e563fcdb39ef255af00dfcfcc2f40dad264d2",
+          "generated_ids_digest": "27520bee24e9acd7720bea9883fe3a49450a63338a1056e4aeb581084812ceb0",
+          "decoded_text_digest": "1a653d6d311b1c049b0c463533213bad67cc1419595a6e751bf6c511f36982e3"
+        },
+        "gate": {
+          "artifact_kind": "dense_no_bias_apply_linear_receipt_emitter_gate",
+          "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+          "tracking_item": "SLM-CPU-203",
+          "selected_path": "eager_f32_candle",
+          "selected_kernel": "dense-f32-candle-linear",
+          "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+          "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+          "role_id": "layers.0.feed_forward.down_proj",
+          "layer": 0,
+          "scope": "feed_forward",
+          "linear": "down_proj",
+          "tensor_name": "layers.0.feed_forward.down_proj.weight",
+          "manifest_sha256": "42728ecadfc53c5e0eaeb4a073af385b9b3d8c9dfe879a9afc44fe06c7432876",
+          "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+          "quant_format": "Q8_0",
+          "bias_present": false,
+          "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+          "runtime_gate_requested_enabled": false,
+          "candidate_execution_enabled": false,
+          "normal_inference_runtime_selection_enabled": false,
+          "before_after_receipts_present": false,
+          "descriptor_callsite_identity_preserved": true,
+          "prompt_ids_digest_preserved": true,
+          "generated_ids_digest_preserved": true,
+          "decoded_text_digest_preserved": true,
+          "fallback_used": false,
+          "decision": "blocked_pending_before_after_warm_session_receipts",
+          "reason": "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured"
+        }
+      },
+      "after": {
+        "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-after.json",
+        "sha256": "9c1dcfe021658fdfc7c4d46bee2ec1ec3a3b29f7cc54c6b2addba049e55d4e9c",
+        "model": {
+          "architecture": "qwen3",
+          "repo": "Qwen/Qwen3-0.6B-GGUF",
+          "file": "Qwen3-0.6B-Q8_0.gguf",
+          "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+          "quant_format": null,
+          "loader_mode": "real_gguf"
+        },
+        "tokenizer": {
+          "source": "gguf_metadata",
+          "strict": true
+        },
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "generation": {
+          "prompt_template": "qwen",
+          "qwen_no_think": true,
+          "deterministic": true,
+          "max_new_tokens": 1,
+          "temperature": 0.0,
+          "greedy": null
+        },
+        "first_prompt": {
+          "generated_token_ids": [
+            17
+          ],
+          "decoded_text": "2",
+          "prompt_ids_digest": "ebba2490dc867a1b172e91cf726e563fcdb39ef255af00dfcfcc2f40dad264d2",
+          "generated_ids_digest": "27520bee24e9acd7720bea9883fe3a49450a63338a1056e4aeb581084812ceb0",
+          "decoded_text_digest": "1a653d6d311b1c049b0c463533213bad67cc1419595a6e751bf6c511f36982e3"
+        },
+        "gate": {
+          "artifact_kind": "dense_no_bias_apply_linear_receipt_emitter_gate",
+          "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+          "tracking_item": "SLM-CPU-203",
+          "selected_path": "eager_f32_candle",
+          "selected_kernel": "dense-f32-candle-linear",
+          "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+          "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+          "role_id": "layers.0.feed_forward.down_proj",
+          "layer": 0,
+          "scope": "feed_forward",
+          "linear": "down_proj",
+          "tensor_name": "layers.0.feed_forward.down_proj.weight",
+          "manifest_sha256": "42728ecadfc53c5e0eaeb4a073af385b9b3d8c9dfe879a9afc44fe06c7432876",
+          "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+          "quant_format": "Q8_0",
+          "bias_present": false,
+          "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+          "runtime_gate_requested_enabled": false,
+          "candidate_execution_enabled": false,
+          "normal_inference_runtime_selection_enabled": false,
+          "before_after_receipts_present": false,
+          "descriptor_callsite_identity_preserved": true,
+          "prompt_ids_digest_preserved": true,
+          "generated_ids_digest_preserved": true,
+          "decoded_text_digest_preserved": true,
+          "fallback_used": false,
+          "decision": "blocked_pending_before_after_warm_session_receipts",
+          "reason": "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured"
+        }
+      },
+      "pair_equivalence": {
+        "model_sha256_unchanged": true,
+        "quant_format_unchanged": true,
+        "tokenizer_source_unchanged": true,
+        "tokenizer_strict_unchanged": true,
+        "runtime_api_unchanged": true,
+        "selected_backend_unchanged": true,
+        "selected_path_unchanged": true,
+        "selected_kernel_unchanged": true,
+        "candidate_path_unchanged": true,
+        "candidate_kernel_unchanged": true,
+        "prompt_ids_digest_unchanged": true,
+        "generated_ids_digest_unchanged": true,
+        "decoded_text_digest_unchanged": true,
+        "generated_token_ids_unchanged": true,
+        "decoded_text_unchanged": true,
+        "fallback_false": true,
+        "candidate_execution_disabled": true,
+        "runtime_selection_disabled": true,
+        "runtime_gate_requested_disabled": true
+      }
+    },
+    "qwen25_q8_0": {
+      "before": {
+        "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-before.json",
+        "sha256": "7540e8e2124f28aa7c20fb7b9a107a33bf7c850ceff81d8bb477b2c24ed6e662",
+        "model": {
+          "architecture": "qwen2",
+          "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+          "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+          "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "quant_format": null,
+          "loader_mode": "real_gguf"
+        },
+        "tokenizer": {
+          "source": "gguf_metadata",
+          "strict": true
+        },
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "generation": {
+          "prompt_template": "qwen2.5",
+          "qwen_no_think": false,
+          "deterministic": true,
+          "max_new_tokens": 1,
+          "temperature": 0.0,
+          "greedy": null
+        },
+        "first_prompt": {
+          "generated_token_ids": [
+            19
+          ],
+          "decoded_text": "4",
+          "prompt_ids_digest": "e7d41acdcdb2d69657b78d1cd707dd97695be174430ab5be45bb585d0fe5bf04",
+          "generated_ids_digest": "c331813142162dd34e3dfee2cf823fb8d8d3cce337c39f3e26d72415fa7e2165",
+          "decoded_text_digest": "0b7438591fc01206d6f5c686108cdba3eb12f62ddc089d6b9443734e03779930"
+        },
+        "gate": {
+          "artifact_kind": "dense_no_bias_apply_linear_receipt_emitter_gate",
+          "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+          "tracking_item": "SLM-CPU-203",
+          "selected_path": "eager_f32_candle",
+          "selected_kernel": "dense-f32-candle-linear",
+          "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+          "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+          "role_id": "layers.0.feed_forward.down_proj",
+          "layer": 0,
+          "scope": "feed_forward",
+          "linear": "down_proj",
+          "tensor_name": "layers.0.feed_forward.down_proj.weight",
+          "manifest_sha256": "fcab9e6d9e8c79bf6f9a7dcbe325c907cefcf5a9d1e9fd1206ad75f2b6fa809a",
+          "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "quant_format": "Q8_0",
+          "bias_present": false,
+          "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+          "runtime_gate_requested_enabled": false,
+          "candidate_execution_enabled": false,
+          "normal_inference_runtime_selection_enabled": false,
+          "before_after_receipts_present": false,
+          "descriptor_callsite_identity_preserved": true,
+          "prompt_ids_digest_preserved": true,
+          "generated_ids_digest_preserved": true,
+          "decoded_text_digest_preserved": true,
+          "fallback_used": false,
+          "decision": "blocked_pending_before_after_warm_session_receipts",
+          "reason": "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured"
+        }
+      },
+      "after": {
+        "path": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-after.json",
+        "sha256": "91c520a2a6c7003504770c07ff97cdbcd93e17549619aba8b5476e804d345670",
+        "model": {
+          "architecture": "qwen2",
+          "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+          "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+          "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "quant_format": null,
+          "loader_mode": "real_gguf"
+        },
+        "tokenizer": {
+          "source": "gguf_metadata",
+          "strict": true
+        },
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "generation": {
+          "prompt_template": "qwen2.5",
+          "qwen_no_think": false,
+          "deterministic": true,
+          "max_new_tokens": 1,
+          "temperature": 0.0,
+          "greedy": null
+        },
+        "first_prompt": {
+          "generated_token_ids": [
+            19
+          ],
+          "decoded_text": "4",
+          "prompt_ids_digest": "e7d41acdcdb2d69657b78d1cd707dd97695be174430ab5be45bb585d0fe5bf04",
+          "generated_ids_digest": "c331813142162dd34e3dfee2cf823fb8d8d3cce337c39f3e26d72415fa7e2165",
+          "decoded_text_digest": "0b7438591fc01206d6f5c686108cdba3eb12f62ddc089d6b9443734e03779930"
+        },
+        "gate": {
+          "artifact_kind": "dense_no_bias_apply_linear_receipt_emitter_gate",
+          "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+          "tracking_item": "SLM-CPU-203",
+          "selected_path": "eager_f32_candle",
+          "selected_kernel": "dense-f32-candle-linear",
+          "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+          "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+          "role_id": "layers.0.feed_forward.down_proj",
+          "layer": 0,
+          "scope": "feed_forward",
+          "linear": "down_proj",
+          "tensor_name": "layers.0.feed_forward.down_proj.weight",
+          "manifest_sha256": "fcab9e6d9e8c79bf6f9a7dcbe325c907cefcf5a9d1e9fd1206ad75f2b6fa809a",
+          "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+          "quant_format": "Q8_0",
+          "bias_present": false,
+          "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+          "runtime_gate_requested_enabled": false,
+          "candidate_execution_enabled": false,
+          "normal_inference_runtime_selection_enabled": false,
+          "before_after_receipts_present": false,
+          "descriptor_callsite_identity_preserved": true,
+          "prompt_ids_digest_preserved": true,
+          "generated_ids_digest_preserved": true,
+          "decoded_text_digest_preserved": true,
+          "fallback_used": false,
+          "decision": "blocked_pending_before_after_warm_session_receipts",
+          "reason": "slm_warm_session_gate_wired_runtime_disabled_but_before_after_pair_not_captured"
+        }
+      },
+      "pair_equivalence": {
+        "model_sha256_unchanged": true,
+        "quant_format_unchanged": true,
+        "tokenizer_source_unchanged": true,
+        "tokenizer_strict_unchanged": true,
+        "runtime_api_unchanged": true,
+        "selected_backend_unchanged": true,
+        "selected_path_unchanged": true,
+        "selected_kernel_unchanged": true,
+        "candidate_path_unchanged": true,
+        "candidate_kernel_unchanged": true,
+        "prompt_ids_digest_unchanged": true,
+        "generated_ids_digest_unchanged": true,
+        "decoded_text_digest_unchanged": true,
+        "generated_token_ids_unchanged": true,
+        "decoded_text_unchanged": true,
+        "fallback_false": true,
+        "candidate_execution_disabled": true,
+        "runtime_selection_disabled": true,
+        "runtime_gate_requested_disabled": true
+      }
+    }
+  },
+  "pair_level_gate": {
+    "before_after_pair_captured_by_this_artifact": true,
+    "individual_receipt_before_after_receipts_present_field": false,
+    "individual_receipt_field_note": "Each warm-session aggregate still reports before_after_receipts_present=false because candidate execution and runtime selection remain disabled in normal inference; this pair artifact supplies the explicit before/after evidence without enabling the candidate.",
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "runtime_gate_requested_enabled": false
+  },
+  "claim_boundary": {
+    "model_binary_committed": false,
+    "candidate_execution_claim": false,
+    "default_runtime_change_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

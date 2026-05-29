@@ -101,6 +101,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias selector audit hook | `ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-192-no-bias-selector-audit-hook.json` | Adds a typed audit-only `DenseLinearNoBiasSelectorAudit` boundary: biasless roles are future candidates, biased or unknown roles fail closed, and the selected path remains `eager_f32_candle` / `dense-f32-candle-linear` |
 | No-bias apply-linear receipt capture blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-207-no-bias-apply-linear-receipt-capture-blocker.json` | Verifies the explicit Qwen3 and Qwen2.5 Q8_0 model paths are present by SHA, but blocks fresh before/after capture because `slm-warm-session` currently passes `None` into the no-bias apply-linear gate emitter; long receipt runs would not populate the required descriptor/callsite or digest-bound gate fields |
 | No-bias apply-linear gate wiring | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-208-no-bias-apply-linear-gate-wiring.json` | Wires a real digest-bound no-bias apply-linear gate object into eligible Qwen3/Qwen2.5 Q8_0 warm-session aggregates while keeping candidate execution disabled and blocking on fresh before/after receipts |
+| No-bias apply-linear receipt pairs | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json` | Captures fresh explicit-path Qwen3/Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired gate, preserving model/tokenizer/runtime/path/kernel/digest identity while candidate execution and normal runtime selection remain disabled |
 
 Qwen3 rows use:
 
@@ -3679,6 +3680,44 @@ candidate, change default runtime selection, prove generated-ID preservation for
 a no-bias experiment, claim allocation reduction, claim timing improvement or
 speedup, claim sustained throughput, broaden Q4/Q5 support, or touch server,
 GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+## SLM-CPU-209 No-Bias Apply-Linear Receipt Pairs
+
+SLM-CPU-209 consumes the SLM-CPU-208 wired gate by capturing fresh explicit-path
+Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs on
+the i5-8250U:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json
+qwen3_before = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-before.json
+qwen3_after = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-209-no-bias-after.json
+qwen25_before = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-before.json
+qwen25_after = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-209-no-bias-after.json
+runtime_api = cpu
+selected_backend = cpu-rust
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+runtime_gate_requested_enabled = false
+fallback_used = false
+```
+
+For both model families, the before/after receipts preserve model SHA, quant
+format, strict GGUF tokenizer authority, prompt IDs digest, generated IDs
+digest, decoded-text digest, selected backend/path/kernel identity, candidate
+path/kernel identity, descriptor/callsite identity, and `fallback_used=false`.
+Qwen3 emits token `17` / `2` in both receipts; Qwen2.5 emits token `19` / `4`
+in both receipts.
+
+Each individual warm-session receipt still records
+`before_after_receipts_present=false` because candidate execution and normal
+runtime selection remain disabled. The SLM-CPU-209 pair artifact supplies the
+explicit before/after evidence without enabling the candidate path, changing the
+default runtime, claiming allocation reduction, claiming timing improvement or
+speedup, claiming sustained throughput, broadening Q4/Q5 support, or touching
+server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
