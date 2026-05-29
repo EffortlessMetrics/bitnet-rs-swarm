@@ -12,13 +12,13 @@
   "model_inference_executed": false,
   "route_sample_execution_started": false,
   "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
-  "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=95",
-  "estimated_charge_percent": 95,
+  "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=100",
+  "estimated_charge_percent": 100,
   "ac_power_inferred": true,
   "thermal_sensor_status": "thermal_zones_visible_temperature_values_unavailable",
   "thermal_context": {
     "source": "windows_perf_thermal_zone",
-    "thermal_zones_visible": 1,
+    "thermal_zones_visible": 2,
     "temperatures_celsius": []
   },
   "run_matrix": {
