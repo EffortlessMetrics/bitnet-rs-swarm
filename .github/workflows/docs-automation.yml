@@ -37,7 +37,7 @@ concurrency:
 jobs:
   classify-docs:
     name: Classify Docs Change
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     outputs:
       tracker_only: ${{ steps.classify.outputs.tracker_only }}
@@ -89,7 +89,7 @@ jobs:
 
   docs-automation:
     name: Lint + Link Check + Rustdoc
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 25
     needs: [classify-docs]
     steps:

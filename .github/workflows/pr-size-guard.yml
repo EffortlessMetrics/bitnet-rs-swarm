@@ -16,7 +16,7 @@ permissions:
 jobs:
   check-pr-size:
     name: Check PR Size
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
     # Skip for explicitly-acknowledged large PRs (mechanical refactors, AI-native work)
     if: >-

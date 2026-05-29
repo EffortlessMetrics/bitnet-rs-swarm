@@ -153,7 +153,7 @@ These workflows run on every PR and on `main` (Linux runners only):
 ### Core CI (`ci-core.yml`)
 
 **Required checks**:
-1. **Build & Test (ubuntu-latest)** - Workspace compilation and test suite
+1. **Build & Test (self-hosted linux x64)** - Workspace compilation and test suite
 2. **Clippy** - Lint checks with `RUSTFLAGS=-Dwarnings`
 3. **Documentation** - Documentation build (`cargo doc --no-deps`)
 4. **CI Core Success** - Status rollup for branch protection
@@ -161,7 +161,7 @@ These workflows run on every PR and on `main` (Linux runners only):
 **Runs on**: All PRs and on `main`
 **Timeout**: 30 minutes global
 **Features**: Uses `--locked` for determinism, runs with `cpu` features by default
-**Notes**: All jobs run on Linux (ubuntu-22.04). Clippy job aligns environment with Build & Test job for consistent warning detection.
+**Notes**: All jobs run on self-hosted Linux. Clippy job aligns environment with Build & Test job for consistent warning detection.
 
 ---
 
@@ -263,7 +263,7 @@ and mirrored in `policy/ci-routed-rollout.toml`.
 
 The shared Apple Silicon workflow still emits a cheap Linux route/summary check
 on pull requests so existing branch protection does not see a missing check.
-Those control jobs do not start `macos-14`. Applying `macos`,
+Those control jobs do not start self-hosted macOS runners. Applying `macos`,
 `apple-silicon`, `metal`, or `full-ci` selects the expensive Apple jobs; main,
 manual, merge-queue, and Mac/Metal-path changes still preserve Apple proof.
 

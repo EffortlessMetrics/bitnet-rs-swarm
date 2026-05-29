@@ -36,7 +36,7 @@ jobs:
   # opt-in PRs (via `feature-matrix` or `full-ci` label) and on workflow_dispatch.
   pr-compile-check:
     name: "pr-check (${{ matrix.label }})"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     if: >-
       github.event_name == 'pull_request' &&
@@ -75,7 +75,7 @@ jobs:
   # paths, manifest/toolchain inputs, or the `full-cli` label select it.
   pr-full-cli-check:
     name: "pr-check (cpu+full-cli)"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     if: >-
       github.event_name == 'pull_request' &&
@@ -143,7 +143,7 @@ jobs:
   # covers the canonical CPU paths.
   compile-check:
     name: "check (${{ matrix.label }})"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     if: >-
       github.ref == 'refs/heads/main' ||
@@ -223,7 +223,7 @@ jobs:
   # canonical CPU checks already exercise these crates as part of the workspace.
   crate-feature-check:
     name: "crate-check (${{ matrix.crate }}/${{ matrix.label }})"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
     if: >-
       github.ref == 'refs/heads/main' ||

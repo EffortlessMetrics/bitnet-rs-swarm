@@ -27,7 +27,7 @@ env:
 jobs:
   check-patch-policy:
     name: Check Patch Policy Compliance
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
 
     steps:
@@ -336,7 +336,7 @@ jobs:
   # Weekly patch lifecycle review
   patch-lifecycle-review:
     name: Weekly Patch Lifecycle Review
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     if: github.event_name == 'schedule'
 
     steps:

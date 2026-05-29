@@ -23,7 +23,7 @@ env:
 jobs:
   collect-test-results:
     name: Collect and Report Test Results
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()
 
     steps:
@@ -180,7 +180,7 @@ jobs:
 
   performance-regression-check:
     name: Performance Regression Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: collect-test-results
 
@@ -259,7 +259,7 @@ jobs:
 
   trend-analysis:
     name: Generate Trend Analysis
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: github.ref == 'refs/heads/main'
     needs: collect-test-results
 
@@ -306,7 +306,7 @@ jobs:
 
   notification-summary:
     name: Send Notification Summary
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()
     needs: [collect-test-results, performance-regression-check, trend-analysis]
 
