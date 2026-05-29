@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T12:35:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-213"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 953
+head_sha = "94e210a22b8cb60e7d85444af7b23ccc8f38d1cc"
+branch = "codex/slm-cpu-213-selector-propagation-boundary"
+summary = "Opened SLM-CPU-213 selector propagation boundary PR."
+notes = [
+  "PR #953 defines DenseLinearNoBiasSelectorPropagationBoundary and records the current fail-closed blocker between warm-session digest identity and apply_linear candidate execution.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "No allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
