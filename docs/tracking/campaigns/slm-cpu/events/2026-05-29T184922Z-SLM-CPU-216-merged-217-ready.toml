@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T18:49:22Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-216"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 965
+merge_sha = "97d46b864345e4683824e3dc17fa9580970c6bb2"
+branch = "codex/slm-cpu-216-no-bias-candidate-on-evidence"
+summary = "Merged SLM-CPU-216 no-bias candidate-on behavior evidence gate and queued SLM-CPU-217."
+notes = [
+  "PR #965 defines DenseLinearNoBiasCandidateOnBehaviorEvidenceGate after the SLM-CPU-215 candidate off/on receipt-pair gate.",
+  "Candidate execution and normal runtime selection remain disabled; the default runtime remains eager_f32_candle when no explicit gate is present.",
+  "SLM-CPU-217 is ready to wire the explicit candidate-on apply_linear attachment and strict receipt fields or record the exact remaining runtime ownership blocker.",
+]
