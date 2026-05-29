@@ -12198,8 +12198,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-211"
-status = "pr_open"
+status = "merged"
 pr = 949
+merge_sha = "2cded50ab67eda9439631d8773f1e8c23a8cb517"
 branch = "codex/slm-cpu-211-receipt-bound-no-bias-selector-descriptor"
 stackable = false
 review_mode = "codex_premerge"
@@ -12245,6 +12246,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes.",
   "Generated IDs are preserved for a no-bias runtime experiment without fresh candidate-off/candidate-on receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-212"
+status = "ready"
+branch = "codex/slm-cpu-212-no-bias-candidate-on-off-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-211"]
+acceptance = "Consume the SLM-CPU-211 receipt-bound selector descriptor and either capture, or precisely block, the first explicit candidate-off/candidate-on strict warm-session receipt pair for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj no-bias apply-linear roles. A valid implementation may execute the no-bias candidate only when the explicit runtime gate is requested and all descriptor, model SHA, quant format, strict tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt/generated/text digests, selected path/kernel, candidate path/kernel, and per-callsite receipt identities match. A valid blocker must name the exact missing runtime propagation, CLI command, receipt field, or candidate policy. No model binary may be committed, no default runtime may change, and no allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-211 adds a receipt-bound no-bias selector descriptor that can carry SLM-CPU-209 model/tokenizer/backend/fallback/digest identity toward the exact apply-linear callsite while keeping runtime disabled.",
+  "SLM-CPU-209 supplies candidate-disabled Qwen3 Q8_0 and Qwen2.5 Q8_0 before/after strict warm-session receipt pairs with generated IDs and decoded text preserved.",
+  "No candidate-on strict warm-session receipt pair exists yet.",
+]
+may_claim = [
+  "SLM-CPU-212 may wire an explicit candidate-on experiment only under receipt-bound descriptor identity.",
+  "SLM-CPU-212 may capture candidate-off/candidate-on strict warm-session receipt pairs for Qwen3/Qwen2.5 Q8_0 no-bias down-proj roles.",
+  "SLM-CPU-212 may record an exact blocker if candidate-on execution or receipt emission cannot be safely wired.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for candidate-on execution without fresh candidate-off/candidate-on strict receipts.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",

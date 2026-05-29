@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T10:46:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-211"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 949
+merge_sha = "2cded50ab67eda9439631d8773f1e8c23a8cb517"
+branch = "codex/slm-cpu-211-receipt-bound-no-bias-selector-descriptor"
+summary = "Merged SLM-CPU-211 receipt-bound no-bias selector descriptor and queued SLM-CPU-212."
+notes = [
+  "PR #949 added a fail-closed DenseLinearNoBiasReceiptBoundSelectorDescriptor and optional DenseLinearRuntimeHookDescriptor carrier for SLM-CPU-209 identity.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "SLM-CPU-212 is ready for a candidate-off/candidate-on strict warm-session receipt experiment or an exact blocker.",
+]
