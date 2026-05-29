@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T13:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-213"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 953
+merge_sha = "dce91a2856ea165b084c1c3d2705c5ef14ddc023"
+branch = "codex/slm-cpu-213-selector-propagation-boundary"
+summary = "Merged SLM-CPU-213 selector propagation boundary and queued SLM-CPU-214."
+notes = [
+  "PR #953 defines DenseLinearNoBiasSelectorPropagationBoundary and records the fail-closed boundary between warm-session digest identity and FeedForward::apply_linear.",
+  "Candidate execution and normal runtime selection remain disabled; default runtime remains eager_f32_candle / dense-f32-candle-linear.",
+  "SLM-CPU-214 is ready to define the first safe selector attachment point, preferably a per-callsite candidate receipt emitter unless session mutation can prove prompt-bound identity safety.",
+]

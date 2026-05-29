@@ -12313,8 +12313,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-213"
-status = "pr_open"
+status = "merged"
 pr = 953
+merge_sha = "dce91a2856ea165b084c1c3d2705c5ef14ddc023"
 branch = "codex/slm-cpu-213-selector-propagation-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -12355,6 +12356,62 @@ may_claim = [
   "SLM-CPU-213 may define a session-scoped selector propagation boundary or per-callsite candidate execution receipt emitter.",
   "SLM-CPU-213 may keep candidate execution disabled and fail-closed while proving where descriptor identity can be attached.",
   "SLM-CPU-213 may record an exact blocker if descriptor identity cannot be safely propagated.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes.",
+  "Generated IDs are preserved for candidate-on execution without fresh candidate-off/candidate-on strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-214"
+status = "ready"
+branch = "codex/slm-cpu-214-no-bias-selector-attachment-point"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-213"]
+acceptance = "Consume the SLM-CPU-213 selector propagation boundary and define the first safe no-bias selector attachment point. Prefer a per-callsite candidate receipt emitter unless a session-scoped mutation point can prove descriptor identity cannot cross prompt boundaries. The slice must attach or model how DenseLinearNoBiasReceiptBoundSelectorDescriptor identity reaches FeedForward::apply_linear with model SHA, architecture, Q8_0 quant format, strict GGUF tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt/generated/text digests, selected path/kernel, candidate path/kernel, and callsite identity. Candidate execution must remain disabled, normal path must remain eager_f32_candle / dense-f32-candle-linear, and no allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-213 defines DenseLinearNoBiasSelectorPropagationBoundary and records that candidate execution is blocked until descriptor identity reaches apply_linear safely.",
+  "The current production hook registry is built before prompt/generated/text digests exist.",
+  "A per-callsite receipt emitter is safer than session mutation unless prompt-bound identity lifetime is proven.",
+]
+may_claim = [
+  "SLM-CPU-214 may define a per-callsite candidate receipt emitter boundary.",
+  "SLM-CPU-214 may define a session-scoped selector mutation point only if prompt-bound descriptor identity cannot leak across prompts.",
+  "SLM-CPU-214 may keep candidate execution disabled while proving descriptor identity reaches the callsite.",
 ]
 must_not_claim = [
   "A model binary is committed.",
