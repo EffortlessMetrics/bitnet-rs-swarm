@@ -12600,7 +12600,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-218"
-status = "ready"
+status = "pr_open"
+pr = 971
+head_sha = "8d9380a0e19301e674cae9c5053387226803f741"
 branch = "codex/slm-cpu-218-no-bias-runtime-owner-boundary"
 stackable = false
 review_mode = "codex_premerge"

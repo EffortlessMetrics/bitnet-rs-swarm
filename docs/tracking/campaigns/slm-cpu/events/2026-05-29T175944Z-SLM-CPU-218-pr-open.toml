@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T17:59:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-218"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 971
+head_sha = "8d9380a0e19301e674cae9c5053387226803f741"
+branch = "codex/slm-cpu-218-no-bias-runtime-owner-boundary"
+summary = "Opened SLM-CPU-218 no-bias candidate runtime owner boundary PR."
+notes = [
+  "PR #971 adds DenseLinearNoBiasCandidateRuntimeOwnerBoundary after the SLM-CPU-217 attachment boundary.",
+  "The slice records FeedForward::apply_linear as the fail-closed runtime owner boundary and keeps the same-callsite candidate-on receipt emitter as the remaining blocker.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
