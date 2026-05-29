@@ -417,6 +417,7 @@ fn dense_linear_runtime_hook_boundary_accepts_inert_q8_sidecar_descriptor() -> a
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: false,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
@@ -469,6 +470,7 @@ fn dense_linear_runtime_hook_boundary_can_carry_payload_without_enabling_compute
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: false,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
@@ -521,6 +523,7 @@ fn dense_linear_runtime_hook_boundary_rejects_payload_tensor_mismatch() -> anyho
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: true,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
@@ -558,6 +561,7 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: false,
+            receipt_bound_no_bias_selector: None,
         },
     );
     hooks.insert(
@@ -572,6 +576,7 @@ fn dense_linear_runtime_hook_boundaries_report_sorted_receipt_identity() -> anyh
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: false,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
@@ -610,6 +615,7 @@ fn dense_linear_runtime_hook_boundary_does_not_enable_packed_compute() -> anyhow
             source_order_input_dim: None,
             source_order_output_dim: None,
             runtime_compute_enabled: true,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(
@@ -1342,6 +1348,7 @@ fn dense_linear_runtime_hook_boundary_can_select_source_order_qproj_with_explici
             source_order_input_dim: Some(8),
             source_order_output_dim: Some(16),
             runtime_compute_enabled: true,
+            receipt_bound_no_bias_selector: None,
         },
     );
     let model = TransformerModel::new_with_tensors_and_dense_linear_hooks(

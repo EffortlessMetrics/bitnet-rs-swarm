@@ -8545,6 +8545,7 @@ commands = [
 ]
 allowed_paths = [
   "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
   "crates/bitnet-transformer/**",
   "ci/slm-cpu/**",
   "docs/slm/**",
@@ -12197,7 +12198,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-211"
-status = "ready"
+status = "pr_open"
+pr = 949
 branch = "codex/slm-cpu-211-receipt-bound-no-bias-selector-descriptor"
 stackable = false
 review_mode = "codex_premerge"
