@@ -11645,7 +11645,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-201"
-status = "ready"
+status = "merged"
+pr = 928
+merge_sha = "091c8d157b3e5df7f1b84e87f2d2ffea1150a117"
 branch = "codex/slm-cpu-201-no-bias-apply-linear-receipt-boundary"
 stackable = false
 review_mode = "codex_premerge"
@@ -11683,6 +11685,59 @@ evidence = [
 may_claim = [
   "SLM-CPU-201 may define or add a receipt/audit boundary for descriptor and callsite identity emission before future runtime selection.",
   "SLM-CPU-201 may record the exact fields and blockers required for later before/after strict warm-session receipts.",
+]
+must_not_claim = [
+  "The no-bias dense linear candidate is selected by default.",
+  "Normal inference executes the no-bias candidate.",
+  "Runtime compute selection changes by default.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a runtime experiment without fresh before/after strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-202"
+status = "ready"
+branch = "codex/slm-cpu-202-no-bias-apply-linear-before-after-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-201"]
+acceptance = "Consume the SLM-CPU-201 no-bias apply-linear receipt boundary and either wire or precisely block the before/after strict warm-session receipt evidence required before any Qwen3 Q8_0 feed_forward.down_proj no-bias candidate can be runtime-selected. A valid slice must preserve exact Qwen3 Q8_0 and Qwen2.5 Q8_0 model SHA, quant format, tokenizer authority, prompt IDs/hash, generated IDs/hash, decoded text/hash, runtime_api=cpu, selected_backend=cpu-rust, selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, fallback=false, descriptor/callsite identity, and normal inference behavior while candidate execution remains disabled. No candidate execution, default runtime change, allocation reduction, timing improvement, speedup, sustained throughput, Q4/Q5 runtime support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is allowed."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-cli/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-201 adds DenseLinearNoBiasApplyLinearReceiptBoundary and makes descriptor/callsite identity receipt-visible while runtime candidate execution remains disabled.",
+  "SLM-CPU-201 keeps selected_path=eager_f32_candle, selected_kernel=dense-f32-candle-linear, runtime_api=cpu, selected_backend=cpu-rust, and fallback=false as the only valid normal inference state.",
+  "SLM-CPU-201 records fresh before/after strict warm-session receipts as the remaining blocker before runtime selection.",
+]
+may_claim = [
+  "SLM-CPU-202 may wire strict before/after receipt evidence for the disabled no-bias apply-linear candidate boundary.",
+  "SLM-CPU-202 may record an exact blocker if the current receipt emitter cannot yet carry all required identity and behavior-preservation fields.",
 ]
 must_not_claim = [
   "The no-bias dense linear candidate is selected by default.",
