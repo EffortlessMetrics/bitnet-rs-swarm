@@ -1,0 +1,13 @@
+timestamp = "2026-05-29T165001Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-217"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-217-no-bias-candidate-runtime-attachment"
+summary = "Queued the no-bias candidate runtime attachment gate."
+notes = [
+  "SLM-CPU-217 should consume the SLM-CPU-216 behavior evidence gate and either wire a fail-closed explicit no-bias apply-linear runtime attachment for the bounded feed_forward.down_proj scope or record the exact remaining runtime ownership blocker.",
+  "The slice must keep the default eager_f32_candle path unchanged and must not claim timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
