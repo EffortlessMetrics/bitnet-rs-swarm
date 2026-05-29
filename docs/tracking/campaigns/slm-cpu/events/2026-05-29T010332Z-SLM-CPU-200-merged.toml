@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T01:03:32Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-200"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 926
+merge_sha = "7262cad35f0b399238bc6c978a36c4756c5893cd"
+branch = "codex/slm-cpu-200-no-bias-apply-linear-audit-boundary"
+summary = "Merged the FeedForward apply-linear no-bias descriptor audit boundary."
+notes = [
+  "SLM-CPU-200 adds DenseLinearNoBiasApplyLinearAuditBoundary and proves exact Qwen3 Q8_0 feed_forward.down_proj descriptor identity can be observed at the dense tensor callsite.",
+  "The merged slice keeps normal inference on eager_f32_candle and makes no runtime candidate execution, allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
+
