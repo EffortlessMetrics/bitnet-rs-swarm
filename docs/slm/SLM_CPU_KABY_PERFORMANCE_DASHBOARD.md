@@ -3820,6 +3820,39 @@ strict warm-session receipts prove generated IDs and decoded text are preserved.
 This blocker makes no allocation, timing, speedup, sustained throughput, Q4/Q5,
 server/accelerator, Qwen3.5, or BitNet QK256 claim.
 
+## SLM-CPU-213 Selector Propagation Boundary
+
+SLM-CPU-213 consumes the SLM-CPU-212 blocker and defines the fail-closed
+boundary between warm-session receipt identity and the `FeedForward::apply_linear`
+runtime selector:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-213-selector-propagation-boundary.json
+decision = blocked_fail_closed
+reason = receipt_bound_selector_identity_cannot_reach_apply_linear_before_candidate_execution
+remaining_blocker = session_hook_registry_mutation_point_or_per_callsite_candidate_receipt_emitter
+prompt_digest_lifetime = available_after_warm_session_prompt_execution
+hook_registry_owner = bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars
+apply_linear_callsite = bitnet_transformer::FeedForward::apply_linear
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The SLM-CPU-211 descriptor can represent exact Qwen3/Qwen2.5 Q8_0 model,
+strict GGUF tokenizer, CPU backend, fallback, prompt/generated/text digest,
+selected-path, and candidate-path identity. The missing piece is still the
+safe ownership point: production hook construction happens before warm-session
+prompt digests exist, and the current callsite has neither a session-scoped
+hook mutation point nor a per-callsite candidate execution receipt emitter.
+
+Candidate execution therefore remains disabled. This slice does not change the
+default runtime, claim generated-ID preservation for candidate-on execution,
+claim allocation or timing improvement, claim speedup or sustained throughput,
+broaden Q4/Q5 runtime support, or touch server, GPU, NPU, OpenVINO, UHD 620,
+Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

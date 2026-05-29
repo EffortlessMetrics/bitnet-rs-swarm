@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_selector_propagation_boundary",
+  "tracking_item": "SLM-CPU-213",
+  "consumes_tracking_items": [
+    "SLM-CPU-211",
+    "SLM-CPU-212"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "blocked_fail_closed",
+  "reason": "receipt_bound_selector_identity_cannot_reach_apply_linear_before_candidate_execution",
+  "remaining_runtime_selection_blocker": "session_hook_registry_mutation_point_or_per_callsite_candidate_receipt_emitter",
+  "summary": "SLM-CPU-213 defines the selector propagation boundary between warm-session receipt identity and FeedForward::apply_linear. The SLM-CPU-211 descriptor can carry exact Qwen3/Qwen2.5 Q8_0 model, tokenizer, backend, fallback, prompt/generated/text digest, selected-path, and candidate-path identity, but current production hooks are built from sidecars before those digests exist and no session mutation point or per-callsite candidate receipt emitter exists. Candidate execution remains disabled.",
+  "validated_existing_surfaces": {
+    "receipt_bound_selector_descriptor_type": "bitnet_transformer::DenseLinearNoBiasReceiptBoundSelectorDescriptor",
+    "runtime_hook_selector_field": "bitnet_transformer::DenseLinearRuntimeHookDescriptor.receipt_bound_no_bias_selector",
+    "selector_propagation_boundary_type": "bitnet_transformer::DenseLinearNoBiasSelectorPropagationBoundary",
+    "warm_session_gate_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+    "candidate_compute_function": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "default_selected_path": "eager_f32_candle",
+    "default_selected_kernel": "dense-f32-candle-linear",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false
+  },
+  "propagation_boundary": {
+    "prompt_digest_lifetime": "available_after_warm_session_prompt_execution",
+    "hook_registry_owner": "bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars",
+    "hook_construction_callsite": "bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars",
+    "hook_selector_value_in_production_loading": null,
+    "apply_linear_callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "hook_registry_selector_present": false,
+    "hook_registry_mutation_point_present": false,
+    "per_callsite_receipt_emitter_present": false,
+    "can_attach_after_prompt_digests_known": false,
+    "can_attach_before_same_prompt_candidate_execution": false,
+    "fail_closed_conditions": [
+      "hook_registry_selector_identity_missing",
+      "session_selector_mutation_point_missing",
+      "per_callsite_candidate_receipt_emitter_missing"
+    ]
+  },
+  "required_before_candidate_on": [
+    "define a session-scoped mutation point that can attach DenseLinearNoBiasReceiptBoundSelectorDescriptor after prompt/generated/text digests are known and before the same prompt's candidate execution",
+    "or define a per-callsite candidate execution receipt emitter that can bind descriptor identity to candidate-off/candidate-on receipts without mutating the model hook registry",
+    "require explicit runtime gate request",
+    "prove descriptor identity for model SHA, architecture, Q8_0 quant format, strict GGUF tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt/generated/text digests, selected path/kernel, and candidate path/kernel",
+    "capture candidate-off/candidate-on strict warm-session receipts proving generated IDs and decoded text are preserved"
+  ],
+  "models_blocked": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+      "candidate_on_receipt_captured": false
+    }
+  },
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-214",
+    "scope": "choose and implement either the session-scoped hook mutation point or a per-callsite candidate execution receipt emitter while keeping candidate execution disabled until candidate-off/candidate-on strict receipts prove preservation"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "candidate_on_receipt_captured": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}
