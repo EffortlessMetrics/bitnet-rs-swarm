@@ -39,9 +39,20 @@ jobs:
 
       - name: Ensure ripgrep exists
         run: |
-          if ! command -v rg >/dev/null 2>&1; then
+          set -eu
+          if command -v rg >/dev/null 2>&1; then
+            echo "ripgrep already present on runner image"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update -y
+            apt-get install -y ripgrep
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
             sudo apt-get update -y
             sudo apt-get install -y ripgrep
+          else
+            echo "::error::ripgrep missing from self-hosted runner image and privileged apt is unavailable"
+            exit 1
           fi
 
       # Ensure scripts are executable in fresh clones
