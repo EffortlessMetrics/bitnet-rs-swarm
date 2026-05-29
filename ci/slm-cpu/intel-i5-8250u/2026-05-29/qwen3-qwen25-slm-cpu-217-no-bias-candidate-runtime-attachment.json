@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_candidate_runtime_attachment_boundary",
+  "tracking_item": "SLM-CPU-217",
+  "consumes_tracking_items": [
+    "SLM-CPU-216"
+  ],
+  "generated_at_utc": "2026-05-29T00:00:00Z",
+  "decision": "candidate_runtime_attachment_defined_fail_closed",
+  "reason": "apply_linear_runtime_ownership_or_receipt_emission_incomplete",
+  "remaining_runtime_selection_blocker": "candidate_runtime_owner",
+  "summary": "SLM-CPU-217 defines the explicit candidate-on runtime attachment boundary after the SLM-CPU-216 behavior gate. The boundary records that FeedForward::apply_linear still has no safe runtime owner that can call the no-bias candidate and emit strict candidate-on receipt fields for the same per-callsite descriptor identity. Default runtime remains eager_f32_candle and candidate execution remains disabled.",
+  "boundary_type": "bitnet_transformer::DenseLinearNoBiasCandidateRuntimeAttachmentBoundary",
+  "source_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-216-no-bias-candidate-on-behavior-evidence-gate.json"
+  ],
+  "current_behavior_gate_state": {
+    "source_decision": "candidate_on_behavior_evidence_gate_defined_fail_closed",
+    "source_remaining_runtime_selection_blocker": "candidate_on_apply_linear_runtime_attachment_point",
+    "candidate_on_behavior_evidence_present": false,
+    "candidate_on_runtime_attachment_point_present": false,
+    "candidate_on_receipt_fields_complete": false
+  },
+  "attachment_boundary": {
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "scope": "feed_forward.down_proj",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "explicit_runtime_gate_required": true,
+    "apply_linear_candidate_attachment_wired": true,
+    "candidate_runtime_owner_present": false,
+    "candidate_receipt_emitter_wired": false,
+    "candidate_compute_callable": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false
+  },
+  "models_scoped": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "decision": "candidate_runtime_attachment_defined_fail_closed"
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "decision": "candidate_runtime_attachment_defined_fail_closed"
+    }
+  },
+  "required_before_candidate_execution": [
+    "candidate runtime owner that can call the no-bias apply-linear candidate",
+    "candidate-on receipt emitter wired to the same FeedForward::apply_linear callsite",
+    "explicit runtime gate requested",
+    "candidate-off strict warm-session receipt present",
+    "candidate-on strict warm-session receipt present",
+    "prompt IDs preserved",
+    "generated IDs preserved",
+    "decoded text preserved",
+    "runtime_api=cpu preserved",
+    "selected_backend=cpu-rust preserved",
+    "fallback_used=false preserved",
+    "selected path/kernel and candidate path/kernel receipt-visible"
+  ],
+  "fail_closed_conditions": [
+    "candidate_runtime_owner_missing",
+    "candidate_receipt_emitter_not_wired",
+    "candidate_compute_not_callable"
+  ],
+  "safe_next_slice": {
+    "tracking_item": "SLM-CPU-218",
+    "scope": "add the candidate runtime owner or record the exact ownership boundary that prevents same-callsite candidate-on receipt emission"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "candidate_on_behavior_evidence_captured": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}

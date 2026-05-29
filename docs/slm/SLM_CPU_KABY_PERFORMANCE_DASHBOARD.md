@@ -104,6 +104,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias apply-linear receipt pairs | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-209-no-bias-apply-linear-receipt-pairs.json` | Captures fresh explicit-path Qwen3/Qwen2.5 Q8_0 before/after strict warm-session receipts through the wired gate, preserving model/tokenizer/runtime/path/kernel/digest identity while candidate execution and normal runtime selection remain disabled |
 | No-bias candidate off/on receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-215-no-bias-candidate-off-on-receipt-gate.json` | Defines the exact candidate-off/candidate-on receipt-pair gate for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; the gate remains fail-closed because no candidate-on strict warm-session receipt exists |
 | No-bias candidate-on behavior evidence gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-216-no-bias-candidate-on-behavior-evidence-gate.json` | Defines the fail-closed behavior-evidence boundary after the receipt-pair gate; candidate execution remains disabled because `FeedForward::apply_linear` lacks a candidate-on runtime attachment point and complete strict receipt fields |
+| No-bias candidate runtime attachment boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-217-no-bias-candidate-runtime-attachment.json` | Defines the explicit candidate-on apply-linear runtime attachment boundary and records the remaining blocker as the missing candidate runtime owner/receipt emitter; eager_f32_candle remains the default runtime |
 
 Qwen3 rows use:
 
@@ -3951,6 +3952,35 @@ This slice does not execute the no-bias candidate, change default runtime,
 claim generated-ID preservation for candidate-on execution, claim allocation or
 timing improvement, claim speedup or sustained throughput, broaden Q4/Q5 support,
 or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256 paths.
+
+## SLM-CPU-217 No-Bias Candidate Runtime Attachment Boundary
+
+SLM-CPU-217 consumes the SLM-CPU-216 behavior gate and defines the explicit
+candidate-on runtime attachment boundary for the same Qwen3/Qwen2.5 Q8_0
+`feed_forward.down_proj` scope. It records the remaining blocker as runtime
+ownership: `FeedForward::apply_linear` still does not have a safe candidate
+runtime owner that can call the no-bias candidate and emit strict candidate-on
+receipt fields for the same per-callsite descriptor identity.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-217-no-bias-candidate-runtime-attachment.json
+decision = candidate_runtime_attachment_defined_fail_closed
+reason = apply_linear_runtime_ownership_or_receipt_emission_incomplete
+remaining_blocker = candidate_runtime_owner
+boundary = bitnet_transformer::DenseLinearNoBiasCandidateRuntimeAttachmentBoundary
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The boundary is still fail-closed. It makes the required runtime owner and
+candidate-on receipt emitter explicit, but it does not execute the no-bias
+candidate, does not change default runtime, does not claim generated-ID
+preservation for candidate-on execution, and does not make allocation, timing,
+speedup, sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet
+QK256 claims.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
