@@ -1,0 +1,13 @@
+timestamp = "2026-05-29T06:12:38Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-208"
+event = "in_progress"
+actor = "codex"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/slm-cpu-208-no-bias-apply-linear-gate-wiring"
+summary = "Queued no-bias apply-linear receipt gate wiring after the SLM-CPU-207 blocker."
+notes = [
+  "SLM-CPU-208 should wire a real receipt-safe no-bias apply-linear gate object into slm-warm-session receipts or precisely block the remaining boundary.",
+  "Candidate execution, default runtime changes, model binaries, allocation/timing/speedup claims, Q4/Q5, server/accelerator, Qwen3.5, and BitNet QK256 remain out of scope.",
+]

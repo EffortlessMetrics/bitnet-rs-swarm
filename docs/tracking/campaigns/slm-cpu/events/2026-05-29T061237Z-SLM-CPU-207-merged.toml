@@ -1,0 +1,21 @@
+timestamp = "2026-05-29T06:12:37Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-207"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 941
+head_sha = "f1952528ecff16f356b2530d0e39662a4682ed82"
+merge_sha = "74f3b9932edc6955875804015b9f740195a2f7cd"
+branch = "codex/slm-cpu-207-no-bias-apply-linear-receipt-capture"
+summary = "Merged the no-bias apply-linear receipt capture blocker."
+artifacts = [
+  "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-207-no-bias-apply-linear-receipt-capture-blocker.json",
+  "docs/slm/SLM_CPU_KABY_PERFORMANCE_DASHBOARD.md",
+]
+notes = [
+  "Exact Qwen3 and Qwen2.5 Q8_0 model paths were verified by SHA.",
+  "Fresh before/after capture is blocked because slm-warm-session currently passes None into the no-bias apply-linear receipt emitter.",
+  "No candidate execution, runtime promotion, allocation/timing/speedup claim, sustained-throughput claim, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet QK256 claim is made.",
+]
