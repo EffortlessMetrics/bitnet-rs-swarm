@@ -9655,6 +9655,8 @@ async fn run_slm_warm_session(
             bitnet_transformer::dense_q8_sidecar_instrumentation_snapshot(),
             &dense_q8_hook_selection,
         );
+    let dense_no_bias_apply_linear_gate =
+        slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(None);
 
     let total_session_ms = elapsed_ms(session_start);
     let speed_summary = speed_accumulator.receipt(
@@ -9838,6 +9840,7 @@ async fn run_slm_warm_session(
         "dense_q8_hook_selection": dense_q8_hook_selection,
         "dense_q8_hook": dense_q8_hook_receipt,
         "dense_q8_sidecar_instrumentation": dense_q8_sidecar_instrumentation,
+        "dense_no_bias_apply_linear_gate": dense_no_bias_apply_linear_gate,
         "qwen_trace": output.qwen_trace.receipt(),
         "cpu": {
             "model": cpu_model.as_str(),
@@ -11271,6 +11274,153 @@ fn slm_warm_session_determinism_receipt(
         "passed": checked && passed,
         "repeated_prompt_groups": groups.len(),
         "groups": groups,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(
+    gate: Option<&bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate>,
+) -> serde_json::Value {
+    let required_receipt_fields = [
+        "model_sha256",
+        "quant_format",
+        "manifest_sha256",
+        "role_id",
+        "layer",
+        "scope",
+        "linear",
+        "bias_present=false",
+        "tensor_name",
+        "selected_path=eager_f32_candle",
+        "selected_kernel=dense-f32-candle-linear",
+        "candidate_path",
+        "candidate_kernel",
+        "runtime_gate_state",
+        "runtime_api=cpu",
+        "selected_backend=cpu-rust",
+        "fallback=false",
+        "prompt_ids_digest",
+        "generated_ids_digest",
+        "decoded_text_digest",
+    ];
+    let required_behavior_receipts = [
+        "qwen3_q8_before_receipt",
+        "qwen3_q8_after_receipt",
+        "qwen25_q8_before_receipt",
+        "qwen25_q8_after_receipt",
+    ];
+    let fail_closed_conditions = gate
+        .map(|gate| gate.fail_closed_conditions.clone())
+        .unwrap_or_else(|| vec!["before_after_receipt_gate_missing_from_emitter"]);
+
+    let (decision, reason, remaining_blocker) = gate
+        .map(|gate| {
+            (
+                gate.decision,
+                gate.reason,
+                gate.remaining_runtime_selection_blocker,
+            )
+        })
+        .unwrap_or((
+            "blocked_receipt_emitter_gate_defined_runtime_disabled",
+            "warm_session_receipt_emitter_can_carry_no_bias_gate_fields_but_lacks_fresh_before_after_receipt_pair",
+            "fresh_qwen3_qwen25_before_after_warm_session_receipts_with_no_bias_gate_fields_missing",
+        ));
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "dense_no_bias_apply_linear_receipt_emitter_gate",
+        "tracking_item": "SLM-CPU-203",
+        "consumes_tracking_item": "SLM-CPU-202",
+        "record_type": "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate",
+        "decision": decision,
+        "reason": reason,
+        "remaining_runtime_selection_blocker": remaining_blocker,
+        "receipt_emitter_surface_defined": true,
+        "before_after_receipts_present": gate
+            .map(|gate| gate.before_after_receipts_present)
+            .unwrap_or(false),
+        "descriptor_callsite_identity_preserved": gate
+            .map(|gate| gate.descriptor_callsite_identity_preserved)
+            .unwrap_or(false),
+        "prompt_ids_digest_preserved": gate
+            .map(|gate| gate.prompt_ids_digest_preserved)
+            .unwrap_or(false),
+        "generated_ids_digest_preserved": gate
+            .map(|gate| gate.generated_ids_digest_preserved)
+            .unwrap_or(false),
+        "decoded_text_digest_preserved": gate
+            .map(|gate| gate.decoded_text_digest_preserved)
+            .unwrap_or(false),
+        "runtime_api": gate.map(|gate| gate.runtime_api).unwrap_or("cpu"),
+        "selected_backend": gate.map(|gate| gate.selected_backend).unwrap_or("cpu-rust"),
+        "selected_path": gate.map(|gate| gate.selected_path).unwrap_or("eager_f32_candle"),
+        "selected_kernel": gate
+            .map(|gate| gate.selected_kernel)
+            .unwrap_or("dense-f32-candle-linear"),
+        "candidate_path": gate
+            .map(|gate| gate.candidate_path)
+            .unwrap_or("qwen3_feed_forward_down_proj_no_bias_candidate"),
+        "candidate_kernel": gate
+            .map(|gate| gate.candidate_kernel)
+            .unwrap_or("dense-f32-candle-linear-no-bias-candidate"),
+        "runtime_gate_name": gate
+            .map(|gate| gate.runtime_gate_name)
+            .unwrap_or("BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME"),
+        "runtime_gate_requested_enabled": gate
+            .map(|gate| gate.runtime_gate_requested_enabled)
+            .unwrap_or(false),
+        "normal_inference_runtime_selection_enabled": gate
+            .map(|gate| gate.normal_inference_runtime_selection_enabled)
+            .unwrap_or(false),
+        "candidate_execution_enabled": gate
+            .map(|gate| gate.candidate_execution_enabled)
+            .unwrap_or(false),
+        "fallback_used": gate.map(|gate| gate.fallback_used).unwrap_or(false),
+        "model_sha256": gate
+            .map(|gate| serde_json::Value::String(gate.model_sha256.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "quant_format": gate
+            .map(|gate| serde_json::Value::String(gate.quant_format.to_string()))
+            .unwrap_or(serde_json::Value::Null),
+        "manifest_sha256": gate
+            .map(|gate| serde_json::Value::String(gate.manifest_sha256.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "tensor_name": gate
+            .map(|gate| serde_json::Value::String(gate.tensor_name.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "role_id": gate
+            .map(|gate| serde_json::Value::String(gate.role_id.clone()))
+            .unwrap_or(serde_json::Value::Null),
+        "layer": gate.map(|gate| serde_json::json!(gate.layer_idx)).unwrap_or(serde_json::Value::Null),
+        "scope": gate
+            .map(|gate| serde_json::Value::String(gate.scope.to_string()))
+            .unwrap_or(serde_json::Value::Null),
+        "linear": gate
+            .map(|gate| serde_json::Value::String(gate.linear.to_string()))
+            .unwrap_or(serde_json::Value::Null),
+        "bias_present": gate.map(|gate| serde_json::json!(gate.bias_present)).unwrap_or(serde_json::Value::Null),
+        "required_behavior_receipts": required_behavior_receipts,
+        "required_receipt_fields": required_receipt_fields,
+        "fail_closed_conditions": fail_closed_conditions,
+        "normal_inference_preserved": gate
+            .map(|gate| gate.preserves_normal_inference())
+            .unwrap_or(true),
+        "allocation_reduction_claim": gate.map(|gate| gate.allocation_reduction_claim).unwrap_or(false),
+        "timing_improvement_claim": gate.map(|gate| gate.timing_improvement_claim).unwrap_or(false),
+        "speedup_claim": gate.map(|gate| gate.speedup_claim).unwrap_or(false),
+        "claim_boundary": {
+            "candidate_execution_disabled": true,
+            "default_runtime_changed": false,
+            "no_allocation_reduction_claim": true,
+            "no_timing_improvement_claim": true,
+            "no_speedup_claim": true,
+            "no_sustained_throughput_claim": true,
+            "no_q4_q5_runtime_support": true,
+            "no_server_or_accelerator_claim": true,
+            "no_qwen35_claim": true,
+            "no_bitnet_qk256_claim": true,
+        },
     })
 }
 
@@ -15894,6 +16044,111 @@ mod tests {
         assert_eq!(receipt["source_order_selector_gate"]["explicit_runtime_opt_in"], true);
         assert_eq!(receipt["speedup_claim"], false);
         assert_eq!(receipt["claim_boundary"]["no_runtime_promotion"], true);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_apply_linear_gate_records_emitter_blocker() {
+        let receipt = slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(None);
+
+        assert_eq!(receipt["tracking_item"], "SLM-CPU-203");
+        assert_eq!(receipt["consumes_tracking_item"], "SLM-CPU-202");
+        assert_eq!(
+            receipt["record_type"],
+            "bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate"
+        );
+        assert_eq!(receipt["receipt_emitter_surface_defined"], true);
+        assert_eq!(receipt["before_after_receipts_present"], false);
+        assert_eq!(receipt["decision"], "blocked_receipt_emitter_gate_defined_runtime_disabled");
+        assert_eq!(
+            receipt["remaining_runtime_selection_blocker"],
+            "fresh_qwen3_qwen25_before_after_warm_session_receipts_with_no_bias_gate_fields_missing"
+        );
+        assert_eq!(receipt["selected_path"], "eager_f32_candle");
+        assert_eq!(receipt["selected_kernel"], "dense-f32-candle-linear");
+        assert_eq!(receipt["candidate_path"], "qwen3_feed_forward_down_proj_no_bias_candidate");
+        assert_eq!(receipt["candidate_kernel"], "dense-f32-candle-linear-no-bias-candidate");
+        assert_eq!(receipt["runtime_api"], "cpu");
+        assert_eq!(receipt["selected_backend"], "cpu-rust");
+        assert_eq!(receipt["fallback_used"], false);
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+        assert_eq!(receipt["normal_inference_runtime_selection_enabled"], false);
+        assert_eq!(receipt["required_behavior_receipts"][0], "qwen3_q8_before_receipt");
+        assert!(
+            receipt["required_receipt_fields"]
+                .as_array()
+                .is_some_and(|fields| fields.contains(&serde_json::json!("prompt_ids_digest")))
+        );
+        assert_eq!(
+            receipt["fail_closed_conditions"][0],
+            "before_after_receipt_gate_missing_from_emitter"
+        );
+        assert_eq!(receipt["speedup_claim"], false);
+        assert_eq!(receipt["claim_boundary"]["candidate_execution_disabled"], true);
+        assert_eq!(receipt["claim_boundary"]["no_bitnet_qk256_claim"], true);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_apply_linear_gate_carries_ready_gate_identity() {
+        let gate = bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+            tensor_name: "layers.0.feed_forward.down_proj.weight".to_string(),
+            role_id: "layers.0.feed_forward.down_proj".to_string(),
+            model_sha256: "qwen3-sha".to_string(),
+            quant_format: "Q8_0",
+            manifest_sha256: "manifest-sha".to_string(),
+            layer_idx: 0,
+            scope: "feed_forward",
+            linear: "down_proj",
+            bias_present: Some(false),
+            runtime_gate_name: "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+            runtime_gate_requested_enabled: true,
+            selected_path: "eager_f32_candle",
+            selected_kernel: "dense-f32-candle-linear",
+            candidate_path: "qwen3_feed_forward_down_proj_no_bias_candidate",
+            candidate_kernel: "dense-f32-candle-linear-no-bias-candidate",
+            runtime_api: "cpu",
+            selected_backend: "cpu-rust",
+            fallback_used: false,
+            before_after_receipts_present: true,
+            descriptor_callsite_identity_preserved: true,
+            prompt_ids_digest_preserved: true,
+            generated_ids_digest_preserved: true,
+            decoded_text_digest_preserved: true,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision: "before_after_receipt_gate_ready_runtime_disabled",
+            reason: "strict_warm_session_identity_preserved",
+            remaining_runtime_selection_blocker: "candidate_execution_still_disabled_until_explicit_runtime_selection_pr",
+            fail_closed_conditions: Vec::new(),
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        };
+
+        let receipt = slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(Some(&gate));
+
+        assert_eq!(receipt["decision"], "before_after_receipt_gate_ready_runtime_disabled");
+        assert_eq!(receipt["before_after_receipts_present"], true);
+        assert_eq!(receipt["descriptor_callsite_identity_preserved"], true);
+        assert_eq!(receipt["prompt_ids_digest_preserved"], true);
+        assert_eq!(receipt["generated_ids_digest_preserved"], true);
+        assert_eq!(receipt["decoded_text_digest_preserved"], true);
+        assert_eq!(receipt["model_sha256"], "qwen3-sha");
+        assert_eq!(receipt["quant_format"], "Q8_0");
+        assert_eq!(receipt["manifest_sha256"], "manifest-sha");
+        assert_eq!(receipt["tensor_name"], "layers.0.feed_forward.down_proj.weight");
+        assert_eq!(receipt["role_id"], "layers.0.feed_forward.down_proj");
+        assert_eq!(receipt["layer"], 0);
+        assert_eq!(receipt["scope"], "feed_forward");
+        assert_eq!(receipt["linear"], "down_proj");
+        assert_eq!(receipt["bias_present"], false);
+        assert_eq!(receipt["runtime_gate_requested_enabled"], true);
+        assert_eq!(receipt["normal_inference_preserved"], true);
+        assert!(receipt["fail_closed_conditions"].as_array().is_some_and(Vec::is_empty));
+        assert_eq!(receipt["allocation_reduction_claim"], false);
+        assert_eq!(receipt["timing_improvement_claim"], false);
+        assert_eq!(receipt["speedup_claim"], false);
     }
 
     #[test]
