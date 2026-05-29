@@ -1,0 +1,16 @@
+timestamp = "2026-05-29T16:15:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-215"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 958
+head_sha = "fcab5a86d36fe28ae5cf87fcaff2900d1d9eabe8"
+branch = "codex/slm-cpu-215-no-bias-candidate-off-on-receipts"
+summary = "Opened SLM-CPU-215 no-bias candidate off/on receipt-pair gate PR."
+notes = [
+  "PR #958 defines DenseLinearNoBiasCandidateOffOnReceiptPairGate for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The gate records candidate-off identity and fails closed because no candidate-on strict warm-session receipt artifact exists yet.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
