@@ -14,11 +14,11 @@
 
 use bitnet_common::config::{BitNetConfig, ModelConfig};
 use bitnet_transformer::{
-    DenseLinearNoBiasApplyLinearAuditBoundary, DenseLinearNoBiasApplyLinearReceiptBoundary,
-    DenseLinearNoBiasFastPathCandidate, DenseLinearNoBiasRuntimeDescriptorContract,
-    DenseLinearNoBiasRuntimeSelectionPreflight, DenseLinearNoBiasSelectorAudit,
-    DenseLinearOutputStorageApiBoundary, DenseLinearPackedQ8Payload,
-    DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
+    DenseLinearNoBiasApplyLinearAuditBoundary, DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate,
+    DenseLinearNoBiasApplyLinearReceiptBoundary, DenseLinearNoBiasFastPathCandidate,
+    DenseLinearNoBiasRuntimeDescriptorContract, DenseLinearNoBiasRuntimeSelectionPreflight,
+    DenseLinearNoBiasSelectorAudit, DenseLinearOutputStorageApiBoundary,
+    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookBoundary, DenseLinearRuntimeHookDescriptor,
     DenseLinearRuntimeHookRegistry, DenseQ8SidecarQNormInputReceiptIdentity, KVCache,
     LayerOutputStorageApiBoundary, NormOutputStorageApiBoundary, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
     TransformerForwardWorkspace, TransformerModel, compare_dense_q8_sidecar_q_norm_input_receipts,
@@ -1172,6 +1172,147 @@ fn no_bias_apply_linear_receipt_boundary_fails_closed_on_missing_identity() {
     assert!(!receipt.normal_inference_runtime_selection_enabled);
     assert!(!receipt.candidate_execution_enabled);
     assert!(receipt.preserves_normal_inference());
+}
+
+#[test]
+fn no_bias_apply_linear_before_after_receipt_gate_preserves_identity_runtime_disabled() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        7,
+        "layers.7.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight,
+        "Q8_0",
+        Some(false),
+        true,
+        true,
+    );
+    let boundary = DenseLinearNoBiasApplyLinearAuditBoundary::from_descriptor_contract(
+        "layers.7.feed_forward.down_proj.weight",
+        &contract,
+        true,
+    );
+    let before = DenseLinearNoBiasApplyLinearReceiptBoundary::from_apply_linear_boundary(
+        &boundary,
+        "cpu",
+        "cpu-rust",
+        false,
+        "prompt-digest",
+        "generated-digest",
+        "decoded-digest",
+        true,
+    );
+    let after = before.clone();
+    let gate = DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate::from_receipt_boundaries(
+        &before, &after, true,
+    );
+
+    assert_eq!(gate.decision, "before_after_receipt_gate_ready_runtime_disabled");
+    assert_eq!(gate.reason, "strict_warm_session_identity_preserved");
+    assert_eq!(
+        gate.remaining_runtime_selection_blocker,
+        "candidate_execution_still_disabled_until_explicit_runtime_selection_pr"
+    );
+    assert_eq!(gate.tensor_name, "layers.7.feed_forward.down_proj.weight");
+    assert_eq!(gate.role_id, "layers.7.feed_forward.down_proj");
+    assert_eq!(gate.model_sha256, SLM_CPU_195_QWEN3_Q8_MODEL_SHA256);
+    assert_eq!(gate.quant_format, "Q8_0");
+    assert_eq!(gate.manifest_sha256, "manifest-sha256");
+    assert_eq!(gate.selected_path, "eager_f32_candle");
+    assert_eq!(gate.selected_kernel, "dense-f32-candle-linear");
+    assert_eq!(gate.runtime_api, "cpu");
+    assert_eq!(gate.selected_backend, "cpu-rust");
+    assert!(!gate.fallback_used);
+    assert!(gate.before_after_receipts_present);
+    assert!(gate.descriptor_callsite_identity_preserved);
+    assert!(gate.prompt_ids_digest_preserved);
+    assert!(gate.generated_ids_digest_preserved);
+    assert!(gate.decoded_text_digest_preserved);
+    assert!(!gate.normal_inference_runtime_selection_enabled);
+    assert!(!gate.candidate_execution_enabled);
+    assert!(gate.fail_closed_conditions.is_empty());
+    assert!(gate.preserves_normal_inference());
+    assert!(!gate.allocation_reduction_claim);
+    assert!(!gate.timing_improvement_claim);
+    assert!(!gate.speedup_claim);
+}
+
+#[test]
+fn no_bias_apply_linear_before_after_receipt_gate_fails_closed_on_drift() {
+    let candidate = DenseLinearNoBiasFastPathCandidate::qwen3_down_proj(
+        7,
+        "layers.7.feed_forward.down_proj",
+        SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+        "manifest-sha256",
+        Some(false),
+    );
+    let preflight =
+        DenseLinearNoBiasRuntimeSelectionPreflight::from_candidate(&candidate, true, true);
+    let contract = DenseLinearNoBiasRuntimeDescriptorContract::from_preflight(
+        &preflight,
+        "Q8_0",
+        Some(false),
+        true,
+        true,
+    );
+    let before_boundary = DenseLinearNoBiasApplyLinearAuditBoundary::from_descriptor_contract(
+        "layers.7.feed_forward.down_proj.weight",
+        &contract,
+        true,
+    );
+    let before = DenseLinearNoBiasApplyLinearReceiptBoundary::from_apply_linear_boundary(
+        &before_boundary,
+        "cpu",
+        "cpu-rust",
+        false,
+        "prompt-digest",
+        "generated-digest",
+        "decoded-digest",
+        true,
+    );
+    let after_boundary = DenseLinearNoBiasApplyLinearAuditBoundary::from_descriptor_contract(
+        "layers.7.feed_forward.up_proj.weight",
+        &contract,
+        true,
+    );
+    let after = DenseLinearNoBiasApplyLinearReceiptBoundary::from_apply_linear_boundary(
+        &after_boundary,
+        "cpu",
+        "cpu-rust",
+        false,
+        "prompt-digest",
+        "changed-generated-digest",
+        "decoded-digest",
+        true,
+    );
+    let gate = DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate::from_receipt_boundaries(
+        &before, &after, false,
+    );
+
+    assert_eq!(gate.decision, "blocked_fail_closed");
+    assert_eq!(gate.reason, "before_after_strict_warm_session_identity_incomplete_or_drifted");
+    for condition in [
+        "after_receipt_boundary_not_ready",
+        "before_after_receipts_missing",
+        "generated_ids_digest_not_preserved",
+        "tensor_name_changed",
+    ] {
+        assert!(
+            gate.fail_closed_conditions.contains(&condition),
+            "missing fail-closed condition {condition}"
+        );
+    }
+    assert!(!gate.descriptor_callsite_identity_preserved);
+    assert!(gate.prompt_ids_digest_preserved);
+    assert!(!gate.generated_ids_digest_preserved);
+    assert!(gate.decoded_text_digest_preserved);
+    assert!(!gate.candidate_execution_enabled);
+    assert!(gate.preserves_normal_inference());
 }
 
 #[test]

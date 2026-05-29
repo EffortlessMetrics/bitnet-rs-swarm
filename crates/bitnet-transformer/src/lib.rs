@@ -1004,6 +1004,42 @@ pub struct DenseLinearNoBiasApplyLinearReceiptBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+    pub tensor_name: String,
+    pub role_id: String,
+    pub model_sha256: String,
+    pub quant_format: &'static str,
+    pub manifest_sha256: String,
+    pub layer_idx: usize,
+    pub scope: &'static str,
+    pub linear: &'static str,
+    pub bias_present: Option<bool>,
+    pub runtime_gate_name: &'static str,
+    pub runtime_gate_requested_enabled: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub before_after_receipts_present: bool,
+    pub descriptor_callsite_identity_preserved: bool,
+    pub prompt_ids_digest_preserved: bool,
+    pub generated_ids_digest_preserved: bool,
+    pub decoded_text_digest_preserved: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
 impl DenseLinearNoBiasApplyLinearAuditBoundary {
     pub fn from_descriptor_contract(
         tensor_name: impl Into<String>,
@@ -1213,6 +1249,197 @@ impl DenseLinearNoBiasApplyLinearReceiptBoundary {
     pub fn preserves_normal_inference(&self) -> bool {
         self.selected_path == "eager_f32_candle"
             && self.selected_kernel == "dense-f32-candle-linear"
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate {
+    pub fn from_receipt_boundaries(
+        before: &DenseLinearNoBiasApplyLinearReceiptBoundary,
+        after: &DenseLinearNoBiasApplyLinearReceiptBoundary,
+        before_after_receipts_present: bool,
+    ) -> Self {
+        let mut fail_closed_conditions = Vec::new();
+        if before.decision != "receipt_emission_boundary_ready_runtime_disabled" {
+            fail_closed_conditions.push("before_receipt_boundary_not_ready");
+        }
+        if after.decision != "receipt_emission_boundary_ready_runtime_disabled" {
+            fail_closed_conditions.push("after_receipt_boundary_not_ready");
+        }
+        if !before_after_receipts_present {
+            fail_closed_conditions.push("before_after_receipts_missing");
+        }
+        if before.tensor_name != after.tensor_name {
+            fail_closed_conditions.push("tensor_name_changed");
+        }
+        if before.role_id != after.role_id {
+            fail_closed_conditions.push("role_id_changed");
+        }
+        if before.model_sha256 != after.model_sha256 {
+            fail_closed_conditions.push("model_sha256_changed");
+        }
+        if before.quant_format != after.quant_format {
+            fail_closed_conditions.push("quant_format_changed");
+        }
+        if before.manifest_sha256 != after.manifest_sha256 {
+            fail_closed_conditions.push("manifest_sha256_changed");
+        }
+        if before.layer_idx != after.layer_idx {
+            fail_closed_conditions.push("layer_idx_changed");
+        }
+        if before.scope != after.scope {
+            fail_closed_conditions.push("scope_changed");
+        }
+        if before.linear != after.linear {
+            fail_closed_conditions.push("linear_changed");
+        }
+        if before.bias_present != Some(false) || after.bias_present != Some(false) {
+            fail_closed_conditions.push("bias_present_not_false");
+        }
+        if before.runtime_gate_name != after.runtime_gate_name {
+            fail_closed_conditions.push("runtime_gate_name_changed");
+        }
+        if before.runtime_gate_requested_enabled != after.runtime_gate_requested_enabled {
+            fail_closed_conditions.push("runtime_gate_request_changed");
+        }
+        if before.selected_path != after.selected_path || after.selected_path != "eager_f32_candle"
+        {
+            fail_closed_conditions.push("selected_path_not_preserved_eager_f32");
+        }
+        if before.selected_kernel != after.selected_kernel
+            || after.selected_kernel != "dense-f32-candle-linear"
+        {
+            fail_closed_conditions.push("selected_kernel_not_preserved_eager_f32");
+        }
+        if before.candidate_path != after.candidate_path {
+            fail_closed_conditions.push("candidate_path_changed");
+        }
+        if before.candidate_kernel != after.candidate_kernel {
+            fail_closed_conditions.push("candidate_kernel_changed");
+        }
+        if before.runtime_api != after.runtime_api || after.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_preserved_cpu");
+        }
+        if before.selected_backend != after.selected_backend || after.selected_backend != "cpu-rust"
+        {
+            fail_closed_conditions.push("selected_backend_not_preserved_cpu_rust");
+        }
+        if before.fallback_used || after.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+        if before.prompt_ids_digest.is_empty()
+            || after.prompt_ids_digest.is_empty()
+            || before.prompt_ids_digest != after.prompt_ids_digest
+        {
+            fail_closed_conditions.push("prompt_ids_digest_not_preserved");
+        }
+        if before.generated_ids_digest.is_empty()
+            || after.generated_ids_digest.is_empty()
+            || before.generated_ids_digest != after.generated_ids_digest
+        {
+            fail_closed_conditions.push("generated_ids_digest_not_preserved");
+        }
+        if before.decoded_text_digest.is_empty()
+            || after.decoded_text_digest.is_empty()
+            || before.decoded_text_digest != after.decoded_text_digest
+        {
+            fail_closed_conditions.push("decoded_text_digest_not_preserved");
+        }
+        if !before.receipt_fields_present || !after.receipt_fields_present {
+            fail_closed_conditions.push("receipt_fields_missing");
+        }
+        if !before.callsite_descriptor_observed || !after.callsite_descriptor_observed {
+            fail_closed_conditions.push("descriptor_callsite_not_observed");
+        }
+        if !before.preserves_normal_inference() || !after.preserves_normal_inference() {
+            fail_closed_conditions.push("normal_inference_not_preserved");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let descriptor_callsite_identity_preserved = before.tensor_name == after.tensor_name
+            && before.role_id == after.role_id
+            && before.model_sha256 == after.model_sha256
+            && before.quant_format == after.quant_format
+            && before.manifest_sha256 == after.manifest_sha256
+            && before.layer_idx == after.layer_idx
+            && before.scope == after.scope
+            && before.linear == after.linear
+            && before.bias_present == Some(false)
+            && after.bias_present == Some(false)
+            && before.candidate_path == after.candidate_path
+            && before.candidate_kernel == after.candidate_kernel
+            && before.callsite_descriptor_observed
+            && after.callsite_descriptor_observed;
+        let prompt_ids_digest_preserved = !before.prompt_ids_digest.is_empty()
+            && before.prompt_ids_digest == after.prompt_ids_digest;
+        let generated_ids_digest_preserved = !before.generated_ids_digest.is_empty()
+            && before.generated_ids_digest == after.generated_ids_digest;
+        let decoded_text_digest_preserved = !before.decoded_text_digest.is_empty()
+            && before.decoded_text_digest == after.decoded_text_digest;
+
+        let gate_ready = fail_closed_conditions.is_empty();
+        let (decision, reason, remaining_runtime_selection_blocker) = if gate_ready {
+            (
+                "before_after_receipt_gate_ready_runtime_disabled",
+                "strict_warm_session_identity_preserved",
+                "candidate_execution_still_disabled_until_explicit_runtime_selection_pr",
+            )
+        } else {
+            (
+                "blocked_fail_closed",
+                "before_after_strict_warm_session_identity_incomplete_or_drifted",
+                "before_after_strict_warm_session_identity",
+            )
+        };
+
+        Self {
+            tensor_name: before.tensor_name.clone(),
+            role_id: before.role_id.clone(),
+            model_sha256: before.model_sha256.clone(),
+            quant_format: before.quant_format,
+            manifest_sha256: before.manifest_sha256.clone(),
+            layer_idx: before.layer_idx,
+            scope: before.scope,
+            linear: before.linear,
+            bias_present: before.bias_present,
+            runtime_gate_name: before.runtime_gate_name,
+            runtime_gate_requested_enabled: before.runtime_gate_requested_enabled,
+            selected_path: before.selected_path,
+            selected_kernel: before.selected_kernel,
+            candidate_path: before.candidate_path,
+            candidate_kernel: before.candidate_kernel,
+            runtime_api: before.runtime_api,
+            selected_backend: before.selected_backend,
+            fallback_used: before.fallback_used || after.fallback_used,
+            before_after_receipts_present,
+            descriptor_callsite_identity_preserved,
+            prompt_ids_digest_preserved,
+            generated_ids_digest_preserved,
+            decoded_text_digest_preserved,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
             && !self.normal_inference_runtime_selection_enabled
             && !self.candidate_execution_enabled
             && !self.allocation_reduction_claim
