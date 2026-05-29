@@ -2,9 +2,10 @@
   "schema_version": 1,
   "artifact_kind": "lunar_lake_goal_artifact_checklist",
   "proof_stage": "objective_artifact_mapping_no_inference",
-  "created_utc": "2026-05-26T05:18:33Z",
+  "created_utc": "2026-05-29T15:08:37Z",
   "machine_id": "intel-258v",
-  "source_revision": "17950f95b5380f0af18ad2371bd6494ab7d7f37d",
+  "source_revision": "31e850540c670320e6268a43df67394cad1afb8e",
+  "post_960_checkpoint_delta": "Current swarm main now additionally includes LNL258V-POWER-006A/#956 plus closeout #960 as Lunar Lake low_power battery-preflight harness and tracker state only. #956 added the no-inference bitnet lunar-lake low-power-harness command and committed lunar-lake-low-power-run-harness.json; the receipt records the current AC/charging preflight as blocked with BatteryStatus=2, estimated charge 100, ac_power_inferred=true, battery_preflight_passed=false, model_inference_allowed=false, model_inference_executed=false, and route_sample_execution_started=false. #960 closes the POWER-006A tracker state. The objective remains not complete because LNL258V-POWER-006 still lacks real battery-mode low_power telemetry, valid route samples, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage. These changes do not add Lunar Lake inference, model loads, fallback behavior changes, route promotion, speedup, power-advantage evidence, battery-mode route samples, measured temperature evidence, native accelerator proof, broad quality evidence, dense-SLM-as-BitNet proof, full BitNet accelerator inference, production QK256 dispatch policy, or BitNet QK256/I2_S behavior change.",
   "post_760_checkpoint_delta": "Current swarm main now additionally includes SLM-CPU-120/#759 plus closeout #760 after the post-758 checkpoint. #759 adds fail-closed packed Q8_0 sidecar payload-order validation in bitnet-models/bitnet-transformer, exposes sidecar_payload_order_matches_runtime_shape in hook selection receipts, and records a Qwen3 run still aborting before q_proj-output fingerprint/receipt with a pre-boundary allocation failure; #760 is tracker closeout state only. The selector remains runtime-disabled unless an explicit exact tensor gate and valid payload order are present, eager_f32_candle remains the default runtime, and packed_q8_sidecar remains unpromoted. This is adjacent SLM CPU fail-closed runtime-support/receipt state, not Lunar Lake route evidence, not a Lunar Lake semantic-intake stale trigger, and not a BitNet QK256/I2_S behavior change. The objective remains not complete because LNL258V-POWER-006 still lacks real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage. These changes do not add Lunar Lake inference, model loads, fallback behavior changes, route promotion, speedup, power-advantage evidence, battery-mode evidence, measured temperature evidence, native accelerator proof, broad quality evidence, dense-SLM-as-BitNet proof, full BitNet accelerator inference, production QK256 dispatch policy, or BitNet QK256/I2_S behavior change.",
   "post_758_checkpoint_delta": "Current swarm main now additionally includes SLM-CPU-116/#742 plus closeout #746, SLM-CPU-117/#749 plus closeout #752, SLM-CPU-118/#753 plus closeout #755, SLM-CPU-119/#757 plus closeout #758, CI lane whitelist validation #747 plus duplicate-lane future marker #750, and public badge refresh #632. SLM-CPU-116/118/119 are adjacent Qwen q_proj-output hook blocker or receipt-pair evidence, and SLM-CPU-117 adds an opt-in runtime-disabled attention.q_proj_output_pre_optional_qnorm trace/fingerprint/comparator hook while preserving eager_f32_candle as the default runtime and packed_q8_sidecar as unpromoted. These are adjacent SLM CPU diagnostic/support artifacts, not Lunar Lake route evidence, not shared BitNet semantic fixes, and not Lunar Lake semantic-intake stale triggers. The objective remains not complete because LNL258V-POWER-006 still lacks real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage. These changes do not add Lunar Lake inference, model loads, fallback behavior changes, route promotion, speedup, power-advantage evidence, battery-mode evidence, measured temperature evidence, native accelerator proof, broad quality evidence, dense-SLM-as-BitNet proof, full BitNet accelerator inference, production QK256 dispatch policy, or BitNet QK256/I2_S behavior change.",
   "post_744_checkpoint_delta": "Current swarm main now additionally includes LNL258V-ASK-009/#743 plus tracker closeout #744 as Lunar Lake OpenVINO operator ask helper Python discovery and tracker state only. #743 made the operator ask helper discover target/lunar-lake-openvino-venv/Scripts/python.exe after BITNET_LUNAR_LAKE_OPENVINO_PYTHON and .venv before falling back to plain python, so profile-promoted OpenVINO auto asks can use the prepared checkout-local target venv when present. Local validation on the rebased ASK-009 PR head verified ask_normal auto without BITNET_LUNAR_LAKE_OPENVINO_PYTHON selected dense_slm_openvino_gpu_candidate / openvino-gpu / openvino_genai with fallback_used=false and a bounded answer-gate pass for the 2+2 prompt. #744 records tracker closeout state only. These changes do not add Lunar Lake route promotion, speedup, power-advantage evidence, battery-mode evidence, measured temperature evidence, native accelerator proof, broad quality evidence, model behavior change, dense-SLM-as-BitNet proof, full BitNet accelerator inference, or BitNet QK256/I2_S behavior change. LNL258V-POWER-006 remains blocked until real battery-mode low_power telemetry, valid route samples, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage are collected. The objective remains not complete because LNL258V-POWER-006 still lacks real battery-mode low_power telemetry, valid energy-proxy evidence, measured thermal readings if available, and benchmark-qualified power advantage.",
@@ -53,6 +54,7 @@
       "before/after battery-mode telemetry can rebuild lunar-lake-low-power-energy-proxy.json",
       "power-profile, regression-v2, operator-comparison, and excellence-audit artifacts are refreshed from battery-mode evidence",
       "operators follow docs/hardware/intel-258v-low-power-battery-runbook.md before collecting POWER-006 evidence",
+      "low-power-harness passes battery preflight before any route sample command starts",
       "low_power remains unpromoted unless answer gates, fallback=false, stable timing, and benchmark-qualified power advantage all pass",
       "low-power-plan receipt remains operator_plan_ready=true and is refreshed after POWER-006 battery evidence is collected"
     ]
@@ -324,11 +326,13 @@
         "lunar-lake-low-power-battery-telemetry-blocked.json",
         "lunar-lake-low-power-energy-proxy.json",
         "lunar-lake-operator-ask-auto-low-power-blocked.json",
+        "lunar-lake-low-power-run-harness.json",
         "lunar-lake-low-power-battery-plan.json"
       ],
       "notes": [
         "low_power has no promoted route.",
         "The current energy-proxy evidence is AC-only and does not prove battery-mode power advantage.",
+        "The low-power run harness records the current AC/charging preflight as blocked and prevents route sample execution.",
         "POWER-010 adds the no-inference plan receipt, but low_power remains blocked because it is not battery-mode evidence and cannot prove power advantage."
       ]
     },
@@ -377,6 +381,23 @@
         "POWER-011 replaces the placeholder route/profile sample step with exact CPU/GPU/NPU explicit-route ask commands and receipt paths.",
         "POWER-011 still does not run inference, collect battery-mode telemetry, promote low_power, prove speedup or power advantage, add model binaries, or change BitNet QK256/I2_S behavior.",
         "POWER-014 makes the plan surface energy_proxy_recorded=false separately from energy_proxy_attempt_recorded=true, with energy_proxy_evidence_status=attempt_recorded_but_invalid_without_battery_mode."
+      ]
+    },
+    {
+      "id": "low_power_run_harness",
+      "status": "covered_no_evidence_claim",
+      "evidence": [
+        "lunar-lake-low-power-run-harness.json",
+        "docs/hardware/intel-258v-low-power-battery-runbook.md",
+        "docs/tracking/campaigns/intel-258v-platform/events/2026-05-29T124130Z-LNL258V-POWER-006A-pr-open.toml",
+        "docs/tracking/campaigns/intel-258v-platform/events/2026-05-29T143702Z-LNL258V-POWER-006A-merged.toml",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/956",
+        "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/960"
+      ],
+      "notes": [
+        "POWER-006A adds bitnet lunar-lake low-power-harness and records the power scheme, BatteryStatus, estimated charge, AC inference, thermal availability, and route/profile matrix before any route sample can run.",
+        "The committed harness receipt is blocked on AC/charging with battery_preflight_passed=false, model_inference_allowed=false, model_inference_executed=false, and route_sample_execution_started=false.",
+        "The harness is preflight control evidence only; it is not battery-mode route/profile evidence, route promotion, speedup, power advantage, measured temperature proof, native accelerator evidence, broad quality evidence, or BitNet QK256/I2_S behavior evidence."
       ]
     },
     {
