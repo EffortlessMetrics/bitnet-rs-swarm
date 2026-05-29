@@ -12775,7 +12775,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-221"
-status = "ready"
+status = "pr_open"
+pr = 983
+head_sha = "d37c7c0f659b18c48334d71b1c2fccf0015435fb"
 branch = "codex/slm-cpu-221-no-bias-receipt-gated-candidate-execution-blocker"
 stackable = false
 review_mode = "codex_premerge"
