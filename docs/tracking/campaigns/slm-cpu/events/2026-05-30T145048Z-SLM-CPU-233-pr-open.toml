@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T14:50:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-233"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1021
+branch = "codex/slm-cpu-233-no-bias-execution-receipts"
+head_sha = "aa1ea3bf730fab7f57fdbfd8926bde1f55315aa2"
+summary = "Opened the SLM-CPU-233 no-bias execution receipt blocker PR."
+notes = [
+  "PR #1021 records that Qwen3 Q8_0 is present and SHA-verified, but the pinned Qwen2.5 Q8_0 model artifact is absent from this workspace.",
+  "The PR keeps candidate-off/candidate-on execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+]
