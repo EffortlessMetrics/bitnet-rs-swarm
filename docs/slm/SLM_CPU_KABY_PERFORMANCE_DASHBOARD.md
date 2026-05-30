@@ -110,6 +110,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias candidate execution receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json` | Consumes the SLM-CPU-230 runtime hook attachment and keeps candidate execution fail-closed until fresh candidate-off/candidate-on execution receipts prove generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer authority, and fallback=false are preserved |
 | No-bias execution capture commands | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json` | Defines the concrete candidate-off/candidate-on execution capture command contract for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; receipts remain uncaptured and no candidate execution or preservation claim is made |
 | No-bias execution receipt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json` | Blocks fresh SLM-CPU-233 candidate-off/candidate-on execution receipt capture because the pinned Qwen2.5 Q8_0 GGUF is absent from this workspace; Qwen3 is present and SHA-verified, but no candidate execution receipt or preservation claim is made |
+| Qwen2.5 artifact prerequisite | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json` | Verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local `target` caches by SHA without committing a model binary, clearing the artifact prerequisite for a later fresh no-bias candidate-off/candidate-on capture |
 
 Qwen3 rows use:
 
@@ -4559,6 +4560,38 @@ does not change default runtime selection, does not prove generated-ID
 preservation, and does not claim allocation reduction, timing improvement,
 speedup, sustained throughput, Q4/Q5 support, server/accelerator execution,
 Qwen3.5, or BitNet QK256 behavior.
+
+## SLM-CPU-234 Qwen2.5 Artifact Prerequisite
+
+SLM-CPU-234 consumes the SLM-CPU-233 blocker and verifies the missing artifact
+prerequisite without changing the tracked model tree. The exact pinned
+Qwen2.5 Q8_0 GGUF is available in ignored local `target` cache directories, and
+both discovered copies match the expected SHA256. No download was attempted in
+this slice and no model binary is committed.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json
+decision = qwen25_artifact_prerequisite_verified_from_ignored_cache
+qwen25_repo = Qwen/Qwen2.5-0.5B-Instruct-GGUF
+qwen25_revision = 9217f5db79a29953eb74d5343926648285ec7e67
+qwen25_filename = qwen2.5-0.5b-instruct-q8_0.gguf
+qwen25_sha256 = ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e
+qwen25_bytes = 675710816
+usable_receipt_capture_path = target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf
+model_binary_committed = false
+download_attempted_in_this_slice = false
+candidate_execution_receipts_captured = false
+candidate_execution_enabled_by_default = false
+normal_inference_runtime_selection_enabled = false
+```
+
+The next safe slice can use the verified ignored-cache path to attempt the
+fresh Qwen3/Qwen2.5 candidate-off/candidate-on execution receipts required by
+the SLM-CPU-232 command contract. This slice does not execute the no-bias
+candidate, does not change default runtime selection, does not prove
+generated-ID preservation, and does not claim allocation reduction, timing
+improvement, speedup, sustained throughput, Q4/Q5 support,
+server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical

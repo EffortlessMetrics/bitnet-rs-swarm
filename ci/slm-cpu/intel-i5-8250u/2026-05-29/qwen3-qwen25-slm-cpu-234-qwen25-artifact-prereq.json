@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_qwen25_artifact_prerequisite",
+  "tracking_item": "SLM-CPU-234",
+  "consumes_tracking_item": "SLM-CPU-233",
+  "consumes_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json",
+  "decision": "qwen25_artifact_prerequisite_verified_from_ignored_cache",
+  "reason": "pinned_qwen25_q8_0_model_artifact_present_in_target_cache_with_matching_sha256",
+  "model_binary_committed": false,
+  "artifact_policy": {
+    "commit_model_binary": false,
+    "use_ignored_local_cache": true,
+    "copy_to_tracked_models_dir": false,
+    "download_attempted_in_this_slice": false
+  },
+  "qwen25_artifact": {
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+    "filename": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "source_url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "expected_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "expected_bytes": 675710816,
+    "verified_cache_paths": [
+      {
+        "path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+        "exists": true,
+        "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "sha256_matches": true,
+        "bytes": 675710816
+      },
+      {
+        "path": "target/slm-cpu-140/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+        "exists": true,
+        "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "sha256_matches": true,
+        "bytes": 675710816
+      }
+    ],
+    "usable_receipt_capture_path": "target/slm-cpu-017/cache/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf"
+  },
+  "qwen3_artifact": {
+    "path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+    "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+    "sha256_matches": true
+  },
+  "host_storage_context": {
+    "drive": "C:",
+    "free_bytes": 84120862720,
+    "free_space_source": "Get-PSDrive FileSystem",
+    "storage_blocker": false
+  },
+  "next_required_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-on-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-on-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json"
+  ],
+  "claim_boundary": {
+    "candidate_execution_receipts_captured": false,
+    "candidate_execution_enabled_by_default": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
