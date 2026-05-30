@@ -113,6 +113,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | Qwen2.5 artifact prerequisite | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json` | Verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local `target` caches by SHA without committing a model binary, clearing the artifact prerequisite for a later fresh no-bias candidate-off/candidate-on capture |
 | No-bias execution receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json` | Captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts for `feed_forward.down_proj`; generated IDs and decoded text are preserved while candidate execution remains disabled and `eager_f32_candle` remains selected |
 | No-bias candidate execution attempt boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json` | Consumes the validated SLM-CPU-235 receipt pair and blocks candidate execution at the exact current runtime boundary: `FeedForward::apply_linear` has no no-bias candidate dispatch branch, so eager F32 remains selected and no executed-candidate preservation or speed claim is made |
+| No-bias apply-linear dispatch blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-237-no-bias-dispatch-blocker.json` | Refines the SLM-CPU-236 blocker: a dispatch branch would be unreachable or receipt-unsafe until prompt-bound no-bias selector identity can reach `FeedForward::apply_linear`; production hook registry construction still sets `receipt_bound_no_bias_selector=None` |
 
 Qwen3 rows use:
 
@@ -4704,6 +4705,48 @@ the explicit gate, receipt-bound selector, strict SLM-CPU-235 receipt-pair
 identity, tensor callsite, `bias_present=false`, CPU backend, and
 `fallback=false` checks all pass. The default path must remain
 `eager_f32_candle` when the explicit gate is absent.
+
+This slice does not execute the no-bias candidate, prove generated-ID
+preservation for an executed candidate path, change default runtime selection,
+claim allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
+support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
+
+## SLM-CPU-237 No-Bias Apply-Linear Dispatch Blocker
+
+SLM-CPU-237 consumes the SLM-CPU-236 dispatch-attempt boundary and records a
+more specific implementation blocker:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-237-no-bias-dispatch-blocker.json
+decision = apply_linear_dispatch_blocked_fail_closed
+remaining_runtime_selection_blocker = session_prompt_bound_no_bias_selector_attachment_or_per_callsite_receipt_emitter
+candidate_execution_attempted = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The no-bias candidate function exists, but wiring a dispatch branch directly
+inside `FeedForward::apply_linear` is not receipt-safe yet. Production hook
+construction in `bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars`
+sets `DenseLinearRuntimeHookDescriptor::receipt_bound_no_bias_selector=None`
+for every sidecar descriptor. That hook registry is model-load scoped, while
+the SLM-CPU-235 prompt/generated/text digests are warm-session prompt-scoped.
+
+As a result, a dispatch branch added now would either never execute because the
+selector is absent, or it would need stale/global identity that is not bound to
+the current prompt receipt. The next safe design must choose one of two
+receipt-safe identity paths:
+
+```text
+session_scoped_hook_mutation
+per_callsite_candidate_receipt_emitter
+```
+
+The session-scoped option must attach and clear prompt-bound selector identity
+without crossing prompt boundaries. The per-callsite option avoids mutating
+model hooks and passes the prompt-bound candidate execution descriptor directly
+to the exact `FeedForward::apply_linear` callsite.
 
 This slice does not execute the no-bias candidate, prove generated-ID
 preservation for an executed candidate path, change default runtime selection,

@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T18:00:38Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-237"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1029
+branch = "codex/slm-cpu-237-no-bias-apply-linear-dispatch"
+head_sha = "45004515b6a721feaa3d2290b1fe0e8b16c796c7"
+summary = "Opened the SLM-CPU-237 no-bias dispatch blocker PR."
+notes = [
+  "PR #1029 records that a FeedForward::apply_linear dispatch branch would be unreachable or receipt-unsafe until prompt-bound selector identity reaches the callsite.",
+  "The PR keeps candidate execution disabled, preserves eager_f32_candle, and makes no timing, allocation, speedup, Q4/Q5, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

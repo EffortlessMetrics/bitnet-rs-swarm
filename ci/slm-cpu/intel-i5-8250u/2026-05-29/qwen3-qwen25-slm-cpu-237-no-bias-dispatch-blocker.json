@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "dense_no_bias_apply_linear_dispatch_blocker",
+  "tracking_item": "SLM-CPU-237",
+  "consumes_tracking_item": "SLM-CPU-236",
+  "decision": "apply_linear_dispatch_blocked_fail_closed",
+  "reason": "no_bias_dispatch_branch_would_be_unreachable_or_receipt_unsafe_without_prompt_bound_selector_attachment",
+  "remaining_runtime_selection_blocker": "session_prompt_bound_no_bias_selector_attachment_or_per_callsite_receipt_emitter",
+  "validated_inputs": {
+    "slm_cpu_235_receipt_pair_validated": true,
+    "slm_cpu_236_blocker_consumed": true,
+    "explicit_gate_receipt_visible": true,
+    "candidate_function_present": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "candidate_function_wired_to_model_execution": false
+  },
+  "current_runtime_surfaces": {
+    "hook_registry_owner": "bitnet_models::bitnet::dense_q8_runtime_hooks_from_sidecars",
+    "hook_registry_lifetime": "model_load",
+    "hook_registry_descriptor_selector_field": "DenseLinearRuntimeHookDescriptor::receipt_bound_no_bias_selector",
+    "production_hook_registry_selector_value": null,
+    "production_hook_registry_selector_source": "crates/bitnet-models/src/bitnet.rs:dense_q8_runtime_hooks_from_sidecars sets receipt_bound_no_bias_selector=None for every sidecar descriptor",
+    "apply_linear_owner": "bitnet_transformer::FeedForward::apply_linear",
+    "apply_linear_receives_hook_registry_by_shared_reference": true,
+    "prompt_generated_text_digests_available_at_hook_construction": false,
+    "prompt_generated_text_digests_available_after_prompt_execution": true,
+    "same_prompt_candidate_execution_can_observe_prompt_bound_selector": false
+  },
+  "why_dispatch_is_not_wired_in_this_slice": [
+    "The required receipt-bound selector is not attached to the production DenseLinearRuntimeHookRegistry.",
+    "The model-load hook registry is built before warm-session prompt IDs, generated IDs, and decoded text digests exist.",
+    "FeedForward::apply_linear receives only the hook registry and linear callsite inputs; it has no prompt/session receipt identity argument.",
+    "Adding a dispatch branch now would either never execute because the selector is None, or would require stale/global identity that is not bound to the current prompt receipt."
+  ],
+  "safe_next_designs": [
+    {
+      "design": "session_scoped_hook_mutation",
+      "description": "Attach a receipt-bound selector to the model/session hook registry after prompt digests exist and before same-prompt candidate execution, with prompt isolation and stale-identity clearing."
+    },
+    {
+      "design": "per_callsite_candidate_receipt_emitter",
+      "description": "Avoid mutating model hooks; pass a prompt-bound candidate execution descriptor to FeedForward::apply_linear for the exact callsite and emit candidate off/on evidence there."
+    }
+  ],
+  "claim_boundary": {
+    "candidate_execution_enabled_by_default": false,
+    "candidate_execution_attempted": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_for_executed_candidate_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_or_q5_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_or_hybrid_claim": false,
+    "bitnet_qk256_change": false
+  }
+}
