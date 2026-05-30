@@ -130,8 +130,19 @@ jobs:
 
       - name: Run stub tests
         if: steps.opencl_headers.outputs.available == 'true'
-        run: cargo test --locked --no-default-features --features oneapi -p bitnet-kernels -- opencl
-        continue-on-error: true
+        run: |
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_cache --test-threads=1
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_context --test-threads=1
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_kernel_sources --test-threads=1
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_embedding --test-threads=1
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_pipeline --test-threads=1
+          cargo test --locked --no-default-features --features oneapi \
+            -p bitnet-kernels -- opencl_work_size --test-threads=1
 
       - name: Run kernel source tests
         run: cargo test --locked --no-default-features --features cpu -p bitnet-kernels -- kernels::tests
