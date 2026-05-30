@@ -12952,7 +12952,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-224"
-status = "ready"
+status = "pr_open"
+pr = 992
+head_sha = "2db260cb9ca10f9cfa2bc439713b6e92a4a37701"
 branch = "codex/slm-cpu-224-no-bias-strict-capture-artifact-pair"
 stackable = false
 review_mode = "codex_premerge"
