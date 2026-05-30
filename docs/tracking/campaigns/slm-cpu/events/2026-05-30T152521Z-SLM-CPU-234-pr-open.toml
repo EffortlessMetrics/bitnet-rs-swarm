@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T15:25:21Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-234"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1023
+branch = "codex/slm-cpu-234-qwen25-artifact-prereq"
+head_sha = "556576ca47afc4e288f100d873b8897285495640"
+summary = "Opened the SLM-CPU-234 Qwen2.5 artifact prerequisite PR."
+notes = [
+  "PR #1023 verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local target caches by SHA without committing a model binary.",
+  "The PR keeps candidate execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+]

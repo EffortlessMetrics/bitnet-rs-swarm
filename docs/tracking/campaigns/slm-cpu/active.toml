@@ -13542,7 +13542,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-234"
-status = "ready"
+status = "pr_open"
+pr = 1023
+head_sha = "556576ca47afc4e288f100d873b8897285495640"
 branch = "codex/slm-cpu-234-qwen25-artifact-prereq"
 stackable = false
 review_mode = "codex_premerge"
