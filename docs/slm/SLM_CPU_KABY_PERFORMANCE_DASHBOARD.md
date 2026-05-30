@@ -4247,6 +4247,42 @@ produce or ingest the validated strict capture artifact pair named by this
 prerequisite before any separately gated candidate execution PR can be
 considered.
 
+## SLM-CPU-226 No-Bias Strict Capture Pair Blocker
+
+SLM-CPU-226 consumes the SLM-CPU-225 strict capture prerequisite and records
+that the validated candidate-off/on strict capture artifact pair still does not
+exist for bounded Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` evidence. The
+older SLM-CPU-209 before/after warm-session pair is useful default-path
+evidence, but it is not a candidate-on strict capture artifact pair: both sides
+keep candidate execution disabled and do not record candidate-on capture
+commands or off/on strict capture validation.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-226-no-bias-strict-capture-pair.json
+decision = blocked_fail_closed
+reason = candidate_off_on_strict_capture_artifact_pair_absent
+remaining_blocker = validated_candidate_off_on_strict_capture_artifact_pair
+boundary = bitnet_transformer::DenseLinearNoBiasStrictCaptureArtifactPairBoundary
+strict_capture_prerequisite_bound = true
+strict_capture_artifact_pair_validated = false
+candidate_off_strict_capture_artifact_present = false
+candidate_on_strict_capture_artifact_present = false
+candidate_off_capture_command_recorded = false
+candidate_on_capture_command_recorded = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
+define and validate the concrete candidate-off/on strict capture commands and
+artifacts before any separately gated candidate execution PR can be considered.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
