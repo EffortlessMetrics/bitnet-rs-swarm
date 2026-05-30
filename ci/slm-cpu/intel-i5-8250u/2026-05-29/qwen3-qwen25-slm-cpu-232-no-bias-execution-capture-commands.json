@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_execution_capture_commands",
+  "tracking_item": "SLM-CPU-232",
+  "consumes_tracking_item": "SLM-CPU-231",
+  "consumes_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json",
+  "decision": "execution_capture_commands_defined_fail_closed",
+  "reason": "candidate_execution_capture_command_contract_defined_but_receipts_not_captured",
+  "remaining_runtime_selection_blocker": "candidate_off_on_execution_receipt_artifacts",
+  "command_contract": {
+    "command": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- --device cpu slm-warm-session",
+    "required_environment": {
+      "BITNET_STRICT_MODE": "1",
+      "BITNET_DISABLE_MINIMAL_LOADER": "1",
+      "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME": "candidate-off-or-candidate-on",
+      "RAYON_NUM_THREADS": "4"
+    },
+    "common_args": [
+      "--model <verified-qwen-gguf>",
+      "--model-format gguf",
+      "--strict-loader",
+      "--strict-tokenizer",
+      "--prompt-template qwen",
+      "--no-think",
+      "--prompt \"What is 2+2? Answer with only the number.\"",
+      "--prompt \"Say exactly: OK\"",
+      "--max-new-tokens 4",
+      "--temperature 0.0",
+      "--greedy",
+      "--deterministic",
+      "--threads 4",
+      "--require-determinism",
+      "--json-out <candidate-off-or-on-receipt.json>"
+    ],
+    "candidate_off": {
+      "gate_value": "off",
+      "json_out_suffix": "candidate-off-execution.json",
+      "must_record": [
+        "runtime_hook_attachment_ready=true",
+        "candidate_execution_enabled=false",
+        "selected_path=eager_f32_candle"
+      ]
+    },
+    "candidate_on": {
+      "gate_value": "on",
+      "json_out_suffix": "candidate-on-execution.json",
+      "must_record": [
+        "runtime_hook_attachment_ready=true",
+        "candidate_execution_gate_requested=true",
+        "candidate_execution_path explicit and receipt-visible"
+      ]
+    }
+  },
+  "identity_requirements": [
+    "model_sha256",
+    "model_architecture",
+    "quant_format=Q8_0",
+    "tokenizer_source=gguf_metadata",
+    "tokenizer_strict=true",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "selected_path",
+    "selected_kernel",
+    "candidate_path",
+    "candidate_kernel",
+    "DenseLinearRuntimeHookRegistry attachment identity",
+    "FeedForward::apply_linear owner/callsite identity",
+    "bias_present=false",
+    "fallback_used=false"
+  ],
+  "candidate_scope": {
+    "models": [
+      {
+        "family": "qwen3",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "quant_format": "Q8_0"
+      },
+      {
+        "family": "qwen2",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "quant_format": "Q8_0"
+      }
+    ],
+    "role_id": "layers.0.feed_forward.down_proj",
+    "tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "callsite_identity": "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+    "bias_present": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "fallback_used": false
+  },
+  "next_required_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-232-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-232-no-bias-candidate-on-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-232-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-232-no-bias-candidate-on-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-validation.json"
+  ],
+  "claim_boundary": {
+    "candidate_execution_receipts_captured": false,
+    "candidate_execution_enabled_by_default": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}
