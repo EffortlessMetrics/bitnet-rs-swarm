@@ -39,7 +39,7 @@ User-facing runtime and proof paths must not silently use the reduced-feature GG
 - Table lookup quantization optimized for ARM NEON architecture (4-bit, 2 elements per byte with nibble packing)
 - **Accuracy**: Target ≥99.6% correlation with FP32 reference (defined in test fixtures)
 - **Performance**: Hardware-dependent; optimised for ARM NEON.
-- **NEON Improvements**: ARM NEON kernel throughput and accuracy improvements added in #988
+- **NEON Kernels**: ARM NEON vectorized kernel path (throughput is hardware-dependent)
 - **Device-Aware Selection**: Automatic ARM NEON vectorization with scalar fallback
 - Memory-efficient lookup tables (16-256 entries, cache-friendly)
 - Parallel processing with configurable block sizes
@@ -52,11 +52,11 @@ User-facing runtime and proof paths must not silently use the reduced-feature GG
 - **Accuracy**: Target ≥99.6% correlation with FP32 reference (defined in test fixtures)
 - **Performance**: Hardware-dependent; optimised for x86 AVX2/AVX-512.
 - **SIMD Optimization**: AVX2 (32-byte) and AVX-512 (64-byte) vectorization
-- **AVX-512 Kernels**: Dedicated AVX-512 TL2 kernels added in #997 for 64-byte wide SIMD lanes
+- **AVX-512 Kernels**: Dedicated AVX-512 TL2 kernels for 64-byte wide SIMD lanes
 - Enhanced vectorized operations (256-4096 entry tables) for large tensor processing
 - CPU feature detection with graceful fallback to scalar implementation
 - **Real Computation**: Direct table lookup matmul without FP32 staging (Issue #261)
-- **2-bit Domain**: Input quantization stays in the 2-bit domain throughout (fixed in #978)
+- **2-bit Domain**: Input quantization stays in the 2-bit domain throughout
 - **Safe LUT Index Calculation**: Uses `bitnet_kernels::tl_lut::lut_index()` with checked arithmetic and overflow protection
 
 ### I2S (QK256/GGML) - Pure Rust
@@ -155,10 +155,10 @@ cargo test -p bitnet-kernels --no-default-features --features cpu test_lut_index
 All quantizers support device-aware operations with:
 
 - **Automatic GPU acceleration**: CUDA kernels with performance monitoring (alpha)
-- **Metal acceleration**: macOS/iOS GPU via `feature = "metal"` (#992)
-- **Vulkan compute**: Cross-platform GPU via `feature = "vulkan"` (#993)
-- **Intel oneAPI**: Intel CPU/GPU acceleration via `feature = "oneapi"` (#986)
-- **ROCm support**: AMD GPU detection via `rocm_available` field in `DeviceProbe` (#995)
+- **Metal acceleration**: macOS/iOS GPU via `feature = "metal"`
+- **Vulkan compute**: Cross-platform GPU via `feature = "vulkan"`
+- **Intel oneAPI**: Intel CPU/GPU acceleration via `feature = "oneapi"`
+- **ROCm support**: AMD GPU detection via `rocm_available` field in `DeviceProbe`
 - **Transparent CPU fallback**: Graceful degradation with maintained accuracy (SIMD-optimised)
 - **Memory optimization**: GPU memory leak detection and efficient allocation
 - **Feature gating**: Proper `#[cfg(feature = "gpu")]` guards for CPU-only builds
