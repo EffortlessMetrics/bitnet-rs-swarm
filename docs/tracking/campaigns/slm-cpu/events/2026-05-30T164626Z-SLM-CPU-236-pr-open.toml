@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T16:46:26Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-236"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1027
+branch = "codex/slm-cpu-236-no-bias-candidate-execution-attempt"
+head_sha = "4d1a942e323288600b12e98c60db0f3cca2f9f6a"
+summary = "Opened the SLM-CPU-236 no-bias candidate execution blocker PR."
+notes = [
+  "PR #1027 consumes the validated SLM-CPU-235 receipt pair and records apply_linear_no_bias_candidate_dispatch as the remaining runtime blocker.",
+  "The PR keeps candidate execution disabled, preserves eager_f32_candle, and makes no timing, allocation, speedup, Q4/Q5, accelerator, Qwen3.5, or BitNet QK256 claim.",
+]

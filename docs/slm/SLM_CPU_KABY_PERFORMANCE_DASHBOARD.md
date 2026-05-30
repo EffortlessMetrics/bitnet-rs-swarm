@@ -112,6 +112,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias execution receipt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json` | Blocks fresh SLM-CPU-233 candidate-off/candidate-on execution receipt capture because the pinned Qwen2.5 Q8_0 GGUF is absent from this workspace; Qwen3 is present and SHA-verified, but no candidate execution receipt or preservation claim is made |
 | Qwen2.5 artifact prerequisite | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json` | Verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local `target` caches by SHA without committing a model binary, clearing the artifact prerequisite for a later fresh no-bias candidate-off/candidate-on capture |
 | No-bias execution receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json` | Captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts for `feed_forward.down_proj`; generated IDs and decoded text are preserved while candidate execution remains disabled and `eager_f32_candle` remains selected |
+| No-bias candidate execution attempt boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json` | Consumes the validated SLM-CPU-235 receipt pair and blocks candidate execution at the exact current runtime boundary: `FeedForward::apply_linear` has no no-bias candidate dispatch branch, so eager F32 remains selected and no executed-candidate preservation or speed claim is made |
 
 Qwen3 rows use:
 
@@ -4654,6 +4655,58 @@ prompt so determinism is evaluated. That is repo command-contract drift, not a
 `ripr` or external tool failure.
 
 This slice does not promote candidate execution, change the default runtime,
+claim allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
+support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
+
+## SLM-CPU-236 No-Bias Candidate Execution Attempt Boundary
+
+SLM-CPU-236 consumes the validated SLM-CPU-235 candidate-off/candidate-on
+receipt pair and records the next runtime boundary for a real no-bias execution
+attempt:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json
+decision = candidate_execution_attempt_blocked_fail_closed
+remaining_runtime_selection_blocker = apply_linear_no_bias_candidate_dispatch
+validated_slm_cpu_235_receipt_pair = true
+candidate_execution_attempt_allowed = false
+normal_inference_runtime_selection_enabled = false
+candidate_execution_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+```
+
+The SLM-CPU-235 receipt pair proves that the explicit no-bias runtime gate is
+receipt-visible and preserves prompt IDs, generated IDs, decoded text,
+GGUF-tokenizer authority, CPU backend identity, selected eager path, candidate
+path identity, and `fallback=false` while candidate execution remains disabled.
+
+The runtime blocker is now specific. `bitnet_transformer::FeedForward::apply_linear`
+currently dispatches through:
+
+```text
+qk256 raw tensor path
+strict CUDA fallback guard
+dense_linear_runtime_hook_boundary audit
+maybe_forward_dense_q8_sidecar_linear
+record_bitnet_linear_cpu_fallback
+candle_nn::Linear::forward
+```
+
+The no-bias candidate function exists as
+`bitnet_transformer::dense_linear_no_bias_candidate_forward`, but there is no
+receipt-gated dispatch branch in `FeedForward::apply_linear` that can call it
+for model execution. That missing branch is the next blocker.
+
+The next safe slice can add the dispatch branch only if it fails closed unless
+the explicit gate, receipt-bound selector, strict SLM-CPU-235 receipt-pair
+identity, tensor callsite, `bias_present=false`, CPU backend, and
+`fallback=false` checks all pass. The default path must remain
+`eager_f32_candle` when the explicit gate is absent.
+
+This slice does not execute the no-bias candidate, prove generated-ID
+preservation for an executed candidate path, change default runtime selection,
 claim allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
 support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
 QK256/I2_S paths.

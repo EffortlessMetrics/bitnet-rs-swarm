@@ -13651,8 +13651,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-236"
-status = "ready"
+status = "pr_open"
+pr = 1027
 branch = "codex/slm-cpu-236-no-bias-candidate-execution-attempt"
+head_sha = "4d1a942e323288600b12e98c60db0f3cca2f9f6a"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13661,6 +13663,7 @@ blocked_by = ["SLM-CPU-235"]
 acceptance = "Consume the SLM-CPU-235 candidate-off/candidate-on execution receipts and either add a narrowly gated no-bias candidate execution attempt for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj, or record the exact remaining runtime blocker. Candidate execution must remain disabled by default and fail closed unless the explicit gate, descriptor identity, FeedForward::apply_linear owner/callsite identity, strict SLM-CPU-235 receipt-pair identity, prompt/generated/text digests, model SHA, tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, selected kernel/path identity, bias_present=false, and fallback=false are all present. If candidate execution is attempted, the slice must capture fresh candidate-off/candidate-on receipts proving prompt IDs, generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer source, selected path/kernel, candidate path/kernel, and fallback=false are preserved for both models. It must not claim timing improvement, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
 commands = [
   "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json",
   "cargo run -p xtask --no-default-features -- campaign generate",
   "cargo run -p xtask --no-default-features -- campaign doctor",
   "git diff --check",
@@ -13685,6 +13688,7 @@ forbidden_paths = [
 evidence = [
   "SLM-CPU-235 captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts with generated IDs and decoded text preserved.",
   "SLM-CPU-235 proves the explicit gate request is receipt-visible while candidate execution remains disabled and eager_f32_candle remains selected.",
+  "SLM-CPU-236 records the current candidate execution blocker as the missing no-bias dispatch branch inside FeedForward::apply_linear.",
 ]
 may_claim = [
   "SLM-CPU-236 may attempt a narrowly gated no-bias candidate execution path for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj only with fresh strict paired receipts.",
