@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T15:43:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-234"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1023
+branch = "codex/slm-cpu-234-qwen25-artifact-prereq"
+head_sha = "b7888b507a62108858b51b208dc827613a78bd70"
+merge_sha = "bdd55f4e92aed46037a94565205e456b5da1ac46"
+summary = "Closed SLM-CPU-234 after the Qwen2.5 artifact prerequisite PR merged and queued SLM-CPU-235."
+notes = [
+  "PR #1023 verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local target caches by SHA without committing a model binary.",
+  "SLM-CPU-235 is ready for fresh Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on no-bias execution receipts through the SLM-CPU-232 command contract.",
+]
