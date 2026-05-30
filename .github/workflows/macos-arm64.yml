@@ -64,9 +64,18 @@ jobs:
           selected=false
           reason="ordinary PR without macOS label or Mac/Metal paths"
 
-          if [ "$EVENT_NAME" != "pull_request" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             selected=true
-            reason="$EVENT_NAME"
+            reason="manual workflow_dispatch"
+          elif [ "$EVENT_NAME" != "pull_request" ]; then
+            # No self-hosted macOS/Apple runners exist on the linux-x64-only swarm
+            # fleet (BITNET-ADR-0008). Selecting these [self-hosted, macOS, ARM64]
+            # jobs on merge_group or main-push events would queue them indefinitely
+            # and block the merge queue / main pipeline. Keep the macOS lane dormant
+            # for those events; Apple coverage stays opt-in via a PR label or an
+            # explicit workflow_dispatch.
+            selected=false
+            reason="$EVENT_NAME: macOS lane dormant (no self-hosted Apple runners)"
           elif python - "$LABELS_JSON" <<'PY'
           import json
           import sys
