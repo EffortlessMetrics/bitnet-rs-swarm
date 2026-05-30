@@ -4754,6 +4754,34 @@ claim allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
 support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
 QK256/I2_S paths.
 
+## SLM-CPU-238 Per-Callsite No-Bias Receipt Emitter
+
+SLM-CPU-238 consumes the SLM-CPU-237 selector propagation blocker and records the
+safer identity path for the next no-bias experiment:
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-238-per-callsite-no-bias-receipt-emitter.json
+decision = per_callsite_candidate_receipt_emitter_defined_fail_closed
+remaining_runtime_selection_blocker = fresh_candidate_off_on_strict_receipts_bound_to_per_callsite_emitter
+candidate_execution_attempted = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The per-callsite path avoids mutating model-load hook registries with
+prompt-scoped identity. Instead, it binds the Qwen3/Qwen2.5 Q8_0
+`feed_forward.down_proj` selector identity to the exact
+`FeedForward::apply_linear` tensor callsite after warm-session prompt digests are
+known. The existing `DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary`
+and `DenseLinearNoBiasCandidateOffOnReceiptPairGate` model the boundary while
+preserving `eager_f32_candle`.
+
+This slice does not execute the no-bias candidate or claim timing, allocation,
+speedup, sustained throughput, Q4/Q5 support, server or accelerator execution,
+Qwen3.5 support, or BitNet QK256/I2_S changes. The next safe slice must capture
+fresh candidate-off/candidate-on receipts bound to this per-callsite emitter
+before any candidate runtime dispatch can be attempted.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
