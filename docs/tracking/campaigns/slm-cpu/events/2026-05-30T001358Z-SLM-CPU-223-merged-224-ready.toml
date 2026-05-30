@@ -1,0 +1,17 @@
+timestamp = "2026-05-30T00:13:58Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-223"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 989
+head_sha = "ad9d7fb8f907bd98c723f2ed7f5b2fab675ac8aa"
+merge_sha = "8c30fea2c7d4eb72645e485c538ea47ba2e6438a"
+branch = "codex/slm-cpu-223-no-bias-strict-artifact-capture"
+summary = "Merged SLM-CPU-223 no-bias strict artifact capture boundary and queued SLM-CPU-224."
+notes = [
+  "SLM-CPU-223 records DenseLinearNoBiasStrictArtifactCaptureBoundary after the SLM-CPU-222 strict receipt artifact-pair boundary.",
+  "The merged artifact keeps candidate execution and normal runtime selection disabled while naming strict_receipt_artifact_pair_boundary as the remaining fail-closed capture blocker.",
+  "SLM-CPU-224 is ready to produce or block the validated candidate-off/candidate-on strict capture artifact pair before any separately gated candidate execution attempt.",
+]
