@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T11:37:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-230"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1013
+head_sha = "2cd1cdb212acfc6a210b591ed12e715bb3df806f"
+branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+summary = "Opened the SLM-CPU-230 tracker queue PR for the no-bias runtime hook attachment boundary."
+notes = [
+  "The PR records SLM-CPU-230 as the next fail-closed no-bias apply-linear boundary after the SLM-CPU-229 runtime-attempt blocker.",
+  "Candidate execution and default runtime changes remain out of scope for the queue PR.",
+]

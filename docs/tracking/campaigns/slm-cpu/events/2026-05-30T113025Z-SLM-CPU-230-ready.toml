@@ -1,0 +1,14 @@
+timestamp = "2026-05-30T11:30:25Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-230"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+summary = "Queued the no-bias apply-linear runtime hook attachment boundary after SLM-CPU-229."
+notes = [
+  "SLM-CPU-229 consumed the validated SLM-CPU-228 strict capture pair and recorded receipt_bound_selector_runtime_hook_registry_attachment as the remaining runtime-selection blocker.",
+  "SLM-CPU-230 is ready to attach or precisely block the descriptor identity at DenseLinearRuntimeHookRegistry for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj scope.",
+  "The next slice must keep candidate execution and default runtime selection disabled unless a later separately gated PR produces fresh candidate-off/candidate-on generated-ID and decoded-text preservation receipts.",
+]
