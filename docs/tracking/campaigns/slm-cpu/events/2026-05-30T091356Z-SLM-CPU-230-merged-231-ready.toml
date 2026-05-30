@@ -1,0 +1,25 @@
+schema = 1
+campaign = "slm-cpu"
+item = "SLM-CPU-230"
+event = "merged"
+timestamp = "2026-05-30T09:13:56Z"
+actor = "codex"
+pr = 1015
+head_sha = "e6b5cd9de5c8e588ad52a7481a2bfb1775273dd4"
+merge_sha = "6e2f18e23b21ac879e336d42babc2aefa21ac8c4"
+branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+summary = "Merged the SLM-CPU-230 no-bias runtime hook attachment boundary and queued SLM-CPU-231."
+notes = [
+  "PR #1015 proves the receipt-bound no-bias selector can be attached to DenseLinearRuntimeHookRegistry for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj scope.",
+  "SLM-CPU-230 keeps candidate execution disabled, keeps normal inference runtime selection disabled, and preserves eager_f32_candle as the default path.",
+  "The remaining blocker is fresh candidate-off/candidate-on execution receipts through the registry attachment boundary.",
+]
+
+[[next]]
+item = "SLM-CPU-231"
+status = "ready"
+branch = "codex/slm-cpu-231-no-bias-candidate-execution-receipts"
+summary = "Queue the fresh explicit-gate no-bias candidate-off/candidate-on execution receipt slice."
+notes = [
+  "SLM-CPU-231 should consume the SLM-CPU-230 runtime hook attachment boundary and capture or precisely block fresh strict execution receipts without changing default runtime behavior.",
+]
