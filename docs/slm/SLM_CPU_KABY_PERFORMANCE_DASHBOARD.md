@@ -4325,6 +4325,47 @@ runtime selection, does not claim candidate-on generated-ID preservation, and
 does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
 server/accelerator, Qwen3.5, or BitNet QK256 claims.
 
+## SLM-CPU-228 No-Bias Strict Capture Artifacts
+
+SLM-CPU-228 consumes the SLM-CPU-227 command/schema slice and captures the
+bounded Qwen3/Qwen2.5 Q8_0 candidate-off and candidate-on warm-session receipts
+for `feed_forward.down_proj`. The validated pair proves receipt identity only:
+candidate-on records the explicit no-bias runtime gate request, but candidate
+execution remains disabled and the selected runtime path remains
+`eager_f32_candle`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-228-no-bias-strict-capture-pair-validation.json
+decision = strict_capture_pair_validated_candidate_execution_fail_closed
+qwen3_candidate_off = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-228-no-bias-candidate-off.json
+qwen3_candidate_on = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-228-no-bias-candidate-on.json
+qwen25_candidate_off = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-228-no-bias-candidate-off.json
+qwen25_candidate_on = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-228-no-bias-candidate-on.json
+strict_capture_artifact_pair_validated = true
+candidate_off_runtime_gate_requested_enabled = false
+candidate_on_runtime_gate_requested_enabled = true
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+prompt_ids_preserved_between_candidate_off_and_candidate_on = true
+generated_ids_preserved_between_candidate_off_and_candidate_on = true
+decoded_text_preserved_between_candidate_off_and_candidate_on = true
+```
+
+The live CLI determinism gate requires at least one repeated prompt group, so
+the SLM-CPU-228 captures repeat the two SLM-CPU-227 prompts rather than running
+one instance of each prompt. That is repo command-contract correction, not a
+`ripr` issue: the artifacts still preserve the same model, tokenizer, backend,
+candidate role, and claim boundary.
+
+This slice does not execute the no-bias candidate, does not change the default
+runtime path, and does not make allocation, timing, speedup,
+sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256
+claims. The next separately gated slice may consume this validated pair before
+attempting candidate execution.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

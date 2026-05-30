@@ -9663,6 +9663,7 @@ async fn run_slm_warm_session(
             backend_identity.runtime_api.as_str(),
             backend_identity.selected_backend.as_str(),
             backend_identity.fallback_used,
+            slm_warm_session_no_bias_runtime_gate_requested_from_env(),
             &prompt_summaries,
         );
     let dense_no_bias_apply_linear_gate =
@@ -11297,6 +11298,7 @@ fn slm_warm_session_no_bias_apply_linear_gate_for_session(
     runtime_api: &str,
     selected_backend: &str,
     fallback_used: bool,
+    runtime_gate_requested_enabled: bool,
     prompt_summaries: &[serde_json::Value],
 ) -> Option<bitnet_transformer::DenseLinearNoBiasApplyLinearBeforeAfterReceiptGate> {
     if prompt_summaries.is_empty()
@@ -11378,7 +11380,7 @@ fn slm_warm_session_no_bias_apply_linear_gate_for_session(
         linear: "down_proj",
         bias_present: Some(false),
         runtime_gate_name: "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
-        runtime_gate_requested_enabled: false,
+        runtime_gate_requested_enabled,
         selected_path: "eager_f32_candle",
         selected_kernel: "dense-f32-candle-linear",
         candidate_path,
@@ -11404,6 +11406,14 @@ fn slm_warm_session_no_bias_apply_linear_gate_for_session(
         timing_improvement_claim: false,
         speedup_claim: false,
     })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_no_bias_runtime_gate_requested_from_env() -> bool {
+    let primary = std::env::var("BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME").ok();
+    let compatibility = std::env::var("BITNET_DENSE_NO_BIAS_LINEAR_ENABLE").ok();
+    bitnet_transformer::dense_linear_no_bias_runtime_gate_requested(primary.as_deref())
+        || bitnet_transformer::dense_linear_no_bias_runtime_gate_requested(compatibility.as_deref())
 }
 
 #[cfg(feature = "full-cli")]
@@ -16313,6 +16323,7 @@ mod tests {
             "cpu",
             "cpu-rust",
             false,
+            false,
             &prompt_summaries,
         ) else {
             assert!(false, "qwen3 q8 cpu session should produce a fail-closed gate object");
@@ -16324,6 +16335,7 @@ mod tests {
         assert_eq!(gate.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
         assert_eq!(gate.runtime_api, "cpu");
         assert_eq!(gate.selected_backend, "cpu-rust");
+        assert!(!gate.runtime_gate_requested_enabled);
         assert!(!gate.fallback_used);
         assert!(!gate.before_after_receipts_present);
         assert!(gate.prompt_ids_digest_preserved);
@@ -16354,6 +16366,41 @@ mod tests {
 
     #[test]
     #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_apply_linear_gate_records_requested_runtime_gate() {
+        let prompt_summaries = vec![serde_json::json!({
+            "prompt_tokenize_contract": {
+                "prompt_ids_sha256": "sha256:prompt"
+            },
+            "generated_token_ids": [19],
+            "text": "4"
+        })];
+
+        let Some(gate) = slm_warm_session_no_bias_apply_linear_gate_for_session(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "cpu",
+            "cpu-rust",
+            false,
+            true,
+            &prompt_summaries,
+        ) else {
+            assert!(false, "qwen3 q8 cpu session should produce a fail-closed gate object");
+            return;
+        };
+
+        assert!(gate.runtime_gate_requested_enabled);
+        assert!(!gate.candidate_execution_enabled);
+
+        let receipt = slm_warm_session_no_bias_apply_linear_receipt_emitter_gate(Some(&gate));
+        assert_eq!(receipt["runtime_gate_requested_enabled"], true);
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+        assert_eq!(receipt["selected_path"], "eager_f32_candle");
+        assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
     fn slm_warm_session_no_bias_apply_linear_gate_rejects_non_q8_or_fallback() {
         let prompt_summaries = vec![serde_json::json!({
             "prompt_tokenize_contract": {
@@ -16371,6 +16418,7 @@ mod tests {
                 "cpu",
                 "cpu-rust",
                 false,
+                false,
                 &prompt_summaries,
             )
             .is_none()
@@ -16383,6 +16431,7 @@ mod tests {
                 "cpu",
                 "cpu-rust",
                 true,
+                false,
                 &prompt_summaries,
             )
             .is_none()

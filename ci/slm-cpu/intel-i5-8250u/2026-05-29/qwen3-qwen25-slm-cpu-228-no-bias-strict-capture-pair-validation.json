@@ -1,0 +1,599 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_strict_capture_pair_validation",
+  "tracking_item": "SLM-CPU-228",
+  "consumes_tracking_items": [
+    "SLM-CPU-227"
+  ],
+  "generated_at_utc": "2026-05-30T06:48:15Z",
+  "decision": "strict_capture_pair_validated_candidate_execution_fail_closed",
+  "summary": "SLM-CPU-228 captures Qwen3 and Qwen2.5 Q8_0 candidate-off/candidate-on strict warm-session receipts through the no-bias apply-linear gate. Candidate-on records the explicit runtime gate request, generated/prompt/text identity is preserved against candidate-off, and candidate execution remains fail-closed on eager_f32_candle.",
+  "scope": {
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "linear_scope": "feed_forward",
+    "linear_role": "down_proj",
+    "quant_format": "Q8_0",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate"
+  },
+  "command_contract_adjustment": {
+    "reason": "The SLM-CPU-227 command template included --require-determinism but only one instance of each prompt. The live CLI correctly requires at least one repeated prompt group for that gate, so SLM-CPU-228 used two copies of each prompt while preserving the same model/template/tokenizer/backend/candidate scope.",
+    "repo_specific_fix": "slm-warm-session receipts now record BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME or compatibility BITNET_DENSE_NO_BIAS_LINEAR_ENABLE as runtime_gate_requested_enabled without enabling candidate execution.",
+    "upstream_ripr_issue_required": false
+  },
+  "models": [
+    {
+      "model_key": "qwen3_q8_0",
+      "passed": true,
+      "candidate_off_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-228-no-bias-candidate-off.json",
+      "candidate_on_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-228-no-bias-candidate-on.json",
+      "candidate_off_receipt_sha256": "4558623526e8f32a06f013a317055366d633e2e0ab5eecbf5641028ab4d6ef75",
+      "candidate_on_receipt_sha256": "64613767838b74458f3fb2c074f9a6d2dda738464f09ec9d70ae8799675abf9d",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "architecture": "qwen3",
+      "quant_format": "Q8_0",
+      "loader_mode": "real_gguf",
+      "tokenizer": {
+        "source": "gguf_metadata",
+        "strict": true
+      },
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "gate_identity": {
+        "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+        "candidate_off_runtime_gate_requested_enabled": false,
+        "candidate_on_runtime_gate_requested_enabled": true,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "scope": "feed_forward",
+        "linear": "down_proj",
+        "bias_present": false,
+        "manifest_sha256": "42728ecadfc53c5e0eaeb4a073af385b9b3d8c9dfe879a9afc44fe06c7432876"
+      },
+      "digests": {
+        "prompt_ids_digest": "accdff2798bce7e2202d15b0b360024faeb88d49780e6c553d0d5522aa9f3a12",
+        "generated_ids_digest": "42e05af5073067807f0658d6643fc70bf56c380f580ccb33f8223291e506e541",
+        "decoded_text_digest": "9af36cee5f3eadf5afe17c7dfae0d3b7d2d19065b38572ae9ef8894efd889a97"
+      },
+      "determinism": {
+        "checked": true,
+        "groups": [
+          {
+            "attempt_count": 2,
+            "case_id": "prompt_03",
+            "prompt": "Say exactly: OK",
+            "prompt_indices": [
+              2,
+              3
+            ],
+            "reference_generated_ids": [
+              3925,
+              13,
+              151645
+            ],
+            "reference_text": "OK.",
+            "stable_generated_token_ids": true,
+            "stable_text": true
+          },
+          {
+            "attempt_count": 2,
+            "case_id": "prompt_01",
+            "prompt": "What is 2+2? Answer with only the number.",
+            "prompt_indices": [
+              0,
+              1
+            ],
+            "reference_generated_ids": [
+              17,
+              151645
+            ],
+            "reference_text": "2",
+            "stable_generated_token_ids": true,
+            "stable_text": true
+          }
+        ],
+        "passed": true,
+        "repeated_prompt_groups": 2
+      },
+      "prompt_rows": [
+        {
+          "case_id": "prompt_01",
+          "prompt_index": 0,
+          "repeat_index": 0,
+          "prompt": "What is 2+2? Answer with only the number.",
+          "prompt_ids_digest": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            17,
+            151645
+          ],
+          "decoded_text": "2",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_02",
+          "prompt_index": 1,
+          "repeat_index": 0,
+          "prompt": "What is 2+2? Answer with only the number.",
+          "prompt_ids_digest": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            17,
+            151645
+          ],
+          "decoded_text": "2",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_03",
+          "prompt_index": 2,
+          "repeat_index": 0,
+          "prompt": "Say exactly: OK",
+          "prompt_ids_digest": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            3925,
+            13,
+            151645
+          ],
+          "decoded_text": "OK.",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_04",
+          "prompt_index": 3,
+          "repeat_index": 0,
+          "prompt": "Say exactly: OK",
+          "prompt_ids_digest": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            3925,
+            13,
+            151645
+          ],
+          "decoded_text": "OK.",
+          "fallback_used": false
+        }
+      ],
+      "checks": [
+        {
+          "check": "candidate_off_artifact_present",
+          "passed": true,
+          "detail": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen3-slm-cpu-228-no-bias-candidate-off.json"
+        },
+        {
+          "check": "candidate_on_artifact_present",
+          "passed": true,
+          "detail": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen3-slm-cpu-228-no-bias-candidate-on.json"
+        },
+        {
+          "check": "model_sha_matches_expected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "architecture_matches_expected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "quant_format_q8_0",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "loader_real_gguf",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "tokenizer_gguf_metadata_strict",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "runtime_cpu_backend_cpu_rust",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "fallback_false",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "selected_path_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "selected_kernel_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_kernel_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_path_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "descriptor_identity_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "scope_down_proj_biasless",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "runtime_gate_off_false_on_true",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_execution_fail_closed",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "normal_runtime_selection_disabled",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "generated_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "decoded_text_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "determinism_passed",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "repeated_prompt_groups_present",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_rows_count_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_rows_identity_preserved",
+          "passed": true,
+          "detail": null
+        }
+      ]
+    },
+    {
+      "model_key": "qwen25_q8_0",
+      "passed": true,
+      "candidate_off_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-228-no-bias-candidate-off.json",
+      "candidate_on_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-228-no-bias-candidate-on.json",
+      "candidate_off_receipt_sha256": "fefed9adf7369b7a55e94bb4665658cb9f7b9a7e12da2e1c9cf9ba2bc6e95952",
+      "candidate_on_receipt_sha256": "6705f5edfc82f5287cc95ddf9202662f2f0ebab6d74a9bf3a65eacd2e9d85e42",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "architecture": "qwen2",
+      "quant_format": "Q8_0",
+      "loader_mode": "real_gguf",
+      "tokenizer": {
+        "source": "gguf_metadata",
+        "strict": true
+      },
+      "runtime_api": "cpu",
+      "selected_backend": "cpu-rust",
+      "fallback_used": false,
+      "gate_identity": {
+        "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+        "candidate_off_runtime_gate_requested_enabled": false,
+        "candidate_on_runtime_gate_requested_enabled": true,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "scope": "feed_forward",
+        "linear": "down_proj",
+        "bias_present": false,
+        "manifest_sha256": "fcab9e6d9e8c79bf6f9a7dcbe325c907cefcf5a9d1e9fd1206ad75f2b6fa809a"
+      },
+      "digests": {
+        "prompt_ids_digest": "ced9281f43539990d85fb0f2135e4dc524db86bc54f1e8eafab3c7e552c13535",
+        "generated_ids_digest": "10f2efd5abc1f35b65642c664d5e75f2713ce971c1d7f6ec183f7c537e691b3b",
+        "decoded_text_digest": "481f23d5557ac12645358f4454ea169dda1ff9564a97a90bb2927cc01ff18ec1"
+      },
+      "determinism": {
+        "checked": true,
+        "groups": [
+          {
+            "attempt_count": 2,
+            "case_id": "prompt_03",
+            "prompt": "Say exactly: OK",
+            "prompt_indices": [
+              2,
+              3
+            ],
+            "reference_generated_ids": [
+              3925,
+              11,
+              1128,
+              1035
+            ],
+            "reference_text": "OK, what would",
+            "stable_generated_token_ids": true,
+            "stable_text": true
+          },
+          {
+            "attempt_count": 2,
+            "case_id": "prompt_01",
+            "prompt": "What is 2+2? Answer with only the number.",
+            "prompt_indices": [
+              0,
+              1
+            ],
+            "reference_generated_ids": [
+              19,
+              151645
+            ],
+            "reference_text": "4",
+            "stable_generated_token_ids": true,
+            "stable_text": true
+          }
+        ],
+        "passed": true,
+        "repeated_prompt_groups": 2
+      },
+      "prompt_rows": [
+        {
+          "case_id": "prompt_01",
+          "prompt_index": 0,
+          "repeat_index": 0,
+          "prompt": "What is 2+2? Answer with only the number.",
+          "prompt_ids_digest": "3ddaf1634401debb084ee44ff0db6a05c95077ae2a2102082ef91d3c5cfd2f10",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            19,
+            151645
+          ],
+          "decoded_text": "4",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_02",
+          "prompt_index": 1,
+          "repeat_index": 0,
+          "prompt": "What is 2+2? Answer with only the number.",
+          "prompt_ids_digest": "3ddaf1634401debb084ee44ff0db6a05c95077ae2a2102082ef91d3c5cfd2f10",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            19,
+            151645
+          ],
+          "decoded_text": "4",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_03",
+          "prompt_index": 2,
+          "repeat_index": 0,
+          "prompt": "Say exactly: OK",
+          "prompt_ids_digest": "388f0f16c79a9163e9f5113e863b780e053056f1f72e10374a63c9b388feb1f8",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            3925,
+            11,
+            1128,
+            1035
+          ],
+          "decoded_text": "OK, what would",
+          "fallback_used": false
+        },
+        {
+          "case_id": "prompt_04",
+          "prompt_index": 3,
+          "repeat_index": 0,
+          "prompt": "Say exactly: OK",
+          "prompt_ids_digest": "388f0f16c79a9163e9f5113e863b780e053056f1f72e10374a63c9b388feb1f8",
+          "prompt_ids_count": 0,
+          "generated_ids": [
+            3925,
+            11,
+            1128,
+            1035
+          ],
+          "decoded_text": "OK, what would",
+          "fallback_used": false
+        }
+      ],
+      "checks": [
+        {
+          "check": "candidate_off_artifact_present",
+          "passed": true,
+          "detail": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen25-slm-cpu-228-no-bias-candidate-off.json"
+        },
+        {
+          "check": "candidate_on_artifact_present",
+          "passed": true,
+          "detail": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen25-slm-cpu-228-no-bias-candidate-on.json"
+        },
+        {
+          "check": "model_sha_matches_expected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "architecture_matches_expected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "quant_format_q8_0",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "loader_real_gguf",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "tokenizer_gguf_metadata_strict",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "runtime_cpu_backend_cpu_rust",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "fallback_false",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "selected_path_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "selected_kernel_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_kernel_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_path_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "descriptor_identity_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "scope_down_proj_biasless",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "runtime_gate_off_false_on_true",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "candidate_execution_fail_closed",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "normal_runtime_selection_disabled",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "generated_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "decoded_text_digest_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "determinism_passed",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "repeated_prompt_groups_present",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_rows_count_preserved",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "check": "prompt_rows_identity_preserved",
+          "passed": true,
+          "detail": null
+        }
+      ]
+    }
+  ],
+  "strict_capture_pair_status": {
+    "candidate_off_strict_capture_artifacts_present": true,
+    "candidate_on_strict_capture_artifacts_present": true,
+    "strict_capture_artifact_pair_validated": true,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_path_preserved": true,
+    "generated_ids_preserved_between_candidate_off_and_candidate_on": true,
+    "decoded_text_preserved_between_candidate_off_and_candidate_on": true,
+    "prompt_ids_preserved_between_candidate_off_and_candidate_on": true
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "next_slice": {
+    "recommended_item": "SLM-CPU-229",
+    "recommended_scope": "consume the validated strict capture pair and define the next separately gated no-bias candidate execution attempt boundary without changing default runtime behavior"
+  },
+  "passed": true
+}
