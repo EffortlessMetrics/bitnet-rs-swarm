@@ -13483,9 +13483,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-233"
-status = "pr_open"
+status = "merged"
 pr = 1021
-head_sha = "aa1ea3bf730fab7f57fdbfd8926bde1f55315aa2"
+head_sha = "1fe24b10dd2c7dc60f3ab36b77be173cc96caefd"
+merge_sha = "20bbfb603c2205099685fb20b4e0cd34dcb39e79"
 branch = "codex/slm-cpu-233-no-bias-execution-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -13532,6 +13533,57 @@ must_not_claim = [
   "A model binary is committed.",
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-234"
+status = "ready"
+branch = "codex/slm-cpu-234-qwen25-artifact-prereq"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-233"]
+acceptance = "Consume the SLM-CPU-233 execution receipt blocker and either restore/verify the exact pinned Qwen2.5 Q8_0 local artifact prerequisite without committing a model binary, or record the exact storage/acquisition blocker that prevents fresh Qwen3/Qwen2.5 no-bias candidate-off/candidate-on execution receipts. A valid verification must prove the Qwen2.5 artifact SHA ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e and keep the SLM-CPU-232 capture command contract unchanged. No candidate execution, default runtime change, generated-ID preservation claim, timing improvement, allocation reduction, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 change is allowed."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-233 records that Qwen3 Q8_0 is present and SHA-verified in the workspace.",
+  "SLM-CPU-233 records that the pinned Qwen2.5 Q8_0 artifact is absent, blocking the required cross-model candidate-off/candidate-on execution receipts.",
+  "SLM-CPU-233 keeps candidate execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+]
+may_claim = [
+  "SLM-CPU-234 may prove the exact pinned Qwen2.5 Q8_0 artifact is locally available by SHA without committing it.",
+  "SLM-CPU-234 may keep receipt capture blocked by naming the exact storage or artifact acquisition prerequisite.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is attempted or enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate execution experiment without fresh strict candidate-off/candidate-on execution receipts.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
