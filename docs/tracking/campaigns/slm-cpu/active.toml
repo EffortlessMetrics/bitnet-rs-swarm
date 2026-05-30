@@ -13305,10 +13305,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-230"
-status = "pr_open"
+status = "merged"
 pr = 1015
+head_sha = "e6b5cd9de5c8e588ad52a7481a2bfb1775273dd4"
+merge_sha = "6e2f18e23b21ac879e336d42babc2aefa21ac8c4"
 branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
-head_sha = "d0b1c5374434b647266c0928e82aa50a16a44ca0"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13356,6 +13357,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is attempted with model inference unless fresh candidate-off/candidate-on strict receipts are produced in a separately gated PR.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without fresh strict candidate-off/candidate-on receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-231"
+status = "ready"
+branch = "codex/slm-cpu-231-no-bias-candidate-execution-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-230"]
+acceptance = "Consume the SLM-CPU-230 runtime hook attachment boundary and capture or precisely block a fresh explicit-gate no-bias candidate-off/candidate-on execution receipt pair for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj. A valid slice must preserve prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, selected kernel/path identity, descriptor identity, DenseLinearRuntimeHookRegistry attachment identity, FeedForward::apply_linear owner/callsite identity, bias_present=false, prompt/generated/text digests, and fallback=false. Candidate execution must remain disabled by default and must not affect the normal eager_f32_candle path when the explicit gate is absent."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-230 proves the receipt-bound no-bias selector can be attached to DenseLinearRuntimeHookRegistry for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-230 records fresh_candidate_off_on_execution_receipts as the remaining blocker before any no-bias candidate execution claim.",
+  "SLM-CPU-230 keeps candidate execution, normal inference runtime selection, and default eager_f32_candle behavior disabled/unchanged.",
+]
+may_claim = [
+  "SLM-CPU-231 may capture or block a fresh explicit-gate candidate-off/candidate-on execution receipt pair through the SLM-CPU-230 registry attachment boundary.",
+  "SLM-CPU-231 may prove generated-ID and decoded-text preservation for a candidate execution attempt only with fresh strict candidate-off/candidate-on receipts.",
+  "SLM-CPU-231 may keep candidate execution fail-closed by naming the exact remaining blocker.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
