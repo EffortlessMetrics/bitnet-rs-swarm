@@ -71,7 +71,12 @@ jobs:
               "orgs/${ORG}/actions/runners?per_page=100" 2>/tmp/gh.err)"; then
             echo "runner API request failed:" >&2
             cat /tmp/gh.err >&2 || true
-            emit "blocked" "runner_api_failed" "true" "false"
+            # Keep the lane self-hosted-only, but do not fail closed on a
+            # transient runner API read. Route to the smaller trusted pool and
+            # let GitHub queue the job; if no runner is actually available the
+            # selected target will remain pending instead of incorrectly
+            # reporting a hosted fallback.
+            emit "cx43" "runner_api_failed_cx43_queued" "true" "false"
             exit 0
           fi
 
@@ -116,14 +121,14 @@ jobs:
           if ! idle_cx53="$(idle_runner_count "cx53" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "blocked" "parse_failed" "true" "false"
+            emit "cx43" "parse_failed_cx43_queued" "true" "false"
             exit 0
           fi
 
           if ! idle_cx43="$(idle_runner_count "cx43" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "blocked" "parse_failed" "true" "false"
+            emit "cx43" "parse_failed_cx43_queued" "true" "false"
             exit 0
           fi
 
