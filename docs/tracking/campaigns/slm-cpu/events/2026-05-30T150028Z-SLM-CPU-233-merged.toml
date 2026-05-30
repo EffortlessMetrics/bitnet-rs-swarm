@@ -1,0 +1,17 @@
+timestamp = "2026-05-30T15:00:28Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-233"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1021
+head_sha = "1fe24b10dd2c7dc60f3ab36b77be173cc96caefd"
+merge_sha = "20bbfb603c2205099685fb20b4e0cd34dcb39e79"
+branch = "codex/slm-cpu-233-no-bias-execution-receipts"
+summary = "Merged the SLM-CPU-233 no-bias execution receipt blocker and queued SLM-CPU-234."
+notes = [
+  "PR #1021 records that Qwen3 Q8_0 is present and SHA-verified, but the pinned Qwen2.5 Q8_0 model artifact is absent from this workspace.",
+  "SLM-CPU-233 keeps candidate-off/candidate-on execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+  "SLM-CPU-234 is ready to verify the pinned Qwen2.5 artifact prerequisite without committing a model binary, or to record the exact storage/acquisition blocker.",
+]
