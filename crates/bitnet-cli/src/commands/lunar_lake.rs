@@ -2409,8 +2409,44 @@ pub struct TelemetryMemoryContext {
 pub struct TelemetryPowerContext {
     pub source: String,
     pub active_scheme: Option<String>,
+    pub active_scheme_guid: Option<String>,
+    pub active_scheme_name: Option<String>,
     pub battery_status: Option<String>,
+    pub win32_battery: Option<TelemetryWin32BatteryContext>,
+    pub wmi_battery_status: Option<TelemetryWmiBatteryStatusContext>,
+    pub wmi_battery_full_charged_capacity: Option<TelemetryWmiBatteryFullChargedCapacityContext>,
     pub ac_power_inferred: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelemetryWin32BatteryContext {
+    pub name: Option<String>,
+    pub battery_status: Option<i64>,
+    pub estimated_charge_remaining: Option<i64>,
+    pub status: Option<String>,
+    pub power_management_supported: Option<bool>,
+    pub design_capacity: Option<i64>,
+    pub full_charge_capacity: Option<i64>,
+    pub time_on_battery: Option<i64>,
+    pub estimated_run_time: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelemetryWmiBatteryStatusContext {
+    pub instance_name: Option<String>,
+    pub power_online: Option<bool>,
+    pub discharging: Option<bool>,
+    pub charging: Option<bool>,
+    pub remaining_capacity: Option<i64>,
+    pub voltage: Option<i64>,
+    pub rate: Option<i64>,
+    pub estimated_runtime: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelemetryWmiBatteryFullChargedCapacityContext {
+    pub instance_name: Option<String>,
+    pub full_charged_capacity: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -2478,7 +2514,14 @@ pub struct PowerProfileTelemetrySummary {
     pub power_context_recorded: bool,
     pub thermal_context_recorded: bool,
     pub active_scheme: Option<String>,
+    pub active_scheme_guid: Option<String>,
+    pub active_scheme_name: Option<String>,
     pub battery_status: Option<String>,
+    pub wmi_power_online: Option<bool>,
+    pub wmi_discharging: Option<bool>,
+    pub wmi_charging: Option<bool>,
+    pub wmi_remaining_capacity: Option<i64>,
+    pub wmi_full_charged_capacity: Option<i64>,
     pub ac_power_inferred: Option<bool>,
     pub thermal_zones_visible: Option<u64>,
     pub thermal_temperature_count: usize,
@@ -2540,6 +2583,17 @@ pub struct LunarLakeLowPowerEnergyProxy {
     pub before_charge_percent: Option<i64>,
     pub after_charge_percent: Option<i64>,
     pub charge_delta_percent: Option<i64>,
+    pub before_remaining_capacity: Option<i64>,
+    pub after_remaining_capacity: Option<i64>,
+    pub remaining_capacity_delta: Option<i64>,
+    pub before_full_charged_capacity: Option<i64>,
+    pub after_full_charged_capacity: Option<i64>,
+    pub before_power_online: Option<bool>,
+    pub after_power_online: Option<bool>,
+    pub before_discharging: Option<bool>,
+    pub after_discharging: Option<bool>,
+    pub before_charging: Option<bool>,
+    pub after_charging: Option<bool>,
     pub before_ac_power_inferred: Option<bool>,
     pub after_ac_power_inferred: Option<bool>,
     pub battery_mode_sample_recorded: bool,
@@ -2606,8 +2660,15 @@ pub struct LunarLakeLowPowerRunHarness {
     pub model_inference_executed: bool,
     pub route_sample_execution_started: bool,
     pub power_scheme: Option<String>,
+    pub power_scheme_guid: Option<String>,
+    pub power_scheme_name: Option<String>,
     pub battery_status: Option<String>,
     pub estimated_charge_percent: Option<i64>,
+    pub wmi_power_online: Option<bool>,
+    pub wmi_discharging: Option<bool>,
+    pub wmi_charging: Option<bool>,
+    pub wmi_remaining_capacity: Option<i64>,
+    pub wmi_full_charged_capacity: Option<i64>,
     pub ac_power_inferred: Option<bool>,
     pub thermal_sensor_status: String,
     pub thermal_context: TelemetryThermalContext,
@@ -8601,6 +8662,9 @@ fn build_telemetry_context_from_parts(
     let power_context_recorded =
         power.active_scheme.as_ref().is_some_and(|value| !value.is_empty())
             || power.battery_status.as_ref().is_some_and(|value| !value.is_empty())
+            || power.win32_battery.is_some()
+            || power.wmi_battery_status.is_some()
+            || power.wmi_battery_full_charged_capacity.is_some()
             || power.ac_power_inferred.is_some();
     let thermal_context_recorded =
         thermal.thermal_zones_visible.unwrap_or(0) > 0 || !thermal.temperatures_celsius.is_empty();
@@ -8932,6 +8996,29 @@ pub fn build_low_power_energy_proxy_with_created_utc(
     let after_charge_percent = after_battery_status.as_deref().and_then(battery_charge_percent);
     let charge_delta_percent =
         before_charge_percent.zip(after_charge_percent).map(|(before, after)| after - before);
+    let before_remaining_capacity =
+        i64_at(&before_json, "power.wmi_battery_status.remaining_capacity");
+    let after_remaining_capacity =
+        i64_at(&after_json, "power.wmi_battery_status.remaining_capacity");
+    let remaining_capacity_delta = before_remaining_capacity
+        .zip(after_remaining_capacity)
+        .map(|(before, after)| after - before);
+    let before_full_charged_capacity =
+        i64_at(&before_json, "power.wmi_battery_full_charged_capacity.full_charged_capacity");
+    let after_full_charged_capacity =
+        i64_at(&after_json, "power.wmi_battery_full_charged_capacity.full_charged_capacity");
+    let before_power_online =
+        value_at(&before_json, "power.wmi_battery_status.power_online").and_then(Value::as_bool);
+    let after_power_online =
+        value_at(&after_json, "power.wmi_battery_status.power_online").and_then(Value::as_bool);
+    let before_discharging =
+        value_at(&before_json, "power.wmi_battery_status.discharging").and_then(Value::as_bool);
+    let after_discharging =
+        value_at(&after_json, "power.wmi_battery_status.discharging").and_then(Value::as_bool);
+    let before_charging =
+        value_at(&before_json, "power.wmi_battery_status.charging").and_then(Value::as_bool);
+    let after_charging =
+        value_at(&after_json, "power.wmi_battery_status.charging").and_then(Value::as_bool);
     let before_ac_power_inferred =
         value_at(&before_json, "power.ac_power_inferred").and_then(Value::as_bool);
     let after_ac_power_inferred =
@@ -8987,6 +9074,17 @@ pub fn build_low_power_energy_proxy_with_created_utc(
         before_charge_percent,
         after_charge_percent,
         charge_delta_percent,
+        before_remaining_capacity,
+        after_remaining_capacity,
+        remaining_capacity_delta,
+        before_full_charged_capacity,
+        after_full_charged_capacity,
+        before_power_online,
+        after_power_online,
+        before_discharging,
+        after_discharging,
+        before_charging,
+        after_charging,
         before_ac_power_inferred,
         after_ac_power_inferred,
         battery_mode_sample_recorded,
@@ -9354,12 +9452,39 @@ fn build_low_power_run_harness_from_parts(
         model_inference_executed: false,
         route_sample_execution_started: false,
         power_scheme: telemetry.power.active_scheme.clone(),
+        power_scheme_guid: telemetry.power.active_scheme_guid.clone(),
+        power_scheme_name: telemetry.power.active_scheme_name.clone(),
         battery_status: telemetry.power.battery_status.clone(),
         estimated_charge_percent: telemetry
             .power
             .battery_status
             .as_deref()
             .and_then(battery_charge_percent),
+        wmi_power_online: telemetry
+            .power
+            .wmi_battery_status
+            .as_ref()
+            .and_then(|status| status.power_online),
+        wmi_discharging: telemetry
+            .power
+            .wmi_battery_status
+            .as_ref()
+            .and_then(|status| status.discharging),
+        wmi_charging: telemetry
+            .power
+            .wmi_battery_status
+            .as_ref()
+            .and_then(|status| status.charging),
+        wmi_remaining_capacity: telemetry
+            .power
+            .wmi_battery_status
+            .as_ref()
+            .and_then(|status| status.remaining_capacity),
+        wmi_full_charged_capacity: telemetry
+            .power
+            .wmi_battery_full_charged_capacity
+            .as_ref()
+            .and_then(|capacity| capacity.full_charged_capacity),
         ac_power_inferred: telemetry.power.ac_power_inferred,
         thermal_sensor_status: low_power_harness_thermal_sensor_status(&telemetry.thermal),
         thermal_context: telemetry.thermal,
@@ -9431,7 +9556,15 @@ fn low_power_run_harness_required_receipt_fields() -> Vec<String> {
         "route_id",
         "profile",
         "power_mode",
+        "power_scheme_guid",
+        "power_scheme_name",
         "battery_status",
+        "wmi_power_online",
+        "wmi_discharging",
+        "wmi_charging",
+        "wmi_remaining_capacity_before",
+        "wmi_remaining_capacity_after",
+        "wmi_full_charged_capacity",
         "estimated_charge_before",
         "estimated_charge_after",
         "elapsed_wall_ms",
@@ -9532,7 +9665,19 @@ fn power_profile_telemetry_summary(
             .and_then(Value::as_bool)
             .unwrap_or(false);
     let active_scheme = string_at(telemetry_json, "power.active_scheme");
+    let active_scheme_guid = string_at(telemetry_json, "power.active_scheme_guid");
+    let active_scheme_name = string_at(telemetry_json, "power.active_scheme_name");
     let battery_status = string_at(telemetry_json, "power.battery_status");
+    let wmi_power_online =
+        value_at(telemetry_json, "power.wmi_battery_status.power_online").and_then(Value::as_bool);
+    let wmi_discharging =
+        value_at(telemetry_json, "power.wmi_battery_status.discharging").and_then(Value::as_bool);
+    let wmi_charging =
+        value_at(telemetry_json, "power.wmi_battery_status.charging").and_then(Value::as_bool);
+    let wmi_remaining_capacity =
+        i64_at(telemetry_json, "power.wmi_battery_status.remaining_capacity");
+    let wmi_full_charged_capacity =
+        i64_at(telemetry_json, "power.wmi_battery_full_charged_capacity.full_charged_capacity");
     let ac_power_inferred =
         value_at(telemetry_json, "power.ac_power_inferred").and_then(Value::as_bool);
     let thermal_zones_visible = u64_at(telemetry_json, "thermal.thermal_zones_visible");
@@ -9576,7 +9721,14 @@ fn power_profile_telemetry_summary(
         power_context_recorded,
         thermal_context_recorded,
         active_scheme,
+        active_scheme_guid,
+        active_scheme_name,
         battery_status,
+        wmi_power_online,
+        wmi_discharging,
+        wmi_charging,
+        wmi_remaining_capacity,
+        wmi_full_charged_capacity,
         ac_power_inferred,
         thermal_zones_visible,
         thermal_temperature_count,
@@ -9743,12 +9895,26 @@ fn collect_telemetry_memory_context() -> TelemetryMemoryContext {
 
 fn collect_telemetry_power_context() -> TelemetryPowerContext {
     let active_scheme = platform_power_mode();
-    let battery_status = platform_battery_status();
-    let ac_power_inferred = battery_status.as_deref().and_then(infer_ac_power_from_battery_status);
+    let (active_scheme_guid, active_scheme_name) =
+        parse_power_scheme_fields(active_scheme.as_deref());
+    let win32_battery = platform_win32_battery_context();
+    let battery_status = win32_battery
+        .as_ref()
+        .and_then(format_win32_battery_status)
+        .or_else(platform_battery_status);
+    let wmi_battery_status = platform_wmi_battery_status_context();
+    let wmi_battery_full_charged_capacity = platform_wmi_battery_full_charged_capacity_context();
+    let ac_power_inferred =
+        infer_ac_power_from_power_sources(battery_status.as_deref(), wmi_battery_status.as_ref());
     TelemetryPowerContext {
         source: "os_power_probe".to_string(),
         active_scheme,
+        active_scheme_guid,
+        active_scheme_name,
         battery_status,
+        win32_battery,
+        wmi_battery_status,
+        wmi_battery_full_charged_capacity,
         ac_power_inferred,
     }
 }
@@ -9833,18 +9999,47 @@ fn format_memory_context(memory: &TelemetryMemoryContext) -> String {
 fn format_power_context(power: &TelemetryPowerContext) -> String {
     if power.active_scheme.is_none()
         && power.battery_status.is_none()
+        && power.win32_battery.is_none()
+        && power.wmi_battery_status.is_none()
+        && power.wmi_battery_full_charged_capacity.is_none()
         && power.ac_power_inferred.is_none()
     {
         return "power_context_unavailable".to_string();
     }
     let active_scheme = power.active_scheme.as_deref().unwrap_or("unavailable");
+    let active_scheme_guid = power.active_scheme_guid.as_deref().unwrap_or("unavailable");
+    let active_scheme_name = power.active_scheme_name.as_deref().unwrap_or("unavailable");
     let battery_status = power.battery_status.as_deref().unwrap_or("unavailable");
     let ac_power = power
         .ac_power_inferred
         .map(|value| value.to_string())
         .unwrap_or_else(|| "unavailable".to_string());
+    let wmi_power_online = power
+        .wmi_battery_status
+        .as_ref()
+        .and_then(|status| status.power_online)
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| "unavailable".to_string());
+    let wmi_discharging = power
+        .wmi_battery_status
+        .as_ref()
+        .and_then(|status| status.discharging)
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| "unavailable".to_string());
+    let wmi_remaining_capacity = power
+        .wmi_battery_status
+        .as_ref()
+        .and_then(|status| status.remaining_capacity)
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| "unavailable".to_string());
+    let wmi_full_charged_capacity = power
+        .wmi_battery_full_charged_capacity
+        .as_ref()
+        .and_then(|capacity| capacity.full_charged_capacity)
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| "unavailable".to_string());
     format!(
-        "source={};active_scheme={active_scheme};battery_status={battery_status};ac_power_inferred={ac_power}",
+        "source={};active_scheme={active_scheme};power_scheme_guid={active_scheme_guid};power_scheme_name={active_scheme_name};battery_status={battery_status};wmi_power_online={wmi_power_online};wmi_discharging={wmi_discharging};wmi_remaining_capacity={wmi_remaining_capacity};wmi_full_charged_capacity={wmi_full_charged_capacity};ac_power_inferred={ac_power}",
         power.source
     )
 }
@@ -9885,6 +10080,25 @@ fn command_stdout(command: &str, args: &[&str]) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
+fn parse_power_scheme_fields(active_scheme: Option<&str>) -> (Option<String>, Option<String>) {
+    let Some(active_scheme) = active_scheme.map(str::trim).filter(|value| !value.is_empty()) else {
+        return (None, None);
+    };
+
+    let guid = active_scheme
+        .split_once("GUID:")
+        .and_then(|(_, rest)| rest.split_whitespace().next())
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty());
+    let name = active_scheme
+        .rsplit_once('(')
+        .and_then(|(_, rest)| rest.strip_suffix(')'))
+        .map(str::trim)
+        .map(ToString::to_string)
+        .filter(|value| !value.is_empty());
+    (guid, name)
+}
+
 #[cfg(target_os = "windows")]
 fn platform_power_mode() -> Option<String> {
     command_stdout("powercfg", &["/GETACTIVESCHEME"])
@@ -9919,6 +10133,124 @@ fn platform_battery_status() -> Option<String> {
             "$b = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1; if ($null -eq $b) { '' } else { \"BatteryStatus=$($b.BatteryStatus);EstimatedChargeRemaining=$($b.EstimatedChargeRemaining)\" }",
         ],
     )
+}
+
+fn format_win32_battery_status(battery: &TelemetryWin32BatteryContext) -> Option<String> {
+    match (battery.battery_status, battery.estimated_charge_remaining) {
+        (None, None) => None,
+        (battery_status, estimated_charge_remaining) => {
+            let battery_status = battery_status
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "unavailable".to_string());
+            let estimated_charge_remaining = estimated_charge_remaining
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "unavailable".to_string());
+            Some(format!(
+                "BatteryStatus={battery_status};EstimatedChargeRemaining={estimated_charge_remaining}"
+            ))
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn platform_win32_battery_context() -> Option<TelemetryWin32BatteryContext> {
+    let json = command_stdout(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-Command",
+            "$b = Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1; if ($null -eq $b) { '' } else { [pscustomobject]@{ Name=$b.Name; BatteryStatus=$b.BatteryStatus; EstimatedChargeRemaining=$b.EstimatedChargeRemaining; Status=$b.Status; PowerManagementSupported=$b.PowerManagementSupported; DesignCapacity=$b.DesignCapacity; FullChargeCapacity=$b.FullChargeCapacity; TimeOnBattery=$b.TimeOnBattery; EstimatedRunTime=$b.EstimatedRunTime } | ConvertTo-Json -Compress }",
+        ],
+    )?;
+    let value: Value = serde_json::from_str(&json).ok()?;
+    Some(TelemetryWin32BatteryContext {
+        name: json_string_field(&value, "Name"),
+        battery_status: json_i64_field(&value, "BatteryStatus"),
+        estimated_charge_remaining: json_i64_field(&value, "EstimatedChargeRemaining"),
+        status: json_string_field(&value, "Status"),
+        power_management_supported: json_bool_field(&value, "PowerManagementSupported"),
+        design_capacity: json_i64_field(&value, "DesignCapacity"),
+        full_charge_capacity: json_i64_field(&value, "FullChargeCapacity"),
+        time_on_battery: json_i64_field(&value, "TimeOnBattery"),
+        estimated_run_time: json_i64_field(&value, "EstimatedRunTime"),
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+fn platform_win32_battery_context() -> Option<TelemetryWin32BatteryContext> {
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn platform_wmi_battery_status_context() -> Option<TelemetryWmiBatteryStatusContext> {
+    let json = command_stdout(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-Command",
+            "$b = Get-CimInstance -Namespace root\\wmi -ClassName BatteryStatus -ErrorAction SilentlyContinue | Select-Object -First 1; if ($null -eq $b) { '' } else { [pscustomobject]@{ InstanceName=$b.InstanceName; PowerOnline=$b.PowerOnline; Discharging=$b.Discharging; Charging=$b.Charging; RemainingCapacity=$b.RemainingCapacity; Voltage=$b.Voltage; Rate=$b.Rate; EstimatedRuntime=$b.EstimatedRuntime } | ConvertTo-Json -Compress }",
+        ],
+    )?;
+    let value: Value = serde_json::from_str(&json).ok()?;
+    Some(TelemetryWmiBatteryStatusContext {
+        instance_name: json_string_field(&value, "InstanceName"),
+        power_online: json_bool_field(&value, "PowerOnline"),
+        discharging: json_bool_field(&value, "Discharging"),
+        charging: json_bool_field(&value, "Charging"),
+        remaining_capacity: json_i64_field(&value, "RemainingCapacity"),
+        voltage: json_i64_field(&value, "Voltage"),
+        rate: json_i64_field(&value, "Rate"),
+        estimated_runtime: json_i64_field(&value, "EstimatedRuntime"),
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+fn platform_wmi_battery_status_context() -> Option<TelemetryWmiBatteryStatusContext> {
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn platform_wmi_battery_full_charged_capacity_context()
+-> Option<TelemetryWmiBatteryFullChargedCapacityContext> {
+    let json = command_stdout(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-Command",
+            "$b = Get-CimInstance -Namespace root\\wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue | Select-Object -First 1; if ($null -eq $b) { '' } else { [pscustomobject]@{ InstanceName=$b.InstanceName; FullChargedCapacity=$b.FullChargedCapacity } | ConvertTo-Json -Compress }",
+        ],
+    )?;
+    let value: Value = serde_json::from_str(&json).ok()?;
+    Some(TelemetryWmiBatteryFullChargedCapacityContext {
+        instance_name: json_string_field(&value, "InstanceName"),
+        full_charged_capacity: json_i64_field(&value, "FullChargedCapacity"),
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+fn platform_wmi_battery_full_charged_capacity_context()
+-> Option<TelemetryWmiBatteryFullChargedCapacityContext> {
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn json_string_field(value: &Value, field: &str) -> Option<String> {
+    value.get(field).and_then(Value::as_str).map(ToString::to_string)
+}
+
+#[cfg(target_os = "windows")]
+fn json_bool_field(value: &Value, field: &str) -> Option<bool> {
+    value.get(field).and_then(Value::as_bool)
+}
+
+#[cfg(target_os = "windows")]
+fn json_i64_field(value: &Value, field: &str) -> Option<i64> {
+    value.get(field).and_then(|value| {
+        value
+            .as_i64()
+            .or_else(|| value.as_u64().and_then(|value| i64::try_from(value).ok()))
+            .or_else(|| value.as_f64().map(|value| value as i64))
+    })
 }
 
 #[cfg(target_os = "linux")]
@@ -9960,6 +10292,32 @@ fn infer_ac_power_from_battery_status(status: &str) -> Option<bool> {
         || lower.contains("batterystatus=4")
         || lower.contains("batterystatus=5")
     {
+        return Some(false);
+    }
+    None
+}
+
+fn infer_ac_power_from_power_sources(
+    battery_status: Option<&str>,
+    wmi_battery_status: Option<&TelemetryWmiBatteryStatusContext>,
+) -> Option<bool> {
+    let win32_inferred = battery_status.and_then(infer_ac_power_from_battery_status);
+    let wmi_inferred = wmi_battery_status.and_then(infer_ac_power_from_wmi_battery_status);
+    match (win32_inferred, wmi_inferred) {
+        (Some(left), Some(right)) if left == right => Some(left),
+        (Some(_), Some(_)) => Some(true),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }
+}
+
+fn infer_ac_power_from_wmi_battery_status(
+    status: &TelemetryWmiBatteryStatusContext,
+) -> Option<bool> {
+    if status.power_online == Some(true) || status.charging == Some(true) {
+        return Some(true);
+    }
+    if status.discharging == Some(true) {
         return Some(false);
     }
     None
@@ -16545,6 +16903,15 @@ fn u64_at(json: &Value, path: &str) -> Option<u64> {
     })
 }
 
+fn i64_at(json: &Value, path: &str) -> Option<i64> {
+    value_at(json, path).and_then(|value| {
+        value
+            .as_i64()
+            .or_else(|| value.as_u64().and_then(|value| i64::try_from(value).ok()))
+            .or_else(|| value.as_f64().map(|value| value as i64))
+    })
+}
+
 fn value_at<'a>(json: &'a Value, dotted_path: &str) -> Option<&'a Value> {
     let mut current = json;
     for segment in dotted_path.split('.') {
@@ -20052,7 +20419,12 @@ mod tests {
             TelemetryPowerContext {
                 source: "test_power".to_string(),
                 active_scheme: Some("Balanced".to_string()),
+                active_scheme_guid: None,
+                active_scheme_name: Some("Balanced".to_string()),
                 battery_status: Some("BatteryStatus=2;EstimatedChargeRemaining=100".to_string()),
+                win32_battery: None,
+                wmi_battery_status: None,
+                wmi_battery_full_charged_capacity: None,
                 ac_power_inferred: Some(true),
             },
             TelemetryThermalContext {
@@ -20093,7 +20465,26 @@ mod tests {
             TelemetryPowerContext {
                 source: "test_power".to_string(),
                 active_scheme: Some("Balanced".to_string()),
+                active_scheme_guid: None,
+                active_scheme_name: Some("Balanced".to_string()),
                 battery_status: Some("BatteryStatus=1;EstimatedChargeRemaining=96".to_string()),
+                win32_battery: None,
+                wmi_battery_status: Some(TelemetryWmiBatteryStatusContext {
+                    instance_name: Some("BAT0".to_string()),
+                    power_online: Some(false),
+                    discharging: Some(true),
+                    charging: Some(false),
+                    remaining_capacity: Some(68350),
+                    voltage: Some(8580),
+                    rate: None,
+                    estimated_runtime: None,
+                }),
+                wmi_battery_full_charged_capacity: Some(
+                    TelemetryWmiBatteryFullChargedCapacityContext {
+                        instance_name: Some("BAT0".to_string()),
+                        full_charged_capacity: Some(70000),
+                    },
+                ),
                 ac_power_inferred: Some(false),
             },
             TelemetryThermalContext {
@@ -20113,6 +20504,116 @@ mod tests {
         assert!(receipt.capture_requirements.requirement_satisfied);
         assert_eq!(receipt.capture_requirements.status, "battery_mode_sample_recorded");
         assert!(receipt.capture_requirements.gaps.is_empty());
+    }
+
+    #[test]
+    fn power_scheme_fields_parse_windows_active_scheme() {
+        let (guid, name) = parse_power_scheme_fields(Some(
+            "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+        ));
+
+        assert_eq!(guid.as_deref(), Some("381b4222-f694-41f0-9685-ff5bb260df2e"));
+        assert_eq!(name.as_deref(), Some("Balanced"));
+    }
+
+    #[test]
+    fn battery_inference_fails_closed_when_sources_conflict() {
+        let wmi = TelemetryWmiBatteryStatusContext {
+            instance_name: Some("test".to_string()),
+            power_online: Some(true),
+            discharging: Some(true),
+            charging: Some(false),
+            remaining_capacity: Some(68350),
+            voltage: Some(8580),
+            rate: None,
+            estimated_runtime: None,
+        };
+
+        let inferred = infer_ac_power_from_power_sources(
+            Some("BatteryStatus=1;EstimatedChargeRemaining=96"),
+            Some(&wmi),
+        );
+
+        assert_eq!(inferred, Some(true));
+    }
+
+    #[test]
+    fn telemetry_context_records_normalized_battery_fields() {
+        let receipt = build_telemetry_context_from_parts(
+            "2026-05-30T22:00:00Z".to_string(),
+            TelemetryMemoryContext {
+                source: "test_memory".to_string(),
+                total_bytes: Some(16),
+                available_bytes: Some(8),
+                used_bytes: Some(8),
+            },
+            TelemetryPowerContext {
+                source: "test_power".to_string(),
+                active_scheme: Some(
+                    "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)"
+                        .to_string(),
+                ),
+                active_scheme_guid: Some("381b4222-f694-41f0-9685-ff5bb260df2e".to_string()),
+                active_scheme_name: Some("Balanced".to_string()),
+                battery_status: Some("BatteryStatus=1;EstimatedChargeRemaining=96".to_string()),
+                win32_battery: Some(TelemetryWin32BatteryContext {
+                    name: Some("BAT0".to_string()),
+                    battery_status: Some(1),
+                    estimated_charge_remaining: Some(96),
+                    status: Some("OK".to_string()),
+                    power_management_supported: Some(true),
+                    design_capacity: None,
+                    full_charge_capacity: None,
+                    time_on_battery: None,
+                    estimated_run_time: None,
+                }),
+                wmi_battery_status: Some(TelemetryWmiBatteryStatusContext {
+                    instance_name: Some("BAT0".to_string()),
+                    power_online: Some(false),
+                    discharging: Some(true),
+                    charging: Some(false),
+                    remaining_capacity: Some(68350),
+                    voltage: Some(8580),
+                    rate: None,
+                    estimated_runtime: None,
+                }),
+                wmi_battery_full_charged_capacity: Some(
+                    TelemetryWmiBatteryFullChargedCapacityContext {
+                        instance_name: Some("BAT0".to_string()),
+                        full_charged_capacity: Some(70000),
+                    },
+                ),
+                ac_power_inferred: Some(false),
+            },
+            TelemetryThermalContext {
+                source: "test_thermal".to_string(),
+                thermal_zones_visible: Some(1),
+                temperatures_celsius: Vec::new(),
+            },
+            true,
+        );
+
+        assert_eq!(
+            receipt.power.active_scheme_guid.as_deref(),
+            Some("381b4222-f694-41f0-9685-ff5bb260df2e")
+        );
+        assert_eq!(receipt.power.active_scheme_name.as_deref(), Some("Balanced"));
+        assert_eq!(
+            receipt.power.wmi_battery_status.as_ref().and_then(|status| status.remaining_capacity),
+            Some(68350)
+        );
+        assert_eq!(
+            receipt
+                .power
+                .wmi_battery_full_charged_capacity
+                .as_ref()
+                .and_then(|capacity| capacity.full_charged_capacity),
+            Some(70000)
+        );
+        assert!(receipt.power_context.contains("power_scheme_guid="));
+        assert!(receipt.power_context.contains("wmi_remaining_capacity=68350"));
+        assert!(receipt.capture_requirements.requirement_satisfied);
+        assert!(!receipt.claim_boundary.power_advantage_claim);
     }
 
     #[test]
@@ -20378,6 +20879,16 @@ mod tests {
                 "power": {
                     "active_scheme": "Balanced",
                     "battery_status": "BatteryStatus=1;EstimatedChargeRemaining=96",
+                    "wmi_battery_status": {
+                        "power_online": false,
+                        "discharging": true,
+                        "charging": false,
+                        "remaining_capacity": 68350,
+                        "voltage": 8580
+                    },
+                    "wmi_battery_full_charged_capacity": {
+                        "full_charged_capacity": 70000
+                    },
                     "ac_power_inferred": false
                 },
                 "thermal": {
@@ -20455,6 +20966,16 @@ mod tests {
                 "power": {
                     "active_scheme": "Balanced",
                     "battery_status": "BatteryStatus=1;EstimatedChargeRemaining=96",
+                    "wmi_battery_status": {
+                        "power_online": false,
+                        "discharging": true,
+                        "charging": false,
+                        "remaining_capacity": 68350,
+                        "voltage": 8580
+                    },
+                    "wmi_battery_full_charged_capacity": {
+                        "full_charged_capacity": 70000
+                    },
                     "ac_power_inferred": false
                 },
                 "thermal": {
@@ -20477,6 +20998,16 @@ mod tests {
                 "power": {
                     "active_scheme": "Balanced",
                     "battery_status": "BatteryStatus=1;EstimatedChargeRemaining=94",
+                    "wmi_battery_status": {
+                        "power_online": false,
+                        "discharging": true,
+                        "charging": false,
+                        "remaining_capacity": 66950,
+                        "voltage": 8560
+                    },
+                    "wmi_battery_full_charged_capacity": {
+                        "full_charged_capacity": 70000
+                    },
                     "ac_power_inferred": false
                 },
                 "thermal": {
@@ -20502,6 +21033,13 @@ mod tests {
         assert_eq!(receipt.before_charge_percent, Some(96));
         assert_eq!(receipt.after_charge_percent, Some(94));
         assert_eq!(receipt.charge_delta_percent, Some(-2));
+        assert_eq!(receipt.before_remaining_capacity, Some(68350));
+        assert_eq!(receipt.after_remaining_capacity, Some(66950));
+        assert_eq!(receipt.remaining_capacity_delta, Some(-1400));
+        assert_eq!(receipt.before_full_charged_capacity, Some(70000));
+        assert_eq!(receipt.after_full_charged_capacity, Some(70000));
+        assert_eq!(receipt.before_power_online, Some(false));
+        assert_eq!(receipt.after_discharging, Some(true));
         assert!(receipt.gaps.is_empty(), "{:?}", receipt.gaps);
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.route_promotion_changed);
@@ -20729,7 +21267,12 @@ mod tests {
             TelemetryPowerContext {
                 source: "test_power".to_string(),
                 active_scheme: Some("Balanced".to_string()),
+                active_scheme_guid: None,
+                active_scheme_name: Some("Balanced".to_string()),
                 battery_status: Some("BatteryStatus=2;EstimatedChargeRemaining=100".to_string()),
+                win32_battery: None,
+                wmi_battery_status: None,
+                wmi_battery_full_charged_capacity: None,
                 ac_power_inferred: Some(true),
             },
             TelemetryThermalContext {
@@ -20761,6 +21304,13 @@ mod tests {
                 .any(|blocker| { blocker.contains("thermal sensors are unavailable") })
         );
         assert!(receipt.required_receipt_fields.iter().any(|field| field == "power_mode"));
+        assert!(receipt.required_receipt_fields.iter().any(|field| field == "power_scheme_guid"));
+        assert!(
+            receipt
+                .required_receipt_fields
+                .iter()
+                .any(|field| field == "wmi_remaining_capacity_before")
+        );
         assert!(receipt.required_receipt_fields.iter().any(|field| field == "tokens_per_second"));
         let matrix_step = receipt
             .command_sequence
@@ -20789,7 +21339,26 @@ mod tests {
             TelemetryPowerContext {
                 source: "test_power".to_string(),
                 active_scheme: Some("Power Scheme GUID: 381b4222 (Balanced)".to_string()),
+                active_scheme_guid: Some("381b4222".to_string()),
+                active_scheme_name: Some("Balanced".to_string()),
                 battery_status: Some("BatteryStatus=1;EstimatedChargeRemaining=96".to_string()),
+                win32_battery: None,
+                wmi_battery_status: Some(TelemetryWmiBatteryStatusContext {
+                    instance_name: Some("BAT0".to_string()),
+                    power_online: Some(false),
+                    discharging: Some(true),
+                    charging: Some(false),
+                    remaining_capacity: Some(68350),
+                    voltage: Some(8580),
+                    rate: None,
+                    estimated_runtime: None,
+                }),
+                wmi_battery_full_charged_capacity: Some(
+                    TelemetryWmiBatteryFullChargedCapacityContext {
+                        instance_name: Some("BAT0".to_string()),
+                        full_charged_capacity: Some(70000),
+                    },
+                ),
                 ac_power_inferred: Some(false),
             },
             TelemetryThermalContext {
@@ -20803,7 +21372,14 @@ mod tests {
         assert!(receipt.model_inference_allowed);
         assert!(!receipt.model_inference_executed);
         assert!(!receipt.route_sample_execution_started);
+        assert_eq!(receipt.power_scheme_guid.as_deref(), Some("381b4222"));
+        assert_eq!(receipt.power_scheme_name.as_deref(), Some("Balanced"));
         assert_eq!(receipt.estimated_charge_percent, Some(96));
+        assert_eq!(receipt.wmi_power_online, Some(false));
+        assert_eq!(receipt.wmi_discharging, Some(true));
+        assert_eq!(receipt.wmi_charging, Some(false));
+        assert_eq!(receipt.wmi_remaining_capacity, Some(68350));
+        assert_eq!(receipt.wmi_full_charged_capacity, Some(70000));
         assert_eq!(receipt.ac_power_inferred, Some(false));
         assert_eq!(
             receipt.thermal_sensor_status,
