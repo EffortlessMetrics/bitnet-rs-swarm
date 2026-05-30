@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T08:06:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-229"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1011
+branch = "codex/slm-cpu-229-no-bias-runtime-attempt-gate"
+head_sha = "ccd8ea4e776dfdee958e4a0657289c2f31d81928"
+summary = "Opened the SLM-CPU-229 no-bias runtime attempt blocker PR."
+notes = [
+  "The PR consumes the SLM-CPU-228 strict capture pair evidence and records the exact remaining runtime blocker instead of enabling candidate execution.",
+  "The blocker is the missing receipt-bound selector attachment into DenseLinearRuntimeHookRegistry for FeedForward::apply_linear.",
+  "Candidate execution remains disabled and no timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
