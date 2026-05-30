@@ -13542,9 +13542,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-234"
-status = "pr_open"
+status = "merged"
 pr = 1023
-head_sha = "556576ca47afc4e288f100d873b8897285495640"
+head_sha = "b7888b507a62108858b51b208dc827613a78bd70"
+merge_sha = "bdd55f4e92aed46037a94565205e456b5da1ac46"
 branch = "codex/slm-cpu-234-qwen25-artifact-prereq"
 stackable = false
 review_mode = "codex_premerge"
@@ -13586,6 +13587,56 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is attempted or enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate execution experiment without fresh strict candidate-off/candidate-on execution receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-235"
+status = "ready"
+branch = "codex/slm-cpu-235-no-bias-execution-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-234"]
+acceptance = "Consume the SLM-CPU-234 Qwen2.5 artifact prerequisite and capture fresh strict Qwen3 and Qwen2.5 Q8_0 candidate-off/candidate-on no-bias execution receipts for feed_forward.down_proj through the SLM-CPU-232 command contract. Valid receipts must preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected path/kernel identity, candidate path/kernel identity, FeedForward::apply_linear owner/callsite identity, bias_present=false, and fallback=false. Candidate execution must remain disabled by default and the normal eager_f32_candle path must remain unchanged when the explicit gate is absent. No timing improvement, allocation reduction, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 change is allowed."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-232 defines the concrete Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on execution capture command contract for feed_forward.down_proj.",
+  "SLM-CPU-233 records Qwen3 present and SHA-verified while blocking on the missing pinned Qwen2.5 Q8_0 artifact.",
+  "SLM-CPU-234 verifies the exact pinned Qwen2.5 Q8_0 artifact from ignored local target caches by SHA without committing a model binary.",
+]
+may_claim = [
+  "SLM-CPU-235 may capture fresh candidate-off/candidate-on execution receipts for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-235 may prove generated-ID and decoded-text preservation for the exact no-bias candidate execution experiment only with fresh strict paired receipts.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
