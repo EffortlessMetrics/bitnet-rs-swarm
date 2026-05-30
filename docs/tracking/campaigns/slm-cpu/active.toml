@@ -13129,7 +13129,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-227"
-status = "ready"
+status = "pr_open"
+pr = 1005
+head_sha = "3a508b80ea1cd37e38fa76738caa4ac635315edf"
 branch = "codex/slm-cpu-227-no-bias-strict-capture-commands"
 stackable = false
 review_mode = "codex_premerge"

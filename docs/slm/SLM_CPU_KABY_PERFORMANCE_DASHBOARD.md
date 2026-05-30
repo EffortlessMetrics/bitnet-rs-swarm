@@ -4283,6 +4283,48 @@ server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
 define and validate the concrete candidate-off/on strict capture commands and
 artifacts before any separately gated candidate execution PR can be considered.
 
+## SLM-CPU-227 No-Bias Strict Capture Commands
+
+SLM-CPU-227 consumes the SLM-CPU-226 strict capture pair blocker and defines the
+concrete candidate-off and candidate-on strict capture command contract for
+bounded Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` evidence. The commands are
+schema and receipt contract evidence only: the candidate-on command records the
+explicit gate-request shape that a later artifact must capture, but candidate
+execution remains disabled until a separately gated runtime PR supplies and
+validates the strict capture artifact pair.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-227-no-bias-strict-capture-commands.json
+decision = capture_commands_defined_fail_closed
+reason = strict_capture_commands_and_schema_defined_but_candidate_on_artifacts_not_yet_captured
+remaining_blocker = validated_candidate_off_on_strict_capture_artifact_pair
+boundary = bitnet_transformer::DenseLinearNoBiasStrictCaptureCommandSchemaBoundary
+candidate_off_capture_command_recorded = true
+candidate_on_capture_command_recorded = true
+candidate_off_strict_capture_artifact_present = false
+candidate_on_strict_capture_artifact_present = false
+strict_capture_artifact_pair_validated = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The command contract requires each future capture artifact to bind model SHA,
+strict GGUF tokenizer authority, `runtime_api=cpu`, `selected_backend=cpu-rust`,
+`fallback_used=false`, prompt/generated/text digests, explicit gate identity,
+descriptor identity, and `FeedForward::apply_linear` owner/callsite identity.
+The candidate-off command records the gate disabled; the candidate-on command
+records the gate requested, but still requires `candidate_execution_enabled=false`
+until a later separately gated runtime PR enables execution with a validated
+artifact pair.
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

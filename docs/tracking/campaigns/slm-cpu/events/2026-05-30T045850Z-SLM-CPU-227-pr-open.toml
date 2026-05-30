@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T04:58:50Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-227"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1005
+branch = "codex/slm-cpu-227-no-bias-strict-capture-commands"
+head_sha = "3a508b80ea1cd37e38fa76738caa4ac635315edf"
+summary = "Opened SLM-CPU-227 no-bias strict capture command/schema PR."
+notes = [
+  "PR #1005 defines concrete candidate-off and candidate-on strict capture command contracts for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The artifact keeps candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+  "No generated-ID preservation, allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
