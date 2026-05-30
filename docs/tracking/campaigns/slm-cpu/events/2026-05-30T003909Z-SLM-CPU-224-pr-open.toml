@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T00:39:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-224"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 992
+head_sha = "2db260cb9ca10f9cfa2bc439713b6e92a4a37701"
+branch = "codex/slm-cpu-224-no-bias-strict-capture-artifact-pair"
+summary = "Opened SLM-CPU-224 no-bias strict capture artifact pair boundary PR."
+notes = [
+  "PR #992 consumes the SLM-CPU-223 strict artifact-capture blocker and records DenseLinearNoBiasStrictCaptureArtifactPairBoundary.",
+  "The slice records the remaining blocker as the incomplete strict artifact-capture boundary before any no-bias FeedForward::apply_linear candidate execution attempt.",
+  "Candidate execution and normal runtime selection remain disabled; no allocation, timing, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
