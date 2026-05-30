@@ -111,6 +111,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias execution capture commands | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json` | Defines the concrete candidate-off/candidate-on execution capture command contract for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; receipts remain uncaptured and no candidate execution or preservation claim is made |
 | No-bias execution receipt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json` | Blocks fresh SLM-CPU-233 candidate-off/candidate-on execution receipt capture because the pinned Qwen2.5 Q8_0 GGUF is absent from this workspace; Qwen3 is present and SHA-verified, but no candidate execution receipt or preservation claim is made |
 | Qwen2.5 artifact prerequisite | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json` | Verifies the pinned Qwen2.5 Q8_0 GGUF from ignored local `target` caches by SHA without committing a model binary, clearing the artifact prerequisite for a later fresh no-bias candidate-off/candidate-on capture |
+| No-bias execution receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json` | Captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts for `feed_forward.down_proj`; generated IDs and decoded text are preserved while candidate execution remains disabled and `eager_f32_candle` remains selected |
 
 Qwen3 rows use:
 
@@ -4592,6 +4593,70 @@ candidate, does not change default runtime selection, does not prove
 generated-ID preservation, and does not claim allocation reduction, timing
 improvement, speedup, sustained throughput, Q4/Q5 support,
 server/accelerator execution, Qwen3.5, or BitNet QK256 behavior.
+
+## SLM-CPU-235 No-Bias Candidate-Off/On Execution Receipts
+
+SLM-CPU-235 consumes the SLM-CPU-234 Qwen2.5 artifact prerequisite and captures
+fresh strict warm-session receipts for Qwen3/Qwen2.5 Q8_0 with
+`BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME=off` and `on`.
+
+```text
+validation_artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json
+qwen3_candidate_off = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-off-execution.json
+qwen3_candidate_on = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-on-execution.json
+qwen25_candidate_off = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-off-execution.json
+qwen25_candidate_on = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-on-execution.json
+validation_passed = true
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+```
+
+The receipt pair preserves behavior across the explicit gate request. Qwen3
+records identical generated outputs for candidate-off and candidate-on:
+
+```text
+prompt_0_generated_ids = [17, 151645]
+prompt_0_decoded_text = 2
+prompt_1_generated_ids = [17, 151645]
+prompt_1_decoded_text = 2
+prompt_2_generated_ids = [3925, 13, 151645]
+prompt_2_decoded_text = OK.
+prompt_3_generated_ids = [3925, 13, 151645]
+prompt_3_decoded_text = OK.
+```
+
+Qwen2.5 also records identical generated outputs for candidate-off and
+candidate-on:
+
+```text
+prompt_0_generated_ids = [19, 151645]
+prompt_0_decoded_text = 4
+prompt_1_generated_ids = [19, 151645]
+prompt_1_decoded_text = 4
+prompt_2_generated_ids = [3925, 151645]
+prompt_2_decoded_text = OK
+prompt_3_generated_ids = [3925, 151645]
+prompt_3_decoded_text = OK
+```
+
+The candidate-on receipts set `runtime_gate_requested_enabled=true`, but
+candidate execution remains disabled and the selected path remains
+`eager_f32_candle`. The receipts preserve model SHA, GGUF tokenizer authority,
+`runtime_api=cpu`, `selected_backend=cpu-rust`, `fallback=false`, prompt IDs,
+generated IDs, decoded text, selected path/kernel, candidate path/kernel,
+descriptor identity, and `FeedForward::apply_linear` callsite identity.
+
+The SLM-CPU-232 command contract includes `--require-determinism`, which
+requires at least one repeated prompt group. An initial two-unique-prompt run
+failed before producing a usable receipt; the committed receipts repeat each
+prompt so determinism is evaluated. That is repo command-contract drift, not a
+`ripr` or external tool failure.
+
+This slice does not promote candidate execution, change the default runtime,
+claim allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
+support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical

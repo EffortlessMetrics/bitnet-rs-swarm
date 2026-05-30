@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T16:12:39Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-235"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1025
+branch = "codex/slm-cpu-235-no-bias-execution-receipts"
+head_sha = "d0d6f7849badfed54ef2a253f3d09d5f824bb142"
+summary = "Opened the SLM-CPU-235 no-bias execution receipt capture PR."
+notes = [
+  "PR #1025 captures fresh Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on no-bias warm-session receipts for feed_forward.down_proj.",
+  "The validation artifact preserves generated IDs, decoded text, strict tokenizer authority, CPU backend identity, fallback=false, and eager_f32_candle selection while candidate execution remains disabled.",
+]
