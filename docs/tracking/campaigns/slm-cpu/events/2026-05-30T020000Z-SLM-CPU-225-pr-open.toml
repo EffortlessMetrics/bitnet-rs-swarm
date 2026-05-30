@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T02:00:00Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-225"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1000
+branch = "codex/slm-cpu-225-no-bias-strict-capture-prereq"
+head_sha = "949be78fdd8423c5a6d915a0cf62778004dc410b"
+summary = "Opened SLM-CPU-225 no-bias strict capture prerequisite PR."
+notes = [
+  "PR #1000 consumes the SLM-CPU-224 strict capture artifact-pair boundary and records the validated candidate-off/on strict capture pair as the remaining fail-closed prerequisite.",
+  "The artifact keeps candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+  "No allocation, timing, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]

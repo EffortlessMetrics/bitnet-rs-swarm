@@ -4207,6 +4207,46 @@ server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
 produce the validated strict capture artifacts before any separately gated
 candidate execution PR can be considered.
 
+## SLM-CPU-225 No-Bias Strict Capture Prerequisite
+
+SLM-CPU-225 consumes the SLM-CPU-224 strict capture artifact-pair boundary and
+records the exact prerequisite that still blocks candidate-on no-bias
+`FeedForward::apply_linear` execution. The prerequisite remains fail-closed
+because the candidate-off/on strict capture pair has not validated: the capture
+artifact paths and commands are still absent, and the gate, descriptor,
+owner/callsite, prompt/generated/text, model/backend, CPU backend, and
+fallback=false bindings are not present together in one validated pair.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-225-no-bias-strict-capture-prereq.json
+decision = blocked_fail_closed
+reason = strict_capture_artifact_pair_not_validated
+remaining_blocker = validated_candidate_off_on_strict_capture_artifact_pair
+boundary = bitnet_transformer::DenseLinearNoBiasStrictCapturePrerequisiteBoundary
+strict_receipt_artifact_pair_boundary_bound = true
+strict_artifact_capture_boundary_bound = true
+strict_capture_artifact_pair_boundary_bound = true
+strict_capture_artifact_pair_validated = false
+candidate_off_strict_capture_artifact_present = false
+candidate_on_strict_capture_artifact_present = false
+candidate_off_capture_command_recorded = false
+candidate_on_capture_command_recorded = false
+strict_capture_prerequisite_ready = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
+produce or ingest the validated strict capture artifact pair named by this
+prerequisite before any separately gated candidate execution PR can be
+considered.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
