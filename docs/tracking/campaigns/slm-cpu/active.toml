@@ -13247,8 +13247,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-229"
-status = "pr_open"
+status = "merged"
 pr = 1011
+merge_sha = "2abe2ff5d20d0108e6bc30bb875f037d0a2ee00b"
 branch = "codex/slm-cpu-229-no-bias-runtime-attempt-gate"
 stackable = false
 review_mode = "codex_premerge"
