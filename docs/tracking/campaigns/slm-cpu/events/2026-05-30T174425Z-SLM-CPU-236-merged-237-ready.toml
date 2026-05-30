@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T17:44:25Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-236"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1027
+branch = "codex/slm-cpu-236-no-bias-candidate-execution-attempt"
+head_sha = "34d99501cf935f6331bafb84f0307265a9376956"
+merge_sha = "5f9339a48c258aa7c1a9b22089c5c869d89b8558"
+summary = "Closed SLM-CPU-236 after the no-bias candidate execution blocker PR merged and queued SLM-CPU-237."
+notes = [
+  "PR #1027 records apply_linear_no_bias_candidate_dispatch as the exact current blocker after consuming the validated SLM-CPU-235 receipt pair.",
+  "SLM-CPU-237 is ready to add a narrow fail-closed dispatch branch inside FeedForward::apply_linear or name a more specific implementation blocker.",
+]
