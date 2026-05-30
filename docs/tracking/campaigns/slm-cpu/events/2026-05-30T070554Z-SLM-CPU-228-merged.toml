@@ -1,0 +1,17 @@
+timestamp = "2026-05-30T07:05:54Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-228"
+event = "merged"
+actor = "codex"
+previous_status = "ready"
+new_status = "merged"
+pr = 1007
+branch = "codex/slm-cpu-228-no-bias-strict-capture-artifacts"
+head_sha = "1656899f1036e38aab4f4902525f91ea7a5c6058"
+merge_sha = "906acbbdc61db24b30450645d00cd984b2cf69d6"
+summary = "Merged SLM-CPU-228 no-bias strict capture artifact pair."
+notes = [
+  "PR #1007 captured Qwen3 and Qwen2.5 Q8_0 candidate-off and candidate-on strict receipt pairs for feed_forward.down_proj.",
+  "The validation artifact preserves model SHA, tokenizer authority, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected path eager_f32_candle, and fallback=false across the pair.",
+  "Candidate execution and normal runtime selection remain fail-closed; SLM-CPU-228 makes no timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
