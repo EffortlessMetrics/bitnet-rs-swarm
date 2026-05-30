@@ -1,0 +1,17 @@
+timestamp = "2026-05-30T03:40:52Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-225"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1000
+head_sha = "ffe43f9f287211108654714ac1069a7dd867c2b4"
+merge_sha = "8364b5ad603c2a24c6c2438c43d91550c7ffd29e"
+branch = "codex/slm-cpu-225-no-bias-strict-capture-prereq"
+summary = "Merged SLM-CPU-225 no-bias strict capture prerequisite and queued SLM-CPU-226."
+notes = [
+  "SLM-CPU-225 records DenseLinearNoBiasStrictCapturePrerequisiteBoundary after the SLM-CPU-224 strict capture artifact-pair boundary.",
+  "The merged artifact keeps candidate execution and normal runtime selection disabled while naming validated_candidate_off_on_strict_capture_artifact_pair as the remaining fail-closed prerequisite.",
+  "SLM-CPU-226 is ready to produce or block that validated candidate-off/on strict capture artifact pair before any separately gated runtime candidate execution attempt.",
+]
