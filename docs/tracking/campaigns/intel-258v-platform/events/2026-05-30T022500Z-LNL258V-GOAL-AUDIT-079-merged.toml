@@ -1,0 +1,20 @@
+timestamp = "2026-05-30T02:25:00Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-079"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 998
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-079-current-main"
+head_sha = "b650c577fd4ec075f07753df36ef86992f14e6a9"
+merge_sha = "b705975347e73c1b862a961c9ddfdd2d13dfef41"
+merged_at = "2026-05-30T02:25:00Z"
+actor = "codex"
+summary = "Merged PR #998 for the current-main no-inference Lunar Lake audit refresh."
+notes = [
+  "GitHub reported the rebased PR checks green before merge.",
+  "The merge records source_revision 2060f00de516fea55f2c17c2c1202ea66b91a018 after the CI routed-rust busy-fleet queueing fix.",
+  "The audit/checklist keep LNL258V-GOAL-AUDIT-078/#977, closeout #979, and SLM-CPU-220/#978 through SLM-CPU-224/#992 plus tracker closeouts through #995 classified as no-inference tracker or boundary state only.",
+  "2060f00de remains classified as repo CI control-plane state only, not Lunar Lake route or inference evidence.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power evidence and benchmark-qualified power advantage.",
+]

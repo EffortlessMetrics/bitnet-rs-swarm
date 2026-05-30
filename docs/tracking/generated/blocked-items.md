@@ -486,7 +486,7 @@
 | intel-258v-platform | LNL258V-GOAL-AUDIT-076 | LNL258V-POWER-006A | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-077 | LNL258V-GOAL-AUDIT-076 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-078 | LNL258V-GOAL-AUDIT-077 | merged |
-| intel-258v-platform | LNL258V-GOAL-AUDIT-079 | LNL258V-GOAL-AUDIT-078 | pr_open |
+| intel-258v-platform | LNL258V-GOAL-AUDIT-079 | LNL258V-GOAL-AUDIT-078 | merged |
 | intel-258v-platform | LNL258V-POWER-006A | LNL258V-POWER-005 | merged |
 | intel-258v-platform | LNL258V-POWER-006 | LNL258V-POWER-005 | blocked |
 | intel-258v-platform | LNL258V-POWER-011 | LNL258V-POWER-010 | merged |
