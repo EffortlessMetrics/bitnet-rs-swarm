@@ -4137,6 +4137,76 @@ produce the missing strict candidate-off/candidate-on same-callsite artifact
 pair or keep runtime candidate execution fail-closed with the exact missing
 artifact evidence recorded.
 
+## SLM-CPU-223 No-Bias Strict Artifact Capture Boundary
+
+SLM-CPU-223 consumes the SLM-CPU-222 strict receipt artifact-pair boundary and
+records the concrete capture blocker for the same-callsite candidate-off/on
+artifact pair. The capture remains fail-closed because the artifact-pair
+boundary is not ready: the receipt-gated candidate execution boundary is still
+incomplete, and neither candidate-off nor candidate-on strict capture artifact
+has been validated for the bounded Qwen3/Qwen2.5 Q8_0
+`feed_forward.down_proj` scope.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-223-no-bias-strict-artifact-capture.json
+decision = blocked_fail_closed
+reason = strict_receipt_artifact_pair_boundary_incomplete
+remaining_blocker = strict_receipt_artifact_pair_boundary
+boundary = bitnet_transformer::DenseLinearNoBiasStrictArtifactCaptureBoundary
+strict_receipt_artifact_pair_boundary_ready = false
+candidate_off_capture_artifact_validated = false
+candidate_on_capture_artifact_validated = false
+candidate_execution_prereqs_complete = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
+produce the validated strict capture artifact pair before any separately gated
+candidate execution PR can be considered.
+
+## SLM-CPU-224 No-Bias Strict Capture Artifact Pair Boundary
+
+SLM-CPU-224 consumes the SLM-CPU-223 strict artifact-capture blocker and records
+the next strict capture artifact-pair boundary for the same-callsite
+candidate-off/on evidence. The pair remains fail-closed because the strict
+artifact-capture boundary is not ready: the strict receipt artifact-pair
+boundary is still incomplete, neither strict capture artifact exists, and the
+candidate-off/on capture commands and identity bindings have not been recorded.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-224-no-bias-strict-capture-artifact-pair.json
+decision = blocked_fail_closed
+reason = strict_artifact_capture_boundary_incomplete
+remaining_blocker = strict_artifact_capture_boundary
+boundary = bitnet_transformer::DenseLinearNoBiasStrictCaptureArtifactPairBoundary
+strict_artifact_capture_boundary_ready = false
+candidate_off_strict_capture_artifact_present = false
+candidate_on_strict_capture_artifact_present = false
+candidate_off_capture_command_recorded = false
+candidate_on_capture_command_recorded = false
+strict_capture_artifact_pair_validated = false
+candidate_execution_prereqs_complete = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not claim candidate-on generated-ID preservation, and
+does not make allocation, timing, speedup, sustained-throughput, Q4/Q5,
+server/accelerator, Qwen3.5, or BitNet QK256 claims. A later tracked slice must
+produce the validated strict capture artifacts before any separately gated
+candidate execution PR can be considered.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
