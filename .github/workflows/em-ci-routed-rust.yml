@@ -16,7 +16,9 @@ permissions:
 jobs:
   route-rust-small:
     name: Route BitNet Rust Small
-    runs-on: [self-hosted, linux, x64]
+    # Tiny coordination job (5 min): keep on GitHub-hosted during the cx33
+    # stabilization pass so it can never land on a self-hosted tiny box.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     if: >-
       github.event_name == 'workflow_dispatch'
@@ -404,7 +406,9 @@ jobs:
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
           || github.event_name == 'pull_request')
-    runs-on: [self-hosted, linux, x64]
+    # Tiny coordination job (5 min): keep on GitHub-hosted during the cx33
+    # stabilization pass so it can never land on a self-hosted tiny box.
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Evaluate router and selected target
