@@ -1,0 +1,14 @@
+timestamp = "2026-05-30T07:37:54Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-229"
+event = "in_progress"
+actor = "codex"
+previous_status = "not_present"
+new_status = "ready"
+branch = "codex/slm-cpu-229-no-bias-runtime-attempt-gate"
+summary = "Queued the no-bias apply-linear runtime attempt gate after SLM-CPU-228."
+notes = [
+  "SLM-CPU-228 captured the validated Qwen3 and Qwen2.5 Q8_0 candidate-off/candidate-on strict receipt pair while keeping candidate execution fail-closed.",
+  "SLM-CPU-229 is ready to add or precisely block a narrowly gated feed_forward.down_proj candidate execution attempt with fresh strict receipts proving generated-ID and decoded-text preservation.",
+  "The next slice must keep candidate execution off by default and must not claim timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 behavior.",
+]
