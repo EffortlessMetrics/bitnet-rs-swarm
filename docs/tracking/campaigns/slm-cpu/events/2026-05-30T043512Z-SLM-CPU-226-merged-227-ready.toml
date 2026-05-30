@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T04:35:12Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-226"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1003
+head_sha = "5331b31f4e97d21f3d1434d9e1c80b624a9b2ae3"
+merge_sha = "8e33119d20cb40cee78abf4be09129ce9b8f4e20"
+branch = "codex/slm-cpu-226-no-bias-strict-capture-pair"
+summary = "Merged SLM-CPU-226 no-bias strict capture pair blocker and queued SLM-CPU-227."
+notes = [
+  "SLM-CPU-226 records that the no-bias candidate-off/on strict capture pair remains absent and fail-closed.",
+  "SLM-CPU-227 is ready to define the concrete strict capture command/schema surface.",
+]

@@ -13070,7 +13070,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-226"
-status = "ready"
+status = "merged"
+pr = 1003
+head_sha = "5331b31f4e97d21f3d1434d9e1c80b624a9b2ae3"
+merge_sha = "8e33119d20cb40cee78abf4be09129ce9b8f4e20"
 branch = "codex/slm-cpu-226-no-bias-strict-capture-pair"
 stackable = false
 review_mode = "codex_premerge"
@@ -13117,6 +13120,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without a fresh validated strict capture artifact pair.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-227"
+status = "ready"
+branch = "codex/slm-cpu-227-no-bias-strict-capture-commands"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-226"]
+acceptance = "Consume the SLM-CPU-226 strict capture pair blocker and define the concrete candidate-off and candidate-on strict capture commands plus artifact schema for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj. A valid slice must make the capture commands receipt-visible, bind explicit gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, prompt/generated/text digests, model/backend identity, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and default eager_f32_candle preservation, while keeping candidate execution disabled unless a later separately gated runtime PR enables it. This item must not claim generated-ID preservation for a candidate-on runtime experiment unless validated artifacts are present, and must not claim timing, allocation, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-226 records that SLM-CPU-209 disabled-gate before/after receipts are not a candidate-on strict capture pair.",
+  "SLM-CPU-226 records candidate-off/candidate-on strict capture artifact paths and commands as absent.",
+  "SLM-CPU-226 keeps candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+]
+may_claim = [
+  "SLM-CPU-227 may define or validate the concrete strict capture command/schema surface for candidate-off and candidate-on evidence.",
+  "SLM-CPU-227 may prove command-level identity requirements for a future strict capture artifact pair.",
+  "SLM-CPU-227 may keep the default eager_f32_candle path unchanged when the explicit gate is absent.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate-on runtime experiment without a validated strict capture artifact pair.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
