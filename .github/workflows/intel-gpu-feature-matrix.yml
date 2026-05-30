@@ -158,6 +158,9 @@ jobs:
         with:
           key: intel-doc-check
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Generate docs
         run: cargo doc --locked --workspace --no-default-features --features cpu --no-deps
         env:
