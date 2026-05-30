@@ -224,9 +224,8 @@ jobs:
           missing="${required_jobs[*]}"
 
           while [ $SECONDS -lt $deadline ]; do
-            payload=$(gh api --paginate -H 'Accept: application/vnd.github+json' \
-              "${api}?per_page=100" --jq '.check_runs[]' \
-              | jq -s '{check_runs: .}' || true)
+            payload=$(gh api -H 'Accept: application/vnd.github+json' \
+              "${api}?per_page=100" --jq '{check_runs: .check_runs}' || true)
             if [ -z "$payload" ]; then
               echo "Empty API response; retrying"
               sleep 30
