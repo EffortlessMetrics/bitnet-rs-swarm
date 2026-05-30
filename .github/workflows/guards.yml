@@ -62,8 +62,8 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install -y ripgrep
           else
-            echo "::error::ripgrep missing from self-hosted runner image and privileged apt is unavailable"
-            exit 1
+            echo "ripgrep missing from self-hosted runner image; installing with cargo"
+            cargo install ripgrep --locked
           fi
 
       # Ensure scripts are executable in fresh clones

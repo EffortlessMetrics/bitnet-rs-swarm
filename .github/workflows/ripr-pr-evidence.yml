@@ -40,9 +40,11 @@ jobs:
         run: git fetch origin ${{ github.base_ref }}
 
       - name: Build xtask
+        id: build_xtask
         run: cargo build --locked -p xtask --no-default-features
 
       - name: RIPR PR evidence
+        if: steps.build_xtask.outcome == 'success'
         env:
           RIPR_BASE: origin/${{ github.base_ref }}
         run: |
@@ -59,6 +61,7 @@ jobs:
           fi
 
       - name: RIPR review guidance
+        if: steps.build_xtask.outcome == 'success'
         run: |
           if ! timeout 25s target/debug/xtask ripr-review-comments --base origin/${{ github.base_ref }} --head HEAD; then
             mkdir -p target/ripr/review
@@ -83,11 +86,11 @@ jobs:
           fi
 
       - name: RIPR PR contract
-        if: always()
+        if: always() && steps.build_xtask.outcome == 'success'
         run: target/debug/xtask ripr-pr --check
 
       - name: RIPR review contract
-        if: always()
+        if: always() && steps.build_xtask.outcome == 'success'
         run: target/debug/xtask ripr-review-comments --check
 
       - name: RIPR summary
@@ -104,7 +107,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: RIPR annotations
-        if: always()
+        if: always() && steps.build_xtask.outcome == 'success'
         run: target/debug/xtask ripr-annotations
 
       - name: Upload RIPR PR evidence
