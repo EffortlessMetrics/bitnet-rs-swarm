@@ -13305,8 +13305,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-230"
-status = "ready"
+status = "pr_open"
+pr = 1015
 branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+head_sha = "d0b1c5374434b647266c0928e82aa50a16a44ca0"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
