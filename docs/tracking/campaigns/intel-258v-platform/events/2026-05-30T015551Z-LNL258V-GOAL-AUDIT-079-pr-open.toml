@@ -1,0 +1,18 @@
+timestamp = "2026-05-30T01:55:51Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GOAL-AUDIT-079"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 998
+branch = "codex/lunar-lake/LNL258V-GOAL-AUDIT-079-current-main"
+head_sha = "1ec5b9e50803d119aa96b278c878e98d842323af"
+actor = "codex"
+summary = "Opened PR #998 for the current-main no-inference Lunar Lake audit refresh."
+notes = [
+  "The PR refreshes source_revision to 470e75e89410d14401f50e75602ab856e4bd54c1.",
+  "The audit/checklist record LNL258V-GOAL-AUDIT-078/#977, closeout #979, and adjacent SLM-CPU-220/#978 through SLM-CPU-224/#992 plus tracker closeouts through #995 as no-inference tracker or boundary state only.",
+  "Live current-main validate/regress/compare strict checks passed from committed artifacts.",
+  "The live AC/charging low-power-harness strict check failed closed before inference.",
+  "LNL258V-POWER-006 remains blocked on real battery-mode low_power evidence and benchmark-qualified power advantage.",
+]
