@@ -12893,7 +12893,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-223"
-status = "ready"
+status = "merged"
+pr = 989
+head_sha = "ad9d7fb8f907bd98c723f2ed7f5b2fab675ac8aa"
+merge_sha = "8c30fea2c7d4eb72645e485c538ea47ba2e6438a"
 branch = "codex/slm-cpu-223-no-bias-strict-artifact-capture"
 stackable = false
 review_mode = "codex_premerge"
@@ -12940,6 +12943,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without fresh same-callsite strict receipts.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-224"
+status = "ready"
+branch = "codex/slm-cpu-224-no-bias-strict-capture-artifact-pair"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-223"]
+acceptance = "Consume the SLM-CPU-223 strict artifact-capture blocker and either produce the validated candidate-off/candidate-on same-callsite strict capture artifact pair for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj, or record the exact remaining capture prerequisite. A valid artifact pair must bind explicit gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, candidate-off and candidate-on capture commands, model/backend identity, and default eager_f32_candle preservation. Candidate execution and normal runtime selection must remain disabled unless the strict capture pair is complete and separately gated, and this item must not claim timing, allocation, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-223 defines DenseLinearNoBiasStrictArtifactCaptureBoundary.",
+  "SLM-CPU-223 records strict_receipt_artifact_pair_boundary as the remaining fail-closed capture blocker.",
+  "SLM-CPU-223 keeps candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+]
+may_claim = [
+  "SLM-CPU-224 may produce or block the validated candidate-off/candidate-on strict capture artifact pair for bounded no-bias apply-linear evidence.",
+  "SLM-CPU-224 may prove strict capture identity for prompt IDs, generated IDs, decoded text, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, and model/backend identity.",
+  "SLM-CPU-224 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without a fresh validated strict capture artifact pair.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
