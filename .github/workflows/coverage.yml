@@ -31,7 +31,10 @@ concurrency:
 jobs:
   coverage:
     name: Code Coverage
-    runs-on: [self-hosted, linux, x64]
+    # Route to real rust-capacity boxes (cx43/cx53), not the 8 GB cx33 tiny pool.
+    # cx33 carries no `rust-small` label, so requiring it keeps this full-coverage
+    # build off the small box where it would OOM.
+    runs-on: [self-hosted, linux, x64, em-ci, rust-small, trusted-pr]
     timeout-minutes: 60
     permissions:
       contents: read
