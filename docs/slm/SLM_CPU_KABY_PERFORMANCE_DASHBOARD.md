@@ -108,6 +108,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias runtime attempt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-229-no-bias-runtime-attempt-blocker.json` | Consumes the validated SLM-CPU-228 strict capture pair and records that candidate execution remains blocked until receipt-bound selector identity reaches the dense runtime hook registry and apply-linear dispatch has a separately gated execution receipt |
 | No-bias runtime hook attachment | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json` | Proves the receipt-bound no-bias selector can be attached to `DenseLinearRuntimeHookRegistry` for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` while preserving eager_f32_candle and keeping candidate execution disabled |
 | No-bias candidate execution receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json` | Consumes the SLM-CPU-230 runtime hook attachment and keeps candidate execution fail-closed until fresh candidate-off/candidate-on execution receipts prove generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer authority, and fallback=false are preserved |
+| No-bias execution capture commands | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json` | Defines the concrete candidate-off/candidate-on execution capture command contract for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; receipts remain uncaptured and no candidate execution or preservation claim is made |
 
 Qwen3 rows use:
 
@@ -4481,6 +4482,46 @@ speedup, sustained throughput, Q4/Q5 support, server/accelerator execution,
 Qwen3.5, or BitNet QK256 behavior. A later separately gated PR must capture
 fresh candidate-off and candidate-on execution receipts through the attached
 registry descriptor before any candidate execution claim can be made.
+
+## SLM-CPU-232 No-Bias Execution Capture Commands
+
+SLM-CPU-232 consumes the SLM-CPU-231 candidate execution receipt gate and
+defines the concrete candidate-off/candidate-on capture command contract for
+the exact Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` scope. The commands bind
+the future receipts to the same model SHA, GGUF tokenizer authority, prompt and
+generated output digests, CPU backend identity, runtime hook attachment
+identity, and `FeedForward::apply_linear` callsite identity. They do not capture
+those execution receipts in this slice, so candidate execution remains
+fail-closed and normal inference stays on `eager_f32_candle`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json
+decision = execution_capture_commands_defined_fail_closed
+reason = candidate_execution_capture_command_contract_defined_but_receipts_not_captured
+remaining_blocker = candidate_off_on_execution_receipt_artifacts
+command = cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- --device cpu slm-warm-session
+candidate_off_gate = off
+candidate_on_gate = on
+role_id = layers.0.feed_forward.down_proj
+callsite_identity = bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight
+candidate_execution_receipts_captured = false
+candidate_execution_enabled_by_default = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_path = feed_forward_down_proj_no_bias_candidate
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+The next required artifacts are the Qwen3 and Qwen2.5 candidate-off and
+candidate-on execution receipts plus a validation artifact proving generated
+IDs, decoded text, backend/kernel identity, strict tokenizer authority,
+callsite identity, and `fallback_used=false` are preserved. This slice only
+defines that capture contract. It does not execute the no-bias candidate, does
+not change default runtime selection, does not prove generated-ID preservation,
+and does not claim allocation reduction, timing improvement, speedup, sustained
+throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet
+QK256 behavior.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical

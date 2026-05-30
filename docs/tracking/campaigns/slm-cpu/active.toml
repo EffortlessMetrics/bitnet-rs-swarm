@@ -13425,7 +13425,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-232"
-status = "ready"
+status = "pr_open"
+pr = 1019
+head_sha = "ee4a263c1ca6347d02ac4461b3bfc5c7cefea15e"
 branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
 stackable = false
 review_mode = "codex_premerge"

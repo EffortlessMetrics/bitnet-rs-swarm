@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T14:20:23Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-232"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1019
+branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
+head_sha = "ee4a263c1ca6347d02ac4461b3bfc5c7cefea15e"
+summary = "Opened the SLM-CPU-232 no-bias execution capture commands PR."
+notes = [
+  "PR #1019 defines the concrete candidate-off/candidate-on capture command contract for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The PR keeps execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+]
