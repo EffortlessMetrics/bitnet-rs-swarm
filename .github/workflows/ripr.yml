@@ -34,7 +34,12 @@ jobs:
           toolchain: "1.95.0"
 
       - name: Install ripr
-        run: cargo install ripr --locked
+        run: |
+          if command -v ripr >/dev/null 2>&1; then
+            ripr --version
+          else
+            cargo install ripr --locked
+          fi
 
       - name: Run ripr doctor
         run: ripr doctor || true

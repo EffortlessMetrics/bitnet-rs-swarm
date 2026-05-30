@@ -33,7 +33,12 @@ jobs:
           cache-on-failure: true
 
       - name: Install ripr
-        run: cargo install ripr --locked
+        run: |
+          if command -v ripr >/dev/null 2>&1; then
+            ripr --version
+          else
+            cargo install ripr --locked
+          fi
 
       - name: Fetch base branch
         if: github.base_ref != ''
