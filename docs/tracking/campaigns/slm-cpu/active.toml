@@ -12952,9 +12952,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-224"
-status = "pr_open"
+status = "merged"
 pr = 992
-head_sha = "2db260cb9ca10f9cfa2bc439713b6e92a4a37701"
+head_sha = "c8fcd1ddd727a2e8dcba95f28e3f211ea9917fa7"
+merge_sha = "c90d8b676a7dbc873f65d835a998922805723988"
 branch = "codex/slm-cpu-224-no-bias-strict-capture-artifact-pair"
 stackable = false
 review_mode = "codex_premerge"
@@ -13001,6 +13002,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without a fresh validated strict capture artifact pair.",
+  "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-225"
+status = "ready"
+branch = "codex/slm-cpu-225-no-bias-strict-capture-prereq"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-224"]
+acceptance = "Consume the SLM-CPU-224 strict capture artifact-pair boundary and either make the strict artifact-capture prerequisite ready for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj, or record the exact remaining prerequisite that keeps strict_artifact_capture_boundary fail-closed. A valid prerequisite must bind the SLM-CPU-222 strict receipt artifact-pair boundary, SLM-CPU-223 strict artifact-capture boundary, candidate-off and candidate-on strict capture artifact paths, candidate-off and candidate-on capture commands, explicit gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, prompt/generated/text digests, model/backend identity, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and default eager_f32_candle preservation. Candidate execution and normal runtime selection must remain disabled unless the strict capture prerequisite and capture artifact pair are complete and separately gated, and this item must not claim timing, allocation, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-224 defines DenseLinearNoBiasStrictCaptureArtifactPairBoundary.",
+  "SLM-CPU-224 records strict_artifact_capture_boundary as the remaining fail-closed prerequisite before a validated strict capture artifact pair.",
+  "SLM-CPU-224 keeps candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+]
+may_claim = [
+  "SLM-CPU-225 may resolve or precisely block the strict artifact-capture prerequisite needed before the strict capture artifact pair can validate.",
+  "SLM-CPU-225 may prove strict capture paths, capture commands, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, gate identity, descriptor identity, FeedForward::apply_linear owner/callsite identity, and model/backend identity.",
+  "SLM-CPU-225 may prove that the default eager_f32_candle path remains unchanged when the explicit gate is absent.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a new runtime experiment without a fresh strict artifact-capture prerequisite and validated strict capture artifact pair.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
