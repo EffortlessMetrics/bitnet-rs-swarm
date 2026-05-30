@@ -1000,7 +1000,8 @@
 | slm-cpu | SLM-CPU-232 | SLM-CPU-231 | merged |
 | slm-cpu | SLM-CPU-233 | SLM-CPU-232 | merged |
 | slm-cpu | SLM-CPU-234 | SLM-CPU-233 | merged |
-| slm-cpu | SLM-CPU-235 | SLM-CPU-234 | pr_open |
+| slm-cpu | SLM-CPU-235 | SLM-CPU-234 | merged |
+| slm-cpu | SLM-CPU-236 | SLM-CPU-235 | ready |
 | slm-cpu | SLM-CPU-165 | SLM-CPU-164 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |

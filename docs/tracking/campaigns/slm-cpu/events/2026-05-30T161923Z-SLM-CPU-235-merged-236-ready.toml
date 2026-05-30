@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T16:19:23Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-235"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1025
+branch = "codex/slm-cpu-235-no-bias-execution-receipts"
+head_sha = "510f2df5544194d77b258656725a855265be8b10"
+merge_sha = "fcb338c10b19e94e5d06b615191fca35b3603793"
+summary = "Closed SLM-CPU-235 after the no-bias execution receipt capture PR merged and queued SLM-CPU-236."
+notes = [
+  "PR #1025 captures fresh Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on no-bias warm-session receipts for feed_forward.down_proj.",
+  "SLM-CPU-236 is ready for a narrowly gated candidate execution attempt or an exact fail-closed runtime blocker; no timing or allocation claim is queued yet.",
+]
