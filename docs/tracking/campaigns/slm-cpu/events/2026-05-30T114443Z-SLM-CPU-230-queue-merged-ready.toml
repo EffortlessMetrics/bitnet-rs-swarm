@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T11:44:43Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-230"
+event = "in_progress"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "ready"
+pr = 1013
+merge_sha = "d89de90000218cdb5a991e6b41f5a41203cc1b75"
+branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+summary = "Merged the SLM-CPU-230 queue PR while keeping the implementation item ready."
+notes = [
+  "#1013 only queued the SLM-CPU-230 implementation boundary after SLM-CPU-229; it did not implement the runtime hook attachment.",
+  "SLM-CPU-230 remains ready for a future implementation PR that attaches or precisely blocks the receipt-bound no-bias runtime hook registry boundary.",
+]
