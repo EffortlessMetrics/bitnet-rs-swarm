@@ -123,6 +123,33 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Install native build tools
+        id: native_build_tools
+        run: |
+          set -eu
+          if command -v cmake >/dev/null 2>&1 && command -v cc >/dev/null 2>&1 && command -v c++ >/dev/null 2>&1; then
+            echo "Native build tools already present on runner image"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update
+            apt-get install -y cmake build-essential
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y cmake build-essential
+          else
+            echo "::warning::cmake/build-essential missing from self-hosted runner image and privileged apt is unavailable; skipping kernel source tests"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if command -v cmake >/dev/null 2>&1 && command -v cc >/dev/null 2>&1 && command -v c++ >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::cmake/build-essential install did not expose cmake, cc, and c++; skipping kernel source tests"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
@@ -145,6 +172,7 @@ jobs:
             -p bitnet-kernels -- opencl_work_size --test-threads=1
 
       - name: Run kernel source tests
+        if: steps.native_build_tools.outputs.available == 'true'
         run: cargo test --locked --no-default-features --features cpu -p bitnet-kernels -- kernels::tests
 
   # GPU smoke tests - only on self-hosted Intel GPU runners
