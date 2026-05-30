@@ -105,6 +105,8 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias candidate off/on receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-215-no-bias-candidate-off-on-receipt-gate.json` | Defines the exact candidate-off/candidate-on receipt-pair gate for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; the gate remains fail-closed because no candidate-on strict warm-session receipt exists |
 | No-bias candidate-on behavior evidence gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-216-no-bias-candidate-on-behavior-evidence-gate.json` | Defines the fail-closed behavior-evidence boundary after the receipt-pair gate; candidate execution remains disabled because `FeedForward::apply_linear` lacks a candidate-on runtime attachment point and complete strict receipt fields |
 | No-bias candidate runtime attachment boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-217-no-bias-candidate-runtime-attachment.json` | Defines the explicit candidate-on apply-linear runtime attachment boundary and records the remaining blocker as the missing candidate runtime owner/receipt emitter; eager_f32_candle remains the default runtime |
+| No-bias runtime attempt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-229-no-bias-runtime-attempt-blocker.json` | Consumes the validated SLM-CPU-228 strict capture pair and records that candidate execution remains blocked until receipt-bound selector identity reaches the dense runtime hook registry and apply-linear dispatch has a separately gated execution receipt |
+| No-bias runtime hook attachment | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json` | Proves the receipt-bound no-bias selector can be attached to `DenseLinearRuntimeHookRegistry` for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` while preserving eager_f32_candle and keeping candidate execution disabled |
 
 Qwen3 rows use:
 
@@ -4365,6 +4367,81 @@ runtime path, and does not make allocation, timing, speedup,
 sustained-throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256
 claims. The next separately gated slice may consume this validated pair before
 attempting candidate execution.
+
+## SLM-CPU-229 No-Bias Runtime Attempt Blocker
+
+SLM-CPU-229 consumes the SLM-CPU-228 strict capture pair and records the exact
+runtime blocker before any no-bias `FeedForward::apply_linear` candidate
+execution can be attempted. The strict capture pair proves candidate-off/on
+identity, prompt/generated/text digest preservation, `runtime_api=cpu`,
+`selected_backend=cpu-rust`, and `fallback_used=false`, but the receipt-bound
+selector still does not reach the dense runtime hook registry as an executable
+descriptor.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-229-no-bias-runtime-attempt-blocker.json
+decision = candidate_execution_attempt_blocked_fail_closed
+reason = strict_capture_pair_is_validated_but_runtime_attachment_is_incomplete
+remaining_blocker = receipt_bound_selector_runtime_hook_registry_attachment
+boundary = bitnet_transformer::DenseLinearNoBiasRuntimeAttemptBoundary
+strict_capture_artifact_pair_validated = true
+explicit_candidate_execution_gate_requested = true
+runtime_hook_registry_attachment_present = false
+runtime_hook_descriptor_binds_selector_identity = false
+runtime_hook_descriptor_binds_strict_capture_pair = false
+apply_linear_dispatch_wired_to_no_bias_candidate = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, change default runtime,
+claim generated-ID preservation for a candidate execution attempt, claim
+allocation or timing improvement, claim speedup or sustained throughput,
+broaden Q4/Q5 support, or touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5,
+or BitNet QK256 paths.
+
+## SLM-CPU-230 No-Bias Runtime Hook Attachment
+
+SLM-CPU-230 consumes the SLM-CPU-229 blocker and adds a typed
+`DenseLinearNoBiasRuntimeHookAttachmentBoundary`. The boundary verifies that a
+receipt-bound no-bias selector descriptor can be attached to
+`DenseLinearRuntimeHookRegistry` for the exact Qwen3/Qwen2.5 Q8_0
+`feed_forward.down_proj` tensor only when the strict capture pair identity,
+model SHA, tokenizer authority, `runtime_api=cpu`, `selected_backend=cpu-rust`,
+selected path/kernel, candidate kernel, prompt/generated/text digests,
+`bias_present=false`, and `fallback_used=false` match.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json
+decision = runtime_hook_attachment_ready_runtime_disabled
+reason = receipt_bound_selector_identity_reaches_runtime_hook_registry_but_candidate_execution_remains_separate
+remaining_blocker = fresh_candidate_off_on_execution_receipts
+boundary = bitnet_transformer::DenseLinearNoBiasRuntimeHookAttachmentBoundary
+strict_capture_artifact_pair_validated = true
+explicit_candidate_execution_gate_requested = true
+runtime_hook_registry_attachment_present = true
+runtime_hook_descriptor_binds_selector_identity = true
+runtime_hook_descriptor_binds_strict_capture_pair = true
+registry_key_matches_tensor_name = true
+descriptor_ready_for_apply_linear_callsite = true
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice only proves selector identity reaches the runtime hook registry. It
+does not call the no-bias candidate, does not change default runtime selection,
+does not claim allocation reduction, timing improvement, speedup, sustained
+throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet
+QK256 behavior. A later separately gated PR still has to capture fresh
+candidate-off/candidate-on execution receipts before candidate execution can be
+considered.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical

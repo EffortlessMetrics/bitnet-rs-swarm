@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_runtime_hook_attachment_boundary",
+  "tracking_item": "SLM-CPU-230",
+  "consumes_tracking_item": "SLM-CPU-229",
+  "consumes_artifact": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-229-no-bias-runtime-attempt-blocker.json",
+  "decision": "runtime_hook_attachment_ready_runtime_disabled",
+  "reason": "receipt_bound_selector_identity_reaches_runtime_hook_registry_but_candidate_execution_remains_separate",
+  "remaining_runtime_selection_blocker": "fresh_candidate_off_on_execution_receipts",
+  "runtime_hook_attachment": {
+    "strict_capture_artifact_pair_validated": true,
+    "explicit_candidate_execution_gate_requested": true,
+    "runtime_hook_registry_attachment_present": true,
+    "runtime_hook_descriptor_binds_selector_identity": true,
+    "runtime_hook_descriptor_binds_strict_capture_pair": true,
+    "registry_key_matches_tensor_name": true,
+    "descriptor_ready_for_apply_linear_callsite": true,
+    "feed_forward_down_proj_scope_preserved": true,
+    "default_runtime_path_preserved": true,
+    "candidate_execution_attempt_allowed": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "candidate_execution_enabled": false
+  },
+  "candidate_scope": {
+    "models": [
+      {
+        "family": "qwen3",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "quant_format": "Q8_0"
+      },
+      {
+        "family": "qwen2",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "quant_format": "Q8_0"
+      }
+    ],
+    "role_id": "layers.0.feed_forward.down_proj",
+    "tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "callsite_identity": "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+    "bias_present": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "fallback_used": false
+  },
+  "strict_identity_requirements": [
+    "model_sha256",
+    "model_architecture",
+    "quant_format",
+    "tokenizer_source=gguf_metadata",
+    "tokenizer_strict=true",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "fallback_used=false",
+    "selected_path=eager_f32_candle",
+    "selected_kernel=dense-f32-candle-linear",
+    "candidate_kernel=dense-f32-candle-linear-no-bias-candidate",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "before_after_receipt_pair_identity",
+    "bias_present=false"
+  ],
+  "required_next_gate": [
+    "Keep normal inference on eager_f32_candle when the explicit gate is absent.",
+    "Do not call dense_linear_no_bias_candidate_forward from FeedForward::apply_linear until a later PR captures fresh candidate-off/candidate-on execution receipts through the attached registry descriptor.",
+    "Fresh candidate-off/candidate-on execution receipts must prove generated IDs, decoded text, model SHA, tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, selected kernel identity, and fallback=false are preserved."
+  ],
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "candidate_execution_attempted": false,
+    "default_runtime_changed": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

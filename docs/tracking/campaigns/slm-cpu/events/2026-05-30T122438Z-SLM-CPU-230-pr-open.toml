@@ -1,0 +1,15 @@
+timestamp = "2026-05-30T12:24:38Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-230"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1015
+branch = "codex/slm-cpu-230-no-bias-runtime-hook-attachment"
+head_sha = "d0b1c5374434b647266c0928e82aa50a16a44ca0"
+summary = "Opened the SLM-CPU-230 no-bias runtime hook attachment boundary PR."
+notes = [
+  "PR #1015 adds a fail-closed DenseLinearNoBiasRuntimeHookAttachmentBoundary that verifies receipt-bound selector identity reaches DenseLinearRuntimeHookRegistry for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "The PR keeps candidate execution disabled, preserves eager_f32_candle, and records fresh candidate-off/on execution receipts as the remaining blocker.",
+]
