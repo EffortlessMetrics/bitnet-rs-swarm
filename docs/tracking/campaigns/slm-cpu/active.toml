@@ -13011,7 +13011,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-225"
-status = "ready"
+status = "pr_open"
+pr = 1000
+head_sha = "949be78fdd8423c5a6d915a0cf62778004dc410b"
 branch = "codex/slm-cpu-225-no-bias-strict-capture-prereq"
 stackable = false
 review_mode = "codex_premerge"
