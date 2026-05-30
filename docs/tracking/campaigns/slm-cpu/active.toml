@@ -13188,7 +13188,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-228"
-status = "ready"
+status = "merged"
+pr = 1007
+head_sha = "1656899f1036e38aab4f4902525f91ea7a5c6058"
+merge_sha = "906acbbdc61db24b30450645d00cd984b2cf69d6"
 branch = "codex/slm-cpu-228-no-bias-strict-capture-artifacts"
 stackable = false
 review_mode = "codex_premerge"
