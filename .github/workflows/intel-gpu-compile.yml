@@ -63,21 +63,25 @@ jobs:
           toolchain: "1.95.0"
 
       - name: Install OpenCL headers
+        id: opencl_headers
         run: |
           set -eu
           if [ -e /usr/include/CL/cl.h ] || [ -e /usr/local/include/CL/cl.h ]; then
             echo "OpenCL headers already present on runner image"
+            echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
             apt-get update
             apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
             sudo apt-get update
             sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable"
-            exit 1
+            echo "::warning::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable; skipping optional OneAPI compile check"
+            echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Cache Rust dependencies
@@ -86,6 +90,7 @@ jobs:
           shared-key: intel-gpu-compile-oneapi
 
       - name: cargo check --workspace (oneapi)
+        if: steps.opencl_headers.outputs.available == 'true'
         run: cargo check --locked --workspace --no-default-features --features oneapi
 
   opencl-kernel-lint:
@@ -164,21 +169,25 @@ jobs:
           toolchain: "1.95.0"
 
       - name: Install OpenCL headers
+        id: opencl_headers
         run: |
           set -eu
           if [ -e /usr/include/CL/cl.h ] || [ -e /usr/local/include/CL/cl.h ]; then
             echo "OpenCL headers already present on runner image"
+            echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
             apt-get update
             apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
             sudo apt-get update
             sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable"
-            exit 1
+            echo "::warning::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable; skipping optional OpenCL CPU fallback tests"
+            echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Cache Rust dependencies
@@ -187,6 +196,7 @@ jobs:
           shared-key: intel-gpu-compile-fallback
 
       - name: Run opencl module tests (CPU fallback)
+        if: steps.opencl_headers.outputs.available == 'true'
         run: |
           cargo test --locked --no-default-features --features cpu,oneapi \
             -p bitnet-kernels -- opencl_cache
@@ -215,21 +225,25 @@ jobs:
           components: clippy
 
       - name: Install OpenCL headers
+        id: opencl_headers
         run: |
           set -eu
           if [ -e /usr/include/CL/cl.h ] || [ -e /usr/local/include/CL/cl.h ]; then
             echo "OpenCL headers already present on runner image"
+            echo "available=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
             apt-get update
             apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
             sudo apt-get update
             sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+            echo "available=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable"
-            exit 1
+            echo "::warning::OpenCL headers missing from self-hosted runner image and privileged apt is unavailable; skipping optional OneAPI clippy"
+            echo "available=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Cache Rust dependencies
@@ -238,4 +252,5 @@ jobs:
           shared-key: intel-gpu-compile-clippy
 
       - name: Clippy (oneapi)
+        if: steps.opencl_headers.outputs.available == 'true'
         run: cargo clippy --locked --lib --no-default-features --features oneapi -- -D warnings
