@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_runtime_attempt_boundary",
+  "tracking_item": "SLM-CPU-229",
+  "consumes_tracking_item": "SLM-CPU-228",
+  "decision": "candidate_execution_attempt_blocked_fail_closed",
+  "reason": "strict_capture_pair_is_validated_but_runtime_attachment_is_incomplete",
+  "remaining_runtime_selection_blocker": "receipt_bound_selector_runtime_hook_registry_attachment",
+  "runtime_blocker_detail": {
+    "strict_capture_artifact_pair_validated": true,
+    "explicit_candidate_execution_gate_requested": true,
+    "runtime_hook_registry_attachment_present": false,
+    "runtime_hook_descriptor_binds_selector_identity": false,
+    "runtime_hook_descriptor_binds_strict_capture_pair": false,
+    "apply_linear_dispatch_wired_to_no_bias_candidate": false,
+    "feed_forward_down_proj_scope_preserved": true,
+    "default_runtime_path_preserved": true,
+    "exact_blocker": "The SLM-CPU-228 strict capture pair proves candidate-off/candidate-on identity, but the warm-session gate is not attached to DenseLinearRuntimeHookRegistry for FeedForward::apply_linear and the production dense hook dispatch only considers Q8 sidecar payload descriptors. No receipt-bound no-bias selector reaches apply_linear as an executable runtime descriptor."
+  },
+  "candidate_scope": {
+    "models": [
+      {
+        "family": "qwen3",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "quant_format": "Q8_0"
+      },
+      {
+        "family": "qwen2",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "quant_format": "Q8_0"
+      }
+    ],
+    "role_id": "layers.0.feed_forward.down_proj",
+    "tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "bias_present": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_path": "feed_forward_down_proj_no_bias_candidate",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "fallback_used": false
+  },
+  "required_next_runtime_attachment": [
+    "Attach a receipt-bound no-bias selector descriptor into DenseLinearRuntimeHookRegistry for the exact feed_forward.down_proj tensor after strict prompt/generated/text digests are known.",
+    "Bind the descriptor to the SLM-CPU-228 strict capture artifact pair identity, model SHA, tokenizer authority, runtime_api=cpu, selected_backend=cpu-rust, selected kernel identity, and fallback=false.",
+    "Teach FeedForward::apply_linear dispatch to call dense_linear_no_bias_candidate_forward only when the explicit gate and descriptor identity are present.",
+    "Capture fresh candidate-off/candidate-on execution receipts for Qwen3 and Qwen2.5 proving prompt IDs, generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer source, and fallback=false are preserved."
+  ],
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "default_runtime_changed": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

@@ -13247,7 +13247,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-229"
-status = "ready"
+status = "pr_open"
+pr = 1011
 branch = "codex/slm-cpu-229-no-bias-runtime-attempt-gate"
 stackable = false
 review_mode = "codex_premerge"

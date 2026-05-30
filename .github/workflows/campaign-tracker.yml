@@ -52,25 +52,8 @@ jobs:
         with:
           toolchain: "1.95.0"
 
-      - name: Ensure native build dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          if command -v cmake >/dev/null 2>&1; then
-            cmake --version
-            exit 0
-          fi
-
-          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
-            apt-get update
-            apt-get install -y --no-install-recommends cmake build-essential pkg-config
-          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends cmake build-essential pkg-config
-          else
-            echo "::error::cmake is required to build sentencepiece-sys during campaign tracker checks"
-            exit 1
-          fi
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
