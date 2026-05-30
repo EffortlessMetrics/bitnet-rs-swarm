@@ -62,6 +62,9 @@ jobs:
         with:
           toolchain: "1.95.0"
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Build PR plan (xtask ci plan)
         id: plan
         timeout-minutes: 10

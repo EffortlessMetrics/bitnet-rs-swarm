@@ -315,6 +315,10 @@ jobs:
           shared-key: ci-core-ubuntu
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Bootstrap native build tools
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Plan package selection
         id: package-plan
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
@@ -606,6 +610,9 @@ jobs:
           shared-key: ci-core-grid-check
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Run BDD Grid Check (CPU cells)
         run: cargo run --locked --no-default-features -p xtask -- grid-check --cpu-only --verbose
 
@@ -642,6 +649,10 @@ jobs:
         with:
           shared-key: ci-core-clippy
           save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Bootstrap native build tools
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Run clippy (core crates, libs only)
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
@@ -753,6 +764,10 @@ jobs:
         with:
           shared-key: ci-core-docs
           save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Bootstrap native build tools
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Build documentation
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'

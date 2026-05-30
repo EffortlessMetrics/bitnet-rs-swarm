@@ -1,0 +1,33 @@
+name: Bootstrap native build tools
+description: Ensure CMake is available for Rust crates with native build scripts.
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure CMake is available
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if command -v cmake >/dev/null 2>&1; then
+          cmake --version
+          exit 0
+        fi
+
+        echo "CMake is not on PATH; installing it for this job."
+        if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+          apt-get update
+          apt-get install -y cmake
+        elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null && command -v apt-get >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y cmake
+        elif command -v python3 >/dev/null 2>&1; then
+          python3 -m pip install --user cmake
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+        else
+          echo "::error::CMake is required for native Rust build scripts, but no package manager or python3 fallback is available."
+          exit 1
+        fi
+
+        cmake --version

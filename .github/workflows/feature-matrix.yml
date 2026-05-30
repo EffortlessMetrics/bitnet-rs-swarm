@@ -67,6 +67,9 @@ jobs:
           shared-key: feature-matrix-pr
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: cargo check ${{ matrix.label }}
         run: cargo check --workspace --locked ${{ matrix.flags }}
 
@@ -133,6 +136,10 @@ jobs:
         with:
           shared-key: feature-matrix-full-cli-pr
           save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Bootstrap native build tools
+        if: steps.route.outputs.selected == 'true'
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: cargo check cpu+full-cli
         if: steps.route.outputs.selected == 'true'
@@ -209,6 +216,9 @@ jobs:
           shared-key: feature-matrix-${{ matrix.label }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: cargo check ${{ matrix.label }}
         # continue-on-error at step level: step conclusion = success even on failure,
         # so the job (and its check run) reports green for informational-only combos.
@@ -278,6 +288,9 @@ jobs:
         with:
           shared-key: crate-check-${{ matrix.crate }}-${{ matrix.label }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: cargo check -p ${{ matrix.crate }} (${{ matrix.label }})
         # continue-on-error for GPU/oneapi checks that require CUDA/OpenCL runtime
