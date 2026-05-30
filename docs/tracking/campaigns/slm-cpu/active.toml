@@ -13129,9 +13129,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-227"
-status = "pr_open"
+status = "merged"
 pr = 1005
-head_sha = "3a508b80ea1cd37e38fa76738caa4ac635315edf"
+head_sha = "812ad752976597bce43b80310b60d23f729d8218"
+merge_sha = "127eee8cbbb2d58fd36f06ddb108eb3ffdd86df1"
 branch = "codex/slm-cpu-227-no-bias-strict-capture-commands"
 stackable = false
 review_mode = "codex_premerge"
@@ -13179,6 +13180,62 @@ must_not_claim = [
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate-on runtime experiment without a validated strict capture artifact pair.",
   "Allocation reduction, timing improvement, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-228"
+status = "ready"
+branch = "codex/slm-cpu-228-no-bias-strict-capture-artifacts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-227"]
+acceptance = "Capture or ingest the SLM-CPU-227 candidate-off and candidate-on strict capture artifacts for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj, validate the pair, and keep candidate execution fail-closed unless the full pair is complete. A valid slice must bind the same model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, runtime_api=cpu, selected_backend=cpu-rust, selected kernel identity, descriptor identity, prompt/generated/text digests, and fallback=false across the candidate-off and candidate-on evidence. It must not claim timing, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-227-no-bias-strict-capture-commands.json",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-227 defines the concrete candidate-off and candidate-on strict capture command contract and schema.",
+  "SLM-CPU-227 keeps candidate execution disabled and preserves eager_f32_candle as the default path.",
+  "SLM-CPU-227 explicitly avoids generated-ID preservation, timing, allocation, or speedup claims without the validated artifact pair.",
+]
+may_claim = [
+  "SLM-CPU-228 may capture or ingest the SLM-CPU-227 strict capture artifact pair.",
+  "SLM-CPU-228 may validate behavior identity for the candidate-off and candidate-on strict capture evidence.",
+  "SLM-CPU-228 may keep candidate execution fail-closed until the artifact pair is complete.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
   "Qwen3.5 or hybrid architecture support is in scope.",
