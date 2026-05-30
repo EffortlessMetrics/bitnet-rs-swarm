@@ -1,0 +1,27 @@
+timestamp = "2026-05-30T01:36:51Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-224"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 992
+head_sha = "2db260cb9ca10f9cfa2bc439713b6e92a4a37701"
+merge_sha = "c90d8b676a7dbc873f65d835a998922805723988"
+branch = "codex/slm-cpu-224-no-bias-strict-capture-artifact-pair"
+summary = "Merged SLM-CPU-224 strict capture artifact-pair boundary and queued SLM-CPU-225."
+notes = [
+  "PR #992 records DenseLinearNoBiasStrictCaptureArtifactPairBoundary and consumes the SLM-CPU-223 blocker.",
+  "The slice remains fail-closed because candidate-off/candidate-on strict capture artifacts and capture commands are still absent.",
+  "Candidate execution and normal runtime selection remain disabled; no timing, allocation, speedup, sustained throughput, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim is made.",
+]
+
+[[next_ready]]
+id = "SLM-CPU-225"
+status = "ready"
+branch = "codex/slm-cpu-225-no-bias-strict-capture-command-boundary"
+summary = "Queue the no-bias strict capture command boundary after SLM-CPU-224."
+notes = [
+  "SLM-CPU-225 should consume the fail-closed SLM-CPU-224 artifact-pair boundary and define or precisely block the candidate-off/candidate-on strict capture command boundary.",
+  "Candidate execution and normal runtime selection must remain disabled until fresh validated strict capture artifacts exist and a later separately gated item enables any experiment.",
+]
