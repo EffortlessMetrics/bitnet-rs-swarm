@@ -1,0 +1,24 @@
+schema = 1
+campaign = "slm-cpu"
+item = "SLM-CPU-231"
+event = "merged"
+timestamp = "2026-05-30T09:53:49Z"
+actor = "codex"
+pr = 1017
+head_sha = "a4e5a33134cd62385824202e7766d9bce9f440bb"
+merge_sha = "059964d92e707513f18883ae880f31318b36a0f2"
+branch = "codex/slm-cpu-231-no-bias-candidate-execution-receipts"
+summary = "Merged the SLM-CPU-231 no-bias candidate execution receipt gate and queued SLM-CPU-232."
+notes = [
+  "PR #1017 adds DenseLinearNoBiasCandidateExecutionReceiptGate and records that fresh candidate-off/candidate-on execution receipts are still absent.",
+  "Candidate execution remains fail-closed; normal inference runtime selection remains disabled; eager_f32_candle remains the default path.",
+]
+
+[[next]]
+item = "SLM-CPU-232"
+status = "ready"
+branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
+summary = "Queue the concrete no-bias candidate execution receipt capture command/schema slice."
+notes = [
+  "SLM-CPU-232 should consume SLM-CPU-231 and define or precisely block the candidate-off/candidate-on execution capture commands without changing default runtime behavior.",
+]
