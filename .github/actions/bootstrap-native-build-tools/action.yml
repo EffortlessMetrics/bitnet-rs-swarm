@@ -9,6 +9,27 @@ runs:
       run: |
         set -euo pipefail
 
+        install_cmake_from_kitware() {
+          cmake_version="${CMAKE_BOOTSTRAP_VERSION:-3.31.8}"
+          cmake_archive="cmake-${cmake_version}-linux-x86_64.tar.gz"
+          cmake_url="https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_archive}"
+          cmake_root="${RUNNER_TEMP:-/tmp}/cmake-${cmake_version}"
+
+          mkdir -p "$cmake_root"
+          if command -v curl >/dev/null 2>&1; then
+            curl -fsSL "$cmake_url" -o "$cmake_root/$cmake_archive"
+          elif command -v wget >/dev/null 2>&1; then
+            wget -q "$cmake_url" -O "$cmake_root/$cmake_archive"
+          else
+            echo "::error::CMake is required for native Rust build scripts, but curl/wget fallback is unavailable."
+            exit 1
+          fi
+
+          tar -xzf "$cmake_root/$cmake_archive" -C "$cmake_root" --strip-components=1
+          echo "$cmake_root/bin" >> "$GITHUB_PATH"
+          export PATH="$cmake_root/bin:$PATH"
+        }
+
         if command -v cmake >/dev/null 2>&1; then
           cmake --version
           exit 0
@@ -22,11 +43,17 @@ runs:
           sudo apt-get update
           sudo apt-get install -y cmake
         elif command -v python3 >/dev/null 2>&1; then
-          python3 -m pip install --user cmake
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$PATH"
+          if python3 -m pip --version >/dev/null 2>&1 || python3 -m ensurepip --user >/dev/null 2>&1; then
+            python3 -m pip install --user cmake
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.local/bin:$PATH"
+          else
+            install_cmake_from_kitware
+          fi
+        elif command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; then
+          install_cmake_from_kitware
         else
-          echo "::error::CMake is required for native Rust build scripts, but no package manager or python3 fallback is available."
+          echo "::error::CMake is required for native Rust build scripts, but no package manager, python3, curl, or wget fallback is available."
           exit 1
         fi
 
