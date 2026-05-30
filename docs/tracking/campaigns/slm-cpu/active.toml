@@ -13366,9 +13366,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-231"
-status = "pr_open"
+status = "merged"
 pr = 1017
-head_sha = "633695440be97fe7ee919232a4eaf79a0d5f4a3f"
+head_sha = "a4e5a33134cd62385824202e7766d9bce9f440bb"
+merge_sha = "059964d92e707513f18883ae880f31318b36a0f2"
 branch = "codex/slm-cpu-231-no-bias-candidate-execution-receipts"
 stackable = false
 review_mode = "codex_premerge"
@@ -13415,6 +13416,61 @@ must_not_claim = [
   "A model binary is committed.",
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-232"
+status = "ready"
+branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-231"]
+acceptance = "Consume the SLM-CPU-231 candidate execution receipt gate and define the concrete explicit-gate candidate-off and candidate-on execution capture commands or record the exact remaining blocker. A valid slice must make the capture commands receipt-visible and require the SLM-CPU-230 registry attachment identity, model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected path/kernel identity, candidate path/kernel identity, FeedForward::apply_linear owner/callsite identity, bias_present=false, and fallback=false. Candidate execution must remain disabled by default and the normal eager_f32_candle path must remain unchanged when the explicit gate is absent."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-231 consumes the SLM-CPU-230 runtime hook attachment and records that fresh candidate-off/candidate-on execution receipts are still absent.",
+  "SLM-CPU-231 keeps candidate execution fail-closed and preserves eager_f32_candle as the default path.",
+]
+may_claim = [
+  "SLM-CPU-232 may define the concrete command and schema surface for future candidate-off/candidate-on execution receipt capture.",
+  "SLM-CPU-232 may keep execution fail-closed by naming the exact missing capture runner, command, artifact, or identity evidence.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate execution experiment without fresh strict candidate-off/candidate-on execution receipts.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
