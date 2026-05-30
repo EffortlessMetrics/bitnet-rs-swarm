@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_strict_capture_command_schema",
+  "tracking_item": "SLM-CPU-227",
+  "consumes_tracking_items": [
+    "SLM-CPU-226"
+  ],
+  "generated_at_utc": "2026-05-30T00:00:00Z",
+  "decision": "capture_commands_defined_fail_closed",
+  "reason": "strict_capture_commands_and_schema_defined_but_candidate_on_artifacts_not_yet_captured",
+  "remaining_runtime_selection_blocker": "validated_candidate_off_on_strict_capture_artifact_pair",
+  "summary": "SLM-CPU-227 consumes the SLM-CPU-226 strict capture pair blocker and defines the concrete candidate-off and candidate-on strict capture command contract for Qwen3 and Qwen2.5 Q8_0 feed_forward.down_proj. The command contract names the exact receipt-visible identity fields that the future strict artifact pair must bind. This slice does not execute the no-bias candidate, does not change default runtime selection, and does not claim generated-ID preservation, allocation reduction, timing improvement, speedup, or sustained throughput.",
+  "boundary_type": "bitnet_transformer::DenseLinearNoBiasStrictCaptureCommandSchemaBoundary",
+  "source_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-226-no-bias-strict-capture-pair.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-225-no-bias-strict-capture-prereq.json"
+  ],
+  "scope": {
+    "callsite": "bitnet_transformer::FeedForward::apply_linear",
+    "linear_scope": "feed_forward",
+    "linear_role": "down_proj",
+    "quant_format": "Q8_0",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate"
+  },
+  "models_scoped": {
+    "qwen3_q8_0": {
+      "architecture": "qwen3",
+      "repo": "Qwen/Qwen3-0.6B-GGUF",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "model_path": "models/slm/Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "role_id": "layers.0.feed_forward.down_proj",
+      "prompt_template": "qwen",
+      "no_think": true
+    },
+    "qwen25_q8_0": {
+      "architecture": "qwen2",
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "model_path": "models/slm/qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "role_id": "layers.0.feed_forward.down_proj",
+      "prompt_template": "qwen2.5",
+      "no_think": false
+    }
+  },
+  "strict_capture_command_contract": {
+    "shell": "powershell",
+    "shared_environment": {
+      "BITNET_STRICT_MODE": "1",
+      "BITNET_DISABLE_MINIMAL_LOADER": "1",
+      "RAYON_NUM_THREADS": "4"
+    },
+    "candidate_off": {
+      "runtime_gate_requested": false,
+      "environment": {
+        "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME": "0",
+        "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE": "0"
+      },
+      "required_receipt_path_suffix": "candidate-off.json",
+      "command_template": "cargo run --locked -p bitnet-cli --no-default-features --features \"cpu,full-cli\" -- --device cpu slm-warm-session --model <model_path> --model-format gguf --prompt-template <prompt_template> <no_think_flag> --prompt \"What is 2+2? Answer with only the number.\" --prompt \"Say exactly: OK\" --max-new-tokens 4 --temperature 0.0 --greedy --deterministic --threads 4 --strict-loader --strict-tokenizer --allocation-audit --require-determinism --quiet --json-out <candidate_off_receipt_path>"
+    },
+    "candidate_on": {
+      "runtime_gate_requested": true,
+      "environment": {
+        "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME": "1",
+        "BITNET_DENSE_NO_BIAS_LINEAR_ENABLE": "1"
+      },
+      "required_receipt_path_suffix": "candidate-on.json",
+      "command_template": "cargo run --locked -p bitnet-cli --no-default-features --features \"cpu,full-cli\" -- --device cpu slm-warm-session --model <model_path> --model-format gguf --prompt-template <prompt_template> <no_think_flag> --prompt \"What is 2+2? Answer with only the number.\" --prompt \"Say exactly: OK\" --max-new-tokens 4 --temperature 0.0 --greedy --deterministic --threads 4 --strict-loader --strict-tokenizer --allocation-audit --require-determinism --quiet --json-out <candidate_on_receipt_path>",
+      "candidate_execution_status": "disabled_until_later_separately_gated_runtime_pr",
+      "candidate_on_claim_status": "command_contract_only_no_generated_id_preservation_claim"
+    }
+  },
+  "expected_artifacts": {
+    "qwen3_candidate_off": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-227-no-bias-candidate-off.json",
+    "qwen3_candidate_on": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-227-no-bias-candidate-on.json",
+    "qwen25_candidate_off": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-227-no-bias-candidate-off.json",
+    "qwen25_candidate_on": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-227-no-bias-candidate-on.json",
+    "pair_validation": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-227-no-bias-strict-capture-pair-validation.json"
+  },
+  "required_schema_fields": [
+    "schema_version",
+    "artifact_kind",
+    "model.sha256",
+    "model.architecture",
+    "model.quant_format=Q8_0",
+    "loader.mode=real_gguf",
+    "tokenizer.source=gguf_metadata",
+    "tokenizer.strict=true",
+    "runtime_api=cpu",
+    "selected_backend=cpu-rust",
+    "fallback_used=false",
+    "prompt_ids",
+    "generated_ids",
+    "decoded_text",
+    "prompt_ids_digest",
+    "generated_ids_digest",
+    "decoded_text_digest",
+    "dense_no_bias_apply_linear_gate.runtime_gate_name",
+    "dense_no_bias_apply_linear_gate.runtime_gate_requested_enabled",
+    "dense_no_bias_apply_linear_gate.selected_path=eager_f32_candle",
+    "dense_no_bias_apply_linear_gate.selected_kernel=dense-f32-candle-linear",
+    "dense_no_bias_apply_linear_gate.candidate_path",
+    "dense_no_bias_apply_linear_gate.candidate_kernel=dense-f32-candle-linear-no-bias-candidate",
+    "dense_no_bias_apply_linear_gate.tensor_name",
+    "dense_no_bias_apply_linear_gate.role_id",
+    "dense_no_bias_apply_linear_gate.layer",
+    "dense_no_bias_apply_linear_gate.scope=feed_forward",
+    "dense_no_bias_apply_linear_gate.linear=down_proj",
+    "dense_no_bias_apply_linear_gate.bias_present=false",
+    "dense_no_bias_apply_linear_gate.candidate_execution_enabled=false",
+    "dense_no_bias_apply_linear_gate.normal_inference_runtime_selection_enabled=false",
+    "dense_no_bias_apply_linear_gate.descriptor_callsite_identity_preserved=true"
+  ],
+  "strict_pair_validation_requirements": [
+    "candidate-off and candidate-on artifacts exist for both Qwen3 and Qwen2.5",
+    "candidate-off and candidate-on artifacts bind the same model SHA for each model",
+    "candidate-off and candidate-on artifacts bind the same prompt_ids_digest for each model",
+    "candidate-off and candidate-on artifacts bind the same generated_ids_digest for each model before any generated-ID preservation claim",
+    "candidate-off and candidate-on artifacts bind the same decoded_text_digest for each model before any decoded-text preservation claim",
+    "candidate-off and candidate-on artifacts bind the same FeedForward::apply_linear callsite identity",
+    "candidate-off and candidate-on artifacts bind the same role_id and tensor_name",
+    "candidate-off artifact records runtime_gate_requested_enabled=false",
+    "candidate-on artifact records runtime_gate_requested_enabled=true",
+    "candidate-on artifact records candidate_execution_enabled=false until a later separately gated runtime PR enables execution",
+    "default no-gate command preserves selected_path=eager_f32_candle"
+  ],
+  "strict_capture_pair_status": {
+    "candidate_off_capture_command_recorded": true,
+    "candidate_on_capture_command_recorded": true,
+    "candidate_off_strict_capture_artifact_present": false,
+    "candidate_on_strict_capture_artifact_present": false,
+    "strict_capture_artifact_pair_validated": false,
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_path_preserved": true
+  },
+  "fail_closed_conditions": [
+    "candidate_off_artifact_missing",
+    "candidate_on_artifact_missing",
+    "candidate_on_artifact_does_not_record_runtime_gate_requested_enabled_true",
+    "candidate_on_artifact_records_candidate_execution_enabled_true_before_separately_gated_runtime_pr",
+    "prompt_ids_digest_mismatch",
+    "generated_ids_digest_mismatch",
+    "decoded_text_digest_mismatch",
+    "model_sha_mismatch",
+    "tokenizer_source_or_strictness_mismatch",
+    "runtime_api_not_cpu",
+    "selected_backend_not_cpu_rust",
+    "fallback_used_not_false",
+    "owner_callsite_identity_missing_or_mismatch",
+    "selected_path_changes_without_validated_strict_pair"
+  ],
+  "next_slice": {
+    "recommended_item": "SLM-CPU-228",
+    "recommended_scope": "capture or ingest the candidate-off/candidate-on strict capture artifacts named by SLM-CPU-227, validate the pair, and keep candidate execution fail-closed unless the pair is complete"
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_for_candidate_on_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_execution_claim": false,
+    "gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  },
+  "passed": true
+}
