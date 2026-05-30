@@ -1,0 +1,382 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "slm_cpu_no_bias_execution_capture_validation",
+  "tracking_item": "SLM-CPU-235",
+  "consumes_tracking_item": "SLM-CPU-234",
+  "consumes_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-on-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-off-execution.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-on-execution.json"
+  ],
+  "decision": "candidate_off_on_execution_receipts_captured_request_gate_only",
+  "passed": true,
+  "models": [
+    {
+      "model_id": "qwen3",
+      "passed": true,
+      "checks": {
+        "model_sha256_matches_expected": true,
+        "tokenizer_authority_preserved": true,
+        "cpu_backend_preserved": true,
+        "fallback_false": true,
+        "candidate_gate_toggles_request_only": true,
+        "candidate_execution_still_disabled": true,
+        "normal_path_preserved": true,
+        "candidate_path_preserved": true,
+        "prompt_ids_preserved": true,
+        "generated_ids_preserved": true,
+        "decoded_text_preserved": true,
+        "determinism_passed": true
+      },
+      "candidate_off": {
+        "artifact": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen3-slm-cpu-235-no-bias-candidate-off-execution.json",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "model_architecture": "qwen3",
+        "quant_format": "Q8_0",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "runtime_gate_requested_enabled": false,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "prompt_ids_digest": "accdff2798bce7e2202d15b0b360024faeb88d49780e6c553d0d5522aa9f3a12",
+        "generated_ids_digest": "42e05af5073067807f0658d6643fc70bf56c380f580ccb33f8223291e506e541",
+        "decoded_text_digest": "9af36cee5f3eadf5afe17c7dfae0d3b7d2d19065b38572ae9ef8894efd889a97",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "bias_present": false,
+        "determinism_passed": true,
+        "quality_passed": true,
+        "prompts": [
+          {
+            "index": 0,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              17,
+              151645
+            ],
+            "text": "2",
+            "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b"
+          },
+          {
+            "index": 1,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              17,
+              151645
+            ],
+            "text": "2",
+            "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b"
+          },
+          {
+            "index": 2,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              13,
+              151645
+            ],
+            "text": "OK.",
+            "prompt_ids_sha256": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646"
+          },
+          {
+            "index": 3,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              13,
+              151645
+            ],
+            "text": "OK.",
+            "prompt_ids_sha256": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646"
+          }
+        ]
+      },
+      "candidate_on": {
+        "artifact": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen3-slm-cpu-235-no-bias-candidate-on-execution.json",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "model_architecture": "qwen3",
+        "quant_format": "Q8_0",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "runtime_gate_requested_enabled": true,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "prompt_ids_digest": "accdff2798bce7e2202d15b0b360024faeb88d49780e6c553d0d5522aa9f3a12",
+        "generated_ids_digest": "42e05af5073067807f0658d6643fc70bf56c380f580ccb33f8223291e506e541",
+        "decoded_text_digest": "9af36cee5f3eadf5afe17c7dfae0d3b7d2d19065b38572ae9ef8894efd889a97",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "bias_present": false,
+        "determinism_passed": true,
+        "quality_passed": true,
+        "prompts": [
+          {
+            "index": 0,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              17,
+              151645
+            ],
+            "text": "2",
+            "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b"
+          },
+          {
+            "index": 1,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              17,
+              151645
+            ],
+            "text": "2",
+            "prompt_ids_sha256": "497fdcb06e25c0c2d3dc2249e91be0261b8b15d83d7e116ab3b613807fb35a1b"
+          },
+          {
+            "index": 2,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              13,
+              151645
+            ],
+            "text": "OK.",
+            "prompt_ids_sha256": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646"
+          },
+          {
+            "index": 3,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              13,
+              151645
+            ],
+            "text": "OK.",
+            "prompt_ids_sha256": "34f9d32c4fa70aac32886781a779816e1d5754991105469fb03c28675dd7c646"
+          }
+        ]
+      },
+      "prompt_ids_match": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "generated_ids_match": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "decoded_text_match": [
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "model_id": "qwen25",
+      "passed": true,
+      "checks": {
+        "model_sha256_matches_expected": true,
+        "tokenizer_authority_preserved": true,
+        "cpu_backend_preserved": true,
+        "fallback_false": true,
+        "candidate_gate_toggles_request_only": true,
+        "candidate_execution_still_disabled": true,
+        "normal_path_preserved": true,
+        "candidate_path_preserved": true,
+        "prompt_ids_preserved": true,
+        "generated_ids_preserved": true,
+        "decoded_text_preserved": true,
+        "determinism_passed": true
+      },
+      "candidate_off": {
+        "artifact": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen25-slm-cpu-235-no-bias-candidate-off-execution.json",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "model_architecture": "qwen2",
+        "quant_format": "Q8_0",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "runtime_gate_requested_enabled": false,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "prompt_ids_digest": "09ac8943b9b6f00454e9083ef21048bea1d15c0491343cf2fda86f6e8be6de05",
+        "generated_ids_digest": "6b0ec1e8be158bfc8028c4396d66f17e2c47d6b1399e61968d5e275c6ff01335",
+        "decoded_text_digest": "b34df75e5b8c1cbe456fd8dd22eafa6a7f3b5781095fb11a004f532dbbd57f0c",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "bias_present": false,
+        "determinism_passed": true,
+        "quality_passed": true,
+        "prompts": [
+          {
+            "index": 0,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              19,
+              151645
+            ],
+            "text": "4",
+            "prompt_ids_sha256": "ec4b0a1dc06b624b9462c67c299c9466a464815cc25f31bb0cb3748f88c66715"
+          },
+          {
+            "index": 1,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              19,
+              151645
+            ],
+            "text": "4",
+            "prompt_ids_sha256": "ec4b0a1dc06b624b9462c67c299c9466a464815cc25f31bb0cb3748f88c66715"
+          },
+          {
+            "index": 2,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              151645
+            ],
+            "text": "OK",
+            "prompt_ids_sha256": "1fca7bc4ed049e2cae28e9b4d37621abf34c59ba7c85b834440f5c8da1802ee2"
+          },
+          {
+            "index": 3,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              151645
+            ],
+            "text": "OK",
+            "prompt_ids_sha256": "1fca7bc4ed049e2cae28e9b4d37621abf34c59ba7c85b834440f5c8da1802ee2"
+          }
+        ]
+      },
+      "candidate_on": {
+        "artifact": "ci\\slm-cpu\\intel-i5-8250u\\2026-05-29\\qwen25-slm-cpu-235-no-bias-candidate-on-execution.json",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "model_architecture": "qwen2",
+        "quant_format": "Q8_0",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true,
+        "runtime_api": "cpu",
+        "selected_backend": "cpu-rust",
+        "fallback_used": false,
+        "selected_path": "eager_f32_candle",
+        "selected_kernel": "dense-f32-candle-linear",
+        "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+        "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+        "runtime_gate_requested_enabled": true,
+        "candidate_execution_enabled": false,
+        "normal_inference_runtime_selection_enabled": false,
+        "prompt_ids_digest": "09ac8943b9b6f00454e9083ef21048bea1d15c0491343cf2fda86f6e8be6de05",
+        "generated_ids_digest": "6b0ec1e8be158bfc8028c4396d66f17e2c47d6b1399e61968d5e275c6ff01335",
+        "decoded_text_digest": "b34df75e5b8c1cbe456fd8dd22eafa6a7f3b5781095fb11a004f532dbbd57f0c",
+        "role_id": "layers.0.feed_forward.down_proj",
+        "tensor_name": "layers.0.feed_forward.down_proj.weight",
+        "bias_present": false,
+        "determinism_passed": true,
+        "quality_passed": true,
+        "prompts": [
+          {
+            "index": 0,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              19,
+              151645
+            ],
+            "text": "4",
+            "prompt_ids_sha256": "ec4b0a1dc06b624b9462c67c299c9466a464815cc25f31bb0cb3748f88c66715"
+          },
+          {
+            "index": 1,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              19,
+              151645
+            ],
+            "text": "4",
+            "prompt_ids_sha256": "ec4b0a1dc06b624b9462c67c299c9466a464815cc25f31bb0cb3748f88c66715"
+          },
+          {
+            "index": 2,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              151645
+            ],
+            "text": "OK",
+            "prompt_ids_sha256": "1fca7bc4ed049e2cae28e9b4d37621abf34c59ba7c85b834440f5c8da1802ee2"
+          },
+          {
+            "index": 3,
+            "prompt_ids": null,
+            "generated_token_ids": [
+              3925,
+              151645
+            ],
+            "text": "OK",
+            "prompt_ids_sha256": "1fca7bc4ed049e2cae28e9b4d37621abf34c59ba7c85b834440f5c8da1802ee2"
+          }
+        ]
+      },
+      "prompt_ids_match": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "generated_ids_match": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "decoded_text_match": [
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "command_contract_note": "The SLM-CPU-232 command contract required --require-determinism; the working capture repeats each prompt so the determinism gate has repeated prompt groups to evaluate.",
+  "claim_boundary": {
+    "candidate_execution_receipts_captured": true,
+    "candidate_execution_enabled_by_default": false,
+    "candidate_runtime_execution_enabled": false,
+    "normal_inference_runtime_selection_enabled": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_claim": true,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_q5_runtime_support": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_claim": false,
+    "bitnet_qk256_claim": false
+  }
+}

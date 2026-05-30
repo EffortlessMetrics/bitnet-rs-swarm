@@ -13596,8 +13596,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-235"
-status = "ready"
+status = "pr_open"
+pr = 1025
 branch = "codex/slm-cpu-235-no-bias-execution-receipts"
+head_sha = "d0d6f7849badfed54ef2a253f3d09d5f824bb142"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13606,6 +13608,7 @@ blocked_by = ["SLM-CPU-234"]
 acceptance = "Consume the SLM-CPU-234 Qwen2.5 artifact prerequisite and capture fresh strict Qwen3 and Qwen2.5 Q8_0 candidate-off/candidate-on no-bias execution receipts for feed_forward.down_proj through the SLM-CPU-232 command contract. Valid receipts must preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected path/kernel identity, candidate path/kernel identity, FeedForward::apply_linear owner/callsite identity, bias_present=false, and fallback=false. Candidate execution must remain disabled by default and the normal eager_f32_candle path must remain unchanged when the explicit gate is absent. No timing improvement, allocation reduction, speedup, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 change is allowed."
 commands = [
   "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-234-qwen25-artifact-prereq.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json",
   "cargo run -p xtask --no-default-features -- campaign generate",
   "cargo run -p xtask --no-default-features -- campaign doctor",
   "git diff --check",
@@ -13628,6 +13631,7 @@ evidence = [
   "SLM-CPU-232 defines the concrete Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on execution capture command contract for feed_forward.down_proj.",
   "SLM-CPU-233 records Qwen3 present and SHA-verified while blocking on the missing pinned Qwen2.5 Q8_0 artifact.",
   "SLM-CPU-234 verifies the exact pinned Qwen2.5 Q8_0 artifact from ignored local target caches by SHA without committing a model binary.",
+  "SLM-CPU-235 captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts with repeated prompts so the determinism gate is actually evaluated.",
 ]
 may_claim = [
   "SLM-CPU-235 may capture fresh candidate-off/candidate-on execution receipts for Qwen3 Q8_0 and Qwen2.5 Q8_0 feed_forward.down_proj.",
