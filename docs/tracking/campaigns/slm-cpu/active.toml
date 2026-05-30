@@ -13766,8 +13766,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-238"
-status = "ready"
+status = "pr_open"
+pr = 1031
 branch = "codex/slm-cpu-238-per-callsite-no-bias-receipt-emitter"
+head_sha = "3d8a9a553eaf1c1a32a3d6e35237ee75d7dc08e3"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
