@@ -246,7 +246,8 @@ jobs:
         env:
           CHANGED_FILES: ${{ needs.classify-changes.outputs.changed_files }}
         run: |
-          python - <<'PY'
+          PYTHON_BIN="$(command -v python3 || command -v python)"
+          "$PYTHON_BIN" - <<'PY'
           import json
           import os
           import pathlib
@@ -336,7 +337,8 @@ jobs:
             --json-out target/ci/ci-plan.json \
             --print
 
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          PYTHON_BIN="$(command -v python3 || command -v python)"
+          "$PYTHON_BIN" - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           import os
           from pathlib import Path
