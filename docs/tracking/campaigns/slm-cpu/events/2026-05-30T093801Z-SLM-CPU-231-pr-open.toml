@@ -1,0 +1,15 @@
+schema = 1
+campaign = "slm-cpu"
+item = "SLM-CPU-231"
+event = "pr_open"
+timestamp = "2026-05-30T09:38:01Z"
+actor = "codex"
+pr = 1017
+head_sha = "633695440be97fe7ee919232a4eaf79a0d5f4a3f"
+branch = "codex/slm-cpu-231-no-bias-candidate-execution-receipts"
+summary = "Opened the SLM-CPU-231 no-bias candidate execution receipt gate PR."
+notes = [
+  "The PR consumes SLM-CPU-230 and adds a fail-closed DenseLinearNoBiasCandidateExecutionReceiptGate for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj scope.",
+  "The candidate execution receipt pair remains absent; candidate execution and normal runtime selection remain disabled.",
+  "The slice does not claim generated-ID preservation, timing, allocation reduction, speedup, Q4/Q5 support, accelerator/server execution, Qwen3.5 support, or BitNet QK256 changes.",
+]

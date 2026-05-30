@@ -107,6 +107,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias candidate runtime attachment boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-217-no-bias-candidate-runtime-attachment.json` | Defines the explicit candidate-on apply-linear runtime attachment boundary and records the remaining blocker as the missing candidate runtime owner/receipt emitter; eager_f32_candle remains the default runtime |
 | No-bias runtime attempt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-229-no-bias-runtime-attempt-blocker.json` | Consumes the validated SLM-CPU-228 strict capture pair and records that candidate execution remains blocked until receipt-bound selector identity reaches the dense runtime hook registry and apply-linear dispatch has a separately gated execution receipt |
 | No-bias runtime hook attachment | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json` | Proves the receipt-bound no-bias selector can be attached to `DenseLinearRuntimeHookRegistry` for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` while preserving eager_f32_candle and keeping candidate execution disabled |
+| No-bias candidate execution receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json` | Consumes the SLM-CPU-230 runtime hook attachment and keeps candidate execution fail-closed until fresh candidate-off/candidate-on execution receipts prove generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer authority, and fallback=false are preserved |
 
 Qwen3 rows use:
 
@@ -4442,6 +4443,44 @@ throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet
 QK256 behavior. A later separately gated PR still has to capture fresh
 candidate-off/candidate-on execution receipts before candidate execution can be
 considered.
+
+## SLM-CPU-231 No-Bias Candidate Execution Receipt Gate
+
+SLM-CPU-231 consumes the SLM-CPU-230 runtime hook attachment boundary and adds a
+typed `DenseLinearNoBiasCandidateExecutionReceiptGate`. The gate records that
+the receipt-bound selector identity reaches `DenseLinearRuntimeHookRegistry`,
+but fresh candidate-off/candidate-on execution receipts through that attachment
+are still absent. It therefore keeps candidate execution fail-closed and leaves
+normal inference on `eager_f32_candle`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json
+decision = candidate_execution_receipt_pair_blocked_fail_closed
+reason = runtime_hook_attachment_ready_but_fresh_execution_receipts_are_missing
+remaining_blocker = candidate_on_execution_receipt
+boundary = bitnet_transformer::DenseLinearNoBiasCandidateExecutionReceiptGate
+runtime_hook_attachment_ready = true
+explicit_candidate_execution_gate_requested = true
+runtime_hook_registry_attachment_present = true
+runtime_hook_descriptor_binds_selector_identity = true
+runtime_hook_descriptor_binds_strict_capture_pair = true
+candidate_off_execution_receipt_present = false
+candidate_on_execution_receipt_present = false
+candidate_execution_receipt_pair_ready = false
+candidate_execution_enabled_by_default = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This slice does not execute the no-bias candidate, does not change default
+runtime selection, does not prove generated-ID preservation for a candidate
+execution attempt, and does not claim allocation reduction, timing improvement,
+speedup, sustained throughput, Q4/Q5 support, server/accelerator execution,
+Qwen3.5, or BitNet QK256 behavior. A later separately gated PR must capture
+fresh candidate-off and candidate-on execution receipts through the attached
+registry descriptor before any candidate execution claim can be made.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
