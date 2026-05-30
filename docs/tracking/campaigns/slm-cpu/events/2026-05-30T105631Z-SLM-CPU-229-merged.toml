@@ -1,0 +1,16 @@
+timestamp = "2026-05-30T10:56:31Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-229"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1011
+branch = "codex/slm-cpu-229-no-bias-runtime-attempt-gate"
+merge_sha = "2abe2ff5d20d0108e6bc30bb875f037d0a2ee00b"
+summary = "Merged the SLM-CPU-229 no-bias runtime attempt blocker."
+notes = [
+  "SLM-CPU-229 consumed the SLM-CPU-228 strict capture pair and recorded the remaining runtime blocker instead of enabling candidate execution.",
+  "The exact blocker is missing receipt-bound selector attachment into DenseLinearRuntimeHookRegistry for FeedForward::apply_linear.",
+  "The slice preserved the default eager_f32_candle runtime and made no timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claim.",
+]
