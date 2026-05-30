@@ -13425,9 +13425,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-232"
-status = "pr_open"
+status = "merged"
 pr = 1019
-head_sha = "ee4a263c1ca6347d02ac4461b3bfc5c7cefea15e"
+head_sha = "2a4ff5c9ef8ed4b0a4ba0d85269f02cb3ae32767"
+merge_sha = "adfa6fc0eeb9dc9c86a2dfda3afe019fb5259103"
 branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
 stackable = false
 review_mode = "codex_premerge"
@@ -13473,6 +13474,62 @@ must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
   "A default runtime path changes when the explicit gate is absent.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, or fallback status are preserved for a candidate execution experiment without fresh strict candidate-off/candidate-on execution receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-233"
+status = "ready"
+branch = "codex/slm-cpu-233-no-bias-execution-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-232"]
+acceptance = "Consume the SLM-CPU-232 candidate-off/candidate-on execution capture command contract and either capture or precisely block fresh strict Qwen3 and Qwen2.5 Q8_0 no-bias candidate-off/candidate-on execution receipts for feed_forward.down_proj. A valid capture must preserve model SHA, tokenizer authority, prompt IDs, generated IDs, decoded text, prompt/generated/text digests, runtime_api=cpu, selected_backend=cpu-rust, selected path/kernel identity, candidate path/kernel identity, FeedForward::apply_linear owner/callsite identity, bias_present=false, and fallback=false. Candidate execution must remain disabled by default and the normal eager_f32_candle path must remain unchanged when the explicit gate is absent."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json",
+  "cargo test --locked -p bitnet-transformer --no-default-features --features cpu no_bias",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli no_bias_apply_linear",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "ci/slm-cpu/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-232 defines the concrete Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on execution capture command contract for feed_forward.down_proj.",
+  "SLM-CPU-232 records the next required artifacts and keeps candidate execution receipts uncaptured.",
+  "SLM-CPU-232 keeps candidate execution, normal inference runtime selection, and default eager_f32_candle behavior disabled/unchanged.",
+]
+may_claim = [
+  "SLM-CPU-233 may capture or ingest fresh strict candidate-off/candidate-on execution receipts through the SLM-CPU-232 command contract.",
+  "SLM-CPU-233 may prove generated-ID and decoded-text preservation for the exact candidate execution experiment only with fresh strict candidate-off/candidate-on receipts.",
+  "SLM-CPU-233 may keep candidate execution fail-closed by naming the exact remaining capture or validation blocker.",
+]
+must_not_claim = [
+  "A model binary is committed.",
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",

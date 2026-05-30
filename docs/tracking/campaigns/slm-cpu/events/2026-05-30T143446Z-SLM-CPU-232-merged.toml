@@ -1,0 +1,17 @@
+timestamp = "2026-05-30T14:34:46Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-232"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1019
+head_sha = "2a4ff5c9ef8ed4b0a4ba0d85269f02cb3ae32767"
+merge_sha = "adfa6fc0eeb9dc9c86a2dfda3afe019fb5259103"
+branch = "codex/slm-cpu-232-no-bias-execution-capture-commands"
+summary = "Merged the SLM-CPU-232 no-bias execution capture command contract and queued SLM-CPU-233."
+notes = [
+  "PR #1019 defines the concrete candidate-off/candidate-on command contract for future Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj execution receipts.",
+  "SLM-CPU-232 keeps candidate execution receipts uncaptured, candidate execution disabled by default, and eager_f32_candle as the normal path.",
+  "SLM-CPU-233 is ready to capture or ingest the fresh strict candidate-off/candidate-on execution receipts without timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.",
+]
