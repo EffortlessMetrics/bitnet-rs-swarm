@@ -1650,6 +1650,56 @@ pub struct DenseLinearNoBiasStrictCaptureArtifactPairBoundary {
     pub speedup_claim: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasRuntimeAttemptBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub strict_capture_artifact_pair_validated: bool,
+    pub explicit_candidate_execution_gate_requested: bool,
+    pub runtime_hook_registry_attachment_present: bool,
+    pub runtime_hook_descriptor_binds_selector_identity: bool,
+    pub runtime_hook_descriptor_binds_strict_capture_pair: bool,
+    pub apply_linear_dispatch_wired_to_no_bias_candidate: bool,
+    pub feed_forward_down_proj_scope_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+    pub candidate_execution_attempt_allowed: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasRuntimeAttemptInputs {
+    pub explicit_candidate_execution_gate_requested: bool,
+    pub runtime_hook_registry_attachment_present: bool,
+    pub runtime_hook_descriptor_binds_selector_identity: bool,
+    pub runtime_hook_descriptor_binds_strict_capture_pair: bool,
+    pub apply_linear_dispatch_wired_to_no_bias_candidate: bool,
+    pub feed_forward_down_proj_scope_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DenseLinearNoBiasStrictArtifactCaptureInputs {
     pub candidate_off_capture_artifact_validated: bool,
@@ -4338,6 +4388,170 @@ impl DenseLinearNoBiasStrictCaptureArtifactPairBoundary {
             default_runtime_path_preserved,
             strict_capture_artifact_pair_validated,
             candidate_execution_prereqs_complete,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasRuntimeAttemptBoundary {
+    pub fn from_strict_capture_artifact_pair(
+        boundary: &DenseLinearNoBiasStrictCaptureArtifactPairBoundary,
+        inputs: DenseLinearNoBiasRuntimeAttemptInputs,
+    ) -> Self {
+        let mut fail_closed_conditions = boundary.fail_closed_conditions.clone();
+        let strict_capture_artifact_pair_validated = boundary.decision
+            == "strict_capture_artifact_pair_validated_runtime_disabled"
+            && boundary.strict_capture_artifact_pair_validated
+            && boundary.candidate_execution_prereqs_complete
+            && boundary.preserves_normal_inference();
+        let default_runtime_path_preserved = inputs.default_runtime_path_preserved
+            && boundary.default_runtime_path_preserved
+            && boundary.selected_path == "eager_f32_candle"
+            && boundary.selected_kernel == "dense-f32-candle-linear"
+            && boundary.preserves_normal_inference();
+
+        if !strict_capture_artifact_pair_validated {
+            fail_closed_conditions.push("strict_capture_artifact_pair_not_validated");
+        }
+        if !inputs.explicit_candidate_execution_gate_requested {
+            fail_closed_conditions.push("explicit_candidate_execution_gate_not_requested");
+        }
+        if !inputs.runtime_hook_registry_attachment_present {
+            fail_closed_conditions
+                .push("receipt_bound_selector_not_attached_to_runtime_hook_registry");
+        }
+        if !inputs.runtime_hook_descriptor_binds_selector_identity {
+            fail_closed_conditions.push("runtime_hook_descriptor_selector_identity_missing");
+        }
+        if !inputs.runtime_hook_descriptor_binds_strict_capture_pair {
+            fail_closed_conditions
+                .push("runtime_hook_descriptor_strict_capture_pair_identity_missing");
+        }
+        if !inputs.apply_linear_dispatch_wired_to_no_bias_candidate {
+            fail_closed_conditions.push("apply_linear_no_bias_candidate_dispatch_not_wired");
+        }
+        if !inputs.feed_forward_down_proj_scope_preserved {
+            fail_closed_conditions.push("feed_forward_down_proj_scope_not_preserved");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if boundary.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if boundary.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if boundary.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let candidate_execution_attempt_allowed = strict_capture_artifact_pair_validated
+            && inputs.explicit_candidate_execution_gate_requested
+            && inputs.runtime_hook_registry_attachment_present
+            && inputs.runtime_hook_descriptor_binds_selector_identity
+            && inputs.runtime_hook_descriptor_binds_strict_capture_pair
+            && inputs.apply_linear_dispatch_wired_to_no_bias_candidate
+            && inputs.feed_forward_down_proj_scope_preserved
+            && default_runtime_path_preserved
+            && boundary.runtime_api == "cpu"
+            && boundary.selected_backend == "cpu-rust"
+            && !boundary.fallback_used
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if candidate_execution_attempt_allowed {
+                (
+                    "candidate_execution_attempt_prereqs_ready_runtime_disabled",
+                    "strict_capture_pair_and_runtime_attachment_are_ready_but_runtime_enablement_remains_separate",
+                    "fresh_candidate_off_on_execution_receipts",
+                )
+            } else if strict_capture_artifact_pair_validated {
+                let blocker = if !inputs.runtime_hook_registry_attachment_present {
+                    "receipt_bound_selector_runtime_hook_registry_attachment"
+                } else if !inputs.runtime_hook_descriptor_binds_selector_identity {
+                    "runtime_hook_descriptor_selector_identity"
+                } else if !inputs.runtime_hook_descriptor_binds_strict_capture_pair {
+                    "runtime_hook_descriptor_strict_capture_pair_identity"
+                } else if !inputs.apply_linear_dispatch_wired_to_no_bias_candidate {
+                    "apply_linear_no_bias_candidate_dispatch"
+                } else if !inputs.explicit_candidate_execution_gate_requested {
+                    "explicit_candidate_execution_gate"
+                } else if !inputs.feed_forward_down_proj_scope_preserved {
+                    "feed_forward_down_proj_scope"
+                } else {
+                    "default_runtime_path_preservation"
+                };
+                (
+                    "candidate_execution_attempt_blocked_fail_closed",
+                    "strict_capture_pair_is_validated_but_runtime_attachment_is_incomplete",
+                    blocker,
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "strict_capture_artifact_pair_incomplete",
+                    "strict_capture_artifact_pair",
+                )
+            };
+
+        Self {
+            tensor_name: boundary.tensor_name.clone(),
+            callsite_identity: boundary.callsite_identity.clone(),
+            model_sha256: boundary.model_sha256.clone(),
+            model_architecture: boundary.model_architecture,
+            quant_format: boundary.quant_format,
+            tokenizer_source: boundary.tokenizer_source,
+            tokenizer_strict: boundary.tokenizer_strict,
+            runtime_api: boundary.runtime_api,
+            selected_backend: boundary.selected_backend,
+            fallback_used: boundary.fallback_used,
+            selected_path: boundary.selected_path,
+            selected_kernel: boundary.selected_kernel,
+            candidate_path: boundary.candidate_path,
+            candidate_kernel: boundary.candidate_kernel,
+            prompt_ids_digest: boundary.prompt_ids_digest.clone(),
+            generated_ids_digest: boundary.generated_ids_digest.clone(),
+            decoded_text_digest: boundary.decoded_text_digest.clone(),
+            strict_capture_artifact_pair_validated,
+            explicit_candidate_execution_gate_requested: inputs
+                .explicit_candidate_execution_gate_requested,
+            runtime_hook_registry_attachment_present: inputs
+                .runtime_hook_registry_attachment_present,
+            runtime_hook_descriptor_binds_selector_identity: inputs
+                .runtime_hook_descriptor_binds_selector_identity,
+            runtime_hook_descriptor_binds_strict_capture_pair: inputs
+                .runtime_hook_descriptor_binds_strict_capture_pair,
+            apply_linear_dispatch_wired_to_no_bias_candidate: inputs
+                .apply_linear_dispatch_wired_to_no_bias_candidate,
+            feed_forward_down_proj_scope_preserved: inputs.feed_forward_down_proj_scope_preserved,
+            default_runtime_path_preserved,
+            candidate_execution_attempt_allowed,
             normal_inference_runtime_selection_enabled: false,
             candidate_execution_enabled: false,
             decision,
@@ -15023,5 +15237,147 @@ mod tests {
         assert!(!pair.allocation_reduction_claim);
         assert!(!pair.timing_improvement_claim);
         assert!(!pair.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_runtime_attempt_records_missing_runtime_attachment_blocker() {
+        let capture = slm_cpu_223_ready_strict_artifact_capture_boundary(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let pair =
+            DenseLinearNoBiasStrictCaptureArtifactPairBoundary::from_strict_artifact_capture_boundary(
+                &capture,
+                DenseLinearNoBiasStrictCaptureArtifactPairInputs {
+                    candidate_off_strict_capture_artifact_path: Some(
+                        "ci/slm-cpu/qwen3-candidate-off-strict-capture.json",
+                    ),
+                    candidate_on_strict_capture_artifact_path: Some(
+                        "ci/slm-cpu/qwen3-candidate-on-strict-capture.json",
+                    ),
+                    candidate_off_strict_capture_artifact_present: true,
+                    candidate_on_strict_capture_artifact_present: true,
+                    candidate_off_capture_command_recorded: true,
+                    candidate_on_capture_command_recorded: true,
+                    candidate_off_capture_binds_gate_identity: true,
+                    candidate_on_capture_binds_gate_identity: true,
+                    candidate_off_capture_binds_descriptor_identity: true,
+                    candidate_on_capture_binds_descriptor_identity: true,
+                    candidate_off_capture_binds_owner_callsite_identity: true,
+                    candidate_on_capture_binds_owner_callsite_identity: true,
+                    candidate_off_on_capture_same_callsite_identity: true,
+                    candidate_off_on_capture_same_prompt_digest: true,
+                    candidate_off_on_capture_same_generated_digest: true,
+                    candidate_off_on_capture_same_decoded_text_digest: true,
+                    candidate_off_on_capture_same_model_backend_identity: true,
+                    capture_prerequisite_blocker_recorded: false,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        let attempt = DenseLinearNoBiasRuntimeAttemptBoundary::from_strict_capture_artifact_pair(
+            &pair,
+            DenseLinearNoBiasRuntimeAttemptInputs {
+                explicit_candidate_execution_gate_requested: true,
+                runtime_hook_registry_attachment_present: false,
+                runtime_hook_descriptor_binds_selector_identity: false,
+                runtime_hook_descriptor_binds_strict_capture_pair: false,
+                apply_linear_dispatch_wired_to_no_bias_candidate: false,
+                feed_forward_down_proj_scope_preserved: true,
+                default_runtime_path_preserved: true,
+            },
+        );
+
+        assert_eq!(attempt.decision, "candidate_execution_attempt_blocked_fail_closed");
+        assert_eq!(
+            attempt.remaining_runtime_selection_blocker,
+            "receipt_bound_selector_runtime_hook_registry_attachment"
+        );
+        assert!(attempt.strict_capture_artifact_pair_validated);
+        assert!(attempt.explicit_candidate_execution_gate_requested);
+        assert!(!attempt.runtime_hook_registry_attachment_present);
+        assert!(!attempt.candidate_execution_attempt_allowed);
+        assert!(!attempt.candidate_execution_enabled);
+        assert!(
+            attempt
+                .fail_closed_conditions
+                .contains(&"receipt_bound_selector_not_attached_to_runtime_hook_registry")
+        );
+        assert!(
+            attempt
+                .fail_closed_conditions
+                .contains(&"apply_linear_no_bias_candidate_dispatch_not_wired")
+        );
+        assert!(attempt.preserves_normal_inference());
+        assert!(!attempt.allocation_reduction_claim);
+        assert!(!attempt.timing_improvement_claim);
+        assert!(!attempt.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_runtime_attempt_prereqs_ready_still_keeps_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let capture = slm_cpu_223_ready_strict_artifact_capture_boundary(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+        let pair =
+            DenseLinearNoBiasStrictCaptureArtifactPairBoundary::from_strict_artifact_capture_boundary(
+                &capture,
+                DenseLinearNoBiasStrictCaptureArtifactPairInputs {
+                    candidate_off_strict_capture_artifact_path: Some(
+                        "ci/slm-cpu/qwen25-candidate-off-strict-capture.json",
+                    ),
+                    candidate_on_strict_capture_artifact_path: Some(
+                        "ci/slm-cpu/qwen25-candidate-on-strict-capture.json",
+                    ),
+                    candidate_off_strict_capture_artifact_present: true,
+                    candidate_on_strict_capture_artifact_present: true,
+                    candidate_off_capture_command_recorded: true,
+                    candidate_on_capture_command_recorded: true,
+                    candidate_off_capture_binds_gate_identity: true,
+                    candidate_on_capture_binds_gate_identity: true,
+                    candidate_off_capture_binds_descriptor_identity: true,
+                    candidate_on_capture_binds_descriptor_identity: true,
+                    candidate_off_capture_binds_owner_callsite_identity: true,
+                    candidate_on_capture_binds_owner_callsite_identity: true,
+                    candidate_off_on_capture_same_callsite_identity: true,
+                    candidate_off_on_capture_same_prompt_digest: true,
+                    candidate_off_on_capture_same_generated_digest: true,
+                    candidate_off_on_capture_same_decoded_text_digest: true,
+                    candidate_off_on_capture_same_model_backend_identity: true,
+                    capture_prerequisite_blocker_recorded: false,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        let attempt = DenseLinearNoBiasRuntimeAttemptBoundary::from_strict_capture_artifact_pair(
+            &pair,
+            DenseLinearNoBiasRuntimeAttemptInputs {
+                explicit_candidate_execution_gate_requested: true,
+                runtime_hook_registry_attachment_present: true,
+                runtime_hook_descriptor_binds_selector_identity: true,
+                runtime_hook_descriptor_binds_strict_capture_pair: true,
+                apply_linear_dispatch_wired_to_no_bias_candidate: true,
+                feed_forward_down_proj_scope_preserved: true,
+                default_runtime_path_preserved: true,
+            },
+        );
+
+        assert_eq!(attempt.decision, "candidate_execution_attempt_prereqs_ready_runtime_disabled");
+        assert_eq!(
+            attempt.remaining_runtime_selection_blocker,
+            "fresh_candidate_off_on_execution_receipts"
+        );
+        assert!(attempt.candidate_execution_attempt_allowed);
+        assert!(!attempt.candidate_execution_enabled);
+        assert!(!attempt.normal_inference_runtime_selection_enabled);
+        assert!(attempt.fail_closed_conditions.is_empty());
+        assert!(attempt.preserves_normal_inference());
+        assert!(!attempt.allocation_reduction_claim);
+        assert!(!attempt.timing_improvement_claim);
+        assert!(!attempt.speedup_claim);
     }
 }
