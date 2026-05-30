@@ -109,6 +109,7 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias runtime hook attachment | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-230-no-bias-runtime-hook-attachment.json` | Proves the receipt-bound no-bias selector can be attached to `DenseLinearRuntimeHookRegistry` for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj` while preserving eager_f32_candle and keeping candidate execution disabled |
 | No-bias candidate execution receipt gate | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-231-no-bias-candidate-execution-receipt-gate.json` | Consumes the SLM-CPU-230 runtime hook attachment and keeps candidate execution fail-closed until fresh candidate-off/candidate-on execution receipts prove generated IDs, decoded text, backend/kernel identity, model SHA, tokenizer authority, and fallback=false are preserved |
 | No-bias execution capture commands | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-232-no-bias-execution-capture-commands.json` | Defines the concrete candidate-off/candidate-on execution capture command contract for Qwen3/Qwen2.5 Q8_0 `feed_forward.down_proj`; receipts remain uncaptured and no candidate execution or preservation claim is made |
+| No-bias execution receipt blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json` | Blocks fresh SLM-CPU-233 candidate-off/candidate-on execution receipt capture because the pinned Qwen2.5 Q8_0 GGUF is absent from this workspace; Qwen3 is present and SHA-verified, but no candidate execution receipt or preservation claim is made |
 
 Qwen3 rows use:
 
@@ -4522,6 +4523,42 @@ not change default runtime selection, does not prove generated-ID preservation,
 and does not claim allocation reduction, timing improvement, speedup, sustained
 throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5, or BitNet
 QK256 behavior.
+
+## SLM-CPU-233 No-Bias Execution Receipt Blocker
+
+SLM-CPU-233 consumes the SLM-CPU-232 capture command contract and checks whether
+the exact local artifact prerequisites are present before attempting the long
+candidate-off/candidate-on warm-session receipt captures. The Qwen3 Q8_0 GGUF is
+present and matches its pinned SHA, but the exact Qwen2.5 Q8_0 artifact required
+for the cross-model acceptance gate is not present in this workspace. The slice
+therefore blocks receipt capture rather than producing a one-model-only proof or
+downloading a large model implicitly.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-233-no-bias-execution-receipt-blocker.json
+decision = candidate_execution_receipt_capture_blocked_fail_closed
+reason = required_qwen25_q8_0_model_artifact_absent_from_workspace
+remaining_blocker = fresh_qwen3_qwen25_candidate_off_on_execution_receipts
+qwen3_present = true
+qwen3_sha256 = 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031
+qwen25_present = false
+qwen25_expected_sha256 = ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e
+candidate_execution_receipts_captured = false
+candidate_execution_enabled_by_default = false
+normal_inference_runtime_selection_enabled = false
+selected_path = eager_f32_candle
+selected_kernel = dense-f32-candle-linear
+candidate_path = feed_forward_down_proj_no_bias_candidate
+candidate_kernel = dense-f32-candle-linear-no-bias-candidate
+```
+
+This blocker keeps the no-bias candidate fail-closed until fresh Qwen3 and
+Qwen2.5 candidate-off/candidate-on execution receipts exist for the same
+`feed_forward.down_proj` callsite. It does not execute the no-bias candidate,
+does not change default runtime selection, does not prove generated-ID
+preservation, and does not claim allocation reduction, timing improvement,
+speedup, sustained throughput, Q4/Q5 support, server/accelerator execution,
+Qwen3.5, or BitNet QK256 behavior.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical

@@ -13483,7 +13483,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-233"
-status = "ready"
+status = "pr_open"
+pr = 1021
+head_sha = "aa1ea3bf730fab7f57fdbfd8926bde1f55315aa2"
 branch = "codex/slm-cpu-233-no-bias-execution-receipts"
 stackable = false
 review_mode = "codex_premerge"
