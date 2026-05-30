@@ -32,6 +32,9 @@ jobs:
         with:
           cache-on-failure: true
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Install ripr
         run: |
           if command -v ripr >/dev/null 2>&1; then
