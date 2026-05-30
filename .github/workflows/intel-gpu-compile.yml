@@ -47,6 +47,9 @@ jobs:
         with:
           shared-key: intel-gpu-compile-cpu
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: cargo check --workspace (cpu)
         run: cargo check --locked --workspace --no-default-features --features cpu
 
@@ -88,6 +91,10 @@ jobs:
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2
         with:
           shared-key: intel-gpu-compile-oneapi
+
+      - name: Bootstrap native build tools
+        if: steps.opencl_headers.outputs.available == 'true'
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: cargo check --workspace (oneapi)
         if: steps.opencl_headers.outputs.available == 'true'
