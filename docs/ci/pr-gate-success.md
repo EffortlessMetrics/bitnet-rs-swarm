@@ -54,7 +54,7 @@ When the migration happens, the change is in
 
 * **Add:** `PR Gate Success`
 * **Remove:** every individual leaf-job name currently required
-  (e.g. `Build & Test (ubuntu-latest)`, `Clippy`, `Documentation`,
+  (e.g. `Build & Test (self-hosted linux x64)`, `Clippy`, `Documentation`,
   `BDD Grid Check`, `Feature Matrix PR`)
 
 After the migration, branch protection has exactly one required
@@ -103,7 +103,7 @@ instead of silently treating a selected proof lane as advisory.
 ## Operational notes
 
 * The aggregator depends on the `gh` CLI and `jq` being available on the
-  runner. `ubuntu-22.04` ships with both.
+  self-hosted runner image. The runner image must ship with both.
 * The workflow checks out the PR and runs `cargo run --locked -p xtask
   --no-default-features -- ci plan` before polling upstream checks.
 * `permissions: { checks: read, actions: read }` is sufficient to

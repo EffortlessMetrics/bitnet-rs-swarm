@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   public-api:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     continue-on-error: true    # informative until parity PR lands
     steps:
@@ -36,7 +36,14 @@ jobs:
 
       - name: Install cargo-public-api
         # Pin to a version compatible with MSRV 1.95.0
-        run: cargo install cargo-public-api --version "0.43.0" --locked
+        shell: bash
+        run: |
+          set -euo pipefail
+          if cargo public-api --version 2>/dev/null | grep -q '0\.43\.0'; then
+            echo "cargo-public-api 0.43.0 already installed"
+          else
+            cargo install cargo-public-api --version "0.43.0" --locked --force
+          fi
 
       - name: Compute base and head
         id: revs

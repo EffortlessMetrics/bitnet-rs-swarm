@@ -18,7 +18,7 @@ jobs:
     # Only run when 'lut' label is present (opt-in for PRs)
     # Nightly strict suite provides comprehensive coverage
     if: contains(github.event.pull_request.labels.*.name, 'lut') || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     continue-on-error: true  # Informational while stress tests stabilize
 
@@ -62,7 +62,7 @@ jobs:
           # TL LUT Stress Test Summary
 
           **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          **Platform**: ubuntu-latest
+          **Platform**: self-hosted-linux-x64
 
           ## Configuration
 

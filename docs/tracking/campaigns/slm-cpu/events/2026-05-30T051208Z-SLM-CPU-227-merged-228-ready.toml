@@ -1,0 +1,19 @@
+timestamp = "2026-05-30T05:12:08Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-227"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1005
+branch = "codex/slm-cpu-227-no-bias-strict-capture-commands"
+head_sha = "812ad752976597bce43b80310b60d23f729d8218"
+merge_sha = "127eee8cbbb2d58fd36f06ddb108eb3ffdd86df1"
+next_item = "SLM-CPU-228"
+next_status = "ready"
+summary = "Merged SLM-CPU-227 no-bias strict capture command/schema PR and queued SLM-CPU-228."
+notes = [
+  "PR #1005 defined concrete candidate-off and candidate-on strict capture command contracts for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-227 kept candidate execution and normal runtime selection disabled while preserving eager_f32_candle as the default path.",
+  "SLM-CPU-228 is ready to capture or ingest the validated candidate-off/candidate-on strict capture artifact pair without timing, allocation, speedup, Q4/Q5, server/accelerator, Qwen3.5, or BitNet QK256 claims.",
+]

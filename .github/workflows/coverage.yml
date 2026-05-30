@@ -31,7 +31,18 @@ concurrency:
 jobs:
   coverage:
     name: Code Coverage
-    runs-on: ubuntu-latest
+    # Full coverage build: pin to cx53/rust-large during stabilization so it does
+    # not share the 8 GB cx33 or the default medium lane (cx33/cx43 lack rust-large).
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 60
     permissions:
       contents: read

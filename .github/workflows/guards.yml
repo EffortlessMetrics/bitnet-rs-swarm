@@ -1,6 +1,17 @@
 name: Guards
 on:
   pull_request:
+    # Only run the heavy guards job on PRs that touch CI guard surfaces. This
+    # mirrors the push paths filter so ordinary code-only PRs do not occupy a
+    # self-hosted runner with a guards build that has nothing to guard.
+    paths:
+      - '.github/**'
+      - 'scripts/**'
+      - 'tools/bitnet-task/**'
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
   push:
     branches: [main]
     paths:
@@ -19,7 +30,7 @@ concurrency:
 jobs:
   guards:
     name: Guards
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     env:
       CARGO_TERM_COLOR: always
@@ -39,9 +50,20 @@ jobs:
 
       - name: Ensure ripgrep exists
         run: |
-          if ! command -v rg >/dev/null 2>&1; then
+          set -eu
+          if command -v rg >/dev/null 2>&1; then
+            echo "ripgrep already present on runner image"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update -y
+            apt-get install -y ripgrep
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
             sudo apt-get update -y
             sudo apt-get install -y ripgrep
+          else
+            echo "ripgrep missing from self-hosted runner image; installing with cargo"
+            cargo install ripgrep --locked
           fi
 
       # Ensure scripts are executable in fresh clones

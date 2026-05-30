@@ -20,7 +20,7 @@ concurrency:
 jobs:
   record:
     name: Record CI actuals
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
     steps:

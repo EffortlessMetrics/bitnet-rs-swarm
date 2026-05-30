@@ -73,7 +73,7 @@ jobs:
   # regressions without building Docker images.
   docker-compile:
     name: "docker-compile (${{ matrix.label }})"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 45
     if: >-
       github.ref == 'refs/heads/main' ||
@@ -115,7 +115,7 @@ jobs:
   # ── Native compile checks (no Docker) ──────────────────────────
   native-compile:
     name: "native-check (${{ matrix.label }})"
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -161,7 +161,7 @@ jobs:
   # second-source check for the GPU matrix workflow.
   cpu-tests:
     name: CPU Tests
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
     needs: [native-compile]
     if: >-
@@ -193,7 +193,7 @@ jobs:
   # ── Intel GPU Docker build ────────────────────────────────────
   intel-gpu-docker:
     name: Intel GPU Docker Build
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 45
     if: >-
       github.ref == 'refs/heads/main' ||
@@ -222,7 +222,7 @@ jobs:
   # ── NVIDIA GPU Docker build ───────────────────────────────────
   nvidia-gpu-docker:
     name: NVIDIA GPU Docker Build
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 45
     if: >-
       github.ref == 'refs/heads/main' ||

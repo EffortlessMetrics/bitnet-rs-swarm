@@ -38,7 +38,7 @@ env:
 jobs:
   route-performance:
     name: Route Performance Tracking
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -84,7 +84,7 @@ jobs:
     name: Cargo Tests (smoke)
     needs: route-performance
     if: needs.route-performance.outputs.selected == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -115,24 +115,24 @@ jobs:
   performance-benchmark:
     name: Performance Benchmark (${{ matrix.platform }})
     needs: route-performance
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: linux-x86_64
-            os: ubuntu-latest
+            runner: '["self-hosted","linux","x64"]'
             target: x86_64-unknown-linux-gnu
           - platform: linux-aarch64
-            os: ubuntu-latest
+            runner: '["self-hosted","linux","ARM64"]'
             target: aarch64-unknown-linux-gnu
             cross: true
           - platform: macos-x86_64
-            os: macos-13  # Intel Mac
+            runner: '["self-hosted","macOS","x64"]'
             target: x86_64-apple-darwin
           - platform: macos-aarch64
-            os: macos-latest  # M1 Mac
+            runner: '["self-hosted","macOS","ARM64"]'
             target: aarch64-apple-darwin
 
     # Only run on schedule or manual dispatch
@@ -223,7 +223,7 @@ jobs:
         {
           "platform": "${{ matrix.platform }}",
           "target": "${{ matrix.target }}",
-          "os": "${{ matrix.os }}",
+          "runner": ${{ toJson(matrix.runner) }},
           "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
           "git_commit": "${{ github.sha }}",
           "git_ref": "${{ github.ref }}",
@@ -478,7 +478,7 @@ jobs:
     name: Performance Summary
     needs: performance-benchmark
     if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
 
     steps:

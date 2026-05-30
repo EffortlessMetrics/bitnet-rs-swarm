@@ -40,7 +40,7 @@ env:
 jobs:
   route-macos:
     name: "Route macOS PR lane"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -64,9 +64,18 @@ jobs:
           selected=false
           reason="ordinary PR without macOS label or Mac/Metal paths"
 
-          if [ "$EVENT_NAME" != "pull_request" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             selected=true
-            reason="$EVENT_NAME"
+            reason="manual workflow_dispatch"
+          elif [ "$EVENT_NAME" != "pull_request" ]; then
+            # No self-hosted macOS/Apple runners exist on the linux-x64-only swarm
+            # fleet (BITNET-ADR-0008). Selecting these [self-hosted, macOS, ARM64]
+            # jobs on merge_group or main-push events would queue them indefinitely
+            # and block the merge queue / main pipeline. Keep the macOS lane dormant
+            # for those events; Apple coverage stays opt-in via a PR label or an
+            # explicit workflow_dispatch.
+            selected=false
+            reason="$EVENT_NAME: macOS lane dormant (no self-hosted Apple runners)"
           elif python - "$LABELS_JSON" <<'PY'
           import json
           import sys
@@ -106,7 +115,7 @@ jobs:
     name: "macOS: Build & Test (CPU)"
     needs: route-macos
     if: needs.route-macos.outputs.selected == 'true'
-    runs-on: macos-14  # Apple Silicon M1
+    runs-on: [self-hosted, macOS, ARM64]  # Apple Silicon M1
     timeout-minutes: 25
     env:
       CARGO_INCREMENTAL: "0"
@@ -160,7 +169,7 @@ jobs:
     name: "macOS: Build (Metal)"
     needs: route-macos
     if: needs.route-macos.outputs.selected == 'true'
-    runs-on: macos-14  # Apple Silicon M1
+    runs-on: [self-hosted, macOS, ARM64]  # Apple Silicon M1
     timeout-minutes: 25
     env:
       CARGO_INCREMENTAL: "0"
@@ -196,7 +205,7 @@ jobs:
     name: "macOS: Clippy"
     needs: route-macos
     if: needs.route-macos.outputs.selected == 'true'
-    runs-on: macos-14  # Apple Silicon M1
+    runs-on: [self-hosted, macOS, ARM64]  # Apple Silicon M1
     timeout-minutes: 15
     env:
       CARGO_INCREMENTAL: "0"
@@ -238,7 +247,7 @@ jobs:
     # rustfmt is platform-independent and does not need scarce Apple Silicon
     # capacity. Keeping the check name stable preserves branch protection while
     # preventing the final macOS gate from failing on an unstarted format job.
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -261,7 +270,7 @@ jobs:
     name: macOS arm64 Success
     # This job only summarizes check outcomes; it should not consume or wait for
     # an Apple Silicon runner after the platform-specific jobs have completed.
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     needs: [route-macos, build-cpu, build-metal, clippy, fmt]
     if: always()

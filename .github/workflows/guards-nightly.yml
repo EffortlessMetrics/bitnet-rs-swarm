@@ -15,7 +15,7 @@ concurrency:
 jobs:
   guards-nightly:
     name: Guards (nightly)
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -24,7 +24,21 @@ jobs:
       # (Optional) Ensure ripgrep exists on runners that might not have it
       - name: Ensure ripgrep
         run: |
-          command -v rg >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y ripgrep
+          set -eu
+          if command -v rg >/dev/null 2>&1; then
+            echo "ripgrep already present on runner image"
+            exit 0
+          fi
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update -y
+            apt-get install -y ripgrep
+          elif command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            sudo apt-get update -y
+            sudo apt-get install -y ripgrep
+          else
+            echo "::error::ripgrep missing from self-hosted runner image and privileged apt is unavailable"
+            exit 1
+          fi
 
       # Reuse the same guard patterns you enforce in PRs
       - name: Guard - actions pinned to 40-hex SHA
@@ -61,21 +75,18 @@ jobs:
           fi
           echo "✅ All cargo/cross use --locked"
 
-      # Non-blocking informational check for new ubuntu-latest usage
-      - name: Info - Check for new ubuntu-latest usage (non-blocking)
+      # Non-blocking informational check for hosted runner usage
+      - name: Info - Check for hosted runner usage (non-blocking)
         continue-on-error: true
         run: |
-          # Approved allowlist: security, coverage, compatibility (intentional floaters)
-          new_latest=$(rg -n 'runs-on:\s*ubuntu-latest' .github/workflows \
-            | grep -Ev '(security\.yml|coverage\.yml|compatibility\.yml|ci-reporting\.yml\.disabled)' || true)
-          if [ -n "$new_latest" ]; then
-            echo "⚠️  Found ubuntu-latest usage outside approved allowlist:"
-            echo "$new_latest"
+          hosted_runs=$(rg -n 'runs-on:\s*(ubuntu|macos|windows)-' .github/workflows || true)
+          if [ -n "$hosted_runs" ]; then
+            echo "⚠️  Found hosted runner usage:"
+            echo "$hosted_runs"
             echo ""
-            echo "Policy: Default to ubuntu-22.04 for reproducibility."
-            echo "If ubuntu-latest is intentional, add to allowlist and document in PR."
+            echo "Policy: use self-hosted runner labels for workflow jobs."
           else
-            echo "✅ No unexpected ubuntu-latest usage"
+            echo "✅ No hosted runner usage"
           fi
 
       - name: Info – receipt excludes present (non-blocking)

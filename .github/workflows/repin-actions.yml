@@ -19,7 +19,7 @@ concurrency:
 jobs:
   repin:
     name: Repin Action SHAs
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
 
     steps:

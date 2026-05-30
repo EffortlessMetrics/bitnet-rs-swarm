@@ -25,7 +25,7 @@ permissions:
 jobs:
   plan:
     name: PR Plan
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -61,6 +61,9 @@ jobs:
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
+
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Build PR plan (xtask ci plan)
         id: plan

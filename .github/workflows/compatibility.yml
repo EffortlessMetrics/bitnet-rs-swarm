@@ -26,7 +26,7 @@ env:
 jobs:
   route-msrv:
     name: Route MSRV Compatibility
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -91,7 +91,7 @@ jobs:
     name: Minimum Supported Rust Version
     needs: route-msrv
     if: needs.route-msrv.outputs.selected == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 20
     env:
       CARGO_TERM_COLOR: always
@@ -115,6 +115,9 @@ jobs:
         uses: dtolnay/rust-toolchain@6d653acede28d24f02e3cd41383119e8b1b35921  # master
         with:
           toolchain: ${{ steps.msrv.outputs.msrv }}
+
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Cache (MSRV)
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
@@ -189,7 +192,7 @@ jobs:
     name: MSRV Workspace Coverage (informational)
     needs: route-msrv
     if: needs.route-msrv.outputs.selected == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true
     timeout-minutes: 20
     env:
@@ -214,6 +217,9 @@ jobs:
         with:
           toolchain: ${{ steps.msrv.outputs.msrv }}
 
+      - name: Bootstrap native build tools
+        uses: ./.github/actions/bootstrap-native-build-tools
+
       - name: Cache (MSRV workspace)
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
@@ -231,7 +237,7 @@ jobs:
 
   abi-stability:
     name: ABI Stability Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
     # ABI surface only changes when bitnet-ffi / public C headers move.
     # Gate to main, manual dispatch, or PRs that opt in via the `ffi` or
@@ -257,7 +263,7 @@ jobs:
 
   ffi-smoke-test:
     name: FFI Smoke Test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true
     timeout-minutes: 10
     # Builds libbitnet_ffi.so and a C harness; only useful when FFI surface
@@ -294,7 +300,7 @@ jobs:
 
   validation-pr:
     name: Model Validation (PR Lane)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
     # Currently a no-op when no test model is committed; only run when a real
     # model fixture exists (signaled via the `model-validation` or `full-ci` label),
@@ -351,7 +357,7 @@ jobs:
 
   tokenizer-fixtures:
     name: Tokenizer Compatibility Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true  # Informational while stabilizing baselines
     timeout-minutes: 10
     # Installs transformers + torch + scipy and replays tokenizer fixtures.
@@ -420,7 +426,7 @@ jobs:
 
   gguf-compat:
     name: GGUF Compatibility Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
     # Downloads a multi-GB GGUF on cache miss; not worth running on every PR.
     # Run on main, manual dispatch, or when explicitly requested via labels.
@@ -459,7 +465,7 @@ jobs:
 
   cross-val-determinism:
     name: Cross-Validation Determinism
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
     if: contains(github.event.pull_request.labels.*.name, 'crossval')
     steps:
@@ -496,7 +502,7 @@ jobs:
 
   audit-and-deny:
     name: Security and License Audit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
     continue-on-error: true  # Non-blocking for PRs
     # Audit/license output is informational and duplicated by the dedicated
