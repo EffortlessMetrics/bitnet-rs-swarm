@@ -13708,8 +13708,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-237"
-status = "ready"
+status = "pr_open"
+pr = 1029
 branch = "codex/slm-cpu-237-no-bias-apply-linear-dispatch"
+head_sha = "45004515b6a721feaa3d2290b1fe0e8b16c796c7"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13718,6 +13720,7 @@ blocked_by = ["SLM-CPU-236"]
 acceptance = "Consume the SLM-CPU-236 apply_linear_no_bias_candidate_dispatch blocker and add the narrow fail-closed dispatch branch inside FeedForward::apply_linear, or record a more specific implementation blocker discovered while wiring it. Any dispatch must only call dense_linear_no_bias_candidate_forward for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj when the explicit gate is requested, a receipt-bound selector is attached to the DenseLinearRuntimeHookRegistry for the exact tensor callsite, the selector binds the validated SLM-CPU-235 receipt-pair identity and prompt/generated/text digests, bias_present=false, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and default eager_f32_candle is preserved when the gate is absent. If candidate execution is wired, capture fresh candidate-off/candidate-on receipts proving prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, selected path/kernel, candidate path/kernel, and fallback=false are preserved for Qwen3 and Qwen2.5. This item must not claim timing improvement, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
 commands = [
   "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-237-no-bias-dispatch-blocker.json",
   "cargo test --locked -p bitnet-transformer no_bias -- --nocapture",
   "cargo run -p xtask --no-default-features -- campaign generate",
   "cargo run -p xtask --no-default-features -- campaign doctor",
@@ -13743,6 +13746,7 @@ forbidden_paths = [
 evidence = [
   "SLM-CPU-235 validates strict Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on receipt identity while candidate execution remains disabled.",
   "SLM-CPU-236 records apply_linear_no_bias_candidate_dispatch as the exact remaining runtime blocker.",
+  "SLM-CPU-237 records that a dispatch branch would be unreachable or receipt-unsafe until prompt-bound no-bias selector identity reaches FeedForward::apply_linear.",
 ]
 may_claim = [
   "SLM-CPU-237 may add a narrowly gated no-bias dispatch branch inside FeedForward::apply_linear.",
