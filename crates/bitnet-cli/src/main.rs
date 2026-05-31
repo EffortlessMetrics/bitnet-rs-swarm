@@ -12269,6 +12269,8 @@ async fn run_lunar_lake_ask(
         }
         anyhow::bail!("lunar-lake ask produced an empty normalized answer");
     }
+    let telemetry_context =
+        build_lunar_lake_operator_ask_telemetry_context(&artifact_root, &route_profile_comparison);
     let receipt = build_lunar_lake_operator_ask_receipt(LunarLakeAskReceiptContext {
         artifact_root: &artifact_root,
         operator_receipt_path: &operator_receipt_path,
@@ -12280,6 +12282,7 @@ async fn run_lunar_lake_ask(
         normalized_answer: &normalized_answer,
         answer_gate: &answer_gate,
         expect_contains: expect_contains.as_deref(),
+        telemetry_context: &telemetry_context,
         source_run_receipt: &source_run_receipt,
     });
     write_json_output(Some(&receipt_path), &receipt)?;
@@ -12604,6 +12607,7 @@ struct LunarLakeAskReceiptContext<'a> {
     normalized_answer: &'a str,
     answer_gate: &'a LunarLakeAnswerGate,
     expect_contains: Option<&'a str>,
+    telemetry_context: &'a serde_json::Value,
     source_run_receipt: &'a serde_json::Value,
 }
 
@@ -13059,6 +13063,7 @@ fn build_lunar_lake_operator_ask_receipt(ctx: LunarLakeAskReceiptContext<'_>) ->
         "execution_coverage": ctx.source_run_receipt["execution_coverage"].clone(),
         "timing": ctx.source_run_receipt["timing"].clone(),
         "timing_metric_status": timing_metric_status,
+        "telemetry_context": ctx.telemetry_context,
         "profile": ctx.source_run_receipt["profile"].clone(),
         "claim_boundary": {
             "cpu_default_route_only": !openvino_candidate_executed,
@@ -13071,6 +13076,223 @@ fn build_lunar_lake_operator_ask_receipt(ctx: LunarLakeAskReceiptContext<'_>) ->
             "arc_or_npu_acceleration_claim": false,
         },
         "source_receipt": ctx.source_run_receipt,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn build_lunar_lake_operator_ask_telemetry_context(
+    artifact_root: &std::path::Path,
+    route_profile_comparison: &std::path::Path,
+) -> serde_json::Value {
+    let comparison_path =
+        resolve_lunar_lake_operator_ask_receipt_path(artifact_root, route_profile_comparison);
+    let comparison = match std::fs::read(&comparison_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+    {
+        Some(comparison) => comparison,
+        None => return lunar_lake_operator_ask_telemetry_context_not_sampled(),
+    };
+    let Some(telemetry_receipt) = comparison["telemetry_context_receipt"].as_str() else {
+        return lunar_lake_operator_ask_telemetry_context_not_sampled();
+    };
+    let telemetry_path = resolve_lunar_lake_operator_ask_receipt_path(
+        artifact_root,
+        std::path::Path::new(telemetry_receipt),
+    );
+    let telemetry = match std::fs::read(&telemetry_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+    {
+        Some(telemetry) => telemetry,
+        None => {
+            return lunar_lake_operator_ask_telemetry_context_not_exposed(
+                Some(telemetry_path.display().to_string()),
+                "linked_telemetry_receipt_unreadable",
+            );
+        }
+    };
+    lunar_lake_operator_ask_telemetry_context_from_linked_receipt(&telemetry_path, &telemetry)
+}
+
+#[cfg(feature = "full-cli")]
+fn resolve_lunar_lake_operator_ask_receipt_path(
+    artifact_root: &std::path::Path,
+    receipt: &std::path::Path,
+) -> std::path::PathBuf {
+    if receipt.is_absolute() || receipt.exists() {
+        receipt.to_path_buf()
+    } else {
+        artifact_root.join(receipt)
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_telemetry_context_not_sampled() -> serde_json::Value {
+    serde_json::json!({
+        "status": "not_sampled",
+        "source_receipt": serde_json::Value::Null,
+        "power": {
+            "status": "not_sampled",
+            "power_source": "unknown",
+            "battery_mode_sample_recorded": false,
+        },
+        "thermal": {
+            "status": "not_sampled",
+            "temperatures_celsius": [],
+            "measured_temperature_available": false,
+        },
+        "claim_boundary": lunar_lake_operator_ask_telemetry_claim_boundary(),
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_telemetry_context_not_exposed(
+    source_receipt: Option<String>,
+    reason: &'static str,
+) -> serde_json::Value {
+    serde_json::json!({
+        "status": "not_exposed",
+        "source_receipt": source_receipt,
+        "reason": reason,
+        "power": {
+            "status": "not_exposed",
+            "power_source": "unknown",
+            "battery_mode_sample_recorded": false,
+        },
+        "thermal": {
+            "status": "not_exposed",
+            "temperatures_celsius": [],
+            "measured_temperature_available": false,
+        },
+        "claim_boundary": lunar_lake_operator_ask_telemetry_claim_boundary(),
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_telemetry_context_from_linked_receipt(
+    source_receipt: &std::path::Path,
+    telemetry: &serde_json::Value,
+) -> serde_json::Value {
+    if telemetry["artifact_kind"].as_str() != Some("lunar_lake_power_thermal_context") {
+        return lunar_lake_operator_ask_telemetry_context_not_exposed(
+            Some(source_receipt.display().to_string()),
+            "linked_telemetry_receipt_unexpected_artifact_kind",
+        );
+    }
+
+    let power = &telemetry["power"];
+    let thermal = &telemetry["thermal"];
+    let power_scheme_raw = power["active_scheme"].as_str();
+    let (parsed_scheme_guid, parsed_scheme_name) =
+        lunar_lake_operator_ask_power_scheme_fields(power_scheme_raw);
+    let power_scheme_guid =
+        power["active_scheme_guid"].as_str().map(ToString::to_string).or(parsed_scheme_guid);
+    let power_scheme_name =
+        power["active_scheme_name"].as_str().map(ToString::to_string).or(parsed_scheme_name);
+    let battery_status_raw = power["battery_status"].as_str();
+    let ac_power_inferred = power["ac_power_inferred"].as_bool();
+    let power_source = match ac_power_inferred {
+        Some(true) => "ac",
+        Some(false) => "battery",
+        None => "unknown",
+    };
+    let thermal_zones_visible = thermal["thermal_zones_visible"].as_u64();
+    let temperatures = if thermal["temperatures_celsius"].as_array().is_some() {
+        thermal["temperatures_celsius"].clone()
+    } else {
+        serde_json::json!([])
+    };
+    let temperature_count = temperatures.as_array().map_or(0, Vec::len);
+    let thermal_context_recorded = telemetry["availability"]["thermal_context_recorded"]
+        .as_bool()
+        .unwrap_or_else(|| thermal.is_object());
+    let thermal_status = if temperature_count > 0 {
+        "measured"
+    } else if thermal_zones_visible.unwrap_or(0) > 0 {
+        "zones_visible_values_unavailable"
+    } else if thermal_context_recorded {
+        "probe_unavailable"
+    } else {
+        "not_exposed"
+    };
+    let power_context_recorded = telemetry["availability"]["power_context_recorded"]
+        .as_bool()
+        .unwrap_or_else(|| power.is_object());
+
+    serde_json::json!({
+        "status": "linked",
+        "source_receipt": source_receipt.display().to_string(),
+        "sample_scope": telemetry["telemetry_scope"].clone(),
+        "power": {
+            "status": if power_context_recorded { "sampled" } else { "not_exposed" },
+            "source": power["source"].clone(),
+            "power_scheme_raw": power_scheme_raw,
+            "power_scheme_guid": power_scheme_guid,
+            "power_scheme_name": power_scheme_name,
+            "power_source": power_source,
+            "battery_status_raw": battery_status_raw,
+            "win32_battery_status_code": lunar_lake_operator_ask_battery_status_field_i64(
+                battery_status_raw,
+                "BatteryStatus",
+            ),
+            "estimated_charge_remaining_percent": lunar_lake_operator_ask_battery_status_field_i64(
+                battery_status_raw,
+                "EstimatedChargeRemaining",
+            ),
+            "ac_power_inferred": ac_power_inferred,
+            "battery_mode_sample_recorded": ac_power_inferred == Some(false),
+        },
+        "thermal": {
+            "status": thermal_status,
+            "source": thermal["source"].clone(),
+            "thermal_zones_visible": thermal_zones_visible,
+            "temperatures_celsius": temperatures,
+            "measured_temperature_available": temperature_count > 0,
+        },
+        "claim_boundary": lunar_lake_operator_ask_telemetry_claim_boundary(),
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_power_scheme_fields(
+    active_scheme: Option<&str>,
+) -> (Option<String>, Option<String>) {
+    let Some(active_scheme) = active_scheme.map(str::trim).filter(|value| !value.is_empty()) else {
+        return (None, None);
+    };
+    let guid = active_scheme
+        .split_once("GUID:")
+        .and_then(|(_, rest)| rest.split_whitespace().next())
+        .map(str::trim)
+        .map(ToString::to_string)
+        .filter(|value| !value.is_empty());
+    let name = active_scheme
+        .rsplit_once('(')
+        .and_then(|(_, rest)| rest.strip_suffix(')'))
+        .map(str::trim)
+        .map(ToString::to_string)
+        .filter(|value| !value.is_empty());
+    (guid, name)
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_battery_status_field_i64(raw: Option<&str>, field: &str) -> Option<i64> {
+    raw.and_then(|raw| {
+        raw.split(';').find_map(|entry| {
+            let (key, value) = entry.split_once('=')?;
+            (key.trim() == field).then(|| value.trim().parse::<i64>().ok()).flatten()
+        })
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_operator_ask_telemetry_claim_boundary() -> serde_json::Value {
+    serde_json::json!({
+        "low_power_evidence": false,
+        "power_advantage_claim": false,
+        "measured_temperature_claim": false,
+        "route_promotion_changed": false,
     })
 }
 
@@ -18297,6 +18519,7 @@ mod tests {
             "text": "\n4<|im_end|>"
         });
         let gate = evaluate_lunar_lake_answer_gate("4", Some("4"));
+        let telemetry_context = lunar_lake_operator_ask_telemetry_context_not_sampled();
         let receipt = build_lunar_lake_operator_ask_receipt(LunarLakeAskReceiptContext {
             artifact_root: std::path::Path::new("ci/hardware/intel-258v/2026-05-08"),
             operator_receipt_path: std::path::Path::new("lunar-lake-operator-readiness.json"),
@@ -18308,6 +18531,7 @@ mod tests {
             normalized_answer: "4",
             answer_gate: &gate,
             expect_contains: Some("4"),
+            telemetry_context: &telemetry_context,
             source_run_receipt: &source,
         });
 
@@ -18340,6 +18564,11 @@ mod tests {
             receipt["timing_metric_status"]["openvino_perf_metrics"]["status"],
             "not_applicable"
         );
+        assert_eq!(receipt["telemetry_context"]["status"], "not_sampled");
+        assert_eq!(receipt["telemetry_context"]["source_receipt"], serde_json::Value::Null);
+        assert_eq!(receipt["telemetry_context"]["power"]["power_source"], "unknown");
+        assert_eq!(receipt["telemetry_context"]["power"]["battery_mode_sample_recorded"], false);
+        assert_eq!(receipt["telemetry_context"]["claim_boundary"]["low_power_evidence"], false);
         assert!(receipt["source_receipt"].is_object());
     }
 
@@ -18434,6 +18663,36 @@ mod tests {
         let answer = lunar_lake_source_answer_text(&source);
         let normalized = lunar_lake_source_normalized_answer(&source, &answer);
         let gate = evaluate_lunar_lake_answer_gate(&normalized, Some("4"));
+        let linked_telemetry = serde_json::json!({
+            "artifact_kind": "lunar_lake_power_thermal_context",
+            "telemetry_scope": "current_machine_runtime_telemetry",
+            "availability": {
+                "power_context_recorded": true,
+                "thermal_context_recorded": true
+            },
+            "power": {
+                "source": "os_power_probe",
+                "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+                "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=100",
+                "ac_power_inferred": true
+            },
+            "thermal": {
+                "source": "windows_perf_thermal_zone",
+                "thermal_zones_visible": 1,
+                "temperatures_celsius": []
+            },
+            "claim_boundary": {
+                "route_promotion_changed": false,
+                "power_advantage_claim": false,
+                "acceleration_claim": false
+            }
+        });
+        let telemetry_context = lunar_lake_operator_ask_telemetry_context_from_linked_receipt(
+            std::path::Path::new(
+                "ci/hardware/intel-258v/2026-05-08/lunar-lake-power-thermal-context.json",
+            ),
+            &linked_telemetry,
+        );
         let receipt = build_lunar_lake_operator_ask_receipt(LunarLakeAskReceiptContext {
             artifact_root: std::path::Path::new("ci/hardware/intel-258v/2026-05-08"),
             operator_receipt_path: std::path::Path::new("lunar-lake-operator-readiness.json"),
@@ -18445,6 +18704,7 @@ mod tests {
             normalized_answer: &normalized,
             answer_gate: &gate,
             expect_contains: Some("4"),
+            telemetry_context: &telemetry_context,
             source_run_receipt: &source,
         });
 
@@ -18492,8 +18752,85 @@ mod tests {
             receipt["timing_metric_status"]["openvino_perf_metrics"]["sentinel_policy"],
             "negative_numeric_values_are_unavailable_not_measured"
         );
+        assert_eq!(receipt["telemetry_context"]["status"], "linked");
+        assert_eq!(
+            receipt["telemetry_context"]["source_receipt"],
+            "ci/hardware/intel-258v/2026-05-08/lunar-lake-power-thermal-context.json"
+        );
+        assert_eq!(
+            receipt["telemetry_context"]["power"]["power_scheme_guid"],
+            "381b4222-f694-41f0-9685-ff5bb260df2e"
+        );
+        assert_eq!(receipt["telemetry_context"]["power"]["power_scheme_name"], "Balanced");
+        assert_eq!(receipt["telemetry_context"]["power"]["power_source"], "ac");
+        assert_eq!(receipt["telemetry_context"]["power"]["battery_mode_sample_recorded"], false);
+        assert_eq!(
+            receipt["telemetry_context"]["thermal"]["status"],
+            "zones_visible_values_unavailable"
+        );
+        assert_eq!(
+            receipt["telemetry_context"]["thermal"]["measured_temperature_available"],
+            false
+        );
+        assert_eq!(receipt["telemetry_context"]["claim_boundary"]["power_advantage_claim"], false);
         assert_eq!(receipt["answer"]["normalized_text"], "2 + 2 equals 4.");
         Ok(())
+    }
+
+    #[cfg(feature = "full-cli")]
+    #[test]
+    fn lunar_lake_operator_ask_telemetry_context_marks_bad_link_not_exposed() {
+        let telemetry_context = lunar_lake_operator_ask_telemetry_context_from_linked_receipt(
+            std::path::Path::new("bad-telemetry.json"),
+            &serde_json::json!({
+                "artifact_kind": "not_power_thermal_context"
+            }),
+        );
+
+        assert_eq!(telemetry_context["status"], "not_exposed");
+        assert_eq!(
+            telemetry_context["reason"],
+            "linked_telemetry_receipt_unexpected_artifact_kind"
+        );
+        assert_eq!(telemetry_context["power"]["power_source"], "unknown");
+        assert_eq!(telemetry_context["thermal"]["measured_temperature_available"], false);
+        assert_eq!(telemetry_context["claim_boundary"]["measured_temperature_claim"], false);
+    }
+
+    #[cfg(feature = "full-cli")]
+    #[test]
+    fn lunar_lake_operator_ask_telemetry_context_defaults_missing_temperatures_to_empty_array() {
+        let telemetry_context = lunar_lake_operator_ask_telemetry_context_from_linked_receipt(
+            std::path::Path::new("lunar-lake-power-thermal-context.json"),
+            &serde_json::json!({
+                "artifact_kind": "lunar_lake_power_thermal_context",
+                "telemetry_scope": "current_machine_runtime_telemetry",
+                "availability": {
+                    "power_context_recorded": true,
+                    "thermal_context_recorded": true
+                },
+                "power": {
+                    "source": "os_power_probe",
+                    "active_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+                    "battery_status": "BatteryStatus=2;EstimatedChargeRemaining=100",
+                    "ac_power_inferred": true
+                },
+                "thermal": {
+                    "source": "windows_perf_thermal_zone",
+                    "thermal_zones_visible": 1
+                },
+                "claim_boundary": {
+                    "route_promotion_changed": false,
+                    "power_advantage_claim": false,
+                    "acceleration_claim": false
+                }
+            }),
+        );
+
+        assert_eq!(telemetry_context["status"], "linked");
+        assert_eq!(telemetry_context["thermal"]["status"], "zones_visible_values_unavailable");
+        assert_eq!(telemetry_context["thermal"]["temperatures_celsius"], serde_json::json!([]));
+        assert_eq!(telemetry_context["thermal"]["measured_temperature_available"], false);
     }
 
     #[test]
