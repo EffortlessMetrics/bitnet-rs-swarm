@@ -13939,10 +13939,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-241"
-status = "pr_open"
+status = "merged"
 pr = 1131
 branch = "codex/slm-cpu/slm-cpu-241-apply-linear-callsite-descriptor"
-head_sha = "a1596d8784294ef4a1dfb0f021eba5029bcc8882"
+head_sha = "ff1782af8b966733d3d88078fd91315c0705a1a5"
+merge_sha = "7705b08d5b9e9c37ab6946405f135b6daadf5101"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13978,10 +13979,65 @@ evidence = [
   "SLM-CPU-235 validates strict Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on request-gate identity while candidate execution remains disabled.",
   "SLM-CPU-238 records the per-callsite prompt-bound receipt-emitter boundary without mutating model-load hook registries.",
   "SLM-CPU-240 records that FeedForward::apply_linear still lacks a prompt-bound no-bias candidate descriptor argument and dispatch branch, so candidate-on execution remains disabled.",
+  "SLM-CPU-241 adds a fail-closed optional prompt-bound no-bias descriptor argument at FeedForward::apply_linear and records prompt/session descriptor construction as the remaining blocker.",
 ]
 may_claim = [
   "SLM-CPU-241 may add or precisely block the prompt-bound no-bias descriptor propagation point at FeedForward::apply_linear for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
   "SLM-CPU-241 may prepare candidate-off/candidate-on receipt capture only if candidate-on actually executes through the exact feed_forward.down_proj no-bias callsite under the explicit gate.",
+]
+must_not_claim = [
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, selected/candidate path identity, or fallback status are preserved for an executed candidate path without fresh strict candidate-off/candidate-on receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-242"
+status = "ready"
+branch = "codex/slm-cpu/slm-cpu-242-prompt-session-callsite-descriptor"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-241"]
+acceptance = "Consume the SLM-CPU-241 apply-linear callsite descriptor boundary and add or precisely block prompt/session-scoped no-bias descriptor construction and propagation to the exact FeedForward::apply_linear Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj callsite. A valid implementation must construct the descriptor only after current prompt/tokenizer identity is known, bind the SLM-CPU-235 model/tokenizer/backend/fallback/digest identity, selected and candidate path/kernel identity, bias_present=false, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, prompt IDs, and prompt digest, pass the descriptor through the existing optional apply_linear argument without mutating model-load hook state across prompt/session boundaries, fail closed on stale or mismatched callsite identity, and preserve eager_f32_candle when the explicit gate is absent. Candidate execution must remain disabled unless a later fresh candidate-on receipt executes through the exact no-bias callsite and preserves prompt IDs, generated IDs, decoded text, model SHA, tokenizer source and strictness, backend/kernel identity, selected/candidate path identity, and fallback=false. A valid blocker must name the exact missing prompt/session descriptor construction, command surface, callsite plumbing, digest lifetime, generated/text receipt emitter, dispatch branch, or runtime ownership boundary. This item must not claim timing improvement, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-241-apply-linear-callsite-descriptor.json",
+  "cargo test --locked -p bitnet-transformer no_bias -- --nocapture",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-235 validates strict Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on request-gate identity while candidate execution remains disabled.",
+  "SLM-CPU-238 records the per-callsite prompt-bound receipt-emitter boundary without mutating model-load hook registries.",
+  "SLM-CPU-241 records that FeedForward::apply_linear can now accept a fail-closed optional prompt-bound no-bias descriptor for the exact down_proj callsite, but production session descriptor construction is still missing.",
+]
+may_claim = [
+  "SLM-CPU-242 may add or precisely block prompt/session-scoped descriptor construction and propagation into FeedForward::apply_linear for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-242 may prepare candidate-off/candidate-on receipt capture only if the descriptor reaches the exact callsite and candidate-on execution actually occurs under the explicit gate.",
 ]
 must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
