@@ -21,7 +21,16 @@ concurrency:
 
 jobs:
   public-api:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
     continue-on-error: true    # informative until parity PR lands
     steps:

@@ -35,7 +35,16 @@ permissions:
 jobs:
   campaign-tracker:
     name: Doctor + Generated Dashboards
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - trusted-pr
     timeout-minutes: 15
     env:
       CARGO_TERM_COLOR: always

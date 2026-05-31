@@ -17,9 +17,10 @@ permissions:
 jobs:
   route-rust-small:
     name: Route BitNet Rust Small
-    # Tiny coordination job (5 min): keep on GitHub-hosted during the cx33
-    # stabilization pass so it can never land on a self-hosted tiny box.
-    runs-on: ubuntu-latest
+    # Nano coordination job: route/classify only; never runs Cargo/Rust work.
+    runs-on:
+      group: em-ci-nano
+      labels: [self-hosted, linux, x64, em-ci, cx23, ci-nano, trusted-pr]
     timeout-minutes: 5
     if: >-
       github.event_name == 'workflow_dispatch'
@@ -111,12 +112,9 @@ jobs:
               "orgs/${ORG}/actions/runners?per_page=100" 2>/tmp/gh.err)"; then
             echo "runner API request failed:" >&2
             cat /tmp/gh.err >&2 || true
-            # Keep the lane self-hosted-only, but do not fail closed on a
-            # transient runner API read. Route to the smaller trusted pool and
-            # let GitHub queue the job; if no runner is actually available the
-            # selected target will remain pending instead of incorrectly
-            # reporting a hosted fallback.
-            emit "cx43" "runner_api_failed_cx43_queued" "true" "false"
+            # Runner discovery must use the org API. If the API/token fails,
+            # block instead of silently falling back to hosted capacity.
+            emit "blocked" "runner_api_failed" "true" "false"
             exit 0
           fi
 
@@ -130,7 +128,7 @@ jobs:
                 | select(
                     ($have | index("em-ci")) and
                     ($have | index($runner_label)) and
-                    ($have | index("rust-small")) and
+                    (if $runner_label == "cx53" then ($have | index("rust-large")) else ($have | index("rust-medium")) end) and
                     ($have | index("trusted-pr"))
                   )
               ] | length
@@ -151,7 +149,7 @@ jobs:
                 | select(
                     ($have | index("em-ci")) and
                     ($have | index($runner_label)) and
-                    ($have | index("rust-small")) and
+                    (if $runner_label == "cx53" then ($have | index("rust-large")) else ($have | index("rust-medium")) end) and
                     ($have | index("trusted-pr"))
                   )
               ] | length
@@ -161,14 +159,14 @@ jobs:
           if ! idle_cx53="$(idle_runner_count "cx53" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "cx43" "parse_failed_cx43_queued" "true" "false"
+            emit "blocked" "runner_api_parse_failed" "true" "false"
             exit 0
           fi
 
           if ! idle_cx43="$(idle_runner_count "cx43" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "cx43" "parse_failed_cx43_queued" "true" "false"
+            emit "blocked" "runner_api_parse_failed" "true" "false"
             exit 0
           fi
 
@@ -178,15 +176,16 @@ jobs:
           echo "idle_cx53=${idle_cx53:-0} online_cx53=${online_cx53:-0}"
           echo "idle_cx43=${idle_cx43:-0} online_cx43=${online_cx43:-0}"
 
-          # Routing preference under self-hosted-only (no GitHub-hosted fallback,
-          # per BITNET-ADR-0008):
+          # Routing preference: heavy/default BitNet work prefers cx53, then cx43,
+          # then falls back to GitHub-hosted only when the trusted fleet is offline.
+          # Runner API/token failures block instead of silently falling back.
           #   1. An idle cx53/cx43 runner -> route there, runs immediately.
           #   2. No idle runner but cx43/cx53 are online (just busy) -> route to
           #      the busy pool and let GitHub queue the job until a runner frees.
           #      Failing closed on momentary busyness would red the required
           #      result whenever the fleet is under load; queuing is the correct
           #      behavior when there is no hosted fallback to absorb the work.
-          #   3. No trusted runner online at all -> genuine outage, stay blocked.
+          #   3. No trusted runner online at all -> use the explicit hosted fallback.
           if [ "${idle_cx53:-0}" -gt 0 ]; then
             emit "cx53" "cx53_idle" "false" "false"
           elif [ "${idle_cx43:-0}" -gt 0 ]; then
@@ -196,7 +195,7 @@ jobs:
           elif [ "${online_cx53:-0}" -gt 0 ]; then
             emit "cx53" "cx53_busy_queued" "false" "false"
           else
-            emit "blocked" "no_online_runner" "false" "false"
+            emit "github" "no_online_self_hosted_github_fallback" "false" "true"
           fi
 
   rust-small-cx53:
@@ -210,7 +209,7 @@ jobs:
               && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
-      labels: [self-hosted, linux, x64, em-ci, cx53, rust-small, trusted-pr]
+      labels: [self-hosted, linux, x64, em-ci, cx53, rust-large, trusted-pr]
     timeout-minutes: 90
     env:
       JOB_ID: ${{ github.run_id }}-${{ github.run_attempt }}
@@ -327,7 +326,7 @@ jobs:
               && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on:
       group: em-ci-small
-      labels: [self-hosted, linux, x64, em-ci, cx43, rust-small, trusted-pr]
+      labels: [self-hosted, linux, x64, em-ci, cx43, rust-medium, trusted-pr]
     timeout-minutes: 90
     env:
       JOB_ID: ${{ github.run_id }}-${{ github.run_attempt }}
@@ -433,20 +432,72 @@ jobs:
         run: |
           df -h / /mnt/docker /mnt/actions /mnt/ci-scratch /mnt/ci-cache /mnt/ci-artifacts 2>/dev/null || true
 
+  rust-small-github:
+    name: BitNet Rust Small on GitHub Hosted
+    needs: route-rust-small
+    if: >-
+      needs.route-rust-small.outputs.target == 'github'
+      && (github.event_name == 'workflow_dispatch'
+          || github.event_name == 'merge_group'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Build and test BitNet rust-small (GitHub Hosted fallback)
+        shell: bash
+        env:
+          CARGO_INCREMENTAL: "0"
+          CARGO_BUILD_JOBS: "2"
+        run: |
+          set -euo pipefail
+          rustc --version
+          cargo --version
+          cargo fetch --locked
+          cargo build --locked \
+            -p bitnet-common \
+            -p bitnet-models \
+            -p bitnet-tokenizers \
+            -p bitnet-quantization \
+            -p bitnet-kernels \
+            --no-default-features --features cpu
+          cargo test --locked \
+            -p bitnet-common \
+            -p bitnet-models \
+            -p bitnet-tokenizers \
+            -p bitnet-quantization \
+            -p bitnet-kernels \
+            --lib \
+            --no-default-features --features cpu \
+            -- --nocapture
+
   rust-small-result:
     name: BitNet Rust Small Result
     needs:
       - route-rust-small
       - rust-small-cx53
       - rust-small-cx43
+      - rust-small-github
     if: >-
       !cancelled()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
           || github.event_name == 'pull_request')
-    # Tiny coordination job (5 min): keep on GitHub-hosted during the cx33
-    # stabilization pass so it can never land on a self-hosted tiny box.
-    runs-on: ubuntu-latest
+    # Nano fan-in job: evaluates results only; never runs Cargo/Rust work.
+    runs-on:
+      group: em-ci-nano
+      labels: [self-hosted, linux, x64, em-ci, cx23, ci-nano, trusted-pr]
     timeout-minutes: 5
     steps:
       - name: Evaluate router and selected target
@@ -456,12 +507,14 @@ jobs:
           ROUTER_RESULT: ${{ needs.route-rust-small.result }}
           CX53_RESULT: ${{ needs.rust-small-cx53.result }}
           CX43_RESULT: ${{ needs.rust-small-cx43.result }}
+          GITHUB_RESULT: ${{ needs.rust-small-github.result }}
         run: |
           set -eu
           echo "router_target=${TARGET:-<empty>}"
           echo "router_result=${ROUTER_RESULT:-<empty>}"
           echo "cx53_result=${CX53_RESULT:-<empty>}"
           echo "cx43_result=${CX43_RESULT:-<empty>}"
+          echo "github_result=${GITHUB_RESULT:-<empty>}"
 
           if [ "${ROUTER_RESULT}" != "success" ]; then
             echo "router job did not succeed; failing normalized result" >&2
@@ -481,9 +534,15 @@ jobs:
                 exit 1
               fi
               ;;
+            github)
+              if [ "${GITHUB_RESULT}" != "success" ]; then
+                echo "selected target github but rust-small-github result was ${GITHUB_RESULT}" >&2
+                exit 1
+              fi
+              ;;
             blocked)
               echo "self-hosted runner routing blocked: ${{ needs.route-rust-small.outputs.reason }}" >&2
-              echo "self-hosted route did not select an available trusted runner" >&2
+              echo "self-hosted route did not select an available trusted runner and fallback is not allowed" >&2
               exit 1
               ;;
             no_rust_inputs)

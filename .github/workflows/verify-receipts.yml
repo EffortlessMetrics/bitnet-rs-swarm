@@ -52,7 +52,16 @@ jobs:
   # Test receipt verification with known examples
   test-receipt-verification:
     name: Test Receipt Verification (Examples)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
     if: contains(github.event.pull_request.labels.*.name, 'receipts')
 
@@ -150,7 +159,16 @@ jobs:
   # Generate and verify receipt from actual benchmark
   verify-generated-receipt:
     name: Verify Generated Receipt (Benchmark)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 30
     # Only run on main/develop branches or workflow_dispatch to avoid overhead on PRs
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
@@ -294,7 +312,17 @@ jobs:
   # Optional: Verify GPU receipts (requires self-hosted GPU runner)
   verify-gpu-receipt:
     name: Verify GPU Receipt (Optional)
-    runs-on: [self-hosted, linux, x64, gpu]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - gpu
+        - trusted-pr
     timeout-minutes: 30
     # Only run on workflow_dispatch or main branch to avoid overhead
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'

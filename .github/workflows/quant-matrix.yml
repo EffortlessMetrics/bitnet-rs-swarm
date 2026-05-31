@@ -20,7 +20,16 @@ jobs:
     name: Build ${{ matrix.features }}
     # Only run when explicitly requested via label
     if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'quant')
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     continue-on-error: true
     timeout-minutes: 8
     strategy:
@@ -114,7 +123,16 @@ jobs:
     name: Smoke Test Quantization
     # Only run when explicitly requested via label
     if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'quant')
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     needs: build-matrix
     continue-on-error: true
 
@@ -167,7 +185,16 @@ jobs:
 
   parity-test:
     name: Parity Test (when slices exist)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     needs: build-matrix
     if: false # Enable when test data is available
 

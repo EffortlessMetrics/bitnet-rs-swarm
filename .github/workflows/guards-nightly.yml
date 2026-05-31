@@ -15,7 +15,16 @@ concurrency:
 jobs:
   guards-nightly:
     name: Guards (nightly)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     steps:
       - name: Checkout

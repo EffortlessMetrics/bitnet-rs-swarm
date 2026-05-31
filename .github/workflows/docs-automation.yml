@@ -37,7 +37,16 @@ concurrency:
 jobs:
   classify-docs:
     name: Classify Docs Change
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 5
     outputs:
       tracker_only: ${{ steps.classify.outputs.tracker_only }}
@@ -89,7 +98,16 @@ jobs:
 
   docs-automation:
     name: Lint + Link Check + Rustdoc
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 25
     needs: [classify-docs]
     steps:

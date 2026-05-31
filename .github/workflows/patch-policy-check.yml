@@ -27,7 +27,16 @@ env:
 jobs:
   check-patch-policy:
     name: Check Patch Policy Compliance
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
 
     steps:
@@ -336,7 +345,16 @@ jobs:
   # Weekly patch lifecycle review
   patch-lifecycle-review:
     name: Weekly Patch Lifecycle Review
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     if: github.event_name == 'schedule'
 
     steps:
