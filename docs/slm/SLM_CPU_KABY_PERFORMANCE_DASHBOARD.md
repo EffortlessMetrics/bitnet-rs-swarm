@@ -4782,6 +4782,43 @@ Qwen3.5 support, or BitNet QK256/I2_S changes. The next safe slice must capture
 fresh candidate-off/candidate-on receipts bound to this per-callsite emitter
 before any candidate runtime dispatch can be attempted.
 
+## SLM-CPU-239 Per-Callsite No-Bias Candidate-Off/On Receipt Blocker
+
+SLM-CPU-239 consumes the SLM-CPU-238 per-callsite emitter boundary and records
+that the existing candidate-off/candidate-on receipts are still
+request-gate-only evidence. They preserve Qwen3/Qwen2.5 strict CPU identity
+across `BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME=off` and `on`, but the candidate-on
+receipts do not execute `dense_linear_no_bias_candidate_forward`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-239-per-callsite-no-bias-off-on-receipts.json
+decision = per_callsite_candidate_off_on_receipts_blocked_fail_closed
+remaining_runtime_selection_blocker = prompt_bound_per_callsite_candidate_execution_descriptor_and_apply_linear_dispatch
+candidate_function_present = bitnet_transformer::dense_linear_no_bias_candidate_forward
+candidate_function_wired_to_model_execution = false
+feed_forward_apply_linear_no_bias_dispatch_branch_present = false
+candidate_on_receipt_executes_candidate_path = false
+candidate_execution_attempted = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The current `FeedForward::apply_linear` path still dispatches through the
+QK256 guard, dense-Q8 hook audit, optional packed-Q8 sidecar path, and
+`candle_nn::Linear::forward`. It does not receive a prompt-bound per-callsite
+no-bias candidate descriptor, and it has no branch that can emit a candidate-on
+receipt from the exact `feed_forward.down_proj` callsite.
+
+The next safe slice must carry prompt-bound per-callsite identity into
+`FeedForward::apply_linear` and fail closed unless the explicit gate,
+SLM-CPU-235 model/tokenizer/backend/fallback/digest identity, callsite
+identity, `bias_present=false`, selected/candidate kernel identity, and default
+eager path preservation all match. This slice does not execute the no-bias
+candidate, prove generated-ID preservation for an executed candidate, change
+default runtime selection, claim allocation reduction, claim timing improvement
+or speedup, broaden Q4/Q5 support, touch server, GPU, NPU, OpenVINO, UHD 620,
+Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

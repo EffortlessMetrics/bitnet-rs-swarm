@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "dense_no_bias_per_callsite_candidate_off_on_receipt_blocker",
+  "tracking_item": "SLM-CPU-239",
+  "consumes_tracking_items": [
+    "SLM-CPU-235",
+    "SLM-CPU-238"
+  ],
+  "generated_at_utc": "2026-05-31T00:00:00Z",
+  "decision": "per_callsite_candidate_off_on_receipts_blocked_fail_closed",
+  "reason": "per_callsite_emitter_identity_exists_but_candidate_on_still_does_not_execute_at_feed_forward_apply_linear",
+  "remaining_runtime_selection_blocker": "prompt_bound_per_callsite_candidate_execution_descriptor_and_apply_linear_dispatch",
+  "source_artifacts": [
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json",
+    "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-238-per-callsite-no-bias-receipt-emitter.json"
+  ],
+  "validated_inputs": {
+    "slm_cpu_235_receipt_pair_validated": true,
+    "slm_cpu_238_per_callsite_emitter_present": true,
+    "slm_cpu_238_per_callsite_identity_matches_descriptor": true,
+    "slm_cpu_238_pair_gate_ready_runtime_disabled": true,
+    "candidate_function_present": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "candidate_function_wired_to_model_execution": false,
+    "feed_forward_apply_linear_accepts_prompt_bound_candidate_descriptor": false,
+    "feed_forward_apply_linear_no_bias_dispatch_branch_present": false,
+    "warm_session_gate_toggles_runtime_request_only": true,
+    "candidate_on_receipt_executes_candidate_path": false
+  },
+  "runtime_boundary": {
+    "apply_linear_owner": "bitnet_transformer::FeedForward::apply_linear",
+    "callsite_identity": "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+    "tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "role_id": "layers.0.feed_forward.down_proj",
+    "scope": "feed_forward",
+    "linear": "down_proj",
+    "bias_present": false,
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_used": false,
+    "selected_path": "eager_f32_candle",
+    "selected_kernel": "dense-f32-candle-linear",
+    "candidate_kernel": "dense-f32-candle-linear-no-bias-candidate",
+    "normal_inference_runtime_selection_enabled": false,
+    "candidate_execution_enabled": false,
+    "current_dispatch_order": [
+      "qk256 raw tensor path",
+      "strict CUDA fallback guard",
+      "dense_linear_runtime_hook_boundary audit",
+      "maybe_forward_dense_q8_sidecar_linear",
+      "record_bitnet_linear_cpu_fallback",
+      "candle_nn::Linear::forward"
+    ]
+  },
+  "models": [
+    {
+      "model_id": "qwen3",
+      "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "model_architecture": "qwen3",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "candidate_path": "qwen3_feed_forward_down_proj_no_bias_candidate",
+      "candidate_off_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-off-execution.json",
+      "candidate_on_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-slm-cpu-235-no-bias-candidate-on-execution.json",
+      "candidate_off_runtime_gate_requested_enabled": false,
+      "candidate_on_runtime_gate_requested_enabled": true,
+      "candidate_execution_enabled": false,
+      "normal_inference_runtime_selection_enabled": false,
+      "prompt_ids_digest": "accdff2798bce7e2202d15b0b360024faeb88d49780e6c553d0d5522aa9f3a12",
+      "generated_ids_digest": "42e05af5073067807f0658d6643fc70bf56c380f580ccb33f8223291e506e541",
+      "decoded_text_digest": "9af36cee5f3eadf5afe17c7dfae0d3b7d2d19065b38572ae9ef8894efd889a97",
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "candidate_on_is_valid_executed_candidate_receipt": false,
+      "generated_id_preservation_for_executed_candidate_claim": false
+    },
+    {
+      "model_id": "qwen25",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "model_architecture": "qwen2",
+      "quant_format": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true,
+      "candidate_path": "qwen25_feed_forward_down_proj_no_bias_candidate",
+      "candidate_off_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-off-execution.json",
+      "candidate_on_receipt": "ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen25-slm-cpu-235-no-bias-candidate-on-execution.json",
+      "candidate_off_runtime_gate_requested_enabled": false,
+      "candidate_on_runtime_gate_requested_enabled": true,
+      "candidate_execution_enabled": false,
+      "normal_inference_runtime_selection_enabled": false,
+      "prompt_ids_digest": "09ac8943b9b6f00454e9083ef21048bea1d15c0491343cf2fda86f6e8be6de05",
+      "generated_ids_digest": "6b0ec1e8be158bfc8028c4396d66f17e2c47d6b1399e61968d5e275c6ff01335",
+      "decoded_text_digest": "b34df75e5b8c1cbe456fd8dd22eafa6a7f3b5781095fb11a004f532dbbd57f0c",
+      "prompt_ids_preserved": true,
+      "generated_ids_preserved": true,
+      "decoded_text_preserved": true,
+      "candidate_on_is_valid_executed_candidate_receipt": false,
+      "generated_id_preservation_for_executed_candidate_claim": false
+    }
+  ],
+  "why_candidate_on_receipts_are_not_valid_for_slm_cpu_239": [
+    "The SLM-CPU-235 candidate-on receipts set runtime_gate_requested_enabled=true but still record candidate_execution_enabled=false.",
+    "The current FeedForward::apply_linear signature receives the Tensor, Linear, projection name, raw tensors, and DenseLinearRuntimeHookRegistry; it does not receive a prompt-bound per-callsite no-bias candidate descriptor.",
+    "The current FeedForward::apply_linear dispatch order has no branch that calls dense_linear_no_bias_candidate_forward for feed_forward.down_proj.",
+    "The SLM-CPU-238 per-callsite emitter is a fail-closed evidence boundary; it does not yet emit a candidate-on receipt from inside the exact apply_linear callsite.",
+    "Recording a candidate-on preservation claim from the request-gate-only receipts would imply executed candidate behavior that did not happen."
+  ],
+  "required_next_slice": {
+    "suggested_tracking_item": "SLM-CPU-240",
+    "scope": "carry a prompt-bound per-callsite candidate execution descriptor into FeedForward::apply_linear and wire a fail-closed no-bias dispatch branch for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj role",
+    "required_before_candidate_on_receipt": [
+      "explicit no-bias runtime gate requested",
+      "per-callsite emitter identity bound at FeedForward::apply_linear",
+      "SLM-CPU-235 model/tokenizer/backend/fallback/digest identity bound",
+      "bias_present=false verified for feed_forward.down_proj",
+      "default eager_f32_candle path preserved when the gate is absent",
+      "candidate-on receipt emitted only when dense_linear_no_bias_candidate_forward executes"
+    ]
+  },
+  "claim_boundary": {
+    "candidate_execution_enabled_by_default": false,
+    "candidate_execution_attempted": false,
+    "valid_candidate_on_execution_receipt_captured": false,
+    "default_runtime_changed": false,
+    "generated_id_preservation_for_executed_candidate_claim": false,
+    "timing_improvement_claim": false,
+    "allocation_reduction_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "q4_or_q5_support_claim": false,
+    "server_or_accelerator_claim": false,
+    "qwen35_or_hybrid_claim": false,
+    "bitnet_qk256_change": false
+  },
+  "passed": true
+}
