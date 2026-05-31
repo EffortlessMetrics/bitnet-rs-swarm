@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "artifact_kind": "lunar_lake_cpu_slm_resident_session",
   "proof_stage": "resident_cpu_no_reload_timing_no_new_inference",
   "created_utc": "2026-05-17T09:30:00Z",
@@ -24,6 +24,14 @@
     "fallback_used": false,
     "answer_gate_passed": true
   },
+  "execution_context": {
+    "thread_count": 1,
+    "power_scheme": null,
+    "power_scheme_status": "not_sampled_in_slm_cpu_warm_session",
+    "ac_battery_state": null,
+    "ac_battery_state_status": "not_sampled_in_slm_cpu_warm_session",
+    "fallback_used": false
+  },
   "resident_session": {
     "reuse_scope": "resident_session",
     "model_loaded_once": true,
@@ -39,7 +47,32 @@
     "generated_token_buffer_reused": true,
     "timing_buffers_reused": true,
     "stop_policy_precomputed_once": true,
-    "resident_memory_bytes": 2801647616
+    "resident_memory_bytes": 2801647616,
+    "memory_samples": {
+      "source": "sysinfo_current_process",
+      "before_load_bytes": null,
+      "before_load_status": "not_exposed",
+      "after_load_bytes": null,
+      "after_load_status": "not_exposed",
+      "after_first_ask_bytes": null,
+      "after_first_ask_status": "not_exposed",
+      "after_warm_loop_bytes": 2801647616,
+      "after_warm_loop_status": "measured_after_warm_loop"
+    },
+    "first_resident_prompt": {
+      "prompt_index": 0,
+      "case_id": "regression_tiny_math_2_plus_2_brief",
+      "profile_id": "regression_tiny",
+      "total_ms": 11953.166,
+      "time_to_first_token_ms": 9281.0,
+      "prefill_ms": 8345.714,
+      "decode_total_ms": 3044.469,
+      "tokenize_ms": 476.974,
+      "generated_tokens": 9,
+      "fallback_used": false,
+      "model_reload_observed": false,
+      "tokenizer_reload_observed": false
+    }
   },
   "cold_reference": {
     "profile_id": "ask_short",
@@ -69,37 +102,166 @@
         "sample_count": 10,
         "min": 16265.008,
         "mean": 16407.3715,
+        "p95": 16572.393,
         "max": 16572.393
       },
       "time_to_first_token_ms": {
         "sample_count": 10,
         "min": 8716.0,
         "mean": 8834.2,
+        "p95": 8971.0,
         "max": 8971.0
       },
       "prefill_ms": {
         "sample_count": 10,
         "min": 7811.024,
         "mean": 7961.1515,
+        "p95": 8089.869,
         "max": 8089.869
       },
       "decode_total_ms": {
         "sample_count": 10,
         "min": 7821.365,
         "mean": 7899.988799999999,
+        "p95": 8000.71,
         "max": 8000.71
       },
       "tokenize_ms": {
         "sample_count": 10,
         "min": 429.223,
         "mean": 465.5535999999999,
+        "p95": 495.779,
         "max": 495.779
       },
       "generated_tokens": {
         "sample_count": 10,
         "min": 24.0,
         "mean": 24.0,
+        "p95": 24.0,
         "max": 24.0
+      },
+      "prompt_token_count": {
+        "exposure": "not_exposed",
+        "source": "prompt_token_count",
+        "summary": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        }
+      },
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 429.223,
+            "mean": 465.5535999999999,
+            "p95": 495.779,
+            "max": 495.779
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 7811.024,
+            "mean": 7961.1515,
+            "p95": 8089.869,
+            "max": 8089.869
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 8716.0,
+            "mean": 8834.2,
+            "p95": 8971.0,
+            "max": 8971.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 7821.365,
+            "mean": 7899.988799999999,
+            "p95": 8000.71,
+            "max": 8000.71
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.62,
+            "mean": 0.7305999999999999,
+            "p95": 0.831,
+            "max": 0.831
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 16265.008,
+            "mean": 16407.3715,
+            "p95": 16572.393,
+            "max": 16572.393
+          }
+        }
       },
       "decode_tokens_per_s_mean": 3.037978990552493,
       "cold_to_resident_total_ratio": 1.70572958624116,
@@ -122,37 +284,166 @@
         "sample_count": 10,
         "min": 11036.382,
         "mean": 11158.749899999999,
+        "p95": 11296.331,
         "max": 11296.331
       },
       "time_to_first_token_ms": {
         "sample_count": 10,
         "min": 8444.0,
         "mean": 8531.8,
+        "p95": 8647.0,
         "max": 8647.0
       },
       "prefill_ms": {
         "sample_count": 10,
         "min": 7605.675,
         "mean": 7656.6327,
+        "p95": 7735.318,
         "max": 7735.318
       },
       "decode_total_ms": {
         "sample_count": 10,
         "min": 2912.26,
         "mean": 2950.160500000001,
+        "p95": 3032.67,
         "max": 3032.67
       },
       "tokenize_ms": {
         "sample_count": 10,
         "min": 434.987,
         "mean": 466.20640000000003,
+        "p95": 532.421,
         "max": 532.421
       },
       "generated_tokens": {
         "sample_count": 10,
         "min": 9.0,
         "mean": 9.0,
+        "p95": 9.0,
         "max": 9.0
+      },
+      "prompt_token_count": {
+        "exposure": "not_exposed",
+        "source": "prompt_token_count",
+        "summary": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        }
+      },
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 434.987,
+            "mean": 466.20640000000003,
+            "p95": 532.421,
+            "max": 532.421
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 7605.675,
+            "mean": 7656.6327,
+            "p95": 7735.318,
+            "max": 7735.318
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 8444.0,
+            "mean": 8531.8,
+            "p95": 8647.0,
+            "max": 8647.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 2912.26,
+            "mean": 2950.160500000001,
+            "p95": 3032.67,
+            "max": 3032.67
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.217,
+            "mean": 0.2742,
+            "p95": 0.346,
+            "max": 0.346
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 11036.382,
+            "mean": 11158.749899999999,
+            "p95": 11296.331,
+            "max": 11296.331
+          }
+        }
       },
       "decode_tokens_per_s_mean": 3.0506814798720265,
       "cold_to_resident_total_ratio": 2.5080353310902685,
@@ -175,37 +466,166 @@
         "sample_count": 10,
         "min": 11726.267,
         "mean": 12314.7897,
+        "p95": 13210.084,
         "max": 13210.084
       },
       "time_to_first_token_ms": {
         "sample_count": 10,
         "min": 9074.0,
         "mean": 9660.9,
+        "p95": 10665.0,
         "max": 10665.0
       },
       "prefill_ms": {
         "sample_count": 10,
         "min": 8133.884,
         "mean": 8737.638599999998,
+        "p95": 9467.583,
         "max": 9467.583
       },
       "decode_total_ms": {
         "sample_count": 10,
         "min": 2885.536,
         "mean": 3018.6404999999995,
+        "p95": 3151.317,
         "max": 3151.317
       },
       "tokenize_ms": {
         "sample_count": 10,
         "min": 383.576,
         "mean": 476.4964,
+        "p95": 509.446,
         "max": 509.446
       },
       "generated_tokens": {
         "sample_count": 10,
         "min": 9.0,
         "mean": 9.0,
+        "p95": 9.0,
         "max": 9.0
+      },
+      "prompt_token_count": {
+        "exposure": "not_exposed",
+        "source": "prompt_token_count",
+        "summary": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        }
+      },
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 383.576,
+            "mean": 476.4964,
+            "p95": 509.446,
+            "max": 509.446
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 8133.884,
+            "mean": 8737.638599999998,
+            "p95": 9467.583,
+            "max": 9467.583
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 9074.0,
+            "mean": 9660.9,
+            "p95": 10665.0,
+            "max": 10665.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 2885.536,
+            "mean": 3018.6404999999995,
+            "p95": 3151.317,
+            "max": 3151.317
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.216,
+            "mean": 0.26450000000000007,
+            "p95": 0.341,
+            "max": 0.341
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 11726.267,
+            "mean": 12314.7897,
+            "p95": 13210.084,
+            "max": 13210.084
+          }
+        }
       },
       "decode_tokens_per_s_mean": 2.981474607526137,
       "cold_to_resident_total_ratio": 2.2725957715705047,

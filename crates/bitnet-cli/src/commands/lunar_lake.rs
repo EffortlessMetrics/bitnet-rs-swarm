@@ -10,6 +10,7 @@ use clap::{Args, Subcommand};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -2165,6 +2166,7 @@ pub struct LunarLakeCpuSlmResidentSession {
     pub source_receipts: CpuSlmResidentSessionSources,
     pub model: CpuSlmAttributionModel,
     pub backend: CpuSlmAttributionBackend,
+    pub execution_context: CpuSlmResidentExecutionContext,
     pub resident_session: CpuSlmResidentSessionEvidence,
     pub cold_reference: CpuSlmResidentColdReference,
     pub profiles: Vec<CpuSlmResidentProfileSummary>,
@@ -2198,6 +2200,47 @@ pub struct CpuSlmResidentSessionEvidence {
     pub timing_buffers_reused: Option<bool>,
     pub stop_policy_precomputed_once: Option<bool>,
     pub resident_memory_bytes: Option<u64>,
+    pub memory_samples: CpuSlmResidentMemorySamples,
+    pub first_resident_prompt: Option<CpuSlmResidentFirstPromptEvidence>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmResidentExecutionContext {
+    pub thread_count: Option<u64>,
+    pub power_scheme: Option<String>,
+    pub power_scheme_status: String,
+    pub ac_battery_state: Option<String>,
+    pub ac_battery_state_status: String,
+    pub fallback_used: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmResidentMemorySamples {
+    pub source: Option<String>,
+    pub before_load_bytes: Option<u64>,
+    pub before_load_status: String,
+    pub after_load_bytes: Option<u64>,
+    pub after_load_status: String,
+    pub after_first_ask_bytes: Option<u64>,
+    pub after_first_ask_status: String,
+    pub after_warm_loop_bytes: Option<u64>,
+    pub after_warm_loop_status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmResidentFirstPromptEvidence {
+    pub prompt_index: u64,
+    pub case_id: Option<String>,
+    pub profile_id: Option<String>,
+    pub total_ms: Option<f64>,
+    pub time_to_first_token_ms: Option<f64>,
+    pub prefill_ms: Option<f64>,
+    pub decode_total_ms: Option<f64>,
+    pub tokenize_ms: Option<f64>,
+    pub generated_tokens: Option<u64>,
+    pub fallback_used: Option<bool>,
+    pub model_reload_observed: bool,
+    pub tokenizer_reload_observed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -2230,6 +2273,8 @@ pub struct CpuSlmResidentProfileSummary {
     pub decode_total_ms: CpuSlmResidentMetricSummary,
     pub tokenize_ms: CpuSlmResidentMetricSummary,
     pub generated_tokens: CpuSlmResidentMetricSummary,
+    pub prompt_token_count: CpuSlmResidentPhaseMetric,
+    pub phase_timings_ms: CpuSlmResidentProfilePhaseTimings,
     pub decode_tokens_per_s_mean: Option<f64>,
     pub cold_to_resident_total_ratio: Option<f64>,
     pub blockers: Vec<String>,
@@ -2240,7 +2285,29 @@ pub struct CpuSlmResidentMetricSummary {
     pub sample_count: u64,
     pub min: Option<f64>,
     pub mean: Option<f64>,
+    pub p95: Option<f64>,
     pub max: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmResidentPhaseMetric {
+    pub exposure: String,
+    pub source: String,
+    pub summary: CpuSlmResidentMetricSummary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmResidentProfilePhaseTimings {
+    pub prompt_render_ms: CpuSlmResidentPhaseMetric,
+    pub tokenize_ms: CpuSlmResidentPhaseMetric,
+    pub prefill_ms: CpuSlmResidentPhaseMetric,
+    pub first_token_ms: CpuSlmResidentPhaseMetric,
+    pub decode_ms: CpuSlmResidentPhaseMetric,
+    pub detokenize_ms: CpuSlmResidentPhaseMetric,
+    pub quality_gate_ms: CpuSlmResidentPhaseMetric,
+    pub receipt_write_ms: CpuSlmResidentPhaseMetric,
+    pub telemetry_ms: CpuSlmResidentPhaseMetric,
+    pub total_response_ms: CpuSlmResidentPhaseMetric,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -7796,7 +7863,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
         && profiles.iter().all(|profile| profile.blockers.is_empty());
 
     Ok(LunarLakeCpuSlmResidentSession {
-        schema_version: "1.0.0".to_string(),
+        schema_version: "1.1.0".to_string(),
         artifact_kind: "lunar_lake_cpu_slm_resident_session".to_string(),
         proof_stage: "resident_cpu_no_reload_timing_no_new_inference".to_string(),
         created_utc,
@@ -7835,6 +7902,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
             fallback_used: fallback_used(&repeated_json),
             answer_gate_passed: bool_at_any(&repeated_json, &["quality_summary.passed"]),
         },
+        execution_context: cpu_slm_resident_execution_context(&repeated_json),
         resident_session,
         cold_reference,
         profiles,
@@ -7876,7 +7944,85 @@ fn cpu_slm_resident_session_evidence(json: &Value) -> CpuSlmResidentSessionEvide
         timing_buffers_reused: bool_at_any(json, &["session.timing_buffers_reused"]),
         stop_policy_precomputed_once: bool_at_any(json, &["session.stop_policy_precomputed_once"]),
         resident_memory_bytes: u64_at(json, "memory.resident_memory_bytes"),
+        memory_samples: cpu_slm_resident_memory_samples(json),
+        first_resident_prompt: cpu_slm_first_resident_prompt(json),
     }
+}
+
+fn cpu_slm_resident_execution_context(json: &Value) -> CpuSlmResidentExecutionContext {
+    let power_available = bool_at_any(json, &["power.available"]);
+    let power_source = string_at(json, "power.source")
+        .unwrap_or_else(|| "not_exposed_in_slm_cpu_warm_session".to_string());
+    let power_scheme =
+        string_at_any(json, &["power.power_scheme", "power.active_scheme", "power.mode"]);
+    let ac_battery_state = string_at_any(json, &["power.battery_status", "power.ac_battery_state"]);
+    CpuSlmResidentExecutionContext {
+        thread_count: u64_at(json, "cpu.threads"),
+        power_scheme_status: if power_scheme.is_some() {
+            "measured".to_string()
+        } else {
+            power_source.clone()
+        },
+        power_scheme,
+        ac_battery_state_status: if ac_battery_state.is_some() || power_available == Some(true) {
+            "measured".to_string()
+        } else {
+            power_source
+        },
+        ac_battery_state,
+        fallback_used: fallback_used(json),
+    }
+}
+
+fn cpu_slm_resident_memory_samples(json: &Value) -> CpuSlmResidentMemorySamples {
+    let after_warm_loop_bytes = u64_at(json, "memory.resident_memory_bytes");
+    CpuSlmResidentMemorySamples {
+        source: string_at(json, "memory.resident_memory_source"),
+        before_load_bytes: None,
+        before_load_status: "not_exposed".to_string(),
+        after_load_bytes: None,
+        after_load_status: "not_exposed".to_string(),
+        after_first_ask_bytes: None,
+        after_first_ask_status: "not_exposed".to_string(),
+        after_warm_loop_bytes,
+        after_warm_loop_status: if after_warm_loop_bytes.is_some() {
+            "measured_after_warm_loop".to_string()
+        } else {
+            "not_exposed".to_string()
+        },
+    }
+}
+
+fn cpu_slm_first_resident_prompt(json: &Value) -> Option<CpuSlmResidentFirstPromptEvidence> {
+    let first = json
+        .get("prompts")
+        .and_then(Value::as_array)?
+        .iter()
+        .filter_map(|prompt| u64_at(prompt, "prompt_index").map(|index| (index, prompt)))
+        .min_by_key(|(index, _)| *index)?;
+    let prompt = first.1;
+    let case_id = string_at(prompt, "case_id");
+    let profile_id =
+        case_id.as_deref().and_then(durability_profile_for_case_id).map(str::to_string);
+    Some(CpuSlmResidentFirstPromptEvidence {
+        prompt_index: first.0,
+        case_id,
+        profile_id,
+        total_ms: number_at_any(prompt, &["timing.total_ms"]),
+        time_to_first_token_ms: number_at_any(
+            prompt,
+            &["timing.time_to_first_token_ms", "timing.first_token_ms"],
+        ),
+        prefill_ms: number_at_any(prompt, &["timing.prefill_ms"]),
+        decode_total_ms: number_at_any(prompt, &["timing.decode_total_ms"]),
+        tokenize_ms: number_at_any(prompt, &["timing.tokenize_ms"]),
+        generated_tokens: u64_at(prompt, "generated_tokens"),
+        fallback_used: fallback_used(prompt),
+        model_reload_observed: number_at_any(prompt, &["timing.model_load_ms"])
+            .is_some_and(|value| value > 0.0),
+        tokenizer_reload_observed: number_at_any(prompt, &["timing.tokenizer_load_ms"])
+            .is_some_and(|value| value > 0.0),
+    })
 }
 
 fn cpu_slm_resident_cold_reference(json: &Value) -> CpuSlmResidentColdReference {
@@ -7908,6 +8054,7 @@ struct ResidentProfileAccumulator {
     prefill_ms: Vec<f64>,
     decode_total_ms: Vec<f64>,
     tokenize_ms: Vec<f64>,
+    detokenize_ms: Vec<f64>,
     generated_tokens: Vec<f64>,
 }
 
@@ -7980,6 +8127,11 @@ fn cpu_slm_resident_profiles(
             push_number(prompt, "timing.prefill_ms", &mut entry.prefill_ms);
             push_number(prompt, "timing.decode_total_ms", &mut entry.decode_total_ms);
             push_number(prompt, "timing.tokenize_ms", &mut entry.tokenize_ms);
+            push_first_number(
+                prompt,
+                &["timing.detokenize_ms", "timing.token_decode_ms.total_ms"],
+                &mut entry.detokenize_ms,
+            );
             if let Some(tokens) = u64_at(prompt, "generated_tokens") {
                 entry.generated_tokens.push(tokens as f64);
             }
@@ -8024,6 +8176,24 @@ fn cpu_slm_resident_profiles(
             let total_ms = resident_metric_summary(&entry.total_ms);
             let decode_total_ms = resident_metric_summary(&entry.decode_total_ms);
             let generated_tokens = resident_metric_summary(&entry.generated_tokens);
+            let phase_timings_ms = CpuSlmResidentProfilePhaseTimings {
+                prompt_render_ms: resident_phase_not_exposed("prompt_render_ms"),
+                tokenize_ms: resident_phase_metric(&entry.tokenize_ms, "timing.tokenize_ms"),
+                prefill_ms: resident_phase_metric(&entry.prefill_ms, "timing.prefill_ms"),
+                first_token_ms: resident_phase_metric(
+                    &entry.time_to_first_token_ms,
+                    "timing.time_to_first_token_ms|timing.first_token_ms",
+                ),
+                decode_ms: resident_phase_metric(&entry.decode_total_ms, "timing.decode_total_ms"),
+                detokenize_ms: resident_phase_metric(
+                    &entry.detokenize_ms,
+                    "timing.token_decode_ms.total_ms",
+                ),
+                quality_gate_ms: resident_phase_not_exposed("quality_gate_ms"),
+                receipt_write_ms: resident_phase_not_exposed("receipt_write_ms"),
+                telemetry_ms: resident_phase_not_exposed("telemetry_ms"),
+                total_response_ms: resident_phase_metric(&entry.total_ms, "timing.total_ms"),
+            };
             let decode_tokens_per_s_mean =
                 match (sum_f64(&entry.generated_tokens), sum_f64(&entry.decode_total_ms)) {
                     (Some(tokens), Some(ms)) if ms > 0.0 => Some(tokens / (ms / 1000.0)),
@@ -8051,6 +8221,8 @@ fn cpu_slm_resident_profiles(
                 decode_total_ms,
                 tokenize_ms: resident_metric_summary(&entry.tokenize_ms),
                 generated_tokens,
+                prompt_token_count: resident_phase_not_exposed("prompt_token_count"),
+                phase_timings_ms,
                 decode_tokens_per_s_mean,
                 cold_to_resident_total_ratio,
                 blockers,
@@ -8071,25 +8243,60 @@ fn push_first_number(json: &Value, paths: &[&str], out: &mut Vec<f64>) {
     }
 }
 
+fn resident_phase_metric(values: &[f64], source: &str) -> CpuSlmResidentPhaseMetric {
+    CpuSlmResidentPhaseMetric {
+        exposure: if values.is_empty() { "not_exposed" } else { "measured" }.to_string(),
+        source: source.to_string(),
+        summary: resident_metric_summary(values),
+    }
+}
+
+fn resident_phase_not_exposed(source: &str) -> CpuSlmResidentPhaseMetric {
+    CpuSlmResidentPhaseMetric {
+        exposure: "not_exposed".to_string(),
+        source: source.to_string(),
+        summary: resident_metric_summary(&[]),
+    }
+}
+
 fn resident_metric_summary(values: &[f64]) -> CpuSlmResidentMetricSummary {
     let sample_count = values.len() as u64;
     if values.is_empty() {
-        return CpuSlmResidentMetricSummary { sample_count, min: None, mean: None, max: None };
+        return CpuSlmResidentMetricSummary {
+            sample_count,
+            min: None,
+            mean: None,
+            p95: None,
+            max: None,
+        };
     }
     let mut min = f64::INFINITY;
     let mut max = f64::NEG_INFINITY;
     let mut sum = 0.0;
+    let mut sorted = Vec::with_capacity(values.len());
     for value in values {
         min = min.min(*value);
         max = max.max(*value);
         sum += value;
+        sorted.push(*value);
     }
+    sorted.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
     CpuSlmResidentMetricSummary {
         sample_count,
         min: Some(min),
         mean: Some(sum / values.len() as f64),
+        p95: resident_percentile_nearest_rank(&sorted, 95.0),
         max: Some(max),
     }
+}
+
+fn resident_percentile_nearest_rank(sorted_values: &[f64], percentile: f64) -> Option<f64> {
+    if sorted_values.is_empty() {
+        return None;
+    }
+    let rank = ((percentile / 100.0) * sorted_values.len() as f64).ceil() as usize;
+    let index = rank.saturating_sub(1).min(sorted_values.len() - 1);
+    sorted_values.get(index).copied()
 }
 
 fn sum_f64(values: &[f64]) -> Option<f64> {
@@ -21000,8 +21207,27 @@ mod tests {
         assert!(receipt.resident_ready, "{:?}", receipt.gaps);
         assert_eq!(receipt.artifact_kind, "lunar_lake_cpu_slm_resident_session");
         assert_eq!(receipt.backend.selected_backend, "cpu-rust");
+        assert_eq!(receipt.execution_context.thread_count, None);
+        assert_eq!(
+            receipt.execution_context.power_scheme_status,
+            "not_exposed_in_slm_cpu_warm_session"
+        );
         assert_eq!(receipt.resident_session.model_loaded_once, Some(true));
         assert_eq!(receipt.resident_session.tokenizer_loaded_once, Some(true));
+        assert_eq!(
+            receipt.resident_session.memory_samples.after_warm_loop_status,
+            "measured_after_warm_loop"
+        );
+        let first_prompt = receipt
+            .resident_session
+            .first_resident_prompt
+            .as_ref()
+            .context("missing first prompt")?;
+        assert_eq!(first_prompt.prompt_index, 0);
+        assert_eq!(first_prompt.profile_id.as_deref(), Some("ask_short"));
+        assert_eq!(first_prompt.fallback_used, Some(false));
+        assert!(!first_prompt.model_reload_observed);
+        assert!(!first_prompt.tokenizer_reload_observed);
         let profile = receipt
             .profiles
             .iter()
@@ -21009,6 +21235,13 @@ mod tests {
             .context("missing ask_short profile")?;
         assert_eq!(profile.observed_execution_count, 2);
         assert_eq!(profile.total_ms.mean, Some(90.0));
+        assert_eq!(profile.total_ms.p95, Some(100.0));
+        assert_eq!(profile.phase_timings_ms.tokenize_ms.exposure, "measured");
+        assert_eq!(profile.phase_timings_ms.tokenize_ms.summary.p95, Some(3.0));
+        assert_eq!(profile.phase_timings_ms.detokenize_ms.exposure, "not_exposed");
+        assert_eq!(profile.phase_timings_ms.prompt_render_ms.exposure, "not_exposed");
+        assert_eq!(profile.phase_timings_ms.quality_gate_ms.exposure, "not_exposed");
+        assert_eq!(profile.prompt_token_count.exposure, "not_exposed");
         assert_eq!(profile.decode_tokens_per_s_mean, Some(8.0 / 0.084));
         assert_eq!(profile.cold_to_resident_total_ratio, Some(200.0 / 90.0));
         assert!(profile.blockers.is_empty());
