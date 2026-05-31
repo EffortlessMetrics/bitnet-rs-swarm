@@ -2,6 +2,8 @@
 
 Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1035
 
+Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
+
 Research date: 2026-05-30
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
@@ -21,6 +23,14 @@ The strongest evidence says:
   load, prefill, and decode;
 - existing receipts do not explain thread/core behavior on the 4 P-core plus
   4 low-power E-core 258V topology.
+
+The current route decision is:
+
+- keep Rust GGUF CPU as the correctness, fallback, and comparison plate;
+- treat OpenVINO CPU as a separate diagnostic candidate, not a drop-in
+  replacement for the Rust GGUF CPU route;
+- defer Rust GGUF CPU optimization until resident timing, thread/core, and
+  matched comparison evidence identify a single target.
 
 Do not start a CPU runtime optimization PR from this research alone. The next
 implementation should be a small receipt or instrumentation PR that makes the
@@ -227,6 +237,84 @@ Do not promote OpenVINO CPU from this table:
   `low_power`, `prefill_heavy`, `structured`, and `warm_resident`.
 
 Use this evidence to justify a matched comparison receipt, not a route change.
+
+## CPU Route Decision Memo
+
+Decision date: 2026-05-31
+
+This research resolves the immediate #1122 planning question as follows.
+
+### Keep Rust GGUF CPU As Correctness/Fallback Plate
+
+Keep `dense_slm_default_cpu` on the Rust GGUF CPU path for correctness,
+fallback, regression, and route comparison. It is slow, but it is the local
+route that preserves the current GGUF model, tokenizer source, prompt
+template, receipt shape, and fallback-free regression context.
+
+This is not a performance endorsement. It is a control-plane decision: the CPU
+plate stays stable until another route has an exact-profile promotion package
+or the CPU evidence identifies a narrow optimization target.
+
+### Keep OpenVINO CPU Separate For Now
+
+OpenVINO CPU should remain a separate route candidate and diagnostic reference.
+The current OpenVINO CPU corpus-v2 evidence is strong enough to prove that the
+OpenVINO CPU export can answer the bounded corpus with direct generated token
+IDs and `fallback_used=false`. It is not strong enough to replace the Rust GGUF
+CPU route because:
+
+- Q8_0 GGUF and INT4_SYM OpenVINO IR are not model-format equivalent;
+- Rust resident total time and OpenVINO generation wall time do not cover the
+  same host setup, tokenizer, prompt-render, pipeline, and receipt phases;
+- OpenVINO tokenization and detokenization phase metrics are still not fully
+  exposed in the current corpus-v2 receipt;
+- matched Rust resident evidence does not cover every OpenVINO profile.
+
+Do not collapse OpenVINO CPU into the CPU default route until a later review
+accepts a matched route/profile comparison despite those differences, or a
+separate product decision explicitly introduces OpenVINO CPU as a distinct
+promoted CPU profile.
+
+### Do Not Optimize Blindly
+
+The next code PR should not tune threads, kernels, tokenizer setup, or route
+policy by intuition. The present evidence points at prefill, first-token,
+decode, and thread/core behavior as the likely target set, but it does not yet
+separate enough sub-phases to justify a durable runtime change.
+
+Optimization becomes a good PR only after one of these is true:
+
+- resident timing proves a repeated per-prompt sub-phase dominates after model
+  and tokenizer load are excluded;
+- the thread/core matrix shows a stable, repeatable topology effect that can be
+  guarded without hurting correctness or low-power evidence;
+- matched Rust GGUF versus OpenVINO CPU comparison shows that the route decision
+  is about model/runtime format, not a missing Rust instrumentation field.
+
+## Fair CPU Benchmark Boundary
+
+A fair CPU benchmark for route decisions must be profile-scoped and honest
+about what differs. It must record:
+
+- Rust GGUF model identity and OpenVINO IR model identity separately;
+- quantization and format mismatch, including Q8_0 GGUF versus INT4_SYM
+  OpenVINO IR;
+- tokenizer source, chat template source, prompt-render policy, and generation
+  config for each route;
+- cold/warm mode, model or pipeline construction, tokenization, prefill,
+  first-token, decode, detokenize, quality gate, receipt write, and total
+  timing scope;
+- prompt and generated token counts for the named profile;
+- direct generated-token ID status, retokenized status, or unavailable status;
+- selected backend/runtime/device and `fallback_used=false`;
+- AC/battery state, Windows power scheme, and thermal availability;
+- whether the comparison is route/profile evidence, model-format diagnostic
+  evidence, or benchmark-qualified promotion input.
+
+The benchmark must fail closed for promotion if it hides model-format mismatch,
+uses different generation configs, lacks same-profile CPU evidence, lacks
+fallback status, or treats a narrower OpenVINO timing scope as equivalent to
+Rust total response timing.
 
 ## Measurement Plan
 
