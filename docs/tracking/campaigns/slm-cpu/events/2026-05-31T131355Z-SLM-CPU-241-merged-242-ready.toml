@@ -1,0 +1,16 @@
+timestamp = "2026-05-31T13:13:55Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-241"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1131
+branch = "codex/slm-cpu/slm-cpu-241-apply-linear-callsite-descriptor"
+head_sha = "ff1782af8b966733d3d88078fd91315c0705a1a5"
+merge_sha = "7705b08d5b9e9c37ab6946405f135b6daadf5101"
+summary = "Closed SLM-CPU-241 after the apply-linear no-bias callsite descriptor boundary PR merged and queued SLM-CPU-242."
+notes = [
+  "PR #1131 adds a fail-closed optional prompt-bound no-bias descriptor argument at FeedForward::apply_linear for the exact feed_forward.down_proj callsite.",
+  "SLM-CPU-242 is ready to add or precisely block prompt/session-scoped descriptor construction and propagation before any candidate-on execution receipt.",
+]
