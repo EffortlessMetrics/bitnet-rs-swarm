@@ -73,7 +73,9 @@ corpus-v2 run. Do not use the runtime-comparison receipt as a benchmark
 speedup claim: Rust GGUF CPU uses Q8_0 GGUF and OpenVINO CPU uses INT4_SYM
 OpenVINO IR, timing scopes still differ, OpenVINO tokenization/detokenization
 metrics are not fully exposed, and several corpus-v2 profiles lack matched
-Rust resident evidence.
+Rust resident evidence. #1156 now enforces that boundary in the comparison
+builder: benchmark qualification must remain false while model formats or
+timing scopes differ.
 
 ## Top Likely Causes
 
@@ -438,7 +440,7 @@ hiding it:
 is now closed. Treat its receipt/schema hardening as the completed first step,
 not as the next action.
 
-The live CPU slow-path follow-ups are:
+The live CPU slow-path follow-ups and guard status are:
 
 1. [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069)
    refreshes resident Rust GGUF CPU no-reload timing. It should separate one
@@ -449,7 +451,10 @@ The live CPU slow-path follow-ups are:
    collects the dense Rust GGUF thread/core matrix across current default,
    1-thread, 4-thread, and 8-thread variants with Windows power, AC/battery,
    thermal, utilization, frequency, fallback, and claim-boundary context.
-3. After #1069 and #1071, refresh the matched Rust GGUF CPU versus OpenVINO CPU
+3. [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156)
+   landed the current comparison-qualification guard. Treat it as completed
+   validation hardening, not as measurement evidence.
+4. After #1069 and #1071, refresh the matched Rust GGUF CPU versus OpenVINO CPU
    comparison with explicit model-format, timing-scope, prompt-render,
    tokenization, and benchmark-qualification blockers.
 

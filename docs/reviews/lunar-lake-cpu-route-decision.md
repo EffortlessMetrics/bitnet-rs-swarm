@@ -23,16 +23,20 @@ useful because corpus-v2 passes with fallback false and direct generated-token
 visibility, but it is not a matched-format CPU speedup claim and it does not
 replace the Rust GGUF CPU route.
 
-This memo records the decision from #1122, landed by #1132. It does not change
-route policy, run inference, refresh receipts, promote OpenVINO CPU, claim a
-speedup, claim a power advantage, or prove BitNet QK256/I2_S behavior.
+This memo records the decision from #1122, landed by #1132. #1156 later added
+the fail-closed comparison guard for the non-equivalence boundary described
+here: CPU comparison receipts must keep benchmark qualification false when
+model formats or timing scopes differ, and the qualification fields must agree.
+This memo does not change route policy, run inference, refresh receipts,
+promote OpenVINO CPU, claim a speedup, claim a power advantage, or prove
+BitNet QK256/I2_S behavior.
 
 ## Current Evidence
 
 | Evidence | Current finding | Decision effect |
 | --- | --- | --- |
 | `lunar-lake-cpu-slow-path.md` | Rust GGUF CPU is slow after reload is removed; prefill, first-token, and decode remain large costs | Optimization needs phase and platform attribution before code changes |
-| `lunar-lake-cpu-slm-runtime-comparison.json` | OpenVINO CPU corpus-v2 now passes, but `benchmark_qualified=false` | Use as route/context evidence, not speedup proof |
+| `lunar-lake-cpu-slm-runtime-comparison.json` | OpenVINO CPU corpus-v2 now passes, but `benchmark_qualified=false`; #1156 guards this status when model formats or timing scopes differ | Use as route/context evidence, not speedup proof |
 | `lunar-lake-openvino-token-visibility.md` | OpenVINO CPU has direct generated token IDs from the current corpus-v2 evidence | Token visibility is not the CPU comparison blocker |
 | `lunar-lake-cpu-thread-core-matrix.md` | Dense Rust GGUF CPU lacks a thread/core matrix on 258V | Do not tune thread count or affinity defaults yet |
 | #1069 | Resident CPU no-reload timing refresh remains open | Measurement subissue, not a route decision by itself |
@@ -80,6 +84,14 @@ If model formats differ, the comparison may still support a route/profile
 candidate review, but it must not claim matched-format engine parity. If timing
 scopes differ, any ratio remains diagnostic until the receipt explains and
 qualifies the difference.
+
+The #1156 guard makes this boundary executable for current CPU comparison
+receipts. A receipt cannot mark the comparison benchmark-qualified while model
+formats differ, while timing scopes differ, or while
+`benchmark_qualification.qualified` and
+`timing_scope_alignment.benchmark_qualified` disagree. That guard preserves
+candidate context; it does not promote OpenVINO CPU or close the resident
+timing and thread/core measurement issues.
 
 ## Block And Unblock Conditions
 
@@ -130,14 +142,17 @@ Measurement subissues do not change this status by themselves.
 
 Do not start with CPU optimization.
 
-The next small PR should be one of:
+The remaining next small PRs are:
 
 1. #1069 resident CPU no-reload timing refresh with stronger phase accounting.
 2. #1071 thread/core matrix receipt for dense Rust GGUF resident asks.
-3. A comparison-schema guard that keeps `benchmark_qualified=false` when model
-   formats or timing scopes differ, while still allowing candidate context.
 
-Each of those PRs should remain docs, receipt, schema, or validation scoped.
+The comparison-schema guard that keeps `benchmark_qualified=false` when model
+formats or timing scopes differ landed in #1156. Future CPU comparison work
+should refresh matched-profile evidence or harden a newly exposed gap, not
+repeat that guard.
+
+Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed
 promotion package.
 
