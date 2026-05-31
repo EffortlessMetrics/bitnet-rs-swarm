@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108)
-Linked PRs: n/a
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137)
 Support-tier impact: no promotion; review-only route identity map
 Policy impact: no policy exception
 
@@ -18,9 +18,9 @@ How should Lunar Lake map current campaign-local route IDs to canonical route
 IDs and proof families before future validators, receipt explainers, or route
 promotion reviews rely on route identity?
 
-This review answers #1135. It does not rename committed receipts, run
-inference, change route policy, promote or revoke a profile, refresh
-benchmarks, mutate generated dashboards, claim a speedup, claim a power
+This review answered #1135 and landed in #1137. It does not rename committed
+receipts, run inference, change route policy, promote or revoke a profile,
+refresh benchmarks, mutate generated dashboards, claim a speedup, claim a power
 advantage, prove native accelerator kernels, or prove BitNet QK256/I2_S
 behavior.
 
@@ -222,7 +222,7 @@ churn.
 
 ## Acceptance For #1135
 
-Issue #1135 can close when this review lands because it:
+Issue #1135 closed when this review landed because it:
 
 - maps current Lunar Lake campaign-local route IDs to canonical OpenVINO route
   IDs and proof families where applicable;

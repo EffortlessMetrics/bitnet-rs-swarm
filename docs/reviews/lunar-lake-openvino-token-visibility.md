@@ -159,6 +159,21 @@ should be one of:
 Do not add a new inference path, route promotion, benchmark matrix, or broad
 artifact refresh for token visibility alone.
 
+## Acceptance For #1123
+
+Issue #1123 can close with this review because it:
+
+- defines the three accepted token-visibility levels: direct pipeline IDs,
+  retokenized output IDs, and text-only or unavailable;
+- maps current OpenVINO CPU/GPU/NPU receipts to those levels;
+- gives a receipt shape for future `generated_token_visibility` fields;
+- states when answer gates are enough and when token visibility blocks
+  promotion-grade token evidence;
+- defines fail-closed behavior when direct IDs are required but only
+  retokenized or text-only evidence exists;
+- keeps route promotion, benchmark equivalence, speedup, native accelerator,
+  and BitNet QK256/I2_S claims unchanged.
+
 ## Claim Boundary
 
 This review does not add:

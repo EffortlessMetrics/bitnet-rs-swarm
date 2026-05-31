@@ -27,8 +27,10 @@ current:
 - #1121 for OpenVINO GPU `ask_short` / `ask_normal` review;
 - #1122 and #1132 for the CPU route posture decision, with #1069 and #1071
   as live measurement follow-ups;
-- #1123 for generated-token visibility rules;
-- #1135 for route ID and canonical proof-family mapping.
+- #1123 for generated-token visibility rules, now defined in
+  [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
+- #1135 for route ID and canonical proof-family mapping, now landed by #1137
+  in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md).
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -165,8 +167,8 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 ## Next Work
 
-- #1123 should define a central generated-token visibility strategy before
-  token-ID gaps become one-off wording in each receipt.
+- Future token-visibility schema or validator work should use the #1123
+  strategy before token-ID gaps become one-off wording in each receipt.
 - #1121 should either keep, narrow, or mark conditional the GPU
   `ask_short` / `ask_normal` promotion with a current evidence map.
 - If `prefill_heavy` or `decode_heavy` become active route-review targets,
@@ -175,8 +177,8 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   resident-session policy change.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
   cold-start gates are accepted.
-- Future receipt or validator work should use the #1135 route-ID proof-family
-  map before depending on route identity.
+- Future receipt or validator work should use the #1135/#1137 route-ID
+  proof-family map before depending on route identity.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
