@@ -147,6 +147,13 @@ Acceptance for cache evidence:
 - the receipt states that the cache classification is timing-derived unless a
   direct runtime cache-hit metric is present.
 
+Implementation note: `bitnet lunar-lake npu-cold-start-diagnosis` should ingest
+the NPU cache experiment and expose a `cold_load_decomposition` block. That
+block distinguishes the first-process cache miss from second-process cache
+reuse, records required NPU timing and answer-gate fields for each run, and
+marks missing direct cache-hit metrics as timing-derived rather than runtime
+truth.
+
 ## Resident-Session Experiment Plan
 
 Purpose: prove whether a long-lived NPU session can be a useful route target

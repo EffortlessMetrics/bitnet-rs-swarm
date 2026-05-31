@@ -661,6 +661,11 @@ pub enum LunarLakeAction {
         #[arg(long, default_value = DENSE_OV_CORPUS_V2)]
         openvino_corpus_v2: PathBuf,
 
+        /// OpenVINO NPU cache hit/miss experiment receipt to inspect for cold-load decomposition.
+        /// Relative paths are resolved under artifact-root unless they exist from the current dir.
+        #[arg(long, default_value = OPENVINO_NPU_CACHE_EXPERIMENT)]
+        npu_cache_experiment: Option<PathBuf>,
+
         /// Output JSON cold-start diagnosis receipt to file.
         #[arg(long, default_value = OPENVINO_NPU_COLD_START_DIAGNOSIS)]
         json_out: PathBuf,
@@ -2369,6 +2374,7 @@ pub struct LunarLakeNpuColdStartDiagnosis {
     pub source_receipts: NpuColdStartSources,
     pub route: NpuColdStartRouteIdentity,
     pub cold_start: NpuColdStartEvidence,
+    pub cold_load_decomposition: NpuColdLoadDecomposition,
     pub hot_path: NpuHotPathEvidence,
     pub corpus_v2_context: NpuCorpusV2Context,
     pub diagnosis_ready: bool,
@@ -2384,6 +2390,7 @@ pub struct NpuColdStartSources {
     pub phase_comparison_receipt: String,
     pub operator_ask_receipt: String,
     pub openvino_corpus_v2_receipt: String,
+    pub npu_cache_experiment_receipt: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -2412,6 +2419,71 @@ pub struct NpuColdStartEvidence {
     pub operator_load_to_generation_ratio: Option<f64>,
     pub phase_runner_load_to_generation_ratio: Option<f64>,
     pub notes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NpuColdLoadDecomposition {
+    pub comparison_scope: String,
+    pub model_tokenizer_identity: NpuColdModelTokenizerIdentity,
+    pub cache: NpuColdCacheDecomposition,
+    pub first_process: Option<NpuColdProcessDecomposition>,
+    pub second_process: Option<NpuColdProcessDecomposition>,
+    pub first_process_cache_miss_distinguishable: bool,
+    pub second_process_cache_reuse_distinguishable: bool,
+    pub missing_direct_cache_hit_metrics_marked_timing_derived: bool,
+    pub explicit_npu_no_fallback_required: bool,
+    pub decomposition_ready: bool,
+    pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct NpuColdModelTokenizerIdentity {
+    pub model_source: Option<String>,
+    pub model_local_path: Option<String>,
+    pub model_architecture: Option<String>,
+    pub quantization: Option<String>,
+    pub prompt_template: Option<String>,
+    pub tokenizer_source: Option<String>,
+    pub openvino_model_xml_sha256: Option<String>,
+    pub openvino_model_bin_sha256: Option<String>,
+    pub openvino_tokenizer_xml_sha256: Option<String>,
+    pub openvino_tokenizer_bin_sha256: Option<String>,
+    pub tokenizer_json_sha256: Option<String>,
+    pub tokenizer_config_json_sha256: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NpuColdCacheDecomposition {
+    pub cache_dir: Option<String>,
+    pub cache_enabled: Option<bool>,
+    pub cache_writable: Option<bool>,
+    pub cache_config_status: String,
+    pub cache_hit_runtime_metric_available: bool,
+    pub cache_hit_metric_source: String,
+    pub cache_classification: Option<String>,
+    pub cache_classification_source: String,
+    pub initial_snapshot: Option<Value>,
+    pub after_first_process_snapshot: Option<Value>,
+    pub after_second_process_snapshot: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NpuColdProcessDecomposition {
+    pub iteration: String,
+    pub cold_warm_mode: String,
+    pub process_wall_ms: Option<f64>,
+    pub pipeline_construct_wall_ms: Option<f64>,
+    pub openvino_load_time_ms: Option<f64>,
+    pub first_ask_generation_wall_ms: Option<f64>,
+    pub openvino_time_to_first_token_ms: Option<f64>,
+    pub throughput_tokens_per_s: Option<f64>,
+    pub selected_backend: Option<String>,
+    pub runtime_device: Option<String>,
+    pub resolved_device: Option<String>,
+    pub fallback_used: Option<bool>,
+    pub answer_gate_passed: Option<bool>,
+    pub direct_generated_token_ids_available: Option<bool>,
+    pub generated_token_ids_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -3328,6 +3400,7 @@ impl LunarLakeCommand {
                 phase_comparison,
                 operator_ask,
                 openvino_corpus_v2,
+                npu_cache_experiment,
                 json_out,
                 created_utc,
                 strict,
@@ -3342,6 +3415,7 @@ impl LunarLakeCommand {
                     phase_comparison,
                     operator_ask,
                     openvino_corpus_v2,
+                    npu_cache_experiment.as_deref(),
                     created_utc,
                 )?;
                 let json_out = resolve_receipt_path(artifact_root, json_out);
@@ -8571,18 +8645,33 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
     phase_comparison: &Path,
     operator_ask: &Path,
     openvino_corpus_v2: &Path,
+    npu_cache_experiment: Option<&Path>,
     created_utc: String,
 ) -> Result<LunarLakeNpuColdStartDiagnosis> {
     let phase_runner_path = resolve_receipt_path(root, openvino_phase_runner);
     let phase_comparison_path = resolve_receipt_path(root, phase_comparison);
     let operator_ask_path = resolve_receipt_path(root, operator_ask);
     let corpus_v2_path = resolve_receipt_path(root, openvino_corpus_v2);
+    let cache_experiment_path = npu_cache_experiment.map(|path| resolve_receipt_path(root, path));
     let phase_runner: Value = read_json_receipt(&phase_runner_path)?;
     let phase_comparison: Value = read_json_receipt(&phase_comparison_path)?;
     let operator_ask: Value = read_json_receipt(&operator_ask_path)?;
     let corpus_v2: Value = read_json_receipt(&corpus_v2_path)?;
 
     let mut gaps = Vec::new();
+    let cache_experiment = match cache_experiment_path.as_ref() {
+        Some(path) if path.exists() => Some(read_json_receipt::<Value>(path)?),
+        Some(path) => {
+            gaps.push(format!("NPU cache experiment receipt missing: {}", path_string(path)));
+            None
+        }
+        None => {
+            gaps.push(
+                "NPU cold-load decomposition requires a cache experiment receipt".to_string(),
+            );
+            None
+        }
+    };
     if string_at(&phase_runner, "artifact_kind").as_deref()
         != Some("intel_258v_dense_slm_openvino_phase_runner")
     {
@@ -8602,6 +8691,12 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
         != Some("intel_258v_dense_slm_openvino_corpus_v2")
     {
         gaps.push("OpenVINO corpus-v2 receipt has unexpected artifact_kind".to_string());
+    }
+    if let Some(cache_experiment) = &cache_experiment
+        && string_at(cache_experiment, "artifact_kind").as_deref()
+            != Some("lunar_lake_openvino_npu_cache_experiment")
+    {
+        gaps.push("OpenVINO NPU cache experiment receipt has unexpected artifact_kind".to_string());
     }
 
     let phase_npu = openvino_device_by_runtime(&phase_runner, "NPU")
@@ -8704,6 +8799,9 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
         notes: cold_notes,
     };
 
+    let cold_load_decomposition =
+        npu_cold_load_decomposition(cache_experiment.as_ref(), &operator_ask);
+    gaps.extend(cold_load_decomposition.blockers.iter().cloned());
     let hot_path = npu_hot_path_evidence(&cold_start.samples, phase_npu, &operator_ask);
     let corpus_v2_context = npu_corpus_v2_context(corpus_npu);
     let mut findings = Vec::new();
@@ -8721,6 +8819,9 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
     }
     if let Some(ratio) = cold_start.operator_load_to_generation_ratio {
         findings.push(format!("operator_load_to_generation_ratio={ratio:.3}"));
+    }
+    if cold_load_decomposition.decomposition_ready {
+        findings.push("npu_cold_load_cache_miss_and_reuse_decomposed".to_string());
     }
     if corpus_v2_context.route_blocked_by_quality {
         findings.push(format!(
@@ -8749,9 +8850,13 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
             phase_comparison_receipt: path_string(&phase_comparison_path),
             operator_ask_receipt: path_string(&operator_ask_path),
             openvino_corpus_v2_receipt: path_string(&corpus_v2_path),
+            npu_cache_experiment_receipt: cache_experiment_path
+                .as_ref()
+                .map(|path| path_string(path)),
         },
         route,
         cold_start,
+        cold_load_decomposition,
         hot_path,
         corpus_v2_context,
         diagnosis_ready,
@@ -8773,6 +8878,314 @@ pub fn build_npu_cold_start_diagnosis_with_created_utc(
             dense_slm_as_bitnet_proof: false,
         },
     })
+}
+
+fn npu_cold_load_decomposition(
+    cache_experiment: Option<&Value>,
+    operator_ask: &Value,
+) -> NpuColdLoadDecomposition {
+    let mut blockers = Vec::new();
+    let Some(cache_experiment) = cache_experiment else {
+        return NpuColdLoadDecomposition {
+            comparison_scope: "cache_experiment_missing".to_string(),
+            model_tokenizer_identity: npu_cold_model_tokenizer_identity(None, operator_ask),
+            cache: NpuColdCacheDecomposition {
+                cache_dir: None,
+                cache_enabled: None,
+                cache_writable: None,
+                cache_config_status: "cache_experiment_missing".to_string(),
+                cache_hit_runtime_metric_available: false,
+                cache_hit_metric_source: "not_exposed".to_string(),
+                cache_classification: None,
+                cache_classification_source: "cache_experiment_missing".to_string(),
+                initial_snapshot: None,
+                after_first_process_snapshot: None,
+                after_second_process_snapshot: None,
+            },
+            first_process: None,
+            second_process: None,
+            first_process_cache_miss_distinguishable: false,
+            second_process_cache_reuse_distinguishable: false,
+            missing_direct_cache_hit_metrics_marked_timing_derived: false,
+            explicit_npu_no_fallback_required: true,
+            decomposition_ready: false,
+            blockers: vec![
+                "NPU cold-load decomposition requires cache hit/miss process evidence".to_string(),
+            ],
+        };
+    };
+
+    if string_at(cache_experiment, "selected_backend").as_deref() != Some("openvino-npu") {
+        blockers
+            .push("NPU cold-load decomposition selected_backend is not openvino-npu".to_string());
+    }
+    if string_at(cache_experiment, "runtime_device").as_deref() != Some("NPU") {
+        blockers.push("NPU cold-load decomposition runtime_device is not explicit NPU".to_string());
+    }
+    if bool_at_any(cache_experiment, &["fallback_used"]) != Some(false) {
+        blockers.push("NPU cold-load decomposition fallback_used=false is not proven".to_string());
+    }
+
+    let first_process = npu_cold_process_run(cache_experiment, "first_process")
+        .map(|run| npu_cold_process_decomposition(run, "first_process_cache_miss"));
+    let second_process = npu_cold_process_run(cache_experiment, "second_process")
+        .map(|run| npu_cold_process_decomposition(run, "second_process_cache_reuse"));
+    let process_pairs =
+        [("first process", first_process.as_ref()), ("second process", second_process.as_ref())];
+    for (label, process) in process_pairs {
+        match process {
+            Some(process) => npu_cold_process_blockers(label, process, &mut blockers),
+            None => blockers.push(format!("NPU cold-load decomposition missing {label} run")),
+        }
+    }
+
+    let cache_files_created =
+        bool_at_any(cache_experiment, &["cache.cache_files_created"]) == Some(true);
+    let cache_files_reused_or_stable =
+        bool_at_any(cache_experiment, &["cache.cache_files_reused_or_stable"]) == Some(true);
+    let cache_effective_by_timing =
+        bool_at_any(cache_experiment, &["cache.cache_effective_by_timing"]) == Some(true);
+    let runtime_metric_available =
+        bool_at_any(cache_experiment, &["cache.cache_hit_runtime_metric_available"]) == Some(true);
+    let timing_derived_cache_reuse = !runtime_metric_available
+        && cache_effective_by_timing
+        && cache_files_created
+        && cache_files_reused_or_stable;
+    let missing_direct_cache_hit_metrics_marked_timing_derived =
+        runtime_metric_available || timing_derived_cache_reuse;
+    if !missing_direct_cache_hit_metrics_marked_timing_derived {
+        blockers.push(
+            "NPU cold-load decomposition lacks direct cache-hit metrics and timing-derived cache classification"
+                .to_string(),
+        );
+    }
+
+    let first_construct =
+        number_at_any(cache_experiment, &["comparison.first_pipeline_construct_wall_ms"]).or_else(
+            || first_process.as_ref().and_then(|process| process.pipeline_construct_wall_ms),
+        );
+    let second_construct =
+        number_at_any(cache_experiment, &["comparison.second_pipeline_construct_wall_ms"]).or_else(
+            || second_process.as_ref().and_then(|process| process.pipeline_construct_wall_ms),
+        );
+    let first_process_cache_miss_distinguishable = cache_files_created
+        && first_process.as_ref().is_some_and(|process| {
+            process.pipeline_construct_wall_ms.is_some()
+                && process.openvino_load_time_ms.is_some()
+                && process.first_ask_generation_wall_ms.is_some()
+        });
+    let second_process_cache_reuse_distinguishable = cache_files_reused_or_stable
+        && cache_effective_by_timing
+        && match (first_construct, second_construct) {
+            (Some(first), Some(second)) => first > 0.0 && second < first,
+            _ => false,
+        };
+    if !first_process_cache_miss_distinguishable {
+        blockers.push("NPU first-process cache-miss timing is not distinguishable".to_string());
+    }
+    if !second_process_cache_reuse_distinguishable {
+        blockers.push("NPU second-process cache-reuse timing is not distinguishable".to_string());
+    }
+
+    let cache = NpuColdCacheDecomposition {
+        cache_dir: string_at(cache_experiment, "cache.cache_dir"),
+        cache_enabled: bool_at_any(cache_experiment, &["cache.cache_enabled"]),
+        cache_writable: bool_at_any(cache_experiment, &["cache.cache_writable"]),
+        cache_config_status: if bool_at_any(cache_experiment, &["cache.cache_enabled"])
+            == Some(true)
+            && bool_at_any(cache_experiment, &["cache.cache_writable"]) == Some(true)
+        {
+            "enabled_writable".to_string()
+        } else {
+            "not_proven_enabled_writable".to_string()
+        },
+        cache_hit_runtime_metric_available: runtime_metric_available,
+        cache_hit_metric_source: if runtime_metric_available {
+            "openvino_runtime_metric".to_string()
+        } else {
+            "not_exposed".to_string()
+        },
+        cache_classification: string_at(cache_experiment, "comparison.classification")
+            .or_else(|| string_at(cache_experiment, "cache.cache_hit_evidence")),
+        cache_classification_source: if runtime_metric_available {
+            "openvino_runtime_metric".to_string()
+        } else {
+            "timing_derived_cache_files_and_construct_ratio".to_string()
+        },
+        initial_snapshot: value_at(cache_experiment, "cache.initial_snapshot").cloned(),
+        after_first_process_snapshot: value_at(
+            cache_experiment,
+            "cache.after_first_process_snapshot",
+        )
+        .cloned(),
+        after_second_process_snapshot: value_at(
+            cache_experiment,
+            "cache.after_second_process_snapshot",
+        )
+        .cloned(),
+    };
+    for (label, snapshot) in [
+        ("initial cache snapshot", &cache.initial_snapshot),
+        ("after-first-process cache snapshot", &cache.after_first_process_snapshot),
+        ("after-second-process cache snapshot", &cache.after_second_process_snapshot),
+    ] {
+        if snapshot.is_none() {
+            blockers.push(format!("NPU cold-load decomposition missing {label}"));
+        }
+    }
+
+    blockers.sort();
+    blockers.dedup();
+    let decomposition_ready = blockers.is_empty()
+        && first_process_cache_miss_distinguishable
+        && second_process_cache_reuse_distinguishable
+        && missing_direct_cache_hit_metrics_marked_timing_derived;
+
+    NpuColdLoadDecomposition {
+        comparison_scope: string_at(cache_experiment, "comparison_scope")
+            .unwrap_or_else(|| "two_process_npu_cache_experiment".to_string()),
+        model_tokenizer_identity: npu_cold_model_tokenizer_identity(
+            Some(cache_experiment),
+            operator_ask,
+        ),
+        cache,
+        first_process,
+        second_process,
+        first_process_cache_miss_distinguishable,
+        second_process_cache_reuse_distinguishable,
+        missing_direct_cache_hit_metrics_marked_timing_derived,
+        explicit_npu_no_fallback_required: true,
+        decomposition_ready,
+        blockers,
+    }
+}
+
+fn npu_cold_model_tokenizer_identity(
+    cache_experiment: Option<&Value>,
+    operator_ask: &Value,
+) -> NpuColdModelTokenizerIdentity {
+    let cache = cache_experiment;
+    NpuColdModelTokenizerIdentity {
+        model_source: cache
+            .and_then(|json| string_at(json, "model.source"))
+            .or_else(|| string_at(operator_ask, "model.repo")),
+        model_local_path: cache
+            .and_then(|json| string_at(json, "model.local_path"))
+            .or_else(|| string_at(operator_ask, "model.local_model_dir"))
+            .or_else(|| string_at(operator_ask, "inputs.model_dir")),
+        model_architecture: cache
+            .and_then(|json| string_at(json, "model.architecture"))
+            .or_else(|| string_at(operator_ask, "model_architecture")),
+        quantization: string_at(operator_ask, "quantization"),
+        prompt_template: string_at(operator_ask, "prompt_template")
+            .or_else(|| string_at(operator_ask, "prompt_policy.prompt_template")),
+        tokenizer_source: string_at(operator_ask, "tokenizer_source"),
+        openvino_model_xml_sha256: cache
+            .and_then(|json| string_at(json, "model.openvino_ir.xml.sha256"))
+            .or_else(|| string_pointer(operator_ask, "/model/files/openvino_model.xml/sha256")),
+        openvino_model_bin_sha256: cache
+            .and_then(|json| string_at(json, "model.openvino_ir.bin.sha256"))
+            .or_else(|| string_pointer(operator_ask, "/model/files/openvino_model.bin/sha256")),
+        openvino_tokenizer_xml_sha256: string_pointer(
+            operator_ask,
+            "/model/files/openvino_tokenizer.xml/sha256",
+        ),
+        openvino_tokenizer_bin_sha256: string_pointer(
+            operator_ask,
+            "/model/files/openvino_tokenizer.bin/sha256",
+        ),
+        tokenizer_json_sha256: string_pointer(operator_ask, "/model/files/tokenizer.json/sha256"),
+        tokenizer_config_json_sha256: string_pointer(
+            operator_ask,
+            "/model/files/tokenizer_config.json/sha256",
+        ),
+    }
+}
+
+fn string_pointer(json: &Value, pointer: &str) -> Option<String> {
+    json.pointer(pointer).and_then(Value::as_str).map(ToString::to_string)
+}
+
+fn npu_cold_process_run<'a>(cache_experiment: &'a Value, iteration: &str) -> Option<&'a Value> {
+    cache_experiment
+        .get("process_runs")
+        .and_then(Value::as_array)?
+        .iter()
+        .find(|run| string_at(run, "iteration").as_deref() == Some(iteration))
+}
+
+fn npu_cold_process_decomposition(
+    process_run: &Value,
+    cold_warm_mode: &str,
+) -> NpuColdProcessDecomposition {
+    let child = value_at(process_run, "child_receipt").unwrap_or(process_run);
+    NpuColdProcessDecomposition {
+        iteration: string_at(process_run, "iteration")
+            .or_else(|| string_at(child, "iteration"))
+            .unwrap_or_else(|| "unknown".to_string()),
+        cold_warm_mode: cold_warm_mode.to_string(),
+        process_wall_ms: number_at_any(process_run, &["process_wall_ms"]),
+        pipeline_construct_wall_ms: number_at_any(child, &["pipeline_construct_wall_ms"]),
+        openvino_load_time_ms: number_at_any(child, &["openvino_perf_metrics.load_time_ms"]),
+        first_ask_generation_wall_ms: number_at_any(child, &["generation_wall_ms"]),
+        openvino_time_to_first_token_ms: number_at_any(
+            child,
+            &["openvino_perf_metrics.time_to_first_token.mean_ms"],
+        ),
+        throughput_tokens_per_s: number_at_any(
+            child,
+            &["openvino_perf_metrics.throughput.mean_ms"],
+        ),
+        selected_backend: string_at(child, "selected_backend"),
+        runtime_device: string_at(child, "runtime_device"),
+        resolved_device: string_at(child, "resolved_device"),
+        fallback_used: bool_at_any(child, &["fallback_used"]),
+        answer_gate_passed: bool_at_any(child, &["answer_gate.passed"]),
+        direct_generated_token_ids_available: bool_at_any(
+            child,
+            &["generated_token_ids_available_from_pipeline"],
+        ),
+        generated_token_ids_source: string_at(child, "generated_token_ids_source"),
+    }
+}
+
+fn npu_cold_process_blockers(
+    label: &str,
+    process: &NpuColdProcessDecomposition,
+    blockers: &mut Vec<String>,
+) {
+    if process.selected_backend.as_deref() != Some("openvino-npu") {
+        blockers.push(format!("NPU cold-load {label} selected_backend is not openvino-npu"));
+    }
+    if process.runtime_device.as_deref() != Some("NPU") {
+        blockers.push(format!("NPU cold-load {label} runtime_device is not explicit NPU"));
+    }
+    if process.fallback_used != Some(false) {
+        blockers.push(format!("NPU cold-load {label} fallback_used=false is not proven"));
+    }
+    if process.answer_gate_passed != Some(true) {
+        blockers.push(format!("NPU cold-load {label} answer gate did not pass"));
+    }
+    if process.direct_generated_token_ids_available != Some(true) {
+        blockers.push(format!(
+            "NPU cold-load {label} lacks direct generated token IDs from the pipeline"
+        ));
+    }
+    if process.pipeline_construct_wall_ms.is_none() {
+        blockers.push(format!("NPU cold-load {label} lacks pipeline_construct_wall_ms"));
+    }
+    if process.openvino_load_time_ms.is_none() {
+        blockers.push(format!("NPU cold-load {label} lacks OpenVINO load_time_ms"));
+    }
+    if process.first_ask_generation_wall_ms.is_none() {
+        blockers.push(format!("NPU cold-load {label} lacks first ask generation wall timing"));
+    }
+    if process.openvino_time_to_first_token_ms.is_none() {
+        blockers.push(format!("NPU cold-load {label} lacks OpenVINO time to first token"));
+    }
+    if process.throughput_tokens_per_s.is_none() {
+        blockers.push(format!("NPU cold-load {label} lacks throughput"));
+    }
 }
 
 fn npu_operator_timing_sample(json: &Value, source: String) -> NpuTimingSample {
@@ -23793,6 +24206,10 @@ mod tests {
                 "backend_lane": "dense_slm_openvino_npu",
                 "selected_kernel_or_runtime": "openvino-genai-llmpipeline-npu",
                 "fallback_used": false,
+                "model_architecture": "qwen2",
+                "quantization": "INT4_SYM",
+                "prompt_template": "qwen2.5",
+                "tokenizer_source": "hf_tokenizer_export",
                 "route": {"acceleration_claim": false},
                 "answer_gate": {"passed": true},
                 "timing": {
@@ -23857,6 +24274,119 @@ mod tests {
                 }
             }),
         )?;
+        write_json(
+            temp.path(),
+            OPENVINO_NPU_CACHE_EXPERIMENT,
+            json!({
+                "artifact_kind": "lunar_lake_openvino_npu_cache_experiment",
+                "comparison_scope": "two_separate_openvino_genai_npu_processes_with_one_cache_dir",
+                "selected_backend": "openvino-npu",
+                "runtime_device": "NPU",
+                "fallback_used": false,
+                "model": {
+                    "source": "Qwen/Qwen2.5-0.5B-Instruct",
+                    "local_path": "models/openvino/qwen2.5-0.5b-instruct-int4-sym",
+                    "architecture": "qwen2",
+                    "openvino_ir": {
+                        "xml": {"sha256": "xml-sha"},
+                        "bin": {"sha256": "bin-sha"}
+                    }
+                },
+                "cache": {
+                    "cache_dir": "target/openvino-cache/npu-test",
+                    "cache_enabled": true,
+                    "cache_writable": true,
+                    "cache_hit_runtime_metric_available": false,
+                    "cache_files_created": true,
+                    "cache_files_reused_or_stable": true,
+                    "cache_effective_by_timing": true,
+                    "initial_snapshot": {
+                        "exists": true,
+                        "file_count": 0,
+                        "total_bytes": 0,
+                        "files": []
+                    },
+                    "after_first_process_snapshot": {
+                        "exists": true,
+                        "file_count": 1,
+                        "total_bytes": 154693720,
+                        "files": [{"path": "cache.blob", "bytes": 154693720}]
+                    },
+                    "after_second_process_snapshot": {
+                        "exists": true,
+                        "file_count": 1,
+                        "total_bytes": 154693720,
+                        "files": [{"path": "cache.blob", "bytes": 154693720}]
+                    }
+                },
+                "process_runs": [
+                    {
+                        "iteration": "first_process",
+                        "process_wall_ms": 29286.0,
+                        "child_receipt": {
+                            "iteration": "first_process",
+                            "runtime_device": "NPU",
+                            "resolved_device": "Intel(R) AI Boost",
+                            "selected_backend": "openvino-npu",
+                            "fallback_used": false,
+                            "pipeline_construct_wall_ms": 28103.0,
+                            "generation_wall_ms": 469.0,
+                            "generated_token_ids_available_from_pipeline": true,
+                            "generated_token_ids_source": "openvino_genai_encoded_results_tokens",
+                            "openvino_perf_metrics": {
+                                "load_time_ms": 28083.0,
+                                "time_to_first_token": {"mean_ms": 229.0},
+                                "throughput": {"mean_ms": 31.6}
+                            },
+                            "answer_gate": {"passed": true}
+                        }
+                    },
+                    {
+                        "iteration": "second_process",
+                        "process_wall_ms": 1821.0,
+                        "child_receipt": {
+                            "iteration": "second_process",
+                            "runtime_device": "NPU",
+                            "resolved_device": "Intel(R) AI Boost",
+                            "selected_backend": "openvino-npu",
+                            "fallback_used": false,
+                            "pipeline_construct_wall_ms": 872.0,
+                            "generation_wall_ms": 443.0,
+                            "generated_token_ids_available_from_pipeline": true,
+                            "generated_token_ids_source": "openvino_genai_encoded_results_tokens",
+                            "openvino_perf_metrics": {
+                                "load_time_ms": 853.0,
+                                "time_to_first_token": {"mean_ms": 230.0},
+                                "throughput": {"mean_ms": 33.6}
+                            },
+                            "answer_gate": {"passed": true}
+                        }
+                    }
+                ],
+                "comparison": {
+                    "first_pipeline_construct_wall_ms": 28103.0,
+                    "second_pipeline_construct_wall_ms": 872.0,
+                    "second_to_first_construct_ratio": 0.031,
+                    "construct_improvement_ms": 27231.0,
+                    "first_answer_gate_passed": true,
+                    "second_answer_gate_passed": true,
+                    "cache_experiment_ready": true,
+                    "classification": "cache_materially_reduces_pipeline_construct"
+                },
+                "generated_token_visibility": {
+                    "direct_generated_token_ids_available": true,
+                    "generated_token_ids_source": "openvino_genai_encoded_results_tokens"
+                },
+                "claim_boundary": {
+                    "route_promotion_changed": false,
+                    "speedup_claim": false,
+                    "power_advantage_claim": false,
+                    "acceleration_claim": false,
+                    "native_npu_inference_claim": false,
+                    "bitnet_qk256_i2s_behavior_changed": false
+                }
+            }),
+        )?;
 
         let receipt = build_npu_cold_start_diagnosis_with_created_utc(
             temp.path(),
@@ -23864,6 +24394,7 @@ mod tests {
             Path::new(DENSE_PHASE_COMPARISON),
             Path::new(DENSE_OV_NPU_OPERATOR_ASK),
             Path::new(DENSE_OV_CORPUS_V2),
+            Some(Path::new(OPENVINO_NPU_CACHE_EXPERIMENT)),
             "2026-05-17T10:00:00Z".to_string(),
         )?;
 
@@ -23874,6 +24405,47 @@ mod tests {
             "openvino_pipeline_load_or_device_compile_dominated"
         );
         assert!(receipt.cold_start.operator_load_to_generation_ratio.unwrap() > 40.0);
+        assert!(receipt.cold_load_decomposition.decomposition_ready);
+        assert_eq!(
+            receipt.cold_load_decomposition.comparison_scope,
+            "two_separate_openvino_genai_npu_processes_with_one_cache_dir"
+        );
+        assert!(receipt.cold_load_decomposition.first_process_cache_miss_distinguishable);
+        assert!(receipt.cold_load_decomposition.second_process_cache_reuse_distinguishable);
+        assert!(
+            receipt.cold_load_decomposition.missing_direct_cache_hit_metrics_marked_timing_derived
+        );
+        assert_eq!(receipt.cold_load_decomposition.cache.cache_hit_metric_source, "not_exposed");
+        assert_eq!(
+            receipt.cold_load_decomposition.cache.cache_classification_source,
+            "timing_derived_cache_files_and_construct_ratio"
+        );
+        assert_eq!(
+            receipt.cold_load_decomposition.model_tokenizer_identity.model_source.as_deref(),
+            Some("Qwen/Qwen2.5-0.5B-Instruct")
+        );
+        assert_eq!(
+            receipt.cold_load_decomposition.model_tokenizer_identity.tokenizer_source.as_deref(),
+            Some("hf_tokenizer_export")
+        );
+        let first_process = receipt
+            .cold_load_decomposition
+            .first_process
+            .as_ref()
+            .context("missing first-process decomposition")?;
+        assert_eq!(first_process.cold_warm_mode, "first_process_cache_miss");
+        assert_eq!(first_process.runtime_device.as_deref(), Some("NPU"));
+        assert_eq!(first_process.fallback_used, Some(false));
+        assert_eq!(first_process.answer_gate_passed, Some(true));
+        assert_eq!(first_process.direct_generated_token_ids_available, Some(true));
+        assert_eq!(first_process.openvino_load_time_ms, Some(28083.0));
+        let second_process = receipt
+            .cold_load_decomposition
+            .second_process
+            .as_ref()
+            .context("missing second-process decomposition")?;
+        assert_eq!(second_process.cold_warm_mode, "second_process_cache_reuse");
+        assert_eq!(second_process.pipeline_construct_wall_ms, Some(872.0));
         assert!(receipt.hot_path.hot_path_interesting);
         assert!(receipt.corpus_v2_context.route_blocked_by_quality);
         assert!(!receipt.claim_boundary.route_promotion_changed);
