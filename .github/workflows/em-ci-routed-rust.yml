@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   route-rust-small:
@@ -30,11 +31,20 @@ jobs:
       error: ${{ steps.route.outputs.error }}
       fallback_allowed: ${{ steps.route.outputs.fallback_allowed }}
     steps:
+      - name: Checkout for change classification
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
       - name: Decide target runner
         id: route
         env:
           GH_TOKEN: ${{ secrets.EM_RUNNER_READ_TOKEN }}
           ORG: EffortlessMetrics
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -eu
 
@@ -60,6 +70,34 @@ jobs:
           if [ "${is_fork_pr}" = "true" ]; then
             emit "blocked" "fork_pr_self_hosted_untrusted" "false" "false"
             exit 0
+          fi
+
+          if [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${BASE_SHA:-}" ] && [ -n "${HEAD_SHA:-}" ]; then
+            if git cat-file -e "${BASE_SHA}" 2>/dev/null && git cat-file -e "${HEAD_SHA}" 2>/dev/null; then
+              changed_files="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")"
+            else
+              changed_files=""
+            fi
+
+            echo "Changed files considered by routed Rust:"
+            printf '%s\n' "$changed_files"
+
+            no_rust_inputs="true"
+            while IFS= read -r path; do
+              [ -n "$path" ] || continue
+              case "$path" in
+                crates/*|crossval/*|tests/*|tools/bitnet-task/*|xtask/*|fuzz/*|Cargo.toml|Cargo.lock|rust-toolchain.toml|Makefile)
+                  no_rust_inputs="false"
+                  ;;
+              esac
+            done <<EOF
+          $changed_files
+          EOF
+
+            if [ -n "$changed_files" ] && [ "$no_rust_inputs" = "true" ]; then
+              emit "no_rust_inputs" "no_rust_inputs_fast_path" "false" "false"
+              exit 0
+            fi
           fi
 
           if [ -z "${GH_TOKEN:-}" ]; then
@@ -402,7 +440,7 @@ jobs:
       - rust-small-cx53
       - rust-small-cx43
     if: >-
-      always()
+      !cancelled()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
           || github.event_name == 'pull_request')
@@ -447,6 +485,9 @@ jobs:
               echo "self-hosted runner routing blocked: ${{ needs.route-rust-small.outputs.reason }}" >&2
               echo "self-hosted route did not select an available trusted runner" >&2
               exit 1
+              ;;
+            no_rust_inputs)
+              echo "No Rust inputs changed; routed rust-small fast path succeeds without self-hosted runner."
               ;;
             *)
               echo "router produced unknown target: ${TARGET}" >&2
