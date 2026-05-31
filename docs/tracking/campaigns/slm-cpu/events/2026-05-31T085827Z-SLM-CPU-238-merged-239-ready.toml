@@ -1,0 +1,16 @@
+timestamp = "2026-05-31T08:58:27Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-238"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1031
+branch = "codex/slm-cpu-238-per-callsite-no-bias-receipt-emitter"
+head_sha = "cc81563f7a54a98ad79d1fd6b0ae77880afdb7e6"
+merge_sha = "3f916b1b0c908d191e82435eea9c65acfe4c7c08"
+summary = "Closed SLM-CPU-238 after the per-callsite no-bias receipt-emitter boundary PR merged and queued SLM-CPU-239."
+notes = [
+  "PR #1031 records the per-callsite no-bias receipt-emitter boundary for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj without mutating model-load hook state.",
+  "SLM-CPU-239 is ready to capture or precisely block fresh strict candidate-off/candidate-on receipts bound to the per-callsite emitter.",
+]
