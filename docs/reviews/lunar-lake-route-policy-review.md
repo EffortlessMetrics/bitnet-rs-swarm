@@ -25,9 +25,9 @@ current:
 - #1119 for NPU cold/cache decomposition;
 - #1120 for NPU warm-resident acceptance, now closed as defined in
   [lunar-lake-npu-warm-resident-acceptance.md](lunar-lake-npu-warm-resident-acceptance.md);
-- #1139 for the NPU phase-timing schema contract before host setup,
-  tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
-  receipt-overhead timers are used for route decisions;
+- #1139 for the NPU phase-timing schema contract, now closed by #1141, before
+  host setup, tokenizer/template, pipeline, compile/load/cache, first-ask,
+  warm-ask, or receipt-overhead timers are used for route decisions;
 - #1121 for OpenVINO GPU `ask_short` / `ask_normal` review, now closed with
   the keep decision recorded in
   [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
@@ -58,7 +58,7 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only; does not imply cold one-off or low-power promotion |
 | `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence |
 
-NPU phase-timing schema work is tracked by #1139 and must not become a
+NPU phase-timing schema work is defined by #1139/#1141 and must not become a
 route-policy shortcut. New timer fields can support review only after their
 scope, source, unavailable handling, and claim boundary are explicit.
 
@@ -193,7 +193,7 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   open a focused profile-phase issue instead of bundling them into #1121.
 - #1120 has defined the NPU `warm_resident` route acceptance rule; future
   resident-session policy changes should cite that review directly.
-- #1139 should define the NPU phase-timing schema before host setup,
+- Use the #1139/#1141 NPU phase-timing schema before host setup,
   tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
   receipt-overhead timings become route-policy evidence.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and

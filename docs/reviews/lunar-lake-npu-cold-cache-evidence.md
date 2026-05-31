@@ -28,10 +28,11 @@ This review supports #1119 by naming the evidence gate that must exist before
 any NPU cold/cache route-policy change is considered. It does not run
 inference, refresh receipts, or change route policy.
 
-Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 owns the
-current validation-alignment question for committed NPU diagnosis and
-route-promotion receipts; keep that work limited to receipt/schema hardening
-instead of widening this review into route policy.
+Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 is also
+closed after #1145 aligned the committed NPU diagnosis and route-promotion
+receipts for direct validation. Keep any future follow-up limited to the
+specific cache, phase, resident, or validation gap being measured instead of
+widening this review into route policy.
 
 ## Current Evidence Snapshot
 
@@ -130,9 +131,11 @@ proof, full BitNet inference, packed QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The next small implementation PR, if needed, should be scoped through #1143 or
-a later cache-specific follow-up. It should be a schema or validation guard
-that:
+The cache-truth guard and direct-validation alignment have already landed. The
+next small implementation PR, if needed, should be scoped through #1119 or a
+later cache-specific follow-up. It should be a schema, validation, or
+receipt-builder guard that preserves these constraints when new cache evidence
+is added:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
   `file_reuse`, `timing_derived`, or `not_exposed`;
