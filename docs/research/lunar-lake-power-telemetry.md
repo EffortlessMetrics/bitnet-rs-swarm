@@ -9,18 +9,20 @@ Repository: `EffortlessMetrics/bitnet-rs-swarm`
 ## Executive Summary
 
 `LNL258V-POWER-006` should not move directly into another broad evidence PR.
-The first useful step is to tighten the telemetry model for battery-mode route
-samples.
+The first useful step was to tighten the telemetry model for battery-mode route
+samples. That schema-hardening follow-up is now in place; the remaining blocker
+is a stable physical battery run with valid before/after telemetry, route
+samples, an energy proxy, and refreshed regression/comparison artifacts.
 
 Current evidence says:
 
 - `Win32_Battery` is enough for a strict AC-vs-battery preflight. The existing
   CLI correctly fails closed when `BatteryStatus=2/6/7/8/9/11` or
   `ac_power_inferred=true`.
-- `root\wmi` battery classes expose richer capacity fields on this laptop than
-  the CLI currently records. They should be the next source for the energy
-  proxy, with `Win32_Battery.EstimatedChargeRemaining` kept as the coarse
-  fallback.
+- `root\wmi` battery classes expose richer capacity fields on this laptop, and
+  the CLI now records them when available. They should be the preferred source
+  for the energy proxy, with `Win32_Battery.EstimatedChargeRemaining` kept as
+  the coarse fallback.
 - Thermal classes are visible but weak on this host. Current results show a
   thermal zone count, but measured temperatures are unavailable or zero. That
   is usable as thermal availability context, not measured-temperature evidence.
@@ -32,11 +34,10 @@ Current evidence says:
   or temperature readings. OpenVINO data should support device identity and
   cache-mode evidence, not power claims.
 
-Recommended next implementation is small: extend the low-power telemetry
-receipt schema to record normalized battery capacity fields from `root\wmi`,
-the existing power scheme and `Win32_Battery` fields, and explicit thermal
-availability status. Do not run route samples until that schema is clear and
-the `POWER-006` allowed paths include the sample receipts named by the runbook.
+The next useful implementation should stay small and operational: collect the
+physical battery-mode evidence named by the runbook only after strict preflight
+passes on battery power. Do not treat AC-only receipts, schema support, or a
+single point sample as `low_power` promotion evidence.
 
 ## Current Repo Behavior
 
@@ -45,6 +46,8 @@ The existing implementation records:
 - memory via `sysinfo`;
 - active Windows power scheme via `powercfg /GETACTIVESCHEME`;
 - battery state via `Get-CimInstance Win32_Battery`;
+- capacity and AC/discharge state via `root\wmi` `BatteryStatus` and
+  `BatteryFullChargedCapacity` when available;
 - thermal temperatures via `MSAcpi_ThermalZoneTemperature` when accessible;
 - thermal-zone visibility via
   `Win32_PerfFormattedData_Counters_ThermalZoneInformation` when temperature
@@ -54,10 +57,13 @@ Relevant source:
 
 - `crates/bitnet-cli/src/commands/lunar_lake.rs`:
   - `TelemetryPowerContext`
+  - `TelemetryWmiBatteryStatusContext`
+  - `TelemetryWmiBatteryFullChargedCapacityContext`
   - `TelemetryThermalContext`
   - `collect_telemetry_power_context`
   - `collect_telemetry_thermal_context`
   - `infer_ac_power_from_battery_status`
+  - `infer_ac_power_from_power_sources`
 
 The committed run-harness receipt currently records an AC-blocked preflight:
 
@@ -78,6 +84,7 @@ to AC:
 | 2026-05-30T18:38:36Z | `telemetry-context --require-battery --strict` | passed | `BatteryStatus=1`, charge 98%, `ac_power_inferred=false`, `requirement_satisfied=true` |
 | 2026-05-30T18:43:35Z | `telemetry-context --require-battery --strict` | failed closed | `BatteryStatus=2`, charge 97%, `ac_power_inferred=true`, `requirement_satisfied=false` |
 | 2026-05-30T18:43:35Z | `low-power-harness --strict` | failed closed | `battery_preflight_passed=false`, `model_inference_allowed=false` |
+| 2026-05-31T03:44:25Z | `telemetry-context --require-battery --strict` | failed closed | `BatteryStatus=2`, charge 97%, `wmi_power_online=true`, `wmi_discharging=false`, `wmi_remaining_capacity=68350`, `wmi_full_charged_capacity=70000`, `ac_power_inferred=true`, `requirement_satisfied=false` |
 
 That behavior is correct. It also means the battery run needs a stable
 preflight/start/end receipt sequence, not one opportunistic point sample.
@@ -145,7 +152,7 @@ Observed on this host while AC was present:
 
 Use:
 
-- Add these fields to the before/after telemetry schema when available.
+- Keep these fields in the before/after telemetry schema when available.
 - Prefer `RemainingCapacity` and `FullChargedCapacity` over percent-only
   charge deltas for energy-proxy normalization.
 - Record `PowerOnline`, `Discharging`, and `Charging` alongside
@@ -428,15 +435,17 @@ three loose receipts with one explicitly allowed battery route-sample bundle.
 
 ## Recommended Next Steps
 
-1. Add a narrow schema-hardening issue or PR for the richer Windows battery
-   fields from `root\wmi`.
-2. Add `power_scheme_guid` and `power_scheme_name` normalization.
-3. Add thermal status normalization that distinguishes:
+1. Treat POWER-006A schema hardening as complete for the current evidence
+   model; keep optional missing fields recorded as unavailable, not zero.
+2. Repair the `POWER-006` allowed paths before running route samples.
+3. Run the battery preflight, before receipt, CPU/GPU/NPU route samples, after
+   receipt, energy proxy, and artifact refresh sequence only while strict
+   battery mode remains satisfied.
+4. Keep thermal status normalization explicit enough to distinguish:
    `measured_temperatures`, `zones_visible_values_unavailable`,
    `access_denied`, and `probe_unavailable`.
-4. Repair the `POWER-006` allowed paths before running route samples.
-5. Only then run the battery preflight, before receipt, CPU/GPU/NPU route
-   samples, after receipt, energy proxy, and artifact refresh sequence.
+5. Preserve the claim boundary in every refresh: no speedup, power-advantage,
+   acceleration, or `low_power` promotion claim from AC-only evidence.
 
 ## References
 
