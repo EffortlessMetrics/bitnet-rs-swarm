@@ -2,7 +2,8 @@
 
 Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1032
 Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
-Phase-timing schema follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139
+Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139
+Current receipt-validation follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143
 
 Research date: 2026-05-30
 
@@ -310,19 +311,22 @@ BitNet NPU execution.
 
 - #1119 remains the cold/cache research parent and keeps timing-derived cache
   classification diagnostic until a stricter policy is accepted.
-- #1139 owns the next narrow phase-timing schema contract for host setup,
+- #1139 closed with the phase-timing schema contract for host setup,
   tokenizer/template setup, `LLMPipeline`, compile/load/cache behavior, first
   ask, warm asks, and receipt overhead.
+- #1143 owns the current validation-alignment question: whether committed
+  OpenVINO NPU diagnosis and route-promotion receipts should validate directly
+  or only through their higher-level leaf artifacts.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
 - #1064 remains the only path to `low_power` battery and energy evidence.
 
 ## Recommended Next Issues
 
-1. [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139)
-   `LNL258V-NPU-PHASE-001`: add or validate a phase timer schema for asset
-   lookup, tokenizer/template setup, `LLMPipeline`, compile/load/cache, first
-   ask, warm ask, and receipt overhead timing.
+1. [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143)
+   `LNL258V-VALIDATE-003`: align direct validation for the current NPU
+   cold-start diagnosis and route-promotion receipts without changing NPU
+   promotion scope.
 2. `LNL258V-NPU-CACHE-002`: rerun the cache experiment with explicit OpenVINO
    version, NPU device properties, and cache snapshots that include stable file
    hashes where practical.

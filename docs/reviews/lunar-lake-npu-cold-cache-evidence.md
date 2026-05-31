@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
+Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
@@ -28,10 +28,10 @@ This review supports #1119 by naming the evidence gate that must exist before
 any NPU cold/cache route-policy change is considered. It does not run
 inference, refresh receipts, or change route policy.
 
-Issue #1139 owns the next narrow phase-timing schema gap. Use it for host
-setup, tokenizer/template setup, `LLMPipeline`, compile/load/cache behavior,
-first ask, warm ask, and receipt-overhead timer ownership instead of widening
-this review into route policy.
+Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 owns the
+current validation-alignment question for committed NPU diagnosis and
+route-promotion receipts; keep that work limited to receipt/schema hardening
+instead of widening this review into route policy.
 
 ## Current Evidence Snapshot
 
@@ -130,7 +130,7 @@ proof, full BitNet inference, packed QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The next small implementation PR, if needed, should be scoped through #1139 or
+The next small implementation PR, if needed, should be scoped through #1143 or
 a later cache-specific follow-up. It should be a schema or validation guard
 that:
 
