@@ -1,0 +1,11 @@
+timestamp = "2026-05-31T08:58:42Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-001"
+event = "pr_open"
+pr = 1087
+head_sha = "d5b76cb71630ec317a417cf8d3fe48e1e8462296"
+actor = "codex"
+notes = [
+  "Opened the docs-only campaign seed PR in bitnet-rs-swarm.",
+  "PR body records lane ownership, generated-dashboard shared surfaces, baseline checks, and the no-runtime claim boundary.",
+]
