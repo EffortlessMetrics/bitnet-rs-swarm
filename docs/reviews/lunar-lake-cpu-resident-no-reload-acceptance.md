@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122)
-Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1104](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1104)
+Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
 
@@ -128,9 +128,10 @@ sampling, or logits work.
 
 ### OpenVINO CPU
 
-OpenVINO CPU remains a separate candidate/control path. The #1104 decision memo
-continues to block matched-format CPU speedup language until model format,
-timing scope, prompt rendering, tokenization, and profile coverage align.
+OpenVINO CPU remains a separate candidate/control path. The #1122 CPU route
+decision, landed by #1132, continues to block matched-format CPU speedup
+language until model format, timing scope, prompt rendering, tokenization, and
+profile coverage align.
 
 ### Low Power
 
