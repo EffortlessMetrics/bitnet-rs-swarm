@@ -420,24 +420,29 @@ Required fields:
 Thermal temperature unavailability should remain a gap, not by itself a blocker
 for collecting route samples. It blocks measured-temperature claims.
 
-## Tracker Scope Finding
+## Tracker Scope Status
 
-`LNL258V-POWER-006` currently names route sample receipts in the runbook, but
-the work-item `allowed_paths` list does not include those files:
+`LNL258V-POWER-006` names the battery-mode route sample receipts in the
+runbook, and #1084 repaired the campaign scope so the work-item `allowed_paths`
+now includes those files:
 
 - `lunar-lake-operator-ask-battery-low-power-cpu.json`
 - `lunar-lake-operator-ask-battery-low-power-gpu.json`
 - `lunar-lake-operator-ask-battery-low-power-npu.json`
 
-Before executing the physical route matrix, create a small tracker-scope repair
-or issue update that adds the intended sample receipt paths or replaces the
-three loose receipts with one explicitly allowed battery route-sample bundle.
+No additional tracker-scope repair is required before the physical route
+matrix. The remaining blocker is evidence availability: strict battery
+preflight must pass on the 258V, then the before receipt, CPU/GPU/NPU
+`low_power` route samples, after receipt, energy proxy, power-profile evidence,
+regression bundle, and operator comparison must be refreshed from real
+battery-mode evidence.
 
 ## Recommended Next Steps
 
 1. Treat POWER-006A schema hardening as complete for the current evidence
    model; keep optional missing fields recorded as unavailable, not zero.
-2. Repair the `POWER-006` allowed paths before running route samples.
+2. Use the #1084 tracker-scope repair as the current allowed-path basis for the
+   three battery-mode route sample receipts.
 3. Run the battery preflight, before receipt, CPU/GPU/NPU route samples, after
    receipt, energy proxy, and artifact refresh sequence only while strict
    battery mode remains satisfied.
