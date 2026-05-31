@@ -9,7 +9,8 @@
     "openvino_phase_runner_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-phase-runner.json",
     "phase_comparison_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-phase-comparison.json",
     "operator_ask_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-operator-ask-npu-math-brief.json",
-    "openvino_corpus_v2_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json"
+    "openvino_corpus_v2_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
+    "npu_cache_experiment_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-experiment.json"
   },
   "route": {
     "route_id": "dense_slm_openvino_npu_candidate",
@@ -84,17 +85,17 @@
       {
         "source": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
         "evidence_scope": "corpus_v2_profile_quality_receipt",
-        "pipeline_construct_wall_ms": 31834.785100014415,
-        "openvino_load_time_ms": 31834.0,
-        "generation_wall_ms": 516.9259083365129,
-        "case_elapsed_ms_sum": 6203.110900038155,
-        "first_streamed_text_chunk_ms": 235.78614167005676,
-        "openvino_time_to_first_token_ms": 170.1412811279297,
-        "openvino_generate_ms": 501.71457926432294,
-        "openvino_inference_ms": 498.22266387939453,
+        "pipeline_construct_wall_ms": 31258.63290001871,
+        "openvino_load_time_ms": 31257.0,
+        "generation_wall_ms": 445.1309214346111,
+        "case_elapsed_ms_sum": 6231.832900084555,
+        "first_streamed_text_chunk_ms": 234.69986428972334,
+        "openvino_time_to_first_token_ms": 173.47162410191126,
+        "openvino_generate_ms": 433.5334254673549,
+        "openvino_inference_ms": 431.1201422555106,
         "openvino_tokenization_ms": -1.0,
-        "throughput_tokens_per_s": -54.90928554534912,
-        "generated_tokens": 133,
+        "throughput_tokens_per_s": -39.54434108734131,
+        "generated_tokens": 140,
         "notes": [
           "Corpus-v2 timing is profile-quality context; failed cases still block promotion"
         ]
@@ -103,25 +104,25 @@
     "pipeline_or_load_ms": {
       "sample_count": 4,
       "min": 29373.0,
-      "mean": 32512.942499999997,
+      "mean": 32368.692499999997,
       "max": 35469.77
     },
     "generation_wall_ms": {
       "sample_count": 4,
-      "min": 489.8775666661095,
-      "mean": 908.3137437458993,
+      "min": 445.1309214346111,
+      "mean": 890.3649970204239,
       "max": 2116.417
     },
     "first_token_or_text_chunk_ms": {
       "sample_count": 3,
-      "min": 235.78614167005676,
-      "mean": 249.7337454722922,
+      "min": 234.69986428972334,
+      "mean": 249.3716530121811,
       "max": 272.3985999958434
     },
     "throughput_tokens_per_s": {
       "sample_count": 3,
-      "min": -54.90928554534912,
-      "mean": 3.2202047771877744,
+      "min": -39.54434108734131,
+      "mean": 8.341852929857046,
       "max": 33.89432271321615
     },
     "operator_load_to_generation_ratio": 57.5902218400827,
@@ -132,38 +133,140 @@
       "Hot-path timings remain candidate-route evidence and do not promote NPU"
     ]
   },
+  "cold_load_decomposition": {
+    "comparison_scope": "two_separate_openvino_genai_npu_processes_with_one_cache_dir",
+    "model_tokenizer_identity": {
+      "model_source": "Qwen/Qwen2.5-0.5B-Instruct",
+      "model_local_path": "models/openvino/qwen2.5-0.5b-instruct-int4-sym",
+      "model_architecture": "qwen2",
+      "quantization": "INT4_SYM",
+      "prompt_template": "qwen2.5",
+      "tokenizer_source": "hf_tokenizer_export",
+      "openvino_model_xml_sha256": "92079df4e311238df5a3cd94848fc84730eefbce08e59f053d8a0aeaa7fb39f4",
+      "openvino_model_bin_sha256": "a15e9535aaf4c8286b7b45f0490dca593cc751450c3b832416ad377bb190b2a9",
+      "openvino_tokenizer_xml_sha256": "779af8438ed2689107ba0bacc939e81734085d3e1a3dbf403402d2ccc982fe1b",
+      "openvino_tokenizer_bin_sha256": "651d8b86c94c40710919f6089189a748ebf4ad1b0f0da728440454d14379b078",
+      "tokenizer_json_sha256": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa",
+      "tokenizer_config_json_sha256": "5fd4cea2574beb6b70ba31582179880d331b723f5b5119ee67c29d45b983f7be"
+    },
+    "cache": {
+      "cache_dir": "target/openvino-cache/lnl258v-ov-token-npu-cache-fresh",
+      "cache_enabled": true,
+      "cache_writable": true,
+      "cache_config_status": "enabled_writable",
+      "cache_hit_runtime_metric_available": false,
+      "cache_hit_metric_source": "not_exposed",
+      "cache_classification": "cache_materially_reduces_pipeline_construct",
+      "cache_classification_source": "timing_derived_cache_files_and_construct_ratio",
+      "initial_snapshot": {
+        "cache_dir": "target/openvino-cache/lnl258v-ov-token-npu-cache-fresh",
+        "exists": true,
+        "file_count": 0,
+        "files": [],
+        "total_bytes": 0
+      },
+      "after_first_process_snapshot": {
+        "cache_dir": "target/openvino-cache/lnl258v-ov-token-npu-cache-fresh",
+        "exists": true,
+        "file_count": 1,
+        "files": [
+          {
+            "bytes": 154693720,
+            "mtime_ns": 1779129075212284000,
+            "path": "8993114486211131037.blob",
+            "sha256": null
+          }
+        ],
+        "total_bytes": 154693720
+      },
+      "after_second_process_snapshot": {
+        "cache_dir": "target/openvino-cache/lnl258v-ov-token-npu-cache-fresh",
+        "exists": true,
+        "file_count": 1,
+        "files": [
+          {
+            "bytes": 154693720,
+            "mtime_ns": 1779129075212284000,
+            "path": "8993114486211131037.blob",
+            "sha256": null
+          }
+        ],
+        "total_bytes": 154693720
+      }
+    },
+    "first_process": {
+      "iteration": "first_process",
+      "cold_warm_mode": "first_process_cache_miss",
+      "process_wall_ms": 29286.901900020897,
+      "pipeline_construct_wall_ms": 28103.867300000275,
+      "openvino_load_time_ms": 28083.0,
+      "first_ask_generation_wall_ms": 469.54329998698086,
+      "openvino_time_to_first_token_ms": 229.32159423828125,
+      "throughput_tokens_per_s": 31.69527816772461,
+      "selected_backend": "openvino-npu",
+      "runtime_device": "NPU",
+      "resolved_device": "Intel(R) AI Boost",
+      "fallback_used": false,
+      "answer_gate_passed": true,
+      "direct_generated_token_ids_available": true,
+      "generated_token_ids_source": "openvino_genai_encoded_results_tokens"
+    },
+    "second_process": {
+      "iteration": "second_process",
+      "cold_warm_mode": "second_process_cache_reuse",
+      "process_wall_ms": 1821.1383000016212,
+      "pipeline_construct_wall_ms": 872.6620000088587,
+      "openvino_load_time_ms": 853.0,
+      "first_ask_generation_wall_ms": 443.70689999777824,
+      "openvino_time_to_first_token_ms": 230.22381591796875,
+      "throughput_tokens_per_s": 33.697750091552734,
+      "selected_backend": "openvino-npu",
+      "runtime_device": "NPU",
+      "resolved_device": "Intel(R) AI Boost",
+      "fallback_used": false,
+      "answer_gate_passed": true,
+      "direct_generated_token_ids_available": true,
+      "generated_token_ids_source": "openvino_genai_encoded_results_tokens"
+    },
+    "first_process_cache_miss_distinguishable": true,
+    "second_process_cache_reuse_distinguishable": true,
+    "missing_direct_cache_hit_metrics_marked_timing_derived": true,
+    "explicit_npu_no_fallback_required": true,
+    "decomposition_ready": true,
+    "blockers": []
+  },
   "hot_path": {
     "bounded_answer_gate_passed": false,
     "fallback_used": false,
     "generation_wall_ms": {
       "sample_count": 3,
-      "min": 489.8775666661095,
-      "mean": 505.61265832786574,
-      "max": 516.9259083365129
+      "min": 445.1309214346111,
+      "mean": 481.68099602723186,
+      "max": 510.03449998097494
     },
     "first_text_chunk_ms": {
       "sample_count": 2,
-      "min": 235.78614167005676,
-      "mean": 254.0923708329501,
+      "min": 234.69986428972334,
+      "mean": 253.54923214278338,
       "max": 272.3985999958434
     },
     "openvino_time_to_first_token_ms": {
       "sample_count": 3,
-      "min": 170.1412811279297,
-      "mean": 199.98677910698783,
+      "min": 173.47162410191126,
+      "mean": 201.09689343164837,
       "max": 241.01649475097656
     },
     "throughput_tokens_per_s": {
       "sample_count": 3,
-      "min": -54.90928554534912,
-      "mean": 3.2202047771877744,
+      "min": -39.54434108734131,
+      "mean": 8.341852929857046,
       "max": 33.89432271321615
     },
     "generated_tokens": {
       "sample_count": 3,
       "min": 9.0,
-      "mean": 58.0,
-      "max": 133.0
+      "mean": 60.333333333333336,
+      "max": 140.0
     },
     "hot_path_interesting": true,
     "notes": [
@@ -172,8 +275,8 @@
     ]
   },
   "corpus_v2_context": {
-    "cases_total": 12,
-    "passed": 12,
+    "cases_total": 14,
+    "passed": 14,
     "failed": 0,
     "route_blocked_by_quality": false,
     "failed_profiles": [],
@@ -183,11 +286,12 @@
   },
   "diagnosis_ready": true,
   "findings": [
-    "npu_pipeline_or_load_mean_ms=32512.942",
+    "npu_pipeline_or_load_mean_ms=32368.692",
     "npu_pipeline_or_load_max_ms=35469.770",
-    "npu_generation_wall_mean_ms=908.314",
-    "npu_hot_path_throughput_mean_tokens_per_s=3.220",
-    "operator_load_to_generation_ratio=57.590"
+    "npu_generation_wall_mean_ms=890.365",
+    "npu_hot_path_throughput_mean_tokens_per_s=8.342",
+    "operator_load_to_generation_ratio=57.590",
+    "npu_cold_load_cache_miss_and_reuse_decomposed"
   ],
   "recommended_next_items": [
     "LNL258V-NPU-CACHE-001: run OpenVINO cache hit/miss experiment with a stable cache directory",
