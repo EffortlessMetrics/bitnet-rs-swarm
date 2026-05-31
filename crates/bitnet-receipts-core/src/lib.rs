@@ -8571,6 +8571,7 @@ fn validate_lunar_lake_openvino_value(value: &Value, path: &str) -> Result<()> {
 
 fn validate_lunar_lake_openvino_object(object: &Value, path: &str) -> Result<()> {
     validate_lunar_lake_openvino_backend_object(object, path)?;
+    validate_lunar_lake_openvino_auto_selected_device(object, path)?;
     validate_lunar_lake_openvino_generated_token_marking(object, path)?;
     validate_lunar_lake_openvino_npu_cache_classification(object, path)?;
     validate_lunar_lake_openvino_npu_promotion_evidence(object, path)
@@ -8669,6 +8670,148 @@ fn reject_openvino_gpu_opencl_claim(object: &Value, path: &str) -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn validate_lunar_lake_openvino_auto_selected_device(object: &Value, path: &str) -> Result<()> {
+    let auto_scope = object.get("auto_scope").and_then(Value::as_str);
+    if let Some(auto_scope) = auto_scope
+        && !matches!(auto_scope, "cli_route_selector" | "openvino_runtime_auto")
+    {
+        return Err(anyhow!(
+            "{path}.auto_scope must be `cli_route_selector` or `openvino_runtime_auto`"
+        ));
+    }
+
+    if auto_scope == Some("cli_route_selector") {
+        if lunar_lake_openvino_auto_claims_selected_device_proof(object) {
+            return Err(anyhow!(
+                "{path} CLI auto route selection must not claim OpenVINO runtime AUTO selected-device proof"
+            ));
+        }
+        return Ok(());
+    }
+
+    let runtime_auto_requested = auto_scope == Some("openvino_runtime_auto")
+        || lunar_lake_openvino_field_is_auto(object, "requested_openvino_device")
+        || lunar_lake_openvino_field_is_auto(object, "openvino_requested_device")
+        || lunar_lake_openvino_field_is_auto(object, "requested_runtime_device")
+        || lunar_lake_openvino_field_is_auto(object, "runtime_requested_device")
+        || lunar_lake_openvino_field_is_auto(object, "requested_backend");
+
+    if !runtime_auto_requested {
+        return Ok(());
+    }
+
+    if auto_scope != Some("openvino_runtime_auto") {
+        return Err(anyhow!(
+            "{path} OpenVINO runtime AUTO evidence must record auto_scope=openvino_runtime_auto"
+        ));
+    }
+
+    if !lunar_lake_openvino_auto_has_selected_device_visibility(object) {
+        return Err(anyhow!(
+            "{path} OpenVINO runtime AUTO evidence must record execution_devices or selected_device_visibility_status=not_exposed"
+        ));
+    }
+
+    if lunar_lake_openvino_auto_visibility_not_exposed(object)
+        && lunar_lake_openvino_auto_claims_selected_device_proof(object)
+    {
+        return Err(anyhow!(
+            "{path} OpenVINO runtime AUTO selected-device visibility is not_exposed and must remain diagnostic"
+        ));
+    }
+
+    Ok(())
+}
+
+fn lunar_lake_openvino_field_is_auto(object: &Value, field: &str) -> bool {
+    object.get(field).and_then(Value::as_str).is_some_and(lunar_lake_openvino_auto_marker)
+}
+
+fn lunar_lake_openvino_auto_marker(value: &str) -> bool {
+    let normalized = value.replace(['-', '_', ' '], "").to_ascii_lowercase();
+    matches!(normalized.as_str(), "auto" | "openvinoauto" | "openvinoruntimeauto")
+}
+
+fn lunar_lake_openvino_auto_has_selected_device_visibility(object: &Value) -> bool {
+    [
+        "execution_devices",
+        "openvino_execution_devices",
+        "selected_execution_devices",
+        "execution_device_evidence",
+    ]
+    .iter()
+    .any(|field| object.get(*field).is_some_and(lunar_lake_openvino_value_is_present))
+        || [
+            "execution_devices_status",
+            "selected_device_visibility_status",
+            "selected_device_evidence_status",
+        ]
+        .iter()
+        .any(|field| {
+            object
+                .get(*field)
+                .and_then(Value::as_str)
+                .is_some_and(lunar_lake_openvino_visibility_status_is_explicit_gap)
+        })
+}
+
+fn lunar_lake_openvino_visibility_status_is_explicit_gap(status: &str) -> bool {
+    status.replace(['-', '_', ' '], "").eq_ignore_ascii_case("notexposed")
+}
+
+fn lunar_lake_openvino_value_is_present(value: &Value) -> bool {
+    match value {
+        Value::Null => false,
+        Value::String(text) => !text.trim().is_empty(),
+        Value::Array(items) => !items.is_empty(),
+        Value::Object(map) => !map.is_empty(),
+        _ => true,
+    }
+}
+
+fn lunar_lake_openvino_auto_visibility_not_exposed(object: &Value) -> bool {
+    [
+        "execution_devices",
+        "openvino_execution_devices",
+        "selected_execution_devices",
+        "execution_devices_status",
+        "selected_device_visibility_status",
+        "selected_device_evidence_status",
+        "execution_device_evidence",
+    ]
+    .iter()
+    .filter_map(|field| object.get(*field))
+    .any(lunar_lake_openvino_value_mentions_not_exposed)
+}
+
+fn lunar_lake_openvino_value_mentions_not_exposed(value: &Value) -> bool {
+    match value {
+        Value::String(text) => text.replace(['-', '_', ' '], "").eq_ignore_ascii_case("notexposed"),
+        Value::Array(items) => items.iter().any(lunar_lake_openvino_value_mentions_not_exposed),
+        Value::Object(map) => map.values().any(lunar_lake_openvino_value_mentions_not_exposed),
+        _ => false,
+    }
+}
+
+fn lunar_lake_openvino_auto_claims_selected_device_proof(object: &Value) -> bool {
+    [
+        "selected_device_proof",
+        "selected_device_proven",
+        "openvino_runtime_auto_selected_device_proof",
+        "gpu_selected_device_proof",
+        "npu_selected_device_proof",
+        "promotion_eligible_for_profile",
+        "low_power_evidence",
+        "power_advantage_claim",
+        "acceleration_claim",
+    ]
+    .iter()
+    .any(|field| object.get(*field).and_then(Value::as_bool) == Some(true))
+        || ["status", "route_status", "promotion_status"].iter().any(|field| {
+            object.get(*field).and_then(Value::as_str).is_some_and(|status| status == "promoted")
+        })
 }
 
 fn validate_lunar_lake_openvino_generated_token_marking(object: &Value, path: &str) -> Result<()> {
@@ -10270,6 +10413,89 @@ mod tests {
         receipt["selected_kernel_or_runtime"] = json!("native-opencl-kernel");
         let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
         assert!(err.contains("native OpenCL"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_cli_auto_route_selector_without_runtime_devices() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("cli_route_selector");
+        receipt["requested_device"] = json!("auto");
+        receipt["requested_route"] = json!("auto");
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_cli_auto_selected_device_proof_claim() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("cli_route_selector");
+        receipt["requested_device"] = json!("auto");
+        receipt["selected_device_proof"] = json!(true);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("CLI auto route selection"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_runtime_auto_without_visibility_status() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("execution_devices"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_runtime_auto_status_without_devices() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt["selected_device_visibility_status"] = json!("available");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("execution_devices"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_runtime_auto_not_exposed_as_diagnostic() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt["selected_device_visibility_status"] = json!("not_exposed");
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_runtime_auto_not_exposed_promotion() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt["selected_device_visibility_status"] = json!("not_exposed");
+        receipt["promotion_status"] = json!("promoted");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("diagnostic"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_runtime_auto_not_exposed_promotion_with_status() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt["selected_device_visibility_status"] = json!("not_exposed");
+        receipt["status"] = json!("diagnostic");
+        receipt["promotion_status"] = json!("promoted");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("diagnostic"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_runtime_auto_with_execution_devices() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt["execution_devices"] = json!(["GPU.0"]);
+        receipt["promotion_status"] = json!("promoted");
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
     }
 
     #[test]
