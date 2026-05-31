@@ -153,9 +153,11 @@ creates a more specific gap:
   boundary fields.
 
 `AUTO` selected-device work is intentionally separate: #1149 owns receipts or
-validators that prove what `AUTO` actually executed. Do not use cache evidence
-or `AUTO` selection as route-policy evidence while selected-device proof is
-missing or ambiguous.
+validators that prove what `AUTO` actually executed, with the current contract
+recorded in
+[lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md).
+Do not use cache evidence or `AUTO` selection as route-policy evidence while
+selected-device proof is missing or ambiguous.
 
 Do not combine that guard with NPU route-policy mutation, new inference
 surfaces, low-power promotion, benchmark matrices, or generated-dashboard churn.
