@@ -4,6 +4,7 @@ Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/is
 Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
 Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139 / PR #1141
 Receipt-validation alignment closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143 / PR #1145
+AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149
 
 Research date: 2026-05-30
 
@@ -317,6 +318,8 @@ BitNet NPU execution.
 - #1143 closed with #1145 after the committed OpenVINO NPU diagnosis and
   route-promotion receipts were aligned for direct validation without changing
   NPU promotion scope.
+- #1149 owns `AUTO` selected-device evidence before any route-policy use of
+  `AUTO`; #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
 - #1064 remains the only path to `low_power` battery and energy evidence.
@@ -330,8 +333,8 @@ BitNet NPU execution.
    already-defined #1120 warm-resident acceptance boundary if a future receipt
    lacks pipeline, cold-first-ask, warm-loop, drift, token, memory, or claim
    boundary fields.
-3. `LNL258V-NPU-AUTO-001`: collect `AUTO` selected-device evidence before any
-   route-policy use of `AUTO`.
+3. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
+   before any route-policy use of `AUTO`.
 4. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
    resident, and power evidence is current.
 

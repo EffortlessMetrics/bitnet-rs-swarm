@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
+Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
@@ -36,7 +36,9 @@ current:
 - #1123 for generated-token visibility rules, now defined in
   [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
 - #1135 for route ID and canonical proof-family mapping, now landed by #1137
-  in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md).
+  in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
+- #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
+  as route-policy evidence.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -200,6 +202,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   cold-start gates are accepted.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
+- #1149 should own any `AUTO` selected-device receipt or validator follow-up;
+  route policy must keep `AUTO` diagnostic while selected-device proof is
+  missing or ambiguous.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
