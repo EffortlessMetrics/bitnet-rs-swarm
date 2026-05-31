@@ -1,0 +1,16 @@
+timestamp = "2026-05-31T09:33:09Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-239"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1092
+branch = "codex/slm-cpu/slm-cpu-239-per-callsite-no-bias-off-on-receipts"
+head_sha = "d07481c5d4dd5ee9ddb897f791be5f811c625258"
+merge_sha = "f307cca7f9267acde3063cab91a50ed0984f8235"
+summary = "Closed SLM-CPU-239 after the per-callsite no-bias candidate-off/on blocker PR merged and queued SLM-CPU-240."
+notes = [
+  "PR #1092 records that the existing candidate-off/candidate-on receipts are request-gate-only evidence and candidate-on does not execute dense_linear_no_bias_candidate_forward at FeedForward::apply_linear.",
+  "SLM-CPU-240 is ready to add or precisely block the prompt-bound per-callsite candidate execution descriptor plus fail-closed apply_linear dispatch for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+]
