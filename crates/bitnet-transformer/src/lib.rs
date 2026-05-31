@@ -10573,29 +10573,29 @@ impl TransformerBlock {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
         let feed_forward_output = match (workspace.as_mut(), prompt_bound_no_bias_descriptor) {
-            (Some(workspace), Some(descriptor)) => self
-                .feed_forward
-                .forward_with_workspace_and_no_bias_callsite_descriptor(
+            (Some(workspace), Some(descriptor)) => {
+                self.feed_forward.forward_with_workspace_and_no_bias_callsite_descriptor(
                     &x,
                     raw_tensors,
                     dense_linear_hooks,
                     workspace,
                     descriptor,
-                )?,
-            (Some(workspace), None) => {
-                self.feed_forward.forward_with_workspace(
-                    &x,
-                    raw_tensors,
-                    dense_linear_hooks,
-                    workspace,
                 )?
             }
-            (None, Some(descriptor)) => self.feed_forward.forward_with_no_bias_callsite_descriptor(
+            (Some(workspace), None) => self.feed_forward.forward_with_workspace(
                 &x,
                 raw_tensors,
                 dense_linear_hooks,
-                descriptor,
+                workspace,
             )?,
+            (None, Some(descriptor)) => {
+                self.feed_forward.forward_with_no_bias_callsite_descriptor(
+                    &x,
+                    raw_tensors,
+                    dense_linear_hooks,
+                    descriptor,
+                )?
+            }
             (None, None) => self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?,
         };
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_finish", || {
@@ -11694,8 +11694,7 @@ impl TransformerModel {
             let matching_layer_count = (0..self.layers.len())
                 .filter(|layer_idx| {
                     prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
-                        descriptor,
-                        *layer_idx,
+                        descriptor, *layer_idx,
                     )
                 })
                 .count();
@@ -14819,12 +14818,8 @@ mod tests {
             callsite_identity,
             "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight"
         );
-        assert!(prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
-            &emitter, 0
-        ));
-        assert!(!prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
-            &emitter, 1
-        ));
+        assert!(prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(&emitter, 0));
+        assert!(!prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(&emitter, 1));
         assert_eq!(emitter.tensor_name, "layers.0.feed_forward.down_proj.weight");
         assert!(emitter.preserves_normal_inference());
         assert!(!emitter.candidate_execution_enabled);
