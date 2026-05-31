@@ -12937,6 +12937,7 @@ fn build_lunar_lake_operator_ask_receipt(ctx: LunarLakeAskReceiptContext<'_>) ->
     } else {
         "operator_default_route_executed"
     };
+    let timing_metric_status = lunar_lake_openvino_timing_metric_status(ctx.source_run_receipt);
 
     serde_json::json!({
         "schema_version": "1.0.0",
@@ -13057,6 +13058,7 @@ fn build_lunar_lake_operator_ask_receipt(ctx: LunarLakeAskReceiptContext<'_>) ->
         "dense_slm": ctx.source_run_receipt["dense_slm"].clone(),
         "execution_coverage": ctx.source_run_receipt["execution_coverage"].clone(),
         "timing": ctx.source_run_receipt["timing"].clone(),
+        "timing_metric_status": timing_metric_status,
         "profile": ctx.source_run_receipt["profile"].clone(),
         "claim_boundary": {
             "cpu_default_route_only": !openvino_candidate_executed,
@@ -13070,6 +13072,112 @@ fn build_lunar_lake_operator_ask_receipt(ctx: LunarLakeAskReceiptContext<'_>) ->
         },
         "source_receipt": ctx.source_run_receipt,
     })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_openvino_timing_metric_status(
+    source_run_receipt: &serde_json::Value,
+) -> serde_json::Value {
+    if source_run_receipt["runtime_api"].as_str() != Some("openvino_genai") {
+        return serde_json::json!({
+            "openvino_perf_metrics": {
+                "status": "not_applicable",
+                "reason": "runtime_api_not_openvino_genai",
+            },
+        });
+    }
+
+    let metrics = &source_run_receipt["timing"]["openvino_perf_metrics"];
+    if !metrics.is_object() {
+        return serde_json::json!({
+            "openvino_perf_metrics": {
+                "status": "not_exposed",
+                "reason": "openvino_perf_metrics_missing",
+            },
+        });
+    }
+
+    let metric_statuses = serde_json::json!({
+        "load_time_ms": {
+            "value": lunar_lake_openvino_metric_value_status(metrics.get("load_time_ms")),
+        },
+        "num_generated_tokens": {
+            "value": lunar_lake_openvino_metric_value_status(metrics.get("num_generated_tokens")),
+        },
+        "tokenization": lunar_lake_openvino_mean_std_status(metrics, "tokenization"),
+        "detokenization": lunar_lake_openvino_mean_std_status(metrics, "detokenization"),
+        "time_to_first_token": lunar_lake_openvino_mean_std_status(metrics, "time_to_first_token"),
+        "generate": lunar_lake_openvino_mean_std_status(metrics, "generate"),
+        "inference": lunar_lake_openvino_mean_std_status(metrics, "inference"),
+        "inter_token_latency": lunar_lake_openvino_mean_std_status(metrics, "inter_token_latency"),
+        "throughput": lunar_lake_openvino_mean_std_status(metrics, "throughput"),
+        "time_per_output_token": lunar_lake_openvino_mean_std_status(metrics, "time_per_output_token"),
+    });
+    let statuses = lunar_lake_openvino_collect_status_strings(&metric_statuses);
+    let measured = statuses.iter().any(|status| *status == "measured");
+    let unavailable =
+        statuses.iter().any(|status| *status != "measured" && *status != "not_applicable");
+    let overall_status = if statuses.is_empty() {
+        "not_exposed"
+    } else {
+        match (measured, unavailable) {
+            (true, true) => "measured_with_unavailable_submetrics",
+            (true, false) => "measured",
+            (false, true) => "not_reported_by_openvino",
+            (false, false) => "not_applicable",
+        }
+    };
+
+    serde_json::json!({
+        "openvino_perf_metrics": {
+            "status": overall_status,
+            "sentinel_policy": "negative_numeric_values_are_unavailable_not_measured",
+            "metrics": metric_statuses,
+        },
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_openvino_mean_std_status(
+    metrics: &serde_json::Value,
+    metric_name: &str,
+) -> serde_json::Value {
+    serde_json::json!({
+        "mean_ms": lunar_lake_openvino_metric_value_status(
+            lunar_lake_source_value_at(metrics, &format!("{metric_name}.mean_ms")),
+        ),
+        "std_ms": lunar_lake_openvino_metric_value_status(
+            lunar_lake_source_value_at(metrics, &format!("{metric_name}.std_ms")),
+        ),
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_openvino_metric_value_status(value: Option<&serde_json::Value>) -> &'static str {
+    match value {
+        Some(serde_json::Value::Number(number)) => match number.as_f64() {
+            Some(value) if value >= 0.0 => "measured",
+            Some(_) => "not_reported_by_openvino",
+            None => "not_numeric",
+        },
+        Some(serde_json::Value::Null) => "not_exposed",
+        Some(_) => "not_numeric",
+        None => "not_exposed",
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn lunar_lake_openvino_collect_status_strings(value: &serde_json::Value) -> Vec<&str> {
+    match value {
+        serde_json::Value::String(status) => vec![status.as_str()],
+        serde_json::Value::Array(items) => {
+            items.iter().flat_map(lunar_lake_openvino_collect_status_strings).collect()
+        }
+        serde_json::Value::Object(map) => {
+            map.values().flat_map(lunar_lake_openvino_collect_status_strings).collect()
+        }
+        _ => Vec::new(),
+    }
 }
 
 #[cfg(feature = "full-cli")]
@@ -18161,6 +18269,7 @@ mod tests {
             "runtime_api": "cpu",
             "fallback_used": false,
             "fallback_reason": null,
+            "backend_lane": "dense_slm_cpu",
             "kernel": {"kernel_id": "dense-qwen-cpu-reference"},
             "model": {
                 "path": "models/qwen2.5.gguf",
@@ -18173,6 +18282,7 @@ mod tests {
                 "loader_mode": "real_gguf",
                 "fallback_loader_used": false
             },
+            "prompt_template": "qwen2.5",
             "prompt_render": "<|im_start|>user\n2+2?<|im_end|>\n<|im_start|>assistant\n",
             "tokens": {
                 "prompt_ids": [1, 2, 3],
@@ -18226,6 +18336,10 @@ mod tests {
         assert_eq!(receipt["answer_gate_passed"], true);
         assert_eq!(receipt["acceleration_claim"], false);
         assert_eq!(receipt["backend"]["fallback_used"], false);
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["status"],
+            "not_applicable"
+        );
         assert!(receipt["source_receipt"].is_object());
     }
 
@@ -18302,7 +18416,19 @@ mod tests {
                 "passed": true,
                 "failed_rules": []
             },
-            "timing": {"generation_wall_ms": 301.0}
+            "timing": {
+                "generation_wall_ms": 301.0,
+                "openvino_perf_metrics": {
+                    "tokenization": {"mean_ms": -1.0, "std_ms": -1.0},
+                    "detokenization": {"mean_ms": -1.0, "std_ms": -1.0},
+                    "time_to_first_token": {"mean_ms": 160.0, "std_ms": 0.0},
+                    "generate": {"mean_ms": 301.0, "std_ms": 0.0},
+                    "inference": {"mean_ms": 298.0, "std_ms": 0.0},
+                    "throughput": {"mean_ms": 49.0, "std_ms": 1.0},
+                    "load_time_ms": 1819.0,
+                    "num_generated_tokens": 9
+                }
+            }
         });
         validate_lunar_lake_ask_source_receipt(&source, &route)?;
         let answer = lunar_lake_source_answer_text(&source);
@@ -18342,6 +18468,30 @@ mod tests {
         assert_eq!(receipt["tokenizer_source"], "hf_tokenizer_export");
         assert_eq!(receipt["prompt"]["token_ids"], serde_json::json!([1, 2, 3]));
         assert_eq!(receipt["tokens"]["generated_count"], 9);
+        assert_eq!(
+            receipt["timing"]["openvino_perf_metrics"]["tokenization"]["mean_ms"],
+            serde_json::json!(-1.0)
+        );
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["status"],
+            "measured_with_unavailable_submetrics"
+        );
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["metrics"]["tokenization"]["mean_ms"],
+            "not_reported_by_openvino"
+        );
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["metrics"]["detokenization"]["std_ms"],
+            "not_reported_by_openvino"
+        );
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["metrics"]["generate"]["mean_ms"],
+            "measured"
+        );
+        assert_eq!(
+            receipt["timing_metric_status"]["openvino_perf_metrics"]["sentinel_policy"],
+            "negative_numeric_values_are_unavailable_not_measured"
+        );
         assert_eq!(receipt["answer"]["normalized_text"], "2 + 2 equals 4.");
         Ok(())
     }
