@@ -4819,6 +4819,43 @@ default runtime selection, claim allocation reduction, claim timing improvement
 or speedup, broaden Q4/Q5 support, touch server, GPU, NPU, OpenVINO, UHD 620,
 Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-240 Per-Callsite No-Bias Dispatch Descriptor Blocker
+
+SLM-CPU-240 consumes the SLM-CPU-239 blocker and records the exact runtime
+boundary that still prevents a valid candidate-on receipt. The per-callsite
+off/on identity exists, but `FeedForward::apply_linear` still has no
+prompt-bound no-bias candidate descriptor argument and no fail-closed dispatch
+branch that calls `dense_linear_no_bias_candidate_forward`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-240-per-callsite-no-bias-dispatch-descriptor.json
+decision = per_callsite_dispatch_descriptor_blocked_fail_closed
+remaining_runtime_selection_blocker = feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument
+candidate_off_on_receipt_pair_gate_ready = true
+prompt_bound_candidate_descriptor_argument_present = false
+descriptor_identity_reaches_apply_linear_callsite = false
+generated_text_digests_available_at_apply_linear = false
+feed_forward_apply_linear_no_bias_dispatch_branch_present = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The structural blocker is now precise. Model-load hook registries are built
+before prompt/generated/text digests exist, while `FeedForward::apply_linear`
+executes before generated IDs and decoded text exist for the current session.
+Mutating model-load hooks with prompt-scoped identity would risk stale identity
+crossing prompt boundaries. The next safe slice is a prompt/session-scoped
+per-callsite descriptor argument or equivalent callsite emitter path that binds
+identity at the exact `feed_forward.down_proj` execution point and emits the
+candidate-on receipt only after the candidate branch actually executes.
+
+This slice does not execute the no-bias candidate, prove generated-ID
+preservation for an executed candidate, change default runtime selection, claim
+allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
+support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
