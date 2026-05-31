@@ -1,6 +1,9 @@
 # Lunar Lake Active Repository Boundary
 
-Tracking issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1036
+Tracking issues:
+
+- https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1036
+- https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1125
 
 Created: `2026-05-30`
 
@@ -37,6 +40,12 @@ and current swarm artifacts. At the time this boundary was written, the active
 blocker remained `LNL258V-POWER-006`: real battery-mode low_power telemetry,
 route sample evidence, energy-proxy evidence, and benchmark-qualified power
 advantage are still missing.
+
+Do not infer active blocker state from old-repo PR text. In particular,
+`LNL258V-POWER-013` is historical swarm evidence for AC-only low_power
+energy-proxy attempt-versus-valid semantics; it is not the active blocker.
+Current low_power promotion remains blocked on `LNL258V-POWER-006` until
+battery-mode route samples and energy-proxy evidence exist in swarm.
 
 ## Historical Source Repo
 
@@ -87,6 +96,14 @@ No runtime, receipt, or tracker state from this PR should be treated as current
 Lunar Lake evidence.
 ```
 
+Recent stale-PR example:
+
+- `EffortlessMetrics/BitNet-rs#6261` was closed unmerged because it targeted
+  the legacy source repo, used stale old-repo Lunar Lake numbering, and treated
+  `POWER-013` wording as current. The useful idea, if any, is only the guard
+  against stale blocker wording; the old-repo PR body, tracker text, CI state,
+  and receipt assumptions must not be ported as current Lunar Lake evidence.
+
 ## What Can Be Ported
 
 The following may be ported to swarm:
@@ -108,6 +125,8 @@ Do not treat these as current Lunar Lake evidence:
 - old-repo PR numbers or tracker statuses;
 - stale old-repo `LNL258V-*` numbering;
 - old-repo audit wording about active blockers;
+- old-repo wording that describes `POWER-013` as active or blocked after swarm
+  has returned the active low_power blocker to `LNL258V-POWER-006`;
 - source-repo generated dashboards;
 - source-repo receipts not present in the current swarm artifact set;
 - source-repo CI, bot, or review status;
@@ -152,6 +171,7 @@ It does not add:
 
 - new Lunar Lake inference;
 - new receipts;
+- old-repo PR merge authority;
 - route promotion;
 - speedup or power-advantage evidence;
 - native OpenCL or native NPU proof;
