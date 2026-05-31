@@ -1,0 +1,15 @@
+timestamp = "2026-05-31T12:53:12Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-241"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1131
+branch = "codex/slm-cpu/slm-cpu-241-apply-linear-callsite-descriptor"
+head_sha = "a1596d8784294ef4a1dfb0f021eba5029bcc8882"
+summary = "Opened the SLM-CPU-241 no-bias apply-linear callsite descriptor boundary PR."
+notes = [
+  "PR #1131 adds a fail-closed optional prompt-bound no-bias descriptor argument at FeedForward::apply_linear for the exact feed_forward.down_proj owner boundary.",
+  "Candidate execution remains disabled; the remaining blocker is prompt/session descriptor construction and digest lifetime before any candidate-on receipt can execute.",
+]
