@@ -50,9 +50,14 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only; does not imply cold one-off or low-power promotion |
 | `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence |
 
-The ledger's route IDs remain campaign-local names. New OpenVINO receipts and
-validators still need to map them to the canonical proof families defined by
-`BITNET-SPEC-OPENVINO-ROUTE-CONTRACT` before any future promotion review.
+The ledger's route IDs remain campaign-local names. The route-ID proof-family
+map records how future OpenVINO receipts and validators should relate those
+campaign route IDs to canonical proof families before any future promotion
+review depends on route identity:
+
+```text
+docs/reviews/lunar-lake-route-id-proof-family-map.md
+```
 
 ## Decision Table
 
@@ -170,8 +175,8 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   resident-session policy change.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
   cold-start gates are accepted.
-- #1135 should map campaign route IDs to canonical proof families before new
-  receipts or validators depend on route identity.
+- Future receipt or validator work should use the #1135 route-ID proof-family
+  map before depending on route identity.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
