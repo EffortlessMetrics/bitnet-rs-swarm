@@ -29,8 +29,8 @@ This review does not change route policy. It defines when existing or future
 resident evidence is sufficient for a route-facing `warm_resident` acceptance
 review and when that evidence must fail closed.
 
-Issue #1120 is closed as answered by this acceptance rule. Issue #1139 owns the
-remaining phase-timing schema work if future receipts need tighter host setup,
+Issue #1120 is closed as answered by this acceptance rule. Issue #1139 closed
+the phase-timing schema work used when future receipts need tighter host setup,
 tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
 receipt-overhead ownership.
 
@@ -152,9 +152,10 @@ blocks a `warm_resident` NPU route review unless the package includes:
 - memory samples and resident growth bytes;
 - a cold-start caveat and no low-power or BitNet claim leakage.
 
-Use #1139 if the guard needs phase-timer ownership beyond the resident-session
-fields above. Do not combine that guard with NPU route-policy mutation, new
-inference surfaces, benchmark matrices, low-power promotion, or
+Use the #1139/#1141 phase-timing contract if the guard needs phase-timer
+ownership beyond the resident-session fields above. Do not combine that guard
+with NPU route-policy mutation, new inference surfaces, benchmark matrices,
+low-power promotion, or
 generated-dashboard churn.
 
 ## Claim Boundary
