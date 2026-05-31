@@ -675,8 +675,28 @@ pub fn dense_linear_no_bias_candidate_forward(
 
 const FEED_FORWARD_APPLY_LINEAR_CALLSITE: &str = "bitnet_transformer::FeedForward::apply_linear";
 
+fn feed_forward_dense_tensor_name(layer_idx: usize, proj_name: &str) -> String {
+    format!("layers.{layer_idx}.feed_forward.{proj_name}.weight")
+}
+
 fn feed_forward_apply_linear_callsite_identity(tensor_name: &str) -> String {
     format!("{FEED_FORWARD_APPLY_LINEAR_CALLSITE}:{tensor_name}")
+}
+
+pub fn dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(
+    layer_idx: usize,
+    proj_name: &str,
+) -> String {
+    feed_forward_apply_linear_callsite_identity(&feed_forward_dense_tensor_name(
+        layer_idx, proj_name,
+    ))
+}
+
+fn prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+    descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    layer_idx: usize,
+) -> bool {
+    descriptor.tensor_name == feed_forward_dense_tensor_name(layer_idx, "down_proj")
 }
 
 fn feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
@@ -7654,6 +7674,22 @@ impl FeedForward {
         self.forward_impl(x, raw_tensors, dense_linear_hooks, None, None)
     }
 
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(
+            x,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            None,
+        )
+    }
+
     fn forward_impl(
         &self,
         x: &Tensor,
@@ -7766,6 +7802,27 @@ impl FeedForward {
         workspace.take_feed_forward_output()
     }
 
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_feed_forward_input(x);
+        let output = self.forward_impl(
+            x,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            Some(workspace),
+        )?;
+        workspace.record_feed_forward_output(&output);
+        workspace.store_feed_forward_output(output);
+        workspace.take_feed_forward_output()
+    }
+
     fn apply_activation(&self, input: &Tensor) -> Result<Tensor> {
         apply_ffn_activation(input, self.activation_type)
     }
@@ -7808,8 +7865,7 @@ impl FeedForward {
             self.layer_idx,
             proj_name
         );
-        let dense_tensor_name =
-            format!("layers.{}.feed_forward.{}.weight", self.layer_idx, proj_name);
+        let dense_tensor_name = feed_forward_dense_tensor_name(self.layer_idx, proj_name);
         if let Some(descriptor) = prompt_bound_no_bias_descriptor {
             let fail_closed_conditions =
                 feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
@@ -10133,7 +10189,7 @@ impl TransformerBlock {
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
     ) -> Result<Tensor> {
-        self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None)
+        self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None, None)
     }
 
     pub fn forward_with_workspace(
@@ -10146,7 +10202,47 @@ impl TransformerBlock {
     ) -> Result<Tensor> {
         workspace.record_block_input(x);
         let output =
-            self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, Some(workspace))?;
+            self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None, Some(workspace))?;
+        workspace.record_block_output(&output);
+        Ok(output)
+    }
+
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        kv_cache: Option<&mut LayerKVCache>,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(
+            x,
+            kv_cache,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            None,
+        )
+    }
+
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        kv_cache: Option<&mut LayerKVCache>,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_block_input(x);
+        let output = self.forward_impl(
+            x,
+            kv_cache,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            Some(workspace),
+        )?;
         workspace.record_block_output(&output);
         Ok(output)
     }
@@ -10157,6 +10253,9 @@ impl TransformerBlock {
         kv_cache: Option<&mut LayerKVCache>,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
         mut workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
         let trace_forward = qwen_trace_events_enabled();
@@ -10473,15 +10572,31 @@ impl TransformerBlock {
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_start", || {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
-        let feed_forward_output = if let Some(workspace) = workspace.as_mut() {
-            self.feed_forward.forward_with_workspace(
+        let feed_forward_output = match (workspace.as_mut(), prompt_bound_no_bias_descriptor) {
+            (Some(workspace), Some(descriptor)) => self
+                .feed_forward
+                .forward_with_workspace_and_no_bias_callsite_descriptor(
+                    &x,
+                    raw_tensors,
+                    dense_linear_hooks,
+                    workspace,
+                    descriptor,
+                )?,
+            (Some(workspace), None) => {
+                self.feed_forward.forward_with_workspace(
+                    &x,
+                    raw_tensors,
+                    dense_linear_hooks,
+                    workspace,
+                )?
+            }
+            (None, Some(descriptor)) => self.feed_forward.forward_with_no_bias_callsite_descriptor(
                 &x,
                 raw_tensors,
                 dense_linear_hooks,
-                workspace,
-            )?
-        } else {
-            self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?
+                descriptor,
+            )?,
+            (None, None) => self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?,
         };
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_finish", || {
             format!(
@@ -11510,7 +11625,7 @@ impl TransformerModel {
     /// **Performance note**: Accepts ownership of `hidden` to avoid cloning on hot path.
     /// Caller should pass owned tensor or use `.clone()` explicitly if needed.
     pub fn forward(&self, hidden: Tensor, kv_cache: Option<&mut KVCache>) -> Result<Tensor> {
-        self.forward_impl(hidden, kv_cache, None)
+        self.forward_impl(hidden, kv_cache, None, None)
     }
 
     pub fn forward_with_workspace(
@@ -11520,7 +11635,35 @@ impl TransformerModel {
         workspace: &mut TransformerForwardWorkspace,
     ) -> Result<Tensor> {
         workspace.record_model_input(&hidden);
-        let output = self.forward_impl(hidden, kv_cache, Some(workspace))?;
+        let output = self.forward_impl(hidden, kv_cache, Some(workspace), None)?;
+        workspace.record_model_output(&output);
+        workspace.store_model_output(output);
+        workspace.take_model_output()
+    }
+
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        hidden: Tensor,
+        kv_cache: Option<&mut KVCache>,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(hidden, kv_cache, None, Some(prompt_bound_no_bias_descriptor))
+    }
+
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        hidden: Tensor,
+        kv_cache: Option<&mut KVCache>,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_model_input(&hidden);
+        let output = self.forward_impl(
+            hidden,
+            kv_cache,
+            Some(workspace),
+            Some(prompt_bound_no_bias_descriptor),
+        )?;
         workspace.record_model_output(&output);
         workspace.store_model_output(output);
         workspace.take_model_output()
@@ -11531,6 +11674,9 @@ impl TransformerModel {
         hidden: Tensor,
         mut kv_cache: Option<&mut KVCache>,
         mut workspace: Option<&mut TransformerForwardWorkspace>,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
     ) -> Result<Tensor> {
         let trace_forward = qwen_trace_events_enabled();
         let forward_start = Instant::now();
@@ -11543,6 +11689,23 @@ impl TransformerModel {
             )
         });
         let mut x = hidden; // Take ownership - no clone needed!
+
+        if let Some(descriptor) = prompt_bound_no_bias_descriptor {
+            let matching_layer_count = (0..self.layers.len())
+                .filter(|layer_idx| {
+                    prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+                        descriptor,
+                        *layer_idx,
+                    )
+                })
+                .count();
+            if matching_layer_count != 1 {
+                return Err(BitNetError::Validation(format!(
+                    "prompt-bound no-bias descriptor target {} must match exactly one feed_forward.down_proj layer before model forward",
+                    descriptor.tensor_name
+                )));
+            }
+        }
 
         // Tracepoint 1: Embeddings (incremental path - single token)
         // This captures the embedding for the current token being processed
@@ -11567,13 +11730,35 @@ impl TransformerModel {
                 format!("\"layer\":{},\"dims\":[{}]", i, qwen_trace_dims_json(x.dims()))
             });
             let layer_cache = kv_cache.as_mut().and_then(|c| c.layer_mut(i));
+            let layer_no_bias_descriptor = prompt_bound_no_bias_descriptor.filter(|descriptor| {
+                prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(descriptor, i)
+            });
             x = if let Some(workspace) = workspace.as_mut() {
-                layer.forward_with_workspace(
+                if let Some(descriptor) = layer_no_bias_descriptor {
+                    layer.forward_with_workspace_and_no_bias_callsite_descriptor(
+                        &x,
+                        layer_cache,
+                        &self.raw_tensors,
+                        &self.dense_linear_hooks,
+                        workspace,
+                        descriptor,
+                    )?
+                } else {
+                    layer.forward_with_workspace(
+                        &x,
+                        layer_cache,
+                        &self.raw_tensors,
+                        &self.dense_linear_hooks,
+                        workspace,
+                    )?
+                }
+            } else if let Some(descriptor) = layer_no_bias_descriptor {
+                layer.forward_with_no_bias_callsite_descriptor(
                     &x,
                     layer_cache,
                     &self.raw_tensors,
                     &self.dense_linear_hooks,
-                    workspace,
+                    descriptor,
                 )?
             } else {
                 layer.forward(&x, layer_cache, &self.raw_tensors, &self.dense_linear_hooks)?
@@ -14602,6 +14787,47 @@ mod tests {
         assert!(emitter.preserves_normal_inference());
         assert!(!emitter.candidate_execution_enabled);
         assert!(!emitter.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_prompt_bound_descriptor_targets_only_matching_down_proj_layer() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let callsite_identity =
+            dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(0, "down_proj");
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                callsite_identity.clone(),
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(
+            callsite_identity,
+            "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight"
+        );
+        assert!(prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+            &emitter, 0
+        ));
+        assert!(!prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+            &emitter, 1
+        ));
+        assert_eq!(emitter.tensor_name, "layers.0.feed_forward.down_proj.weight");
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
     }
 
     #[test]
