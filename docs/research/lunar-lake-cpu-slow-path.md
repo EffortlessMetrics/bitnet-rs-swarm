@@ -338,26 +338,31 @@ hiding it:
 | 5 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
 | 6 | Change prefill/decode kernels or route policy | Potentially high, but evidence not yet precise enough | High: broad runtime and CI churn risk |
 
-## Recommended Next Step
+## Current Next Steps
 
-Open a small follow-up item, `CPU-SLM-PERF-001`, for a receipt/schema hardening
-PR only:
+`CPU-SLM-PERF-001` was opened as
+[#1045](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1045) and
+is now closed. Treat its receipt/schema hardening as the completed first step,
+not as the next action.
 
-```text
-Add Lunar Lake Rust GGUF CPU slow-path phase attribution fields and tests.
-No route-policy change. No kernel optimization. No generated dashboard refresh.
-```
+The live CPU slow-path follow-ups are:
 
-Acceptance:
+1. [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069)
+   refreshes resident Rust GGUF CPU no-reload timing. It should separate one
+   first resident ask from 30 additional warm asks for `regression_tiny`,
+   `ask_short`, and `ask_normal`, and keep unavailable sub-phases marked
+   `not_exposed`.
+2. [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+   collects the dense Rust GGUF thread/core matrix across current default,
+   1-thread, 4-thread, and 8-thread variants with Windows power, AC/battery,
+   thermal, utilization, frequency, fallback, and claim-boundary context.
+3. After #1069 and #1071, refresh the matched Rust GGUF CPU versus OpenVINO CPU
+   comparison with explicit model-format, timing-scope, prompt-render,
+   tokenization, and benchmark-qualification blockers.
 
-- the receipt distinguishes cold model load, tokenizer load, prompt rendering,
-  tokenize, prefill, first token, decode, detokenize, quality gate, receipt
-  write, telemetry, and total response;
-- unavailable sub-phases are marked `not_exposed` instead of `0`;
-- profile, prompt tokens, generated tokens, thread count, power scheme, and
-  fallback status are present;
-- the committed docs say the new receipt is measurement infrastructure, not a
-  CPU performance fix.
+Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
+route-policy changes until the resident timing and thread/core evidence explain
+which slow-path target is real.
 
 ## Claim Boundary
 
