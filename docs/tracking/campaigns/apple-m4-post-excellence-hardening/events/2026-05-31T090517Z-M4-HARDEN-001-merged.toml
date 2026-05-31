@@ -1,0 +1,11 @@
+timestamp = "2026-05-31T09:05:17Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-001"
+event = "merged"
+pr = 1087
+merge_sha = "0f979e07f6ef0a4025d388975e6526f4e7a5b29a"
+actor = "codex"
+notes = [
+  "PR #1087 merged the docs-only apple-m4-post-excellence-hardening campaign seed.",
+  "The next runnable item is M4-HARDEN-002 for dense local-server timeout and cancellation hardening.",
+]
