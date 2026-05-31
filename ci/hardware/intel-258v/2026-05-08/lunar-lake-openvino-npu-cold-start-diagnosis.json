@@ -105,24 +105,28 @@
       "sample_count": 4,
       "min": 29373.0,
       "mean": 32368.692499999997,
+      "p95": 35469.77,
       "max": 35469.77
     },
     "generation_wall_ms": {
       "sample_count": 4,
       "min": 445.1309214346111,
       "mean": 890.3649970204239,
+      "p95": 2116.417,
       "max": 2116.417
     },
     "first_token_or_text_chunk_ms": {
       "sample_count": 3,
       "min": 234.69986428972334,
       "mean": 249.3716530121811,
+      "p95": 272.3985999958434,
       "max": 272.3985999958434
     },
     "throughput_tokens_per_s": {
       "sample_count": 3,
       "min": -39.54434108734131,
       "mean": 8.341852929857046,
+      "p95": 33.89432271321615,
       "max": 33.89432271321615
     },
     "operator_load_to_generation_ratio": 57.5902218400827,
@@ -204,6 +208,7 @@
       "openvino_time_to_first_token_ms": 229.32159423828125,
       "throughput_tokens_per_s": 31.69527816772461,
       "selected_backend": "openvino-npu",
+      "runtime_api": "openvino_genai",
       "runtime_device": "NPU",
       "resolved_device": "Intel(R) AI Boost",
       "fallback_used": false,
@@ -221,6 +226,7 @@
       "openvino_time_to_first_token_ms": 230.22381591796875,
       "throughput_tokens_per_s": 33.697750091552734,
       "selected_backend": "openvino-npu",
+      "runtime_api": "openvino_genai",
       "runtime_device": "NPU",
       "resolved_device": "Intel(R) AI Boost",
       "fallback_used": false,
@@ -242,30 +248,35 @@
       "sample_count": 3,
       "min": 445.1309214346111,
       "mean": 481.68099602723186,
+      "p95": 510.03449998097494,
       "max": 510.03449998097494
     },
     "first_text_chunk_ms": {
       "sample_count": 2,
       "min": 234.69986428972334,
       "mean": 253.54923214278338,
+      "p95": 272.3985999958434,
       "max": 272.3985999958434
     },
     "openvino_time_to_first_token_ms": {
       "sample_count": 3,
       "min": 173.47162410191126,
       "mean": 201.09689343164837,
+      "p95": 241.01649475097656,
       "max": 241.01649475097656
     },
     "throughput_tokens_per_s": {
       "sample_count": 3,
       "min": -39.54434108734131,
       "mean": 8.341852929857046,
+      "p95": 33.89432271321615,
       "max": 33.89432271321615
     },
     "generated_tokens": {
       "sample_count": 3,
       "min": 9.0,
       "mean": 60.333333333333336,
+      "p95": 140.0,
       "max": 140.0
     },
     "hot_path_interesting": true,

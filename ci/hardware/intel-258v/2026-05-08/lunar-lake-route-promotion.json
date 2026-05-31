@@ -158,7 +158,7 @@
       "phase_timing_present": true,
       "speedup_claim": false,
       "acceleration_claim": false,
-      "last_evidence_utc": "2026-05-19T20:30:00Z",
+      "last_evidence_utc": "2026-05-23T19:25:00Z",
       "reason": "Dense Qwen CPU remains the default route id and regression baseline, but OpenVINO routes supersede it for profile-qualified profiles [gpu:ask_normal,ask_short,decode_heavy,prefill_heavy; npu:warm_resident]."
     },
     {
@@ -195,7 +195,7 @@
       "phase_timing_present": false,
       "speedup_claim": false,
       "acceleration_claim": false,
-      "last_evidence_utc": "2026-05-19T20:30:00Z",
+      "last_evidence_utc": "2026-05-23T19:25:00Z",
       "reason": "BitNet CPU is promoted only as the strict BitNet reference route; dense Qwen CPU remains the default user-facing route."
     },
     {
@@ -237,7 +237,7 @@
       "phase_timing_present": true,
       "speedup_claim": false,
       "acceleration_claim": false,
-      "last_evidence_utc": "2026-05-19T20:30:00Z",
+      "last_evidence_utc": "2026-05-23T19:25:00Z",
       "reason": "OpenVINO GPU is promoted only for benchmark-qualified dense Qwen profiles [ask_normal,ask_short,decode_heavy,prefill_heavy] with fallback=false, passing corpus-v2 evidence, direct token visibility, profile-matched timing, and lower total response than the CPU baseline."
     },
     {
@@ -283,9 +283,26 @@
       "fallback_used": false,
       "answer_gate_passed": true,
       "phase_timing_present": true,
+      "npu_cache": {
+        "evidence_receipt": "lunar-lake-openvino-npu-cache-experiment.json",
+        "cache_hit_runtime_metric_available": false,
+        "cache_hit_metric_source": "not_exposed",
+        "cache_classification_source": "timing_derived_cache_files_and_construct_ratio",
+        "evidence_boundary": "timing-derived cache-file and process timing evidence only; no direct OpenVINO runtime cache-hit truth is claimed"
+      },
+      "resident_session": {
+        "evidence_receipt": "lunar-lake-openvino-npu-resident-session.json",
+        "timing_scope": "openvino_npu_resident_warm_session",
+        "promoted_profiles": [
+          "warm_resident"
+        ],
+        "pipeline_construct_scope": "excluded_from_warm_resident_timing",
+        "power_advantage_claim": false,
+        "evidence_boundary": "resident-session evidence supports warm_resident only; cold one-off and low_power remain blocked"
+      },
       "speedup_claim": false,
       "acceleration_claim": false,
-      "last_evidence_utc": "2026-05-19T20:30:00Z",
+      "last_evidence_utc": "2026-05-23T19:25:00Z",
       "reason": "OpenVINO NPU is promoted only for profile-qualified warm resident dense Qwen profiles [warm_resident] with fallback=false, passing corpus-v2 evidence, resident-session timing, direct token visibility, and profile-matched latency evidence; cold and low_power profiles remain blocked."
     }
   ],

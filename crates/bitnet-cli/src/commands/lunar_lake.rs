@@ -1580,10 +1580,33 @@ pub struct RoutePromotion {
     pub fallback_used: Option<bool>,
     pub answer_gate_passed: Option<bool>,
     pub phase_timing_present: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub npu_cache: Option<RoutePromotionNpuCacheEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resident_session: Option<RoutePromotionNpuResidentEvidence>,
     pub speedup_claim: bool,
     pub acceleration_claim: bool,
     pub last_evidence_utc: String,
     pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RoutePromotionNpuCacheEvidence {
+    pub evidence_receipt: String,
+    pub cache_hit_runtime_metric_available: bool,
+    pub cache_hit_metric_source: String,
+    pub cache_classification_source: String,
+    pub evidence_boundary: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RoutePromotionNpuResidentEvidence {
+    pub evidence_receipt: String,
+    pub timing_scope: String,
+    pub promoted_profiles: Vec<String>,
+    pub pipeline_construct_scope: String,
+    pub power_advantage_claim: bool,
+    pub evidence_boundary: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -2600,6 +2623,7 @@ pub struct NpuColdProcessDecomposition {
     pub openvino_time_to_first_token_ms: Option<f64>,
     pub throughput_tokens_per_s: Option<f64>,
     pub selected_backend: Option<String>,
+    pub runtime_api: Option<String>,
     pub runtime_device: Option<String>,
     pub resolved_device: Option<String>,
     pub fallback_used: Option<bool>,
@@ -9569,6 +9593,7 @@ fn npu_cold_process_decomposition(
             &["openvino_perf_metrics.throughput.mean_ms"],
         ),
         selected_backend: string_at(child, "selected_backend"),
+        runtime_api: string_at(child, "runtime_api"),
         runtime_device: string_at(child, "runtime_device"),
         resolved_device: string_at(child, "resolved_device"),
         fallback_used: bool_at_any(child, &["fallback_used"]),
@@ -9588,6 +9613,9 @@ fn npu_cold_process_blockers(
 ) {
     if process.selected_backend.as_deref() != Some("openvino-npu") {
         blockers.push(format!("NPU cold-load {label} selected_backend is not openvino-npu"));
+    }
+    if process.runtime_api.as_deref() != Some("openvino_genai") {
+        blockers.push(format!("NPU cold-load {label} runtime_api is not openvino_genai"));
     }
     if process.runtime_device.as_deref() != Some("NPU") {
         blockers.push(format!("NPU cold-load {label} runtime_device is not explicit NPU"));
@@ -16233,6 +16261,10 @@ fn promote_route(
             "Additional route is not promoted by the Lunar Lake route policy.".to_string(),
         ),
     };
+    let npu_cache =
+        route_promotion_npu_cache_evidence(route, &status, openvino_npu_promoted_profiles);
+    let resident_session =
+        route_promotion_npu_resident_evidence(route, &status, openvino_npu_promoted_profiles);
 
     RoutePromotion {
         route_id: route.route_id.clone(),
@@ -16250,11 +16282,56 @@ fn promote_route(
         fallback_used,
         answer_gate_passed,
         phase_timing_present,
+        npu_cache,
+        resident_session,
         speedup_claim,
         acceleration_claim: route.acceleration_claim,
         last_evidence_utc: operator.created_utc.clone(),
         reason,
     }
+}
+
+fn route_promotion_npu_cache_evidence(
+    route: &OperatorRoute,
+    status: &str,
+    openvino_npu_promoted_profiles: &BTreeSet<String>,
+) -> Option<RoutePromotionNpuCacheEvidence> {
+    if route.route_id != "dense_slm_openvino_npu_candidate"
+        || status != "promoted"
+        || openvino_npu_promoted_profiles.is_empty()
+    {
+        return None;
+    }
+
+    Some(RoutePromotionNpuCacheEvidence {
+        evidence_receipt: OPENVINO_NPU_CACHE_EXPERIMENT.to_string(),
+        cache_hit_runtime_metric_available: false,
+        cache_hit_metric_source: "not_exposed".to_string(),
+        cache_classification_source: "timing_derived_cache_files_and_construct_ratio".to_string(),
+        evidence_boundary: "timing-derived cache-file and process timing evidence only; no direct OpenVINO runtime cache-hit truth is claimed".to_string(),
+    })
+}
+
+fn route_promotion_npu_resident_evidence(
+    route: &OperatorRoute,
+    status: &str,
+    openvino_npu_promoted_profiles: &BTreeSet<String>,
+) -> Option<RoutePromotionNpuResidentEvidence> {
+    if route.route_id != "dense_slm_openvino_npu_candidate"
+        || status != "promoted"
+        || openvino_npu_promoted_profiles.is_empty()
+    {
+        return None;
+    }
+
+    Some(RoutePromotionNpuResidentEvidence {
+        evidence_receipt: OPENVINO_NPU_RESIDENT_SESSION.to_string(),
+        timing_scope: "openvino_npu_resident_warm_session".to_string(),
+        promoted_profiles: openvino_npu_promoted_profiles.iter().cloned().collect(),
+        pipeline_construct_scope: "excluded_from_warm_resident_timing".to_string(),
+        power_advantage_claim: false,
+        evidence_boundary: "resident-session evidence supports warm_resident only; cold one-off and low_power remain blocked".to_string(),
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -18326,6 +18403,8 @@ mod tests {
             fallback_used: Some(false),
             answer_gate_passed: Some(true),
             phase_timing_present: Some(true),
+            npu_cache: None,
+            resident_session: None,
             speedup_claim: false,
             acceleration_claim: false,
             last_evidence_utc: "2026-05-19T04:30:00Z".to_string(),
@@ -19348,6 +19427,16 @@ mod tests {
             npu.present_evidence.iter().any(|item| item.ends_with("gpu-route-profile-ready.json"))
         );
         assert!(npu.missing_evidence.is_empty(), "{:?}", npu.missing_evidence);
+        let npu_cache = npu.npu_cache.as_ref().context("missing NPU cache evidence")?;
+        assert_eq!(npu_cache.evidence_receipt, OPENVINO_NPU_CACHE_EXPERIMENT);
+        assert!(!npu_cache.cache_hit_runtime_metric_available);
+        assert_eq!(npu_cache.cache_hit_metric_source, "not_exposed");
+        assert!(npu_cache.evidence_boundary.contains("no direct OpenVINO runtime cache-hit"));
+        let resident_session =
+            npu.resident_session.as_ref().context("missing NPU resident-session evidence")?;
+        assert_eq!(resident_session.evidence_receipt, OPENVINO_NPU_RESIDENT_SESSION);
+        assert_eq!(resident_session.promoted_profiles, vec!["warm_resident".to_string()]);
+        assert!(!resident_session.power_advantage_claim);
         assert!(
             npu.blocked_for.contains(&"low_power_power_advantage_unproven".to_string()),
             "{:?}",
@@ -24788,6 +24877,7 @@ mod tests {
                         "process_wall_ms": 29286.0,
                         "child_receipt": {
                             "iteration": "first_process",
+                            "runtime_api": "openvino_genai",
                             "runtime_device": "NPU",
                             "resolved_device": "Intel(R) AI Boost",
                             "selected_backend": "openvino-npu",
@@ -24809,6 +24899,7 @@ mod tests {
                         "process_wall_ms": 1821.0,
                         "child_receipt": {
                             "iteration": "second_process",
+                            "runtime_api": "openvino_genai",
                             "runtime_device": "NPU",
                             "resolved_device": "Intel(R) AI Boost",
                             "selected_backend": "openvino-npu",
@@ -24897,6 +24988,7 @@ mod tests {
             .as_ref()
             .context("missing first-process decomposition")?;
         assert_eq!(first_process.cold_warm_mode, "first_process_cache_miss");
+        assert_eq!(first_process.runtime_api.as_deref(), Some("openvino_genai"));
         assert_eq!(first_process.runtime_device.as_deref(), Some("NPU"));
         assert_eq!(first_process.fallback_used, Some(false));
         assert_eq!(first_process.answer_gate_passed, Some(true));
