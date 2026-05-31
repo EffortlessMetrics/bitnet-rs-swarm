@@ -4,6 +4,11 @@ Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1035
 
 Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
 
+Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
+
+Live measurement follow-ups: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069),
+[#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+
 Research date: 2026-05-30
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
