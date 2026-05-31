@@ -13939,8 +13939,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-241"
-status = "ready"
+status = "pr_open"
+pr = 1131
 branch = "codex/slm-cpu/slm-cpu-241-apply-linear-callsite-descriptor"
+head_sha = "a1596d8784294ef4a1dfb0f021eba5029bcc8882"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
