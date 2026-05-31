@@ -1,0 +1,10 @@
+timestamp = "2026-05-31T08:50:54Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-001"
+event = "in_progress"
+actor = "codex"
+notes = [
+  "Started the post-excellence hardening campaign seed from the completed apple-m4-inference-excellence baseline.",
+  "Scope is docs/tracking only: campaign narrative, active manifest, generated dashboards, and no runtime changes.",
+  "The completed BitNet-rs closeout remains the baseline source of truth and is not reopened by this item.",
+]
