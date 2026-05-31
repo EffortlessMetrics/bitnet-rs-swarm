@@ -289,6 +289,8 @@ cost and must state that resident proof does not remove cold-start cost.
 
 ### Thread/Core Matrix Receipt
 
+Detailed plan: `docs/research/lunar-lake-cpu-thread-core-matrix.md`.
+
 Run the same resident ask set across a small matrix:
 
 | Variant | Purpose |
