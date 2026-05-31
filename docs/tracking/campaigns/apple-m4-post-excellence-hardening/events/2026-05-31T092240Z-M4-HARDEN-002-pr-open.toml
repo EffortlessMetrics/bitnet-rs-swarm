@@ -1,0 +1,11 @@
+timestamp = "2026-05-31T09:22:40Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-002"
+event = "pr_open"
+pr = 1091
+head_sha = "f0473f36ed4bbadf81121bfa28f470a530b073c7"
+actor = "codex"
+notes = [
+  "Opened the dense local-server timeout and streaming cancellation PR in bitnet-rs-swarm.",
+  "PR scope remains dense SLM server hardening only; BitNet chat and serve remain disabled without ready-gate receipts.",
+]

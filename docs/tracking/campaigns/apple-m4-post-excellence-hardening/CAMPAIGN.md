@@ -118,7 +118,7 @@ completed items.
 | Work item | Status | Notes |
 |---|---|---|
 | M4-HARDEN-001 | merged | Seed this campaign and docs/tracking queue only. No runtime changes. |
-| M4-HARDEN-002 | in_progress | Dense server timeout and cancellation with partial-generation receipts. No BitNet serve. |
+| M4-HARDEN-002 | pr_open | Dense server timeout and cancellation with partial-generation receipts. No BitNet serve. |
 | M4-HARDEN-003 | proposed | Dense server response conformance, streaming events, receipt export, and clean failure paths. |
 | M4-HARDEN-004 | proposed | BitNet repaired-250 regression analysis before corpus expansion. |
 | M4-HARDEN-005 | proposed | Rerun only failing or repaired BitNet families and preserve identity. |
