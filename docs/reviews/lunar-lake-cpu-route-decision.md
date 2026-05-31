@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1096](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1096), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
-Linked PRs: n/a
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -23,9 +23,9 @@ useful because corpus-v2 passes with fallback false and direct generated-token
 visibility, but it is not a matched-format CPU speedup claim and it does not
 replace the Rust GGUF CPU route.
 
-This memo closes the decision gap from #1096. It does not change route policy,
-run inference, refresh receipts, promote OpenVINO CPU, claim a speedup, claim a
-power advantage, or prove BitNet QK256/I2_S behavior.
+This memo records the decision from #1122, landed by #1132. It does not change
+route policy, run inference, refresh receipts, promote OpenVINO CPU, claim a
+speedup, claim a power advantage, or prove BitNet QK256/I2_S behavior.
 
 ## Current Evidence
 

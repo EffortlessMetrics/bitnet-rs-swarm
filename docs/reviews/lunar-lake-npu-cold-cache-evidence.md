@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1093](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1093), [#1094](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1094), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
+Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
@@ -24,7 +24,7 @@ metrics as unavailable. They are not enough to promote NPU for cold one-off
 asks, `ask_short`, `ask_normal`, `low_power`, native NPU kernels, or BitNet
 QK256/I2_S behavior.
 
-This review answers #1093 by naming the evidence gate that must exist before
+This review supports #1119 by naming the evidence gate that must exist before
 any NPU cold/cache route-policy change is considered. It does not run
 inference, refresh receipts, or change route policy.
 
@@ -91,7 +91,7 @@ available, writable, and bound to the exact model/export/runtime/device tuple.
 
 ### Warm Resident
 
-Use #1094 and `lunar-lake-npu-warm-resident-acceptance.md` for warm-resident
+Use #1120 and `lunar-lake-npu-warm-resident-acceptance.md` for warm-resident
 acceptance. Cache evidence can explain why resident setup is attractive, but it
 does not replace the same-process resident loop acceptance gates.
 

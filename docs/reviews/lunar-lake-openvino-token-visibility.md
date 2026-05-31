@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1097](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1097)
+Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only token evidence policy
 Policy impact: no policy exception
@@ -120,7 +120,7 @@ visibility blocker. GPU `ask_short` and `ask_normal` can continue to be reviewed
 against quality, fallback, timing, route identity, and benchmark-qualified
 advantage without adding a token-visibility caveat.
 
-This does not settle #1095. It only removes token visibility as the reason to
+This does not settle #1121. It only removes token visibility as the reason to
 narrow those two profiles.
 
 ### NPU

@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1096](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1096)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122)
 Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1104](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1104)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception

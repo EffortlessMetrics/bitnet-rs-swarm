@@ -3,7 +3,7 @@
 Review issues:
 
 - Original review: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1034
-- Current refresh: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1095
+- Current refresh: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121
 
 Review date: 2026-05-30
 Refresh date: 2026-05-31
@@ -229,7 +229,7 @@ Small follow-ups that still fit the current research-first operating mode:
 3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
    battery-mode samples and energy-proxy evidence.
 
-No immediate implementation PR follows from #1095. If `prefill_heavy` or
+No immediate implementation PR follows from #1121. If `prefill_heavy` or
 `decode_heavy` needs review, open a separate focused profile-phase issue rather
 than expanding this `ask_short` / `ask_normal` review.
 

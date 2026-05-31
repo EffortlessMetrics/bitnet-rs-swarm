@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1098](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1098)
+Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
@@ -22,10 +22,13 @@ smallest useful follow-up is to keep the profile reviews and evidence contracts
 current:
 
 - #1064 for battery-mode `low_power` evidence;
-- #1094 for NPU warm-resident acceptance;
-- #1095 for OpenVINO GPU `ask_short` / `ask_normal` review;
-- #1096 for the CPU route optimization decision memo;
-- #1097 for generated-token visibility rules.
+- #1119 for NPU cold/cache decomposition;
+- #1120 for NPU warm-resident acceptance;
+- #1121 for OpenVINO GPU `ask_short` / `ask_normal` review;
+- #1122 and #1132 for the CPU route posture decision, with #1069 and #1071
+  as live measurement follow-ups;
+- #1123 for generated-token visibility rules;
+- #1135 for route ID and canonical proof-family mapping.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -38,8 +41,8 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | Profile | Current promoted route | Review posture |
 | --- | --- | --- |
 | `regression_tiny` | `dense_slm_default_cpu` | keep CPU as cheap strict regression route |
-| `ask_short` | `dense_slm_openvino_gpu_candidate` | keep while #1095 confirms corpus, timing, fallback, and token visibility remain valid |
-| `ask_normal` | `dense_slm_openvino_gpu_candidate` | keep while #1095 confirms corpus, timing, fallback, and token visibility remain valid |
+| `ask_short` | `dense_slm_openvino_gpu_candidate` | keep while #1121 confirms corpus, timing, fallback, and token visibility remain valid |
+| `ask_normal` | `dense_slm_openvino_gpu_candidate` | keep while #1121 confirms corpus, timing, fallback, and token visibility remain valid |
 | `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
 | `decode_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
 | `structured` | `dense_slm_default_cpu` | keep CPU until structured OpenVINO evidence has its own promotion package |
@@ -92,8 +95,9 @@ These rules apply before profile-specific promotion language:
 
 Dense Qwen CPU remains the correctness and fallback plate for profiles where no
 accelerator has a stronger exact-profile package. CPU route evidence is not an
-acceleration claim, and #1096 must decide whether to optimize Rust GGUF CPU,
-evaluate OpenVINO CPU as a separate candidate, or keep CPU as fallback only.
+acceleration claim. #1122, closed by #1132, keeps Rust GGUF CPU as the dense
+SLM correctness and fallback baseline while #1069 and #1071 remain the live
+measurement follow-ups.
 
 ### OpenVINO GPU
 
@@ -108,7 +112,7 @@ OpenVINO GPU may stay promoted only for profiles whose evidence still has:
 - benchmark-qualified advantage against the relevant CPU baseline;
 - no native OpenCL, BitNet, power, or broad acceleration claim.
 
-The `ask_short` and `ask_normal` profile decision lives in #1095. The current
+The `ask_short` and `ask_normal` profile decision lives in #1121. The current
 ledger also promotes `prefill_heavy` and `decode_heavy`; keep those on
 review-watch until prefill/decode split evidence is refreshed or a later review
 decides whether to keep, narrow, or mark them conditional.
@@ -156,14 +160,18 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 ## Next Work
 
-- #1097 should define a central generated-token visibility strategy before
+- #1123 should define a central generated-token visibility strategy before
   token-ID gaps become one-off wording in each receipt.
-- #1095 should either keep, narrow, or mark conditional the GPU
+- #1121 should either keep, narrow, or mark conditional the GPU
   `ask_short` / `ask_normal` promotion with a current evidence map.
 - If `prefill_heavy` or `decode_heavy` become active route-review targets,
-  open a focused profile-phase issue instead of bundling them into #1095.
-- #1094 should define the NPU `warm_resident` route acceptance rule before any
+  open a focused profile-phase issue instead of bundling them into #1121.
+- #1120 should define the NPU `warm_resident` route acceptance rule before any
   resident-session policy change.
+- #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
+  cold-start gates are accepted.
+- #1135 should map campaign route IDs to canonical proof families before new
+  receipts or validators depend on route identity.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
