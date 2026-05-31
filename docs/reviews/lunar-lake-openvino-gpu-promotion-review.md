@@ -1,8 +1,12 @@
 # Lunar Lake OpenVINO GPU Promotion Review
 
-Review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1034
+Review issues:
+
+- Original review: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1034
+- Current refresh: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1095
 
 Review date: 2026-05-30
+Refresh date: 2026-05-31
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -14,6 +18,13 @@ Do not open a route-policy PR for those profiles. Current swarm artifacts show
 fallback-free OpenVINO GenAI execution on Arc 140V GPU, passing corpus-v2
 profile evidence, direct generated-token visibility, profile-matched timing,
 and benchmark-qualified lower total response than the CPU baseline.
+
+The 2026-05-31 refresh keeps that conclusion. The route-policy review now
+records that `ask_short` and `ask_normal` should remain profile-scoped and
+receipt-invalidatable, and the token-visibility review records that current
+OpenVINO GPU corpus-v2 evidence has direct generated-token IDs from
+`openvino_genai_encoded_results_tokens`. Those reviews remove route-policy and
+token-visibility drift as reasons to narrow the two GPU ask profiles.
 
 This is a narrow dense SLM OpenVINO recommendation. It is not:
 
@@ -37,6 +48,10 @@ This is a narrow dense SLM OpenVINO recommendation. It is not:
 
 This review is about whether `ask_short` and `ask_normal` should remain on the
 OpenVINO GPU route. The answer is yes.
+
+This review does not re-open `prefill_heavy` or `decode_heavy`. The route-policy
+review keeps those profiles on review-watch until a focused profile-phase review
+decides whether their prefill/decode split evidence is sufficient.
 
 ## Evidence Summary
 
@@ -145,6 +160,13 @@ receipt records:
 
 Preserve this requirement for every future OpenVINO GPU receipt.
 
+The dedicated token-visibility review confirms the same boundary: direct
+pipeline IDs can support promotion-grade token visibility inside this exact
+dense SLM route/profile package, while retokenized or text-only evidence would
+remain diagnostic. The current GPU corpus-v2 diagnosis is in the direct-token
+bucket, so token visibility does not require narrowing `ask_short` or
+`ask_normal`.
+
 ### Prefill/Decode Split Gap
 
 The gap is real but not a blocker for keeping `ask_short` and `ask_normal`
@@ -168,6 +190,11 @@ The current route language is appropriately scoped:
 
 Keep that language. Do not reword it into an acceleration, native OpenCL, or
 BitNet claim.
+
+The route-policy review turns this into a reusable decision rule. Future GPU
+route-policy work should keep, narrow, condition, or revoke a profile based on
+the exact profile evidence, not on global accelerator status or old generated
+dashboard wording.
 
 ## Promotion Boundaries
 
@@ -202,6 +229,10 @@ Small follow-ups that still fit the current research-first operating mode:
 3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
    battery-mode samples and energy-proxy evidence.
 
+No immediate implementation PR follows from #1095. If `prefill_heavy` or
+`decode_heavy` needs review, open a separate focused profile-phase issue rather
+than expanding this `ask_short` / `ask_normal` review.
+
 ## Claim Boundary
 
 This review does not add:
@@ -213,6 +244,8 @@ This review does not add:
 - speedup or acceleration claims;
 - power-advantage evidence;
 - native OpenCL proof;
+- NPU evidence;
+- `low_power` evidence;
 - BitNet QK256/I2_S behavior proof.
 
 It only reviews the current OpenVINO GPU promotion evidence and recommends
@@ -226,3 +259,7 @@ keeping `ask_short` and `ask_normal` promotion in place.
   https://docs.openvino.ai/2026/openvino-workflow/running-inference/inference-devices-and-modes/query-device-properties.html
 - OpenVINO documentation: optimizing latency,
   https://docs.openvino.ai/2026/openvino-workflow/running-inference/optimize-inference/optimizing-latency.html
+- Lunar Lake route policy review:
+  [lunar-lake-route-policy-review.md](lunar-lake-route-policy-review.md)
+- Lunar Lake OpenVINO token visibility review:
+  [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md)
