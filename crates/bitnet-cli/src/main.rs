@@ -12168,11 +12168,34 @@ async fn run_lunar_lake_ask(
                 "lunar-lake OpenVINO ask uses the tokenizer exported in the OpenVINO model directory; --tokenizer is only supported for the CPU GGUF route"
             );
         }
+        let python = openvino_operator_python();
+        if let Err(err) = ensure_openvino_operator_python_ready(&python) {
+            let error = err.to_string();
+            let blocked_receipt = build_lunar_lake_operator_ask_runtime_blocked_receipt(
+                LunarLakeAskRuntimeBlockedReceiptContext {
+                    artifact_root: &artifact_root,
+                    operator_receipt: &operator_receipt_path,
+                    promotion_ledger: &promotion_ledger,
+                    route_profile_comparison: &route_profile_comparison,
+                    route_selection: &route_selection,
+                    route: &route,
+                    model_path: &model,
+                    source_run_path: &source_run_path,
+                    runtime_python: &python,
+                    question: &question,
+                    max_new_tokens,
+                    error: &error,
+                },
+            );
+            write_json_output(Some(&receipt_path), &blocked_receipt)?;
+            anyhow::bail!("{error}");
+        }
         run_openvino_lunar_lake_operator_ask(OpenVINOOperatorAskContext {
             artifact_root: &artifact_root,
             operator_receipt_path: &operator_receipt_path,
             model_dir: &model,
             route: &route,
+            python: &python,
             question: &question,
             max_new_tokens,
             expect_contains: expect_contains.as_deref(),
@@ -12413,6 +12436,7 @@ struct OpenVINOOperatorAskContext<'a> {
     operator_receipt_path: &'a std::path::Path,
     model_dir: &'a std::path::Path,
     route: &'a commands::lunar_lake::OperatorRoute,
+    python: &'a std::path::Path,
     question: &'a str,
     max_new_tokens: usize,
     expect_contains: Option<&'a str>,
@@ -12422,8 +12446,7 @@ struct OpenVINOOperatorAskContext<'a> {
 #[cfg(feature = "full-cli")]
 fn run_openvino_lunar_lake_operator_ask(ctx: OpenVINOOperatorAskContext<'_>) -> Result<()> {
     let device = openvino_operator_device_for_route(ctx.route)?;
-    let python = openvino_operator_python();
-    let mut command = std::process::Command::new(&python);
+    let mut command = std::process::Command::new(ctx.python);
     command
         .arg("scripts/openvino_genai_operator_ask.py")
         .arg("--model-dir")
@@ -12446,13 +12469,39 @@ fn run_openvino_lunar_lake_operator_ask(ctx: OpenVINOOperatorAskContext<'_>) -> 
         command.arg("--expect-contains").arg(expected);
     }
     let output = command.output().with_context(|| {
-        format!("failed to launch OpenVINO operator ask helper via {}", python.display())
+        format!("failed to launch OpenVINO operator ask helper via {}", ctx.python.display())
     })?;
     if !output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
             "OpenVINO operator ask helper failed with status {} using Python {}. Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino_genai> when no checkout-local OpenVINO Python is prepared.\nstdout:\n{}\nstderr:\n{}",
+            output.status,
+            ctx.python.display(),
+            stdout.trim(),
+            stderr.trim()
+        );
+    }
+    Ok(())
+}
+
+#[cfg(feature = "full-cli")]
+fn ensure_openvino_operator_python_ready(python: &std::path::Path) -> Result<()> {
+    let output = std::process::Command::new(python)
+        .arg("-c")
+        .arg("import openvino; import openvino_genai")
+        .output()
+        .map_err(|err| {
+            anyhow::anyhow!(
+                "failed to launch OpenVINO operator Python preflight via {}. Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino_genai> when no checkout-local OpenVINO Python is prepared: {err}",
+                python.display()
+            )
+        })?;
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        anyhow::bail!(
+            "OpenVINO operator Python preflight failed with status {} using Python {}. Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino_genai> when no checkout-local OpenVINO Python is prepared.\nstdout:\n{}\nstderr:\n{}",
             output.status,
             python.display(),
             stdout.trim(),
@@ -12574,6 +12623,22 @@ struct LunarLakeAskBlockedReceiptContext<'a> {
 }
 
 #[cfg(feature = "full-cli")]
+struct LunarLakeAskRuntimeBlockedReceiptContext<'a> {
+    artifact_root: &'a std::path::Path,
+    operator_receipt: &'a std::path::Path,
+    promotion_ledger: &'a std::path::Path,
+    route_profile_comparison: &'a std::path::Path,
+    route_selection: &'a commands::lunar_lake::OperatorAskRouteSelection,
+    route: &'a commands::lunar_lake::OperatorRoute,
+    model_path: &'a std::path::Path,
+    source_run_path: &'a std::path::Path,
+    runtime_python: &'a std::path::Path,
+    question: &'a str,
+    max_new_tokens: usize,
+    error: &'a str,
+}
+
+#[cfg(feature = "full-cli")]
 fn build_lunar_lake_operator_ask_blocked_receipt(
     ctx: LunarLakeAskBlockedReceiptContext<'_>,
 ) -> serde_json::Value {
@@ -12682,6 +12747,123 @@ fn build_lunar_lake_operator_ask_blocked_receipt(
         },
         "claim_boundary": {
             "route_selection_blocked": true,
+            "new_inference_executed": false,
+            "model_loaded": false,
+            "fallback_used": false,
+            "route_promotion_changed": false,
+            "default_route_changed": false,
+            "speedup_claim": false,
+            "power_advantage_claim": false,
+            "acceleration_claim": false,
+            "native_accelerator_claim": false,
+            "bitnet_qk256_i2s_claim": false,
+        },
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn build_lunar_lake_operator_ask_runtime_blocked_receipt(
+    ctx: LunarLakeAskRuntimeBlockedReceiptContext<'_>,
+) -> serde_json::Value {
+    let next_required_evidence = vec![
+        format!(
+            "Set {LUNAR_LAKE_OPENVINO_PYTHON_ENV}=<python.exe with openvino and openvino_genai>"
+        ),
+        "Prepare checkout-local .venv/Scripts/python.exe with openvino_genai".to_string(),
+        "Prepare target/lunar-lake-openvino-venv/Scripts/python.exe with openvino_genai"
+            .to_string(),
+    ];
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "lunar_lake_operator_ask_blocked",
+        "proof_stage": "operator_runtime_prerequisite_blocked_no_inference",
+        "created_utc": chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        "machine_id": "intel-258v",
+        "artifact_root": ctx.artifact_root.display().to_string(),
+        "operator_receipt": ctx.operator_receipt.display().to_string(),
+        "promotion_ledger": ctx.promotion_ledger.display().to_string(),
+        "route_profile_comparison": ctx.route_profile_comparison.display().to_string(),
+        "requested_device": ctx.route_selection.requested_device,
+        "requested_route": ctx.route_selection.requested_route,
+        "profile_id": ctx.route_selection.profile_id,
+        "selected_route": ctx.route_selection.selected_route,
+        "selected_backend": ctx.route_selection.selected_backend,
+        "runtime_api": ctx.route_selection.runtime_api,
+        "promotion_status": ctx.route_selection.promotion_status,
+        "route_profile_status": ctx.route_selection.route_profile_status,
+        "route_profile_blockers": ctx.route_selection.route_profile_blockers,
+        "route_selection_status": "selected",
+        "route_selection_blocked": false,
+        "runtime_prerequisite_status": "blocked",
+        "runtime_prerequisite_error": ctx.error,
+        "route_reason": ctx.route_selection.route_reason,
+        "why_not_cpu": ctx.route_selection.why_not_cpu,
+        "why_not_gpu": ctx.route_selection.why_not_gpu,
+        "why_not_npu": ctx.route_selection.why_not_npu,
+        "candidate_routes": ctx.route_selection.candidate_routes,
+        "next_required_evidence": next_required_evidence,
+        "question": ctx.question,
+        "max_new_tokens": ctx.max_new_tokens,
+        "model_path_required": true,
+        "model_resolution": "resolved_before_runtime_prerequisite_check",
+        "model_path": ctx.model_path.display().to_string(),
+        "model_path_exists": ctx.model_path.exists(),
+        "source_run_receipt": ctx.source_run_path.display().to_string(),
+        "fallback_used": false,
+        "answer_gate_passed": serde_json::Value::Null,
+        "new_inference_executed": false,
+        "speedup_claim": false,
+        "acceleration_claim": false,
+        "power_advantage_claim": false,
+        "bitnet_qk256_i2s_claim": false,
+        "route": {
+            "route_id": ctx.route.route_id,
+            "selected_backend": ctx.route.selected_backend,
+            "runtime_api": ctx.route.runtime_api,
+            "selected_kernel_or_runtime": ctx.route.selected_kernel_or_runtime,
+            "fallback_policy": ctx.route.fallback_policy,
+            "acceleration_claim": ctx.route.acceleration_claim,
+        },
+        "route_selection": {
+            "requested_device": ctx.route_selection.requested_device,
+            "requested_route": ctx.route_selection.requested_route,
+            "profile_id": ctx.route_selection.profile_id,
+            "selected_route": ctx.route_selection.selected_route,
+            "selected_backend": ctx.route_selection.selected_backend,
+            "runtime_api": ctx.route_selection.runtime_api,
+            "promotion_status": ctx.route_selection.promotion_status,
+            "selection_source": ctx.route_selection.selection_source,
+            "route_selection_status": "selected",
+            "route_selection_blocked": false,
+            "route_reason": ctx.route_selection.route_reason,
+            "why_not_cpu": ctx.route_selection.why_not_cpu,
+            "why_not_gpu": ctx.route_selection.why_not_gpu,
+            "why_not_npu": ctx.route_selection.why_not_npu,
+            "candidate_routes": ctx.route_selection.candidate_routes,
+            "promotion_ledger": ctx.route_selection.promotion_ledger,
+            "route_profile_comparison": ctx.route_selection.route_profile_comparison,
+            "route_profile_status": ctx.route_selection.route_profile_status,
+            "route_profile_blockers": ctx.route_selection.route_profile_blockers,
+            "model_path_required": true,
+            "model_resolution": "resolved_before_runtime_prerequisite_check",
+        },
+        "runtime_prerequisite": {
+            "kind": "openvino_genai_python_import",
+            "status": "blocked",
+            "python": ctx.runtime_python.display().to_string(),
+            "required_modules": ["openvino", "openvino_genai"],
+            "discovery_order": [
+                LUNAR_LAKE_OPENVINO_PYTHON_ENV,
+                ".venv/Scripts/python.exe",
+                "target/lunar-lake-openvino-venv/Scripts/python.exe",
+                "python"
+            ],
+            "error": ctx.error,
+        },
+        "claim_boundary": {
+            "route_selection_blocked": false,
+            "runtime_prerequisite_blocked": true,
             "new_inference_executed": false,
             "model_loaded": false,
             "fallback_used": false,
@@ -17658,6 +17840,108 @@ mod tests {
                 |error| error.contains("benchmark_qualified_speedup_or_power_advantage")
             )
         );
+    }
+
+    #[cfg(feature = "full-cli")]
+    #[test]
+    fn lunar_lake_operator_ask_runtime_blocked_receipt_records_selected_route_boundary() {
+        let route = commands::lunar_lake::OperatorRoute {
+            route_id: "dense_slm_openvino_gpu_candidate".to_string(),
+            workload: "dense_slm_acceleration_candidate".to_string(),
+            selected_model: "Qwen2.5-0.5B-Instruct OpenVINO IR INT4_SYM".to_string(),
+            selected_backend: "openvino-gpu".to_string(),
+            runtime_api: "openvino_genai".to_string(),
+            selected_kernel_or_runtime: "openvino-genai-llmpipeline-gpu".to_string(),
+            fallback_policy: "strict_no_fallback".to_string(),
+            route_reason: "profile-promoted GPU route".to_string(),
+            answer_gate_evidence: Some("dense-ov-gpu-ask.json".to_string()),
+            phase_evidence: Some("dense-ov-phase.json".to_string()),
+            acceleration_claim: false,
+        };
+        let route_selection = commands::lunar_lake::OperatorAskRouteSelection {
+            requested_device: "auto".to_string(),
+            requested_route: "auto".to_string(),
+            profile_id: "ask_short".to_string(),
+            selected_route: route.route_id.clone(),
+            selected_backend: route.selected_backend.clone(),
+            runtime_api: route.runtime_api.clone(),
+            promotion_status: "promoted".to_string(),
+            selection_source: "promotion_ledger_auto".to_string(),
+            route_reason: route.route_reason.clone(),
+            why_not_cpu: vec!["gpu route is promoted for ask_short".to_string()],
+            why_not_gpu: vec!["selected".to_string()],
+            why_not_npu: vec!["npu route is not promoted for ask_short".to_string()],
+            candidate_routes: vec![
+                commands::lunar_lake::DEFAULT_ASK_ROUTE.to_string(),
+                route.route_id.clone(),
+                "dense_slm_openvino_npu_candidate".to_string(),
+            ],
+            promotion_ledger: Some("lunar-lake-route-promotion.json".to_string()),
+            route_profile_comparison: Some("lunar-lake-route-profile-comparison.json".to_string()),
+            route_profile_status: Some("promoted_route_ready".to_string()),
+            route_profile_blockers: vec![],
+            route: route.clone(),
+        };
+
+        let receipt = build_lunar_lake_operator_ask_runtime_blocked_receipt(
+            LunarLakeAskRuntimeBlockedReceiptContext {
+                artifact_root: std::path::Path::new("ci/hardware/intel-258v/2026-05-08"),
+                operator_receipt: std::path::Path::new("lunar-lake-operator-readiness.json"),
+                promotion_ledger: std::path::Path::new("lunar-lake-route-promotion.json"),
+                route_profile_comparison: std::path::Path::new(
+                    "lunar-lake-route-profile-comparison.json",
+                ),
+                route_selection: &route_selection,
+                route: &route,
+                model_path: std::path::Path::new("models/openvino/qwen2.5-0.5b-instruct-int4-sym"),
+                source_run_path: std::path::Path::new("target/tmp/ask-short-source-run.json"),
+                runtime_python: std::path::Path::new("python"),
+                question: "What is 2+2?",
+                max_new_tokens: 16,
+                error: "OpenVINO operator Python preflight failed: ModuleNotFoundError: No module named 'openvino_genai'",
+            },
+        );
+
+        assert_eq!(receipt["artifact_kind"], "lunar_lake_operator_ask_blocked");
+        assert_eq!(receipt["proof_stage"], "operator_runtime_prerequisite_blocked_no_inference");
+        assert_eq!(receipt["requested_device"], "auto");
+        assert_eq!(receipt["requested_route"], "auto");
+        assert_eq!(receipt["profile_id"], "ask_short");
+        assert_eq!(receipt["selected_route"], "dense_slm_openvino_gpu_candidate");
+        assert_eq!(receipt["selected_backend"], "openvino-gpu");
+        assert_eq!(receipt["runtime_api"], "openvino_genai");
+        assert_eq!(receipt["promotion_status"], "promoted");
+        assert_eq!(receipt["route_selection_blocked"], false);
+        assert_eq!(receipt["runtime_prerequisite_status"], "blocked");
+        assert_eq!(receipt["fallback_used"], false);
+        assert_eq!(receipt["new_inference_executed"], false);
+        assert_eq!(receipt["model_path_required"], true);
+        assert_eq!(receipt["route_selection"]["model_path_required"], true);
+        assert_eq!(receipt["runtime_prerequisite"]["kind"], "openvino_genai_python_import");
+        assert!(
+            receipt["runtime_prerequisite"]["required_modules"]
+                .as_array()
+                .is_some_and(|items| items.iter().any(|item| item == "openvino_genai"))
+        );
+        assert!(receipt["runtime_prerequisite"]["discovery_order"].as_array().is_some_and(
+            |items| items.iter().any(|item| {
+                item.as_str().is_some_and(|value| value == LUNAR_LAKE_OPENVINO_PYTHON_ENV)
+            })
+        ));
+        assert!(receipt["next_required_evidence"].as_array().is_some_and(|items| {
+            items.iter().any(|item| {
+                item.as_str().is_some_and(|value| {
+                    value.contains(LUNAR_LAKE_OPENVINO_PYTHON_ENV)
+                        && value.contains("openvino_genai")
+                })
+            })
+        }));
+        assert_eq!(receipt["claim_boundary"]["runtime_prerequisite_blocked"], true);
+        assert_eq!(receipt["claim_boundary"]["route_selection_blocked"], false);
+        assert_eq!(receipt["claim_boundary"]["new_inference_executed"], false);
+        assert_eq!(receipt["claim_boundary"]["model_loaded"], false);
+        assert_eq!(receipt["claim_boundary"]["fallback_used"], false);
+        assert_eq!(receipt["claim_boundary"]["route_promotion_changed"], false);
     }
 
     #[cfg(feature = "full-cli")]

@@ -79,6 +79,20 @@ cache expected by the route:
 | Dense Qwen CPU | Qwen2.5-0.5B-Instruct Q8_0 GGUF | Pass `--model <path-to-qwen2.5-0.5b-instruct-q8_0.gguf>`, or keep the GGUF in the local CLI cache. |
 | OpenVINO GPU / NPU | Qwen2.5-0.5B-Instruct OpenVINO IR INT4_SYM directory | Pass `--model <OpenVINO IR directory>` or set `BITNET_LUNAR_LAKE_OPENVINO_MODEL_DIR=<OpenVINO IR directory>`. |
 
+OpenVINO GPU / NPU asks also require a Python runtime that can import both
+`openvino` and `openvino_genai`. The discovery order is:
+
+1. `BITNET_LUNAR_LAKE_OPENVINO_PYTHON`
+2. `.venv/Scripts/python.exe`
+3. `target/lunar-lake-openvino-venv/Scripts/python.exe`
+4. `python`
+
+If the selected Python cannot import `openvino_genai`, `ask --json-out` writes
+a no-inference blocked receipt with
+`proof_stage=operator_runtime_prerequisite_blocked_no_inference`. That receipt
+is prerequisite evidence only: it is not route-policy evidence, fallback
+evidence, or an answer-quality result.
+
 On Windows, the CPU cache path is typically:
 
 ```text
@@ -119,9 +133,10 @@ target/debug/bitnet.exe lunar-lake ask `
 
 ## Operator Quickstart
 
-Run these commands from the repository root after the local model prerequisites
-above are available. The installed command form is `bitnet`; when using a local
-debug build, replace `bitnet` with `target/debug/bitnet.exe`.
+Run these commands from the repository root after the local model and OpenVINO
+Python prerequisites above are available. The installed command form is
+`bitnet`; when using a local debug build, replace `bitnet` with
+`target/debug/bitnet.exe`.
 
 ```powershell
 $artifactRoot = "ci/hardware/intel-258v/2026-05-08"
