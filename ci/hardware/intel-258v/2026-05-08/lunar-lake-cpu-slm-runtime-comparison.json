@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "artifact_kind": "lunar_lake_cpu_slm_runtime_comparison",
   "proof_stage": "rust_gguf_cpu_vs_openvino_cpu_context_no_promotion_change",
   "created_utc": "2026-05-17T09:45:00Z",
@@ -17,10 +17,37 @@
     "tokenizer_source": "gguf_metadata",
     "prompt_template": "qwen2.5"
   },
+  "model_format_comparison": {
+    "rust_gguf_cpu": {
+      "route_id": "dense_slm_default_cpu",
+      "model_family": "qwen",
+      "model_architecture": "qwen2",
+      "model_format": "GGUF",
+      "quantization": "Q8_0",
+      "tokenizer_source": "gguf_metadata",
+      "prompt_template": "qwen2.5",
+      "model_source": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e"
+    },
+    "openvino_cpu": {
+      "route_id": "dense_slm_openvino_cpu_candidate",
+      "model_family": "qwen",
+      "model_architecture": "qwen2",
+      "model_format": "OpenVINO IR",
+      "quantization": "INT4_SYM",
+      "tokenizer_source": "hf_tokenizer_export",
+      "prompt_template": "qwen2.5",
+      "model_source": "models/openvino/qwen2.5-0.5b-instruct-int4-sym",
+      "model_sha256": "a15e9535aaf4c8286b7b45f0490dca593cc751450c3b832416ad377bb190b2a9"
+    },
+    "model_formats_match": false,
+    "comparison_scope": "route/profile context only; GGUF Q8_0 and OpenVINO IR INT4_SYM timings are not token-level engine parity"
+  },
   "rust_gguf_cpu": {
     "route_id": "dense_slm_default_cpu",
     "selected_backend": "cpu-rust",
     "runtime_api": "cpu",
+    "resolved_device": null,
     "selected_kernel_or_runtime": "resident_cpu_rust_gguf",
     "fallback_used": false,
     "answer_gate_passed": true,
@@ -35,12 +62,13 @@
     "route_id": "dense_slm_openvino_cpu_candidate",
     "selected_backend": "openvino-cpu",
     "runtime_api": "openvino_genai",
+    "resolved_device": "Intel(R) Core(TM) Ultra 7 258V",
     "selected_kernel_or_runtime": "openvino-genai-llmpipeline-cpu",
     "fallback_used": false,
-    "answer_gate_passed": false,
+    "answer_gate_passed": true,
     "quality_scope": "OpenVINO CPU corpus-v2 candidate evidence",
     "timing_scope": "OpenVINO GenAI generation wall time and PerfMetrics context",
-    "load_or_construct_ms": 2373.5882000000856,
+    "load_or_construct_ms": 981.4550000010058,
     "known_gaps": [
       "OpenVINO GenAI generated token IDs are retokenized from text when direct IDs are unavailable",
       "OpenVINO CPU prefill/decode_128 splits are not equivalent to GGUF CPU phase receipts"
@@ -62,24 +90,28 @@
           "sample_count": 10,
           "min": 16265.008,
           "mean": 16407.3715,
+          "p95": 16572.393,
           "max": 16572.393
         },
         "time_to_first_token_ms": {
           "sample_count": 10,
           "min": 8716.0,
           "mean": 8834.2,
+          "p95": 8971.0,
           "max": 8971.0
         },
         "tokenize_ms": {
           "sample_count": 10,
           "min": 429.223,
           "mean": 465.5535999999999,
+          "p95": 495.779,
           "max": 495.779
         },
         "generated_tokens": {
           "sample_count": 10,
           "min": 24.0,
           "mean": 24.0,
+          "p95": 24.0,
           "max": 24.0
         },
         "throughput_tokens_per_s_mean": 3.037978990552493,
@@ -90,42 +122,44 @@
         "selected_backend": "openvino-cpu",
         "runtime_api": "openvino_genai",
         "fallback_used": false,
-        "answer_gate_passed": false,
+        "answer_gate_passed": true,
         "cases_total": 3,
-        "cases_passed": 2,
-        "cases_failed": 1,
+        "cases_passed": 3,
+        "cases_failed": 0,
         "timing_ms": {
           "sample_count": 3,
-          "min": 159.60079999786103,
-          "mean": 231.8301666661379,
-          "max": 370.2862999998615
+          "min": 109.32729998603465,
+          "mean": 232.79196666165566,
+          "p95": 299.1664999863133,
+          "max": 299.1664999863133
         },
         "time_to_first_token_ms": {
           "sample_count": 3,
-          "min": 135.75280000077328,
-          "mean": 145.82389999971687,
-          "max": 165.3041999998095
+          "min": 97.0681000035256,
+          "mean": 120.63189999510844,
+          "p95": 155.75610002269968,
+          "max": 155.75610002269968
         },
         "tokenize_ms": {
-          "sample_count": 3,
-          "min": 12.435999870300291,
-          "mean": 14.083666483561197,
-          "max": 14.980999946594238
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 3,
           "min": 2.0,
-          "mean": 10.333333333333334,
+          "mean": 14.0,
+          "p95": 24.0,
           "max": 24.0
         },
-        "throughput_tokens_per_s_mean": 80.54777526855469,
+        "throughput_tokens_per_s_mean": 88.62142435709636,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
-      "openvino_to_rust_total_ratio": 0.014129634759969803,
-      "status": "blocked_candidate_context_only",
-      "blockers": [
-        "OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)"
-      ],
+      "openvino_to_rust_total_ratio": 0.014188254752545565,
+      "status": "candidate_timing_context_only_no_promotion",
+      "blockers": [],
       "notes": [
         "Runtime comparison records diagnostic timing context only; it does not promote OpenVINO CPU or claim speedup",
         "openvino_to_rust_total_ratio=0.014; ratio is not benchmark-qualified speedup"
@@ -146,24 +180,28 @@
           "sample_count": 10,
           "min": 11036.382,
           "mean": 11158.7499,
+          "p95": 11296.331,
           "max": 11296.331
         },
         "time_to_first_token_ms": {
           "sample_count": 10,
           "min": 8444.0,
           "mean": 8531.8,
+          "p95": 8647.0,
           "max": 8647.0
         },
         "tokenize_ms": {
           "sample_count": 10,
           "min": 434.987,
           "mean": 466.2064,
+          "p95": 532.421,
           "max": 532.421
         },
         "generated_tokens": {
           "sample_count": 10,
           "min": 9.0,
           "mean": 9.0,
+          "p95": 9.0,
           "max": 9.0
         },
         "throughput_tokens_per_s_mean": 3.0506814798720265,
@@ -174,45 +212,47 @@
         "selected_backend": "openvino-cpu",
         "runtime_api": "openvino_genai",
         "fallback_used": false,
-        "answer_gate_passed": false,
+        "answer_gate_passed": true,
         "cases_total": 2,
-        "cases_passed": 1,
-        "cases_failed": 1,
+        "cases_passed": 2,
+        "cases_failed": 0,
         "timing_ms": {
           "sample_count": 2,
-          "min": 182.04790000163484,
-          "mean": 187.6007999999274,
-          "max": 193.15369999821996
+          "min": 79.3235000455752,
+          "mean": 109.29820002638735,
+          "p95": 139.2729000071995,
+          "max": 139.2729000071995
         },
         "time_to_first_token_ms": {
           "sample_count": 2,
-          "min": 130.48909999997704,
-          "mean": 134.3013499990775,
-          "max": 138.11359999817796
+          "min": 78.94700003089383,
+          "mean": 85.06170002510771,
+          "p95": 91.1764000193216,
+          "max": 91.1764000193216
         },
         "tokenize_ms": {
-          "sample_count": 2,
-          "min": 12.395000457763672,
-          "mean": 12.524500370025635,
-          "max": 12.654000282287598
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 2,
-          "min": 8.0,
-          "mean": 8.0,
+          "min": 1.0,
+          "mean": 4.5,
+          "p95": 8.0,
           "max": 8.0
         },
-        "throughput_tokens_per_s_mean": 87.52720642089844,
+        "throughput_tokens_per_s_mean": 103.80427551269533,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
-      "openvino_to_rust_total_ratio": 0.016811990740999348,
-      "status": "blocked_candidate_context_only",
-      "blockers": [
-        "OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)"
-      ],
+      "openvino_to_rust_total_ratio": 0.009794842702441726,
+      "status": "candidate_timing_context_only_no_promotion",
+      "blockers": [],
       "notes": [
         "Runtime comparison records diagnostic timing context only; it does not promote OpenVINO CPU or claim speedup",
-        "openvino_to_rust_total_ratio=0.017; ratio is not benchmark-qualified speedup"
+        "openvino_to_rust_total_ratio=0.010; ratio is not benchmark-qualified speedup"
       ]
     },
     {
@@ -230,24 +270,28 @@
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "time_to_first_token_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "tokenize_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "generated_tokens": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "throughput_tokens_per_s_mean": null,
@@ -258,41 +302,135 @@
         "selected_backend": "openvino-cpu",
         "runtime_api": "openvino_genai",
         "fallback_used": false,
-        "answer_gate_passed": false,
+        "answer_gate_passed": true,
         "cases_total": 1,
-        "cases_passed": 0,
-        "cases_failed": 1,
+        "cases_passed": 1,
+        "cases_failed": 0,
         "timing_ms": {
           "sample_count": 1,
-          "min": 762.239600000612,
-          "mean": 762.239600000612,
-          "max": 762.239600000612
+          "min": 340.98249999806285,
+          "mean": 340.98249999806285,
+          "p95": 340.98249999806285,
+          "max": 340.98249999806285
         },
         "time_to_first_token_ms": {
           "sample_count": 1,
-          "min": 135.02410000000964,
-          "mean": 135.02410000000964,
-          "max": 135.02410000000964
+          "min": 137.13829999323934,
+          "mean": 137.13829999323934,
+          "p95": 137.13829999323934,
+          "max": 137.13829999323934
         },
         "tokenize_ms": {
-          "sample_count": 1,
-          "min": 15.239999771118164,
-          "mean": 15.239999771118164,
-          "max": 15.239999771118164
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 1,
-          "min": 64.0,
-          "mean": 64.0,
-          "max": 64.0
+          "min": 23.0,
+          "mean": 23.0,
+          "p95": 23.0,
+          "max": 23.0
         },
-        "throughput_tokens_per_s_mean": 96.68206024169922,
+        "throughput_tokens_per_s_mean": 96.10424041748048,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
       "openvino_to_rust_total_ratio": null,
       "status": "blocked_candidate_context_only",
       "blockers": [
-        "OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)",
+        "Rust GGUF CPU resident profile evidence missing"
+      ],
+      "notes": [
+        "Runtime comparison records diagnostic timing context only; it does not promote OpenVINO CPU or claim speedup"
+      ]
+    },
+    {
+      "profile_id": "low_power",
+      "rust_cpu": {
+        "route_id": "dense_slm_default_cpu",
+        "selected_backend": "cpu-rust",
+        "runtime_api": "cpu",
+        "fallback_used": null,
+        "answer_gate_passed": null,
+        "cases_total": null,
+        "cases_passed": null,
+        "cases_failed": null,
+        "timing_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "time_to_first_token_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "tokenize_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "generated_tokens": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "throughput_tokens_per_s_mean": null,
+        "timing_source": "missing_rust_gguf_cpu_profile"
+      },
+      "openvino_cpu": {
+        "route_id": "dense_slm_openvino_cpu_candidate",
+        "selected_backend": "openvino-cpu",
+        "runtime_api": "openvino_genai",
+        "fallback_used": false,
+        "answer_gate_passed": true,
+        "cases_total": 1,
+        "cases_passed": 1,
+        "cases_failed": 0,
+        "timing_ms": {
+          "sample_count": 1,
+          "min": 113.54309995658696,
+          "mean": 113.54309995658696,
+          "p95": 113.54309995658696,
+          "max": 113.54309995658696
+        },
+        "time_to_first_token_ms": {
+          "sample_count": 1,
+          "min": 112.77919996064156,
+          "mean": 112.77919996064156,
+          "p95": 112.77919996064156,
+          "max": 112.77919996064156
+        },
+        "tokenize_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "generated_tokens": {
+          "sample_count": 1,
+          "min": 3.0,
+          "mean": 3.0,
+          "p95": 3.0,
+          "max": 3.0
+        },
+        "throughput_tokens_per_s_mean": 77.48574829101562,
+        "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
+      },
+      "openvino_to_rust_total_ratio": null,
+      "status": "blocked_candidate_context_only",
+      "blockers": [
         "Rust GGUF CPU resident profile evidence missing"
       ],
       "notes": [
@@ -314,24 +452,28 @@
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "time_to_first_token_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "tokenize_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "generated_tokens": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "throughput_tokens_per_s_mean": null,
@@ -342,41 +484,44 @@
         "selected_backend": "openvino-cpu",
         "runtime_api": "openvino_genai",
         "fallback_used": false,
-        "answer_gate_passed": false,
+        "answer_gate_passed": true,
         "cases_total": 1,
-        "cases_passed": 0,
-        "cases_failed": 1,
+        "cases_passed": 1,
+        "cases_failed": 0,
         "timing_ms": {
           "sample_count": 1,
-          "min": 563.5708999980125,
-          "mean": 563.5708999980125,
-          "max": 563.5708999980125
+          "min": 473.6348000005819,
+          "mean": 473.6348000005819,
+          "p95": 473.6348000005819,
+          "max": 473.6348000005819
         },
         "time_to_first_token_ms": {
           "sample_count": 1,
-          "min": 232.19239999889396,
-          "mean": 232.19239999889396,
-          "max": 232.19239999889396
+          "min": 242.838500009384,
+          "mean": 242.838500009384,
+          "p95": 242.838500009384,
+          "max": 242.838500009384
         },
         "tokenize_ms": {
-          "sample_count": 1,
-          "min": 15.760000228881836,
-          "mean": 15.760000228881836,
-          "max": 15.760000228881836
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 1,
-          "min": 35.0,
-          "mean": 35.0,
-          "max": 35.0
+          "min": 26.0,
+          "mean": 26.0,
+          "p95": 26.0,
+          "max": 26.0
         },
-        "throughput_tokens_per_s_mean": 95.91414642333984,
+        "throughput_tokens_per_s_mean": 98.74530792236328,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
       "openvino_to_rust_total_ratio": null,
       "status": "blocked_candidate_context_only",
       "blockers": [
-        "OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)",
         "Rust GGUF CPU resident profile evidence missing"
       ],
       "notes": [
@@ -398,24 +543,28 @@
           "sample_count": 10,
           "min": 11726.267,
           "mean": 12314.7897,
+          "p95": 13210.084,
           "max": 13210.084
         },
         "time_to_first_token_ms": {
           "sample_count": 10,
           "min": 9074.0,
           "mean": 9660.9,
+          "p95": 10665.0,
           "max": 10665.0
         },
         "tokenize_ms": {
           "sample_count": 10,
           "min": 383.576,
           "mean": 476.4964,
+          "p95": 509.446,
           "max": 509.446
         },
         "generated_tokens": {
           "sample_count": 10,
           "min": 9.0,
           "mean": 9.0,
+          "p95": 9.0,
           "max": 9.0
         },
         "throughput_tokens_per_s_mean": 2.981474607526137,
@@ -426,45 +575,47 @@
         "selected_backend": "openvino-cpu",
         "runtime_api": "openvino_genai",
         "fallback_used": false,
-        "answer_gate_passed": false,
+        "answer_gate_passed": true,
         "cases_total": 4,
-        "cases_passed": 3,
-        "cases_failed": 1,
+        "cases_passed": 4,
+        "cases_failed": 0,
         "timing_ms": {
           "sample_count": 4,
-          "min": 154.5841000006476,
-          "mean": 434.660525000254,
-          "max": 1213.9324999989185
+          "min": 78.13440001336858,
+          "mean": 250.78605001908727,
+          "p95": 725.0005000387318,
+          "max": 725.0005000387318
         },
         "time_to_first_token_ms": {
           "sample_count": 4,
-          "min": 132.12909999856493,
-          "mean": 397.0192499991754,
-          "max": 1155.2684999987832
+          "min": 77.54030002979562,
+          "mean": 234.12715003360063,
+          "p95": 686.7407000390813,
+          "max": 686.7407000390813
         },
         "tokenize_ms": {
-          "sample_count": 4,
-          "min": 12.925999641418455,
-          "mean": 14.750250101089478,
-          "max": 16.672000885009766
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 4,
-          "min": 4.0,
-          "mean": 6.25,
+          "min": 2.0,
+          "mean": 4.75,
+          "p95": 8.0,
           "max": 8.0
         },
-        "throughput_tokens_per_s_mean": 81.56858825683594,
+        "throughput_tokens_per_s_mean": 101.68414306640625,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
-      "openvino_to_rust_total_ratio": 0.03529581386194959,
-      "status": "blocked_candidate_context_only",
-      "blockers": [
-        "OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)"
-      ],
+      "openvino_to_rust_total_ratio": 0.02036462303689094,
+      "status": "candidate_timing_context_only_no_promotion",
+      "blockers": [],
       "notes": [
         "Runtime comparison records diagnostic timing context only; it does not promote OpenVINO CPU or claim speedup",
-        "openvino_to_rust_total_ratio=0.035; ratio is not benchmark-qualified speedup"
+        "openvino_to_rust_total_ratio=0.020; ratio is not benchmark-qualified speedup"
       ]
     },
     {
@@ -482,24 +633,28 @@
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "time_to_first_token_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "tokenize_ms": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "generated_tokens": {
           "sample_count": 0,
           "min": null,
           "mean": null,
+          "p95": null,
           "max": null
         },
         "throughput_tokens_per_s_mean": null,
@@ -516,29 +671,124 @@
         "cases_failed": 0,
         "timing_ms": {
           "sample_count": 1,
-          "min": 273.92239999971935,
-          "mean": 273.92239999971935,
-          "max": 273.92239999971935
+          "min": 253.7474999553524,
+          "mean": 253.7474999553524,
+          "p95": 253.7474999553524,
+          "max": 253.7474999553524
         },
         "time_to_first_token_ms": {
           "sample_count": 1,
-          "min": 107.41789999883622,
-          "mean": 107.41789999883622,
-          "max": 107.41789999883622
+          "min": 79.51089995913208,
+          "mean": 79.51089995913208,
+          "p95": 79.51089995913208,
+          "max": 79.51089995913208
         },
         "tokenize_ms": {
-          "sample_count": 1,
-          "min": 13.013999938964844,
-          "mean": 13.013999938964844,
-          "max": 13.013999938964844
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
         },
         "generated_tokens": {
           "sample_count": 1,
           "min": 17.0,
           "mean": 17.0,
+          "p95": 17.0,
           "max": 17.0
         },
-        "throughput_tokens_per_s_mean": 96.60027313232422,
+        "throughput_tokens_per_s_mean": 91.83426666259766,
+        "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
+      },
+      "openvino_to_rust_total_ratio": null,
+      "status": "blocked_candidate_context_only",
+      "blockers": [
+        "Rust GGUF CPU resident profile evidence missing"
+      ],
+      "notes": [
+        "Runtime comparison records diagnostic timing context only; it does not promote OpenVINO CPU or claim speedup"
+      ]
+    },
+    {
+      "profile_id": "warm_resident",
+      "rust_cpu": {
+        "route_id": "dense_slm_default_cpu",
+        "selected_backend": "cpu-rust",
+        "runtime_api": "cpu",
+        "fallback_used": null,
+        "answer_gate_passed": null,
+        "cases_total": null,
+        "cases_passed": null,
+        "cases_failed": null,
+        "timing_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "time_to_first_token_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "tokenize_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "generated_tokens": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "throughput_tokens_per_s_mean": null,
+        "timing_source": "missing_rust_gguf_cpu_profile"
+      },
+      "openvino_cpu": {
+        "route_id": "dense_slm_openvino_cpu_candidate",
+        "selected_backend": "openvino-cpu",
+        "runtime_api": "openvino_genai",
+        "fallback_used": false,
+        "answer_gate_passed": true,
+        "cases_total": 1,
+        "cases_passed": 1,
+        "cases_failed": 0,
+        "timing_ms": {
+          "sample_count": 1,
+          "min": 119.328000000678,
+          "mean": 119.328000000678,
+          "p95": 119.328000000678,
+          "max": 119.328000000678
+        },
+        "time_to_first_token_ms": {
+          "sample_count": 1,
+          "min": 118.52479999652132,
+          "mean": 118.52479999652132,
+          "p95": 118.52479999652132,
+          "max": 118.52479999652132
+        },
+        "tokenize_ms": {
+          "sample_count": 0,
+          "min": null,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "generated_tokens": {
+          "sample_count": 1,
+          "min": 3.0,
+          "mean": 3.0,
+          "p95": 3.0,
+          "max": 3.0
+        },
+        "throughput_tokens_per_s_mean": 82.38249969482422,
         "timing_source": "openvino_cpu_corpus_v2_generation_wall_and_perfmetrics"
       },
       "openvino_to_rust_total_ratio": null,
@@ -551,19 +801,53 @@
       ]
     }
   ],
+  "timing_scope_alignment": {
+    "rust_scope": "resident Rust GGUF CPU prompt-loop timing",
+    "openvino_scope": "OpenVINO GenAI generation wall time and PerfMetrics context",
+    "timing_scopes_match": false,
+    "cold_warm_mode": "mismatched: Rust GGUF CPU uses resident warm prompt-loop evidence; OpenVINO CPU uses corpus-v2 cases after one LLMPipeline construction",
+    "pipeline_or_model_construction_separated": true,
+    "tokenization_status": "Rust tokenize timing is measured; OpenVINO tokenization PerfMetrics report the unavailable -1.0 sentinel and are filtered from summaries",
+    "prompt_render_status": "Prompt rendered hashes/config are available, but prompt-render duration is not measured consistently across both routes",
+    "benchmark_qualified": false,
+    "blockers": [
+      "OpenVINO tokenization/detokenization PerfMetrics are not fully exposed by current receipts",
+      "Prompt-render timing is not measured consistently across both routes",
+      "Rust GGUF CPU resident evidence is missing matched profiles: decode_heavy,low_power,prefill_heavy,structured,warm_resident",
+      "Rust GGUF CPU uses Q8_0 GGUF while OpenVINO CPU uses INT4_SYM OpenVINO IR",
+      "Rust timing scope is resident prompt-loop total while OpenVINO timing scope is generation wall plus separate pipeline construction"
+    ]
+  },
+  "generated_token_visibility": {
+    "rust_gguf_cpu_direct_generated_token_ids": true,
+    "rust_gguf_cpu_source": "resident Rust GGUF prompt-loop records generated token counts and deterministic generated-token evidence",
+    "openvino_cpu_direct_generated_token_ids": true,
+    "openvino_cpu_source": "OpenVINO GenAI EncodedResults.tokens from corpus-v2 receipt",
+    "openvino_cpu_retokenized_ids_used": false
+  },
+  "benchmark_qualification": {
+    "qualified": false,
+    "status": "context_only_not_benchmark_qualified_no_route_promotion",
+    "blockers": [
+      "OpenVINO tokenization/detokenization PerfMetrics are not fully exposed by current receipts",
+      "Prompt-render timing is not measured consistently across both routes",
+      "Rust GGUF CPU resident evidence is missing matched profiles: decode_heavy,low_power,prefill_heavy,structured,warm_resident",
+      "Rust GGUF CPU uses Q8_0 GGUF while OpenVINO CPU uses INT4_SYM OpenVINO IR",
+      "Rust timing scope is resident prompt-loop total while OpenVINO timing scope is generation wall plus separate pipeline construction"
+    ]
+  },
   "comparison_ready": true,
   "findings": [
     "rust_gguf_cpu_model_load_ms=13592.773",
-    "openvino_cpu_pipeline_construct_ms=2373.588",
+    "openvino_cpu_pipeline_construct_ms=981.455",
     "profile_ask_normal_openvino_to_rust_total_ratio=0.014",
-    "profile_ask_normal_openvino_candidate_blocked_by=OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)",
-    "profile_ask_short_openvino_to_rust_total_ratio=0.017",
-    "profile_ask_short_openvino_candidate_blocked_by=OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)",
-    "profile_decode_heavy_openvino_candidate_blocked_by=OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)|Rust GGUF CPU resident profile evidence missing",
-    "profile_prefill_heavy_openvino_candidate_blocked_by=OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)|Rust GGUF CPU resident profile evidence missing",
-    "profile_regression_tiny_openvino_to_rust_total_ratio=0.035",
-    "profile_regression_tiny_openvino_candidate_blocked_by=OpenVINO CPU corpus-v2 profile has 1 answer-gate failure(s)",
-    "profile_structured_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing"
+    "profile_ask_short_openvino_to_rust_total_ratio=0.010",
+    "profile_decode_heavy_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing",
+    "profile_low_power_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing",
+    "profile_prefill_heavy_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing",
+    "profile_regression_tiny_openvino_to_rust_total_ratio=0.020",
+    "profile_structured_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing",
+    "profile_warm_resident_openvino_candidate_blocked_by=Rust GGUF CPU resident profile evidence missing"
   ],
   "recommended_next_items": [
     "LNL258V-GPU-QUAL-001: classify OpenVINO GPU corpus-v2 quality failures before promotion",

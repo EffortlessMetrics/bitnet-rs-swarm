@@ -49,16 +49,16 @@ causes and the measurement plan needed before a runtime change.
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-phase-attribution.json` | Derived CPU phase attribution, no new inference | Cold one-off total response 27986.539 ms; cold load 14250.931 ms; tokenize 482.325 ms; prefill 9361.503 ms; first token 9726 ms; decode 3242.064 ms for 9 output tokens |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json` | Resident Rust GGUF CPU prompt loop, no model/tokenizer reload per prompt | Model loaded once; tokenizer loaded once; ask_short mean total 11158.750 ms; ask_normal mean total 16407.372 ms; no model or tokenizer reload observed |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-profile-run.json` | Explicit Rust GGUF CPU heavy-profile timing | prefill_heavy total 1373681.117 ms for 2734 prompt tokens and 16 generated tokens; decode_heavy total 123115.592 ms for 67 prompt tokens and 512 generated tokens |
-| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Older Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU timings were much lower, but the receipt marked OpenVINO CPU candidate context blocked by answer-gate failures |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU corpus-v2 now passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
 | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` | Newer OpenVINO CPU/GPU/NPU corpus-v2 receipt | OpenVINO CPU resolved to `Intel(R) Core(TM) Ultra 7 258V`, constructed in 981.455 ms, ran 14/14 corpus-v2 cases with fallback false and direct generated token IDs |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-cpu-corpus-v2-diagnosis.json` | OpenVINO CPU diagnosis | OpenVINO CPU corpus-v2 diagnosis says 14 total, 14 passed, 0 failed, no fallback, direct generated token IDs available |
 
-The OpenVINO CPU comparison evidence has drift between older and newer
-receipts. Treat the older runtime-comparison blockers as stale until refreshed
-against the newer corpus-v2 run. Do not use either receipt as a benchmark
+The OpenVINO CPU comparison evidence was refreshed against the newer
+corpus-v2 run. Do not use the runtime-comparison receipt as a benchmark
 speedup claim: Rust GGUF CPU uses Q8_0 GGUF and OpenVINO CPU uses INT4_SYM
-OpenVINO IR, so the comparison is route/profile context unless the receipt
-explicitly qualifies a matched benchmark.
+OpenVINO IR, timing scopes still differ, OpenVINO tokenization/detokenization
+metrics are not fully exposed, and several corpus-v2 profiles lack matched
+Rust resident evidence.
 
 ## Top Likely Causes
 
@@ -223,8 +223,8 @@ Do not promote OpenVINO CPU from this table:
 - OpenVINO GenAI tokenization and detokenization metrics report `-1.0` in the
   current corpus-v2 receipt, so host tokenizer/template setup is not fully
   split;
-- older comparison receipts still contain stale blocker language that should
-  be refreshed before route-policy review.
+- matched Rust resident profile evidence is still missing for `decode_heavy`,
+  `low_power`, `prefill_heavy`, `structured`, and `warm_resident`.
 
 Use this evidence to justify a matched comparison receipt, not a route change.
 

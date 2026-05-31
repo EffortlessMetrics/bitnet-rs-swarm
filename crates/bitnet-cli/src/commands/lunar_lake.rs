@@ -2320,9 +2320,13 @@ pub struct LunarLakeCpuSlmRuntimeComparison {
     pub artifact_root: String,
     pub source_receipts: CpuSlmRuntimeComparisonSources,
     pub model: CpuSlmAttributionModel,
+    pub model_format_comparison: CpuSlmRuntimeModelFormatComparison,
     pub rust_gguf_cpu: CpuSlmRuntimeRouteSummary,
     pub openvino_cpu: CpuSlmRuntimeRouteSummary,
     pub profiles: Vec<CpuSlmRuntimeProfileComparison>,
+    pub timing_scope_alignment: CpuSlmRuntimeTimingScopeAlignment,
+    pub generated_token_visibility: CpuSlmRuntimeGeneratedTokenVisibility,
+    pub benchmark_qualification: CpuSlmRuntimeBenchmarkQualification,
     pub comparison_ready: bool,
     pub findings: Vec<String>,
     pub recommended_next_items: Vec<String>,
@@ -2342,6 +2346,7 @@ pub struct CpuSlmRuntimeRouteSummary {
     pub route_id: String,
     pub selected_backend: String,
     pub runtime_api: String,
+    pub resolved_device: Option<String>,
     pub selected_kernel_or_runtime: Option<String>,
     pub fallback_used: Option<bool>,
     pub answer_gate_passed: Option<bool>,
@@ -2349,6 +2354,56 @@ pub struct CpuSlmRuntimeRouteSummary {
     pub timing_scope: String,
     pub load_or_construct_ms: Option<f64>,
     pub known_gaps: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmRuntimeModelFormatComparison {
+    pub rust_gguf_cpu: CpuSlmRuntimeModelIdentity,
+    pub openvino_cpu: CpuSlmRuntimeModelIdentity,
+    pub model_formats_match: bool,
+    pub comparison_scope: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmRuntimeModelIdentity {
+    pub route_id: String,
+    pub model_family: String,
+    pub model_architecture: String,
+    pub model_format: String,
+    pub quantization: String,
+    pub tokenizer_source: String,
+    pub prompt_template: String,
+    pub model_source: Option<String>,
+    pub model_sha256: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmRuntimeTimingScopeAlignment {
+    pub rust_scope: String,
+    pub openvino_scope: String,
+    pub timing_scopes_match: bool,
+    pub cold_warm_mode: String,
+    pub pipeline_or_model_construction_separated: bool,
+    pub tokenization_status: String,
+    pub prompt_render_status: String,
+    pub benchmark_qualified: bool,
+    pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmRuntimeGeneratedTokenVisibility {
+    pub rust_gguf_cpu_direct_generated_token_ids: Option<bool>,
+    pub rust_gguf_cpu_source: String,
+    pub openvino_cpu_direct_generated_token_ids: Option<bool>,
+    pub openvino_cpu_source: String,
+    pub openvino_cpu_retokenized_ids_used: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmRuntimeBenchmarkQualification {
+    pub qualified: bool,
+    pub status: String,
+    pub blockers: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -8243,6 +8298,20 @@ fn push_first_number(json: &Value, paths: &[&str], out: &mut Vec<f64>) {
     }
 }
 
+fn push_nonnegative_number(json: &Value, path: &str, out: &mut Vec<f64>) {
+    if let Some(value) = number_at_any(json, &[path]).filter(|value| *value >= 0.0) {
+        out.push(value);
+    }
+}
+
+fn push_first_nonnegative_number(json: &Value, paths: &[&str], out: &mut Vec<f64>) {
+    if let Some(value) =
+        paths.iter().find_map(|path| number_at_any(json, &[*path]).filter(|value| *value >= 0.0))
+    {
+        out.push(value);
+    }
+}
+
 fn resident_phase_metric(values: &[f64], source: &str) -> CpuSlmResidentPhaseMetric {
     CpuSlmResidentPhaseMetric {
         exposure: if values.is_empty() { "not_exposed" } else { "measured" }.to_string(),
@@ -8361,6 +8430,7 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
         route_id: DEFAULT_ASK_ROUTE.to_string(),
         selected_backend: resident.backend.selected_backend.clone(),
         runtime_api: resident.backend.runtime_api.clone(),
+        resolved_device: None,
         selected_kernel_or_runtime: resident.backend.selected_kernel_or_runtime.clone(),
         fallback_used: resident.backend.fallback_used,
         answer_gate_passed: resident.backend.answer_gate_passed,
@@ -8379,6 +8449,8 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
             .unwrap_or_else(|| "openvino-cpu".to_string()),
         runtime_api: string_at(openvino_corpus_cpu, "runtime_api")
             .unwrap_or_else(|| "openvino_genai".to_string()),
+        resolved_device: string_at(openvino_corpus_cpu, "resolved_device")
+            .or_else(|| string_at(openvino_corpus_cpu, "runtime_device")),
         selected_kernel_or_runtime: string_at(openvino_corpus_cpu, "selected_kernel_or_runtime"),
         fallback_used: fallback_used(openvino_corpus_cpu),
         answer_gate_passed: openvino_device_answer_gate_passed(openvino_corpus_cpu),
@@ -8393,6 +8465,62 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
             "OpenVINO GenAI generated token IDs are retokenized from text when direct IDs are unavailable".to_string(),
             "OpenVINO CPU prefill/decode_128 splits are not equivalent to GGUF CPU phase receipts".to_string(),
         ],
+    };
+    let model_format_comparison = CpuSlmRuntimeModelFormatComparison {
+        rust_gguf_cpu: CpuSlmRuntimeModelIdentity {
+            route_id: DEFAULT_ASK_ROUTE.to_string(),
+            model_family: resident
+                .model
+                .model_family
+                .clone()
+                .unwrap_or_else(|| "qwen".to_string()),
+            model_architecture: resident
+                .model
+                .model_architecture
+                .clone()
+                .unwrap_or_else(|| "qwen2".to_string()),
+            model_format: "GGUF".to_string(),
+            quantization: resident
+                .model
+                .quantization
+                .clone()
+                .unwrap_or_else(|| "Q8_0".to_string()),
+            tokenizer_source: resident
+                .model
+                .tokenizer_source
+                .clone()
+                .unwrap_or_else(|| "gguf_metadata".to_string()),
+            prompt_template: resident
+                .model
+                .prompt_template
+                .clone()
+                .unwrap_or_else(|| "qwen2.5".to_string()),
+            model_source: string_at(&openvino_corpus, "corpus.model.file")
+                .or_else(|| string_at(&openvino_corpus, "paths.gguf_cpu_corpus_v2")),
+            model_sha256: string_at(&openvino_corpus, "corpus.model.sha256"),
+        },
+        openvino_cpu: CpuSlmRuntimeModelIdentity {
+            route_id: "dense_slm_openvino_cpu_candidate".to_string(),
+            model_family: string_at(&openvino_corpus, "model_family")
+                .unwrap_or_else(|| "qwen".to_string()),
+            model_architecture: string_at(&openvino_corpus, "model_architecture")
+                .unwrap_or_else(|| "qwen2".to_string()),
+            model_format: "OpenVINO IR".to_string(),
+            quantization: string_at(&openvino_corpus, "quantization")
+                .unwrap_or_else(|| "INT4_SYM".to_string()),
+            tokenizer_source: string_at(&openvino_corpus, "tokenizer_source")
+                .unwrap_or_else(|| "hf_tokenizer_export".to_string()),
+            prompt_template: string_at(&openvino_corpus, "prompt_template")
+                .unwrap_or_else(|| "qwen2.5".to_string()),
+            model_source: string_at(&openvino_corpus, "model.local_model_dir")
+                .or_else(|| string_at(&openvino_corpus, "model.repo")),
+            model_sha256: openvino_corpus
+                .pointer("/model/files/openvino_model.bin/sha256")
+                .and_then(Value::as_str)
+                .map(ToString::to_string),
+        },
+        model_formats_match: false,
+        comparison_scope: "route/profile context only; GGUF Q8_0 and OpenVINO IR INT4_SYM timings are not token-level engine parity".to_string(),
     };
 
     let mut profile_ids = BTreeSet::new();
@@ -8461,6 +8589,91 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
         });
     }
 
+    let missing_rust_profiles = profiles
+        .iter()
+        .filter(|profile| profile.rust_cpu.cases_total.is_none())
+        .map(|profile| profile.profile_id.clone())
+        .collect::<Vec<_>>();
+    let openvino_tokenization_exposed =
+        profiles.iter().any(|profile| profile.openvino_cpu.tokenize_ms.sample_count > 0);
+    let openvino_cpu_direct_generated_token_ids = bool_at_any(
+        &openvino_corpus,
+        &["verification.generated_token_ids_available_from_pipeline"],
+    )
+    .or_else(|| {
+        openvino_corpus_cpu.get("cases").and_then(Value::as_array).map(|cases| {
+            !cases.is_empty()
+                && cases.iter().all(|case| {
+                    bool_at_any(case, &["generated_token_ids_available_from_pipeline"])
+                        == Some(true)
+                })
+        })
+    });
+    let openvino_cpu_retokenized_ids_used =
+        bool_at_any(&openvino_corpus, &["verification.generated_token_ids_retokenized_from_text"]);
+    let generated_token_visibility = CpuSlmRuntimeGeneratedTokenVisibility {
+        rust_gguf_cpu_direct_generated_token_ids: Some(true),
+        rust_gguf_cpu_source:
+            "resident Rust GGUF prompt-loop records generated token counts and deterministic generated-token evidence"
+                .to_string(),
+        openvino_cpu_direct_generated_token_ids: openvino_cpu_direct_generated_token_ids,
+        openvino_cpu_source: "OpenVINO GenAI EncodedResults.tokens from corpus-v2 receipt"
+            .to_string(),
+        openvino_cpu_retokenized_ids_used,
+    };
+    let mut benchmark_blockers = vec![
+        "Rust GGUF CPU uses Q8_0 GGUF while OpenVINO CPU uses INT4_SYM OpenVINO IR"
+            .to_string(),
+        "Rust timing scope is resident prompt-loop total while OpenVINO timing scope is generation wall plus separate pipeline construction"
+            .to_string(),
+        "OpenVINO tokenization/detokenization PerfMetrics are not fully exposed by current receipts"
+            .to_string(),
+        "Prompt-render timing is not measured consistently across both routes".to_string(),
+    ];
+    if !missing_rust_profiles.is_empty() {
+        benchmark_blockers.push(format!(
+            "Rust GGUF CPU resident evidence is missing matched profiles: {}",
+            missing_rust_profiles.join(",")
+        ));
+    }
+    if rust_gguf_cpu.fallback_used != Some(false) || openvino_cpu.fallback_used != Some(false) {
+        benchmark_blockers.push("Both routes must record fallback_used=false".to_string());
+    }
+    if generated_token_visibility.openvino_cpu_direct_generated_token_ids != Some(true) {
+        benchmark_blockers.push(
+            "OpenVINO CPU direct generated-token IDs must be available without retokenization"
+                .to_string(),
+        );
+    }
+    benchmark_blockers.sort();
+    benchmark_blockers.dedup();
+    let timing_scope_alignment = CpuSlmRuntimeTimingScopeAlignment {
+        rust_scope: rust_gguf_cpu.timing_scope.clone(),
+        openvino_scope: openvino_cpu.timing_scope.clone(),
+        timing_scopes_match: false,
+        cold_warm_mode: "mismatched: Rust GGUF CPU uses resident warm prompt-loop evidence; OpenVINO CPU uses corpus-v2 cases after one LLMPipeline construction"
+            .to_string(),
+        pipeline_or_model_construction_separated: rust_gguf_cpu.load_or_construct_ms.is_some()
+            && openvino_cpu.load_or_construct_ms.is_some(),
+        tokenization_status: if openvino_tokenization_exposed {
+            "Rust tokenize timing and OpenVINO tokenization PerfMetrics have samples, but they still come from different runtimes"
+                .to_string()
+        } else {
+            "Rust tokenize timing is measured; OpenVINO tokenization PerfMetrics report the unavailable -1.0 sentinel and are filtered from summaries"
+                .to_string()
+        },
+        prompt_render_status:
+            "Prompt rendered hashes/config are available, but prompt-render duration is not measured consistently across both routes"
+                .to_string(),
+        benchmark_qualified: false,
+        blockers: benchmark_blockers.clone(),
+    };
+    let benchmark_qualification = CpuSlmRuntimeBenchmarkQualification {
+        qualified: false,
+        status: "context_only_not_benchmark_qualified_no_route_promotion".to_string(),
+        blockers: benchmark_blockers,
+    };
+
     let mut findings = Vec::new();
     if let Some(load) = rust_gguf_cpu.load_or_construct_ms {
         findings.push(format!("rust_gguf_cpu_model_load_ms={load:.3}"));
@@ -8492,7 +8705,7 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
     let comparison_ready = gaps.is_empty();
 
     Ok(LunarLakeCpuSlmRuntimeComparison {
-        schema_version: "1.0.0".to_string(),
+        schema_version: "1.1.0".to_string(),
         artifact_kind: "lunar_lake_cpu_slm_runtime_comparison".to_string(),
         proof_stage: "rust_gguf_cpu_vs_openvino_cpu_context_no_promotion_change".to_string(),
         created_utc,
@@ -8504,9 +8717,13 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
             openvino_phase_runner_receipt: path_string(&openvino_phase_path),
         },
         model: resident.model.clone(),
+        model_format_comparison,
         rust_gguf_cpu,
         openvino_cpu,
         profiles,
+        timing_scope_alignment,
+        generated_token_visibility,
+        benchmark_qualification,
         comparison_ready,
         findings,
         recommended_next_items,
@@ -8615,8 +8832,8 @@ fn openvino_runtime_profile_evidence(
     let mut generated_tokens = Vec::new();
     let mut throughput = Vec::new();
     for case in &cases {
-        push_number(case, "timing.generation_wall_ms", &mut timing);
-        push_first_number(
+        push_nonnegative_number(case, "timing.generation_wall_ms", &mut timing);
+        push_first_nonnegative_number(
             case,
             &[
                 "timing.first_streamed_text_chunk_ms",
@@ -8624,13 +8841,21 @@ fn openvino_runtime_profile_evidence(
             ],
             &mut ttft,
         );
-        push_number(case, "timing.openvino_perf_metrics.tokenization.mean_ms", &mut tokenize);
-        push_number(
+        push_nonnegative_number(
+            case,
+            "timing.openvino_perf_metrics.tokenization.mean_ms",
+            &mut tokenize,
+        );
+        push_nonnegative_number(
             case,
             "timing.openvino_perf_metrics.num_generated_tokens",
             &mut generated_tokens,
         );
-        push_number(case, "timing.openvino_perf_metrics.throughput.mean_ms", &mut throughput);
+        push_nonnegative_number(
+            case,
+            "timing.openvino_perf_metrics.throughput.mean_ms",
+            &mut throughput,
+        );
     }
 
     CpuSlmRuntimeProfileEvidence {
@@ -21413,9 +21638,14 @@ mod tests {
         )?;
 
         assert!(receipt.comparison_ready, "{:?}", receipt.gaps);
+        assert_eq!(receipt.schema_version, "1.1.0");
         assert_eq!(receipt.artifact_kind, "lunar_lake_cpu_slm_runtime_comparison");
         assert_eq!(receipt.rust_gguf_cpu.selected_backend, "cpu-rust");
         assert_eq!(receipt.openvino_cpu.selected_backend, "openvino-cpu");
+        assert_eq!(receipt.model_format_comparison.rust_gguf_cpu.model_format, "GGUF");
+        assert_eq!(receipt.model_format_comparison.openvino_cpu.model_format, "OpenVINO IR");
+        assert!(!receipt.model_format_comparison.model_formats_match);
+        assert!(!receipt.benchmark_qualification.qualified);
         let profile = receipt
             .profiles
             .iter()
