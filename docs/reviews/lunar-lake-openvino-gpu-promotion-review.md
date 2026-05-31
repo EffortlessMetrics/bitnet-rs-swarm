@@ -143,6 +143,25 @@ Treat the stale wording as diagnostic text drift, not as evidence that
 change for this review. The current status-refresh receipt is
 `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis-status-refresh.json`.
 
+That status-refresh receipt preserves the useful quality facts from the
+diagnosis: 14/14 cases passed, fallback is false, direct generated-token IDs
+are available, retokenized generated IDs were not used, and the active fixture
+is aligned. It also marks the stale diagnosis fields explicitly:
+
+- `promotion_status=candidate_only_not_promoted` is quality-diagnosis text
+  only, not route-status authority;
+- `recommended_next_actions[0]` is superseded because GPU corpus-v2 failures
+  are cleared;
+- `profile_diagnoses[*].route_profile_status=candidate_blocked_by_quality` is
+  superseded for route status by profile-scoped route comparison evidence.
+
+Use `lunar-lake-route-promotion.json` and
+`lunar-lake-route-profile-comparison.json` as the current GPU route-status
+authority. Keep the original diagnosis receipt as a quality-diagnosis artifact,
+not a promotion ledger. If a future receipt refresh removes the status-refresh
+boundary or changes the preserved quality facts, reopen route-policy review
+before narrowing or broadening GPU promotion.
+
 ### Answer-Gate Failures
 
 No current GPU corpus-v2 answer-gate failures were found. The issue's
