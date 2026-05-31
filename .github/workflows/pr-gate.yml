@@ -224,12 +224,26 @@ jobs:
           # status propagation cushion; otherwise it can fail after upstream
           # CI has spent most of its runtime but before it emits a result.
           deadline=$((SECONDS + 3300))
-          api="repos/${OWNER}/${REPO}/commits/${HEAD_SHA}/check-runs"
+          api_url="https://api.github.com/repos/${OWNER}/${REPO}/commits/${HEAD_SHA}/check-runs"
           missing="${required_jobs[*]}"
 
           while [ $SECONDS -lt $deadline ]; do
-            payload=$(gh api --paginate --slurp -H 'Accept: application/vnd.github+json' \
-              "${api}?per_page=100" | jq '{check_runs: map(.check_runs[]) }' || true)
+            # Self-hosted PR Gate runners do not all provide GitHub CLI. Use the
+            # REST API directly so the gate can poll checks on every runner.
+            payload=$(
+              for page in 1 2 3 4 5; do
+                response=$(curl -fsSL \
+                  -H 'Accept: application/vnd.github+json' \
+                  -H "Authorization: Bearer ${GH_TOKEN}" \
+                  -H 'X-GitHub-Api-Version: 2022-11-28' \
+                  "${api_url}?per_page=100&page=${page}") || exit 1
+                printf '%s\n' "$response" | jq -c '.check_runs[]?'
+                count=$(printf '%s' "$response" | jq '.check_runs | length')
+                if [ "$count" -lt 100 ]; then
+                  break
+                fi
+              done | jq -s '{check_runs: .}'
+            ) || true
             if [ -z "$payload" ]; then
               echo "Empty API response; retrying"
               sleep 30
