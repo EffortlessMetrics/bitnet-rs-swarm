@@ -673,6 +673,68 @@ pub fn dense_linear_no_bias_candidate_forward(
     input.matmul(&linear.weight().t()?)
 }
 
+const FEED_FORWARD_APPLY_LINEAR_CALLSITE: &str = "bitnet_transformer::FeedForward::apply_linear";
+
+fn feed_forward_apply_linear_callsite_identity(tensor_name: &str) -> String {
+    format!("{FEED_FORWARD_APPLY_LINEAR_CALLSITE}:{tensor_name}")
+}
+
+fn feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+    descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    proj_name: &str,
+    tensor_name: &str,
+) -> Vec<&'static str> {
+    let mut fail_closed_conditions = Vec::new();
+    let expected_callsite_identity = feed_forward_apply_linear_callsite_identity(tensor_name);
+
+    if proj_name != "down_proj" {
+        fail_closed_conditions.push("feed_forward_projection_not_down_proj");
+    }
+    if descriptor.tensor_name != tensor_name {
+        fail_closed_conditions.push("prompt_bound_descriptor_tensor_name_mismatch");
+    }
+    if descriptor.callsite_identity != expected_callsite_identity {
+        fail_closed_conditions.push("prompt_bound_descriptor_callsite_identity_mismatch");
+    }
+    if !descriptor.per_callsite_receipt_emitter_present {
+        fail_closed_conditions.push("per_callsite_receipt_emitter_missing");
+    }
+    if !descriptor.per_callsite_identity_matches_descriptor {
+        fail_closed_conditions.push("per_callsite_identity_does_not_match_descriptor");
+    }
+    if !descriptor.explicit_runtime_gate_requested {
+        fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+    }
+    if descriptor.runtime_api != "cpu" {
+        fail_closed_conditions.push("runtime_api_not_cpu");
+    }
+    if descriptor.selected_backend != "cpu-rust" {
+        fail_closed_conditions.push("selected_backend_not_cpu_rust");
+    }
+    if descriptor.fallback_used {
+        fail_closed_conditions.push("fallback_used");
+    }
+    if descriptor.selected_path != "eager_f32_candle" {
+        fail_closed_conditions.push("selected_path_not_eager_f32_candle");
+    }
+    if descriptor.selected_kernel != "dense-f32-candle-linear" {
+        fail_closed_conditions.push("selected_kernel_not_dense_f32_candle_linear");
+    }
+    if descriptor.normal_inference_runtime_selection_enabled {
+        fail_closed_conditions.push("normal_inference_runtime_selection_enabled");
+    }
+    if descriptor.candidate_execution_enabled {
+        fail_closed_conditions.push("candidate_execution_enabled");
+    }
+    if !descriptor.preserves_normal_inference() {
+        fail_closed_conditions.push("normal_inference_not_preserved");
+    }
+
+    fail_closed_conditions.sort_unstable();
+    fail_closed_conditions.dedup();
+    fail_closed_conditions
+}
+
 /// Disabled-by-default preflight for future no-bias runtime selection.
 ///
 /// This is an audit surface only. It can report that an exact Qwen3 Q8_0
@@ -1223,6 +1285,7 @@ pub struct DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
     pub candidate_off_on_receipt_pair_gate_ready: bool,
     pub explicit_runtime_gate_requested: bool,
     pub prompt_bound_candidate_descriptor_argument_present: bool,
+    pub prompt_bound_session_descriptor_constructed: bool,
     pub descriptor_identity_reaches_apply_linear_callsite: bool,
     pub prompt_digest_available_at_apply_linear: bool,
     pub generated_text_digests_available_at_apply_linear: bool,
@@ -1854,6 +1917,7 @@ pub struct DenseLinearNoBiasCandidateExecutionReceiptInputs {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
     pub prompt_bound_candidate_descriptor_argument_present: bool,
+    pub prompt_bound_session_descriptor_constructed: bool,
     pub descriptor_identity_reaches_apply_linear_callsite: bool,
     pub prompt_digest_available_at_apply_linear: bool,
     pub generated_text_digests_available_at_apply_linear: bool,
@@ -2866,6 +2930,9 @@ impl DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
                 "feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument_missing",
             );
         }
+        if !inputs.prompt_bound_session_descriptor_constructed {
+            fail_closed_conditions.push("prompt_bound_session_descriptor_not_constructed");
+        }
         if !inputs.descriptor_identity_reaches_apply_linear_callsite {
             fail_closed_conditions
                 .push("per_callsite_descriptor_identity_not_available_at_apply_linear");
@@ -2910,6 +2977,7 @@ impl DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
         let candidate_execution_attempt_allowed = candidate_off_on_receipt_pair_gate_ready
             && pair_gate.explicit_runtime_gate_requested
             && inputs.prompt_bound_candidate_descriptor_argument_present
+            && inputs.prompt_bound_session_descriptor_constructed
             && inputs.descriptor_identity_reaches_apply_linear_callsite
             && inputs.prompt_digest_available_at_apply_linear
             && inputs.generated_text_digests_available_at_apply_linear
@@ -2933,6 +3001,8 @@ impl DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
             } else if candidate_off_on_receipt_pair_gate_ready {
                 let blocker = if !inputs.prompt_bound_candidate_descriptor_argument_present {
                     "feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument"
+                } else if !inputs.prompt_bound_session_descriptor_constructed {
+                    "prompt_bound_session_descriptor_construction"
                 } else if !inputs.descriptor_identity_reaches_apply_linear_callsite {
                     "per_callsite_descriptor_identity_to_apply_linear"
                 } else if !inputs.prompt_digest_available_at_apply_linear {
@@ -2985,6 +3055,8 @@ impl DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
             explicit_runtime_gate_requested: pair_gate.explicit_runtime_gate_requested,
             prompt_bound_candidate_descriptor_argument_present: inputs
                 .prompt_bound_candidate_descriptor_argument_present,
+            prompt_bound_session_descriptor_constructed: inputs
+                .prompt_bound_session_descriptor_constructed,
             descriptor_identity_reaches_apply_linear_callsite: inputs
                 .descriptor_identity_reaches_apply_linear_callsite,
             prompt_digest_available_at_apply_linear: inputs.prompt_digest_available_at_apply_linear,
@@ -7579,7 +7651,7 @@ impl FeedForward {
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
     ) -> Result<Tensor> {
-        self.forward_impl(x, raw_tensors, dense_linear_hooks, None)
+        self.forward_impl(x, raw_tensors, dense_linear_hooks, None, None)
     }
 
     fn forward_impl(
@@ -7587,10 +7659,19 @@ impl FeedForward {
         x: &Tensor,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
         workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
-        let gate =
-            self.apply_linear(x, &self.gate_proj, "gate_proj", raw_tensors, dense_linear_hooks)?;
+        let gate = self.apply_linear(
+            x,
+            &self.gate_proj,
+            "gate_proj",
+            raw_tensors,
+            dense_linear_hooks,
+            None,
+        )?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("mlp.gate_proj", Some(self.layer_idx), &gate)?;
         }
@@ -7613,7 +7694,8 @@ impl FeedForward {
             tracing::debug!("MLP ||activation(u)||: {:.6e}", activation_norm);
         }
 
-        let up = self.apply_linear(x, &self.up_proj, "up_proj", raw_tensors, dense_linear_hooks)?;
+        let up =
+            self.apply_linear(x, &self.up_proj, "up_proj", raw_tensors, dense_linear_hooks, None)?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("mlp.up_proj", Some(self.layer_idx), &up)?;
         }
@@ -7650,6 +7732,7 @@ impl FeedForward {
             "down_proj",
             raw_tensors,
             dense_linear_hooks,
+            prompt_bound_no_bias_descriptor,
         )?;
         if let Some(workspace) = workspace {
             let boundary = self.down_proj_output_storage_boundary(&output);
@@ -7676,7 +7759,8 @@ impl FeedForward {
         workspace: &mut TransformerForwardWorkspace,
     ) -> Result<Tensor> {
         workspace.record_feed_forward_input(x);
-        let output = self.forward_impl(x, raw_tensors, dense_linear_hooks, Some(workspace))?;
+        let output =
+            self.forward_impl(x, raw_tensors, dense_linear_hooks, None, Some(workspace))?;
         workspace.record_feed_forward_output(&output);
         workspace.store_feed_forward_output(output);
         workspace.take_feed_forward_output()
@@ -7694,6 +7778,9 @@ impl FeedForward {
         proj_name: &str,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
     ) -> Result<Tensor> {
         // Generate weight name based on layer index and projection name
         // Format: "layers.{idx}.feed_forward.{proj_name}.weight.qk256_qs"
@@ -7723,6 +7810,27 @@ impl FeedForward {
         );
         let dense_tensor_name =
             format!("layers.{}.feed_forward.{}.weight", self.layer_idx, proj_name);
+        if let Some(descriptor) = prompt_bound_no_bias_descriptor {
+            let fail_closed_conditions =
+                feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                    descriptor,
+                    proj_name,
+                    &dense_tensor_name,
+                );
+            if !fail_closed_conditions.is_empty() {
+                return Err(BitNetError::Validation(format!(
+                    "prompt-bound no-bias descriptor for {dense_tensor_name} failed closed before candidate dispatch: {}",
+                    fail_closed_conditions.join(",")
+                )));
+            }
+            tracing::trace!(
+                tensor_name = %dense_tensor_name,
+                callsite_identity = %descriptor.callsite_identity,
+                selected_path = descriptor.selected_path,
+                candidate_path = descriptor.candidate_path,
+                "prompt-bound no-bias descriptor reached FeedForward::apply_linear; candidate execution remains disabled"
+            );
+        }
         let hook_boundary =
             dense_linear_runtime_hook_boundary(&dense_tensor_name, dense_linear_hooks);
         tracing::trace!(
@@ -14265,6 +14373,7 @@ mod tests {
                 &pair_gate,
                 DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
                     prompt_bound_candidate_descriptor_argument_present: false,
+                    prompt_bound_session_descriptor_constructed: false,
                     descriptor_identity_reaches_apply_linear_callsite: false,
                     prompt_digest_available_at_apply_linear: false,
                     generated_text_digests_available_at_apply_linear: false,
@@ -14284,6 +14393,7 @@ mod tests {
         assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
         assert!(boundary.explicit_runtime_gate_requested);
         assert!(!boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(!boundary.prompt_bound_session_descriptor_constructed);
         assert!(!boundary.descriptor_identity_reaches_apply_linear_callsite);
         assert!(!boundary.feed_forward_apply_linear_no_bias_dispatch_branch_present);
         assert!(!boundary.dispatch_calls_no_bias_candidate_forward);
@@ -14293,6 +14403,11 @@ mod tests {
         assert!(boundary.fail_closed_conditions.contains(
             &"feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument_missing"
         ));
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"prompt_bound_session_descriptor_not_constructed")
+        );
         assert!(
             boundary
                 .fail_closed_conditions
@@ -14310,6 +14425,48 @@ mod tests {
     }
 
     #[test]
+    fn no_bias_per_callsite_dispatch_descriptor_names_session_descriptor_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let boundary =
+            DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary::from_candidate_off_on_pair_gate(
+                &pair_gate,
+                DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+                    prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: false,
+                    descriptor_identity_reaches_apply_linear_callsite: false,
+                    prompt_digest_available_at_apply_linear: false,
+                    generated_text_digests_available_at_apply_linear: false,
+                    feed_forward_apply_linear_no_bias_dispatch_branch_present: false,
+                    dispatch_calls_no_bias_candidate_forward: false,
+                    candidate_on_receipt_emitted_at_apply_linear_callsite: false,
+                    feed_forward_down_proj_scope_preserved: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(
+            boundary.remaining_runtime_selection_blocker,
+            "prompt_bound_session_descriptor_construction"
+        );
+        assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(!boundary.prompt_bound_session_descriptor_constructed);
+        assert!(!boundary.descriptor_identity_reaches_apply_linear_callsite);
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"prompt_bound_session_descriptor_not_constructed")
+        );
+        assert!(boundary.preserves_normal_inference());
+        assert!(!boundary.candidate_execution_attempt_allowed);
+        assert!(!boundary.candidate_execution_enabled_by_default);
+    }
+
+    #[test]
     fn no_bias_per_callsite_dispatch_descriptor_names_digest_lifetime_blocker() {
         let pair_gate = slm_cpu_216_ready_pair_gate(
             SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
@@ -14322,6 +14479,7 @@ mod tests {
                 &pair_gate,
                 DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
                     prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: true,
                     descriptor_identity_reaches_apply_linear_callsite: true,
                     prompt_digest_available_at_apply_linear: true,
                     generated_text_digests_available_at_apply_linear: false,
@@ -14340,6 +14498,7 @@ mod tests {
         );
         assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
         assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(boundary.prompt_bound_session_descriptor_constructed);
         assert!(boundary.descriptor_identity_reaches_apply_linear_callsite);
         assert!(boundary.prompt_digest_available_at_apply_linear);
         assert!(!boundary.generated_text_digests_available_at_apply_linear);
@@ -14367,6 +14526,7 @@ mod tests {
                 &pair_gate,
                 DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
                     prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: true,
                     descriptor_identity_reaches_apply_linear_callsite: true,
                     prompt_digest_available_at_apply_linear: true,
                     generated_text_digests_available_at_apply_linear: true,
@@ -14388,6 +14548,7 @@ mod tests {
         assert_eq!(boundary.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
         assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
         assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(boundary.prompt_bound_session_descriptor_constructed);
         assert!(boundary.descriptor_identity_reaches_apply_linear_callsite);
         assert!(boundary.feed_forward_apply_linear_no_bias_dispatch_branch_present);
         assert!(boundary.dispatch_calls_no_bias_candidate_forward);
@@ -14400,6 +14561,87 @@ mod tests {
         assert!(!boundary.allocation_reduction_claim);
         assert!(!boundary.timing_improvement_claim);
         assert!(!boundary.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_apply_linear_descriptor_argument_accepts_exact_down_proj_callsite() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let callsite_identity =
+            feed_forward_apply_linear_callsite_identity(&descriptor.tensor_name);
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                callsite_identity,
+                true,
+                true,
+                true,
+            );
+
+        let fail_closed_conditions =
+            feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                &emitter,
+                "down_proj",
+                &descriptor.tensor_name,
+            );
+
+        assert!(fail_closed_conditions.is_empty());
+        assert!(emitter.per_callsite_receipt_emitter_present);
+        assert!(emitter.per_callsite_identity_matches_descriptor);
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_apply_linear_descriptor_argument_rejects_wrong_callsite() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                feed_forward_apply_linear_callsite_identity(&descriptor.tensor_name),
+                true,
+                true,
+                true,
+            );
+
+        let fail_closed_conditions =
+            feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                &emitter,
+                "gate_proj",
+                "layers.0.feed_forward.gate_proj.weight",
+            );
+
+        assert!(fail_closed_conditions.contains(&"feed_forward_projection_not_down_proj"));
+        assert!(fail_closed_conditions.contains(&"prompt_bound_descriptor_tensor_name_mismatch"));
+        assert!(
+            fail_closed_conditions.contains(&"prompt_bound_descriptor_callsite_identity_mismatch")
+        );
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(emitter.preserves_normal_inference());
     }
 
     #[test]
