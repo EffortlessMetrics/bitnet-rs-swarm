@@ -31,7 +31,7 @@ hard_constraints = [
 
 [[work_item]]
 id = "M4-HARDEN-001"
-status = "in_progress"
+status = "pr_open"
 branch = "codex/apple-m4/M4-HARDEN-001-seed-post-excellence-hardening"
 stackable = false
 review_mode = "codex_premerge"
