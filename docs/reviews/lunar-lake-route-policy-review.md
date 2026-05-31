@@ -23,8 +23,14 @@ current:
 
 - #1064 for battery-mode `low_power` evidence;
 - #1119 for NPU cold/cache decomposition;
-- #1120 for NPU warm-resident acceptance;
-- #1121 for OpenVINO GPU `ask_short` / `ask_normal` review;
+- #1120 for NPU warm-resident acceptance, now closed as defined in
+  [lunar-lake-npu-warm-resident-acceptance.md](lunar-lake-npu-warm-resident-acceptance.md);
+- #1139 for the NPU phase-timing schema contract before host setup,
+  tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
+  receipt-overhead timers are used for route decisions;
+- #1121 for OpenVINO GPU `ask_short` / `ask_normal` review, now closed with
+  the keep decision recorded in
+  [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
 - #1122 and #1132 for the CPU route posture decision, with #1069 and #1071
   as live measurement follow-ups;
 - #1123 for generated-token visibility rules, now defined in
@@ -51,6 +57,10 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | `low_power` | none | blocked by #1064 until real battery-mode route samples and energy proxy exist |
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only; does not imply cold one-off or low-power promotion |
 | `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence |
+
+NPU phase-timing schema work is tracked by #1139 and must not become a
+route-policy shortcut. New timer fields can support review only after their
+scope, source, unavailable handling, and claim boundary are explicit.
 
 The ledger's route IDs remain campaign-local names. The route-ID proof-family
 map records how future OpenVINO receipts and validators should relate those
@@ -135,6 +145,13 @@ resident evidence must keep these boundaries visible:
 - memory growth and power/thermal context are recorded or blocked explicitly;
 - cold-start caveats remain in route reasons.
 
+Phase-timing work must keep host setup, tokenizer/template, pipeline
+construction, compile/load/cache behavior, first ask, warm asks, and receipt
+overhead in separate fields or explicit unavailable states before those timers
+can affect route policy. Timing-derived cache classification remains
+diagnostic unless a later accepted policy names it as sufficient for a narrower
+claim.
+
 Hot-path latency alone does not promote NPU for `ask_short`, `ask_normal`, or
 `low_power`. Battery or energy-proxy evidence for `low_power` remains blocked
 by #1064.
@@ -169,12 +186,16 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 - Future token-visibility schema or validator work should use the #1123
   strategy before token-ID gaps become one-off wording in each receipt.
-- #1121 should either keep, narrow, or mark conditional the GPU
-  `ask_short` / `ask_normal` promotion with a current evidence map.
+- #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
+  evidence map; future GPU mutation needs a new concrete regression or review
+  finding.
 - If `prefill_heavy` or `decode_heavy` become active route-review targets,
   open a focused profile-phase issue instead of bundling them into #1121.
-- #1120 should define the NPU `warm_resident` route acceptance rule before any
-  resident-session policy change.
+- #1120 has defined the NPU `warm_resident` route acceptance rule; future
+  resident-session policy changes should cite that review directly.
+- #1139 should define the NPU phase-timing schema before host setup,
+  tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
+  receipt-overhead timings become route-policy evidence.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
   cold-start gates are accepted.
 - Future receipt or validator work should use the #1135/#1137 route-ID
