@@ -1,0 +1,16 @@
+timestamp = "2026-05-31T12:26:35Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-240"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1103
+branch = "codex/slm-cpu/slm-cpu-240-per-callsite-no-bias-dispatch-descriptor"
+head_sha = "72ef6adecb171cb7351620697af020167182c704"
+merge_sha = "6e314c89542f29f005efeb6e176c9119c74af280"
+summary = "Closed SLM-CPU-240 after the no-bias per-callsite dispatch descriptor blocker PR merged and queued SLM-CPU-241."
+notes = [
+  "PR #1103 records that FeedForward::apply_linear still lacks a prompt-bound no-bias candidate descriptor argument and dispatch branch, so candidate-on execution remains disabled.",
+  "SLM-CPU-241 is ready to add or precisely block safe prompt-bound descriptor propagation to the exact FeedForward::apply_linear feed_forward.down_proj callsite.",
+]
