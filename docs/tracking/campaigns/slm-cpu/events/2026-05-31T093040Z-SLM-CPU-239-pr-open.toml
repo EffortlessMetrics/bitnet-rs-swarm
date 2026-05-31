@@ -1,0 +1,15 @@
+timestamp = "2026-05-31T09:30:40Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-239"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1092
+branch = "codex/slm-cpu/slm-cpu-239-per-callsite-no-bias-off-on-receipts"
+head_sha = "abfdc87d7dbb7859575863974cfd7263af09e840"
+summary = "Opened the SLM-CPU-239 per-callsite no-bias candidate-off/on receipt blocker PR."
+notes = [
+  "PR #1092 records that the existing SLM-CPU-235 off/on receipts are request-gate-only and do not execute dense_linear_no_bias_candidate_forward at FeedForward::apply_linear.",
+  "The remaining blocker is a prompt-bound per-callsite candidate execution descriptor plus fail-closed apply_linear dispatch for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj role.",
+]
