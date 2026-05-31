@@ -8728,7 +8728,7 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
     ];
     let comparison_ready = gaps.is_empty();
 
-    Ok(LunarLakeCpuSlmRuntimeComparison {
+    let receipt = LunarLakeCpuSlmRuntimeComparison {
         schema_version: "1.1.0".to_string(),
         artifact_kind: "lunar_lake_cpu_slm_runtime_comparison".to_string(),
         proof_stage: "rust_gguf_cpu_vs_openvino_cpu_context_no_promotion_change".to_string(),
@@ -8763,7 +8763,42 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
             bitnet_qk256_i2s_claim: false,
             hidden_fallback_allowed: false,
         },
-    })
+    };
+    validate_cpu_slm_runtime_comparison_qualification(&receipt)?;
+    Ok(receipt)
+}
+
+fn validate_cpu_slm_runtime_comparison_qualification(
+    receipt: &LunarLakeCpuSlmRuntimeComparison,
+) -> Result<()> {
+    if receipt.benchmark_qualification.qualified
+        != receipt.timing_scope_alignment.benchmark_qualified
+    {
+        bail!(
+            "CPU runtime comparison benchmark qualification fields disagree: \
+             benchmark_qualification.qualified={} timing_scope_alignment.benchmark_qualified={}",
+            receipt.benchmark_qualification.qualified,
+            receipt.timing_scope_alignment.benchmark_qualified
+        );
+    }
+
+    if !receipt.model_format_comparison.model_formats_match
+        && receipt.benchmark_qualification.qualified
+    {
+        bail!(
+            "CPU runtime comparison must keep benchmark_qualified=false when model formats differ"
+        );
+    }
+
+    if !receipt.timing_scope_alignment.timing_scopes_match
+        && receipt.benchmark_qualification.qualified
+    {
+        bail!(
+            "CPU runtime comparison must keep benchmark_qualified=false when timing scopes differ"
+        );
+    }
+
+    Ok(())
 }
 
 fn openvino_cpu_device(json: &Value) -> Option<&Value> {
@@ -21735,6 +21770,31 @@ mod tests {
         assert_eq!(receipt.model_format_comparison.openvino_cpu.model_format, "OpenVINO IR");
         assert!(!receipt.model_format_comparison.model_formats_match);
         assert!(!receipt.benchmark_qualification.qualified);
+
+        let mut mismatched_model_claim = receipt.clone();
+        mismatched_model_claim.benchmark_qualification.qualified = true;
+        mismatched_model_claim.timing_scope_alignment.benchmark_qualified = true;
+        let err = validate_cpu_slm_runtime_comparison_qualification(&mismatched_model_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("model formats differ"), "got: {err}");
+
+        let mut mismatched_timing_claim = receipt.clone();
+        mismatched_timing_claim.model_format_comparison.model_formats_match = true;
+        mismatched_timing_claim.benchmark_qualification.qualified = true;
+        mismatched_timing_claim.timing_scope_alignment.benchmark_qualified = true;
+        let err = validate_cpu_slm_runtime_comparison_qualification(&mismatched_timing_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("timing scopes differ"), "got: {err}");
+
+        let mut inconsistent_claim = receipt.clone();
+        inconsistent_claim.benchmark_qualification.qualified = true;
+        let err = validate_cpu_slm_runtime_comparison_qualification(&inconsistent_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("fields disagree"), "got: {err}");
+
         let profile = receipt
             .profiles
             .iter()
