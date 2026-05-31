@@ -28,6 +28,7 @@ bitnet receipts explain <receipt.json>
 | Phase timing contract | `docs/specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md` |
 | Route promotion gates | `docs/specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md` |
 | BitNet proof boundary | `docs/specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md` |
+| Lunar Lake route ID/proof-family map | `docs/reviews/lunar-lake-route-id-proof-family-map.md` |
 | Rust bridge boundary | `docs/specs/BITNET-SPEC-OPENVINO-RUST-BRIDGE.md` |
 | Server boundary | `docs/specs/BITNET-SPEC-OPENVINO-SERVER.md` |
 | Implementation plan | `plans/openvino-lunar-lake/implementation-plan.md` |

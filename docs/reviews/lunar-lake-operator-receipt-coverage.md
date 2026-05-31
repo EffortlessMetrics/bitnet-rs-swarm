@@ -148,20 +148,29 @@ Required boundaries for that PR:
 - no benchmark-qualified advantage claim;
 - no generated-token or answer-quality claim expansion.
 
-### 3. Campaign route IDs still need canonical proof-family mapping
+### 3. Campaign route IDs now have a canonical mapping note
 
 The route policy review already records that current ledger route IDs are
 campaign-local names. The operator receipts are usable because route reasons and
-claim-boundary fields are explicit, but a future schema hardening pass should
-map campaign IDs such as `dense_slm_openvino_gpu_candidate` to the canonical
-proof families in `BITNET-SPEC-OPENVINO-ROUTE-CONTRACT`.
+claim-boundary fields are explicit. The route-ID map now records how campaign
+IDs such as `dense_slm_openvino_gpu_candidate` should relate to canonical
+route IDs and proof families:
 
-Next smallest PR only if this becomes a validator or support-tier blocker:
+```text
+docs/reviews/lunar-lake-route-id-proof-family-map.md
+```
+
+Next smallest implementation PR only if this becomes a validator or
+support-tier blocker:
 
 ```text
 LNL258V-ROUTE-ID-MAP-001:
-  add canonical proof_family fields alongside existing campaign route IDs.
+  add canonical_route_id and proof_family fields alongside existing campaign
+  route IDs.
 ```
+
+That implementation should use the mapping note, reject backend/device/runtime
+conflicts, and keep existing receipts readable without rewriting them.
 
 ## Non-Findings
 
