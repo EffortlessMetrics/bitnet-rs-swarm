@@ -673,6 +673,88 @@ pub fn dense_linear_no_bias_candidate_forward(
     input.matmul(&linear.weight().t()?)
 }
 
+const FEED_FORWARD_APPLY_LINEAR_CALLSITE: &str = "bitnet_transformer::FeedForward::apply_linear";
+
+fn feed_forward_dense_tensor_name(layer_idx: usize, proj_name: &str) -> String {
+    format!("layers.{layer_idx}.feed_forward.{proj_name}.weight")
+}
+
+fn feed_forward_apply_linear_callsite_identity(tensor_name: &str) -> String {
+    format!("{FEED_FORWARD_APPLY_LINEAR_CALLSITE}:{tensor_name}")
+}
+
+pub fn dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(
+    layer_idx: usize,
+    proj_name: &str,
+) -> String {
+    feed_forward_apply_linear_callsite_identity(&feed_forward_dense_tensor_name(
+        layer_idx, proj_name,
+    ))
+}
+
+fn prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+    descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    layer_idx: usize,
+) -> bool {
+    descriptor.tensor_name == feed_forward_dense_tensor_name(layer_idx, "down_proj")
+}
+
+fn feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+    descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    proj_name: &str,
+    tensor_name: &str,
+) -> Vec<&'static str> {
+    let mut fail_closed_conditions = Vec::new();
+    let expected_callsite_identity = feed_forward_apply_linear_callsite_identity(tensor_name);
+
+    if proj_name != "down_proj" {
+        fail_closed_conditions.push("feed_forward_projection_not_down_proj");
+    }
+    if descriptor.tensor_name != tensor_name {
+        fail_closed_conditions.push("prompt_bound_descriptor_tensor_name_mismatch");
+    }
+    if descriptor.callsite_identity != expected_callsite_identity {
+        fail_closed_conditions.push("prompt_bound_descriptor_callsite_identity_mismatch");
+    }
+    if !descriptor.per_callsite_receipt_emitter_present {
+        fail_closed_conditions.push("per_callsite_receipt_emitter_missing");
+    }
+    if !descriptor.per_callsite_identity_matches_descriptor {
+        fail_closed_conditions.push("per_callsite_identity_does_not_match_descriptor");
+    }
+    if !descriptor.explicit_runtime_gate_requested {
+        fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+    }
+    if descriptor.runtime_api != "cpu" {
+        fail_closed_conditions.push("runtime_api_not_cpu");
+    }
+    if descriptor.selected_backend != "cpu-rust" {
+        fail_closed_conditions.push("selected_backend_not_cpu_rust");
+    }
+    if descriptor.fallback_used {
+        fail_closed_conditions.push("fallback_used");
+    }
+    if descriptor.selected_path != "eager_f32_candle" {
+        fail_closed_conditions.push("selected_path_not_eager_f32_candle");
+    }
+    if descriptor.selected_kernel != "dense-f32-candle-linear" {
+        fail_closed_conditions.push("selected_kernel_not_dense_f32_candle_linear");
+    }
+    if descriptor.normal_inference_runtime_selection_enabled {
+        fail_closed_conditions.push("normal_inference_runtime_selection_enabled");
+    }
+    if descriptor.candidate_execution_enabled {
+        fail_closed_conditions.push("candidate_execution_enabled");
+    }
+    if !descriptor.preserves_normal_inference() {
+        fail_closed_conditions.push("normal_inference_not_preserved");
+    }
+
+    fail_closed_conditions.sort_unstable();
+    fail_closed_conditions.dedup();
+    fail_closed_conditions
+}
+
 /// Disabled-by-default preflight for future no-bias runtime selection.
 ///
 /// This is an audit surface only. It can report that an exact Qwen3 Q8_0
@@ -1192,6 +1274,49 @@ pub struct DenseLinearNoBiasCandidateOffOnReceiptPairGate {
     pub decoded_text_preserved: bool,
     pub normal_inference_runtime_selection_enabled: bool,
     pub candidate_execution_enabled: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub prompt_ids_digest: String,
+    pub generated_ids_digest: String,
+    pub decoded_text_digest: String,
+    pub candidate_off_on_receipt_pair_gate_ready: bool,
+    pub explicit_runtime_gate_requested: bool,
+    pub prompt_bound_candidate_descriptor_argument_present: bool,
+    pub prompt_bound_session_descriptor_constructed: bool,
+    pub descriptor_identity_reaches_apply_linear_callsite: bool,
+    pub prompt_digest_available_at_apply_linear: bool,
+    pub generated_text_digests_available_at_apply_linear: bool,
+    pub feed_forward_apply_linear_no_bias_dispatch_branch_present: bool,
+    pub dispatch_calls_no_bias_candidate_forward: bool,
+    pub candidate_on_receipt_emitted_at_apply_linear_callsite: bool,
+    pub feed_forward_down_proj_scope_preserved: bool,
+    pub default_runtime_path_preserved: bool,
+    pub candidate_execution_attempt_allowed: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled_by_default: bool,
     pub decision: &'static str,
     pub reason: &'static str,
     pub remaining_runtime_selection_blocker: &'static str,
@@ -1806,6 +1931,20 @@ pub struct DenseLinearNoBiasCandidateExecutionReceiptInputs {
     pub generated_ids_preserved: bool,
     pub decoded_text_preserved: bool,
     pub execution_receipt_blocker_recorded: bool,
+    pub default_runtime_path_preserved: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+    pub prompt_bound_candidate_descriptor_argument_present: bool,
+    pub prompt_bound_session_descriptor_constructed: bool,
+    pub descriptor_identity_reaches_apply_linear_callsite: bool,
+    pub prompt_digest_available_at_apply_linear: bool,
+    pub generated_text_digests_available_at_apply_linear: bool,
+    pub feed_forward_apply_linear_no_bias_dispatch_branch_present: bool,
+    pub dispatch_calls_no_bias_candidate_forward: bool,
+    pub candidate_on_receipt_emitted_at_apply_linear_callsite: bool,
+    pub feed_forward_down_proj_scope_preserved: bool,
     pub default_runtime_path_preserved: bool,
 }
 
@@ -2774,6 +2913,205 @@ impl DenseLinearNoBiasCandidateOffOnReceiptPairGate {
             && !self.fallback_used
             && !self.normal_inference_runtime_selection_enabled
             && !self.candidate_execution_enabled
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
+impl DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary {
+    pub fn from_candidate_off_on_pair_gate(
+        pair_gate: &DenseLinearNoBiasCandidateOffOnReceiptPairGate,
+        inputs: DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs,
+    ) -> Self {
+        let mut fail_closed_conditions = pair_gate.fail_closed_conditions.clone();
+        let candidate_off_on_receipt_pair_gate_ready = pair_gate.decision
+            == "candidate_off_on_receipt_pair_gate_ready_runtime_disabled"
+            && pair_gate.per_callsite_receipt_emitter_present
+            && pair_gate.per_callsite_identity_matches_descriptor
+            && pair_gate.explicit_runtime_gate_requested
+            && pair_gate.candidate_off_receipt_present
+            && pair_gate.candidate_on_receipt_present
+            && pair_gate.prompt_ids_preserved
+            && pair_gate.generated_ids_preserved
+            && pair_gate.decoded_text_preserved
+            && pair_gate.preserves_normal_inference()
+            && pair_gate.fail_closed_conditions.is_empty();
+        let default_runtime_path_preserved = inputs.default_runtime_path_preserved
+            && pair_gate.selected_path == "eager_f32_candle"
+            && pair_gate.selected_kernel == "dense-f32-candle-linear"
+            && pair_gate.preserves_normal_inference();
+
+        if !candidate_off_on_receipt_pair_gate_ready {
+            fail_closed_conditions.push("candidate_off_on_receipt_pair_gate_not_ready");
+        }
+        if !inputs.prompt_bound_candidate_descriptor_argument_present {
+            fail_closed_conditions.push(
+                "feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument_missing",
+            );
+        }
+        if !inputs.prompt_bound_session_descriptor_constructed {
+            fail_closed_conditions.push("prompt_bound_session_descriptor_not_constructed");
+        }
+        if !inputs.descriptor_identity_reaches_apply_linear_callsite {
+            fail_closed_conditions
+                .push("per_callsite_descriptor_identity_not_available_at_apply_linear");
+        }
+        if !inputs.prompt_digest_available_at_apply_linear {
+            fail_closed_conditions.push("prompt_digest_not_available_at_apply_linear");
+        }
+        if !inputs.generated_text_digests_available_at_apply_linear {
+            fail_closed_conditions
+                .push("generated_text_digests_not_available_before_apply_linear_dispatch");
+        }
+        if !inputs.feed_forward_apply_linear_no_bias_dispatch_branch_present {
+            fail_closed_conditions
+                .push("feed_forward_apply_linear_no_bias_dispatch_branch_missing");
+        }
+        if !inputs.dispatch_calls_no_bias_candidate_forward {
+            fail_closed_conditions.push("dense_linear_no_bias_candidate_forward_dispatch_missing");
+        }
+        if !inputs.candidate_on_receipt_emitted_at_apply_linear_callsite {
+            fail_closed_conditions
+                .push("candidate_on_receipt_not_emitted_at_apply_linear_callsite");
+        }
+        if !inputs.feed_forward_down_proj_scope_preserved {
+            fail_closed_conditions.push("feed_forward_down_proj_scope_not_preserved");
+        }
+        if !default_runtime_path_preserved {
+            fail_closed_conditions.push("default_runtime_path_not_preserved");
+        }
+        if pair_gate.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if pair_gate.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if pair_gate.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let candidate_execution_attempt_allowed = candidate_off_on_receipt_pair_gate_ready
+            && pair_gate.explicit_runtime_gate_requested
+            && inputs.prompt_bound_candidate_descriptor_argument_present
+            && inputs.prompt_bound_session_descriptor_constructed
+            && inputs.descriptor_identity_reaches_apply_linear_callsite
+            && inputs.prompt_digest_available_at_apply_linear
+            && inputs.generated_text_digests_available_at_apply_linear
+            && inputs.feed_forward_apply_linear_no_bias_dispatch_branch_present
+            && inputs.dispatch_calls_no_bias_candidate_forward
+            && inputs.candidate_on_receipt_emitted_at_apply_linear_callsite
+            && inputs.feed_forward_down_proj_scope_preserved
+            && default_runtime_path_preserved
+            && pair_gate.runtime_api == "cpu"
+            && pair_gate.selected_backend == "cpu-rust"
+            && !pair_gate.fallback_used
+            && fail_closed_conditions.is_empty();
+
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if candidate_execution_attempt_allowed {
+                (
+                    "per_callsite_dispatch_descriptor_ready_runtime_disabled",
+                    "prompt_bound_candidate_descriptor_reaches_apply_linear_with_dispatch_branch_but_runtime_enablement_remains_separate",
+                    "fresh_candidate_off_on_execution_receipts_from_apply_linear",
+                )
+            } else if candidate_off_on_receipt_pair_gate_ready {
+                let blocker = if !inputs.prompt_bound_candidate_descriptor_argument_present {
+                    "feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument"
+                } else if !inputs.prompt_bound_session_descriptor_constructed {
+                    "prompt_bound_session_descriptor_construction"
+                } else if !inputs.descriptor_identity_reaches_apply_linear_callsite {
+                    "per_callsite_descriptor_identity_to_apply_linear"
+                } else if !inputs.prompt_digest_available_at_apply_linear {
+                    "prompt_digest_lifetime_at_apply_linear"
+                } else if !inputs.generated_text_digests_available_at_apply_linear {
+                    "generated_text_digest_lifetime_before_apply_linear_dispatch"
+                } else if !inputs.feed_forward_apply_linear_no_bias_dispatch_branch_present {
+                    "feed_forward_apply_linear_no_bias_dispatch_branch"
+                } else if !inputs.dispatch_calls_no_bias_candidate_forward {
+                    "dense_linear_no_bias_candidate_forward_dispatch_call"
+                } else if !inputs.candidate_on_receipt_emitted_at_apply_linear_callsite {
+                    "apply_linear_callsite_candidate_on_receipt_emitter"
+                } else if !inputs.feed_forward_down_proj_scope_preserved {
+                    "feed_forward_down_proj_scope"
+                } else {
+                    "default_runtime_path_preservation"
+                };
+                (
+                    "per_callsite_dispatch_descriptor_blocked_fail_closed",
+                    "candidate_off_on_identity_exists_but_prompt_bound_descriptor_or_apply_linear_dispatch_is_missing",
+                    blocker,
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "candidate_off_on_receipt_pair_gate_incomplete",
+                    "candidate_off_on_receipt_pair_gate",
+                )
+            };
+
+        Self {
+            tensor_name: pair_gate.tensor_name.clone(),
+            callsite_identity: pair_gate.callsite_identity.clone(),
+            model_sha256: pair_gate.model_sha256.clone(),
+            model_architecture: pair_gate.model_architecture,
+            quant_format: pair_gate.quant_format,
+            tokenizer_source: pair_gate.tokenizer_source,
+            tokenizer_strict: pair_gate.tokenizer_strict,
+            runtime_api: pair_gate.runtime_api,
+            selected_backend: pair_gate.selected_backend,
+            fallback_used: pair_gate.fallback_used,
+            selected_path: pair_gate.selected_path,
+            selected_kernel: pair_gate.selected_kernel,
+            candidate_path: pair_gate.candidate_path,
+            candidate_kernel: pair_gate.candidate_kernel,
+            prompt_ids_digest: pair_gate.prompt_ids_digest.clone(),
+            generated_ids_digest: pair_gate.generated_ids_digest.clone(),
+            decoded_text_digest: pair_gate.decoded_text_digest.clone(),
+            candidate_off_on_receipt_pair_gate_ready,
+            explicit_runtime_gate_requested: pair_gate.explicit_runtime_gate_requested,
+            prompt_bound_candidate_descriptor_argument_present: inputs
+                .prompt_bound_candidate_descriptor_argument_present,
+            prompt_bound_session_descriptor_constructed: inputs
+                .prompt_bound_session_descriptor_constructed,
+            descriptor_identity_reaches_apply_linear_callsite: inputs
+                .descriptor_identity_reaches_apply_linear_callsite,
+            prompt_digest_available_at_apply_linear: inputs.prompt_digest_available_at_apply_linear,
+            generated_text_digests_available_at_apply_linear: inputs
+                .generated_text_digests_available_at_apply_linear,
+            feed_forward_apply_linear_no_bias_dispatch_branch_present: inputs
+                .feed_forward_apply_linear_no_bias_dispatch_branch_present,
+            dispatch_calls_no_bias_candidate_forward: inputs
+                .dispatch_calls_no_bias_candidate_forward,
+            candidate_on_receipt_emitted_at_apply_linear_callsite: inputs
+                .candidate_on_receipt_emitted_at_apply_linear_callsite,
+            feed_forward_down_proj_scope_preserved: inputs.feed_forward_down_proj_scope_preserved,
+            default_runtime_path_preserved,
+            candidate_execution_attempt_allowed,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled_by_default: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && self.default_runtime_path_preserved
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled_by_default
             && !self.allocation_reduction_claim
             && !self.timing_improvement_claim
             && !self.speedup_claim
@@ -7333,7 +7671,23 @@ impl FeedForward {
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
     ) -> Result<Tensor> {
-        self.forward_impl(x, raw_tensors, dense_linear_hooks, None)
+        self.forward_impl(x, raw_tensors, dense_linear_hooks, None, None)
+    }
+
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(
+            x,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            None,
+        )
     }
 
     fn forward_impl(
@@ -7341,10 +7695,19 @@ impl FeedForward {
         x: &Tensor,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
         workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
-        let gate =
-            self.apply_linear(x, &self.gate_proj, "gate_proj", raw_tensors, dense_linear_hooks)?;
+        let gate = self.apply_linear(
+            x,
+            &self.gate_proj,
+            "gate_proj",
+            raw_tensors,
+            dense_linear_hooks,
+            None,
+        )?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("mlp.gate_proj", Some(self.layer_idx), &gate)?;
         }
@@ -7367,7 +7730,8 @@ impl FeedForward {
             tracing::debug!("MLP ||activation(u)||: {:.6e}", activation_norm);
         }
 
-        let up = self.apply_linear(x, &self.up_proj, "up_proj", raw_tensors, dense_linear_hooks)?;
+        let up =
+            self.apply_linear(x, &self.up_proj, "up_proj", raw_tensors, dense_linear_hooks, None)?;
         if qwen_trace_layer_enabled(self.layer_idx) {
             qwen_trace_tensor("mlp.up_proj", Some(self.layer_idx), &up)?;
         }
@@ -7404,6 +7768,7 @@ impl FeedForward {
             "down_proj",
             raw_tensors,
             dense_linear_hooks,
+            prompt_bound_no_bias_descriptor,
         )?;
         if let Some(workspace) = workspace {
             let boundary = self.down_proj_output_storage_boundary(&output);
@@ -7430,7 +7795,29 @@ impl FeedForward {
         workspace: &mut TransformerForwardWorkspace,
     ) -> Result<Tensor> {
         workspace.record_feed_forward_input(x);
-        let output = self.forward_impl(x, raw_tensors, dense_linear_hooks, Some(workspace))?;
+        let output =
+            self.forward_impl(x, raw_tensors, dense_linear_hooks, None, Some(workspace))?;
+        workspace.record_feed_forward_output(&output);
+        workspace.store_feed_forward_output(output);
+        workspace.take_feed_forward_output()
+    }
+
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_feed_forward_input(x);
+        let output = self.forward_impl(
+            x,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            Some(workspace),
+        )?;
         workspace.record_feed_forward_output(&output);
         workspace.store_feed_forward_output(output);
         workspace.take_feed_forward_output()
@@ -7448,6 +7835,9 @@ impl FeedForward {
         proj_name: &str,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
     ) -> Result<Tensor> {
         // Generate weight name based on layer index and projection name
         // Format: "layers.{idx}.feed_forward.{proj_name}.weight.qk256_qs"
@@ -7475,8 +7865,28 @@ impl FeedForward {
             self.layer_idx,
             proj_name
         );
-        let dense_tensor_name =
-            format!("layers.{}.feed_forward.{}.weight", self.layer_idx, proj_name);
+        let dense_tensor_name = feed_forward_dense_tensor_name(self.layer_idx, proj_name);
+        if let Some(descriptor) = prompt_bound_no_bias_descriptor {
+            let fail_closed_conditions =
+                feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                    descriptor,
+                    proj_name,
+                    &dense_tensor_name,
+                );
+            if !fail_closed_conditions.is_empty() {
+                return Err(BitNetError::Validation(format!(
+                    "prompt-bound no-bias descriptor for {dense_tensor_name} failed closed before candidate dispatch: {}",
+                    fail_closed_conditions.join(",")
+                )));
+            }
+            tracing::trace!(
+                tensor_name = %dense_tensor_name,
+                callsite_identity = %descriptor.callsite_identity,
+                selected_path = descriptor.selected_path,
+                candidate_path = descriptor.candidate_path,
+                "prompt-bound no-bias descriptor reached FeedForward::apply_linear; candidate execution remains disabled"
+            );
+        }
         let hook_boundary =
             dense_linear_runtime_hook_boundary(&dense_tensor_name, dense_linear_hooks);
         tracing::trace!(
@@ -9779,7 +10189,7 @@ impl TransformerBlock {
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
     ) -> Result<Tensor> {
-        self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None)
+        self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None, None)
     }
 
     pub fn forward_with_workspace(
@@ -9792,7 +10202,47 @@ impl TransformerBlock {
     ) -> Result<Tensor> {
         workspace.record_block_input(x);
         let output =
-            self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, Some(workspace))?;
+            self.forward_impl(x, kv_cache, raw_tensors, dense_linear_hooks, None, Some(workspace))?;
+        workspace.record_block_output(&output);
+        Ok(output)
+    }
+
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        kv_cache: Option<&mut LayerKVCache>,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(
+            x,
+            kv_cache,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            None,
+        )
+    }
+
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        x: &Tensor,
+        kv_cache: Option<&mut LayerKVCache>,
+        raw_tensors: &HashMap<String, Tensor>,
+        dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_block_input(x);
+        let output = self.forward_impl(
+            x,
+            kv_cache,
+            raw_tensors,
+            dense_linear_hooks,
+            Some(prompt_bound_no_bias_descriptor),
+            Some(workspace),
+        )?;
         workspace.record_block_output(&output);
         Ok(output)
     }
@@ -9803,6 +10253,9 @@ impl TransformerBlock {
         kv_cache: Option<&mut LayerKVCache>,
         raw_tensors: &HashMap<String, Tensor>,
         dense_linear_hooks: &DenseLinearRuntimeHookRegistry,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
         mut workspace: Option<&mut TransformerForwardWorkspace>,
     ) -> Result<Tensor> {
         let trace_forward = qwen_trace_events_enabled();
@@ -10119,15 +10572,31 @@ impl TransformerBlock {
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_start", || {
             format!("\"layer\":{}", self.attention.layer_idx)
         });
-        let feed_forward_output = if let Some(workspace) = workspace.as_mut() {
-            self.feed_forward.forward_with_workspace(
+        let feed_forward_output = match (workspace.as_mut(), prompt_bound_no_bias_descriptor) {
+            (Some(workspace), Some(descriptor)) => self
+                .feed_forward
+                .forward_with_workspace_and_no_bias_callsite_descriptor(
+                    &x,
+                    raw_tensors,
+                    dense_linear_hooks,
+                    workspace,
+                    descriptor,
+                )?,
+            (Some(workspace), None) => {
+                self.feed_forward.forward_with_workspace(
+                    &x,
+                    raw_tensors,
+                    dense_linear_hooks,
+                    workspace,
+                )?
+            }
+            (None, Some(descriptor)) => self.feed_forward.forward_with_no_bias_callsite_descriptor(
                 &x,
                 raw_tensors,
                 dense_linear_hooks,
-                workspace,
-            )?
-        } else {
-            self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?
+                descriptor,
+            )?,
+            (None, None) => self.feed_forward.forward(&x, raw_tensors, dense_linear_hooks)?,
         };
         qwen_trace_runtime_event(trace_forward, "block.feed_forward_finish", || {
             format!(
@@ -11156,7 +11625,7 @@ impl TransformerModel {
     /// **Performance note**: Accepts ownership of `hidden` to avoid cloning on hot path.
     /// Caller should pass owned tensor or use `.clone()` explicitly if needed.
     pub fn forward(&self, hidden: Tensor, kv_cache: Option<&mut KVCache>) -> Result<Tensor> {
-        self.forward_impl(hidden, kv_cache, None)
+        self.forward_impl(hidden, kv_cache, None, None)
     }
 
     pub fn forward_with_workspace(
@@ -11166,7 +11635,35 @@ impl TransformerModel {
         workspace: &mut TransformerForwardWorkspace,
     ) -> Result<Tensor> {
         workspace.record_model_input(&hidden);
-        let output = self.forward_impl(hidden, kv_cache, Some(workspace))?;
+        let output = self.forward_impl(hidden, kv_cache, Some(workspace), None)?;
+        workspace.record_model_output(&output);
+        workspace.store_model_output(output);
+        workspace.take_model_output()
+    }
+
+    pub fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        hidden: Tensor,
+        kv_cache: Option<&mut KVCache>,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        self.forward_impl(hidden, kv_cache, None, Some(prompt_bound_no_bias_descriptor))
+    }
+
+    pub fn forward_with_workspace_and_no_bias_callsite_descriptor(
+        &self,
+        hidden: Tensor,
+        kv_cache: Option<&mut KVCache>,
+        workspace: &mut TransformerForwardWorkspace,
+        prompt_bound_no_bias_descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<Tensor> {
+        workspace.record_model_input(&hidden);
+        let output = self.forward_impl(
+            hidden,
+            kv_cache,
+            Some(workspace),
+            Some(prompt_bound_no_bias_descriptor),
+        )?;
         workspace.record_model_output(&output);
         workspace.store_model_output(output);
         workspace.take_model_output()
@@ -11177,6 +11674,9 @@ impl TransformerModel {
         hidden: Tensor,
         mut kv_cache: Option<&mut KVCache>,
         mut workspace: Option<&mut TransformerForwardWorkspace>,
+        prompt_bound_no_bias_descriptor: Option<
+            &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+        >,
     ) -> Result<Tensor> {
         let trace_forward = qwen_trace_events_enabled();
         let forward_start = Instant::now();
@@ -11189,6 +11689,23 @@ impl TransformerModel {
             )
         });
         let mut x = hidden; // Take ownership - no clone needed!
+
+        if let Some(descriptor) = prompt_bound_no_bias_descriptor {
+            let matching_layer_count = (0..self.layers.len())
+                .filter(|layer_idx| {
+                    prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+                        descriptor,
+                        *layer_idx,
+                    )
+                })
+                .count();
+            if matching_layer_count != 1 {
+                return Err(BitNetError::Validation(format!(
+                    "prompt-bound no-bias descriptor target {} must match exactly one feed_forward.down_proj layer before model forward",
+                    descriptor.tensor_name
+                )));
+            }
+        }
 
         // Tracepoint 1: Embeddings (incremental path - single token)
         // This captures the embedding for the current token being processed
@@ -11213,13 +11730,35 @@ impl TransformerModel {
                 format!("\"layer\":{},\"dims\":[{}]", i, qwen_trace_dims_json(x.dims()))
             });
             let layer_cache = kv_cache.as_mut().and_then(|c| c.layer_mut(i));
+            let layer_no_bias_descriptor = prompt_bound_no_bias_descriptor.filter(|descriptor| {
+                prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(descriptor, i)
+            });
             x = if let Some(workspace) = workspace.as_mut() {
-                layer.forward_with_workspace(
+                if let Some(descriptor) = layer_no_bias_descriptor {
+                    layer.forward_with_workspace_and_no_bias_callsite_descriptor(
+                        &x,
+                        layer_cache,
+                        &self.raw_tensors,
+                        &self.dense_linear_hooks,
+                        workspace,
+                        descriptor,
+                    )?
+                } else {
+                    layer.forward_with_workspace(
+                        &x,
+                        layer_cache,
+                        &self.raw_tensors,
+                        &self.dense_linear_hooks,
+                        workspace,
+                    )?
+                }
+            } else if let Some(descriptor) = layer_no_bias_descriptor {
+                layer.forward_with_no_bias_callsite_descriptor(
                     &x,
                     layer_cache,
                     &self.raw_tensors,
                     &self.dense_linear_hooks,
-                    workspace,
+                    descriptor,
                 )?
             } else {
                 layer.forward(&x, layer_cache, &self.raw_tensors, &self.dense_linear_hooks)?
@@ -14004,6 +14543,331 @@ mod tests {
         assert!(pair_gate.preserves_normal_inference());
         assert!(!pair_gate.candidate_execution_enabled);
         assert!(!pair_gate.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_dispatch_descriptor_records_apply_linear_argument_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let boundary =
+            DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary::from_candidate_off_on_pair_gate(
+                &pair_gate,
+                DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+                    prompt_bound_candidate_descriptor_argument_present: false,
+                    prompt_bound_session_descriptor_constructed: false,
+                    descriptor_identity_reaches_apply_linear_callsite: false,
+                    prompt_digest_available_at_apply_linear: false,
+                    generated_text_digests_available_at_apply_linear: false,
+                    feed_forward_apply_linear_no_bias_dispatch_branch_present: false,
+                    dispatch_calls_no_bias_candidate_forward: false,
+                    candidate_on_receipt_emitted_at_apply_linear_callsite: false,
+                    feed_forward_down_proj_scope_preserved: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(boundary.decision, "per_callsite_dispatch_descriptor_blocked_fail_closed");
+        assert_eq!(
+            boundary.remaining_runtime_selection_blocker,
+            "feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument"
+        );
+        assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
+        assert!(boundary.explicit_runtime_gate_requested);
+        assert!(!boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(!boundary.prompt_bound_session_descriptor_constructed);
+        assert!(!boundary.descriptor_identity_reaches_apply_linear_callsite);
+        assert!(!boundary.feed_forward_apply_linear_no_bias_dispatch_branch_present);
+        assert!(!boundary.dispatch_calls_no_bias_candidate_forward);
+        assert!(!boundary.candidate_execution_attempt_allowed);
+        assert!(!boundary.candidate_execution_enabled_by_default);
+        assert!(!boundary.normal_inference_runtime_selection_enabled);
+        assert!(boundary.fail_closed_conditions.contains(
+            &"feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument_missing"
+        ));
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"prompt_bound_session_descriptor_not_constructed")
+        );
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"generated_text_digests_not_available_before_apply_linear_dispatch")
+        );
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"feed_forward_apply_linear_no_bias_dispatch_branch_missing")
+        );
+        assert!(boundary.preserves_normal_inference());
+        assert!(!boundary.allocation_reduction_claim);
+        assert!(!boundary.timing_improvement_claim);
+        assert!(!boundary.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_dispatch_descriptor_names_session_descriptor_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let boundary =
+            DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary::from_candidate_off_on_pair_gate(
+                &pair_gate,
+                DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+                    prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: false,
+                    descriptor_identity_reaches_apply_linear_callsite: false,
+                    prompt_digest_available_at_apply_linear: false,
+                    generated_text_digests_available_at_apply_linear: false,
+                    feed_forward_apply_linear_no_bias_dispatch_branch_present: false,
+                    dispatch_calls_no_bias_candidate_forward: false,
+                    candidate_on_receipt_emitted_at_apply_linear_callsite: false,
+                    feed_forward_down_proj_scope_preserved: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(
+            boundary.remaining_runtime_selection_blocker,
+            "prompt_bound_session_descriptor_construction"
+        );
+        assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(!boundary.prompt_bound_session_descriptor_constructed);
+        assert!(!boundary.descriptor_identity_reaches_apply_linear_callsite);
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"prompt_bound_session_descriptor_not_constructed")
+        );
+        assert!(boundary.preserves_normal_inference());
+        assert!(!boundary.candidate_execution_attempt_allowed);
+        assert!(!boundary.candidate_execution_enabled_by_default);
+    }
+
+    #[test]
+    fn no_bias_per_callsite_dispatch_descriptor_names_digest_lifetime_blocker() {
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3",
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let boundary =
+            DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary::from_candidate_off_on_pair_gate(
+                &pair_gate,
+                DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+                    prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: true,
+                    descriptor_identity_reaches_apply_linear_callsite: true,
+                    prompt_digest_available_at_apply_linear: true,
+                    generated_text_digests_available_at_apply_linear: false,
+                    feed_forward_apply_linear_no_bias_dispatch_branch_present: false,
+                    dispatch_calls_no_bias_candidate_forward: false,
+                    candidate_on_receipt_emitted_at_apply_linear_callsite: false,
+                    feed_forward_down_proj_scope_preserved: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(boundary.decision, "per_callsite_dispatch_descriptor_blocked_fail_closed");
+        assert_eq!(
+            boundary.remaining_runtime_selection_blocker,
+            "generated_text_digest_lifetime_before_apply_linear_dispatch"
+        );
+        assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
+        assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(boundary.prompt_bound_session_descriptor_constructed);
+        assert!(boundary.descriptor_identity_reaches_apply_linear_callsite);
+        assert!(boundary.prompt_digest_available_at_apply_linear);
+        assert!(!boundary.generated_text_digests_available_at_apply_linear);
+        assert!(!boundary.feed_forward_apply_linear_no_bias_dispatch_branch_present);
+        assert!(!boundary.candidate_execution_attempt_allowed);
+        assert!(
+            boundary
+                .fail_closed_conditions
+                .contains(&"generated_text_digests_not_available_before_apply_linear_dispatch")
+        );
+        assert!(boundary.preserves_normal_inference());
+    }
+
+    #[test]
+    fn no_bias_per_callsite_dispatch_descriptor_models_future_ready_runtime_disabled() {
+        let qwen25_sha = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+        let pair_gate = slm_cpu_216_ready_pair_gate(
+            qwen25_sha,
+            "qwen2",
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+        );
+
+        let boundary =
+            DenseLinearNoBiasPerCallsiteDispatchDescriptorBoundary::from_candidate_off_on_pair_gate(
+                &pair_gate,
+                DenseLinearNoBiasPerCallsiteDispatchDescriptorInputs {
+                    prompt_bound_candidate_descriptor_argument_present: true,
+                    prompt_bound_session_descriptor_constructed: true,
+                    descriptor_identity_reaches_apply_linear_callsite: true,
+                    prompt_digest_available_at_apply_linear: true,
+                    generated_text_digests_available_at_apply_linear: true,
+                    feed_forward_apply_linear_no_bias_dispatch_branch_present: true,
+                    dispatch_calls_no_bias_candidate_forward: true,
+                    candidate_on_receipt_emitted_at_apply_linear_callsite: true,
+                    feed_forward_down_proj_scope_preserved: true,
+                    default_runtime_path_preserved: true,
+                },
+            );
+
+        assert_eq!(boundary.decision, "per_callsite_dispatch_descriptor_ready_runtime_disabled");
+        assert_eq!(
+            boundary.remaining_runtime_selection_blocker,
+            "fresh_candidate_off_on_execution_receipts_from_apply_linear"
+        );
+        assert_eq!(boundary.model_architecture, "qwen2");
+        assert_eq!(boundary.model_sha256, qwen25_sha);
+        assert_eq!(boundary.candidate_path, "qwen25_feed_forward_down_proj_no_bias_candidate");
+        assert!(boundary.candidate_off_on_receipt_pair_gate_ready);
+        assert!(boundary.prompt_bound_candidate_descriptor_argument_present);
+        assert!(boundary.prompt_bound_session_descriptor_constructed);
+        assert!(boundary.descriptor_identity_reaches_apply_linear_callsite);
+        assert!(boundary.feed_forward_apply_linear_no_bias_dispatch_branch_present);
+        assert!(boundary.dispatch_calls_no_bias_candidate_forward);
+        assert!(boundary.candidate_on_receipt_emitted_at_apply_linear_callsite);
+        assert!(boundary.candidate_execution_attempt_allowed);
+        assert!(!boundary.candidate_execution_enabled_by_default);
+        assert!(!boundary.normal_inference_runtime_selection_enabled);
+        assert!(boundary.fail_closed_conditions.is_empty());
+        assert!(boundary.preserves_normal_inference());
+        assert!(!boundary.allocation_reduction_claim);
+        assert!(!boundary.timing_improvement_claim);
+        assert!(!boundary.speedup_claim);
+    }
+
+    #[test]
+    fn no_bias_apply_linear_descriptor_argument_accepts_exact_down_proj_callsite() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let callsite_identity =
+            feed_forward_apply_linear_callsite_identity(&descriptor.tensor_name);
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                callsite_identity,
+                true,
+                true,
+                true,
+            );
+
+        let fail_closed_conditions =
+            feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                &emitter,
+                "down_proj",
+                &descriptor.tensor_name,
+            );
+
+        assert!(fail_closed_conditions.is_empty());
+        assert!(emitter.per_callsite_receipt_emitter_present);
+        assert!(emitter.per_callsite_identity_matches_descriptor);
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(!emitter.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_prompt_bound_descriptor_targets_only_matching_down_proj_layer() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let callsite_identity =
+            dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(0, "down_proj");
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                callsite_identity.clone(),
+                true,
+                true,
+                true,
+            );
+
+        assert_eq!(
+            callsite_identity,
+            "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight"
+        );
+        assert!(prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+            &emitter, 0
+        ));
+        assert!(!prompt_bound_no_bias_descriptor_targets_feed_forward_down_proj_layer(
+            &emitter, 1
+        ));
+        assert_eq!(emitter.tensor_name, "layers.0.feed_forward.down_proj.weight");
+        assert!(emitter.preserves_normal_inference());
+        assert!(!emitter.candidate_execution_enabled);
+    }
+
+    #[test]
+    fn no_bias_apply_linear_descriptor_argument_rejects_wrong_callsite() {
+        let gate = slm_cpu_211_test_gate(
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+        );
+        let descriptor = DenseLinearNoBiasReceiptBoundSelectorDescriptor::from_before_after_gate(
+            &gate,
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "slm-cpu-209:qwen3:before-after",
+            true,
+        );
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_receipt_bound_selector_descriptor(
+                &descriptor,
+                descriptor.tensor_name.clone(),
+                feed_forward_apply_linear_callsite_identity(&descriptor.tensor_name),
+                true,
+                true,
+                true,
+            );
+
+        let fail_closed_conditions =
+            feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                &emitter,
+                "gate_proj",
+                "layers.0.feed_forward.gate_proj.weight",
+            );
+
+        assert!(fail_closed_conditions.contains(&"feed_forward_projection_not_down_proj"));
+        assert!(fail_closed_conditions.contains(&"prompt_bound_descriptor_tensor_name_mismatch"));
+        assert!(
+            fail_closed_conditions.contains(&"prompt_bound_descriptor_callsite_identity_mismatch")
+        );
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(emitter.preserves_normal_inference());
     }
 
     #[test]

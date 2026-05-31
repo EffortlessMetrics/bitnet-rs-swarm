@@ -1,0 +1,15 @@
+timestamp = "2026-05-31T09:50:56Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-240"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1103
+branch = "codex/slm-cpu/slm-cpu-240-per-callsite-no-bias-dispatch-descriptor"
+head_sha = "45d2a9a38e66a735ef0886d346e1ec86c6832525"
+summary = "Opened the SLM-CPU-240 no-bias per-callsite dispatch descriptor blocker PR."
+notes = [
+  "PR #1103 records the prompt-bound per-callsite no-bias dispatch descriptor blocker after SLM-CPU-239.",
+  "Candidate execution remains disabled; the next blocker is getting safe descriptor identity to FeedForward::apply_linear before any candidate-on execution receipt.",
+]

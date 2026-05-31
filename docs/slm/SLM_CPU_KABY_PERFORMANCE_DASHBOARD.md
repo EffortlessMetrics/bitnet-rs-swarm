@@ -114,6 +114,11 @@ GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256.
 | No-bias execution receipt capture | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-235-no-bias-execution-capture-validation.json` | Captures fresh Qwen3/Qwen2.5 Q8_0 explicit gate-off/gate-on warm-session receipts for `feed_forward.down_proj`; generated IDs and decoded text are preserved while candidate execution remains disabled and `eager_f32_candle` remains selected |
 | No-bias candidate execution attempt boundary | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-236-no-bias-candidate-execution-attempt.json` | Consumes the validated SLM-CPU-235 receipt pair and blocks candidate execution at the exact current runtime boundary: `FeedForward::apply_linear` has no no-bias candidate dispatch branch, so eager F32 remains selected and no executed-candidate preservation or speed claim is made |
 | No-bias apply-linear dispatch blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-237-no-bias-dispatch-blocker.json` | Refines the SLM-CPU-236 blocker: a dispatch branch would be unreachable or receipt-unsafe until prompt-bound no-bias selector identity can reach `FeedForward::apply_linear`; production hook registry construction still sets `receipt_bound_no_bias_selector=None` |
+| No-bias per-callsite receipt emitter | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-238-per-callsite-no-bias-receipt-emitter.json` | Defines the safer per-callsite receipt-emitter boundary that avoids mutating model-load hooks while candidate execution remains disabled |
+| No-bias per-callsite off/on blocker | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-239-per-callsite-no-bias-off-on-receipts.json` | Records that existing off/on receipts are request-gate evidence only because the candidate-on path still does not execute from `FeedForward::apply_linear` |
+| No-bias per-callsite dispatch descriptor | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-240-per-callsite-no-bias-dispatch-descriptor.json` | Names the missing prompt-bound no-bias descriptor argument and dispatch branch at `FeedForward::apply_linear`; no candidate execution or default runtime change |
+| No-bias apply-linear callsite descriptor | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-241-apply-linear-callsite-descriptor.json` | Adds a fail-closed optional descriptor argument at `FeedForward::apply_linear` and blocks production execution on prompt/session descriptor construction; no candidate execution or speed claim |
+| No-bias prompt/session callsite descriptor | `ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-242-prompt-session-callsite-descriptor.json` | Adds opt-in model/layer propagation for a prompt-bound no-bias descriptor to the exact `FeedForward::apply_linear` callsite, while blocking production warm-session use on descriptor construction and post-decode receipt emission |
 
 Qwen3 rows use:
 
@@ -4818,6 +4823,113 @@ candidate, prove generated-ID preservation for an executed candidate, change
 default runtime selection, claim allocation reduction, claim timing improvement
 or speedup, broaden Q4/Q5 support, touch server, GPU, NPU, OpenVINO, UHD 620,
 Qwen3.5, or BitNet QK256/I2_S paths.
+
+## SLM-CPU-240 Per-Callsite No-Bias Dispatch Descriptor Blocker
+
+SLM-CPU-240 consumes the SLM-CPU-239 blocker and records the exact runtime
+boundary that still prevents a valid candidate-on receipt. The per-callsite
+off/on identity exists, but `FeedForward::apply_linear` still has no
+prompt-bound no-bias candidate descriptor argument and no fail-closed dispatch
+branch that calls `dense_linear_no_bias_candidate_forward`.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-240-per-callsite-no-bias-dispatch-descriptor.json
+decision = per_callsite_dispatch_descriptor_blocked_fail_closed
+remaining_runtime_selection_blocker = feed_forward_apply_linear_prompt_bound_candidate_descriptor_argument
+candidate_off_on_receipt_pair_gate_ready = true
+prompt_bound_candidate_descriptor_argument_present = false
+descriptor_identity_reaches_apply_linear_callsite = false
+generated_text_digests_available_at_apply_linear = false
+feed_forward_apply_linear_no_bias_dispatch_branch_present = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The structural blocker is now precise. Model-load hook registries are built
+before prompt/generated/text digests exist, while `FeedForward::apply_linear`
+executes before generated IDs and decoded text exist for the current session.
+Mutating model-load hooks with prompt-scoped identity would risk stale identity
+crossing prompt boundaries. The next safe slice is a prompt/session-scoped
+per-callsite descriptor argument or equivalent callsite emitter path that binds
+identity at the exact `feed_forward.down_proj` execution point and emits the
+candidate-on receipt only after the candidate branch actually executes.
+
+This slice does not execute the no-bias candidate, prove generated-ID
+preservation for an executed candidate, change default runtime selection, claim
+allocation reduction, claim timing improvement or speedup, broaden Q4/Q5
+support, touch server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet
+QK256/I2_S paths.
+
+## SLM-CPU-241 Apply-Linear Callsite Descriptor Boundary
+
+SLM-CPU-241 consumes the SLM-CPU-240 blocker and adds the first fail-closed
+prompt-bound descriptor argument at the `FeedForward::apply_linear` owner. The
+argument is optional, the normal `forward` and `forward_with_workspace` paths
+still pass `None`, and the validator accepts only the exact
+`feed_forward.down_proj` callsite identity.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-241-apply-linear-callsite-descriptor.json
+decision = per_callsite_dispatch_descriptor_blocked_fail_closed
+remaining_runtime_selection_blocker = prompt_bound_session_descriptor_construction
+candidate_off_on_receipt_pair_gate_ready = true
+prompt_bound_candidate_descriptor_argument_present = true
+prompt_bound_session_descriptor_constructed = false
+descriptor_identity_reaches_apply_linear_callsite_for_production_session = false
+feed_forward_apply_linear_no_bias_dispatch_branch_present = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The code boundary now rejects stale or wrong-callsite descriptor identity before
+any candidate dispatch can occur. It rejects gate/up projection attachment,
+tensor-name mismatch, callsite identity mismatch, enabled candidate execution,
+non-CPU backend identity, fallback use, or default-runtime drift. The remaining
+production blocker is not a missing function parameter anymore; it is the
+session-scoped descriptor construction and digest lifetime path that must pass
+current prompt identity to the exact callsite without mutating model-load hook
+state across prompt boundaries.
+
+This slice does not execute `dense_linear_no_bias_candidate_forward`, emit a
+valid candidate-on execution receipt, prove generated-ID preservation for an
+executed candidate, change default runtime selection, claim allocation
+reduction, claim timing improvement or speedup, broaden Q4/Q5 support, touch
+server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+## SLM-CPU-242 Prompt/Session Callsite Descriptor Boundary
+
+SLM-CPU-242 consumes the SLM-CPU-241 apply-linear argument boundary and adds an
+opt-in propagation path through `TransformerModel`, `TransformerBlock`, and
+`FeedForward`. The default `forward` and `forward_with_workspace` paths still
+pass no descriptor. The opt-in path targets exactly one
+`feed_forward.down_proj` layer before model forward and then lets
+`FeedForward::apply_linear` perform the same fail-closed callsite validation.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-242-prompt-session-callsite-descriptor.json
+decision = prompt_session_callsite_descriptor_plumbing_present_blocked_fail_closed
+remaining_runtime_selection_blocker = warm_session_prompt_session_descriptor_construction_and_generated_text_receipt_emitter
+opt_in_descriptor_propagation_present = true
+production_warm_session_descriptor_constructed = false
+descriptor_identity_reaches_apply_linear_callsite_for_production_warm_session = false
+generated_text_receipt_emitter_at_apply_linear_callsite = false
+candidate_execution_attempt_allowed = false
+candidate_execution_enabled_by_default = false
+default_runtime_changed = false
+```
+
+The remaining blocker is now narrower than the model/layer call chain: the
+warm-session command still needs a current-session descriptor construction
+point and a generated/text receipt emitter that binds evidence after decode
+without mutating model-load hook state across prompt boundaries.
+
+This slice does not execute `dense_linear_no_bias_candidate_forward`, emit a
+valid candidate-on execution receipt, prove generated-ID preservation for an
+executed candidate, change default runtime selection, claim allocation
+reduction, claim timing improvement or speedup, broaden Q4/Q5 support, touch
+server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
