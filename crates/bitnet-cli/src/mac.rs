@@ -72,6 +72,7 @@ const MAC_SERVE_BACKPRESSURE_SMOKE_DEFAULT_RECEIPT: &str =
 const MAC_SERVE_DEFAULT_HOST: &str = "127.0.0.1";
 const MAC_SERVE_DEFAULT_PORT: u16 = 8080;
 const MAC_SERVE_DEFAULT_MAX_NEW_TOKENS: usize = 64;
+const MAC_SERVE_DEFAULT_REQUEST_TIMEOUT_SECONDS: u64 = 300;
 const MAC_SERVE_MAX_REQUEST_BYTES: usize = 1_048_576;
 const MAC_SERVE_MAX_HTTP_REQUEST_BYTES: usize = MAC_SERVE_MAX_REQUEST_BYTES + 16_384;
 const MAC_SERVE_CONTEXT_GUARDRAIL_ERROR_PREFIX: &str =
@@ -1103,6 +1104,10 @@ enum MacAction {
         #[arg(long, default_value_t = true)]
         stream: bool,
 
+        /// Per-request generation timeout enforced at prefill/decode token boundaries.
+        #[arg(long, default_value_t = MAC_SERVE_DEFAULT_REQUEST_TIMEOUT_SECONDS)]
+        request_timeout_seconds: u64,
+
         /// Default maximum new tokens for completion requests that omit max_tokens.
         #[arg(long, visible_aliases = ["max-tokens", "n-predict"], default_value_t = MAC_SERVE_DEFAULT_MAX_NEW_TOKENS)]
         max_new_tokens: usize,
@@ -1891,6 +1896,7 @@ impl MacCommand {
                 port,
                 strict,
                 stream,
+                request_timeout_seconds,
                 max_new_tokens,
                 temperature,
                 top_k,
@@ -1915,6 +1921,7 @@ impl MacCommand {
                     top_p,
                     repetition_penalty,
                     seed,
+                    request_timeout_seconds,
                 };
                 let endpoint = MacServeEndpoint { host, port };
                 run_mac_serve(
@@ -11230,12 +11237,71 @@ struct MacServeGenerationDefaults {
     top_p: f32,
     repetition_penalty: f32,
     seed: Option<u64>,
+    request_timeout_seconds: u64,
 }
 
 #[derive(Clone, Debug)]
 struct MacServeEndpoint {
     host: String,
     port: u16,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MacServeStopReason {
+    Length,
+    Stop,
+    Timeout,
+    Cancelled,
+}
+
+impl MacServeStopReason {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Length => "length",
+            Self::Stop => "stop",
+            Self::Timeout => "timeout",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    fn is_partial(self) -> bool {
+        matches!(self, Self::Timeout | Self::Cancelled)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct MacServeStopState {
+    reason: MacServeStopReason,
+    stage: &'static str,
+    elapsed_ms: u64,
+}
+
+fn mac_serve_interruption_state(
+    started: std::time::Instant,
+    timeout_seconds: u64,
+    stream: bool,
+    generated_tokens: usize,
+    cancel_after_tokens: Option<usize>,
+    stage: &'static str,
+) -> Option<MacServeStopState> {
+    let elapsed = started.elapsed();
+    if elapsed >= Duration::from_secs(timeout_seconds) {
+        return Some(MacServeStopState {
+            reason: MacServeStopReason::Timeout,
+            stage,
+            elapsed_ms: elapsed.as_millis() as u64,
+        });
+    }
+
+    if stream && cancel_after_tokens.is_some_and(|limit| generated_tokens >= limit) {
+        return Some(MacServeStopState {
+            reason: MacServeStopReason::Cancelled,
+            stage,
+            elapsed_ms: elapsed.as_millis() as u64,
+        });
+    }
+
+    None
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -11576,6 +11642,11 @@ impl MacServeGenerator {
                 "completion max_tokens/max_new_tokens is capped at 512 for the M4 local server; got {max_new_tokens}"
             );
         }
+        let request_timeout_seconds =
+            request.timeout_seconds.unwrap_or(state.defaults.request_timeout_seconds);
+        if request_timeout_seconds == 0 {
+            anyhow::bail!("completion timeout_seconds must be greater than zero");
+        }
         let temperature = request.temperature.unwrap_or(state.defaults.temperature);
         let top_k = request.top_k.unwrap_or(state.defaults.top_k);
         let top_p = request.top_p.unwrap_or(state.defaults.top_p);
@@ -11583,6 +11654,12 @@ impl MacServeGenerator {
             request.repetition_penalty.unwrap_or(state.defaults.repetition_penalty);
         let seed = request.seed.or(state.defaults.seed);
         let stream = request.stream.unwrap_or(state.stream);
+        if request.cancel_after_tokens.is_some() && !stream {
+            anyhow::bail!(
+                "completion cancel_after_tokens is only supported for streaming requests"
+            );
+        }
+        let cancel_after_tokens = request.cancel_after_tokens;
         let request_started = std::time::Instant::now();
         let formatted_prompt = self.prompt_template.apply(&prompt, system_prompt.as_deref());
         let rendered_prompt_sha256 = sha256_hex(formatted_prompt.as_bytes());
@@ -11694,8 +11771,20 @@ impl MacServeGenerator {
 
         let prefill_start = std::time::Instant::now();
         let mut prefill_token_count = 0usize;
+        let mut stop_state = None;
         if tokens.len() > 1 {
             for token in &tokens[..tokens.len() - 1] {
+                if let Some(state) = mac_serve_interruption_state(
+                    request_started,
+                    request_timeout_seconds,
+                    stream,
+                    0,
+                    cancel_after_tokens,
+                    "prefill",
+                ) {
+                    stop_state = Some(state);
+                    break;
+                }
                 let x = self.model.embed(&[*token])?;
                 let _ = self.model.forward(&x, any_cache.as_mut())?;
                 prefill_token_count += 1;
@@ -11710,54 +11799,84 @@ impl MacServeGenerator {
         let mut sample_step_ms = Vec::with_capacity(max_new_tokens);
         let mut stop_tail = String::with_capacity(max_stop_len);
         let mut first_token_ms = None;
-        let mut finish_reason = "length";
-        for _ in 0..max_new_tokens {
-            let decode_step_start = std::time::Instant::now();
-            let last_token = tokens.last().copied().expect("tokens must be non-empty");
-            let x = self.model.embed(&[last_token])?;
-            let h = self.model.forward(&x, any_cache.as_mut())?;
-            let last_hidden = crate::extract_last_token_hidden(&h)?;
-            let logits = self.model.logits(&last_hidden)?;
-            let logits_vec = crate::extract_logits_2d(&logits)?;
-            let sample_start = std::time::Instant::now();
-            let next_token = sampler.sample(&logits_vec, &generated_token_ids)?;
-            sample_step_ms.push(crate::elapsed_ms(sample_start));
-            tokens.push(next_token);
-            generated_token_ids.push(next_token);
-            if first_token_ms.is_none() {
-                first_token_ms = Some(request_started.elapsed().as_millis() as u64);
-            }
-            let token_text = self.tokenizer.decode(&[next_token])?;
-            if max_stop_len > 0 {
-                stop_tail.push_str(&token_text);
-                if stop_tail.len() > max_stop_len {
-                    let cut = stop_tail.len() - max_stop_len;
-                    let mut safe_cut = cut;
-                    while safe_cut > 0 && !stop_tail.is_char_boundary(safe_cut) {
-                        safe_cut -= 1;
-                    }
-                    stop_tail.drain(..safe_cut);
+        let mut finish_reason = MacServeStopReason::Length;
+        if let Some(state) = stop_state {
+            finish_reason = state.reason;
+        }
+        if stop_state.is_none() {
+            for _ in 0..max_new_tokens {
+                if let Some(state) = mac_serve_interruption_state(
+                    request_started,
+                    request_timeout_seconds,
+                    stream,
+                    generated_token_ids.len(),
+                    cancel_after_tokens,
+                    "decode",
+                ) {
+                    stop_state = Some(state);
+                    finish_reason = state.reason;
+                    break;
                 }
-            }
-            token_texts.push(token_text);
-            decode_step_ms.push(crate::elapsed_ms(decode_step_start));
+                let decode_step_start = std::time::Instant::now();
+                let last_token = tokens.last().copied().expect("tokens must be non-empty");
+                let x = self.model.embed(&[last_token])?;
+                let h = self.model.forward(&x, any_cache.as_mut())?;
+                let last_hidden = crate::extract_last_token_hidden(&h)?;
+                let logits = self.model.logits(&last_hidden)?;
+                let logits_vec = crate::extract_logits_2d(&logits)?;
+                let sample_start = std::time::Instant::now();
+                let next_token = sampler.sample(&logits_vec, &generated_token_ids)?;
+                sample_step_ms.push(crate::elapsed_ms(sample_start));
+                tokens.push(next_token);
+                generated_token_ids.push(next_token);
+                if first_token_ms.is_none() {
+                    first_token_ms = Some(request_started.elapsed().as_millis() as u64);
+                }
+                let token_text = self.tokenizer.decode(&[next_token])?;
+                if max_stop_len > 0 {
+                    stop_tail.push_str(&token_text);
+                    if stop_tail.len() > max_stop_len {
+                        let cut = stop_tail.len() - max_stop_len;
+                        let mut safe_cut = cut;
+                        while safe_cut > 0 && !stop_tail.is_char_boundary(safe_cut) {
+                            safe_cut -= 1;
+                        }
+                        stop_tail.drain(..safe_cut);
+                    }
+                }
+                token_texts.push(token_text);
+                decode_step_ms.push(crate::elapsed_ms(decode_step_start));
 
-            if all_stop_ids.contains(&next_token) {
-                finish_reason = "stop";
-                break;
-            }
-            if let Some(eos) = self.tokenizer.eos_token_id()
-                && next_token == eos
-            {
-                finish_reason = "stop";
-                break;
-            }
-            if max_stop_len > 0
-                && !all_stop_sequences.is_empty()
-                && all_stop_sequences.iter().any(|pat| stop_tail.ends_with(pat))
-            {
-                finish_reason = "stop";
-                break;
+                if all_stop_ids.contains(&next_token) {
+                    finish_reason = MacServeStopReason::Stop;
+                    break;
+                }
+                if let Some(eos) = self.tokenizer.eos_token_id()
+                    && next_token == eos
+                {
+                    finish_reason = MacServeStopReason::Stop;
+                    break;
+                }
+                if max_stop_len > 0
+                    && !all_stop_sequences.is_empty()
+                    && all_stop_sequences.iter().any(|pat| stop_tail.ends_with(pat))
+                {
+                    finish_reason = MacServeStopReason::Stop;
+                    break;
+                }
+
+                if let Some(state) = mac_serve_interruption_state(
+                    request_started,
+                    request_timeout_seconds,
+                    stream,
+                    generated_token_ids.len(),
+                    cancel_after_tokens,
+                    "decode",
+                ) {
+                    stop_state = Some(state);
+                    finish_reason = state.reason;
+                    break;
+                }
             }
         }
 
@@ -11765,6 +11884,10 @@ impl MacServeGenerator {
         let decode_ms = decode_step_ms.iter().sum::<f64>();
         let sampling_ms = sample_step_ms.iter().sum::<f64>();
         let total_ms = crate::elapsed_ms(request_started);
+        let partial_generation = finish_reason.is_partial();
+        let timeout_stop = stop_state.filter(|state| state.reason == MacServeStopReason::Timeout);
+        let cancellation_stop =
+            stop_state.filter(|state| state.reason == MacServeStopReason::Cancelled);
         let bitnet_route = state.model_family == MacServeModelFamily::Bitnet;
         let artifact_kind = if bitnet_route {
             "bitnet_apple_m4_serve_completion"
@@ -11797,6 +11920,9 @@ impl MacServeGenerator {
             "artifact_kind": artifact_kind,
             "timestamp": chrono::Utc::now().to_rfc3339(),
             "request_id": request_id.as_str(),
+            "status": if partial_generation { "partial" } else { "completed" },
+            "stop_reason": finish_reason.as_str(),
+            "partial_generation": partial_generation,
             "artifact_path": receipt_path.display().to_string(),
             "requested_backend": APPLE_M4_CPU_NEON,
             "selected_backend": APPLE_M4_CPU_NEON,
@@ -11841,6 +11967,8 @@ impl MacServeGenerator {
                 "system_prompt": system_prompt,
                 "stream": stream,
                 "max_new_tokens": max_new_tokens,
+                "timeout_seconds": request_timeout_seconds,
+                "cancel_after_tokens": cancel_after_tokens,
                 "temperature": temperature,
                 "top_k": top_k,
                 "top_p": top_p,
@@ -11850,12 +11978,31 @@ impl MacServeGenerator {
             "generation": {
                 "mode": if temperature == 0.0 && top_k == 1 { "greedy" } else { "sampling" },
                 "text": text,
-                "finish_reason": finish_reason,
+                "finish_reason": finish_reason.as_str(),
+                "stop_reason": finish_reason.as_str(),
+                "partial": partial_generation,
                 "prompt_tokens": prompt_token_count,
                 "generated_tokens": generated_token_ids.len(),
                 "prompt_token_ids": prompt_token_ids,
                 "generated_token_ids": generated_token_ids,
                 "token_texts": token_texts,
+            },
+            "timeout_boundary": {
+                "configured_seconds": request_timeout_seconds,
+                "enforced": true,
+                "reached": timeout_stop.is_some(),
+                "stage": timeout_stop.map(|state| state.stage),
+                "elapsed_ms": timeout_stop.map(|state| state.elapsed_ms),
+                "partial_generation_receipt_emitted": partial_generation,
+            },
+            "cancellation": {
+                "cancellable": stream,
+                "requested": cancel_after_tokens.is_some(),
+                "cancel_after_tokens": cancel_after_tokens,
+                "observed": cancellation_stop.is_some(),
+                "stage": cancellation_stop.map(|state| state.stage),
+                "elapsed_ms": cancellation_stop.map(|state| state.elapsed_ms),
+                "partial_generation_receipt_emitted": partial_generation,
             },
             "timing": {
                 "model_load_ms": 0.0,
@@ -11880,6 +12027,9 @@ impl MacServeGenerator {
             "claim_boundary": {
                 "local_server_completion_endpoint": true,
                 "streaming_transport": stream,
+                "request_timeout_enforced": true,
+                "streaming_cancellation_supported": true,
+                "partial_generation_receipt": partial_generation,
                 "openai_compatibility_claimed": false,
                 "production_readiness_claimed": false,
                 "bitnet_quality_claimed": false,
@@ -11903,8 +12053,8 @@ impl MacServeGenerator {
                 "logs_include_trace_id": state.trace.enabled,
                 "receipt_trace_id_matches": state.trace.enabled,
                 "failure_receipt_linked": false,
-                "timeout_stage_linked": false,
-                "cancellation_stage_linked": false,
+                "timeout_stage_linked": timeout_stop.is_some(),
+                "cancellation_stage_linked": cancellation_stop.is_some(),
                 "per_request_receipts_linked": true,
             }),
         ) {
@@ -11941,6 +12091,8 @@ impl MacServeGenerator {
                 .as_str()
                 .unwrap_or("length")
                 .to_string(),
+            stop_reason: receipt["stop_reason"].as_str().unwrap_or("length").to_string(),
+            partial_generation: receipt["partial_generation"].as_bool().unwrap_or(false),
             stream,
             trace_id,
             receipt,
@@ -11956,6 +12108,8 @@ struct MacServeCompletion {
     token_texts: Vec<String>,
     generated_token_ids: Vec<u32>,
     finish_reason: String,
+    stop_reason: String,
+    partial_generation: bool,
     stream: bool,
     trace_id: Option<String>,
     receipt: serde_json::Value,
@@ -11968,12 +12122,14 @@ struct MacServeCompletionRequest {
     messages: Option<Vec<MacServeChatMessage>>,
     max_tokens: Option<usize>,
     max_new_tokens: Option<usize>,
+    timeout_seconds: Option<u64>,
     temperature: Option<f32>,
     top_k: Option<usize>,
     top_p: Option<f32>,
     repetition_penalty: Option<f32>,
     seed: Option<u64>,
     stream: Option<bool>,
+    cancel_after_tokens: Option<usize>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -12440,6 +12596,8 @@ async fn run_mac_serve_smoke(
         top_p: 1.0,
         repetition_penalty: 1.1,
         seed: Some(0),
+        request_timeout_seconds: timeout_seconds
+            .unwrap_or(MAC_SERVE_DEFAULT_REQUEST_TIMEOUT_SECONDS),
     };
     let state = MacServeState::new_with_route(
         model,
@@ -12474,17 +12632,25 @@ async fn run_mac_serve_smoke(
     )
     .await?;
     let one_shot =
-        mac_serve_smoke_completion(&state, prompt, false, max_new_tokens, timeout_seconds).await?;
+        mac_serve_smoke_completion(&state, prompt, false, max_new_tokens, timeout_seconds, None)
+            .await?;
     let streaming =
-        mac_serve_smoke_completion(&state, prompt, true, max_new_tokens, timeout_seconds).await?;
+        mac_serve_smoke_completion(&state, prompt, true, max_new_tokens, timeout_seconds, None)
+            .await?;
+    let streaming_cancellation =
+        mac_serve_smoke_completion(&state, prompt, true, max_new_tokens, timeout_seconds, Some(1))
+            .await?;
 
     let passed = health["passed"].as_bool().unwrap_or(false)
         && ready["passed"].as_bool().unwrap_or(false)
         && models["passed"].as_bool().unwrap_or(false)
         && one_shot["passed"].as_bool().unwrap_or(false)
-        && streaming["passed"].as_bool().unwrap_or(false);
+        && streaming["passed"].as_bool().unwrap_or(false)
+        && streaming_cancellation["passed"].as_bool().unwrap_or(false)
+        && streaming_cancellation["cancellation"]["observed"].as_bool() == Some(true);
     let timeout_reached = one_shot["timeout_boundary"]["reached"].as_bool().unwrap_or(false)
-        || streaming["timeout_boundary"]["reached"].as_bool().unwrap_or(false);
+        || streaming["timeout_boundary"]["reached"].as_bool().unwrap_or(false)
+        || streaming_cancellation["timeout_boundary"]["reached"].as_bool().unwrap_or(false);
     let receipt = serde_json::json!({
         "schema_version": "1.0.0",
         "artifact_kind": "bitnet_apple_m4_dense_local_server_smoke",
@@ -12500,12 +12666,11 @@ async fn run_mac_serve_smoke(
         "fallback_used": false,
         "receipt_dir": receipt_dir.display().to_string(),
         "timeout_boundary": {
-            "configured_seconds": timeout_seconds,
-            "enforced": false,
+            "configured_seconds": state.defaults.request_timeout_seconds,
+            "enforced": true,
             "reached": timeout_reached,
-            "status": "not_enforced_in_process_smoke",
-            "scope": "metadata_only",
-            "deferred_to": "M4-SERVE-EX-002",
+            "status": if timeout_reached { "reached" } else { "enforced_not_reached" },
+            "scope": "prefill_and_decode_token_boundaries",
         },
         "checks": {
             "health": health,
@@ -12513,6 +12678,7 @@ async fn run_mac_serve_smoke(
             "models": models,
             "one_shot_completion": one_shot,
             "streaming_completion": streaming,
+            "streaming_cancellation": streaming_cancellation,
         },
         "claim_boundary": {
             "server_health_checked": true,
@@ -12520,6 +12686,7 @@ async fn run_mac_serve_smoke(
             "model_catalog_checked": true,
             "one_shot_completion_checked": true,
             "streaming_completion_checked": true,
+            "streaming_cancellation_checked": true,
             "receipt_export_checked": true,
             "dense_slm_only": true,
             "bitnet_serve_claimed": false,
@@ -12571,12 +12738,15 @@ async fn mac_serve_smoke_completion(
     stream: bool,
     max_new_tokens: usize,
     timeout_seconds: Option<u64>,
+    cancel_after_tokens: Option<usize>,
 ) -> Result<serde_json::Value> {
     let started = Instant::now();
     let request_body = serde_json::json!({
         "prompt": prompt,
         "max_tokens": max_new_tokens,
         "stream": stream,
+        "timeout_seconds": timeout_seconds.unwrap_or(state.defaults.request_timeout_seconds),
+        "cancel_after_tokens": cancel_after_tokens,
     });
     let request_body = serde_json::to_string(&request_body)?;
     let request = format!(
@@ -12634,6 +12804,14 @@ async fn mac_serve_smoke_completion(
         && generated_tokens > 0
         && generated_text_non_empty
         && receipt_export["passed"].as_bool() == Some(true);
+    let cancellation = if cancel_after_tokens.is_some() {
+        receipt_export["cancellation"].clone()
+    } else {
+        serde_json::json!({
+            "requested": false,
+            "observed": false,
+        })
+    };
     Ok(serde_json::json!({
         "executed": true,
         "stream": stream,
@@ -12646,14 +12824,17 @@ async fn mac_serve_smoke_completion(
         "generated_tokens": generated_tokens,
         "generated_text_non_empty": generated_text_non_empty,
         "finish_reason": if stream { receipt_export["finish_reason"].clone() } else { body["choices"][0]["finish_reason"].clone() },
+        "stop_reason": if stream { receipt_export["stop_reason"].clone() } else { body["stop_reason"].clone() },
+        "partial_generation": if stream { receipt_export["partial_generation"].clone() } else { body["partial_generation"].clone() },
+        "cancellation": cancellation,
         "receipt_export": receipt_export,
         "elapsed_ms": crate::rounded_ms(crate::elapsed_ms(started)),
         "timeout_boundary": {
-            "configured_seconds": timeout_seconds,
-            "enforced": false,
-            "reached": false,
-            "status": "not_enforced_in_process_smoke",
-            "deferred_to": "M4-SERVE-EX-002",
+            "configured_seconds": timeout_seconds.unwrap_or(state.defaults.request_timeout_seconds),
+            "enforced": true,
+            "reached": if stream { receipt_export["timeout_boundary"]["reached"].clone() } else { body["receipt"]["timeout_boundary"]["reached"].clone() },
+            "status": "enforced",
+            "scope": "prefill_and_decode_token_boundaries",
         },
     }))
 }
@@ -12688,6 +12869,10 @@ async fn mac_serve_smoke_receipt_export(
             .is_some_and(|text| !text.trim().is_empty()),
         "generated_tokens": receipt["generation"]["generated_tokens"],
         "finish_reason": receipt["generation"]["finish_reason"],
+        "stop_reason": receipt["stop_reason"],
+        "partial_generation": receipt["partial_generation"],
+        "timeout_boundary": receipt["timeout_boundary"],
+        "cancellation": receipt["cancellation"],
     }))
 }
 
@@ -13162,6 +13347,8 @@ fn mac_serve_completion_json(completion: &MacServeCompletion) -> serde_json::Val
         "receipt_id": completion.request_id,
         "receipt_path": "redacted",
         "receipt_path_redacted": true,
+        "stop_reason": completion.stop_reason,
+        "partial_generation": completion.partial_generation,
         "receipt": mac_serve_redacted_http_receipt(&completion.receipt),
         "usage": {
             "completion_tokens": completion.generated_token_ids.len(),
@@ -13189,6 +13376,8 @@ fn mac_serve_completion_sse(completion: &MacServeCompletion) -> Result<String> {
         "receipt_path": "redacted",
         "receipt_path_redacted": true,
         "generated_token_ids": completion.generated_token_ids,
+        "stop_reason": completion.stop_reason,
+        "partial_generation": completion.partial_generation,
         "trace_id": completion.trace_id.as_deref(),
         "claim_boundary": {
             "openai_compatibility_claimed": false,
@@ -13253,6 +13442,10 @@ fn mac_serve_safety_json(state: &MacServeState) -> serde_json::Value {
         "request_limits": {
             "max_request_bytes": MAC_SERVE_MAX_REQUEST_BYTES,
             "oversize_status": 413,
+            "request_timeout_seconds": state.defaults.request_timeout_seconds,
+            "timeout_enforced": true,
+            "timeout_enforcement_scope": "prefill_and_decode_token_boundaries",
+            "streaming_cancellation_supported": true,
         },
         "cache_path_disclosure": {
             "operator_http_metadata_redacts_cache_paths": true,
@@ -23340,7 +23533,17 @@ fn validate_dense_local_server_completion_receipt(
         &["tokenizer", "prompt_template"],
         QWEN_PROMPT_TEMPLATE,
     )?;
-    require_non_empty_string_at(path, receipt, &["generation", "text"])?;
+    let stop_reason = require_non_empty_string_at(path, receipt, &["stop_reason"])?;
+    if !matches!(stop_reason, "length" | "stop" | "timeout" | "cancelled") {
+        anyhow::bail!(
+            "{} dense local server completion has unsupported stop_reason {stop_reason:?}",
+            path.display()
+        );
+    }
+    let partial_generation = receipt["partial_generation"].as_bool().unwrap_or(false);
+    if !partial_generation {
+        require_non_empty_string_at(path, receipt, &["generation", "text"])?;
+    }
     let prompt_tokens = require_u64_at(path, receipt, &["generation", "prompt_tokens"], true)?;
     let generated_tokens =
         require_u64_at(path, receipt, &["generation", "generated_tokens"], true)?;
@@ -23355,7 +23558,16 @@ fn validate_dense_local_server_completion_receipt(
     }
     require_bool_at(path, receipt, &["session_reuse", "model_loaded_at_startup"], true)?;
     require_bool_at(path, receipt, &["session_reuse", "tokenizer_loaded_at_startup"], true)?;
+    require_bool_at(path, receipt, &["timeout_boundary", "enforced"], true)?;
+    if stop_reason == "timeout" {
+        require_bool_at(path, receipt, &["timeout_boundary", "reached"], true)?;
+    }
+    if stop_reason == "cancelled" {
+        require_bool_at(path, receipt, &["cancellation", "observed"], true)?;
+    }
     require_bool_at(path, receipt, &["claim_boundary", "local_server_completion_endpoint"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "request_timeout_enforced"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "streaming_cancellation_supported"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "openai_compatibility_claimed"], false)?;
     require_bool_at(path, receipt, &["claim_boundary", "production_readiness_claimed"], false)?;
     require_bool_at(path, receipt, &["claim_boundary", "bitnet_quality_claimed"], false)?;
@@ -23452,7 +23664,14 @@ fn validate_dense_local_server_smoke_receipt(
     if !matches!(result, "pass" | "fail") {
         anyhow::bail!("{} dense local-server smoke result must be pass or fail", path.display());
     }
-    for endpoint in ["health", "ready", "models", "one_shot_completion", "streaming_completion"] {
+    for endpoint in [
+        "health",
+        "ready",
+        "models",
+        "one_shot_completion",
+        "streaming_completion",
+        "streaming_cancellation",
+    ] {
         require_bool_at(path, receipt, &["checks", endpoint, "executed"], true)?;
     }
     if result == "pass" {
@@ -23461,6 +23680,13 @@ fn validate_dense_local_server_smoke_receipt(
         require_bool_at(path, receipt, &["checks", "models", "passed"], true)?;
         require_bool_at(path, receipt, &["checks", "one_shot_completion", "passed"], true)?;
         require_bool_at(path, receipt, &["checks", "streaming_completion", "passed"], true)?;
+        require_bool_at(path, receipt, &["checks", "streaming_cancellation", "passed"], true)?;
+        require_bool_at(
+            path,
+            receipt,
+            &["checks", "streaming_cancellation", "cancellation", "observed"],
+            true,
+        )?;
         require_bool_at(
             path,
             receipt,
@@ -23474,13 +23700,14 @@ fn validate_dense_local_server_smoke_receipt(
             true,
         )?;
     }
-    require_bool_at(path, receipt, &["timeout_boundary", "enforced"], false)?;
+    require_bool_at(path, receipt, &["timeout_boundary", "enforced"], true)?;
     require_bool_at(path, receipt, &["timeout_boundary", "reached"], false)?;
     require_bool_at(path, receipt, &["claim_boundary", "server_health_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "server_readiness_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "model_catalog_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "one_shot_completion_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "streaming_completion_checked"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "streaming_cancellation_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "receipt_export_checked"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "dense_slm_only"], true)?;
     require_bool_at(path, receipt, &["claim_boundary", "bitnet_serve_claimed"], false)?;
@@ -23497,7 +23724,9 @@ fn validate_dense_local_server_smoke_receipt(
         receipt["checks"]["one_shot_completion"]["generated_tokens"].as_u64().unwrap_or(0);
     let streaming_tokens =
         receipt["checks"]["streaming_completion"]["generated_tokens"].as_u64().unwrap_or(0);
-    Ok((Some(0), Some((one_shot_tokens + streaming_tokens) as usize)))
+    let cancellation_tokens =
+        receipt["checks"]["streaming_cancellation"]["generated_tokens"].as_u64().unwrap_or(0);
+    Ok((Some(0), Some((one_shot_tokens + streaming_tokens + cancellation_tokens) as usize)))
 }
 
 fn validate_apple_m4_inference_status_receipt(
@@ -30624,6 +30853,7 @@ mod tests {
                 top_p: 1.0,
                 repetition_penalty: 1.1,
                 seed: None,
+                request_timeout_seconds: MAC_SERVE_DEFAULT_REQUEST_TIMEOUT_SECONDS,
             },
             receipt_dir,
             None,
@@ -33503,6 +33733,7 @@ mod tests {
                 top_p: 1.0,
                 repetition_penalty: 1.1,
                 seed: None,
+                request_timeout_seconds: MAC_SERVE_DEFAULT_REQUEST_TIMEOUT_SECONDS,
             },
             receipt_path,
             None,
@@ -33800,7 +34031,7 @@ mod tests {
             "fallback_used": false,
             "timeout_boundary": {
                 "configured_seconds": 300,
-                "enforced": false,
+                "enforced": true,
                 "reached": false,
             },
             "checks": {
@@ -33818,6 +34049,13 @@ mod tests {
                     "passed": true,
                     "generated_tokens": 1,
                     "receipt_export": {"executed": true, "passed": true}
+                },
+                "streaming_cancellation": {
+                    "executed": true,
+                    "passed": true,
+                    "generated_tokens": 1,
+                    "cancellation": {"observed": true},
+                    "receipt_export": {"executed": true, "passed": true}
                 }
             },
             "claim_boundary": {
@@ -33826,6 +34064,7 @@ mod tests {
                 "model_catalog_checked": true,
                 "one_shot_completion_checked": true,
                 "streaming_completion_checked": true,
+                "streaming_cancellation_checked": true,
                 "receipt_export_checked": true,
                 "dense_slm_only": true,
                 "bitnet_serve_claimed": false,
@@ -33843,7 +34082,7 @@ mod tests {
 
         let summary = validate_mac_receipt_value(&receipt_path, &receipt)?;
         assert_eq!(summary.artifact_kind, "bitnet_apple_m4_dense_local_server_smoke");
-        assert_eq!(summary.generated_tokens, Some(2));
+        assert_eq!(summary.generated_tokens, Some(3));
 
         receipt["claim_boundary"]["bitnet_serve_claimed"] = serde_json::json!(true);
         let err = validate_mac_receipt_value(&receipt_path, &receipt)

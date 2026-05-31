@@ -66,7 +66,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-002"
-status = "proposed"
+status = "in_progress"
 branch = "codex/apple-m4/M4-HARDEN-002-dense-server-timeout-cancel"
 stackable = false
 review_mode = "codex_premerge"
