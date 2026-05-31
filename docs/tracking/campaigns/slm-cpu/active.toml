@@ -13766,10 +13766,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-238"
-status = "pr_open"
+status = "merged"
 pr = 1031
 branch = "codex/slm-cpu-238-per-callsite-no-bias-receipt-emitter"
-head_sha = "3d8a9a553eaf1c1a32a3d6e35237ee75d7dc08e3"
+head_sha = "cc81563f7a54a98ad79d1fd6b0ae77880afdb7e6"
+merge_sha = "3f916b1b0c908d191e82435eea9c65acfe4c7c08"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -13813,6 +13814,62 @@ must_not_claim = [
   "A default runtime path changes when the explicit gate is absent.",
   "A model-load hook registry safely carries prompt-bound selector identity across prompt boundaries.",
   "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, selected/candidate path identity, or fallback status are preserved for an executed candidate path without fresh strict candidate-off/candidate-on execution receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-239"
+status = "ready"
+branch = "codex/slm-cpu/slm-cpu-239-per-callsite-no-bias-off-on-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-238"]
+acceptance = "Consume the SLM-CPU-238 per-callsite no-bias receipt-emitter boundary and capture, ingest, or precisely block fresh strict Qwen3 and Qwen2.5 Q8_0 candidate-off/candidate-on receipts bound to FeedForward::apply_linear feed_forward.down_proj. A valid candidate-on receipt must execute only under the explicit gate and bind the per-callsite emitter identity, validated SLM-CPU-235 receipt-pair identity, prompt/generated/text digests, model SHA, tokenizer source and strictness, runtime_api=cpu, selected_backend=cpu-rust, selected and candidate path/kernel identity, bias_present=false, fallback=false, prompt IDs, generated IDs, and decoded text. The default path must remain eager_f32_candle when the explicit gate is absent. This item must not claim timing improvement, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-238-per-callsite-no-bias-receipt-emitter.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-239-per-callsite-no-bias-off-on-receipts.json",
+  "cargo test --locked -p bitnet-transformer no_bias -- --nocapture",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-transformer/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-235 validates strict Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on receipt identity while candidate execution remains disabled.",
+  "SLM-CPU-238 records the per-callsite prompt-bound receipt-emitter boundary without mutating model-load hook registries.",
+  "PR #1031 records the next blocker as fresh strict candidate-off/candidate-on receipts bound to the per-callsite emitter.",
+]
+may_claim = [
+  "SLM-CPU-239 may capture or precisely block fresh per-callsite-bound candidate-off/candidate-on receipts for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-239 may prove generated-ID and decoded-text preservation for the exact no-bias candidate execution experiment only with fresh strict paired receipts.",
+]
+must_not_claim = [
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "A model-load hook registry safely carries prompt-bound selector identity across prompt boundaries.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, selected/candidate path identity, or fallback status are preserved for an executed candidate path without fresh strict candidate-off/candidate-on receipts.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
