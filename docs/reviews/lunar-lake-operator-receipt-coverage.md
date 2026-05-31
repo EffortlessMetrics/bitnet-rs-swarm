@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108)
+Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
@@ -114,6 +114,9 @@ LNL258V-OP-TELEMETRY-001:
   add a non-promotional telemetry_context summary to successful operator ask
   receipts, or explicitly mark it not_sampled/not_exposed.
 ```
+
+The exact field contract for that PR is now defined in
+[lunar-lake-operator-ask-telemetry-context.md](lunar-lake-operator-ask-telemetry-context.md).
 
 Required boundaries for that PR:
 
