@@ -34,6 +34,7 @@ bitnet receipts explain <receipt.json>
 | Route promotion ledger | `ci/hardware/intel-258v/2026-05-08/lunar-lake-route-promotion.json` |
 | Route profile comparison | `ci/hardware/intel-258v/2026-05-08/lunar-lake-route-profile-comparison.json` |
 | OpenVINO corpus-v2 receipt | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` |
+| GPU corpus-v2 diagnosis status refresh | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis-status-refresh.json` |
 | OpenVINO phase runner | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-phase-runner.json` |
 
 ## Current OpenVINO Rows
@@ -41,8 +42,8 @@ bitnet receipts explain <receipt.json>
 | Row | Model / proof family | Backend | Runtime device | Status | Evidence | Boundary |
 | --- | --- | --- | --- | --- | --- | --- |
 | Qwen2.5 OpenVINO CPU | Dense SLM OpenVINO GenAI | `openvino-cpu` | `CPU` | candidate | IR manifest, LLMPipeline smoke, corpus-v2 receipt, phase runner, Rust-vs-OpenVINO CPU comparison | Not the promoted default; dense GGUF CPU remains default until a route-promotion review changes it. |
-| Qwen2.5 OpenVINO GPU | Dense SLM OpenVINO GenAI | `openvino-gpu` | `GPU.0` / Arc 140V | candidate | Arc 140V OpenVINO ask receipt, corpus-v2 receipt, phase runner, route-profile blockers, validator gate | No native OpenCL claim; no speedup or route promotion until exact-profile quality and timing pass. |
-| Qwen2.5 OpenVINO NPU | Dense SLM OpenVINO GenAI | `openvino-npu` | `NPU` | candidate | NPU ask receipt, corpus-v2 receipt, phase runner, cold-start diagnosis, route-profile blockers, validator gate | No cold one-off usability claim; warm/resident or low-power promotion requires cache plus warm/resident evidence. |
+| Qwen2.5 OpenVINO GPU | Dense SLM OpenVINO GenAI | `openvino-gpu` | `GPU.0` / Arc 140V | profile-promoted | Arc 140V OpenVINO ask receipts, corpus-v2 receipt, phase runner, route-promotion ledger, route-profile comparison, validator gate | Promoted only for `ask_short`, `ask_normal`, `prefill_heavy`, and `decode_heavy`; no native OpenCL, BitNet, low-power, speedup, power-advantage, or broad quality claim. |
+| Qwen2.5 OpenVINO NPU | Dense SLM OpenVINO GenAI | `openvino-npu` | `NPU` | profile-promoted | NPU ask receipt, corpus-v2 receipt, phase runner, cold-start diagnosis, resident evidence, route-promotion ledger, route-profile comparison, validator gate | Promoted only for `warm_resident`; no cold one-off, dynamic decode, beam/parallel sampling, low-power, native NPU, or BitNet claim. |
 | Qwen2.5 OpenVINO server | Dense SLM exact-profile server | OpenVINO route under server | exact profile only | planned | Server spec only | No server readiness until ask/chat readiness, underlying route linkage, exposure fields, cold/warm timing, streaming/concurrency boundaries, and exact-profile receipts exist. |
 | BitNet OpenVINO NPU subgraphs | BitNet-shaped static subgraphs | `openvino-npu` | `NPU` | diagnostic | RMSNorm, linear projection, and FFN/static subgraph parity receipts in the 258V lane | No full BitNet inference, QK256 decode, dynamic decode, or acceleration claim. |
 | BitNet OpenVINO GPU/subgraphs | BitNet-shaped OpenVINO research | `openvino-gpu` | `GPU.0` | planned/diagnostic | Current Arc GPU proof is OpenVINO smoke plus separate native OpenCL parity outside this row | No full BitNet GPU inference, no native OpenCL proof, and no QK256 accelerator decode claim. |
@@ -51,9 +52,9 @@ bitnet receipts explain <receipt.json>
 
 | Route | Promotion status | Promoted profiles | Current blockers |
 | --- | --- | --- | --- |
-| `dense_slm_default_cpu` | promoted | `regression_tiny`, `ask_short`, `ask_normal` | CPU path is trusted but remains performance-sensitive; OpenVINO routes may replace it only through exact-profile promotion. |
-| `dense_slm_openvino_gpu_candidate` | candidate | none | Corpus-v2 failures, direct generated-token visibility gaps, incomplete profile timing splits, and missing benchmark-qualified advantage. |
-| `dense_slm_openvino_npu_candidate` | candidate | none | Corpus-v2 failures, high cold load, missing cache/resident proof, and missing low-power advantage evidence. |
+| `dense_slm_default_cpu` | promoted | `regression_tiny`, `structured` | CPU remains the default route ID and regression baseline; OpenVINO routes supersede it only for their promoted profiles. |
+| `dense_slm_openvino_gpu_candidate` | profile-promoted | `ask_normal`, `ask_short`, `decode_heavy`, `prefill_heavy` | Not promoted for `regression_tiny`, `structured`, `warm_resident`, `low_power`, or BitNet reference; no native OpenCL, power, or broad acceleration claim. |
+| `dense_slm_openvino_npu_candidate` | profile-promoted | `warm_resident` | Cold one-off use, `low_power`, dynamic decode, beam/parallel sampling, and BitNet/QK256 execution remain blocked or unproven. |
 | `bitnet_reference_cpu` | promoted for BitNet reference only | `bitnet_strict_reference` | Not a dense SLM route; dense SLM success never counts as BitNet proof. |
 
 ## Claim Boundaries
@@ -61,7 +62,9 @@ bitnet receipts explain <receipt.json>
 - OpenVINO dense SLM receipts are not BitNet packed I2_S/QK256 proof.
 - OpenVINO GPU receipts are not native OpenCL execution proof.
 - OpenVINO NPU receipts are not native NPU kernel proof.
-- OpenVINO GPU/NPU candidate evidence is not route promotion.
+- OpenVINO GPU/NPU candidate evidence is not route promotion; the
+  route-promotion ledger and route-profile comparison are the route-status
+  authority.
 - `fallback_used=false` or an explicit strict no-fallback policy is mandatory
   for OpenVINO status rows.
 - Retokenized generated token IDs must be labeled as retokenized and must not
@@ -88,8 +91,8 @@ bitnet validate open-vino-lunar-lake `
 | Row | Next proof |
 | --- | --- |
 | Qwen2.5 OpenVINO CPU | Decide whether OpenVINO CPU can beat the dense GGUF CPU default for any exact profile after quality and timing review. |
-| Qwen2.5 OpenVINO GPU | Run profile-specific quality/timing review and promote only exact profiles that pass corpus v2 with fallback-free GPU execution and a benchmark-qualified advantage. |
-| Qwen2.5 OpenVINO NPU | Add cache, warm/resident, and low-power evidence before any warm or low-power route promotion. |
+| Qwen2.5 OpenVINO GPU | Keep current profile-scoped promotion; add explicit prefill/decode split receipts before making stronger phase claims, and keep `low_power` blocked until POWER-006 evidence exists. |
+| Qwen2.5 OpenVINO NPU | Keep `warm_resident` scoped promotion; decompose cold-load and cache behavior before any cold one-off route promotion, and keep `low_power` blocked until POWER-006 evidence exists. |
 | OpenVINO server | Add exact-profile server receipts only after the underlying ask/chat route is promoted or explicitly candidate-scoped. |
 | BitNet OpenVINO subgraphs | Continue static-shape CPU-reference parity for selected subgraphs; keep QK256/dynamic decode out of scope until separately proven. |
 

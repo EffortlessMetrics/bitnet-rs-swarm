@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "lunar_lake_openvino_gpu_corpus_v2_diagnosis_status_refresh",
+  "proof_stage": "gpu_corpus_v2_diagnosis_wording_superseded_by_profile_scoped_route_evidence_no_policy_change",
+  "created_utc": "2026-05-31T05:30:00Z",
+  "machine_id": "intel-258v",
+  "artifact_root": "ci/hardware/intel-258v/2026-05-08",
+  "source_issue": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1068",
+  "stale_diagnosis_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis.json",
+  "route_promotion_ledger": "ci/hardware/intel-258v/2026-05-08/lunar-lake-route-promotion.json",
+  "route_profile_comparison": "ci/hardware/intel-258v/2026-05-08/lunar-lake-route-profile-comparison.json",
+  "regression_bundle": "ci/hardware/intel-258v/2026-05-08/lunar-lake-regression-bundle-v2.json",
+  "diagnosis_quality_facts_preserved": {
+    "quality_summary_total": 14,
+    "quality_summary_passed": 14,
+    "quality_summary_failed": 0,
+    "failed_profiles": [],
+    "failed_categories": [],
+    "fallback_used": false,
+    "direct_generated_token_ids_available": true,
+    "retokenized_generated_ids_used": false,
+    "aligned_with_active_fixture": true
+  },
+  "stale_fields": [
+    {
+      "path": "promotion_status",
+      "stale_value": "candidate_only_not_promoted",
+      "current_interpretation": "quality-diagnosis status only; current profile-scoped promotion authority is lunar-lake-route-promotion.json and lunar-lake-route-profile-comparison.json"
+    },
+    {
+      "path": "recommended_next_actions[0]",
+      "stale_value": "Keep OpenVINO GPU/NPU routes unpromoted until failed corpus-v2 cases are cleanly rerun or intentionally re-gated",
+      "current_interpretation": "GPU corpus-v2 failures are cleared; GPU remains promoted only for ask_short, ask_normal, prefill_heavy, and decode_heavy, while low_power remains unpromoted"
+    },
+    {
+      "path": "profile_diagnoses[*].route_profile_status",
+      "stale_value": "candidate_blocked_by_quality",
+      "current_interpretation": "the quality-only diagnosis is superseded for route status by profile-scoped route comparison evidence"
+    }
+  ],
+  "current_route_state": {
+    "dense_slm_default_cpu": {
+      "status": "promoted",
+      "promoted_for": [
+        "regression_tiny",
+        "structured"
+      ]
+    },
+    "dense_slm_openvino_gpu_candidate": {
+      "status": "profile_promoted",
+      "promoted_for": [
+        "ask_normal",
+        "ask_short",
+        "decode_heavy",
+        "prefill_heavy"
+      ],
+      "not_promoted_for": [
+        "bitnet_strict_reference",
+        "low_power",
+        "regression_tiny",
+        "structured",
+        "warm_resident"
+      ]
+    },
+    "dense_slm_openvino_npu_candidate": {
+      "status": "profile_promoted",
+      "promoted_for": [
+        "warm_resident"
+      ],
+      "not_promoted_for": [
+        "ask_normal",
+        "ask_short",
+        "decode_heavy",
+        "low_power",
+        "prefill_heavy",
+        "regression_tiny",
+        "structured"
+      ]
+    },
+    "low_power": {
+      "promoted_route": null,
+      "blocker": "POWER-006 battery-mode telemetry, valid energy proxy, and benchmark-qualified power advantage are still missing"
+    }
+  },
+  "recommended_next_actions": [
+    "Use the route-promotion ledger and route-profile comparison as the route-status authority for GPU profile promotion.",
+    "Preserve the GPU diagnosis receipt as a quality-diagnosis artifact, not a route-status authority.",
+    "Keep low_power blocked until POWER-006 battery-mode telemetry and energy-proxy evidence exist.",
+    "Do not convert profile-scoped GPU promotion into native OpenCL, BitNet QK256/I2_S, broad chat-quality, acceleration, speedup, or power-advantage claims."
+  ],
+  "claim_boundary": {
+    "diagnostic_status_refresh_only": true,
+    "new_inference_executed": false,
+    "route_policy_changed": false,
+    "route_promotion_changed": false,
+    "broad_quality_claim": false,
+    "speedup_claim": false,
+    "power_advantage_claim": false,
+    "native_opencl_claim": false,
+    "native_npu_claim": false,
+    "bitnet_qk256_i2s_behavior_changed": false,
+    "hidden_fallback_allowed": false
+  }
+}

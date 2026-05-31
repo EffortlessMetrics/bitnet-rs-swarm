@@ -124,8 +124,9 @@ The data in the same diagnosis is clean:
 - no retokenized generated IDs.
 
 Treat the stale wording as diagnostic text drift, not as evidence that
-`ask_short` or `ask_normal` must be narrowed. A future docs or receipt-refresh
-PR may clean it up, but route policy does not need to change for this review.
+`ask_short` or `ask_normal` must be narrowed. Route policy does not need to
+change for this review. The current status-refresh receipt is
+`ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis-status-refresh.json`.
 
 ### Answer-Gate Failures
 
@@ -192,10 +193,10 @@ Do not promote GPU for:
 
 No route-policy PR is recommended from this review.
 
-Small follow-ups that would still fit the current research-first operating mode:
+Small follow-ups that still fit the current research-first operating mode:
 
-1. Refresh the GPU corpus-v2 diagnosis wording so its `promotion_status` and
-   `recommended_next_actions` reflect the current clean corpus-v2 state.
+1. Keep the GPU corpus-v2 status refresh tied to the route-promotion ledger and
+   route-profile comparison when those artifacts change.
 2. Add profile-phase receipts that split prefill and decode for
    `prefill_heavy` and `decode_heavy`.
 3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real

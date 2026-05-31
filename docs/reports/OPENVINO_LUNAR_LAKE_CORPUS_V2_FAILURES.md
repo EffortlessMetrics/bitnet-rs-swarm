@@ -22,25 +22,30 @@ ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-cpu-corpus-v2-diagnosis.js
 ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis.json
 ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-corpus-v2-diagnosis.json
 ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-generation-budget-sensitivity.json
+ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis-status-refresh.json
 ci/hardware/intel-258v/2026-05-08/lunar-lake-route-profile-comparison.json
 ci/quality/lunar-lake-answer-corpus-v2.yaml
 ```
 
-All OpenVINO rows remain `promotion_status=candidate_only_not_promoted` with
-`fallback_used=false`. Generated token IDs are marked as retokenized from
-decoded text, not direct OpenVINO GenAI pipeline-internal token IDs.
+The CPU/GPU/NPU corpus-v2 quality diagnoses now record 14/14 passing cases,
+`fallback_used=false`, and direct OpenVINO GenAI generated-token IDs. The older
+quality-diagnosis `promotion_status=candidate_only_not_promoted` field is not
+the route-status authority. Current route status comes from
+`lunar-lake-route-promotion.json` and
+`lunar-lake-route-profile-comparison.json`.
 
 ## Route Summary
 
 | Route | Corpus v2 result | Failed profiles | Promotion result |
 | --- | ---: | --- | --- |
-| OpenVINO CPU | 12/12 pass, 0 fail | none | Candidate remains blocked |
-| OpenVINO GPU.0 / Arc 140V | 12/12 pass, 0 fail | none | Candidate remains blocked |
-| OpenVINO NPU | 12/12 pass, 0 fail | none | Candidate remains blocked |
+| OpenVINO CPU | 14/14 pass, 0 fail | none | Candidate; dense GGUF CPU remains default for promoted CPU profiles |
+| OpenVINO GPU.0 / Arc 140V | 14/14 pass, 0 fail | none | Profile-promoted for `ask_short`, `ask_normal`, `prefill_heavy`, and `decode_heavy` |
+| OpenVINO NPU | 14/14 pass, 0 fail | none | Profile-promoted for `warm_resident` only |
 
-Candidate routes also remain blocked by missing benchmark-qualified speed or
-power advantage, incomplete direct generated-token visibility, and
-profile-regression evidence requirements in the route-profile comparison.
+Unpromoted profiles still remain blocked by their own route-profile evidence:
+`low_power` lacks battery-mode power evidence, `structured` and
+`regression_tiny` remain CPU-promoted, and BitNet reference behavior is not a
+dense SLM OpenVINO claim.
 
 ## Failure Classification
 
@@ -65,48 +70,48 @@ no longer an OpenVINO candidate blocker under the cross-runtime fixture wording.
 
 ## Profile Blockers
 
-OpenVINO GPU.0 remains blocked for:
+OpenVINO GPU.0 remains unpromoted for:
 
-- All profiles: generated token IDs are retokenized, benchmark-qualified
-  advantage is missing, and candidate-route promotion evidence is incomplete.
-- `prefill_heavy` and `decode_heavy`: quality now passes, but profile-specific
-  timing evidence is still insufficient for promotion.
+- `regression_tiny` and `structured`, where CPU remains the promoted route.
+- `low_power`, where battery-mode telemetry, a valid energy proxy, and
+  benchmark-qualified power advantage are still missing.
+- `warm_resident`, where NPU is the promoted route.
 
-OpenVINO NPU remains blocked for:
+OpenVINO NPU remains unpromoted for:
 
-- All profiles: generated token IDs are retokenized, benchmark-qualified
-  advantage is missing, and candidate-route promotion evidence is incomplete.
-- NPU-specific: cache or resident warm-route proof is missing, and cold start is
-  still classified as OpenVINO pipeline load or device compile dominated.
-- `prefill_heavy` and `decode_heavy`: quality now passes, but profile-specific
-  timing evidence is still insufficient for promotion.
+- Cold one-off `ask_short`, `ask_normal`, `prefill_heavy`, and `decode_heavy`,
+  where cold-load and cache behavior remain bounded by separate NPU evidence.
+- `low_power`, where battery-mode telemetry, a valid energy proxy, and
+  benchmark-qualified power advantage are still missing.
+- Dynamic decode, beam search, parallel sampling, native NPU, and BitNet/QK256
+  execution claims.
 
-OpenVINO CPU remains blocked for:
+OpenVINO CPU remains unpromoted for:
 
-- All profiles: generated token IDs are retokenized, benchmark-qualified
-  advantage is missing, and candidate-route promotion evidence is incomplete.
-- `prefill_heavy` and `decode_heavy`: quality now passes, but profile-specific
-  timing evidence is still insufficient for promotion.
+- OpenVINO CPU-specific promotion. Dense GGUF CPU remains the promoted CPU
+  default for `regression_tiny` and `structured` until OpenVINO CPU proves a
+  profile-specific advantage.
 
 ## Next Actions
 
-1. Keep OpenVINO GPU/NPU routes unpromoted until exact-profile timing, direct
-   token visibility, and promotion evidence gaps are closed.
+1. Use the route-promotion ledger and route-profile comparison as the
+   route-status authority.
 2. Preserve direct versus retokenized generated-token visibility in every
    OpenVINO candidate receipt.
-3. Run route promotion only after quality gates pass and exact-profile timing
-   or power evidence proves an advantage over the current promoted CPU route.
+3. Keep `low_power` blocked until POWER-006 battery-mode telemetry and
+   energy-proxy evidence prove a benchmark-qualified power advantage.
 
 ## Claim Boundary
 
 This report supports only the following claim:
 
 ```text
-Existing Lunar Lake OpenVINO CPU/GPU/NPU corpus-v2 candidate routes pass the
-bounded quality fixture while remaining unpromoted because route-promotion
-evidence is incomplete.
+Existing Lunar Lake OpenVINO CPU/GPU/NPU corpus-v2 routes pass the bounded
+quality fixture. Route promotion remains profile-scoped and is governed by the
+route-promotion ledger and route-profile comparison.
 ```
 
-It does not prove OpenVINO GPU/NPU route promotion, speedup, power advantage,
-native OpenCL execution, native NPU execution, full BitNet accelerator
-inference, packed QK256 accelerator decode, or BitNet QK256/I2_S behavior.
+It does not prove unscoped OpenVINO GPU/NPU route promotion, speedup, power
+advantage, native OpenCL execution, native NPU execution, full BitNet
+accelerator inference, packed QK256 accelerator decode, or BitNet QK256/I2_S
+behavior.
