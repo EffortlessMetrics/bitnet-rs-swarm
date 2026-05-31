@@ -105,7 +105,10 @@ instead of silently treating a selected proof lane as advisory.
 * The aggregator depends on the `gh` CLI and `jq` being available on the
   self-hosted runner image. The runner image must ship with both.
 * The workflow checks out the PR and runs `cargo run --locked -p xtask
-  --no-default-features -- ci plan` before polling upstream checks.
+  --no-default-features -- ci plan` before polling upstream checks, except for
+  empty-label ordinary docs-only diffs where PR Gate emits the stable no-Rust
+  docs plan directly to avoid a cold `xtask` compile. Workflow, tracker,
+  policy-doc, labelled, Rust, and mixed diffs still use the Rust planner.
 * `permissions: { checks: read, actions: read }` is sufficient to
   read the upstream check conclusions; no write permissions are
   granted.
