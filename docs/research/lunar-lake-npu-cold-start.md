@@ -4,6 +4,7 @@ Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/is
 Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
 Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139 / PR #1141
 Receipt-validation alignment closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143 / PR #1145
+Cache-classification guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1154
 AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149
 
 Research date: 2026-05-30
@@ -318,6 +319,9 @@ BitNet NPU execution.
 - #1143 closed with #1145 after the committed OpenVINO NPU diagnosis and
   route-promotion receipts were aligned for direct validation without changing
   NPU promotion scope.
+- #1154 closed because existing validator coverage already fails closed when
+  timing-derived cache diagnostics are treated as direct runtime cache-hit truth
+  without direct runtime evidence fields.
 - #1149 owns `AUTO` selected-device evidence before any route-policy use of
   `AUTO`; #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in

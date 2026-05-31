@@ -39,6 +39,12 @@ current:
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
   as route-policy evidence.
+- #1154 / existing validator coverage for the NPU cache-classification guard:
+  timing-derived cache evidence stays diagnostic and cannot become direct
+  runtime cache-hit truth without direct runtime evidence fields.
+- #1156 for the CPU comparison qualification guard: model-format or timing-scope
+  mismatch keeps `benchmark_qualified=false` while preserving diagnostic CPU
+  candidate context.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -199,12 +205,16 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
   receipt-overhead timings become route-policy evidence.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
-  cold-start gates are accepted.
+  cold-start gates are accepted. The current cache-classification guard is
+  already covered by existing validator behavior and #1154 is closed.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
 - #1149 should own any `AUTO` selected-device receipt or validator follow-up;
   route policy must keep `AUTO` diagnostic while selected-device proof is
   missing or ambiguous.
+- #1156 has landed the current CPU comparison qualification guard; CPU follow-up
+  work should focus on #1069/#1071 measurement or a newly exposed evidence gap,
+  not another generic non-equivalence guard.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary

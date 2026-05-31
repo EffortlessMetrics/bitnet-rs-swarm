@@ -30,9 +30,11 @@ inference, refresh receipts, or change route policy.
 
 Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 is also
 closed after #1145 aligned the committed NPU diagnosis and route-promotion
-receipts for direct validation. Keep any future follow-up limited to the
-specific cache, phase, resident, or validation gap being measured instead of
-widening this review into route policy.
+receipts for direct validation. #1154 is closed because existing validator
+coverage already rejects treating timing-derived cache diagnostics as direct
+runtime cache-hit truth without direct runtime evidence fields. Keep any future
+follow-up limited to the specific cache, phase, resident, or validation gap
+being measured instead of widening this review into route policy.
 
 ## Current Evidence Snapshot
 
@@ -131,11 +133,13 @@ proof, full BitNet inference, packed QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The cache-truth guard and direct-validation alignment have already landed. The
-next small implementation PR, if needed, should be scoped through #1119 or a
-later cache-specific follow-up. It should be a schema, validation, or
-receipt-builder guard that preserves these constraints when new cache evidence
-is added:
+The cache-truth guard and direct-validation alignment have already landed: #1145
+aligned current receipts for direct validation, and existing validator coverage
+closed #1154 by enforcing the timing-derived-versus-runtime-cache-truth
+boundary. The next small implementation PR, if needed, should be scoped through
+the #1119 parent issue or a later cache-specific follow-up. It should preserve
+these constraints when new cache evidence is added or when a newly exposed field
+creates a more specific gap:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
   `file_reuse`, `timing_derived`, or `not_exposed`;
