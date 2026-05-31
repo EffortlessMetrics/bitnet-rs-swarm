@@ -402,7 +402,7 @@ jobs:
       - rust-small-cx53
       - rust-small-cx43
     if: >-
-      always()
+      !cancelled()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
           || github.event_name == 'pull_request')
