@@ -133,6 +133,198 @@ jobs:
           if [ "$labels" = "null" ]; then
             labels="[]"
           fi
+
+          # Keep the Rust planner authoritative for Rust, workflow, labelled,
+          # tracker, policy-doc, and mixed PRs. Empty-label ordinary docs-only
+          # PRs have a stable no-Rust plan, so emit it directly to avoid paying
+          # a cold xtask compile just to discover that only always-on guards are
+          # blocking.
+          if [ "$labels" = "[]" ] &&
+             [ -s changed.txt ] &&
+             ! grep -Ev '(^docs/|\.md$|^README|^CHANGELOG|^CONTRIBUTING|^SECURITY|^COMPATIBILITY|^THIRD_PARTY|^CLAUDE\.md$)' changed.txt >/dev/null &&
+             ! grep -E '^docs/(tracking|ci)/' changed.txt >/dev/null; then
+            cat > ci-plan.json <<'JSON'
+          {
+            "schema_version": 1,
+            "budget": {
+              "preferred_default_lem": 25,
+              "default_limit_lem": 35,
+              "estimated_lem": 9,
+              "posture": "pennies"
+            },
+            "classification": {
+              "no_rust_inputs": true,
+              "docs_only": true,
+              "tracker_only": false,
+              "tracker_or_campaign_only": false,
+              "hardware_receipt_only": false,
+              "policy_docs_only": false,
+              "rust_inputs_changed": false,
+              "manifest_or_toolchain_changed": false,
+              "public_api_changed": false,
+              "gpu_changed": false,
+              "macos_changed": false,
+              "model_validation_changed": false,
+              "coverage_requested": false,
+              "full_ci_requested": false
+            },
+            "selected_lanes": [
+              {
+                "id": "pr-plan",
+                "name": "PR Plan",
+                "estimated_lem": 1,
+                "reason": "plan artifact",
+                "blocking": false
+              },
+              {
+                "id": "macos-arm64-route",
+                "name": "Route macOS PR lane",
+                "estimated_lem": 1,
+                "reason": "cheap route job",
+                "blocking": false
+              },
+              {
+                "id": "performance-tracking-route",
+                "name": "Route Performance Tracking",
+                "estimated_lem": 1,
+                "reason": "cheap route job",
+                "blocking": false
+              },
+              {
+                "id": "test-telemetry-route",
+                "name": "Route Test Telemetry",
+                "estimated_lem": 1,
+                "reason": "cheap route job",
+                "blocking": false
+              },
+              {
+                "id": "compatibility-msrv-route",
+                "name": "Route MSRV Compatibility",
+                "estimated_lem": 1,
+                "reason": "cheap route job",
+                "blocking": false
+              },
+              {
+                "id": "always-on-guards",
+                "name": "Guards / PR Size Guard / Markdownlint / Link Check",
+                "estimated_lem": 4,
+                "reason": "always-on",
+                "blocking": true
+              }
+            ],
+            "skipped_lanes": [
+              {
+                "id": "ci-core-build-test",
+                "name": "CI (Core) - build/test/clippy/docs",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "feature-matrix-pr",
+                "name": "Feature Matrix (PR smoke)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "feature-matrix-full-cli",
+                "name": "Feature Matrix (full-cli PR smoke)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "feature-matrix-full",
+                "name": "Feature Matrix (full)",
+                "reason": "not selected for changed files or labels",
+                "blocking": false
+              },
+              {
+                "id": "bdd-grid-check",
+                "name": "BDD Grid Check",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "policy",
+                "name": "Policy",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "macos-arm64-clippy",
+                "name": "Clippy (macOS ARM64)",
+                "reason": "not selected for changed files or labels",
+                "blocking": false
+              },
+              {
+                "id": "compatibility-msrv",
+                "name": "Compatibility (MSRV)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "compatibility-ffi-abi",
+                "name": "Compatibility (ABI/FFI)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "compatibility-tokenizer",
+                "name": "Compatibility (tokenizer)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "gpu-native",
+                "name": "GPU CI Matrix (native compile)",
+                "reason": "not selected for changed files or labels",
+                "blocking": true
+              },
+              {
+                "id": "gpu-docker",
+                "name": "GPU CI Matrix (Docker)",
+                "reason": "not selected for changed files or labels",
+                "blocking": false
+              },
+              {
+                "id": "property-tests",
+                "name": "Property Tests (smoke)",
+                "reason": "not selected for changed files or labels",
+                "blocking": false
+              },
+              {
+                "id": "ripr-advisory",
+                "name": "ripr static exposure (advisory)",
+                "reason": "not selected for changed files or labels",
+                "blocking": false
+              }
+            ],
+            "packages": {
+              "changed": [],
+              "direct_dependents": [],
+              "canaries": [],
+              "selected": [],
+              "broad_sweep_required": false,
+              "selection_reason": "no Rust package selection for changed files"
+            },
+            "risk_packs": [
+              "docs_tracking"
+            ],
+            "labels": []
+          }
+          JSON
+            {
+              echo "## CI Plan"
+              echo ""
+              echo "Fast path: empty-label docs-only PR; Rust planner compile skipped."
+              echo ""
+              echo "### Selected lanes"
+              echo ""
+              jq -r '.selected_lanes[] | "- `\(.id)` - \(.name) (\(.estimated_lem) LEM, blocking=\(.blocking))"' ci-plan.json
+            } >> "$GITHUB_STEP_SUMMARY"
+            cat ci-plan.json
+            exit 0
+          fi
+
           cargo run --locked -p xtask --no-default-features -- ci plan \
             --changed-file changed.txt \
             --labels-json "$labels" \
