@@ -117,6 +117,80 @@ target/debug/bitnet.exe lunar-lake ask `
   --json-out target/tmp/lunar-lake-ask-auto-gpu-ask-short.json
 ```
 
+## Operator Quickstart
+
+Run these commands from the repository root after the local model prerequisites
+above are available. The installed command form is `bitnet`; when using a local
+debug build, replace `bitnet` with `target/debug/bitnet.exe`.
+
+```powershell
+$artifactRoot = "ci/hardware/intel-258v/2026-05-08"
+```
+
+Start with one fallback-free promoted-profile ask. Auto selection is resolved
+from the route-promotion ledger and route-profile comparison when `--route auto`
+and `--device auto` are requested.
+
+```powershell
+bitnet lunar-lake ask `
+  --artifact-root $artifactRoot `
+  --profile ask_short `
+  --route auto `
+  --device auto `
+  --prompt "What is 2+2? Answer briefly." `
+  --expect-contains 4 `
+  --max-new-tokens 16 `
+  --json-out target/tmp/lunar-lake-ask-auto-ask-short.json
+```
+
+Then run the committed bundle checks that operators use before trusting the
+current route status:
+
+```powershell
+bitnet lunar-lake validate `
+  --artifact-root $artifactRoot `
+  --strict
+
+bitnet lunar-lake regress `
+  --artifact-root $artifactRoot `
+  --strict
+
+bitnet lunar-lake compare `
+  --artifact-root $artifactRoot `
+  --strict
+```
+
+The current promoted non-low-power profiles are:
+
+| Profile | Promoted route | Boundary |
+|---|---|---|
+| `regression_tiny` | `dense_slm_default_cpu` | Cheap strict smoke and CPU baseline. |
+| `structured` | `dense_slm_default_cpu` | CPU-promoted structured output profile. |
+| `ask_short` | `dense_slm_openvino_gpu_candidate` | OpenVINO GPU profile promotion only. |
+| `ask_normal` | `dense_slm_openvino_gpu_candidate` | OpenVINO GPU profile promotion only. |
+| `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | Profile-level promotion; stronger phase claims still need explicit split receipts. |
+| `decode_heavy` | `dense_slm_openvino_gpu_candidate` | Profile-level promotion; stronger phase claims still need explicit split receipts. |
+| `warm_resident` | `dense_slm_openvino_npu_candidate` | Warm/resident NPU only; not cold one-off usability. |
+
+Inspect these receipt surfaces after the quickstart commands:
+
+| Command | Receipt surface |
+|---|---|
+| `ask` | The `--json-out` operator ask receipt; confirm `fallback_used=false`, selected route, profile, answer gate, tokenizer/template/stop-policy, generated-token visibility, and timing fields. |
+| `validate --strict` | `lunar-lake-operator-readiness.json` or the local `--json-out` copy; confirm operator readiness and route-policy freshness. |
+| `regress --strict` | `lunar-lake-regression-bundle-v2.json` or the local `--json-out` copy; confirm regression, semantic-intake, route-profile, and blocked-low-power gates. |
+| `compare --strict` | `lunar-lake-operator-comparison.json` or the local `--json-out` copy; confirm comparison readiness and no hidden fallback. |
+| Route status | `lunar-lake-route-promotion.json` and `lunar-lake-route-profile-comparison.json`; these are the authority for profile-scoped promotion. |
+
+`low_power` is intentionally not part of this generic quickstart. It has no
+promoted route until POWER-006 records battery-mode telemetry, a valid energy
+proxy, and benchmark-qualified power advantage. Use the low-power runbook below
+for that physical evidence path.
+
+This quickstart does not claim native OpenCL execution, native NPU execution,
+speedup, power advantage, broad chat quality, BitNet QK256/I2_S behavior, or a
+new route promotion. Dense SLM receipts remain separate from BitNet proof.
+
 ## Low-Power Battery Runbook
 
 The current `low_power` route-policy blocker is real battery-mode telemetry and
