@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
+Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only warm resident acceptance rule
 Policy impact: no policy exception
@@ -28,6 +28,11 @@ or BitNet QK256/I2_S behavior.
 This review does not change route policy. It defines when existing or future
 resident evidence is sufficient for a route-facing `warm_resident` acceptance
 review and when that evidence must fail closed.
+
+Issue #1120 is closed as answered by this acceptance rule. Issue #1139 owns the
+remaining phase-timing schema work if future receipts need tighter host setup,
+tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
+receipt-overhead ownership.
 
 ## Current Evidence Snapshot
 
@@ -147,8 +152,10 @@ blocks a `warm_resident` NPU route review unless the package includes:
 - memory samples and resident growth bytes;
 - a cold-start caveat and no low-power or BitNet claim leakage.
 
-Do not combine that guard with NPU route-policy mutation, new inference
-surfaces, benchmark matrices, low-power promotion, or generated-dashboard churn.
+Use #1139 if the guard needs phase-timer ownership beyond the resident-session
+fields above. Do not combine that guard with NPU route-policy mutation, new
+inference surfaces, benchmark matrices, low-power promotion, or
+generated-dashboard churn.
 
 ## Claim Boundary
 

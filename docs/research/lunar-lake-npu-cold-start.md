@@ -1,6 +1,8 @@
 # Lunar Lake NPU Cold-Start Research
 
-Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1032
+Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1032
+Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
+Phase-timing schema follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139
 
 Research date: 2026-05-30
 
@@ -304,15 +306,30 @@ Do not treat dense Qwen OpenVINO NPU evidence as BitNet QK256/I2_S behavior
 proof. It can guide Lunar Lake route ergonomics, but it does not prove native
 BitNet NPU execution.
 
+## Current Issue Ownership
+
+- #1119 remains the cold/cache research parent and keeps timing-derived cache
+  classification diagnostic until a stricter policy is accepted.
+- #1139 owns the next narrow phase-timing schema contract for host setup,
+  tokenizer/template setup, `LLMPipeline`, compile/load/cache behavior, first
+  ask, warm asks, and receipt overhead.
+- #1120 closed with the warm-resident acceptance rule defined in
+  [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
+- #1064 remains the only path to `low_power` battery and energy evidence.
+
 ## Recommended Next Issues
 
-1. `LNL258V-NPU-PHASE-001`: add phase timer schema for tokenizer, asset,
-   `LLMPipeline`, compile/load, first ask, and warm ask timing.
+1. [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139)
+   `LNL258V-NPU-PHASE-001`: add or validate a phase timer schema for asset
+   lookup, tokenizer/template setup, `LLMPipeline`, compile/load/cache, first
+   ask, warm ask, and receipt overhead timing.
 2. `LNL258V-NPU-CACHE-002`: rerun the cache experiment with explicit OpenVINO
    version, NPU device properties, and cache snapshots that include stable file
    hashes where practical.
-3. `LNL258V-NPU-RESIDENT-003`: expose an operator-facing resident-session
-   measurement command and receipt schema.
+3. `LNL258V-NPU-RESIDENT-003`: add only a validator or receipt check for the
+   already-defined #1120 warm-resident acceptance boundary if a future receipt
+   lacks pipeline, cold-first-ask, warm-loop, drift, token, memory, or claim
+   boundary fields.
 4. `LNL258V-NPU-AUTO-001`: collect `AUTO` selected-device evidence before any
    route-policy use of `AUTO`.
 5. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
