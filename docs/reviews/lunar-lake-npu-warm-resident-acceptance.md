@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1094](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1094), [#1093](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1093), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
+Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only warm resident acceptance rule
 Policy impact: no policy exception
@@ -118,7 +118,7 @@ construction for ordinary one-off asks.
 
 ### Cold One-Off And Cache
 
-Keep cold one-off NPU blocked until #1093 defines accepted cache and phase
+Keep cold one-off NPU blocked until #1119 defines accepted cache and phase
 evidence. Timing-derived cache classification is diagnostic unless a later
 review accepts it as promotion-grade.
 
