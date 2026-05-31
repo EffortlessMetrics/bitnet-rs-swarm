@@ -70,6 +70,38 @@ const DURABLE_QWEN_CPU_WARM_SESSION: &str = "lunar-lake-durable-qwen25-cpu-warm-
 const CPU_SLM_PHASE_ATTRIBUTION: &str = "lunar-lake-cpu-slm-phase-attribution.json";
 const CPU_SLM_RESIDENT_SESSION: &str = "lunar-lake-cpu-slm-resident-session.json";
 const CPU_SLM_RUNTIME_COMPARISON: &str = "lunar-lake-cpu-slm-runtime-comparison.json";
+const CPU_SLM_PHASE_NOT_EXPOSED: &str = "not_exposed";
+const CPU_SLM_PHASE_REQUIRED_FIELDS: &[&str] = &[
+    "cold_warm_mode",
+    "process_start_ms",
+    "model_load_ms",
+    "model_resolve_ms",
+    "model_open_ms",
+    "model_mmap_ms",
+    "model_parse_metadata_ms",
+    "model_tensor_index_ms",
+    "model_weight_materialize_ms",
+    "model_sha256_ms",
+    "tokenizer_load_ms",
+    "prompt_template_resolve_ms",
+    "prompt_render_ms",
+    "tokenize_ms",
+    "prefill_ms",
+    "first_token_ms",
+    "decode_total_ms",
+    "detokenize_ms",
+    "quality_gate_ms",
+    "receipt_write_ms",
+    "telemetry_collect_ms",
+    "total_response_ms",
+    "timing_scope",
+    "profile",
+    "prompt_token_count",
+    "generated_token_count",
+    "thread_count",
+    "power_scheme",
+    "fallback_used",
+];
 const OPENVINO_GPU_CORPUS_V2_DIAGNOSIS: &str = "lunar-lake-openvino-gpu-corpus-v2-diagnosis.json";
 const OPENVINO_NPU_COLD_START_DIAGNOSIS: &str = "lunar-lake-openvino-npu-cold-start-diagnosis.json";
 const OPENVINO_NPU_RESIDENT_SESSION: &str = "lunar-lake-openvino-npu-resident-session.json";
@@ -1947,6 +1979,7 @@ pub struct LunarLakeCpuSlmPhaseAttribution {
     pub cold_one_off: CpuSlmColdAttribution,
     pub warm_session: CpuSlmWarmAttribution,
     pub openvino_cpu_context: Option<CpuSlmOpenVinoCpuContext>,
+    pub schema_coverage: CpuSlmPhaseSchemaCoverage,
     pub attribution_ready: bool,
     pub findings: Vec<String>,
     pub recommended_next_items: Vec<String>,
@@ -1984,6 +2017,7 @@ pub struct CpuSlmAttributionBackend {
 pub struct CpuSlmColdAttribution {
     pub profile_id: String,
     pub timing: ProfileTimingSummary,
+    pub phase_breakdown: CpuSlmPhaseBreakdown,
     pub model_load_share_of_total: Option<f64>,
     pub tokenize_share_of_total: Option<f64>,
     pub first_token_share_of_total: Option<f64>,
@@ -2010,6 +2044,7 @@ pub struct CpuSlmWarmProfileAttribution {
     pub profile: String,
     pub prompt_tokens: Option<u64>,
     pub generated_tokens: Option<u64>,
+    pub phase_breakdown: CpuSlmPhaseBreakdown,
     pub prefill_ms: Option<f64>,
     pub first_token_decode_ms: Option<f64>,
     pub decode_total_ms: Option<f64>,
@@ -2017,6 +2052,75 @@ pub struct CpuSlmWarmProfileAttribution {
     pub decode_tokens_per_s: Option<f64>,
     pub fallback_used: Option<bool>,
     pub receipt_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmPhaseBreakdown {
+    pub cold_warm_mode: String,
+    pub process_start_ms: CpuSlmPhaseMillis,
+    pub model_load_ms: CpuSlmPhaseMillis,
+    pub model_resolve_ms: CpuSlmPhaseMillis,
+    pub model_open_ms: CpuSlmPhaseMillis,
+    pub model_mmap_ms: CpuSlmPhaseMillis,
+    pub model_parse_metadata_ms: CpuSlmPhaseMillis,
+    pub model_tensor_index_ms: CpuSlmPhaseMillis,
+    pub model_weight_materialize_ms: CpuSlmPhaseMillis,
+    pub model_sha256_ms: CpuSlmPhaseMillis,
+    pub tokenizer_load_ms: CpuSlmPhaseMillis,
+    pub prompt_template_resolve_ms: CpuSlmPhaseMillis,
+    pub prompt_render_ms: CpuSlmPhaseMillis,
+    pub tokenize_ms: CpuSlmPhaseMillis,
+    pub prefill_ms: CpuSlmPhaseMillis,
+    pub first_token_ms: CpuSlmPhaseMillis,
+    pub decode_total_ms: CpuSlmPhaseMillis,
+    pub detokenize_ms: CpuSlmPhaseMillis,
+    pub quality_gate_ms: CpuSlmPhaseMillis,
+    pub receipt_write_ms: CpuSlmPhaseMillis,
+    pub telemetry_collect_ms: CpuSlmPhaseMillis,
+    pub total_response_ms: CpuSlmPhaseMillis,
+    pub timing_scope: String,
+    pub profile: String,
+    pub prompt_token_count: CpuSlmCountField,
+    pub generated_token_count: CpuSlmCountField,
+    pub thread_count: CpuSlmCountField,
+    pub power_scheme: CpuSlmStringField,
+    pub fallback_used: CpuSlmBoolField,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmPhaseMillis {
+    pub value_ms: Option<f64>,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmCountField {
+    pub value: Option<u64>,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmStringField {
+    pub value: Option<String>,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmBoolField {
+    pub value: Option<bool>,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmPhaseSchemaCoverage {
+    pub required_fields: Vec<String>,
+    pub required_fields_present: bool,
+    pub unavailable_marker: String,
+    pub unavailable_phase_fields: Vec<String>,
+    pub cold_model_load_separated: bool,
+    pub resident_prompt_cost_separated: bool,
+    pub measurement_infrastructure_only: bool,
+    pub documentation: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -6837,6 +6941,7 @@ pub fn build_cpu_slm_phase_attribution_with_created_utc(
     let cpu_phase_json: Value = read_json_receipt(&cpu_phase_path)?;
     let cold_warm: LunarLakeColdWarmBenchmark = read_json_receipt(&cold_warm_path)?;
     let phase_comparison_json: Value = read_json_receipt(&phase_comparison_path)?;
+    let cold_operator_json = read_json_receipt::<Value>(&root.join(DENSE_CPU_OPERATOR_ASK)).ok();
 
     let mut gaps = Vec::new();
     let mut findings = Vec::new();
@@ -6870,9 +6975,14 @@ pub fn build_cpu_slm_phase_attribution_with_created_utc(
     let cold_route = find_cpu_cold_route(&cold_warm).with_context(|| {
         format!("{} does not contain dense_slm_default_cpu timing", cold_warm_path.display())
     })?;
-    let cold_one_off = cpu_slm_cold_attribution(cold_route.profile_id, cold_route.route)?;
-    let warm_session = cpu_slm_warm_attribution(&cpu_phase_json, &mut gaps);
+    let cold_one_off = cpu_slm_cold_attribution(
+        cold_route.profile_id,
+        cold_route.route,
+        cold_operator_json.as_ref(),
+    )?;
+    let warm_session = cpu_slm_warm_attribution(root, &cpu_phase_json, &mut gaps);
     let openvino_cpu_context = cpu_slm_openvino_cpu_context(&phase_comparison_json);
+    let schema_coverage = cpu_slm_phase_schema_coverage(&cold_one_off, &warm_session);
 
     if let Some(total) = cold_one_off.timing.total_response_ms {
         findings.push(format!("cpu_one_off_total_response_ms={total:.3}"));
@@ -6895,6 +7005,9 @@ pub fn build_cpu_slm_phase_attribution_with_created_utc(
         }
     } else {
         gaps.push("OpenVINO CPU comparison context is missing".to_string());
+    }
+    if schema_coverage.required_fields_present {
+        findings.push("cpu_phase_required_fields_indexed_with_not_exposed_markers".to_string());
     }
 
     let recommended_next_items = vec![
@@ -6941,6 +7054,7 @@ pub fn build_cpu_slm_phase_attribution_with_created_utc(
         cold_one_off,
         warm_session,
         openvino_cpu_context,
+        schema_coverage,
         attribution_ready,
         findings,
         recommended_next_items,
@@ -6990,6 +7104,7 @@ fn find_cpu_cold_route(benchmark: &LunarLakeColdWarmBenchmark) -> Option<CpuCold
 fn cpu_slm_cold_attribution(
     profile_id: &str,
     route: &ColdWarmRouteBenchmark,
+    operator_ask: Option<&Value>,
 ) -> Result<CpuSlmColdAttribution> {
     let timing = route.timing.clone();
     let total = timing.total_response_ms;
@@ -7016,6 +7131,7 @@ fn cpu_slm_cold_attribution(
     }
     Ok(CpuSlmColdAttribution {
         profile_id: profile_id.to_string(),
+        phase_breakdown: cpu_slm_cold_phase_breakdown(profile_id, route, operator_ask),
         timing,
         model_load_share_of_total: share(route.timing.cold_load_ms),
         tokenize_share_of_total: share(route.timing.tokenize_ms),
@@ -7028,11 +7144,20 @@ fn cpu_slm_cold_attribution(
     })
 }
 
-fn cpu_slm_warm_attribution(json: &Value, gaps: &mut Vec<String>) -> CpuSlmWarmAttribution {
+fn cpu_slm_warm_attribution(
+    root: &Path,
+    json: &Value,
+    gaps: &mut Vec<String>,
+) -> CpuSlmWarmAttribution {
     let profiles = json
         .get("profiles")
         .and_then(Value::as_array)
-        .map(|profiles| profiles.iter().map(cpu_slm_warm_profile_attribution).collect::<Vec<_>>())
+        .map(|profiles| {
+            profiles
+                .iter()
+                .map(|profile| cpu_slm_warm_profile_attribution(root, profile))
+                .collect::<Vec<_>>()
+        })
         .unwrap_or_default();
     if profiles.is_empty() {
         gaps.push("dense Qwen CPU warm phase receipt has no profiles".to_string());
@@ -7058,11 +7183,14 @@ fn cpu_slm_warm_attribution(json: &Value, gaps: &mut Vec<String>) -> CpuSlmWarmA
     }
 }
 
-fn cpu_slm_warm_profile_attribution(profile: &Value) -> CpuSlmWarmProfileAttribution {
+fn cpu_slm_warm_profile_attribution(root: &Path, profile: &Value) -> CpuSlmWarmProfileAttribution {
     let prompt_tokens = u64_at(profile, "prompt_tokens");
     let generated_tokens = u64_at(profile, "generated_tokens");
     let prefill_ms = number_at_any(profile, &["prefill_ms"]);
     let decode_total_ms = number_at_any(profile, &["decode_total_ms"]);
+    let receipt_path = string_at(profile, "receipt_path");
+    let detailed_receipt =
+        receipt_path.as_deref().and_then(|path| read_cpu_slm_profile_receipt(root, path).ok());
     let prefill_ms_per_prompt_token = match (prefill_ms, prompt_tokens) {
         (Some(ms), Some(tokens)) if tokens > 0 => Some(ms / tokens as f64),
         _ => None,
@@ -7075,14 +7203,392 @@ fn cpu_slm_warm_profile_attribution(profile: &Value) -> CpuSlmWarmProfileAttribu
         profile: string_at(profile, "profile").unwrap_or_else(|| "unknown".to_string()),
         prompt_tokens,
         generated_tokens,
+        phase_breakdown: cpu_slm_warm_phase_breakdown(profile, detailed_receipt.as_ref()),
         prefill_ms,
         first_token_decode_ms: number_at_any(profile, &["first_token_decode_ms"]),
         decode_total_ms,
         prefill_ms_per_prompt_token,
         decode_tokens_per_s,
         fallback_used: bool_at_any(profile, &["fallback_used"]),
-        receipt_path: string_at(profile, "receipt_path"),
+        receipt_path,
     }
+}
+
+fn cpu_slm_cold_phase_breakdown(
+    profile_id: &str,
+    route: &ColdWarmRouteBenchmark,
+    operator_ask: Option<&Value>,
+) -> CpuSlmPhaseBreakdown {
+    let timing = &route.timing;
+    CpuSlmPhaseBreakdown {
+        cold_warm_mode: "cold_one_off".to_string(),
+        process_start_ms: phase_ms_not_exposed(),
+        model_load_ms: phase_ms(
+            timing.cold_load_ms.or_else(|| {
+                operator_ask.and_then(|json| number_at_any(json, &["timing.model_load_ms"]))
+            }),
+            "cold_warm_benchmark.route.timing.cold_load_ms",
+        ),
+        model_resolve_ms: phase_ms_not_exposed(),
+        model_open_ms: phase_ms_not_exposed(),
+        model_mmap_ms: phase_ms_not_exposed(),
+        model_parse_metadata_ms: phase_ms_not_exposed(),
+        model_tensor_index_ms: phase_ms_not_exposed(),
+        model_weight_materialize_ms: phase_ms_not_exposed(),
+        model_sha256_ms: phase_ms_not_exposed(),
+        tokenizer_load_ms: phase_ms(
+            operator_ask.and_then(|json| number_at_any(json, &["timing.tokenizer_load_ms"])),
+            "lunar_lake_operator_ask.timing.tokenizer_load_ms",
+        ),
+        prompt_template_resolve_ms: phase_ms_not_exposed(),
+        prompt_render_ms: phase_ms_not_exposed(),
+        tokenize_ms: phase_ms(timing.tokenize_ms, "cold_warm_benchmark.route.timing.tokenize_ms"),
+        prefill_ms: phase_ms(timing.prefill_ms, "cold_warm_benchmark.route.timing.prefill_ms"),
+        first_token_ms: phase_ms(
+            timing.first_token_ms,
+            "cold_warm_benchmark.route.timing.first_token_ms",
+        ),
+        decode_total_ms: phase_ms(
+            timing.decode_total_ms,
+            "cold_warm_benchmark.route.timing.decode_total_ms",
+        ),
+        detokenize_ms: phase_ms_not_exposed(),
+        quality_gate_ms: phase_ms_not_exposed(),
+        receipt_write_ms: phase_ms_not_exposed(),
+        telemetry_collect_ms: phase_ms_not_exposed(),
+        total_response_ms: phase_ms(
+            timing.total_response_ms,
+            "cold_warm_benchmark.route.timing.total_response_ms",
+        ),
+        timing_scope: timing.timing_scope.clone(),
+        profile: profile_id.to_string(),
+        prompt_token_count: count_field(
+            timing.prompt_tokens.or_else(|| {
+                operator_ask.and_then(|json| {
+                    u64_at(json, "tokens.prompt_count")
+                        .or_else(|| u64_at(json, "source_receipt.execution.prompt_tokens"))
+                })
+            }),
+            "cold_warm_benchmark.route.timing.prompt_tokens",
+        ),
+        generated_token_count: count_field(
+            timing.output_tokens.or_else(|| {
+                operator_ask.and_then(|json| {
+                    u64_at(json, "tokens.generated_count")
+                        .or_else(|| u64_at(json, "source_receipt.execution.generated_tokens"))
+                })
+            }),
+            "cold_warm_benchmark.route.timing.output_tokens",
+        ),
+        thread_count: count_field(
+            operator_ask.and_then(|json| {
+                u64_at(json, "thread_count")
+                    .or_else(|| u64_at(json, "source_receipt.execution.thread_count"))
+                    .or_else(|| u64_at(json, "execution.thread_count"))
+            }),
+            "lunar_lake_operator_ask.thread_count",
+        ),
+        power_scheme: string_field(
+            operator_ask.and_then(|json| {
+                string_at(json, "power_scheme")
+                    .or_else(|| string_at(json, "telemetry.power.active_scheme"))
+                    .or_else(|| string_at(json, "power.active_scheme"))
+            }),
+            "lunar_lake_operator_ask.power_scheme",
+        ),
+        fallback_used: bool_field(route.fallback_used, "cold_warm_benchmark.route.fallback_used"),
+    }
+}
+
+fn cpu_slm_warm_phase_breakdown(
+    profile: &Value,
+    detailed_receipt: Option<&Value>,
+) -> CpuSlmPhaseBreakdown {
+    let profile_name = string_at(profile, "profile").unwrap_or_else(|| "unknown".to_string());
+    let prompt_tokens = u64_at(profile, "prompt_tokens").or_else(|| {
+        detailed_receipt.and_then(|json| {
+            u64_at(json, "tokens.prompt")
+                .or_else(|| u64_at(json, "source_receipt.execution.prompt_tokens"))
+        })
+    });
+    let generated_tokens = u64_at(profile, "generated_tokens").or_else(|| {
+        detailed_receipt.and_then(|json| {
+            u64_at(json, "tokens.generated")
+                .or_else(|| u64_at(json, "source_receipt.execution.generated_tokens"))
+        })
+    });
+    CpuSlmPhaseBreakdown {
+        cold_warm_mode: "warm_resident".to_string(),
+        process_start_ms: phase_ms_not_exposed(),
+        model_load_ms: phase_ms(
+            detailed_receipt.and_then(|json| number_at_any(json, &["timing.model_load_ms"])),
+            "warm_profile_receipt.timing.model_load_ms",
+        ),
+        model_resolve_ms: phase_ms_not_exposed(),
+        model_open_ms: phase_ms_not_exposed(),
+        model_mmap_ms: phase_ms_not_exposed(),
+        model_parse_metadata_ms: phase_ms_not_exposed(),
+        model_tensor_index_ms: phase_ms_not_exposed(),
+        model_weight_materialize_ms: phase_ms_not_exposed(),
+        model_sha256_ms: phase_ms_not_exposed(),
+        tokenizer_load_ms: phase_ms(
+            detailed_receipt.and_then(|json| number_at_any(json, &["timing.tokenizer_load_ms"])),
+            "warm_profile_receipt.timing.tokenizer_load_ms",
+        ),
+        prompt_template_resolve_ms: phase_ms_not_exposed(),
+        prompt_render_ms: phase_ms_not_exposed(),
+        tokenize_ms: phase_ms(
+            detailed_receipt.and_then(|json| number_at_any(json, &["timing.tokenize_ms"])),
+            "warm_profile_receipt.timing.tokenize_ms",
+        ),
+        prefill_ms: phase_ms(
+            number_at_any(profile, &["prefill_ms"]).or_else(|| {
+                detailed_receipt.and_then(|json| number_at_any(json, &["timing.prefill_ms"]))
+            }),
+            "warm_session.profile.prefill_ms",
+        ),
+        first_token_ms: phase_ms(
+            detailed_receipt
+                .and_then(|json| number_at_any(json, &["timing.first_token_ms"]))
+                .or_else(|| number_at_any(profile, &["first_token_decode_ms"])),
+            "warm_profile_receipt.timing.first_token_ms",
+        ),
+        decode_total_ms: phase_ms(
+            number_at_any(profile, &["decode_total_ms"]).or_else(|| {
+                detailed_receipt.and_then(|json| number_at_any(json, &["timing.decode_total_ms"]))
+            }),
+            "warm_session.profile.decode_total_ms",
+        ),
+        detokenize_ms: phase_ms_not_exposed(),
+        quality_gate_ms: phase_ms_not_exposed(),
+        receipt_write_ms: phase_ms_not_exposed(),
+        telemetry_collect_ms: phase_ms_not_exposed(),
+        total_response_ms: phase_ms(
+            detailed_receipt.and_then(|json| {
+                number_at_any(json, &["timing.total_ms", "timing.total_response_ms"])
+            }),
+            "warm_profile_receipt.timing.total_ms",
+        ),
+        timing_scope: "resident Rust GGUF CPU warm-profile phase timing".to_string(),
+        profile: profile_name,
+        prompt_token_count: count_field(prompt_tokens, "warm_session.profile.prompt_tokens"),
+        generated_token_count: count_field(
+            generated_tokens,
+            "warm_session.profile.generated_tokens",
+        ),
+        thread_count: count_field(
+            detailed_receipt.and_then(|json| {
+                u64_at(json, "thread_count")
+                    .or_else(|| u64_at(json, "source_receipt.execution.thread_count"))
+                    .or_else(|| u64_at(json, "execution.thread_count"))
+            }),
+            "warm_profile_receipt.thread_count",
+        ),
+        power_scheme: string_field(
+            detailed_receipt.and_then(|json| {
+                string_at(json, "power_scheme")
+                    .or_else(|| string_at(json, "telemetry.power.active_scheme"))
+                    .or_else(|| string_at(json, "power.active_scheme"))
+            }),
+            "warm_profile_receipt.power_scheme",
+        ),
+        fallback_used: bool_field(
+            bool_at_any(profile, &["fallback_used"])
+                .or_else(|| detailed_receipt.and_then(fallback_used)),
+            "warm_session.profile.fallback_used",
+        ),
+    }
+}
+
+fn read_cpu_slm_profile_receipt(root: &Path, receipt_path: &str) -> Result<Value> {
+    let direct = PathBuf::from(receipt_path);
+    if direct.exists() {
+        return read_json_receipt(&direct);
+    }
+    let rooted = root.join(receipt_path);
+    if rooted.exists() {
+        return read_json_receipt(&rooted);
+    }
+    let normalized = receipt_path.replace('\\', "/");
+    let normalized_direct = PathBuf::from(&normalized);
+    if normalized_direct.exists() {
+        return read_json_receipt(&normalized_direct);
+    }
+    let normalized_rooted = root.join(&normalized);
+    read_json_receipt(&normalized_rooted)
+}
+
+fn phase_ms(value_ms: Option<f64>, source: &str) -> CpuSlmPhaseMillis {
+    match value_ms {
+        Some(value_ms) => {
+            CpuSlmPhaseMillis { value_ms: Some(value_ms), source: source.to_string() }
+        }
+        None => phase_ms_not_exposed(),
+    }
+}
+
+fn phase_ms_not_exposed() -> CpuSlmPhaseMillis {
+    CpuSlmPhaseMillis { value_ms: None, source: CPU_SLM_PHASE_NOT_EXPOSED.to_string() }
+}
+
+fn count_field(value: Option<u64>, source: &str) -> CpuSlmCountField {
+    match value {
+        Some(value) => CpuSlmCountField { value: Some(value), source: source.to_string() },
+        None => CpuSlmCountField { value: None, source: CPU_SLM_PHASE_NOT_EXPOSED.to_string() },
+    }
+}
+
+fn string_field(value: Option<String>, source: &str) -> CpuSlmStringField {
+    match value {
+        Some(value) if !value.trim().is_empty() => {
+            CpuSlmStringField { value: Some(value), source: source.to_string() }
+        }
+        _ => CpuSlmStringField { value: None, source: CPU_SLM_PHASE_NOT_EXPOSED.to_string() },
+    }
+}
+
+fn bool_field(value: Option<bool>, source: &str) -> CpuSlmBoolField {
+    match value {
+        Some(value) => CpuSlmBoolField { value: Some(value), source: source.to_string() },
+        None => CpuSlmBoolField { value: None, source: CPU_SLM_PHASE_NOT_EXPOSED.to_string() },
+    }
+}
+
+fn cpu_slm_phase_schema_coverage(
+    cold_one_off: &CpuSlmColdAttribution,
+    warm_session: &CpuSlmWarmAttribution,
+) -> CpuSlmPhaseSchemaCoverage {
+    let mut unavailable_phase_fields =
+        cpu_slm_unavailable_phase_fields("cold_one_off", &cold_one_off.phase_breakdown);
+    for profile in &warm_session.profiles {
+        unavailable_phase_fields.extend(cpu_slm_unavailable_phase_fields(
+            &format!("warm_session.profiles.{}", profile.profile),
+            &profile.phase_breakdown,
+        ));
+    }
+    unavailable_phase_fields.sort();
+    unavailable_phase_fields.dedup();
+    CpuSlmPhaseSchemaCoverage {
+        required_fields: CPU_SLM_PHASE_REQUIRED_FIELDS
+            .iter()
+            .map(|field| (*field).to_string())
+            .collect(),
+        required_fields_present: cpu_slm_phase_breakdown_required_fields_present(
+            &cold_one_off.phase_breakdown,
+        ) && !warm_session.profiles.is_empty()
+            && warm_session.profiles.iter().all(|profile| {
+                cpu_slm_phase_breakdown_required_fields_present(&profile.phase_breakdown)
+            }),
+        unavailable_marker: CPU_SLM_PHASE_NOT_EXPOSED.to_string(),
+        unavailable_phase_fields,
+        cold_model_load_separated: cold_one_off.timing.cold_load_ms.is_some()
+            && cold_one_off.phase_breakdown.model_load_ms.value_ms.is_some(),
+        resident_prompt_cost_separated: !warm_session.profiles.is_empty()
+            && warm_session.model_load_ms.is_some()
+            && warm_session.profiles.iter().all(|profile| {
+                profile.phase_breakdown.cold_warm_mode == "warm_resident"
+                    && profile.phase_breakdown.total_response_ms.source != CPU_SLM_PHASE_NOT_EXPOSED
+            }),
+        measurement_infrastructure_only: true,
+        documentation: "docs/research/lunar-lake-cpu-slow-path.md#cpu-phase-attribution-receipt"
+            .to_string(),
+    }
+}
+
+fn cpu_slm_phase_breakdown_required_fields_present(breakdown: &CpuSlmPhaseBreakdown) -> bool {
+    !breakdown.cold_warm_mode.trim().is_empty()
+        && !breakdown.timing_scope.trim().is_empty()
+        && !breakdown.profile.trim().is_empty()
+        && cpu_slm_phase_metric_is_valid(&breakdown.process_start_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_load_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_resolve_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_open_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_mmap_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_parse_metadata_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_tensor_index_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_weight_materialize_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.model_sha256_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.tokenizer_load_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.prompt_template_resolve_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.prompt_render_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.tokenize_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.prefill_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.first_token_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.decode_total_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.detokenize_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.quality_gate_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.receipt_write_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.telemetry_collect_ms)
+        && cpu_slm_phase_metric_is_valid(&breakdown.total_response_ms)
+        && cpu_slm_count_field_is_valid(&breakdown.prompt_token_count)
+        && cpu_slm_count_field_is_valid(&breakdown.generated_token_count)
+        && cpu_slm_count_field_is_valid(&breakdown.thread_count)
+        && cpu_slm_string_field_is_valid(&breakdown.power_scheme)
+        && cpu_slm_bool_field_is_valid(&breakdown.fallback_used)
+}
+
+fn cpu_slm_phase_metric_is_valid(metric: &CpuSlmPhaseMillis) -> bool {
+    if metric.source.trim().is_empty() {
+        return false;
+    }
+    metric.value_ms.is_some() || metric.source == CPU_SLM_PHASE_NOT_EXPOSED
+}
+
+fn cpu_slm_count_field_is_valid(field: &CpuSlmCountField) -> bool {
+    if field.source.trim().is_empty() {
+        return false;
+    }
+    field.value.is_some() || field.source == CPU_SLM_PHASE_NOT_EXPOSED
+}
+
+fn cpu_slm_string_field_is_valid(field: &CpuSlmStringField) -> bool {
+    if field.source.trim().is_empty() {
+        return false;
+    }
+    field.value.is_some() || field.source == CPU_SLM_PHASE_NOT_EXPOSED
+}
+
+fn cpu_slm_bool_field_is_valid(field: &CpuSlmBoolField) -> bool {
+    if field.source.trim().is_empty() {
+        return false;
+    }
+    field.value.is_some() || field.source == CPU_SLM_PHASE_NOT_EXPOSED
+}
+
+fn cpu_slm_unavailable_phase_fields(prefix: &str, breakdown: &CpuSlmPhaseBreakdown) -> Vec<String> {
+    let mut fields = Vec::new();
+    let mut push_if_missing = |name: &str, source: &str| {
+        if source == CPU_SLM_PHASE_NOT_EXPOSED {
+            fields.push(format!("{prefix}.{name}"));
+        }
+    };
+    push_if_missing("process_start_ms", &breakdown.process_start_ms.source);
+    push_if_missing("model_load_ms", &breakdown.model_load_ms.source);
+    push_if_missing("model_resolve_ms", &breakdown.model_resolve_ms.source);
+    push_if_missing("model_open_ms", &breakdown.model_open_ms.source);
+    push_if_missing("model_mmap_ms", &breakdown.model_mmap_ms.source);
+    push_if_missing("model_parse_metadata_ms", &breakdown.model_parse_metadata_ms.source);
+    push_if_missing("model_tensor_index_ms", &breakdown.model_tensor_index_ms.source);
+    push_if_missing("model_weight_materialize_ms", &breakdown.model_weight_materialize_ms.source);
+    push_if_missing("model_sha256_ms", &breakdown.model_sha256_ms.source);
+    push_if_missing("tokenizer_load_ms", &breakdown.tokenizer_load_ms.source);
+    push_if_missing("prompt_template_resolve_ms", &breakdown.prompt_template_resolve_ms.source);
+    push_if_missing("prompt_render_ms", &breakdown.prompt_render_ms.source);
+    push_if_missing("tokenize_ms", &breakdown.tokenize_ms.source);
+    push_if_missing("prefill_ms", &breakdown.prefill_ms.source);
+    push_if_missing("first_token_ms", &breakdown.first_token_ms.source);
+    push_if_missing("decode_total_ms", &breakdown.decode_total_ms.source);
+    push_if_missing("detokenize_ms", &breakdown.detokenize_ms.source);
+    push_if_missing("quality_gate_ms", &breakdown.quality_gate_ms.source);
+    push_if_missing("receipt_write_ms", &breakdown.receipt_write_ms.source);
+    push_if_missing("telemetry_collect_ms", &breakdown.telemetry_collect_ms.source);
+    push_if_missing("total_response_ms", &breakdown.total_response_ms.source);
+    push_if_missing("prompt_token_count", &breakdown.prompt_token_count.source);
+    push_if_missing("generated_token_count", &breakdown.generated_token_count.source);
+    push_if_missing("thread_count", &breakdown.thread_count.source);
+    push_if_missing("power_scheme", &breakdown.power_scheme.source);
+    push_if_missing("fallback_used", &breakdown.fallback_used.source);
+    fields
 }
 
 fn cpu_slm_openvino_cpu_context(json: &Value) -> Option<CpuSlmOpenVinoCpuContext> {
@@ -19734,7 +20240,8 @@ mod tests {
                     "decode_steady_state_tok_s": 10.0
                 },
                 "latency": {"total_ms": 217.0},
-                "tokens": {"prompt_count": 38, "generated_count": 8}
+                "tokens": {"prompt_count": 38, "generated_count": 8},
+                "thread_count": 1
             }),
         )?;
         write_json(
@@ -19780,6 +20287,56 @@ mod tests {
                         "receipt_path": "decode.json"
                     }
                 ]
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            "prefill.json",
+            json!({
+                "artifact_kind": "dense_slm_cpu_phase_profile",
+                "fallback_used": false,
+                "source_receipt": {
+                    "execution": {
+                        "thread_count": 8,
+                        "prompt_tokens": 512,
+                        "generated_tokens": 1
+                    }
+                },
+                "timing": {
+                    "model_load_ms": 40.0,
+                    "tokenizer_load_ms": 5.0,
+                    "tokenize_ms": 3.0,
+                    "prefill_ms": 1024.0,
+                    "first_token_ms": 1044.0,
+                    "decode_total_ms": 20.0,
+                    "total_ms": 1050.0
+                },
+                "tokens": {"prompt": 512, "generated": 1}
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            "decode.json",
+            json!({
+                "artifact_kind": "dense_slm_cpu_phase_profile",
+                "fallback_used": false,
+                "source_receipt": {
+                    "execution": {
+                        "thread_count": 8,
+                        "prompt_tokens": 32,
+                        "generated_tokens": 128
+                    }
+                },
+                "timing": {
+                    "model_load_ms": 40.0,
+                    "tokenizer_load_ms": 5.0,
+                    "tokenize_ms": 3.0,
+                    "prefill_ms": 64.0,
+                    "first_token_ms": 76.0,
+                    "decode_total_ms": 640.0,
+                    "total_ms": 710.0
+                },
+                "tokens": {"prompt": 32, "generated": 128}
             }),
         )?;
         write_json(
@@ -19867,6 +20424,23 @@ mod tests {
         assert_eq!(receipt.backend.runtime_api, "cpu");
         assert_eq!(receipt.cold_one_off.timing.total_response_ms, Some(217.0));
         assert_eq!(receipt.cold_one_off.model_load_share_of_total, Some(100.0 / 217.0));
+        assert!(receipt.schema_coverage.required_fields_present);
+        assert_eq!(receipt.schema_coverage.unavailable_marker, "not_exposed");
+        assert!(receipt.schema_coverage.cold_model_load_separated);
+        assert!(receipt.schema_coverage.resident_prompt_cost_separated);
+        assert!(receipt.schema_coverage.measurement_infrastructure_only);
+        assert!(
+            receipt
+                .schema_coverage
+                .unavailable_phase_fields
+                .iter()
+                .any(|field| field == "cold_one_off.process_start_ms")
+        );
+        assert_eq!(receipt.cold_one_off.phase_breakdown.cold_warm_mode, "cold_one_off");
+        assert_eq!(receipt.cold_one_off.phase_breakdown.model_load_ms.value_ms, Some(100.0));
+        assert_eq!(receipt.cold_one_off.phase_breakdown.tokenizer_load_ms.value_ms, Some(5.0));
+        assert_eq!(receipt.cold_one_off.phase_breakdown.thread_count.value, Some(1));
+        assert_eq!(receipt.cold_one_off.phase_breakdown.power_scheme.source, "not_exposed");
         assert!(receipt.warm_session.model_loaded_once == Some(true));
         let decode = receipt
             .warm_session
@@ -19875,6 +20449,10 @@ mod tests {
             .find(|profile| profile.profile == "decode_128")
             .context("missing decode_128")?;
         assert_eq!(decode.decode_tokens_per_s, Some(200.0));
+        assert_eq!(decode.phase_breakdown.cold_warm_mode, "warm_resident");
+        assert_eq!(decode.phase_breakdown.thread_count.value, Some(8));
+        assert_eq!(decode.phase_breakdown.total_response_ms.value_ms, Some(710.0));
+        assert_eq!(decode.phase_breakdown.detokenize_ms.source, "not_exposed");
         let openvino = receipt.openvino_cpu_context.as_ref().context("missing openvino cpu")?;
         assert_eq!(openvino.pipeline_load_ms, Some(10.0));
         assert!(!receipt.claim_boundary.new_inference_executed);

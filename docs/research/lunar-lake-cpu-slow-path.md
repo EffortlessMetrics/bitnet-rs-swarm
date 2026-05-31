@@ -239,6 +239,7 @@ Required fields:
 
 - `cold_warm_mode`
 - `process_start_ms`
+- `model_load_ms`
 - `model_resolve_ms`
 - `model_open_ms`
 - `model_mmap_ms`
@@ -263,6 +264,10 @@ Required fields:
 
 This should target `regression_tiny`, `ask_short`, and `ask_normal` first. Do
 not start with `prefill_heavy`.
+
+Schema hardening should expose these fields on cold and warm profile samples.
+Unavailable sub-phases must use `not_exposed` with null values; the receipt is
+measurement infrastructure and is not a CPU performance fix or route promotion.
 
 ### Resident CPU Session Receipt
 
