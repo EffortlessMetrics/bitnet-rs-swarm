@@ -6,6 +6,7 @@ Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-sw
 Receipt-validation alignment closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143 / PR #1145
 Cache-classification guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1154
 AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149
+AUTO selected-device review: [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
 
 Research date: 2026-05-30
 
@@ -213,6 +214,11 @@ Acceptance for resident evidence:
 
 `AUTO` should not be used as a route-promotion shortcut.
 
+The current fail-closed contract is recorded in
+[lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md).
+That review distinguishes CLI `--device auto` route selection from OpenVINO
+runtime-layer `AUTO` selected-device proof.
+
 Before any `AUTO`-based claim, collect a receipt that compares:
 
 - explicit `openvino-npu`;
@@ -323,7 +329,9 @@ BitNet NPU execution.
   timing-derived cache diagnostics are treated as direct runtime cache-hit truth
   without direct runtime evidence fields.
 - #1149 owns `AUTO` selected-device evidence before any route-policy use of
-  `AUTO`; #1119 remains the broader cold/cache parent.
+  `AUTO`, with the current review contract recorded in
+  [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md);
+  #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
 - #1064 remains the only path to `low_power` battery and energy evidence.
@@ -338,6 +346,8 @@ BitNet NPU execution.
    lacks pipeline, cold-first-ask, warm-loop, drift, token, memory, or claim
    boundary fields.
 3. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
+   using the contract in
+   [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 4. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
    resident, and power evidence is current.

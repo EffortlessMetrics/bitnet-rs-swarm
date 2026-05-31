@@ -38,7 +38,8 @@ current:
 - #1135 for route ID and canonical proof-family mapping, now landed by #1137
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
-  as route-policy evidence.
+  as route-policy evidence, with the current evidence contract recorded in
+  [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md).
 - #1154 / existing validator coverage for the NPU cache-classification guard:
   timing-derived cache evidence stays diagnostic and cannot become direct
   runtime cache-hit truth without direct runtime evidence fields.
@@ -210,8 +211,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
 - #1149 should own any `AUTO` selected-device receipt or validator follow-up;
-  route policy must keep `AUTO` diagnostic while selected-device proof is
-  missing or ambiguous.
+  [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
+  records the current fail-closed contract. Route policy must keep `AUTO`
+  diagnostic while selected-device proof is missing or ambiguous.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
   work should focus on #1069/#1071 measurement or a newly exposed evidence gap,
   not another generic non-equivalence guard.
