@@ -120,6 +120,8 @@ source receipts with:
   prompt-token counts, generated-token counts, direct generated-token source,
   passing answer gates, no fallback, and no model/tokenizer reload inside the
   resident loop;
+- generated token IDs available from the source receipt, with the source marked
+  as direct rather than retokenized decoded text or determinism-only stability;
 - negative claim-boundary booleans for inference, route promotion, speedup,
   power advantage, acceleration, Arc/NPU execution, BitNet QK256/I2_S behavior,
   and hidden fallback.
