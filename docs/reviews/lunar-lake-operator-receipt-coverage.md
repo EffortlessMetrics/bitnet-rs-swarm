@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
-Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137)
+Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
 
@@ -102,7 +102,7 @@ status, answer gate, token visibility, and timing for the selected profile.
 The original coverage gap was that they did not directly carry power scheme,
 AC/battery state, thermal availability, or a telemetry receipt pointer.
 
-#1116 defined the contract in
+Issue #1116 defined the contract in
 [lunar-lake-operator-ask-telemetry-context.md](lunar-lake-operator-ask-telemetry-context.md),
 and #1127 added receipt-builder support for a non-promotional
 `telemetry_context` block on successful asks when linked power/thermal context
@@ -131,7 +131,7 @@ some OpenVINO metrics use `-1.0` for unavailable tokenization or detokenization
 timing. The token visibility review already says sentinel values must not be
 coerced into numeric summaries.
 
-#1111 closed via #1112 after adding explicit timing status handling for these
+Issue #1111 closed via #1112 after adding explicit timing status handling for these
 OpenVINO sentinel metrics.
 
 Closed follow-up:
@@ -176,7 +176,10 @@ conflicts, and keep existing receipts readable without rewriting them.
 ## Current Remaining Work
 
 The remaining operator-appliance gaps are physical evidence or intentionally
-deferred measurement, not another broad operator-receipt cleanup:
+deferred measurement, not another broad operator-receipt cleanup. #1160 is now
+closed by #1174 as the current OpenVINO NPU cache-rerun diagnostic evidence
+package; it did not become route-policy, low-power, speedup, direct cache-hit,
+native NPU, or BitNet proof.
 
 1. [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
    remains the battery-mode `low_power` evidence gate.
@@ -185,8 +188,9 @@ deferred measurement, not another broad operator-receipt cleanup:
    remain the Rust GGUF CPU resident and thread/core measurement gates.
 3. [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
    remains the OpenVINO runtime `AUTO` selected-device evidence gate.
-4. [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
-   remains the current OpenVINO NPU cache-rerun evidence gate.
+4. [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119)
+   remains the broader NPU cold/cache research parent for any future phase or
+   cache-boundary follow-up.
 
 Do not open a new operator receipt PR unless one of those evidence packages or a
 new review exposes a concrete field, schema, or validator gap.
@@ -208,8 +212,9 @@ This review does not find a reason to mutate route policy.
 Issue #1108 closed when this review landed. Its named follow-ups for telemetry
 context (#1110/#1127), timing sentinel status (#1111/#1112), and route ID proof
 family mapping (#1135/#1137) are now also closed. This review still must not be
-used to close POWER-006, #1069, #1071, #1149, #1160, or any physical measurement
-issue.
+used to close POWER-006, #1069, #1071, #1149, or any physical measurement
+issue. #1160 is closed by its own diagnostic receipt package in #1174, not by
+this operator coverage review.
 
 ## Claim Boundary
 
