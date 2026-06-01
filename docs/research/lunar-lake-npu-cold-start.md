@@ -272,29 +272,36 @@ The current fail-closed contract is recorded in
 That review distinguishes CLI `--device auto` route selection from OpenVINO
 runtime-layer `AUTO` selected-device proof.
 
-Before any `AUTO`-based claim, collect a receipt that compares:
+The 2026-06-01 runtime `AUTO` diagnostic package now compares:
 
 - explicit `openvino-npu`;
 - explicit `openvino-gpu`;
 - `AUTO`;
 - the same model, prompt, generation config, answer gate, and cache settings.
 
-Required fields:
+It records the required boundary fields:
 
 - requested device;
 - selected backend;
 - OpenVINO runtime device;
 - resolved device name;
-- `EXECUTION_DEVICES` or equivalent selected-device property, if exposed;
+- `EXECUTION_DEVICES` status as `not_exposed`;
 - fallback status;
 - answer gate;
 - generated token IDs;
 - pipeline construct and generation timings;
 - cache directory and cache status.
 
+The diagnostic receipts validate and preserve the fail-closed result: runtime
+`AUTO` can be requested and can pass the bounded answer gates, but the current
+OpenVINO GenAI receipt source still cannot expose which execution device the
+AUTO plugin selected internally.
+
 Promotion can only use `AUTO` evidence if it proves the selected device and
 fallback behavior for the target profile. If selected-device visibility is
-missing, keep `AUTO` as diagnostic evidence only.
+missing, keep `AUTO` as diagnostic evidence only. The next useful #1149 PR
+needs a newly identified OpenVINO API, property, plugin log, or receipt source
+that can expose actual selected-device identity for the same tuple.
 
 ## Tokenizer And Asset Reload Gap
 
@@ -385,7 +392,9 @@ BitNet NPU execution.
   timing-derived cache diagnostics are treated as direct runtime cache-hit truth
   without direct runtime evidence fields.
 - #1149 owns `AUTO` selected-device evidence before any route-policy use of
-  `AUTO`, with the current review contract recorded in
+  `AUTO`. The 2026-06-01 diagnostic package proves runtime `AUTO` can be
+  requested and answer-gated, but selected-device visibility remains
+  `not_exposed`; the current review contract is recorded in
   [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md);
   #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
@@ -410,8 +419,9 @@ BitNet NPU execution.
    research open for fresh evidence that uses the #1191 host phase surface,
    direct runtime cache metrics/logs if exposed, or newly found phase/cache
    gaps. Do not reopen a generic schema or cache-rerun PR from #1119 alone.
-2. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
-   using the contract in
+2. `LNL258V-NPU-AUTO-001` (#1149): do not repeat a generic runtime `AUTO`
+   rerun. Open the next PR only if a concrete OpenVINO selected-device source
+   is found, using the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 3. A future cache follow-up should be opened only for a newly exposed direct

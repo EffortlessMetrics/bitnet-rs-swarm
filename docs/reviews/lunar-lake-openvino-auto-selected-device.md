@@ -45,12 +45,53 @@ OpenVINO runtime would select if `AUTO` were requested at the OpenVINO layer.
 | `lunar-lake-route-id-proof-family-map.md` maps `openvino-auto` to no proof family until selected execution devices are recorded | Route identity stays unresolved without runtime-selected-device fields |
 | Current ask receipts with `requested_device=auto` are CLI route-selector receipts | They are useful route-policy artifacts, not runtime `AUTO` selected-device evidence |
 | #1159 receipt validation requires runtime `AUTO` receipts to identify `auto_scope=openvino_runtime_auto` and execution-device visibility or explicit `not_exposed` | The guard preserves the boundary, but does not collect selected-device measurement evidence |
-| No committed receipt currently records OpenVINO `EXECUTION_DEVICES` or an equivalent selected-device property for runtime `AUTO` | AUTO remains diagnostic even when answer gates pass |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-phase-gpu-npu-auto-20260601.json` | Runtime-layer `AUTO` was requested alongside explicit `GPU.0` and explicit `NPU`; bounded phase prompts passed with `fallback_used=false`, but `AUTO` selected-device visibility is `not_exposed` |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-corpus-v2-gpu-npu-auto-20260601.json` | Runtime-layer `AUTO`, explicit `GPU.0`, and explicit `NPU` ran all corpus-v2 cases with no failed answer gates and direct generated-token IDs; `AUTO` selected-device proof remains false |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-phase-validation-20260601.json` and `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-corpus-v2-validation-20260601.json` | Both diagnostic packages validate under `lunar_lake_openvino_route_boundary` |
+| OpenVINO `AUTO` rejects the safe `EXECUTION_DEVICES` property probe in the 2026-06-01 diagnostic package | AUTO remains diagnostic even when answer gates pass |
+
+## 2026-06-01 Runtime AUTO Diagnostic Package
+
+The current 258V diagnostic package deliberately requests OpenVINO runtime
+`AUTO`, not CLI route-selector `auto`, and compares it with explicit `GPU.0`
+and explicit `NPU` on the same exported Qwen2.5 INT4_SYM model.
+
+The phase receipt records:
+
+- `artifact_kind=intel_258v_dense_slm_openvino_phase_runner`;
+- OpenVINO `2026.2.0-21903-52ddc073857-releases/2026/2`;
+- OpenVINO GenAI `2026.2.0.0-3121-adf73e80e66`;
+- available devices `CPU`, `GPU`, and `NPU`;
+- explicit GPU, explicit NPU, and runtime `AUTO` bounded prompt execution;
+- passing answer gates, `fallback_used=false`, and direct generated-token IDs;
+- `auto_scope=openvino_runtime_auto` for the `AUTO` device row;
+- `selected_backend=openvino-auto`;
+- `selected_device_visibility_status=not_exposed`;
+- `execution_devices_status=not_exposed`;
+- `selected_device_proof=false`;
+- `openvino_runtime_auto_selected_device_proof=false`.
+
+The corpus-v2 receipt records the same runtime `AUTO` boundary across all 14
+bounded corpus-v2 cases. The explicit GPU, explicit NPU, and runtime `AUTO`
+rows all pass the bounded answer gates with `fallback_used=false` and direct
+generated-token IDs available from `openvino_genai_encoded_results_tokens`.
+
+The safe selected-device property probe against `AUTO` reports that the
+OpenVINO AUTO plugin does not support `EXECUTION_DEVICES`. That is a useful
+negative finding: the current receipt source can prove that runtime `AUTO` was
+requested and that answer gates passed, but it still cannot prove which device
+OpenVINO selected internally.
+
+Treat this package as a diagnostic closeout for the currently exposed
+runtime-layer `AUTO` surface, not as selected-device proof. It does not support
+GPU promotion, NPU promotion, `low_power`, speedup, power advantage, native
+accelerator execution, or BitNet QK256/I2_S claims.
 
 ## Current Command Surface
 
-The current repo can validate a runtime `AUTO` receipt shape, but it does not
-yet expose the measurement command that would close #1149.
+The current repo can validate and commit runtime `AUTO` diagnostic receipts,
+but the current OpenVINO GenAI receipt source still does not expose actual
+selected-device identity for the governed Qwen export/profile/cache tuple.
 
 - `crates/bitnet-receipts-core/src/lib.rs` accepts
   `auto_scope=openvino_runtime_auto` only when the receipt records
@@ -78,11 +119,12 @@ yet expose the measurement command that would close #1149.
   They are not runtime `AUTO` selected-device evidence for the governed Qwen
   export, prompt, generation config, answer gate, and cache settings.
 
-The next #1149 PR should therefore be a narrow measurement command or
-receipt-source update that deliberately requests OpenVINO runtime `AUTO` and
-records selected-device visibility or explicit `not_exposed`. A generic schema,
-validator, route-policy, or benchmark PR is not the next useful step unless the
-measurement exposes a field gap the #1159 guard cannot represent.
+After the 2026-06-01 diagnostic package, another #1149 PR should only proceed
+if it identifies a different OpenVINO API, runtime property, plugin log, or
+receipt source that can expose actual selected-device identity for the same
+tuple. A generic schema, validator, route-policy, benchmark, or repeat
+diagnostic PR is not the next useful step while selected-device visibility
+remains `not_exposed`.
 
 ## Required Evidence Package
 
@@ -172,18 +214,15 @@ No route-policy PR is required from this review alone.
 
 The review and validator guard are already landed by #1158/#1159. The receipt
 sources now have a diagnostic `--devices AUTO` shape that records
-`not_exposed` instead of silently implying selected-device proof. The next PR
-that can close #1149 should be a narrow measurement package from the 258V host,
-not another generic schema, validator, or route-policy change. That package
-should record:
+`not_exposed` instead of silently implying selected-device proof. The
+2026-06-01 diagnostic package exercises that shape on the 258V host and
+preserves the fail-closed result.
 
-- `auto_scope`;
-- requested CLI route/device versus requested OpenVINO runtime device;
-- selected backend/runtime device/resolved device;
-- execution-device property value or `not_exposed`;
-- phase applicability for selected-device visibility;
-- fallback, answer-gate, token-visibility, timing, cache, and claim-boundary
-  fields.
+The next useful PR is not another generic runtime `AUTO` rerun. It should be
+opened only if a concrete OpenVINO selected-device source is found. That PR
+should keep the same Qwen export/profile/cache tuple and replace the current
+`not_exposed` visibility with actual selected-device evidence, or prove that a
+newly inspected source is also unavailable.
 
 Do not open another generic schema or validator PR unless the measurement run
 exposes a missing or ambiguous field that #1159 cannot represent. Do not
