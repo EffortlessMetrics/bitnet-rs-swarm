@@ -132,7 +132,7 @@ jobs:
           EOF
 
       - name: Droid M3 review
-        uses: EffortlessSteven/droid-action@e1b7d598ff1eccee505e1cc9699186190a958a14  # proven Bun fork SHA
+        uses: EffortlessSteven/droid-action@36ef632f86ef849de0be62477bc811627d2f7a9c  # consolidated dev: hardening + validator-token + model attribution
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           ANTHROPIC_AUTH_TOKEN: ""
