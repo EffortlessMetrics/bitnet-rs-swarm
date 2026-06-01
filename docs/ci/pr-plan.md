@@ -70,6 +70,20 @@ not promote expensive macOS, Windows, Docker, GPU, coverage, model-validation,
 or performance lanes onto ordinary PRs unless the plan selects them. Branch
 protection still remains a separate repository setting.
 
+## No-Rust Evidence Fast Path
+
+PR Plan may emit the stable schema-1 no-Rust plan without compiling `xtask`
+when an empty-label PR changes only ordinary docs plus `ci/hardware/**`
+evidence receipts. This preserves the same lane set and package-selection
+boundary as `xtask ci plan`: route jobs plus always-on guards, no selected Rust
+packages, `no_rust_inputs=true`, and `model_validation_changed=true` when a
+hardware receipt is present.
+
+The fast path is intentionally narrow. Labelled PRs, workflow/control-plane
+edits, policy docs, tracker/campaign files, manifests, Rust inputs, and unknown
+paths fall back to `xtask ci plan` so the Rust planner remains authoritative for
+anything that can affect routing policy or generated campaign state.
+
 ## Fixture Coverage
 
 Schema fixture tests cover:

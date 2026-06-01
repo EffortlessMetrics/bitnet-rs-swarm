@@ -57,24 +57,51 @@ jobs:
           echo "Changed files ($count):"
           sed -n '1,200p' changed.txt
 
+      - name: Build no-Rust evidence PR plan
+        id: no_rust_fast_path
+        env:
+          LABELS: ${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.labels.*.name) || '[]' }}
+        run: |
+          set -euo pipefail
+          python_bin="$(command -v python3 || command -v python || true)"
+          if [ -z "${python_bin}" ]; then
+            echo "fast_path=false" >> "$GITHUB_OUTPUT"
+            echo "Python is unavailable; falling back to xtask ci plan."
+            exit 0
+          fi
+          "${python_bin}" scripts/ci_plan_fast_path.py \
+            --changed-file changed.txt \
+            --labels-json "${LABELS:-[]}" \
+            --json-out ci-plan.json \
+            --github-summary "$GITHUB_STEP_SUMMARY" \
+            --github-output "$GITHUB_OUTPUT" \
+            --print
+
       - name: Set up Rust
+        if: steps.no_rust_fast_path.outputs.fast_path != 'true'
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
 
       - name: Bootstrap native build tools
+        if: steps.no_rust_fast_path.outputs.fast_path != 'true'
         uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Build PR plan (xtask ci plan)
+        if: steps.no_rust_fast_path.outputs.fast_path != 'true'
         id: plan
         timeout-minutes: 10
         env:
-          LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          LABELS: ${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.labels.*.name) || '[]' }}
         run: |
           set -euo pipefail
+          labels="${LABELS:-[]}"
+          if [ "$labels" = "null" ]; then
+            labels="[]"
+          fi
           cargo run --locked -p xtask --no-default-features -- ci plan \
             --changed-file changed.txt \
-            --labels-json "$LABELS" \
+            --labels-json "$labels" \
             --json-out ci-plan.json \
             --github-summary "$GITHUB_STEP_SUMMARY" \
             --print
