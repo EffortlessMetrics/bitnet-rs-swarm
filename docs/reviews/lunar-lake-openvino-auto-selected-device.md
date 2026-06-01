@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1212](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1212), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
-Linked PRs: [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159)
+Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1214](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1214), [#1212](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1212), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
+Linked PRs: [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1213](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1213)
 Support-tier impact: no promotion; review-only AUTO selected-device evidence contract
 Policy impact: no policy exception
 
@@ -31,9 +31,12 @@ policy, promote NPU or GPU, claim speedup, claim power advantage, or add BitNet
 QK256/I2_S behavior evidence.
 
 The review contract is now landed by #1158, and #1159 added the fail-closed
-receipt validator guard for runtime `AUTO` selected-device proof. Issue #1149
-remains open for the parent decision on whether the `genai_debug_log` source
-is acceptable selected-device evidence and how narrowly it must be represented.
+receipt validator guard for runtime `AUTO` selected-device proof. This #1214
+review update accepts `genai_debug_log` as a narrow selected-device visibility
+source for the observed stateful LLM model block only. Issue #1149 remains open
+as the parent selected-device gate because that source is not yet wired into the
+generated phase receipt and does not relax any promotion, timing, fallback,
+power, or profile evidence requirement.
 
 The key distinction is:
 
@@ -138,6 +141,35 @@ for this runtime `AUTO` diagnostic run. It does not by itself prove
 phase-by-phase route policy, power, low-power, NPU, native accelerator, or
 BitNet behavior.
 
+## Debug-Log Source Decision
+
+This #1214 review update chooses a narrow accept posture for the #1212 source:
+`genai_debug_log` is acceptable selected-device visibility only for the
+specific stateful LLM model block parsed from the captured OpenVINO GenAI debug
+log. It is not equivalent to the public compiled-model property accessor, and
+it is not a route-promotion proof by itself.
+
+Any future receipt, schema, or validator that uses this source must keep these
+fields explicit:
+
+- `selected_device_visibility_source=genai_debug_log`;
+- source log path, byte count, and SHA-256;
+- OpenVINO and OpenVINO GenAI versions;
+- `auto_scope=openvino_runtime_auto` and requested runtime device `AUTO`;
+- model/export identity and profile or prompt scope;
+- parsed model block, for example `stateful_llm_model`;
+- parsed execution devices, for example `GPU.0`;
+- resolved device name when the log provides one;
+- phase or model-block applicability;
+- paired fallback status and answer-gate status from the generated receipt;
+- claim boundary fields preserving no route policy or promotion change.
+
+This means a debug-log source can answer "which device executed this stateful
+LLM model block in this diagnostic run?" It cannot answer whether tokenizer,
+detokenizer, paged-attention probes, warm repeats, power behavior, or other
+profiles have the same selected-device behavior unless those blocks are
+separately captured and represented.
+
 ## Official API Boundary
 
 OpenVINO documents selected-device visibility for `AUTO` through the compiled
@@ -191,13 +223,13 @@ selected-device identity for the governed Qwen export/profile/cache tuple.
   They are not runtime `AUTO` selected-device evidence for the governed Qwen
   export, prompt, generation config, answer gate, and cache settings.
 
-After the #1212 debug-log package, another #1149 PR should only proceed if it
-does one of two narrow things:
+After the #1212 debug-log package and #1214 review decision, another #1149 PR
+should only proceed if it does one of two narrow things:
 
-- reviews whether `selected_device_visibility_source=genai_debug_log` is
-  acceptable selected-device evidence for stateful GenAI LLM route receipts; or
-- wires that source into receipt/schema/validator handling without changing
-  route policy.
+- wires `selected_device_visibility_source=genai_debug_log` into
+  receipt/schema/validator handling without changing route policy; or
+- records an explicit reason to keep the source as review-only if a parser or
+  validator cannot represent the model-block scope safely.
 
 A generic schema, route-policy, benchmark, or repeat diagnostic PR is not the
 next useful step. The parent question is now claim-boundary review, not another
@@ -289,14 +321,16 @@ QK256 decode, or BitNet QK256/I2_S parity.
 
 ## Next Smallest PR
 
-No route-policy PR is required from this review alone.
+No route-policy PR is required from this review alone. No additional docs-only
+decision PR is required after this #1214 closeout unless new evidence changes
+the source boundary.
 
-The next useful PR after the #1212 receipt package is a review or small schema
-PR that decides whether `genai_debug_log` is an accepted selected-device
-visibility source for the stateful LLM model block. If accepted, validators and
-receipts should distinguish it from a public API property accessor and keep the
-source scoped to the captured log block. If rejected, runtime `AUTO` remains
-diagnostic despite the log signal.
+The next useful PR after #1214 is a small receipt/schema/validator change only
+if the lane needs machine-readable `genai_debug_log` selected-device evidence.
+That PR should distinguish the debug log from a public API property accessor,
+keep the source scoped to the captured stateful LLM model block, and preserve
+the generated phase receipt's fail-closed behavior until the parser writes the
+accepted fields explicitly.
 
 Do not open another generic schema or validator PR unless the measurement run
 exposes a missing or ambiguous field that #1159 cannot represent. Do not

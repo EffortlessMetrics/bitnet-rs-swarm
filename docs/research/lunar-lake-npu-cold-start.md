@@ -318,13 +318,13 @@ still records `selected_device_visibility_status=not_exposed` because the
 script has no public GenAI property accessor.
 
 Promotion can only use `AUTO` evidence if it proves the selected device and
-fallback behavior for the target profile. The debug-log source can support
-selected-device review for the observed stateful LLM model block, but it does
-not promote `AUTO`, NPU, low-power routing, cold one-off routing, power
-advantage, speedup, native accelerator execution, or BitNet QK256/I2_S
-behavior. The next useful #1149 step is a claim-boundary review or small
-schema/validator update that decides whether `genai_debug_log` is an accepted
-selected-device visibility source and how narrowly it must be represented.
+fallback behavior for the target profile. The #1214 review update accepts the
+debug-log source only as block-scoped selected-device visibility for the
+observed stateful LLM model block. It does not promote `AUTO`, NPU, low-power
+routing, cold one-off routing, power advantage, speedup, native accelerator
+execution, or BitNet QK256/I2_S behavior. The next useful #1149 step is a small
+schema/validator update only if the lane needs machine-readable
+`genai_debug_log` fields and can preserve the stateful-LLM-block scope safely.
 
 ## Tokenizer And Asset Reload Gap
 
