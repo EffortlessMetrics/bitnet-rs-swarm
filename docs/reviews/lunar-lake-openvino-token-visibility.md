@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
+Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
 Linked PRs: [#1101](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1101), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138)
 Support-tier impact: no promotion; review-only token evidence policy
 Policy impact: no policy exception
@@ -28,9 +28,10 @@ inside the exact route/model/profile package that produced them. They do not
 turn dense Qwen OpenVINO success into BitNet QK256/I2_S proof.
 
 This review does not require a route-policy change because current committed
-OpenVINO CPU, GPU, NPU corpus-v2, NPU cache, NPU resident, and CPU comparison
-receipts already expose direct OpenVINO GenAI token IDs where the current route
-reviews need them. It does define the fail-closed behavior for future receipts.
+OpenVINO CPU, GPU, NPU corpus-v2, NPU cache, NPU cache-rerun, NPU resident, and
+CPU comparison receipts already expose direct OpenVINO GenAI token IDs where the
+current route reviews need them. It does define the fail-closed behavior for
+future receipts.
 
 The review note was added by #1101 and the #1123 closeout landed in #1138. It
 remains a future fail-closed strategy, not an active implementation queue or a
@@ -45,6 +46,7 @@ reason to open another inference PR.
 | `lunar-lake-openvino-gpu-corpus-v2-diagnosis.json` | `direct_generated_token_ids_available=true`, `retokenized_generated_ids_used=false`, source `openvino_genai_encoded_results_tokens` | GPU `ask_short` / `ask_normal` review does not have a token-visibility blocker |
 | `lunar-lake-openvino-npu-corpus-v2-diagnosis.json` | `direct_generated_token_ids_available=true`, `retokenized_generated_ids_used=false`, source `openvino_genai_encoded_results_tokens` | NPU corpus diagnosis has direct token visibility, but cold/resident/power blockers still apply |
 | `lunar-lake-openvino-npu-cache-experiment.json` | `direct_generated_token_ids_available=true`, source `openvino_genai_encoded_results_tokens` | cache evidence can keep answer/token visibility honest, but cache-hit classification remains separate |
+| `lunar-lake-openvino-npu-cache-rerun-20260601.json` | `direct_generated_token_ids_available=true`, source `openvino_genai_encoded_results_tokens`, profile applicability marked non-promotion smoke evidence | #1160 cache-rerun evidence keeps answer/token visibility honest, but timing-derived cache classification and profile scope remain separate |
 | `lunar-lake-openvino-npu-resident-session.json` | `direct_generated_token_ids_available=true`, source `openvino_genai_encoded_results_tokens` | resident-session token drift checks can use direct IDs within that resident session |
 | `lunar-lake-cpu-slm-runtime-comparison.json` | Rust GGUF CPU direct token evidence and OpenVINO CPU direct token evidence are both present; OpenVINO CPU did not use retokenized IDs | token visibility is not the CPU comparison blocker; model format and timing scope remain blockers |
 
@@ -131,10 +133,10 @@ evidence regression or review finding.
 
 ### NPU
 
-NPU corpus, cache, and resident receipts expose direct token IDs, so the NPU
-blockers remain cold-start decomposition, cache truth, resident acceptance, and
-`low_power` battery/power evidence. Direct NPU token visibility does not
-promote NPU for cold one-off asks or `low_power`.
+NPU corpus, cache, current cache-rerun, and resident receipts expose direct
+token IDs, so the NPU blockers remain cold-start decomposition, cache truth,
+resident acceptance, and `low_power` battery/power evidence. Direct NPU token
+visibility does not promote NPU for cold one-off asks or `low_power`.
 
 ### CPU
 
