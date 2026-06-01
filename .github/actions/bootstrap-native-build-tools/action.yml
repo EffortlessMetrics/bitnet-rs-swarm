@@ -1,13 +1,25 @@
 name: Bootstrap native build tools
-description: Ensure CMake is available for Rust crates with native build scripts.
+description: Ensure CMake, a C++ compiler, and OpenSSL pkg-config metadata are available for Rust crates with native build scripts.
 
 runs:
   using: composite
   steps:
-    - name: Ensure CMake is available
+    - name: Ensure native build tools are available
       shell: bash
       run: |
         set -euo pipefail
+
+        install_apt_packages() {
+          if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
+            apt-get update
+            apt-get install -y "$@"
+          elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null && command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y "$@"
+          else
+            return 1
+          fi
+        }
 
         install_cmake_from_kitware() {
           cmake_version="${CMAKE_BOOTSTRAP_VERSION:-3.31.8}"
@@ -30,31 +42,82 @@ runs:
           export PATH="$cmake_root/bin:$PATH"
         }
 
+        select_cxx_compiler() {
+          if command -v c++ >/dev/null 2>&1; then
+            cxx_path="$(command -v c++)"
+          elif command -v g++ >/dev/null 2>&1; then
+            cxx_path="$(command -v g++)"
+          elif command -v clang++ >/dev/null 2>&1; then
+            cxx_path="$(command -v clang++)"
+          else
+            return 1
+          fi
+
+          echo "CXX=$cxx_path" >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER=$cxx_path" >> "$GITHUB_ENV"
+          export CXX="$cxx_path"
+          export CMAKE_CXX_COMPILER="$cxx_path"
+          "$cxx_path" --version
+        }
+
+        ensure_cxx_compiler() {
+          if select_cxx_compiler; then
+            return 0
+          fi
+
+          echo "No C++ compiler found on PATH; installing build-essential for this job."
+          if ! install_apt_packages build-essential; then
+            echo "::error::A C++ compiler is required for native Rust build scripts, but no apt/sudo installation path is available."
+            exit 1
+          fi
+
+          if ! select_cxx_compiler; then
+            echo "::error::build-essential install completed, but no c++, g++, or clang++ compiler is available on PATH."
+            exit 1
+          fi
+        }
+
+        ensure_openssl_pkg_config() {
+          if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists openssl; then
+            pkg-config --modversion openssl
+            return 0
+          fi
+
+          echo "OpenSSL pkg-config metadata is unavailable; installing pkg-config and libssl-dev for this job."
+          if ! install_apt_packages pkg-config libssl-dev; then
+            echo "::error::pkg-config and OpenSSL headers are required for native Rust build scripts, but no apt/sudo installation path is available."
+            exit 1
+          fi
+
+          if ! command -v pkg-config >/dev/null 2>&1 || ! pkg-config --exists openssl; then
+            echo "::error::OpenSSL pkg-config metadata is still unavailable after installing prerequisites."
+            exit 1
+          fi
+
+          pkg-config --modversion openssl
+        }
+
         if command -v cmake >/dev/null 2>&1; then
           cmake --version
-          exit 0
-        fi
-
-        echo "CMake is not on PATH; installing it for this job."
-        if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
-          apt-get update
-          apt-get install -y cmake
-        elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null && command -v apt-get >/dev/null 2>&1; then
-          sudo apt-get update
-          sudo apt-get install -y cmake
+        elif install_apt_packages cmake; then
+          cmake --version
         elif command -v python3 >/dev/null 2>&1; then
           if python3 -m pip --version >/dev/null 2>&1 || python3 -m ensurepip --user >/dev/null 2>&1; then
             python3 -m pip install --user cmake
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
             export PATH="$HOME/.local/bin:$PATH"
+            cmake --version
           else
             install_cmake_from_kitware
+            cmake --version
           fi
         elif command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; then
           install_cmake_from_kitware
+          cmake --version
         else
           echo "::error::CMake is required for native Rust build scripts, but no package manager, python3, curl, or wget fallback is available."
           exit 1
         fi
 
-        cmake --version
+        ensure_cxx_compiler
+        ensure_openssl_pkg_config
