@@ -113,6 +113,11 @@ jobs:
             wf=true
           fi
 
+          # TEMPORARY PROBE (revert before merge): force the runtime lane so we
+          # validate that Runtime Guards actually schedules and compiles on
+          # em-ci-small / cx43. This line must be removed before merging.
+          rt=true
+
           emit "$wf" "$rt" "classified from changed files"
 
   workflow-guards:
