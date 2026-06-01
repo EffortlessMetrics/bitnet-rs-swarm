@@ -69,6 +69,37 @@ One anomaly should stay visible: the cold-start diagnosis copied a negative
 derived aggregate as NPU throughput evidence. Use direct generation wall,
 OpenVINO TTFT, answer-gate, fallback, and generated-token fields instead.
 
+## Current Command Surface
+
+The current command surface is enough to preserve the NPU cold/cache boundary,
+but it does not yet expose every phase needed to close #1119.
+
+- `scripts/openvino_genai_npu_cache_probe.py` measures two explicit NPU child
+  processes sharing one cache directory. It records coarse `LLMPipeline`
+  construction and generation timing, cache snapshots, answer gates, fallback
+  status, and generated token IDs. It does not expose a direct runtime cache-hit
+  metric.
+- `scripts/openvino_genai_phase_receipt.py` records bounded CPU/GPU/NPU phase
+  evidence with direct generated token IDs, OpenVINO `PerfMetrics`, coarse
+  `pipeline_construct_wall_ms`, streamer timing, and generation timing. It does
+  not separately time asset resolution, tokenizer object construction,
+  chat-template rendering, prompt tokenization, cache lookup, compile/load,
+  receipt build/write, or telemetry as distinct host-owned phases.
+- `scripts/openvino_genai_token_utils.py` renders and tokenizes prompts for the
+  OpenVINO helper scripts, but those operations are not independently timed in
+  current receipts.
+- `scripts/openvino_genai_npu_resident_session.py` records same-process
+  warm-resident behavior. That evidence can support a `warm_resident` review,
+  but it does not make cold one-off, default, or `low_power` NPU routing valid.
+- #1149 owns the separate runtime-layer OpenVINO `AUTO` selected-device gap.
+  Generic device visibility, CLI route selection, or explicit-NPU cache
+  evidence should not be treated as `AUTO` execution proof.
+
+The next #1119 PR should add one precise missing host-side phase timer/status
+field, or a direct runtime cache metric/log if OpenVINO exposes one. It should
+not be another generic cache rerun, route-policy mutation, benchmark matrix, or
+low-power promotion attempt.
+
 ## Cold-Start Phase Model
 
 The existing receipts name the problem, but they do not fully split it. Treat
