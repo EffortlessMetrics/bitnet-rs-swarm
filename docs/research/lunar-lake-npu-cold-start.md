@@ -10,6 +10,7 @@ Cache-classification guard closed by: https://github.com/EffortlessMetrics/bitne
 AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149
 AUTO selected-device review: [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
 Host phase timing receipt guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189 / PR #1191
+AUTO debug-log evidence validator closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216 / PR #1217
 
 Research date: 2026-05-30
 
@@ -50,6 +51,10 @@ Committed receipts show:
 - #1189 / #1191 added the host-side `host_phase_timing` receipt surface and
   validator guard for future phase receipts. That is schema and guard support;
   it is not new physical NPU evidence and does not by itself promote a route.
+- #1216 / #1217 added machine-readable validator support for the block-scoped
+  OpenVINO GenAI `AUTO` debug-log evidence artifact. That is selected-device
+  review support for one stateful LLM model block; it is not generated
+  phase-receipt selected-device proof, route-policy evidence, or NPU promotion.
 
 That evidence is promising for a resident NPU profile, but it is not a broad
 NPU route promotion, power-advantage, native BitNet, or low-power claim.
@@ -320,11 +325,14 @@ script has no public GenAI property accessor.
 Promotion can only use `AUTO` evidence if it proves the selected device and
 fallback behavior for the target profile. The #1214 review update accepts the
 debug-log source only as block-scoped selected-device visibility for the
-observed stateful LLM model block. It does not promote `AUTO`, NPU, low-power
-routing, cold one-off routing, power advantage, speedup, native accelerator
-execution, or BitNet QK256/I2_S behavior. The next useful #1149 step is a small
-schema/validator update only if the lane needs machine-readable
-`genai_debug_log` fields and can preserve the stateful-LLM-block scope safely.
+observed stateful LLM model block. #1217 makes that evidence artifact
+machine-readable and validator-admitted when it preserves the debug-log source,
+log provenance, runtime `AUTO` scope, stateful LLM model block, parsed execution
+devices, block applicability, paired answer/fallback status, and claim
+boundary. It does not wire selected-device visibility into the generated phase
+receipt, promote `AUTO`, promote NPU, change low-power routing, prove cold
+one-off routing, claim power advantage, claim speedup, prove native accelerator
+execution, or prove BitNet QK256/I2_S behavior.
 
 ## Tokenizer And Asset Reload Gap
 
@@ -416,8 +424,12 @@ BitNet NPU execution.
   without direct runtime evidence fields.
 - #1149 owns `AUTO` selected-device evidence before any route-policy use of
   `AUTO`. The 2026-06-01 diagnostic package proves runtime `AUTO` can be
-  requested and answer-gated, but selected-device visibility remains
-  `not_exposed`; the current review contract is recorded in
+  requested and answer-gated, and the #1212 debug-log capture proves the
+  stateful LLM model block executed on `GPU.0` in that one diagnostic run.
+  #1217 validator-admits that debug-log evidence artifact under the same
+  block-scoped boundary, but the generated phase receipt still records
+  selected-device visibility as `not_exposed`; the current review contract is
+  recorded in
   [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md);
   #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
@@ -443,8 +455,13 @@ BitNet NPU execution.
    direct runtime cache metrics/logs if exposed, or newly found phase/cache
    gaps. Do not reopen a generic schema or cache-rerun PR from #1119 alone.
 2. `LNL258V-NPU-AUTO-001` (#1149): do not repeat a generic runtime `AUTO`
-   rerun. Open the next PR only if a concrete OpenVINO selected-device source
-   is found, using the contract in
+   rerun or generic schema/validator PR. #1217 already admits the current
+   `genai_debug_log` evidence artifact. Open the next PR only for a parser or
+   receipt-source integration that emits those accepted fields from a future
+   debug-log capture, a public GenAI API or equivalent lower-level OpenVINO
+   selected-device bridge for the same tuple, or a route review after the
+   exact selected-device, quality, timing, fallback, profile, and power gates
+   exist. Use the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 3. A future cache follow-up should be opened only for a newly exposed direct
