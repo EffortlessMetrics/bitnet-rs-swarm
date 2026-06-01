@@ -74,7 +74,7 @@ jobs:
 
           echo "::add-mask::$MINIMAX"
 
-          mkdir -p .factory "$HOME/.factory"
+          mkdir -p .factory "$HOME/.factory" "$HOME/.factory/droid"
 
           # Single-model settings file: MiniMax-M3 is the only custom model, so
           # the review model selector is custom:MiniMax-M3-0 (index 0).
@@ -94,6 +94,7 @@ jobs:
           JSON
 
           cp .factory/byok-settings.json "$HOME/.factory/settings.json"
+          cp .factory/byok-settings.json "$HOME/.factory/droid/settings.json"
 
       - name: Write Droid review prompt
         shell: bash
