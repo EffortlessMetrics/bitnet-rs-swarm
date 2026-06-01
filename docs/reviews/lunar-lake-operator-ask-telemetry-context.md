@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110)
-Linked PRs: n/a
+Linked PRs: [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127)
 Support-tier impact: no promotion; schema contract only
 Policy impact: no policy exception
 
@@ -20,7 +20,7 @@ as `low_power` evidence?
 
 ## Decision
 
-Successful `lunar-lake ask` receipts should add a non-promotional
+Successful `lunar-lake ask` receipts should carry a non-promotional
 `telemetry_context` summary. The summary may be copied from a linked
 `lunar-lake-power-thermal-context.json` receipt, sampled directly by the ask
 command, or marked unavailable. It must never infer battery-mode evidence from
@@ -29,6 +29,11 @@ AC-only telemetry, missing thermal temperatures, or a route-profile aggregate.
 The field is context for interpretation, not a route-promotion gate by itself.
 It can make an answer receipt self-explanatory, but it cannot promote
 `low_power`, claim power advantage, or claim measured temperatures.
+
+Implementation status: #1116 landed this contract and #1127 added the
+receipt-builder support for successful asks. Historical committed ask receipts
+that predate #1127 may still omit `telemetry_context`; do not hand-refresh them
+unless a real evidence rerun or a narrow validation issue requires it.
 
 ## Required Shape
 
@@ -145,8 +150,9 @@ maps to:
 | `thermal.status` | `zones_visible_values_unavailable` | Thermal visibility exists, but measured-temperature claims remain blocked. |
 | `thermal.temperatures_celsius` | `[]` | Do not invent temperatures or treat zero as measured data. |
 
-The existing successful ask receipts omit this summary today. That omission is
-the #1110 schema gap. It is not a reason to revoke current GPU profile routing,
+The successful ask receipts that motivated #1110 omitted this summary. That
+original omission is now a closed schema/builder gap for newly emitted asks. It
+was not, and is still not, a reason to revoke current GPU profile routing,
 because route-profile and regression aggregates already link the same telemetry
 context and do not claim `low_power`.
 
@@ -168,23 +174,24 @@ summaries:
 
 ## Implementation Acceptance For #1110
 
-The schema/builder PR for #1110 should:
+The schema/builder PR for #1110 closed in #1127 after it:
 
-- add `telemetry_context` to successful `lunar-lake ask` receipts;
-- include `source_receipt` when the context comes from
+- added `telemetry_context` to successful `lunar-lake ask` receipts;
+- included `source_receipt` when the context comes from
   `lunar-lake-power-thermal-context.json` or an equivalent telemetry receipt;
-- normalize `power_scheme_guid` and `power_scheme_name` when a Windows
+- normalized `power_scheme_guid` and `power_scheme_name` when a Windows
   `powercfg /getactivescheme` string is available;
-- preserve AC, battery, and unknown power states explicitly;
-- preserve thermal unavailability without invented temperatures;
-- add focused receipt-builder tests for linked, `not_sampled`, and
+- preserved AC, battery, and unknown power states explicitly;
+- preserved thermal unavailability without invented temperatures;
+- added focused receipt-builder tests for linked, `not_sampled`, and
   unavailable thermal contexts;
-- keep blocked low-power asks and POWER-006 route samples governed by the
+- kept blocked low-power asks and POWER-006 route samples governed by the
   stricter battery evidence contract in
   [lunar-lake-power-telemetry.md](../research/lunar-lake-power-telemetry.md).
 
-The implementation should not rerun inference, refresh benchmark matrices,
-change route policy, or edit generated dashboards.
+Future telemetry-context work should not rerun inference, refresh benchmark
+matrices, change route policy, or edit generated dashboards unless a new,
+narrow evidence issue defines that scope.
 
 ## Claim Boundary
 
@@ -200,5 +207,5 @@ This contract does not add:
 - native OpenCL or native NPU proof;
 - BitNet QK256/I2_S behavior proof.
 
-It only defines the successful-ask telemetry summary that #1110 should add
-before the lane spends runtime or CI budget on implementation.
+It only defines the successful-ask telemetry summary that #1110/#1127 added
+without spending runtime or CI budget on a broader implementation.

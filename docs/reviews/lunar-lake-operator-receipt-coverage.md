@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110)
-Linked PRs: n/a
+Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
+Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137)
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
 
@@ -69,7 +69,7 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 
 | Surface | Current artifact | Coverage | Review decision |
 | --- | --- | --- | --- |
-| Successful `ask` | auto GPU `ask_short` / `ask_normal`, auto NPU `warm_resident` ask receipts | Present for selected route, profile, backend, runtime, model/export, tokenizer/template, prompt IDs, generated IDs, answer gate, fallback, route reason, claim boundary, and timing | Keep; add telemetry and timing-status hardening before using asks as complete operator context |
+| Successful `ask` | auto GPU `ask_short` / `ask_normal`, auto NPU `warm_resident` ask receipts | Present for selected route, profile, backend, runtime, model/export, tokenizer/template, prompt IDs, generated IDs, answer gate, fallback, route reason, claim boundary, and timing; builder support now exists for telemetry context and OpenVINO timing status on newly emitted receipts | Keep; historical committed ask receipts may still rely on linked aggregate telemetry until refreshed by a real evidence run |
 | Blocked `ask` | `lunar-lake-operator-ask-auto-low-power-blocked.json` | Present for fail-closed route selection, `fallback_used=false`, no model load, no new inference, runbook, and next evidence | Keep; this is correct blocker evidence, not low-power proof |
 | `validate --strict` | `lunar-lake-operator-readiness.json` | Linked aggregate for operator readiness, route policy, route model identity coverage, power-profile blockers, thermal availability, and blocked ask evidence | Keep as readiness aggregate; do not treat it as a live answer receipt |
 | `profile-compare --strict` | `lunar-lake-route-profile-comparison.json` | Present for per-profile route evidence, model identity, quality, timing, telemetry, blockers, and promotion eligibility | Keep as route-profile authority; continue mapping campaign route IDs to canonical proof families in future schemas |
@@ -88,60 +88,61 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 | Fallback status | Present | Operator ask and aggregate receipts preserve `fallback_used=false`; blocked asks also preserve no fallback. |
 | Answer gate | Present or linked | Successful asks record bounded answer gates; regression and comparison index ask summaries. |
 | Generated-token visibility | Present | Successful OpenVINO asks carry direct generated IDs from the source receipt path and token counts. |
-| Timing | Present with caveat | Ask receipts include OpenVINO wall and perf metric timing; tokenization and detokenization metrics can appear as `-1.0` sentinels. |
-| Power and thermal context | Linked, not direct on ask | Aggregate route/profile/regression receipts index telemetry, but successful ask receipts do not carry a power or thermal context summary. |
+| Timing | Present with caveat | Ask receipts include OpenVINO wall and perf metric timing; #1111/#1112 added status handling so future receipts do not treat `-1.0` sentinels as measured latency. |
+| Power and thermal context | Linked historically; direct builder support for future asks | Aggregate route/profile/regression receipts index telemetry, and #1110/#1127 added a non-promotional ask-level telemetry context when a linked telemetry receipt is available. |
 | Known blockers and next evidence | Present for blocked low-power, linked in aggregates | Low-power blocker fields are clear and should remain the active POWER-006 evidence contract. |
 | BitNet proof boundary | Present | Claim-boundary fields keep dense SLM evidence separate from BitNet QK256/I2_S proof. |
 
 ## Findings
 
-### 1. Successful asks need a telemetry summary
+### 1. Successful ask telemetry context is now a closed builder gap
 
 Successful `lunar-lake ask` receipts already prove route identity, fallback
 status, answer gate, token visibility, and timing for the selected profile.
-They do not directly carry power scheme, AC/battery state, thermal availability,
-or a telemetry receipt pointer.
+The original coverage gap was that they did not directly carry power scheme,
+AC/battery state, thermal availability, or a telemetry receipt pointer.
 
-That is acceptable for the current non-low-power profile decisions because the
-route-profile, regression, comparison, and power-profile receipts link the
-telemetry context. It is still a coverage gap for the operator end state where
-each answer path should explain power and thermal context where available.
+#1116 defined the contract in
+[lunar-lake-operator-ask-telemetry-context.md](lunar-lake-operator-ask-telemetry-context.md),
+and #1127 added receipt-builder support for a non-promotional
+`telemetry_context` block on successful asks when linked power/thermal context
+exists. Historical committed ask receipts that predate #1127 should not be
+hand-refreshed just to add this field; they remain covered by linked aggregate
+telemetry until a real evidence run emits a new ask receipt.
 
-Next smallest PR:
+Closed follow-up:
 
 ```text
 LNL258V-OP-TELEMETRY-001:
-  add a non-promotional telemetry_context summary to successful operator ask
-  receipts, or explicitly mark it not_sampled/not_exposed.
+  #1110 closed by #1127 after adding non-promotional telemetry_context support.
 ```
 
-The exact field contract for that PR is now defined in
-[lunar-lake-operator-ask-telemetry-context.md](lunar-lake-operator-ask-telemetry-context.md).
-
-Required boundaries for that PR:
+Boundary that still applies:
 
 - no battery-mode evidence claim;
 - no `low_power` promotion;
-- no benchmark refresh;
-- no inference rerun requirement unless the field cannot be derived honestly;
+- no historical receipt rewrite or benchmark refresh just for field locality;
 - no speedup, power-advantage, accelerator, or BitNet claim.
 
-### 2. OpenVINO timing sentinels need status fields
+### 2. OpenVINO timing sentinel status is now a closed builder gap
 
 OpenVINO ask timing includes useful wall timing and OpenVINO perf metrics, but
 some OpenVINO metrics use `-1.0` for unavailable tokenization or detokenization
 timing. The token visibility review already says sentinel values must not be
 coerced into numeric summaries.
 
-Next smallest PR:
+#1111 closed via #1112 after adding explicit timing status handling for these
+OpenVINO sentinel metrics.
+
+Closed follow-up:
 
 ```text
 LNL258V-OP-TIMING-STATUS-001:
-  preserve raw OpenVINO perf metrics, but add per-metric status fields such as
-  measured, not_exposed, not_reported_by_openvino, or not_applicable.
+  #1111 closed by #1112 after preserving raw metrics while marking sentinel
+  values as unavailable instead of measured.
 ```
 
-Required boundaries for that PR:
+Boundary that still applies:
 
 - no timing improvement claim;
 - no profile promotion;
@@ -160,8 +161,8 @@ route IDs and proof families:
 docs/reviews/lunar-lake-route-id-proof-family-map.md
 ```
 
-Next smallest implementation PR only if this becomes a validator or
-support-tier blocker:
+The mapping review closed #1135 in #1137. The next implementation PR is needed
+only if this becomes a validator or support-tier blocker:
 
 ```text
 LNL258V-ROUTE-ID-MAP-001:
@@ -171,6 +172,24 @@ LNL258V-ROUTE-ID-MAP-001:
 
 That implementation should use the mapping note, reject backend/device/runtime
 conflicts, and keep existing receipts readable without rewriting them.
+
+## Current Remaining Work
+
+The remaining operator-appliance gaps are physical evidence or intentionally
+deferred measurement, not another broad operator-receipt cleanup:
+
+1. [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
+   remains the battery-mode `low_power` evidence gate.
+2. [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069)
+   and [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+   remain the Rust GGUF CPU resident and thread/core measurement gates.
+3. [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
+   remains the OpenVINO runtime `AUTO` selected-device evidence gate.
+4. [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+   remains the current OpenVINO NPU cache-rerun evidence gate.
+
+Do not open a new operator receipt PR unless one of those evidence packages or a
+new review exposes a concrete field, schema, or validator gap.
 
 ## Non-Findings
 
@@ -186,9 +205,11 @@ This review does not find a reason to mutate route policy.
 
 ## Acceptance For #1108
 
-Issue #1108 can close when this review lands because it answers the coverage
-question and names the next smallest PRs. It must not be used to close
-POWER-006, #1069, #1071, or any physical measurement issue.
+Issue #1108 closed when this review landed. Its named follow-ups for telemetry
+context (#1110/#1127), timing sentinel status (#1111/#1112), and route ID proof
+family mapping (#1135/#1137) are now also closed. This review still must not be
+used to close POWER-006, #1069, #1071, #1149, #1160, or any physical measurement
+issue.
 
 ## Claim Boundary
 
