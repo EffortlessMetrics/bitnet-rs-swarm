@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178)
-Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195)
+Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
 
@@ -183,9 +183,11 @@ native NPU, or BitNet proof.
 
 1. [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
    remains the battery-mode `low_power` evidence gate.
-2. [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069)
-   and [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
-   remain the Rust GGUF CPU resident and thread/core measurement gates.
+2. [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+   remains the Rust GGUF CPU physical thread/core matrix evidence gate. #1069
+   is closed by #1182 as a resident-session command-surface review, and #1186
+   is closed by #1194 as the no-inference thread/core matrix builder contract;
+   neither closeout supplies fresh physical CPU measurements.
 3. [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
    remains the OpenVINO runtime `AUTO` selected-device evidence gate.
 4. [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119)
@@ -216,9 +218,10 @@ This review does not find a reason to mutate route policy.
 Issue #1108 closed when this review landed. Its named follow-ups for telemetry
 context (#1110/#1127), timing sentinel status (#1111/#1112), and route ID proof
 family mapping (#1135/#1137) are now also closed. This review still must not be
-used to close POWER-006, #1069, #1071, #1149, #1178, or any physical
-measurement issue. The #1160 diagnostic receipt package closed in #1174, not
-by this operator coverage review.
+used to close POWER-006, #1071, #1149, #1178, or any physical measurement
+issue. #1069's closeout remains command-surface and historical, not physical
+proof. The #1160 diagnostic receipt package closed in #1174, not by this
+operator coverage review.
 
 ## Claim Boundary
 
