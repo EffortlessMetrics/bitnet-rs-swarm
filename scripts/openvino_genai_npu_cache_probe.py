@@ -88,6 +88,191 @@ def file_record(path: Path) -> dict[str, Any]:
     }
 
 
+def model_identity(model_dir: Path) -> dict[str, Any]:
+    return {
+        "source": "Qwen/Qwen2.5-0.5B-Instruct",
+        "local_path": model_dir.as_posix(),
+        "architecture": "qwen2",
+        "format": "openvino_ir",
+        "quantization": "int4_sym",
+        "openvino_ir": {
+            "xml": file_record(model_dir / "openvino_model.xml"),
+            "bin": file_record(model_dir / "openvino_model.bin"),
+        },
+        "openvino_tokenizer": {
+            "xml": file_record(model_dir / "openvino_tokenizer.xml"),
+            "bin": file_record(model_dir / "openvino_tokenizer.bin"),
+        },
+        "openvino_detokenizer": {
+            "xml": file_record(model_dir / "openvino_detokenizer.xml"),
+            "bin": file_record(model_dir / "openvino_detokenizer.bin"),
+        },
+        "tokenizer_assets": {
+            "tokenizer_json": file_record(model_dir / "tokenizer.json"),
+            "tokenizer_config_json": file_record(model_dir / "tokenizer_config.json"),
+            "chat_template_jinja": file_record(model_dir / "chat_template.jinja"),
+            "special_tokens_map_json": file_record(model_dir / "special_tokens_map.json"),
+            "added_tokens_json": file_record(model_dir / "added_tokens.json"),
+            "vocab_json": file_record(model_dir / "vocab.json"),
+            "merges_txt": file_record(model_dir / "merges.txt"),
+        },
+        "export_config": file_record(model_dir / "openvino_config.json"),
+        "generation_config": file_record(model_dir / "generation_config.json"),
+    }
+
+
+def json_safe(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): json_safe(item) for key, item in value.items()}
+    return str(value)
+
+
+def safe_get_property(core: Any, device: str, property_name: str) -> dict[str, Any]:
+    try:
+        value = core.get_property(device, property_name)
+    except Exception as exc:  # pragma: no cover - depends on installed runtime devices.
+        return {
+            "available": False,
+            "value": None,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    return {"available": True, "value": json_safe(value), "error": None}
+
+
+def device_context(core: Any, device: str) -> dict[str, Any]:
+    property_names = [
+        "FULL_DEVICE_NAME",
+        "OPTIMIZATION_CAPABILITIES",
+        "SUPPORTED_PROPERTIES",
+    ]
+    properties = {
+        property_name: safe_get_property(core, device, property_name)
+        for property_name in property_names
+    }
+    resolved = properties["FULL_DEVICE_NAME"]["value"]
+    return {
+        "requested_device": device,
+        "resolved_device": resolved,
+        "device_properties": properties,
+    }
+
+
+def genai_config(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "cache_dir_property": "CACHE_DIR",
+        "cache_dir": args.cache_dir.as_posix(),
+        "prefill_hint": {"status": "unset_by_probe", "value": None},
+        "generate_hint": {"status": "unset_by_probe", "value": None},
+        "max_prompt_len": {"status": "unset_by_probe", "value": None},
+        "min_response_len": {"status": "unset_by_probe", "value": None},
+        "max_new_tokens": args.max_new_tokens,
+        "do_sample": False,
+        "num_beams": 1,
+        "beam_search": False,
+        "parallel_sampling": False,
+        "sampling": "greedy",
+    }
+
+
+def phase_value(value_ms: Any, source: str, unavailable_source: str = "not_exposed") -> dict[str, Any]:
+    if value_ms is None:
+        return {"value_ms": None, "source": unavailable_source}
+    return {"value_ms": float(value_ms), "source": source}
+
+
+def child_phase_ms(
+    construct_wall_ms: float,
+    generation_wall_ms: float,
+    first_chunk_ms: float | None,
+    perf: dict[str, Any] | None,
+) -> dict[str, Any]:
+    tokenization = perf.get("tokenization", {}) if perf else {}
+    generate = perf.get("generate", {}) if perf else {}
+    inference = perf.get("inference", {}) if perf else {}
+    ttft = perf.get("time_to_first_token", {}) if perf else {}
+    tpot = perf.get("time_per_output_token", {}) if perf else {}
+    detokenization = perf.get("detokenization", {}) if perf else {}
+    return {
+        "process_start_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "asset_resolution_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "model_metadata_or_hash_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "tokenizer_load_or_construct_wall_ms": phase_value(None, "", "not_exposed_by_genai"),
+        "prompt_render_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "prompt_tokenize_wall_ms": phase_value(
+            tokenization.get("mean_ms"),
+            "openvino_perf_metrics.tokenization.mean_ms",
+        ),
+        "pipeline_construct_wall_ms": phase_value(
+            construct_wall_ms,
+            "harness_wall_clock_around_llmpipeline_construct",
+        ),
+        "openvino_load_or_compile_wall_ms": phase_value(
+            perf.get("load_time_ms") if perf else None,
+            "openvino_perf_metrics.load_time_ms",
+        ),
+        "cache_lookup_wall_ms": phase_value(None, "", "not_exposed_by_openvino_genai"),
+        "first_generate_wall_ms": phase_value(
+            generation_wall_ms,
+            "harness_wall_clock_around_generate",
+        ),
+        "first_token_wall_ms": phase_value(
+            ttft.get("mean_ms") or first_chunk_ms,
+            "openvino_perf_metrics.ttft_or_streamer_first_chunk",
+        ),
+        "decode_total_ms": phase_value(
+            generate.get("mean_ms") or inference.get("mean_ms"),
+            "openvino_perf_metrics.generate_or_inference.mean_ms",
+        ),
+        "time_per_output_token_ms": phase_value(
+            tpot.get("mean_ms"),
+            "openvino_perf_metrics.tpot.mean_ms",
+        ),
+        "detokenize_wall_ms": phase_value(
+            detokenization.get("mean_ms"),
+            "openvino_perf_metrics.detokenization.mean_ms",
+        ),
+        "generation_wall_ms": phase_value(
+            generation_wall_ms,
+            "harness_wall_clock_around_generate",
+        ),
+        "quality_gate_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "receipt_build_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "receipt_write_wall_ms": phase_value(None, "", "not_measured_by_probe"),
+        "telemetry_collect_wall_ms": phase_value(None, "", "not_collected_by_probe"),
+    }
+
+
+def first_child_receipt(run: dict[str, Any]) -> dict[str, Any]:
+    child = run.get("child_receipt")
+    return child if isinstance(child, dict) else {}
+
+
+def profile_applicability(first: dict[str, Any], max_new_tokens: int) -> dict[str, Any]:
+    prompt = first.get("prompt", {})
+    prompt_token_count = prompt.get("prompt_token_count")
+    generated_token_count = first.get("generated_token_count")
+    return {
+        "profile": "regression_tiny",
+        "prompt_token_count": prompt_token_count,
+        "generated_token_count": generated_token_count,
+        "requested_max_new_tokens": max_new_tokens,
+        "fits_prompt_bound": (
+            isinstance(prompt_token_count, int) and prompt_token_count <= 64
+        ),
+        "fits_output_bound": (
+            isinstance(generated_token_count, int) and generated_token_count <= 16
+        ),
+        "promotion_profile_evidence": False,
+        "promotion_profile_evidence_reason": (
+            "cache_probe_smoke_prompt_bounds_only_not_corpus_profile_benchmark"
+        ),
+    }
+
+
 def cache_snapshot(cache_dir: Path) -> dict[str, Any]:
     files = []
     if cache_dir.exists():
@@ -193,15 +378,21 @@ def run_child(args: argparse.Namespace) -> int:
     first_chunk_ms = None
     if first_chunk_at[0] is not None:
         first_chunk_ms = (first_chunk_at[0] - generation_start) * 1000.0
+    perf = perf_metrics(result)
     receipt = {
         "iteration": args.child_iteration,
+        "route_id": "dense_slm_openvino_npu_candidate",
+        "proof_family": "openvino_dense_slm_npu",
+        "timing_mode": "cached_cold_process",
         "runtime_api": "openvino_genai",
         "runtime_device": args.device,
         "resolved_device": resolved_device,
+        "requested_backend": "openvino-npu",
         "selected_backend": "openvino-npu",
         "fallback_used": False,
         "cache_dir": args.cache_dir.as_posix(),
         "pipeline_construct_wall_ms": construct_wall_ms,
+        "genai_config": genai_config(args),
         "prompt": prompt,
         "question": args.question,
         "max_new_tokens": args.max_new_tokens,
@@ -216,7 +407,8 @@ def run_child(args: argparse.Namespace) -> int:
         "first_streamed_text_chunk_ms": first_chunk_ms,
         "streamed_chunks_count": len(chunks),
         "streamed_text": "".join(chunk["text"] for chunk in chunks),
-        "openvino_perf_metrics": perf_metrics(result),
+        "openvino_perf_metrics": perf,
+        "phase_ms": child_phase_ms(construct_wall_ms, generation_wall_ms, first_chunk_ms, perf),
         "answer_gate": {
             "kind": "contains",
             "expected": args.expect_contains,
@@ -276,6 +468,9 @@ def main() -> int:
     import openvino as ov
     import openvino_genai as ov_genai
 
+    core = ov.Core()
+    selected_device_context = device_context(core, args.device)
+    model = model_identity(args.model_dir)
     args.cache_dir.mkdir(parents=True, exist_ok=True)
     initial_snapshot = cache_snapshot(args.cache_dir)
     child_dir = args.work_dir
@@ -325,8 +520,16 @@ def main() -> int:
         cache_hit_evidence = "cache_files_created_but_second_process_timing_not_materially_improved"
     elif initial_snapshot["file_count"] > 0 and cache_effective:
         cache_hit_evidence = "preexisting_cache_files_and_second_process_timing_improved"
+    if cache_effective:
+        cache_evidence_source = "timing_derived"
+    elif cache_files_reused_or_stable and after_first_snapshot["file_count"] > 0:
+        cache_evidence_source = "file_reuse"
+    else:
+        cache_evidence_source = "not_exposed"
 
     created_utc = args.created_utc or utc_now()
+    first_receipt = first_child_receipt(first)
+    second_receipt = first_child_receipt(second)
     receipt = {
         "schema_version": "1.0.0",
         "artifact_kind": "lunar_lake_openvino_npu_cache_experiment",
@@ -338,28 +541,51 @@ def main() -> int:
         "artifact_root": args.artifact_root_label,
         "comparison_scope": "two_separate_openvino_genai_npu_processes_with_one_cache_dir",
         "route_id": "dense_slm_openvino_npu_candidate",
+        "proof_family": "openvino_dense_slm_npu",
+        "profile": "regression_tiny",
+        "profile_applicability": profile_applicability(first_receipt, args.max_new_tokens),
+        "timing_mode": "cached_cold_process",
+        "cold_start_policy": "diagnostic_cache_rerun_no_route_promotion",
         "requested_backend": "openvino-npu",
         "selected_backend": "openvino-npu",
         "runtime_api": "openvino_genai",
         "runtime_device": args.device,
+        "resolved_device": selected_device_context["resolved_device"],
+        "selected_device_context": selected_device_context,
         "backend_lane": "dense_slm_openvino_npu",
         "selected_kernel_or_runtime": "openvino-genai-llmpipeline-npu",
         "fallback_used": fallback_used,
-        "model": {
-            "source": "Qwen/Qwen2.5-0.5B-Instruct",
-            "local_path": args.model_dir.as_posix(),
-            "architecture": "qwen2",
-            "openvino_ir": {
-                "xml": file_record(args.model_dir / "openvino_model.xml"),
-                "bin": file_record(args.model_dir / "openvino_model.bin"),
-            },
-        },
+        "model": model,
+        "genai_config": genai_config(args),
         "cache": {
             "cache_dir": args.cache_dir.as_posix(),
             "cache_enabled": True,
             "cache_writable": args.cache_dir.exists() and args.cache_dir.is_dir(),
+            "cache_permission": (
+                "writable" if args.cache_dir.exists() and args.cache_dir.is_dir() else "missing"
+            ),
+            "cache_key_basis": {
+                "status": "probe_declared_exact_tuple",
+                "fields": [
+                    "model.openvino_ir.xml.sha256",
+                    "model.openvino_ir.bin.sha256",
+                    "model.openvino_tokenizer.xml.sha256",
+                    "model.openvino_tokenizer.bin.sha256",
+                    "environment.openvino_version",
+                    "environment.openvino_genai_version",
+                    "runtime_device",
+                    "selected_device_context.resolved_device",
+                    "genai_config",
+                    "cache.cache_dir",
+                ],
+            },
             "cache_hit_evidence": cache_hit_evidence,
+            "cache_evidence_source": cache_evidence_source,
             "cache_hit_runtime_metric_available": False,
+            "direct_runtime_cache_hit_status": {
+                "available": False,
+                "source": "not_exposed_by_openvino_genai",
+            },
             "cache_files_created": cache_files_created,
             "cache_files_reused_or_stable": cache_files_reused_or_stable,
             "material_improvement_ratio_threshold": args.material_improvement_ratio,
@@ -370,6 +596,30 @@ def main() -> int:
             "after_second_process_snapshot": after_second_snapshot,
         },
         "process_runs": [first, second],
+        "process_split": {
+            "first_process": {
+                "role": "cache_miss_or_cache_prime_process",
+                "iteration": "first_process",
+                "returncode": first.get("process_returncode"),
+                "pipeline_construct_wall_ms": first_construct,
+                "answer_gate_passed": first_passed,
+                "fallback_used": first_receipt.get("fallback_used"),
+                "runtime_device": first_receipt.get("runtime_device"),
+                "resolved_device": first_receipt.get("resolved_device"),
+                "phase_ms": first_receipt.get("phase_ms"),
+            },
+            "second_process": {
+                "role": "cache_reuse_probe_process",
+                "iteration": "second_process",
+                "returncode": second.get("process_returncode"),
+                "pipeline_construct_wall_ms": second_construct,
+                "answer_gate_passed": second_passed,
+                "fallback_used": second_receipt.get("fallback_used"),
+                "runtime_device": second_receipt.get("runtime_device"),
+                "resolved_device": second_receipt.get("resolved_device"),
+                "phase_ms": second_receipt.get("phase_ms"),
+            },
+        },
         "comparison": {
             "first_pipeline_construct_wall_ms": first_construct,
             "second_pipeline_construct_wall_ms": second_construct,
