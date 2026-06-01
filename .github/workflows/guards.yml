@@ -38,12 +38,57 @@ jobs:
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
+      # Split the guards into two concepts:
+      #   * Workflow-safety guards (rg-based: pinned actions, MSRV, --locked,
+      #     receipt excludes, dev-only flags) ALWAYS run. They need no Rust
+      #     toolchain and no C/OpenSSL libraries.
+      #   * Runtime guards (bitnet-task integration test, wrapper smoke,
+      #     check-units family) compile Rust and only run when runtime-relevant
+      #     files changed. A workflow/CI-only PR therefore never compiles Rust
+      #     and never depends on cc/pkg-config/OpenSSL being present on the
+      #     self-hosted runner image. Non-PR events run the full set.
+      - name: Detect change scope
+        id: scope
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Non-PR event: running full (runtime) guards."
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$BASE_REF" || true
+          base="$(git rev-parse "origin/$BASE_REF" 2>/dev/null || echo "")"
+          if [ -n "$base" ] && git cat-file -e "$base" 2>/dev/null; then
+            git diff --name-only "$base" HEAD > changed.txt || true
+          else
+            : > changed.txt
+          fi
+          if [ ! -s changed.txt ]; then
+            echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Could not determine changed files; running full guards as a safe default."
+            exit 0
+          fi
+          echo "Changed files:"; sed -n '1,200p' changed.txt
+          # Paths that affect the bitnet-task build/tests or the workspace.
+          runtime_re='^(crates/|tools/bitnet-task/|src/|Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$|scripts/check-units|scripts/check-envlock|scripts/tests/)'
+          if grep -qE "$runtime_re" changed.txt; then
+            echo "runtime_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Runtime-relevant files changed: running Rust integration guards."
+          else
+            echo "runtime_changed=false" >> "$GITHUB_OUTPUT"
+            echo "Workflow/CI-only change: skipping Rust integration guards (no cargo compile)."
+          fi
+
       - name: Install Rust toolchain
+        if: steps.scope.outputs.runtime_changed == 'true'
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
 
       - name: Cache Rust dependencies
+        if: steps.scope.outputs.runtime_changed == 'true'
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
           shared-key: guards-ubuntu
@@ -71,9 +116,11 @@ jobs:
       - run: chmod +x scripts/tests/*.sh || true
 
       - name: bitnet-task integration tests
+        if: steps.scope.outputs.runtime_changed == 'true'
         run: cargo test --locked -p bitnet-task
 
       - name: bitnet-task wrapper compatibility smoke
+        if: steps.scope.outputs.runtime_changed == 'true'
         run: ./scripts/tests/bitnet-task-wrapper-help-smoke.sh
 
       - name: Guard - no floating action refs
@@ -114,12 +161,15 @@ jobs:
           echo "✅ MSRV consistent across all workflows (1.95.0)"
 
       - name: Check units
+        if: steps.scope.outputs.runtime_changed == 'true'
         run: ./scripts/check-units.sh || true
       - name: Check envlock
+        if: steps.scope.outputs.runtime_changed == 'true'
         run: ./scripts/check-envlock.sh || true
       - name: Make check-units-imports executable
         run: chmod +x scripts/check-units-imports.sh || true
       - name: Check units imports
+        if: steps.scope.outputs.runtime_changed == 'true'
         run: ./scripts/check-units-imports.sh || true
       - name: Guard dev-only flags (informational)
         run: |
