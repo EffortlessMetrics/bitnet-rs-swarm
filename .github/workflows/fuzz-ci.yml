@@ -33,7 +33,16 @@ jobs:
   # Always-on: build a representative fuzz subset on PR/push, and the scheduled matrix on schedule/manual.
   fuzz-build:
     name: Fuzz targets build
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 60
     steps:
       - name: Checkout
@@ -128,7 +137,16 @@ jobs:
   # Scheduled only: run each selected fuzz target for a short time to catch new crashes
   fuzz-run:
     name: "Fuzz run (${{ matrix.target }})"
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 30
     # Only run on schedule (nightly) or manual workflow dispatch — not on PRs
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

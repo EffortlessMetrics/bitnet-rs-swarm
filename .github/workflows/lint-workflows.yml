@@ -23,7 +23,16 @@ concurrency:
 
 jobs:
   check-yaml:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4

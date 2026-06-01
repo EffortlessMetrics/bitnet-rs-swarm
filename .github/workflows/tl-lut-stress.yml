@@ -18,7 +18,16 @@ jobs:
     # Only run when 'lut' label is present (opt-in for PRs)
     # Nightly strict suite provides comprehensive coverage
     if: contains(github.event.pull_request.labels.*.name, 'lut') || github.event_name == 'workflow_dispatch'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
     continue-on-error: true  # Informational while stress tests stabilize
 

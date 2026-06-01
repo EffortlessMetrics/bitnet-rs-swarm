@@ -32,7 +32,16 @@ env:
 jobs:
   compile-check-cpu:
     name: Compile Check (CPU)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -55,7 +64,16 @@ jobs:
 
   compile-check-oneapi:
     name: Compile Check (OneAPI)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -102,7 +120,16 @@ jobs:
 
   opencl-kernel-lint:
     name: OpenCL Kernel Lint
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -165,7 +192,16 @@ jobs:
 
   cpu-fallback-tests:
     name: CPU Fallback Tests
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -220,7 +256,16 @@ jobs:
 
   clippy-gpu:
     name: Clippy (OneAPI)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx53
+        - rust-large
+        - trusted-pr
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4

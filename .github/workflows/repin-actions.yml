@@ -19,7 +19,16 @@ concurrency:
 jobs:
   repin:
     name: Repin Action SHAs
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - trusted-pr
     timeout-minutes: 15
 
     steps:

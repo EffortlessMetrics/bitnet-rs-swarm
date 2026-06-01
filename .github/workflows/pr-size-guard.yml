@@ -16,7 +16,16 @@ permissions:
 jobs:
   check-pr-size:
     name: Check PR Size
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - trusted-pr
     timeout-minutes: 10
     # Skip for explicitly-acknowledged large PRs (mechanical refactors, AI-native work)
     if: >-

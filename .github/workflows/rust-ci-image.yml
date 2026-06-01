@@ -28,7 +28,16 @@ env:
 jobs:
   build:
     name: Build rust-ci image
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 45
 
     steps:

@@ -16,7 +16,16 @@ concurrency:
 
 jobs:
   refresh:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - trusted-pr
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
