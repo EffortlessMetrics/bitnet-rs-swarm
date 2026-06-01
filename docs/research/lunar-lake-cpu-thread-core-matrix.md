@@ -45,17 +45,33 @@ physical matrix evidence issue.
 
 ## Current Command Surface
 
-There is no current Lunar Lake command or receipt builder that emits
-`lunar-lake-cpu-slm-thread-core-matrix.json`.
+`lunar-lake cpu-slm-thread-core-matrix` is the narrow receipt-builder surface
+for this lane. It does not run inference or collect hardware samples. It
+aggregates explicit per-variant resident-session receipts with:
+
+```text
+--variant default=<resident-session-json>
+--variant threads_1=<resident-session-json>
+--variant threads_4=<resident-session-json>
+--variant threads_8=<resident-session-json>
+```
+
+The builder emits `lunar-lake-cpu-slm-thread-core-matrix.json` and fails closed
+when required variants, resident reuse, thread counts, power/AC-battery
+context, telemetry statuses, fallback=false, generated-token ID source, or the
+claim boundary are missing.
 
 [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
-tracks the narrow command and receipt-builder contract needed before physical
-matrix evidence can close #1071.
+owns that command and receipt-builder contract. #1071 remains the physical
+matrix evidence issue.
 
 Relevant existing surfaces do not close this gap:
 
 - `lunar-lake cpu-slm-resident-session` summarizes an existing repeated
   warm-session receipt. It does not run a new thread/core matrix.
+- `lunar-lake cpu-slm-thread-core-matrix` validates and aggregates one
+  resident-session receipt per matrix variant. It does not create those source
+  receipts.
 - `lunar-lake ask --threads <N>` can produce one-off operator asks, but it is
   not enough for this issue if every variant reloads the model.
 - BitNet QK256/I2_S thread matrix receipts are specialist kernel evidence, not
