@@ -9,6 +9,7 @@ Receipt-validation alignment closed by: https://github.com/EffortlessMetrics/bit
 Cache-classification guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1154
 AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149
 AUTO selected-device review: [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
+Host phase timing receipt guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189 / PR #1191
 
 Research date: 2026-05-30
 
@@ -36,6 +37,9 @@ Committed receipts show:
   wall time, and 221ms mean OpenVINO time to first token;
 - the resident receipt also recorded about 692 MB of resident memory growth
   after pipeline construction and warm-loop execution.
+- #1189 / #1191 added the host-side `host_phase_timing` receipt surface and
+  validator guard for future phase receipts. That is schema and guard support;
+  it is not new physical NPU evidence and does not by itself promote a route.
 
 That evidence is promising for a resident NPU profile, but it is not a broad
 NPU route promotion, power-advantage, native BitNet, or low-power claim.
@@ -81,13 +85,14 @@ but it does not yet expose every phase needed to close #1119.
   metric.
 - `scripts/openvino_genai_phase_receipt.py` records bounded CPU/GPU/NPU phase
   evidence with direct generated token IDs, OpenVINO `PerfMetrics`, coarse
-  `pipeline_construct_wall_ms`, streamer timing, and generation timing. It does
-  not separately time asset resolution, tokenizer object construction,
-  chat-template rendering, prompt tokenization, cache lookup, compile/load,
-  receipt build/write, or telemetry as distinct host-owned phases.
-- `scripts/openvino_genai_token_utils.py` renders and tokenizes prompts for the
-  OpenVINO helper scripts, but those operations are not independently timed in
-  current receipts.
+  `pipeline_construct_wall_ms`, streamer timing, generation timing, and the
+  #1191 `host_phase_timing` block for host-owned setup, tokenizer/template,
+  prompt render/tokenization, first-generate, receipt-overhead, telemetry, and
+  explicit unavailable runtime phase statuses.
+- `scripts/openvino_genai_token_utils.py` can now return host prompt render and
+  prompt tokenization timing to the phase receipt path when requested. These
+  host timers do not expose direct OpenVINO runtime cache-hit, compile, or load
+  truth.
 - `scripts/openvino_genai_npu_resident_session.py` records same-process
   warm-resident behavior. That evidence can support a `warm_resident` review,
   but it does not make cold one-off, default, or `low_power` NPU routing valid.
@@ -95,10 +100,12 @@ but it does not yet expose every phase needed to close #1119.
   Generic device visibility, CLI route selection, or explicit-NPU cache
   evidence should not be treated as `AUTO` execution proof.
 
-The next #1119 PR should add one precise missing host-side phase timer/status
-field, or a direct runtime cache metric/log if OpenVINO exposes one. It should
-not be another generic cache rerun, route-policy mutation, benchmark matrix, or
-low-power promotion attempt.
+The #1189 / #1191 host-side phase surface closes the immediate schema/guard
+gap. The next #1119 implementation should only proceed if a physical evidence
+run or runtime audit exposes a direct cache metric/log, an `AUTO`
+selected-device field, a battery evidence field, or another specific missing
+receipt boundary. It should not be another generic cache rerun, route-policy
+mutation, benchmark matrix, or low-power promotion attempt.
 
 ## Cold-Start Phase Model
 
@@ -291,11 +298,13 @@ missing, keep `AUTO` as diagnostic evidence only.
 
 ## Tokenizer And Asset Reload Gap
 
-The current receipts identify the model and tokenizer artifacts, but they do
-not prove whether tokenizer files, prompt templates, model metadata, or OpenVINO
-IR assets are reloaded per ask.
+The committed historical receipts identify the model and tokenizer artifacts,
+but they do not prove whether tokenizer files, prompt templates, model
+metadata, or OpenVINO IR assets are reloaded per ask. The #1191
+`host_phase_timing` receipt surface can now record the host-owned portions of
+that split for future phase runs.
 
-Add host-side phase timers around:
+Future evidence runs should populate or explicitly mark unavailable:
 
 - model path resolution;
 - OpenVINO IR existence/hash lookup;
@@ -307,8 +316,9 @@ Add host-side phase timers around:
 - first `generate` call;
 - repeated warm `generate` calls.
 
-The goal is to separate Rust/host setup from OpenVINO compile/load work. Do not
-rewrite route policy until that split exists.
+The goal remains to separate Rust/host setup from OpenVINO compile/load work.
+Do not rewrite route policy from schema support alone; use the split only after
+a fresh receipt records the relevant measured or unavailable fields.
 
 ## Promotion Rules
 
@@ -388,20 +398,26 @@ BitNet NPU execution.
   evidence package. The artifact is useful diagnostic evidence, but it does
   not close direct runtime cache-hit, cold/default NPU promotion, `AUTO`, or
   low-power evidence gaps.
+- #1189 closed with #1191 after adding the `host_phase_timing` receipt-builder
+  and validator guard. This closes the immediate host phase schema/guard gap,
+  but it does not create new physical NPU evidence, direct runtime cache-hit
+  truth, `AUTO` selected-device proof, or `low_power` evidence.
 - #1064 remains the only path to `low_power` battery and energy evidence.
 
 ## Recommended Next Issues
 
 1. `LNL258V-NPU-COLD-001` (#1119): keep broader cold/cache decomposition
-   research open for phase, resident, and cache-truth gaps that are not closed
-   by the timing-derived #1160 / #1174 diagnostic receipt.
+   research open for fresh evidence that uses the #1191 host phase surface,
+   direct runtime cache metrics/logs if exposed, or newly found phase/cache
+   gaps. Do not reopen a generic schema or cache-rerun PR from #1119 alone.
 2. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
    using the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 3. A future cache follow-up should be opened only for a newly exposed direct
    cache metric, runtime log, or stricter missing field. It should cite #1119
-   or a new precise issue rather than reopening #1160 as another generic rerun.
+   or a new precise issue rather than reopening #1160 as another generic rerun
+   or repeating the #1189 host phase guard.
 4. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
    resident, and power evidence is current.
 
@@ -420,8 +436,8 @@ It does not add:
 - native OpenCL or native NPU proof;
 - BitNet QK256/I2_S behavior proof.
 
-It documents the current NPU cold-start evidence, the remaining phase gaps, and
-the acceptance criteria for future small PRs.
+It documents the current NPU cold-start evidence, the remaining evidence gaps,
+and the acceptance criteria for future small PRs.
 
 ## References
 
