@@ -15025,12 +15025,28 @@ fn load_npu_resident_session(
     }
 
     let source_receipt = path_string(&path);
+    let requested_backend = string_at(&json, "requested_backend");
+    let selected_backend = string_at(&json, "selected_backend");
+    let runtime_device = string_at(&json, "runtime_device");
+    let resolved_device = string_at(&json, "resolved_device");
+    let resolved_device_lower = resolved_device.as_deref().unwrap_or_default().to_ascii_lowercase();
+    let accepted_resolved_npu_device = resolved_device_lower.contains("intel(r) ai boost")
+        || resolved_device_lower.contains("intel ai boost")
+        || resolved_device_lower.contains("npu");
     let mut blockers = Vec::new();
-    if string_at(&json, "selected_backend").as_deref() != Some("openvino-npu") {
+    if requested_backend.as_deref() != Some("openvino-npu") {
+        blockers.push("NPU resident-session requested_backend is not openvino-npu".to_string());
+    }
+    if selected_backend.as_deref() != Some("openvino-npu") {
         blockers.push("NPU resident-session selected_backend is not openvino-npu".to_string());
     }
-    if string_at(&json, "runtime_device").as_deref() != Some("NPU") {
+    if runtime_device.as_deref() != Some("NPU") {
         blockers.push("NPU resident-session runtime_device is not NPU".to_string());
+    }
+    if !accepted_resolved_npu_device {
+        blockers.push(
+            "NPU resident-session resolved device is not an accepted NPU identity".to_string(),
+        );
     }
     if bool_at_any(&json, &["fallback_used"]) != Some(false) {
         blockers.push("NPU resident-session fallback_used=false is not proven".to_string());
@@ -15074,26 +15090,164 @@ fn load_npu_resident_session(
         && bool_at_any(&json, &["fallback_used"]) == Some(false)
         && bool_at_any(&json, &["resident_session.warm_resident_asks.fallback_used"]) != Some(true);
     index.add("dense_slm_openvino_npu_candidate", source_receipt, blockers);
+    let warm_passed = u64_at(&json, "resident_session.warm_resident_asks.passed").unwrap_or(0);
+    let cold_first_count = u64_at(&json, "resident_session.cold_first_ask.ask_count").unwrap_or(0);
+    let cold_first_passed = u64_at(&json, "resident_session.cold_first_ask.passed").unwrap_or(0);
+    let cold_first_failed = u64_at(&json, "resident_session.cold_first_ask.failed").unwrap_or(0);
+    let warm_asks = json
+        .get("asks")
+        .and_then(Value::as_array)
+        .map(|asks| {
+            asks.iter()
+                .filter(|ask| string_at(ask, "phase").as_deref() == Some("warm_resident_ask"))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let direct_generated_token_ids_available =
+        bool_at_any(&json, &["generated_token_visibility.direct_generated_token_ids_available"])
+            == Some(true)
+            || warm_asks.iter().any(|ask| {
+                bool_at_any(
+                    ask,
+                    &[
+                        "generated_token_ids_available_from_pipeline",
+                        "output.generated_token_ids_available_from_pipeline",
+                        "verification.generated_token_ids_available_from_pipeline",
+                    ],
+                ) == Some(true)
+            });
+    let proof_limitations_text =
+        string_array_at(&json, "resident_session.proof_limitations").join(" ").to_ascii_lowercase();
+    let cold_start_caveat_recorded = proof_limitations_text.contains("cold")
+        && (proof_limitations_text.contains("startup")
+            || proof_limitations_text.contains("one-off")
+            || proof_limitations_text.contains("one off"));
+    let power_boundary_recorded = proof_limitations_text.contains("power")
+        && (proof_limitations_text.contains("not measured")
+            || proof_limitations_text.contains("unavailable")
+            || proof_limitations_text.contains("no power"));
+    let pinned_device_identity = requested_backend.as_deref() == Some("openvino-npu")
+        && selected_backend.as_deref() == Some("openvino-npu")
+        && runtime_device.as_deref() == Some("NPU")
+        && accepted_resolved_npu_device
+        && bool_at_any(&json, &["resident_session.same_process_pipeline_reused"]) == Some(true);
     let mut warm_resident_blockers = Vec::new();
+    if number_at_any(&json, &["pipeline.pipeline_construct_wall_ms"]).is_none() {
+        warm_resident_blockers.push(
+            "NPU resident warm_resident proof lacks separated pipeline construction timing"
+                .to_string(),
+        );
+    }
+    if value_at(&json, "cache_context").is_none() {
+        warm_resident_blockers.push(
+            "NPU resident warm_resident proof lacks cache context separated from warm loop"
+                .to_string(),
+        );
+    }
+    if cold_first_count < 1
+        || cold_first_passed < 1
+        || cold_first_failed > 0
+        || bool_at_any(&json, &["resident_session.cold_first_ask.fallback_used"]) != Some(false)
+    {
+        warm_resident_blockers.push(
+            "NPU resident warm_resident proof lacks a separated fallback-free cold first ask"
+                .to_string(),
+        );
+    }
+    if bool_at_any(&json, &["resident_session.same_process_pipeline_reused"]) != Some(true) {
+        warm_resident_blockers.push(
+            "NPU resident warm_resident proof does not prove same-process pipeline reuse"
+                .to_string(),
+        );
+    }
     if warm_ask_count < 30 {
         warm_resident_blockers
             .push(format!("NPU resident stability proof has only {warm_ask_count}/30 warm ask(s)"));
     }
-    if bool_at_any(&json, &["stability.answer_drift_detected"]) == Some(true) {
-        warm_resident_blockers
-            .push("NPU resident stability proof observed answer drift".to_string());
+    if warm_ask_count >= 30 && warm_passed < warm_ask_count {
+        warm_resident_blockers.push(format!(
+            "NPU resident warm_resident proof has only {warm_passed}/{warm_ask_count} passing warm ask(s)"
+        ));
     }
-    if bool_at_any(&json, &["stability.fallback_drift_detected"]) == Some(true) {
+    if bool_at_any(&json, &["stability.answer_drift_detected"]) != Some(false) {
         warm_resident_blockers
-            .push("NPU resident stability proof observed fallback drift".to_string());
+            .push("NPU resident stability proof lacks answer drift=false".to_string());
     }
-    if bool_at_any(&json, &["stability.route_drift_detected"]) == Some(true) {
+    if bool_at_any(&json, &["stability.generated_token_drift_detected"]) != Some(false) {
         warm_resident_blockers
-            .push("NPU resident stability proof observed route drift".to_string());
+            .push("NPU resident stability proof lacks generated-token drift=false".to_string());
+    }
+    if bool_at_any(&json, &["stability.fallback_drift_detected"]) != Some(false) {
+        warm_resident_blockers
+            .push("NPU resident stability proof lacks fallback drift=false".to_string());
+    }
+    if bool_at_any(&json, &["stability.route_drift_detected"]) != Some(false) {
+        warm_resident_blockers
+            .push("NPU resident stability proof lacks route drift=false".to_string());
+    }
+    if bool_at_any(&json, &["stability.device_drift_detected"]) == Some(true) {
+        warm_resident_blockers
+            .push("NPU resident stability proof observed device drift".to_string());
+    } else if bool_at_any(&json, &["stability.device_drift_detected"]) != Some(false)
+        && !pinned_device_identity
+    {
+        warm_resident_blockers.push(
+            "NPU resident stability proof lacks device drift=false or pinned NPU identity"
+                .to_string(),
+        );
+    }
+    if !direct_generated_token_ids_available {
+        warm_resident_blockers
+            .push("NPU resident warm_resident proof lacks direct generated-token IDs".to_string());
+    }
+    let missing_memory_samples = [
+        (
+            "stability.memory_samples.before_pipeline_construct_bytes",
+            "before_pipeline_construct_bytes",
+        ),
+        (
+            "stability.memory_samples.after_pipeline_construct_bytes",
+            "after_pipeline_construct_bytes",
+        ),
+        ("stability.memory_samples.after_cold_first_ask_bytes", "after_cold_first_ask_bytes"),
+        ("stability.memory_samples.after_warm_loop_bytes", "after_warm_loop_bytes"),
+    ]
+    .into_iter()
+    .filter_map(|(path, label)| value_at(&json, path).is_none().then_some(label))
+    .collect::<Vec<_>>();
+    if !missing_memory_samples.is_empty() {
+        warm_resident_blockers.push(format!(
+            "NPU resident stability proof lacks memory lifecycle samples: {}",
+            missing_memory_samples.join(", ")
+        ));
     }
     if value_at(&json, "stability.resident_memory_growth_bytes").is_none() {
         warm_resident_blockers
             .push("NPU resident stability proof lacks memory-growth context".to_string());
+    }
+    if !cold_start_caveat_recorded {
+        warm_resident_blockers
+            .push("NPU resident warm_resident proof lacks cold-start caveat".to_string());
+    }
+    if !power_boundary_recorded {
+        warm_resident_blockers.push(
+            "NPU resident warm_resident proof lacks explicit power/telemetry boundary context"
+                .to_string(),
+        );
+    }
+    for (path, label) in [
+        ("claim_boundary.route_promotion_changed", "route-promotion"),
+        ("claim_boundary.speedup_claim", "speedup"),
+        ("claim_boundary.power_advantage_claim", "power-advantage"),
+        ("claim_boundary.acceleration_claim", "acceleration"),
+        ("claim_boundary.native_npu_inference_claim", "native-NPU"),
+        ("claim_boundary.bitnet_qk256_i2s_behavior_changed", "BitNet QK256/I2_S"),
+    ] {
+        if bool_at_any(&json, &[path]) != Some(false) {
+            warm_resident_blockers.push(format!(
+                "NPU resident warm_resident proof lacks explicit false {label} claim boundary"
+            ));
+        }
     }
     warm_resident_blockers.sort();
     warm_resident_blockers.dedup();
@@ -20882,6 +21036,115 @@ mod tests {
                 .iter()
                 .any(|source| { source.ends_with(OPENVINO_NPU_RESIDENT_SESSION) })
         );
+        for expected in [
+            "NPU resident stability proof has only 10/30 warm ask(s)",
+            "NPU resident warm_resident proof lacks separated pipeline construction timing",
+            "NPU resident warm_resident proof lacks a separated fallback-free cold first ask",
+            "NPU resident warm_resident proof does not prove same-process pipeline reuse",
+            "NPU resident stability proof lacks generated-token drift=false",
+            "NPU resident warm_resident proof lacks direct generated-token IDs",
+            "NPU resident stability proof lacks memory lifecycle samples:",
+            "NPU resident warm_resident proof lacks cold-start caveat",
+            "NPU resident warm_resident proof lacks explicit power/telemetry boundary context",
+        ] {
+            assert!(
+                warm_evidence.blockers.iter().any(|blocker| blocker.contains(expected)),
+                "missing {expected}: {:?}",
+                warm_evidence.blockers
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn npu_resident_session_accepts_full_warm_resident_boundary() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_json(
+            temp.path(),
+            OPENVINO_NPU_RESIDENT_SESSION,
+            json!({
+                "artifact_kind": "lunar_lake_openvino_npu_resident_session",
+                "requested_backend": "openvino-npu",
+                "selected_backend": "openvino-npu",
+                "runtime_device": "NPU",
+                "resolved_device": "Intel(R) AI Boost",
+                "fallback_used": false,
+                "pipeline": {
+                    "pipeline_construct_wall_ms": 42.0
+                },
+                "cache_context": {
+                    "cache_requested": true,
+                    "cache_config_status": "requested"
+                },
+                "resident_session": {
+                    "resident_session_ready": true,
+                    "cold_first_ask": {
+                        "ask_count": 1,
+                        "passed": 1,
+                        "failed": 0,
+                        "fallback_used": false
+                    },
+                    "warm_resident_asks": {
+                        "ask_count": 30,
+                        "passed": 30,
+                        "failed": 0,
+                        "fallback_used": false
+                    },
+                    "same_process_pipeline_reused": true,
+                    "proof_limitations": [
+                        "resident proof does not remove the cold one-off NPU startup blocker",
+                        "power advantage is not measured by this receipt",
+                        "route promotion is unchanged"
+                    ]
+                },
+                "stability": {
+                    "answer_drift_detected": false,
+                    "generated_token_drift_detected": false,
+                    "fallback_drift_detected": false,
+                    "route_drift_detected": false,
+                    "memory_samples": {
+                        "before_pipeline_construct_bytes": 100,
+                        "after_pipeline_construct_bytes": 200,
+                        "after_cold_first_ask_bytes": 300,
+                        "after_warm_loop_bytes": 320
+                    },
+                    "resident_memory_growth_bytes": 220
+                },
+                "asks": [
+                    {
+                        "phase": "cold_first_ask",
+                        "generated_token_ids_available_from_pipeline": true
+                    },
+                    {
+                        "phase": "warm_resident_ask",
+                        "generated_token_ids_available_from_pipeline": true
+                    }
+                ],
+                "claim_boundary": {
+                    "route_promotion_changed": false,
+                    "speedup_claim": false,
+                    "power_advantage_claim": false,
+                    "acceleration_claim": false,
+                    "native_npu_inference_claim": false,
+                    "bitnet_qk256_i2s_behavior_changed": false
+                }
+            }),
+        )?;
+
+        let mut gaps = Vec::new();
+        let diagnostics = load_route_diagnostics_index(
+            temp.path(),
+            None,
+            None,
+            None,
+            Some(Path::new(OPENVINO_NPU_RESIDENT_SESSION)),
+            None,
+            None,
+            &mut gaps,
+        )?;
+        assert!(gaps.is_empty(), "{gaps:?}");
+        let warm_evidence = diagnostics.get("dense_slm_openvino_npu_candidate", "warm_resident");
+        assert!(warm_evidence.blockers.is_empty(), "{:?}", warm_evidence.blockers);
         Ok(())
     }
 
