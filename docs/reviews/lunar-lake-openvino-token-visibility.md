@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
-Linked PRs: n/a
+Linked PRs: [#1101](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1101), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138)
 Support-tier impact: no promotion; review-only token evidence policy
 Policy impact: no policy exception
 
@@ -31,6 +31,10 @@ This review does not require a route-policy change because current committed
 OpenVINO CPU, GPU, NPU corpus-v2, NPU cache, NPU resident, and CPU comparison
 receipts already expose direct OpenVINO GenAI token IDs where the current route
 reviews need them. It does define the fail-closed behavior for future receipts.
+
+The review note was added by #1101 and the #1123 closeout landed in #1138. It
+remains a future fail-closed strategy, not an active implementation queue or a
+reason to open another inference PR.
 
 ## Current Evidence Map
 
@@ -120,8 +124,10 @@ visibility blocker. GPU `ask_short` and `ask_normal` can continue to be reviewed
 against quality, fallback, timing, route identity, and benchmark-qualified
 advantage without adding a token-visibility caveat.
 
-This does not settle #1121. It only removes token visibility as the reason to
-narrow those two profiles.
+Issue #1121 is now closed by the GPU promotion review. Token visibility remains
+non-blocking for `ask_short` and `ask_normal` while the current direct-ID
+evidence stays valid. Future GPU route mutation still needs a concrete
+evidence regression or review finding.
 
 ### NPU
 
@@ -161,7 +167,7 @@ artifact refresh for token visibility alone.
 
 ## Acceptance For #1123
 
-Issue #1123 can close with this review because it:
+Issue #1123 is closed by #1138 because this review:
 
 - defines the three accepted token-visibility levels: direct pipeline IDs,
   retokenized output IDs, and text-only or unavailable;
