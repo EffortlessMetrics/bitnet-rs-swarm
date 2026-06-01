@@ -58,6 +58,9 @@ review into route policy.
 | `lunar-lake-openvino-npu-cache-rerun-20260601.json` | Cache starts empty, then one stable 158052779-byte blob remains after both process runs | File evidence supports cache reuse diagnosis for the current model/export/runtime/device tuple |
 | `lunar-lake-openvino-npu-cache-rerun-20260601.json` | `cache_evidence_source=timing_derived`; `direct_runtime_cache_hit_status.available=false`; command provenance uses repo-relative replay commands | Cache-hit truth remains diagnostic, while the committed receipt avoids stale local checkout paths |
 | `lunar-lake-openvino-npu-cache-rerun-20260601.json` | First and second process answer gates pass, fallback is false, direct generated-token IDs are available, and profile applicability is marked non-promotion smoke evidence | Suitable closed #1160 diagnostic package; still not route-promotion evidence |
+| `lunar-lake-openvino-npu-cache-probe-20260601T1323Z.json` | Current-main explicit-NPU cache probe uses one cache directory; first construct is 10838.986 ms, second construct is 892.883 ms, ratio is 0.082, improvement is 9946.102 ms | Confirms the material cache effect is still visible on the current script/runtime path, but remains timing/file-derived diagnosis |
+| `lunar-lake-openvino-npu-cache-probe-20260601T1323Z.json` | Answer gates pass in both processes, `fallback_used=false`, generated-token IDs come from `openvino_genai_encoded_results_tokens`, and `direct_runtime_cache_hit_status.available=false` | Valid diagnostic evidence under `lunar_lake_openvino_route_boundary`; still not direct runtime cache-hit truth or route-promotion evidence |
+| `lunar-lake-openvino-npu-resident-session-20260601T1325Z.json` | Paired same-cache resident diagnostic constructs the pipeline in 864.753 ms and completes 10/10 warm asks with fallback false, no answer/token/fallback/route drift, 314.739 ms mean generation wall, and 161.381 ms mean OpenVINO TTFT | Useful current-main resident context, but not a replacement for the existing 30/30 warm-resident acceptance receipt and not a new promotion claim |
 | `lunar-lake-openvino-npu-cold-start-diagnosis.json` | `cold_load_decomposition` records first-process cache miss, second-process cache reuse, timing-derived cache classification, and missing direct cache metrics | Decomposition is review-ready, but still diagnostic |
 | `lunar-lake-npu-cold-start.md` | Cold startup remains dominated by pipeline construction, compile/load, transfer, cache, tokenizer/setup, and first-ask costs | Do not promote cold one-off NPU from cache evidence alone |
 
@@ -68,6 +71,17 @@ OpenVINO NPU cache reuse materially reduces second-process pipeline construction
 for this exact model/export/device/cache directory, with fallback false and
 passing answer gates.
 ```
+
+The paired 2026-06-01 resident diagnostic adds only this bounded context:
+
+```text
+With the same cache directory already present, a current-main explicit-NPU
+resident session can keep one pipeline alive for 10 warm asks with fallback
+false, stable answers/tokens/routes, and direct generated-token IDs.
+```
+
+It does not replace the existing 30/30 warm-resident acceptance receipt and does
+not expand route policy.
 
 The unsafe claim is:
 

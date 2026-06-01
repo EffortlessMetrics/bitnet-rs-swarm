@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "lunar_lake_openvino_receipt_validation",
+  "claim_boundary": {
+    "bitnet_qk256_or_i2s_claimed": false,
+    "native_opencl_claimed": false,
+    "power_advantage_claimed": false,
+    "route_promotion_changed": false,
+    "speedup_claimed": false
+  },
+  "schema_version": "1.0.0",
+  "source_receipt": "ci\\hardware\\intel-258v\\2026-05-08\\lunar-lake-openvino-npu-resident-session-20260601T1325Z.json",
+  "valid": true,
+  "validated_contract": "lunar_lake_openvino_route_boundary"
+}
