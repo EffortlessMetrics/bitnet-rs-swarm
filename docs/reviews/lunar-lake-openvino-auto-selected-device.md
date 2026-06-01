@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
-Linked PRs: n/a
+Linked PRs: [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159)
 Support-tier impact: no promotion; review-only AUTO selected-device evidence contract
 Policy impact: no policy exception
 
@@ -21,6 +21,10 @@ This review records the #1149 evidence boundary only. It does not run
 inference, add an `AUTO` runtime command, refresh receipts, change route policy,
 promote NPU or GPU, claim speedup, claim power advantage, or add BitNet
 QK256/I2_S behavior evidence.
+
+The review contract is now landed by #1158, and #1159 added the fail-closed
+receipt validator guard for runtime `AUTO` selected-device proof. Issue #1149
+remains open for actual runtime/physical `AUTO` measurement evidence.
 
 The key distinction is:
 
@@ -40,6 +44,7 @@ OpenVINO runtime would select if `AUTO` were requested at the OpenVINO layer.
 | `BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE` says AUTO receipts without actual execution devices are diagnostic only | NPU cold/cache or resident evidence cannot inherit AUTO proof |
 | `lunar-lake-route-id-proof-family-map.md` maps `openvino-auto` to no proof family until selected execution devices are recorded | Route identity stays unresolved without runtime-selected-device fields |
 | Current ask receipts with `requested_device=auto` are CLI route-selector receipts | They are useful route-policy artifacts, not runtime `AUTO` selected-device evidence |
+| #1159 receipt validation requires runtime `AUTO` receipts to identify `auto_scope=openvino_runtime_auto` and execution-device visibility or explicit `not_exposed` | The guard preserves the boundary, but does not collect selected-device measurement evidence |
 | No committed receipt currently records OpenVINO `EXECUTION_DEVICES` or an equivalent selected-device property for runtime `AUTO` | AUTO remains diagnostic even when answer gates pass |
 
 ## Required Evidence Package
@@ -128,8 +133,10 @@ QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The next implementation PR, if needed, should be one narrow receipt/schema or
-measurement step scoped by #1149. It should add only enough structure to record:
+The review and validator guard are already landed by #1158/#1159. The next PR
+should be a narrow measurement or receipt-source update only when the 258V host
+is ready to collect runtime `AUTO` selected-device evidence. That package
+should record:
 
 - `auto_scope`;
 - requested CLI route/device versus requested OpenVINO runtime device;
@@ -139,8 +146,10 @@ measurement step scoped by #1149. It should add only enough structure to record:
 - fallback, answer-gate, token-visibility, timing, cache, and claim-boundary
   fields.
 
-Do not combine that implementation with route promotion, new inference surface
-work, low-power promotion, benchmark matrices, generated-dashboard churn, or
+Do not open another generic schema or validator PR unless the measurement run
+exposes a missing or ambiguous field that #1159 cannot represent. Do not
+combine the measurement with route promotion, new inference surface work,
+low-power promotion, benchmark matrices, generated-dashboard churn, or
 unrelated hardware lanes.
 
 ## Claim Boundary
