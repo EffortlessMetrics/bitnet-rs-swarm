@@ -1,14 +1,16 @@
 name: Guards
 on:
   pull_request:
-    # Only run the heavy guards job on PRs that touch CI guard surfaces. This
-    # mirrors the push paths filter so ordinary code-only PRs do not occupy a
-    # self-hosted runner with a guards build that has nothing to guard.
+    # Only run guards on PRs that touch CI guard surfaces. This mirrors the push
+    # paths filter so ordinary code-only PRs do not occupy a runner needlessly.
     paths:
       - '.github/**'
       - 'scripts/**'
+      - 'policy/**'
       - 'tools/bitnet-task/**'
       - 'crates/**'
+      - 'src/**'
+      - 'xtask/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
@@ -17,8 +19,11 @@ on:
     paths:
       - '.github/**'
       - 'scripts/**'
+      - 'policy/**'
       - 'tools/bitnet-task/**'
       - 'crates/**'
+      - 'src/**'
+      - 'xtask/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
@@ -27,26 +32,108 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Guards are split into two concepts:
+#   * Workflow Guards  — fast workflow/policy safety checks, NO Rust compile.
+#                        Run whenever workflow/policy/CI files change.
+#   * Runtime Guards   — Rust integration checks (bitnet-task), only when
+#                        runtime-relevant files change.
+# The `guards` aggregate job preserves the externally-visible required check
+# name ("Guards") so PR Gate fan-in and branch protection are untouched. A
+# workflow/CI-only PR therefore never compiles Rust and never depends on
+# cc/pkg-config/OpenSSL being present on a self-hosted runner image.
 jobs:
-  guards:
-    name: Guards
-    runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 15
-    env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
+  classify-guards:
+    name: Classify Guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      workflow_required: ${{ steps.classify.outputs.workflow_required }}
+      runtime_required: ${{ steps.classify.outputs.runtime_required }}
+      reason: ${{ steps.classify.outputs.reason }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
-          toolchain: "1.95.0"
+          fetch-depth: 0
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
-        with:
-          shared-key: guards-ubuntu
+      - id: classify
+        shell: bash
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+
+          emit() {
+            echo "workflow_required=$1" >> "$GITHUB_OUTPUT"
+            echo "runtime_required=$2" >> "$GITHUB_OUTPUT"
+            echo "reason=$3" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Guards classification"
+              echo ""
+              echo "- workflow_required=\`$1\`"
+              echo "- runtime_required=\`$2\`"
+              echo "- reason: $3"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "workflow_required=$1 runtime_required=$2 reason=$3"
+          }
+
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            emit true true "non-PR event (push/dispatch): run full guards"
+            exit 0
+          fi
+
+          git fetch --no-tags --depth=1 origin "$BASE_REF" || true
+          base="$(git rev-parse "origin/$BASE_REF" 2>/dev/null || echo "")"
+          if [ -n "$base" ] && git cat-file -e "$base" 2>/dev/null; then
+            git diff --name-only "$base" HEAD > changed.txt || true
+          else
+            : > changed.txt
+          fi
+
+          if [ ! -s changed.txt ]; then
+            emit true true "could not determine changed files: run full guards (safe default)"
+            exit 0
+          fi
+
+          echo "Changed files:"
+          sed -n '1,200p' changed.txt
+
+          # Workflow/policy/control-plane surfaces -> fast workflow guards.
+          workflow_re='^(\.github/|scripts/|policy/)'
+          # Files that affect the bitnet-task build/tests or the workspace.
+          runtime_re='^(Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$|crates/|src/|xtask/|tests/|benches/|build\.rs$|tools/bitnet-task/|scripts/check-units|scripts/check-envlock|scripts/tests/)'
+
+          wf=false
+          rt=false
+          grep -qE "$workflow_re" changed.txt && wf=true || true
+          grep -qE "$runtime_re" changed.txt && rt=true || true
+
+          # Defensive: if the paths filter triggered but nothing matched (e.g. a
+          # surface we did not enumerate), run the cheap workflow guards.
+          if [ "$wf" = false ] && [ "$rt" = false ]; then
+            wf=true
+          fi
+
+          emit "$wf" "$rt" "classified from changed files"
+
+  workflow-guards:
+    name: Workflow Guards
+    needs: classify-guards
+    if: needs.classify-guards.outputs.workflow_required == 'true'
+    # Control-plane pool: CX23, no Rust compile.
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - workflow-nano
+        - trusted-pr
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
       - name: Ensure ripgrep exists
         run: |
@@ -62,19 +149,24 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install -y ripgrep
           else
-            echo "ripgrep missing from self-hosted runner image; installing with cargo"
-            cargo install ripgrep --locked
+            echo "::error::ripgrep missing from control-plane runner image (workflow guards must not compile Rust to install it)"
+            exit 1
           fi
 
-      # Ensure scripts are executable in fresh clones
-      - run: chmod +x scripts/*.sh || true
-      - run: chmod +x scripts/tests/*.sh || true
+      # Ensure CI scripts are executable in fresh clones (no-op if absent).
+      - run: chmod +x scripts/ci/*.sh scripts/*.sh 2>/dev/null || true
 
-      - name: bitnet-task integration tests
-        run: cargo test --locked -p bitnet-task
-
-      - name: bitnet-task wrapper compatibility smoke
-        run: ./scripts/tests/bitnet-task-wrapper-help-smoke.sh
+      - name: Guard - no new bare self-hosted routes (advisory)
+        run: |
+          set -euo pipefail
+          if [ -f scripts/ci/check-no-bare-self-hosted.sh ]; then
+            # Advisory only: the repo still has a pre-existing bare-route backlog.
+            # The blocking, differential version is a follow-up PR.
+            bash scripts/ci/check-no-bare-self-hosted.sh \
+              || echo "::warning::pre-existing bare self-hosted routes present (migration backlog)"
+          else
+            echo "scripts/ci/check-no-bare-self-hosted.sh not present on this branch; skipping"
+          fi
 
       - name: Guard - no floating action refs
         run: |
@@ -113,14 +205,6 @@ jobs:
           fi
           echo "✅ MSRV consistent across all workflows (1.95.0)"
 
-      - name: Check units
-        run: ./scripts/check-units.sh || true
-      - name: Check envlock
-        run: ./scripts/check-envlock.sh || true
-      - name: Make check-units-imports executable
-        run: chmod +x scripts/check-units-imports.sh || true
-      - name: Check units imports
-        run: ./scripts/check-units-imports.sh || true
       - name: Guard dev-only flags (informational)
         run: |
           set +e
@@ -135,6 +219,7 @@ jobs:
           fi
           echo "✅ Dev-only flags check completed"
           exit 0
+
       - name: Guard bare cfg(cuda) in tests (informational)
         run: |
           set +e
@@ -144,6 +229,7 @@ jobs:
             echo "✅ No bare cfg(cuda) in tests"
           fi
           exit 0
+
       - name: Guard - cargo/cross --locked everywhere
         run: |
           # We allow: 'cargo|cross (build|test|run|bench|clippy) ... --locked'
@@ -162,6 +248,7 @@ jobs:
             exit 1
           fi
           echo "✅ All workflow cargo/cross commands use --locked"
+
       - name: Guard - receipt workflow excludes python/wasm
         run: |
           f=".github/workflows/verify-receipts.yml"
@@ -181,6 +268,7 @@ jobs:
           fi
 
           echo "✅ receipt workflow excludes python/wasm in CPU+GPU lanes"
+
       - name: Upload guard logs
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
@@ -190,3 +278,97 @@ jobs:
             **/guards*.log
             **/guards*.txt
           retention-days: 3
+          if-no-files-found: ignore
+
+  runtime-guards:
+    name: Runtime Guards
+    needs: classify-guards
+    if: needs.classify-guards.outputs.runtime_required == 'true'
+    # CX43-class medium Rust pool (the legacy cpx42-named boxes also carry cx43).
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx43
+        - rust-medium
+        - trusted-pr
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
+        with:
+          shared-key: guards-runtime
+
+      # Ensure scripts are executable in fresh clones
+      - run: chmod +x scripts/*.sh scripts/tests/*.sh 2>/dev/null || true
+
+      - name: bitnet-task integration tests
+        run: cargo test --locked -p bitnet-task
+
+      - name: bitnet-task wrapper compatibility smoke
+        run: ./scripts/tests/bitnet-task-wrapper-help-smoke.sh
+
+      - name: Check units
+        run: ./scripts/check-units.sh || true
+
+      - name: Check envlock
+        run: ./scripts/check-envlock.sh || true
+
+      - name: Check units imports
+        run: |
+          chmod +x scripts/check-units-imports.sh || true
+          ./scripts/check-units-imports.sh || true
+
+  guards:
+    name: Guards
+    needs:
+      - classify-guards
+      - workflow-guards
+      - runtime-guards
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate Guards
+        run: |
+          set -euo pipefail
+
+          classify_result='${{ needs.classify-guards.result }}'
+          workflow_required='${{ needs.classify-guards.outputs.workflow_required }}'
+          runtime_required='${{ needs.classify-guards.outputs.runtime_required }}'
+          workflow_result='${{ needs.workflow-guards.result }}'
+          runtime_result='${{ needs.runtime-guards.result }}'
+
+          echo "classify_result=$classify_result"
+          echo "workflow_required=$workflow_required workflow_result=$workflow_result"
+          echo "runtime_required=$runtime_required runtime_result=$runtime_result"
+
+          if [ "$classify_result" != "success" ]; then
+            echo "::error::Classify Guards did not succeed (result=$classify_result)"
+            exit 1
+          fi
+
+          if [ "$workflow_required" = "true" ] && [ "$workflow_result" != "success" ]; then
+            echo "::error::Workflow Guards failed (result=$workflow_result)"
+            exit 1
+          fi
+
+          if [ "$runtime_required" = "true" ] && [ "$runtime_result" != "success" ]; then
+            echo "::error::Runtime Guards failed (result=$runtime_result)"
+            exit 1
+          fi
+
+          echo "✅ Guards passed (skipped lanes that were not required are ignored)"
