@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md), [BITNET-SPEC-PROOF-FAMILY-NON-INHERITANCE](../specs/BITNET-SPEC-PROOF-FAMILY-NON-INHERITANCE.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108)
+Linked issues: [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178)
 Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137)
 Support-tier impact: no promotion; review-only route identity map
 Policy impact: no policy exception
@@ -58,7 +58,7 @@ The current committed route-promotion ledger records these profile routes:
 | `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | profile-promoted, phase split still review-watch |
 | `decode_heavy` | `dense_slm_openvino_gpu_candidate` | profile-promoted, phase split still review-watch |
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | profile-promoted OpenVINO NPU resident route |
-| `bitnet_strict_reference` | `bitnet_reference_cpu` | promoted BitNet CPU reference route |
+| `bitnet_strict_reference` | `bitnet_reference_cpu` | promoted BitNet CPU reference route; semantic freshness owned by #1178 |
 | `low_power` | none | blocked by POWER-006 battery-mode evidence |
 
 The current CPU runtime comparison also records
@@ -155,6 +155,7 @@ claim-bearing receipt should record the canonical fields directly.
 | Rust GGUF CPU route is summarized as OpenVINO CPU proof | Fail mapping |
 | Dense SLM proof family is used as BitNet QK256/I2_S proof | Reject the claim boundary |
 | BitNet CPU reference evidence is used as dense SLM route quality | Reject the claim boundary |
+| Shared BitNet semantic fix lands after current CPU reference evidence | Rerun affected BitNet CPU reference evidence through #1178 before changing BitNet route claims |
 | `openvino-auto` lacks per-phase execution-device evidence | Diagnostic only |
 | `low_power` has no battery-mode route samples or energy proxy | Keep profile blocked before promotion |
 | `fallback_used=true` in any selected route evidence | Block selected-route promotion or proof-family claim |
@@ -194,6 +195,8 @@ mapped to `openvino_dense_slm_cpu` just because both execute on the CPU.
 
 `bitnet_reference_cpu` maps to the `bitnet_cpu_reference` proof family. Dense
 SLM CPU/GPU/NPU evidence must never close BitNet strict-reference gates.
+Issue #1178 owns semantic-intake freshness if future shared BitNet semantic
+changes or receipt/validator gaps require a targeted CPU reference rerun.
 
 ### Low Power
 
@@ -219,6 +222,11 @@ small implementation PR should add a route-ID helper or schema check that:
 Do not combine that helper with route-policy mutation, new inference, benchmark
 matrices, POWER-006 battery evidence, CPU optimization, or generated-dashboard
 churn.
+
+If the question is stale BitNet CPU reference evidence rather than route-ID
+mapping, route it to #1178. The next change should be a targeted freshness
+rerun, guard, or receipt-note update only after that issue names the evidence
+gap.
 
 ## Acceptance For #1135
 
