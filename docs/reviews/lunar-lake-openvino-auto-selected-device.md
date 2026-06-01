@@ -47,6 +47,35 @@ OpenVINO runtime would select if `AUTO` were requested at the OpenVINO layer.
 | #1159 receipt validation requires runtime `AUTO` receipts to identify `auto_scope=openvino_runtime_auto` and execution-device visibility or explicit `not_exposed` | The guard preserves the boundary, but does not collect selected-device measurement evidence |
 | No committed receipt currently records OpenVINO `EXECUTION_DEVICES` or an equivalent selected-device property for runtime `AUTO` | AUTO remains diagnostic even when answer gates pass |
 
+## Current Command Surface
+
+The current repo can validate a runtime `AUTO` receipt shape, but it does not
+yet expose the measurement command that would close #1149.
+
+- `crates/bitnet-receipts-core/src/lib.rs` accepts
+  `auto_scope=openvino_runtime_auto` only when the receipt records
+  `execution_devices`, an equivalent selected-device evidence field, or
+  `selected_device_visibility_status=not_exposed`.
+- The same validator keeps `not_exposed` diagnostic: a receipt that cannot see
+  execution devices must not claim selected-device proof, promotion,
+  acceleration, power, or `low_power` evidence.
+- `crates/bitnet-cli/src/commands/lunar_lake.rs` currently indexes CLI
+  `--device auto` operator-ask receipts and explicit OpenVINO GPU/NPU route
+  evidence. That is route-selector evidence, not OpenVINO runtime-layer `AUTO`
+  selected-device proof.
+- Current operator ask routing maps explicit OpenVINO routes to `GPU.0` or
+  `NPU`; it does not deliberately request OpenVINO GenAI `AUTO` for the Qwen
+  export/profile/cache tuple and record which device OpenVINO executed.
+- Generic device-smoke and Intel NPU probe surfaces remain visibility checks.
+  They are not runtime `AUTO` selected-device evidence for the governed Qwen
+  export, prompt, generation config, answer gate, and cache settings.
+
+The next #1149 PR should therefore be a narrow measurement command or
+receipt-source update that deliberately requests OpenVINO runtime `AUTO` and
+records selected-device visibility or explicit `not_exposed`. A generic schema,
+validator, route-policy, or benchmark PR is not the next useful step unless the
+measurement exposes a field gap the #1159 guard cannot represent.
+
 ## Required Evidence Package
 
 Before any `AUTO` receipt is cited as GPU, NPU, `low_power`, speed, or route
