@@ -8,7 +8,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209)
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
 Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
@@ -52,6 +52,7 @@ BitNet QK256/I2_S behavior.
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
 | #1201 / #1207 | Source-receipt contract for the physical matrix is closed | Source-enrichment support, not an open blocker |
 | #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
+| #1232 | Resident Rust GGUF phase evidence successor is open | Use for resident phase/no-reload evidence before any CPU optimization or matched comparison PR |
 
 The refreshed runtime comparison records:
 
@@ -159,9 +160,9 @@ Do not start with CPU optimization.
 
 The remaining next small PRs are evidence work only:
 
-1. A new narrow physical resident no-reload measurement source only if the
-   existing #1069/#1182 resident-session summarizer cannot provide the needed
-   fresh first-ask and 30-warm-ask evidence.
+1. Use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
+   for resident Rust GGUF phase/no-reload evidence before adding a physical
+   measurement source, receipt-builder fields, or matched-comparison work.
 2. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
    can keep model-format, timing-scope, prompt-render, tokenization, and
    benchmark-qualification blockers explicit.
@@ -174,9 +175,10 @@ formats or timing scopes differ landed in #1156. Future CPU comparison work
 should refresh matched-profile evidence, use completed measurement packages, or
 harden a newly exposed gap, not repeat that guard.
 
-Issue #1209 is closed as the post-matrix review. Future CPU work should open
-or use a new narrow issue with explicit evidence fields, acceptance criteria,
-and claim boundaries before any runtime optimization or route-policy PR.
+Issue #1209 is closed as the post-matrix review. Issue #1232 is now the live
+resident phase evidence successor with explicit evidence fields, acceptance
+criteria, and claim boundaries before any runtime optimization or route-policy
+PR.
 
 Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed

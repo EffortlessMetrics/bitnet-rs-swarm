@@ -6,6 +6,8 @@ Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
 
 Closed post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209
 
+Live resident phase evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232
+
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
 Closed physical matrix follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071) /
@@ -51,12 +53,14 @@ The current route decision is:
 - keep Rust GGUF CPU as the correctness, fallback, and comparison plate;
 - treat OpenVINO CPU as a separate diagnostic candidate, not a drop-in
   replacement for the Rust GGUF CPU route;
-- defer Rust GGUF CPU optimization until resident phase timing, matched
+- defer Rust GGUF CPU optimization until #1232 resident phase timing, matched
   comparison evidence, or a later topology receipt identifies a single target.
 
-Do not start a CPU runtime optimization PR from this research alone. The next
-implementation should be a small receipt or instrumentation PR that makes the
-phase attribution harder to dispute.
+Do not start a CPU runtime optimization PR from this research alone. The live
+next CPU planning issue is
+[#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232),
+which defines resident Rust GGUF phase evidence before any receipt,
+instrumentation, matched-comparison, optimization, or route-policy PR.
 
 ## Current CPU Route Context
 
@@ -461,7 +465,7 @@ hiding it:
 | ---: | --- | --- | --- |
 | 1 | Add CPU phase attribution receipt fields and a fixture/test for schema validation | High: makes reload, prefill, decode, and receipt overhead separable | Low: docs/schema/unit-test surface |
 | 2 | Add resident CPU session refresh receipt with per-prompt overhead accounting | High: confirms whether no-reload path is still prefill/decode bound | Medium: hardware run needed, but no route-policy change |
-| 3 | Open or use a new narrow evidence issue after #1209 when the next target is resident phase attribution, resident no-reload refresh, matched OpenVINO CPU comparison, or topology evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
+| 3 | Use #1232 as the new narrow evidence issue after #1209 for resident Rust GGUF phase attribution and no-reload evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
 | 6 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
@@ -507,10 +511,10 @@ The live CPU slow-path follow-ups and guard status are:
    is closed as the post-matrix CPU slow-path review. Treat it as the decision
    that #1208 does not justify CPU optimization, default thread tuning,
    OpenVINO CPU promotion, or route-policy changes. The next CPU work should
-   use a new narrow issue only when it names one evidence target: resident
-   phase attribution, a fresh resident no-reload measurement, matched Rust GGUF
-   CPU versus OpenVINO CPU comparison, or a later affinity/topology receipt
-   with stronger placement telemetry.
+   use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
+   for resident Rust GGUF phase attribution and no-reload evidence. Matched
+   Rust GGUF CPU versus OpenVINO CPU comparison or later affinity/topology work
+   still needs a separate narrow issue once the evidence target is concrete.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by
