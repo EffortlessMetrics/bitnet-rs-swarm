@@ -8574,6 +8574,7 @@ fn validate_lunar_lake_openvino_object(object: &Value, path: &str) -> Result<()>
     validate_lunar_lake_openvino_auto_selected_device(object, path)?;
     validate_lunar_lake_openvino_generated_token_marking(object, path)?;
     validate_lunar_lake_openvino_npu_cache_classification(object, path)?;
+    validate_lunar_lake_openvino_host_phase_timing(object, path)?;
     validate_lunar_lake_openvino_npu_promotion_evidence(object, path)
 }
 
@@ -8932,6 +8933,134 @@ fn validate_lunar_lake_openvino_npu_cache_classification(object: &Value, path: &
     }
 
     Ok(())
+}
+
+fn validate_lunar_lake_openvino_host_phase_timing(object: &Value, path: &str) -> Result<()> {
+    let Some(timing) = object.get("host_phase_timing") else {
+        return Ok(());
+    };
+    let entries = timing.as_object().ok_or_else(|| {
+        anyhow!("{path}.host_phase_timing must be an object of phase timing entries")
+    })?;
+
+    for (field, entry) in entries {
+        if matches!(field.as_str(), "schema" | "schema_version") {
+            continue;
+        }
+        let entry_path = format!("{path}.host_phase_timing.{field}");
+        validate_lunar_lake_openvino_phase_timing_entry(field, entry, &entry_path)?;
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_phase_timing_entry(
+    field: &str,
+    entry: &Value,
+    path: &str,
+) -> Result<()> {
+    let entry = entry
+        .as_object()
+        .ok_or_else(|| anyhow!("{path} must record value/status/source as an object"))?;
+    let status = entry.get("status").and_then(Value::as_str).ok_or_else(|| {
+        anyhow!("{path}.status must record measured, not_exposed, not_applicable, or derived")
+    })?;
+    if !matches!(status, "measured" | "not_exposed" | "not_applicable" | "derived") {
+        return Err(anyhow!(
+            "{path}.status must be measured, not_exposed, not_applicable, or derived"
+        ));
+    }
+    let source = entry
+        .get("source")
+        .and_then(Value::as_str)
+        .filter(|source| !source.trim().is_empty())
+        .ok_or_else(|| anyhow!("{path}.source must be a non-empty timing source"))?;
+
+    if field == "cache_hit_status" {
+        return validate_lunar_lake_openvino_phase_cache_hit_status(entry, status, source, path);
+    }
+
+    let value = entry.get("value_ms").ok_or_else(|| anyhow!("{path}.value_ms must be present"))?;
+    match status {
+        "measured" => {
+            let value_ms = value
+                .as_f64()
+                .ok_or_else(|| anyhow!("{path}.value_ms must be a number when measured"))?;
+            if value_ms < 0.0 {
+                return Err(anyhow!(
+                    "{path}.value_ms must not record a negative OpenVINO sentinel as measured timing"
+                ));
+            }
+            if lunar_lake_phase_timing_source_is_coarse_pipeline(source)
+                && matches!(field, "openvino_load_or_compile_wall_ms" | "cache_lookup_wall_ms")
+            {
+                return Err(anyhow!(
+                    "{path}.source must not use coarse pipeline construction timing as measured {field} proof"
+                ));
+            }
+        }
+        "derived" => {
+            if !value.is_null() {
+                let value_ms = value.as_f64().ok_or_else(|| {
+                    anyhow!("{path}.value_ms must be null or a number when derived")
+                })?;
+                if value_ms < 0.0 {
+                    return Err(anyhow!("{path}.value_ms must be non-negative when derived"));
+                }
+            }
+        }
+        "not_exposed" | "not_applicable" => {
+            if !value.is_null() {
+                return Err(anyhow!(
+                    "{path}.value_ms must be null when status is {status}; unavailable timing must not be zero-filled"
+                ));
+            }
+        }
+        _ => {
+            return Err(anyhow!(
+                "{path}.status must be measured, not_exposed, not_applicable, or derived"
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_phase_cache_hit_status(
+    entry: &Map<String, Value>,
+    status: &str,
+    source: &str,
+    path: &str,
+) -> Result<()> {
+    if matches!(status, "not_exposed" | "not_applicable")
+        && entry.get("value").is_some_and(|value| value.is_null())
+    {
+        return Ok(());
+    }
+
+    let value = match entry.get("value") {
+        Some(Value::Null) | None => "unknown",
+        Some(value) => {
+            value.as_str().ok_or_else(|| anyhow!("{path}.value must be a string or null"))?
+        }
+    };
+    if lunar_lake_cache_status_is_direct_hit(value)
+        && lunar_lake_cache_source_is_diagnostic(source)
+        && !lunar_lake_cache_source_is_runtime_direct(source)
+    {
+        return Err(anyhow!(
+            "{path}.value must not turn timing-derived cache evidence into direct runtime cache-hit truth"
+        ));
+    }
+
+    Ok(())
+}
+
+fn lunar_lake_phase_timing_source_is_coarse_pipeline(source: &str) -> bool {
+    let normalized = source.replace(['-', '_', ' '], "").to_ascii_lowercase();
+    normalized.contains("pipelineconstruct")
+        || normalized.contains("llmpipelineconstruct")
+        || normalized.contains("coarsepipeline")
 }
 
 fn lunar_lake_cache_source_is_runtime_direct(value: &str) -> bool {
@@ -10645,6 +10774,78 @@ mod tests {
         });
         let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
         assert!(err.contains("direct cache hit"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_host_phase_timing_contract() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["host_phase_timing"] = json!({
+            "pipeline_construct_wall_ms": {
+                "value_ms": 123.4,
+                "status": "measured",
+                "source": "harness_wall_clock",
+                "scope": "LLMPipeline construction envelope"
+            },
+            "openvino_load_or_compile_wall_ms": {
+                "value_ms": null,
+                "status": "not_exposed",
+                "source": "openvino_genai_perf_metrics.load_time",
+                "scope": "direct runtime load or compile timing"
+            },
+            "cache_hit_status": {
+                "value": "unknown",
+                "status": "not_exposed",
+                "source": "openvino_genai_llmpipeline_receipt_source",
+                "scope": "direct runtime cache-hit visibility"
+            }
+        });
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_measured_sentinel_phase_timing() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["host_phase_timing"] = json!({
+            "ttft_ms": {
+                "value_ms": -1.0,
+                "status": "measured",
+                "source": "openvino_genai_perf_metrics.time_to_first_token",
+                "scope": "OpenVINO reported time to first token"
+            }
+        });
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("negative OpenVINO sentinel"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_coarse_pipeline_as_direct_compile_timing() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["host_phase_timing"] = json!({
+            "openvino_load_or_compile_wall_ms": {
+                "value_ms": 123.4,
+                "status": "measured",
+                "source": "pipeline_construct_wall_ms",
+                "scope": "direct runtime load or compile timing"
+            }
+        });
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("coarse pipeline construction timing"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_phase_timing_cache_hit_from_diagnostic_source() {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["host_phase_timing"] = json!({
+            "cache_hit_status": {
+                "value": "hit",
+                "status": "derived",
+                "source": "timing_derived_cache_files_and_construct_ratio",
+                "scope": "cache-hit classification"
+            }
+        });
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("direct runtime cache-hit truth"), "got: {err}");
     }
 
     #[test]
