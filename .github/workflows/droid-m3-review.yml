@@ -63,16 +63,16 @@ jobs:
       - name: Configure MiniMax M3 BYOK
         shell: bash
         env:
-          MINIMAX: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           set -euo pipefail
 
-          test -n "${MINIMAX:-}" || {
-            echo "::error::Missing MINIMAX secret"
+          test -n "${MINIMAX_API_KEY:-}" || {
+            echo "::error::Missing MINIMAX_API_KEY secret"
             exit 1
           }
 
-          echo "::add-mask::$MINIMAX"
+          echo "::add-mask::$MINIMAX_API_KEY"
 
           mkdir -p .factory "$HOME/.factory" "$HOME/.factory/droid"
 
@@ -85,7 +85,7 @@ jobs:
                 "displayName": "MiniMax-M3",
                 "model": "MiniMax-M3",
                 "baseUrl": "https://api.minimax.io/anthropic",
-                "apiKey": "${MINIMAX}",
+                "apiKey": "${MINIMAX_API_KEY}",
                 "provider": "anthropic",
                 "maxOutputTokens": 64000
               }
@@ -134,7 +134,7 @@ jobs:
       - name: Droid M3 review
         uses: EffortlessSteven/droid-action@e1b7d598ff1eccee505e1cc9699186190a958a14  # proven Bun fork SHA
         env:
-          MINIMAX: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           ANTHROPIC_AUTH_TOKEN: ""
           ANTHROPIC_BASE_URL: ""
           OPENAI_API_KEY: ""
