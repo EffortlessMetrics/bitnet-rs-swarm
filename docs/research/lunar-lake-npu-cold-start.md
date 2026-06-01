@@ -313,7 +313,11 @@ Promotion can only use `AUTO` evidence if it proves the selected device and
 fallback behavior for the target profile. If selected-device visibility is
 missing, keep `AUTO` as diagnostic evidence only. The next useful #1149 PR
 needs a newly identified OpenVINO API, property, plugin log, or receipt source
-that can expose actual selected-device identity for the same tuple.
+that can expose actual selected-device identity for the same tuple. Official
+OpenVINO guidance points at the compiled-model `EXECUTION_DEVICES` property,
+but the current Python `openvino_genai.LLMPipeline` surface does not expose the
+underlying compiled model or a generic property accessor, so a future PR must
+first bridge that API gap or document that it remains unavailable.
 
 ## Tokenizer And Asset Reload Gap
 
