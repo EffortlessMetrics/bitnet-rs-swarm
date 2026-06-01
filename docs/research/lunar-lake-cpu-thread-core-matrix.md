@@ -37,6 +37,25 @@ state, and resident dense Qwen phase timing across a fixed matrix.
 | `ci/hardware/intel-258v/2026-05-08/cpu-bitnet-perf-002-i2s-tiling-matrix.json` | QK256/I2_S tiling/thread candidates were recorded for BitNet microbench work. | Thread counts are recorded for a synthetic BitNet kernel search surface, not dense Qwen GGUF resident asks. |
 | `ci/hardware/intel-258v/2026-05-08/cpu-bitnet-perf-003-i2s-applied-thread-matrix.json` | Scoped worker thread counts were applied inside sampled QK256/I2_S microbenches. | It explicitly does not claim full decode behavior and does not cover the dense SLM user-facing CPU path. |
 
+## Current Command Surface
+
+There is no current Lunar Lake command or receipt builder that emits
+`lunar-lake-cpu-slm-thread-core-matrix.json`.
+
+Relevant existing surfaces do not close this gap:
+
+- `lunar-lake cpu-slm-resident-session` summarizes an existing repeated
+  warm-session receipt. It does not run a new thread/core matrix.
+- `lunar-lake ask --threads <N>` can produce one-off operator asks, but it is
+  not enough for this issue if every variant reloads the model.
+- BitNet QK256/I2_S thread matrix receipts are specialist kernel evidence, not
+  dense Qwen GGUF resident-route evidence.
+
+The next measurement surface must either run one resident session per variant
+or explicitly mark `resident_session_reused=false` and fail the
+resident-matrix acceptance. This is a measurement-command and receipt-source
+gap, not a route-policy, CPU tuning, OpenVINO CPU promotion, or speedup issue.
+
 ## Required Receipt
 
 Proposed path:
