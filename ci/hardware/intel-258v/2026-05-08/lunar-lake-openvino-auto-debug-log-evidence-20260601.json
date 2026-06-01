@@ -146,8 +146,13 @@
   },
   "genai_debug_log_evidence": {
     "visibility_status": "exposed_by_genai_debug_log",
+    "selected_device_visibility_source": "genai_debug_log",
     "source": "OpenVINO GenAI stateful LLMPipeline compiled-model debug dump",
     "block_title": "Model: Stateful LLM model",
+    "model_block": "stateful_llm_model",
+    "phase_or_model_block_applicability": [
+      "stateful_llm_model_block"
+    ],
     "block_line_range": [
       153,
       190

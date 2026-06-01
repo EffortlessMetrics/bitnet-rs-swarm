@@ -8521,6 +8521,10 @@ pub fn validate_lunar_lake_openvino_receipt_json(receipt: &Value) -> Result<()> 
         require_string_eq(receipt, "runtime_api", "openvino_genai")?;
     }
 
+    if artifact_kind == LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND {
+        validate_lunar_lake_openvino_auto_debug_log_evidence(receipt)?;
+    }
+
     validate_lunar_lake_openvino_value(receipt, "$")?;
     Ok(())
 }
@@ -8543,10 +8547,96 @@ fn is_lunar_lake_openvino_artifact_kind(artifact_kind: &str) -> bool {
             | "lunar_lake_openvino_npu_cold_start_diagnosis"
             | "lunar_lake_openvino_npu_cache_experiment"
             | "lunar_lake_openvino_npu_resident_session"
+            | LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND
             | "lunar_lake_openvino_operator_ask"
             | "lunar_lake_route_profile_comparison"
             | "lunar_lake_route_promotion_ledger"
     )
+}
+
+const LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND: &str =
+    "lunar_lake_openvino_auto_genai_debug_log_evidence";
+
+fn validate_lunar_lake_openvino_auto_debug_log_evidence(receipt: &Value) -> Result<()> {
+    require_string_eq(
+        receipt,
+        "artifact_kind",
+        LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND,
+    )?;
+    require_string_eq(receipt, "machine_id", "intel-258v")?;
+
+    let source_phase_receipt = object_field(receipt, "source_phase_receipt")?;
+    require_string_non_empty(source_phase_receipt, "path")?;
+    require_positive_u64(source_phase_receipt, "bytes")?;
+    require_sha256(source_phase_receipt, "sha256")?;
+    require_string_eq(source_phase_receipt, "runtime_api", "openvino_genai")?;
+    require_string_array_contains(source_phase_receipt, "requested_devices", "AUTO")?;
+    require_string_eq(
+        source_phase_receipt,
+        "phase_receipt_selected_device_visibility_status",
+        "not_exposed",
+    )?;
+    require_bool_eq(
+        source_phase_receipt,
+        "phase_receipt_openvino_runtime_auto_selected_device_proof",
+        false,
+    )?;
+
+    let debug_log = object_field(receipt, "debug_log")?;
+    require_string_non_empty(debug_log, "path")?;
+    require_positive_u64(debug_log, "bytes")?;
+    require_sha256(debug_log, "sha256")?;
+    require_string_eq(debug_log, "openvino_log_level_env", "2")?;
+
+    let environment = object_field(receipt, "environment")?;
+    require_string_non_empty(object_field(environment, "openvino")?, "version")?;
+    require_string_non_empty(object_field(environment, "openvino_genai")?, "version")?;
+
+    let debug_evidence = object_field(receipt, "genai_debug_log_evidence")?;
+    require_string_eq(debug_evidence, "visibility_status", "exposed_by_genai_debug_log")?;
+    require_string_eq(debug_evidence, "selected_device_visibility_source", "genai_debug_log")?;
+    require_string_eq(debug_evidence, "model_block", "stateful_llm_model")?;
+    let block_title = required_string(debug_evidence, "block_title")?;
+    if !block_title.contains("Stateful LLM model") {
+        return Err(anyhow!(
+            "genai_debug_log_evidence.block_title must identify the Stateful LLM model block"
+        ));
+    }
+    require_non_empty_string_array(debug_evidence, "execution_devices")?;
+    require_string_array_contains(
+        debug_evidence,
+        "phase_or_model_block_applicability",
+        "stateful_llm_model_block",
+    )?;
+
+    let same_run = object_field(receipt, "same_run_answer_and_fallback")?;
+    require_string_eq(same_run, "phase_receipt_runtime_device", "AUTO")?;
+    require_bool_eq(same_run, "phase_receipt_fallback_used", false)?;
+    require_bool_eq(same_run, "all_answer_gates_passed", true)?;
+    let cases = array_field(same_run, "cases")?;
+    if cases.is_empty() {
+        return Err(anyhow!("same_run_answer_and_fallback.cases must not be empty"));
+    }
+    for case in cases {
+        if !case.is_object() {
+            return Err(anyhow!("same_run_answer_and_fallback.cases entries must be objects"));
+        }
+        require_bool_eq(case, "answer_gate_passed", true)?;
+        require_bool_eq(case, "fallback_used", false)?;
+    }
+
+    let claim_boundary = object_field(receipt, "claim_boundary")?;
+    let must_not_claim = Value::Array(array_field(claim_boundary, "must_not_claim")?.clone());
+    if !value_contains_case_insensitive(&must_not_claim, "route policy")
+        || !value_contains_case_insensitive(&must_not_claim, "low_power")
+        || !value_contains_case_insensitive(&must_not_claim, "bitnet")
+    {
+        return Err(anyhow!(
+            "claim_boundary.must_not_claim must preserve route-policy, low_power, and BitNet claim boundaries"
+        ));
+    }
+
+    Ok(())
 }
 
 fn validate_lunar_lake_openvino_value(value: &Value, path: &str) -> Result<()> {
@@ -9326,6 +9416,31 @@ fn required_u64(object: &Value, field: &str) -> Result<u64> {
     object_field(object, field)?
         .as_u64()
         .ok_or_else(|| anyhow!("field `{field}` must be an unsigned integer"))
+}
+
+fn require_non_empty_string_array(object: &Value, field: &str) -> Result<()> {
+    let values = array_field(object, field)?;
+    if values.is_empty() {
+        return Err(anyhow!("field `{field}` must not be empty"));
+    }
+    for value in values {
+        let text =
+            value.as_str().ok_or_else(|| anyhow!("field `{field}` entries must be strings"))?;
+        if text.trim().is_empty() {
+            return Err(anyhow!("field `{field}` entries must not be empty"));
+        }
+    }
+    Ok(())
+}
+
+fn require_string_array_contains(object: &Value, field: &str, expected: &str) -> Result<()> {
+    require_non_empty_string_array(object, field)?;
+    let has_expected =
+        array_field(object, field)?.iter().filter_map(Value::as_str).any(|value| value == expected);
+    if !has_expected {
+        return Err(anyhow!("field `{field}` must contain `{expected}`"));
+    }
+    Ok(())
 }
 
 fn require_string_eq(object: &Value, field: &str, expected: &str) -> Result<()> {
@@ -10340,6 +10455,75 @@ mod tests {
         receipt
     }
 
+    fn minimal_lunar_lake_openvino_auto_debug_log_evidence_receipt() -> Value {
+        json!({
+            "schema_version": "1.0.0",
+            "artifact_kind": "lunar_lake_openvino_auto_genai_debug_log_evidence",
+            "campaign": "intel-258v-platform",
+            "item": "LNL258V-NPU-AUTO-LOG-001",
+            "machine_id": "intel-258v",
+            "source_phase_receipt": {
+                "path": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-phase-20260601.json",
+                "bytes": 45897,
+                "sha256": "6a8e923d4cae2277001dd24e638a7944a3c19860712658cea269eca7f0bec1d2",
+                "runtime_api": "openvino_genai",
+                "requested_devices": ["AUTO"],
+                "phase_receipt_selected_device_visibility_status": "not_exposed",
+                "phase_receipt_openvino_runtime_auto_selected_device_proof": false
+            },
+            "debug_log": {
+                "path": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-stdout-stderr-20260601.txt",
+                "bytes": 9288,
+                "sha256": "4d1637bc96e35cffb72b7d88ca1183adc5c60a692f8221d358f2ba8dcad5641f",
+                "openvino_log_level_env": "2"
+            },
+            "environment": {
+                "openvino": {
+                    "version": "2026.2.0-21903-52ddc073857-releases/2026/2"
+                },
+                "openvino_genai": {
+                    "version": "2026.2.0.0-3121-adf73e80e66"
+                }
+            },
+            "genai_debug_log_evidence": {
+                "visibility_status": "exposed_by_genai_debug_log",
+                "selected_device_visibility_source": "genai_debug_log",
+                "source": "OpenVINO GenAI stateful LLMPipeline compiled-model debug dump",
+                "block_title": "Model: Stateful LLM model",
+                "model_block": "stateful_llm_model",
+                "phase_or_model_block_applicability": ["stateful_llm_model_block"],
+                "execution_devices": ["GPU.0"],
+                "execution_device_full_names": [{
+                    "device": "GPU.0",
+                    "full_name": "Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)"
+                }],
+                "scope_note": "This is GenAI-path diagnostic evidence for the stateful LLM model block."
+            },
+            "same_run_answer_and_fallback": {
+                "phase_receipt_runtime_device": "AUTO",
+                "phase_receipt_fallback_used": false,
+                "phase_receipt_fallback_status": "no_application_fallback_used_auto_requested_selected_device_not_exposed",
+                "case_count": 1,
+                "all_answer_gates_passed": true,
+                "cases": [{
+                    "id": "math_2_plus_2",
+                    "answer_gate_passed": true,
+                    "fallback_used": false
+                }]
+            },
+            "claim_boundary": {
+                "may_claim": [
+                    "The OpenVINO GenAI stateful LLM debug-log source exposed EXECUTION_DEVICES for this runtime AUTO diagnostic run."
+                ],
+                "must_not_claim": [
+                    "No route policy changed.",
+                    "No low_power promotion, battery-mode evidence, power advantage, speedup, or benchmark-qualified advantage is proven.",
+                    "No native OpenCL, native NPU, acceleration, broad dense SLM quality, model-format equivalence, or BitNet QK256/I2_S behavior claim is proven."
+                ]
+            }
+        })
+    }
+
     #[test]
     fn lunar_lake_openvino_validator_accepts_candidate_gpu_receipt() {
         let result =
@@ -10669,6 +10853,34 @@ mod tests {
         receipt["promotion_status"] = json!("promoted");
         let result = validate_lunar_lake_openvino_receipt_json(&receipt);
         assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_auto_debug_log_evidence() {
+        let result = validate_lunar_lake_openvino_receipt_json(
+            &minimal_lunar_lake_openvino_auto_debug_log_evidence_receipt(),
+        );
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_requires_auto_debug_log_source_marker() {
+        let mut receipt = minimal_lunar_lake_openvino_auto_debug_log_evidence_receipt();
+        let removed = receipt
+            .get_mut("genai_debug_log_evidence")
+            .and_then(Value::as_object_mut)
+            .and_then(|debug_evidence| debug_evidence.remove("selected_device_visibility_source"));
+        assert!(removed.is_some(), "fixture must contain source marker");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("selected_device_visibility_source"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_auto_debug_log_without_execution_devices() {
+        let mut receipt = minimal_lunar_lake_openvino_auto_debug_log_evidence_receipt();
+        receipt["genai_debug_log_evidence"]["execution_devices"] = json!([]);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("execution_devices"), "got: {err}");
     }
 
     #[test]
