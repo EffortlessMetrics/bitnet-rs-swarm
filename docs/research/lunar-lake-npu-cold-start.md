@@ -27,8 +27,9 @@ Committed receipts show:
 - cold pipeline/load samples are 29.373s to 35.470s, with a 32.513s mean;
 - hot generation after load is much smaller, generally about 0.49s to 0.52s
   for the bounded math/operator receipts;
-- a second OpenVINO GenAI process using the same cache directory reduced
-  pipeline construction from 28.104s to 0.873s;
+- the historical cache experiment reduced a second OpenVINO GenAI process using
+  the same cache directory from 28.104s to 0.873s, and the current #1160 rerun
+  records a smaller but still material reduction from 11.164s to 0.945s;
 - a same-process resident session completed 30/30 warm asks with
   `fallback_used=false`, no answer/token/route drift, 764ms mean generation
   wall time, and 221ms mean OpenVINO time to first token;
@@ -57,6 +58,7 @@ Keep that boundary until the measurements below are collected and reviewed.
 | --- | --- | --- |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cold-start-diagnosis.json` | Derived diagnosis, no new inference | `openvino_pipeline_load_or_device_compile_dominated`; 4 pipeline/load samples, 29.373s min, 32.513s mean, 35.470s max; operator load-to-generation ratio 57.59; phase-runner load-to-generation ratio 68.13 |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-experiment.json` | Two separate OpenVINO GenAI NPU processes, one cache dir | First pipeline construct 28.104s; second construct 0.873s; 0.031 second/first ratio; one 154,693,720-byte cache blob; answer gates passed both runs; no runtime cache-hit metric exposed |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json` | Current #1160 two-process NPU cache rerun, one cache dir | First pipeline construct 11.164s; second construct 0.945s; 0.085 second/first ratio; 10.219s improvement; one 158,052,779-byte cache blob stayed stable; answer gates passed both runs; fallback false; direct generated token IDs available; direct runtime cache-hit metric not exposed |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-resident-session.json` | Same-process NPU pipeline plus repeated warm asks | Pipeline construct 1.470s with cache requested; 30/30 warm asks passed; warm generation mean 764ms, p95 1171ms; OpenVINO TTFT mean 221ms, p95 257ms; no answer/token/fallback/route drift |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-auto-npu-warm-resident-math-brief.json` | Operator ask for `warm_resident` route evidence | `profile_id=warm_resident`; selected backend `openvino-npu`; fallback false; answer gate passed; pipeline construct 32.032s and generation wall 862ms, so the receipt is not a cold one-off promotion |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cold-warm-profile-benchmark.json` | Profile benchmark index | NPU remains blocked outside `warm_resident`; `low_power` has no benchmark-qualified promoted route; warm resident timing excludes one-off NPU pipeline construction |
@@ -153,6 +155,17 @@ Acceptance for cache evidence:
   construction;
 - the receipt states that the cache classification is timing-derived unless a
   direct runtime cache-hit metric is present.
+
+The current #1160 rerun artifact
+`ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json`
+satisfies this as a diagnostic cache snapshot: it records explicit NPU routing,
+model/export/tokenizer identity, OpenVINO 2026.2.0 / GenAI 2026.2.0.0 context,
+cache snapshots, first/second process phase summaries, passing answer gates,
+direct generated token IDs, and `fallback_used=false`. It still records
+`cache_evidence_source=timing_derived` and
+`direct_runtime_cache_hit_status.available=false`, so it remains diagnostic
+cache evidence rather than direct runtime cache-hit truth or route-promotion
+evidence.
 
 Implementation note: `bitnet lunar-lake npu-cold-start-diagnosis` should ingest
 the NPU cache experiment and expose a `cold_load_decomposition` block. That
@@ -339,17 +352,20 @@ BitNet NPU execution.
   closed when future `warm_resident` resident-session receipts omit the #1120
   pipeline, cold-first-ask, warm-loop, drift, token, memory, telemetry, or
   claim-boundary evidence.
+- #1160 owns the current cache-rerun evidence package. The 2026-06-01 artifact
+  is useful diagnostic evidence, but it does not close direct runtime cache-hit,
+  cold/default NPU promotion, `AUTO`, or low-power evidence gaps.
 - #1064 remains the only path to `low_power` battery and energy evidence.
 
 ## Recommended Next Issues
 
-1. `LNL258V-NPU-CACHE-RERUN-001` (#1160): rerun the cache experiment
-   with explicit OpenVINO version, NPU device properties, and cache snapshots
-   that include stable file hashes where practical. Do not reuse the historical
-   merged `LNL258V-NPU-CACHE-001` or `LNL258V-NPU-CACHE-002` campaign IDs for
-   this follow-up. The cache probe should emit
-   `item=LNL258V-NPU-CACHE-RERUN-001` by default, with any historical rerun
-   reproduction using an explicit item override.
+1. `LNL258V-NPU-CACHE-RERUN-001` (#1160): review or close the current
+   diagnostic rerun package at
+   `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json`.
+   Any further rerun should add only a stricter missing evidence field, such as
+   a direct OpenVINO runtime cache-hit metric if one becomes exposed, and should
+   keep `item=LNL258V-NPU-CACHE-RERUN-001` unless explicitly reproducing a
+   historical campaign item.
 2. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
    using the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
@@ -363,7 +379,7 @@ This document is research and issue shaping only.
 
 It does not add:
 
-- new Lunar Lake inference;
+- route-policy inference beyond the cited #1160 diagnostic cache rerun receipt;
 - new generated dashboards;
 - new route policy;
 - route promotion;
