@@ -2257,13 +2257,43 @@ pub struct CpuSlmResidentSessionEvidence {
     pub first_resident_prompt: Option<CpuSlmResidentFirstPromptEvidence>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CpuSlmResidentExecutionContext {
+    #[serde(default)]
+    pub requested_thread_count: Option<u64>,
+    #[serde(default)]
+    pub effective_thread_count: Option<u64>,
     pub thread_count: Option<u64>,
+    #[serde(default)]
+    pub thread_env: CpuSlmThreadEnv,
+    #[serde(default)]
+    pub process_affinity_mask: Option<String>,
+    #[serde(default)]
+    pub affinity_classification: Option<String>,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub affinity_classification_status: String,
+    #[serde(default)]
+    pub windows_power_scheme: Option<String>,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub windows_power_scheme_status: String,
     pub power_scheme: Option<String>,
     pub power_scheme_status: String,
     pub ac_battery_state: Option<String>,
     pub ac_battery_state_status: String,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub thermal_availability: String,
+    #[serde(default)]
+    pub temperature_c: Option<f64>,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub temperature_status: String,
+    #[serde(default)]
+    pub cpu_utilization_per_logical_processor: Option<Value>,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub cpu_utilization_status: String,
+    #[serde(default)]
+    pub frequency_or_throttle_proxy: Option<Value>,
+    #[serde(default = "cpu_slm_not_exposed_status")]
+    pub frequency_or_throttle_status: String,
     pub fallback_used: Option<bool>,
 }
 
@@ -2327,6 +2357,10 @@ pub struct CpuSlmResidentProfileSummary {
     pub tokenize_ms: CpuSlmResidentMetricSummary,
     pub generated_tokens: CpuSlmResidentMetricSummary,
     pub prompt_token_count: CpuSlmResidentPhaseMetric,
+    #[serde(default)]
+    pub generated_token_ids_available: Option<bool>,
+    #[serde(default = "cpu_slm_generated_token_ids_source_not_exposed")]
+    pub generated_token_ids_source: String,
     pub phase_timings_ms: CpuSlmResidentProfilePhaseTimings,
     pub decode_tokens_per_s_mean: Option<f64>,
     pub cold_to_resident_total_ratio: Option<f64>,
@@ -2456,7 +2490,7 @@ pub struct CpuSlmThreadCoreVariantSummary {
     pub blockers: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CpuSlmThreadEnv {
     pub rayon_num_threads: Option<String>,
     pub bitnet_cpu_threads: Option<String>,
@@ -8050,6 +8084,9 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
     }
 
     let resident_session = cpu_slm_resident_session_evidence(&repeated_json);
+    if resident_session.reuse_scope.as_deref() != Some("resident_session") {
+        gaps.push("resident session must record reuse_scope=resident_session".to_string());
+    }
     if resident_session.model_loaded_once != Some(true) {
         gaps.push("resident session did not prove model_loaded_once=true".to_string());
     }
@@ -8095,7 +8132,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
         && profiles.iter().all(|profile| profile.blockers.is_empty());
 
     Ok(LunarLakeCpuSlmResidentSession {
-        schema_version: "1.1.0".to_string(),
+        schema_version: "1.2.0".to_string(),
         artifact_kind: "lunar_lake_cpu_slm_resident_session".to_string(),
         proof_stage: "resident_cpu_no_reload_timing_no_new_inference".to_string(),
         created_utc,
@@ -8185,23 +8222,147 @@ fn cpu_slm_resident_execution_context(json: &Value) -> CpuSlmResidentExecutionCo
     let power_available = bool_at_any(json, &["power.available"]);
     let power_source = string_at(json, "power.source")
         .unwrap_or_else(|| "not_exposed_in_slm_cpu_warm_session".to_string());
-    let power_scheme =
-        string_at_any(json, &["power.power_scheme", "power.active_scheme", "power.mode"]);
-    let ac_battery_state = string_at_any(json, &["power.battery_status", "power.ac_battery_state"]);
-    CpuSlmResidentExecutionContext {
-        thread_count: u64_at(json, "cpu.threads"),
-        power_scheme_status: if power_scheme.is_some() {
+    let requested_thread_count = u64_at_any(
+        json,
+        &["execution_context.requested_thread_count", "threading.requested_thread_count"],
+    );
+    let effective_thread_count = u64_at_any(
+        json,
+        &[
+            "execution_context.effective_thread_count",
+            "execution_context.thread_count",
+            "threading.effective_thread_count",
+            "cpu.threads",
+        ],
+    );
+    let power_scheme = string_at_any(
+        json,
+        &[
+            "execution_context.windows_power_scheme",
+            "execution_context.power_scheme",
+            "power.power_scheme",
+            "power.active_scheme_name",
+            "power.active_scheme",
+            "power.mode",
+        ],
+    );
+    let ac_battery_state = string_at_any(
+        json,
+        &["execution_context.ac_battery_state", "power.ac_battery_state", "power.battery_status"],
+    );
+    let windows_power_scheme_status = string_at_any(
+        json,
+        &[
+            "execution_context.windows_power_scheme_status",
+            "execution_context.power_scheme_status",
+            "power.power_scheme_status",
+        ],
+    )
+    .unwrap_or_else(|| {
+        if power_scheme.is_some() { "measured".to_string() } else { power_source.clone() }
+    });
+    let ac_battery_state_status = string_at_any(
+        json,
+        &["execution_context.ac_battery_state_status", "power.ac_battery_state_status"],
+    )
+    .unwrap_or_else(|| {
+        if ac_battery_state.is_some() || power_available == Some(true) {
             "measured".to_string()
         } else {
             power_source.clone()
-        },
+        }
+    });
+    CpuSlmResidentExecutionContext {
+        requested_thread_count,
+        effective_thread_count,
+        thread_count: effective_thread_count.or_else(|| u64_at(json, "cpu.threads")),
+        thread_env: cpu_slm_thread_env(json),
+        process_affinity_mask: optional_string_at_any(
+            json,
+            &[
+                "execution_context.process_affinity_mask",
+                "affinity.process_affinity_mask",
+                "process_affinity_mask",
+            ],
+        ),
+        affinity_classification: optional_string_at_any(
+            json,
+            &[
+                "execution_context.affinity_classification",
+                "affinity.classification",
+                "affinity_classification",
+            ],
+        ),
+        affinity_classification_status: string_at_any(
+            json,
+            &[
+                "execution_context.affinity_classification_status",
+                "affinity.classification_status",
+                "affinity_classification_status",
+            ],
+        )
+        .unwrap_or_else(cpu_slm_not_exposed_status),
+        windows_power_scheme: power_scheme.clone(),
+        windows_power_scheme_status: windows_power_scheme_status.clone(),
+        power_scheme_status: windows_power_scheme_status,
         power_scheme,
-        ac_battery_state_status: if ac_battery_state.is_some() || power_available == Some(true) {
-            "measured".to_string()
-        } else {
-            power_source
-        },
+        ac_battery_state_status,
         ac_battery_state,
+        thermal_availability: string_at_any(
+            json,
+            &[
+                "execution_context.thermal_availability",
+                "telemetry.thermal_availability",
+                "thermal.thermal_availability",
+            ],
+        )
+        .unwrap_or_else(cpu_slm_not_exposed_status),
+        temperature_c: number_at_any(
+            json,
+            &[
+                "execution_context.temperature_c",
+                "telemetry.temperature_c",
+                "thermal.temperature_c",
+            ],
+        ),
+        temperature_status: string_at_any(
+            json,
+            &[
+                "execution_context.temperature_status",
+                "telemetry.temperature_status",
+                "thermal.temperature_status",
+            ],
+        )
+        .unwrap_or_else(cpu_slm_not_exposed_status),
+        cpu_utilization_per_logical_processor: value_at_any(
+            json,
+            &[
+                "execution_context.cpu_utilization_per_logical_processor",
+                "telemetry.cpu_utilization_per_logical_processor",
+            ],
+        )
+        .cloned(),
+        cpu_utilization_status: string_at_any(
+            json,
+            &["execution_context.cpu_utilization_status", "telemetry.cpu_utilization_status"],
+        )
+        .unwrap_or_else(cpu_slm_not_exposed_status),
+        frequency_or_throttle_proxy: value_at_any(
+            json,
+            &[
+                "execution_context.frequency_or_throttle_proxy",
+                "telemetry.frequency_or_throttle_proxy",
+            ],
+        )
+        .cloned(),
+        frequency_or_throttle_status: string_at_any(
+            json,
+            &[
+                "execution_context.frequency_or_throttle_status",
+                "telemetry.frequency_or_throttle_status",
+            ],
+        )
+        .unwrap_or_else(cpu_slm_not_exposed_status),
         fallback_used: fallback_used(json),
     }
 }
@@ -8288,6 +8449,9 @@ struct ResidentProfileAccumulator {
     tokenize_ms: Vec<f64>,
     detokenize_ms: Vec<f64>,
     generated_tokens: Vec<f64>,
+    prompt_token_counts: Vec<f64>,
+    generated_token_ids_available: bool,
+    generated_token_ids_sources: BTreeSet<String>,
 }
 
 fn cpu_slm_resident_profiles(
@@ -8367,6 +8531,21 @@ fn cpu_slm_resident_profiles(
             if let Some(tokens) = u64_at(prompt, "generated_tokens") {
                 entry.generated_tokens.push(tokens as f64);
             }
+            if let Some(tokens) = u64_at_any(
+                prompt,
+                &[
+                    "prompt_token_count",
+                    "tokens.prompt",
+                    "prompt.prompt_token_count",
+                    "execution.prompt_tokens",
+                ],
+            ) {
+                entry.prompt_token_counts.push(tokens as f64);
+            }
+            if let Some(source) = cpu_slm_resident_generated_token_ids_source(prompt) {
+                entry.generated_token_ids_available = true;
+                entry.generated_token_ids_sources.insert(source.to_string());
+            }
         }
     }
 
@@ -8401,6 +8580,15 @@ fn cpu_slm_resident_profiles(
             }
             if entry.total_ms.is_empty() {
                 blockers.push("resident profile has no total_ms timing samples".to_string());
+            }
+            if entry.prompt_token_counts.is_empty() {
+                blockers.push("resident profile has no measured prompt token counts".to_string());
+            }
+            if !entry.generated_token_ids_available {
+                blockers.push(
+                    "resident profile has no direct generated token IDs from source prompts"
+                        .to_string(),
+                );
             }
             blockers.sort();
             blockers.dedup();
@@ -8453,7 +8641,14 @@ fn cpu_slm_resident_profiles(
                 decode_total_ms,
                 tokenize_ms: resident_metric_summary(&entry.tokenize_ms),
                 generated_tokens,
-                prompt_token_count: resident_phase_not_exposed("prompt_token_count"),
+                prompt_token_count: resident_phase_metric(
+                    &entry.prompt_token_counts,
+                    "prompts[].prompt_token_count|prompts[].tokens.prompt",
+                ),
+                generated_token_ids_available: Some(entry.generated_token_ids_available),
+                generated_token_ids_source: cpu_slm_resident_profile_generated_token_ids_source(
+                    &entry.generated_token_ids_sources,
+                ),
                 phase_timings_ms,
                 decode_tokens_per_s_mean,
                 cold_to_resident_total_ratio,
@@ -8461,6 +8656,35 @@ fn cpu_slm_resident_profiles(
             }
         })
         .collect()
+}
+
+fn cpu_slm_resident_generated_token_ids_source(prompt: &Value) -> Option<&'static str> {
+    if value_at(prompt, "generated_token_ids")
+        .and_then(Value::as_array)
+        .is_some_and(|values| !values.is_empty())
+    {
+        return Some("slm_warm_session_generated_ids");
+    }
+    if value_at(prompt, "tokens.generated_ids")
+        .and_then(Value::as_array)
+        .is_some_and(|values| !values.is_empty())
+        || value_at(prompt, "tokens.ids")
+            .and_then(Value::as_array)
+            .is_some_and(|values| !values.is_empty())
+    {
+        return Some("resident_prompt_receipt");
+    }
+    None
+}
+
+fn cpu_slm_resident_profile_generated_token_ids_source(sources: &BTreeSet<String>) -> String {
+    if sources.contains("slm_warm_session_generated_ids") {
+        return "slm_warm_session_generated_ids".to_string();
+    }
+    if sources.contains("resident_prompt_receipt") {
+        return "resident_prompt_receipt".to_string();
+    }
+    sources.iter().next().cloned().unwrap_or_else(cpu_slm_generated_token_ids_source_not_exposed)
 }
 
 fn push_number(json: &Value, path: &str, out: &mut Vec<f64>) {
@@ -8503,6 +8727,14 @@ fn resident_phase_not_exposed(source: &str) -> CpuSlmResidentPhaseMetric {
         source: source.to_string(),
         summary: resident_metric_summary(&[]),
     }
+}
+
+fn cpu_slm_not_exposed_status() -> String {
+    "not_exposed".to_string()
+}
+
+fn cpu_slm_generated_token_ids_source_not_exposed() -> String {
+    "not_exposed".to_string()
 }
 
 fn resident_metric_summary(values: &[f64]) -> CpuSlmResidentMetricSummary {
@@ -22627,6 +22859,31 @@ mod tests {
                 "runtime_api": "cpu",
                 "fallback_used": false,
                 "speedup_claim": false,
+                "execution_context": {
+                    "requested_thread_count": null,
+                    "effective_thread_count": 4,
+                    "thread_count": 4,
+                    "thread_env": {
+                        "RAYON_NUM_THREADS": null,
+                        "BITNET_CPU_THREADS": null,
+                        "BITNET_NUM_THREADS": null,
+                        "OMP_NUM_THREADS": null,
+                        "OPENBLAS_NUM_THREADS": null,
+                        "MKL_NUM_THREADS": null,
+                        "NUMEXPR_NUM_THREADS": null
+                    },
+                    "process_affinity_mask": "0xff",
+                    "affinity_classification": null,
+                    "affinity_classification_status": "not_exposed",
+                    "windows_power_scheme": "Balanced",
+                    "windows_power_scheme_status": "measured",
+                    "ac_battery_state": "AC",
+                    "ac_battery_state_status": "measured",
+                    "thermal_availability": "not_exposed",
+                    "temperature_status": "not_exposed",
+                    "cpu_utilization_status": "not_exposed",
+                    "frequency_or_throttle_status": "not_exposed"
+                },
                 "quality_summary": {"passed": true},
                 "determinism": {
                     "passed": true,
@@ -22677,7 +22934,9 @@ mod tests {
                         "prompt_index": 0,
                         "case_id": "ask_short_math",
                         "fallback_used": false,
+                        "prompt_token_count": 8,
                         "generated_tokens": 4,
+                        "generated_token_ids": [1, 2, 3, 4],
                         "quality": {"passed": true},
                         "timing": {
                             "model_load_ms": 0.0,
@@ -22693,7 +22952,9 @@ mod tests {
                         "prompt_index": 1,
                         "case_id": "ask_short_math",
                         "backend": {"fallback_used": false},
+                        "prompt_token_count": 8,
                         "generated_tokens": 4,
+                        "generated_token_ids": [1, 2, 3, 4],
                         "quality": {"passed": true},
                         "timing": {
                             "model_load_ms": 0.0,
@@ -22720,11 +22981,14 @@ mod tests {
         assert!(receipt.resident_ready, "{:?}", receipt.gaps);
         assert_eq!(receipt.artifact_kind, "lunar_lake_cpu_slm_resident_session");
         assert_eq!(receipt.backend.selected_backend, "cpu-rust");
-        assert_eq!(receipt.execution_context.thread_count, None);
-        assert_eq!(
-            receipt.execution_context.power_scheme_status,
-            "not_exposed_in_slm_cpu_warm_session"
-        );
+        assert_eq!(receipt.schema_version, "1.2.0");
+        assert_eq!(receipt.execution_context.requested_thread_count, None);
+        assert_eq!(receipt.execution_context.effective_thread_count, Some(4));
+        assert_eq!(receipt.execution_context.thread_count, Some(4));
+        assert_eq!(receipt.execution_context.windows_power_scheme.as_deref(), Some("Balanced"));
+        assert_eq!(receipt.execution_context.windows_power_scheme_status, "measured");
+        assert_eq!(receipt.execution_context.ac_battery_state.as_deref(), Some("AC"));
+        assert_eq!(receipt.execution_context.ac_battery_state_status, "measured");
         assert_eq!(receipt.resident_session.model_loaded_once, Some(true));
         assert_eq!(receipt.resident_session.tokenizer_loaded_once, Some(true));
         assert_eq!(
@@ -22754,7 +23018,10 @@ mod tests {
         assert_eq!(profile.phase_timings_ms.detokenize_ms.exposure, "not_exposed");
         assert_eq!(profile.phase_timings_ms.prompt_render_ms.exposure, "not_exposed");
         assert_eq!(profile.phase_timings_ms.quality_gate_ms.exposure, "not_exposed");
-        assert_eq!(profile.prompt_token_count.exposure, "not_exposed");
+        assert_eq!(profile.prompt_token_count.exposure, "measured");
+        assert_eq!(profile.prompt_token_count.summary.mean, Some(8.0));
+        assert_eq!(profile.generated_token_ids_available, Some(true));
+        assert_eq!(profile.generated_token_ids_source, "slm_warm_session_generated_ids");
         assert_eq!(profile.decode_tokens_per_s_mean, Some(8.0 / 0.084));
         assert_eq!(profile.cold_to_resident_total_ratio, Some(200.0 / 90.0));
         assert!(profile.blockers.is_empty());
@@ -22967,6 +23234,31 @@ mod tests {
                 "selected_backend": "cpu-rust",
                 "runtime_api": "cpu",
                 "fallback_used": false,
+                "execution_context": {
+                    "requested_thread_count": null,
+                    "effective_thread_count": 4,
+                    "thread_count": 4,
+                    "thread_env": {
+                        "RAYON_NUM_THREADS": null,
+                        "BITNET_CPU_THREADS": null,
+                        "BITNET_NUM_THREADS": null,
+                        "OMP_NUM_THREADS": null,
+                        "OPENBLAS_NUM_THREADS": null,
+                        "MKL_NUM_THREADS": null,
+                        "NUMEXPR_NUM_THREADS": null
+                    },
+                    "process_affinity_mask": "0xff",
+                    "affinity_classification": null,
+                    "affinity_classification_status": "not_exposed",
+                    "windows_power_scheme": "Balanced",
+                    "windows_power_scheme_status": "measured",
+                    "ac_battery_state": "AC",
+                    "ac_battery_state_status": "measured",
+                    "thermal_availability": "not_exposed",
+                    "temperature_status": "not_exposed",
+                    "cpu_utilization_status": "not_exposed",
+                    "frequency_or_throttle_status": "not_exposed"
+                },
                 "quality_summary": {"passed": true},
                 "determinism": {
                     "passed": true,
@@ -22988,14 +23280,16 @@ mod tests {
                 },
                 "model": {"family": "qwen", "architecture": "qwen2", "quant_format": "Q8_0", "tokenizer": "tokenizer.json"},
                 "generation": {"prompt_template": "qwen2.5"},
-                "session": {"model_loaded_once": true, "tokenizer_loaded_once": true, "prompt_count": 2},
+                "session": {"reuse_scope": "resident_session", "model_loaded_once": true, "tokenizer_loaded_once": true, "prompt_count": 2},
                 "timing": {"model_load_ms": 100.0, "tokenizer_load_ms": 10.0},
                 "prompts": [
                     {
                         "prompt_index": 0,
                         "case_id": "ask_short_math",
                         "fallback_used": false,
+                        "prompt_token_count": 8,
                         "generated_tokens": 4,
+                        "generated_token_ids": [1, 2, 3, 4],
                         "quality": {"passed": true},
                         "timing": {"model_load_ms": 0.0, "tokenizer_load_ms": 0.0, "total_ms": 80.0, "time_to_first_token_ms": 30.0, "decode_total_ms": 40.0, "tokenize_ms": 2.0}
                     },
@@ -23003,7 +23297,9 @@ mod tests {
                         "prompt_index": 1,
                         "case_id": "ask_short_math",
                         "fallback_used": false,
+                        "prompt_token_count": 8,
                         "generated_tokens": 4,
+                        "generated_token_ids": [1, 2, 3, 4],
                         "quality": {"passed": true},
                         "timing": {"model_load_ms": 0.0, "tokenizer_load_ms": 0.0, "total_ms": 100.0, "time_to_first_token_ms": 40.0, "decode_total_ms": 44.0, "tokenize_ms": 3.0}
                     }

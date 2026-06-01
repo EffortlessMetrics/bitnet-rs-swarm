@@ -28,8 +28,8 @@ Existing artifacts prove useful surrounding facts, but they do not satisfy
   evidence.
 
 Do not tune CPU defaults, pin affinity by default, or claim a CPU speedup from
-the current evidence. The next implementation should be a small measurement
-receipt/harness that records thread count, Windows scheduling context, power
+the current evidence. The next physical run should use enriched warm-session
+source receipts that record thread count, Windows scheduling context, power
 state, and resident dense Qwen phase timing across a fixed matrix.
 
 [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
@@ -128,11 +128,21 @@ source receipts with:
 
 Raw `bitnet slm-warm-session --threads <N>` receipts are therefore useful
 measurement inputs, but they are not validator-ready matrix inputs by
-themselves. The current aggregate receipt has `artifact_kind=slm_cpu_warm_session`,
-records `cpu.threads`, and proves one model/tokenizer load for the warm-session
-process, but it does not emit the `execution_context` block required by the
-matrix builder, does not capture thread environment or process affinity, and
-records power/thermal state as `not_sampled_in_slm_cpu_warm_session`.
+themselves unless they are produced by a version that records the source
+context required by #1201. Current enriched receipts keep
+`artifact_kind=slm_cpu_warm_session`, record `cpu.threads`, emit
+`execution_context.requested_thread_count`, `effective_thread_count`,
+`thread_env`, process affinity, Windows power scheme, AC/battery state, and
+measured-or-unavailable telemetry statuses, and carry direct
+`prompts[].generated_token_ids` plus `prompts[].prompt_token_count` into the
+resident-session summary.
+
+The enrichment is still only a source-receipt bridge. It does not run the
+default / 1-thread / 4-thread / 8-thread physical matrix, does not tune CPU
+defaults, and does not change route policy. Windows power and AC/battery fields
+must be measured during the physical run; unavailable affinity classification,
+thermal, utilization, and frequency/throttle fields may be marked
+`not_exposed`, but the status fields must be present.
 
 The existing committed
 `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json`
@@ -143,21 +153,15 @@ remain `not_exposed`, generated-token visibility is only determinism-group
 stability unless a source is recorded explicitly, and default/1/4/8 variants do
 not exist as separate source receipts.
 
-The next implementation should therefore be a source wrapper or enrichment path
-that emits validator-ready `lunar_lake_cpu_slm_resident_session` receipts per
-variant. It can reuse `slm-warm-session` as the execution primitive, but it
-must add the #1201 execution-context, telemetry, direct-token-source, and claim
-boundary fields before the #1071 physical matrix run is attempted.
+The next physical step should therefore produce one enriched
+`slm_cpu_warm_session` receipt per variant, convert each one with
+`lunar-lake cpu-slm-resident-session`, and only then aggregate them with
+`lunar-lake cpu-slm-thread-core-matrix`.
 
-The next implementation should add or prove one narrow source surface before
-the physical default / 1-thread / 4-thread / 8-thread matrix is attempted:
-
-- a wrapper around `slm-warm-session` that records the required #1071 context
-  per variant;
-- an enrichment path for an existing resident-session receipt that adds the
-  missing thread, power, telemetry, affinity, and unavailable-field statuses; or
-- a fixture-only guard proving which source-receipt fields are mandatory before
-  the aggregate builder accepts them.
+The source enrichment path now exists for new receipts. The remaining work is
+to collect physical default / 1-thread / 4-thread / 8-thread source receipts
+on Lunar Lake and confirm that the resident-session conversion preserves the
+required context for the matrix validator.
 
 Do not use #1201 to tune CPU defaults, promote OpenVINO CPU, compare speedups,
 or run the physical matrix. It is the evidence-source contract needed before
