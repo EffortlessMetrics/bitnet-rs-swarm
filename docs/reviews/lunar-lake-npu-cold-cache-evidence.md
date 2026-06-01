@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
-Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
+Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162), [#1189](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189)
+Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1191](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1191)
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
 
@@ -38,9 +38,13 @@ boundaries. The 2026-06-01 rerun provides a current diagnostic cache snapshot
 package, but it still uses timing-derived cache classification and does not
 expose direct runtime cache-hit truth. #1162 is closed by #1163 after the
 warm-resident validator started enforcing the
-resident-session acceptance boundary. Keep any future follow-up limited to the
-specific cache, phase, resident, or validation gap being measured instead of
-widening this review into route policy.
+resident-session acceptance boundary. #1189 is closed by #1191 after the
+existing OpenVINO GenAI phase receipt path gained a `host_phase_timing` block
+and validator guard. That closes the immediate host phase schema/guard gap, but
+does not add physical timing evidence, direct runtime cache-hit truth, or route
+promotion evidence. Keep any future follow-up limited to the specific cache,
+phase, resident, or validation gap being measured instead of widening this
+review into route policy.
 
 ## Current Evidence Snapshot
 
@@ -82,7 +86,7 @@ Before any NPU cold/cache route-policy PR, one package must record:
 | Model/export identity | Source model, OpenVINO IR XML/BIN hashes, tokenizer hashes, OpenVINO version, driver/device context, and cache key basis |
 | Cache setup | Cache directory, enabled/writable status, permissions, pre-run snapshot, after-first-process snapshot, after-second-process snapshot |
 | Cache-hit evidence | Runtime metric, runtime log, stable file reuse, or explicit `not_exposed`; timing-derived classification must say so |
-| Phase split | Pipeline construction, OpenVINO load time, cache lookup or `not_exposed`, tokenizer/setup or `not_exposed`, first ask, TTFT, decode/generation, and total response |
+| Phase split | Pipeline construction, OpenVINO load time, cache lookup or `not_exposed`, tokenizer/setup, prompt render/tokenization, first ask, TTFT, decode/generation, receipt overhead, telemetry timing, and total response |
 | Process split | First process cache-miss and second process cache-reuse runs recorded separately |
 | Quality | Answer gate and generated-token visibility for both processes |
 | Drift and fallback | Fallback false, selected device stable, generated-token source explicit, no hidden CPU/GPU fallback |
@@ -148,12 +152,16 @@ artifact is committed and the evidence remains diagnostic. No follow-up PR is
 needed unless a newly exposed direct cache metric, runtime log, or stricter
 missing field creates a specific gap.
 
-The cache-truth guard and direct-validation alignment have already landed: #1145
-aligned current receipts for direct validation, and existing validator coverage
-closed #1154 by enforcing the timing-derived-versus-runtime-cache-truth
-boundary. The next small implementation PR, if needed, should be scoped through
-the #1119 parent issue or a new precise cache-evidence issue, not another broad
-rerun of #1160. It should preserve these constraints when new cache evidence is
+The cache-truth guard, direct-validation alignment, and host phase timing guard
+have already landed: #1145 aligned current receipts for direct validation,
+existing validator coverage closed #1154 by enforcing the
+timing-derived-versus-runtime-cache-truth boundary, and #1191 closed #1189 by
+adding `host_phase_timing` value/status/source entries plus fail-closed
+validation for sentinels, coarse-versus-narrow phase ownership, and
+timing-derived cache status. The next small implementation PR, if needed,
+should be scoped through the #1119 parent issue or a new precise
+cache-evidence issue, not another broad rerun of #1160 or repeat of the #1189
+schema guard. It should preserve these constraints when new cache evidence is
 added or when a newly exposed field creates a more specific gap:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
@@ -166,6 +174,10 @@ added or when a newly exposed field creates a more specific gap:
   present;
 - preserves fallback, answer-gate, generated-token, route identity, and claim
   boundary fields.
+
+Do not treat the #1191 receipt surface as a physical evidence run. Future
+route-policy work still needs fresh receipts with measured or explicitly
+unavailable phase fields for the target model/export/runtime/device/profile.
 
 `AUTO` selected-device work is intentionally separate: #1149 owns receipts or
 validators that prove what `AUTO` actually executed, with the current contract

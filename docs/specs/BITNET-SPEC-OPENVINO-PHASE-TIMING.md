@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-DENSE-SLM](BITNET-SPEC-OPENVINO-DENSE-SLM.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
-Linked PRs: n/a
+Linked issues: [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1189](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189)
+Linked PRs: [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1191](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1191)
 Support-tier impact: no promotion; defines phase timing receipt gates
 Policy impact: no policy exception
 
@@ -126,7 +126,10 @@ pipeline construction, model compile, cache lookup, and tokenizer load.
 For `LNL258V-NPU-PHASE-001`, an NPU phase-timing receipt must assign each
 timer to exactly one owner or mark it unavailable. The receipt must not use a
 coarse timer as proof for a narrower internal OpenVINO phase unless the source
-is explicit.
+is explicit. #1191 implements the current host-owned receipt-builder and
+validator guard for these value/status/source fields; that implementation is
+schema support only and does not create new physical timing evidence or route
+promotion.
 
 | Receipt field | Owner and timing scope | Accepted source | If unavailable |
 | --- | --- | --- | --- |
