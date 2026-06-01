@@ -8636,6 +8636,10 @@ fn validate_lunar_lake_openvino_backend_object(object: &Value, path: &str) -> Re
         }
         "openvino-npu" => require_runtime_device_prefix(object, "NPU", path)?,
         "openvino-cpu-gpu-npu" => {}
+        other if lunar_lake_openvino_auto_marker(other) => {
+            require_string_eq(object, "auto_scope", "openvino_runtime_auto")
+                .map_err(|err| anyhow!("{path}: {err}"))?;
+        }
         other if other.starts_with("openvino") => {
             return Err(anyhow!("{path} has unsupported OpenVINO backend `{other}`"));
         }
@@ -8696,7 +8700,8 @@ fn validate_lunar_lake_openvino_auto_selected_device(object: &Value, path: &str)
         || lunar_lake_openvino_field_is_auto(object, "openvino_requested_device")
         || lunar_lake_openvino_field_is_auto(object, "requested_runtime_device")
         || lunar_lake_openvino_field_is_auto(object, "runtime_requested_device")
-        || lunar_lake_openvino_field_is_auto(object, "requested_backend");
+        || lunar_lake_openvino_field_is_auto(object, "requested_backend")
+        || lunar_lake_openvino_field_is_auto(object, "selected_backend");
 
     if !runtime_auto_requested {
         return Ok(());
@@ -8711,6 +8716,14 @@ fn validate_lunar_lake_openvino_auto_selected_device(object: &Value, path: &str)
     if !lunar_lake_openvino_auto_has_selected_device_visibility(object) {
         return Err(anyhow!(
             "{path} OpenVINO runtime AUTO evidence must record execution_devices or selected_device_visibility_status=not_exposed"
+        ));
+    }
+
+    if lunar_lake_openvino_field_is_auto(object, "selected_backend")
+        && lunar_lake_openvino_auto_claims_selected_device_proof(object)
+    {
+        return Err(anyhow!(
+            "{path} selected_backend=openvino-auto is diagnostic only; record the actual selected backend before claiming selected-device proof or promotion"
         ));
     }
 
@@ -10185,6 +10198,19 @@ mod tests {
         })
     }
 
+    fn minimal_lunar_lake_openvino_runtime_auto_receipt() -> Value {
+        let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
+        receipt["requested_backend"] = json!("openvino-auto");
+        receipt["selected_backend"] = json!("openvino-auto");
+        receipt["runtime_device"] = json!("AUTO");
+        receipt["route_id"] = json!("openvino_runtime_auto_diagnostic");
+        receipt["backend_lane"] = json!("dense_slm_openvino_runtime_auto");
+        receipt["selected_kernel_or_runtime"] = json!("openvino-genai-llmpipeline-auto");
+        receipt["auto_scope"] = json!("openvino_runtime_auto");
+        receipt["requested_openvino_device"] = json!("AUTO");
+        receipt
+    }
+
     #[test]
     fn lunar_lake_openvino_validator_accepts_candidate_gpu_receipt() {
         let result =
@@ -10462,6 +10488,24 @@ mod tests {
         receipt["selected_device_visibility_status"] = json!("not_exposed");
         let result = validate_lunar_lake_openvino_receipt_json(&receipt);
         assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_runtime_auto_backend_not_exposed_as_diagnostic() {
+        let mut receipt = minimal_lunar_lake_openvino_runtime_auto_receipt();
+        receipt["selected_device_visibility_status"] = json!("not_exposed");
+        receipt["promotion_status"] = json!("diagnostic");
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_runtime_auto_backend_promotion() {
+        let mut receipt = minimal_lunar_lake_openvino_runtime_auto_receipt();
+        receipt["execution_devices"] = json!(["GPU.0"]);
+        receipt["promotion_status"] = json!("promoted");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("selected_backend=openvino-auto"), "got: {err}");
     }
 
     #[test]
