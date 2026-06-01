@@ -26,7 +26,7 @@ jobs:
   plan:
     name: PR Plan
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
@@ -83,6 +83,13 @@ jobs:
         with:
           toolchain: "1.95.0"
 
+      # Warm the xtask build so the cold compile does not blow the step timeout.
+      - name: Cache Rust dependencies
+        if: steps.no_rust_fast_path.outputs.fast_path != 'true'
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
+        with:
+          shared-key: pr-plan-xtask
+
       - name: Bootstrap native build tools
         if: steps.no_rust_fast_path.outputs.fast_path != 'true'
         uses: ./.github/actions/bootstrap-native-build-tools
@@ -90,7 +97,7 @@ jobs:
       - name: Build PR plan (xtask ci plan)
         if: steps.no_rust_fast_path.outputs.fast_path != 'true'
         id: plan
-        timeout-minutes: 10
+        timeout-minutes: 25
         env:
           LABELS: ${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.labels.*.name) || '[]' }}
         run: |

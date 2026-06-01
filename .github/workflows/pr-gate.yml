@@ -62,6 +62,13 @@ jobs:
         with:
           toolchain: "1.95.0"
 
+      # Warm the xtask build so the plan-compute step does not pay a full cold
+      # compile (the dominant cause of the 'Build PR gate CI plan' timeout).
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
+        with:
+          shared-key: pr-gate-xtask
+
       - name: Bootstrap native build tools
         uses: ./.github/actions/bootstrap-native-build-tools
 
@@ -124,7 +131,7 @@ jobs:
           sed -n '1,200p' changed.txt
 
       - name: Build PR gate CI plan
-        timeout-minutes: 10
+        timeout-minutes: 25
         env:
           LABELS: ${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.labels.*.name) || '[]' }}
         run: |
