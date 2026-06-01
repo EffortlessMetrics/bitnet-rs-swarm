@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
-Linked PRs: n/a
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -24,7 +24,8 @@ current:
 - #1064 for battery-mode `low_power` evidence;
 - #1119 for NPU cold/cache decomposition;
 - #1120 for NPU warm-resident acceptance, now closed as defined in
-  [lunar-lake-npu-warm-resident-acceptance.md](lunar-lake-npu-warm-resident-acceptance.md);
+  [lunar-lake-npu-warm-resident-acceptance.md](lunar-lake-npu-warm-resident-acceptance.md),
+  with the #1162 follow-up guard landed by #1163;
 - #1139 for the NPU phase-timing schema contract, now closed by #1141, before
   host setup, tokenizer/template, pipeline, compile/load/cache, first-ask,
   warm-ask, or receipt-overhead timers are used for route decisions;
@@ -33,19 +34,25 @@ current:
   [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
 - #1122 and #1132 for the CPU route posture decision, with #1069 and #1071
   as live measurement follow-ups;
-- #1123 for generated-token visibility rules, now defined in
-  [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
-- #1135 for route ID and canonical proof-family mapping, now landed by #1137
+- #1123 for generated-token visibility rules, now closed by #1138 and defined
+  in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
+- #1135 for route ID and canonical proof-family mapping, now closed by #1137
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
-  as route-policy evidence, with the current evidence contract recorded in
-  [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md).
+  as route-policy evidence, with the current evidence contract recorded by
+  #1158 in
+  [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
+  and the runtime `AUTO` proof-boundary guard landed by #1159;
 - #1154 / existing validator coverage for the NPU cache-classification guard:
   timing-derived cache evidence stays diagnostic and cannot become direct
   runtime cache-hit truth without direct runtime evidence fields.
 - #1156 for the CPU comparison qualification guard: model-format or timing-scope
   mismatch keeps `benchmark_qualified=false` while preserving diagnostic CPU
   candidate context.
+- #1160 for the current OpenVINO NPU cache-rerun evidence package;
+- #1165 for operator receipt coverage closeout, which leaves the remaining
+  operator-appliance gaps in #1064, #1069/#1071, #1149, and #1160 rather than a
+  new broad route-policy or receipt cleanup.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -58,18 +65,24 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | Profile | Current promoted route | Review posture |
 | --- | --- | --- |
 | `regression_tiny` | `dense_slm_default_cpu` | keep CPU as cheap strict regression route |
-| `ask_short` | `dense_slm_openvino_gpu_candidate` | keep while #1121 confirms corpus, timing, fallback, and token visibility remain valid |
-| `ask_normal` | `dense_slm_openvino_gpu_candidate` | keep while #1121 confirms corpus, timing, fallback, and token visibility remain valid |
+| `ask_short` | `dense_slm_openvino_gpu_candidate` | keep after #1121 confirmed corpus, timing, fallback, and token visibility remain valid |
+| `ask_normal` | `dense_slm_openvino_gpu_candidate` | keep after #1121 confirmed corpus, timing, fallback, and token visibility remain valid |
 | `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
 | `decode_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
 | `structured` | `dense_slm_default_cpu` | keep CPU until structured OpenVINO evidence has its own promotion package |
 | `low_power` | none | blocked by #1064 until real battery-mode route samples and energy proxy exist |
-| `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only; does not imply cold one-off or low-power promotion |
+| `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only after #1163 guarded the acceptance boundary; does not imply cold one-off or low-power promotion |
 | `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence |
 
 NPU phase-timing schema work is defined by #1139/#1141 and must not become a
 route-policy shortcut. New timer fields can support review only after their
 scope, source, unavailable handling, and claim boundary are explicit.
+
+Recent guard closeouts make the current route posture easier to preserve but do
+not change it. #1159 blocks ambiguous runtime `AUTO` selected-device proof,
+while #1163 blocks incomplete `warm_resident` NPU evidence, and #1165 confirms
+that operator receipt follow-ups are now physical evidence or deferred
+measurement items rather than another route-policy cleanup.
 
 The ledger's route IDs remain campaign-local names. The route-ID proof-family
 map records how future OpenVINO receipts and validators should relate those
@@ -193,30 +206,36 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 ## Next Work
 
-- Future token-visibility schema or validator work should use the #1123
+- Future token-visibility schema or validator work should use the #1123/#1138
   strategy before token-ID gaps become one-off wording in each receipt.
 - #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
   evidence map; future GPU mutation needs a new concrete regression or review
   finding.
 - If `prefill_heavy` or `decode_heavy` become active route-review targets,
   open a focused profile-phase issue instead of bundling them into #1121.
-- #1120 has defined the NPU `warm_resident` route acceptance rule; future
-  resident-session policy changes should cite that review directly.
+- #1120 has defined the NPU `warm_resident` route acceptance rule, and
+  #1162/#1163 landed the current guard. Future resident-session policy changes
+  should cite that review directly only if new evidence exposes a new gap.
 - Use the #1139/#1141 NPU phase-timing schema before host setup,
   tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
   receipt-overhead timings become route-policy evidence.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
   cold-start gates are accepted. The current cache-classification guard is
-  already covered by existing validator behavior and #1154 is closed.
+  already covered by existing validator behavior and #1154 is closed; #1160
+  owns the current cache-rerun evidence package.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
-- #1149 should own any `AUTO` selected-device receipt or validator follow-up;
+- #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
-  records the current fail-closed contract. Route policy must keep `AUTO`
-  diagnostic while selected-device proof is missing or ambiguous.
+  records the current fail-closed contract from #1158, and #1159 has landed the
+  validator guard. Route policy must keep `AUTO` diagnostic while
+  selected-device proof is missing or ambiguous.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
   work should focus on #1069/#1071 measurement or a newly exposed evidence gap,
   not another generic non-equivalence guard.
+- #1165 closed the current operator receipt follow-up review. Future operator
+  work should cite one of #1064, #1069/#1071, #1149, or #1160 rather than
+  opening another broad operator coverage cleanup.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
