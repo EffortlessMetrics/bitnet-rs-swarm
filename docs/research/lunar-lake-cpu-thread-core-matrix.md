@@ -99,6 +99,54 @@ Issue #1194 closed the aggregate matrix-builder contract, but it did not create 
 per-variant physical source receipts. #1201 is the current child issue for that
 gap.
 
+## Current Source-Surface Audit
+
+Current-main code inspection on 2026-06-01 keeps #1201 as a source-receipt
+contract issue, not a physical matrix issue.
+
+`lunar-lake cpu-slm-thread-core-matrix` currently accepts only per-variant
+source receipts with:
+
+- `artifact_kind=lunar_lake_cpu_slm_resident_session`;
+- required variants `default`, `threads_1`, `threads_4`, and `threads_8`;
+- resident readiness, resident session reuse, `model_loaded_once=true`, and
+  `tokenizer_loaded_once=true`;
+- requested/effective thread count fields, thread environment capture, process
+  affinity mask, honest affinity classification status, Windows power scheme,
+  and AC/battery state;
+- thermal availability, temperature status, CPU-utilization status, and
+  frequency/throttle status as measured-or-unavailable fields;
+- `regression_tiny`, `ask_short`, and `ask_normal` profiles with measured
+  prompt-token counts, generated-token counts, direct generated-token source,
+  passing answer gates, no fallback, and no model/tokenizer reload inside the
+  resident loop;
+- negative claim-boundary booleans for inference, route promotion, speedup,
+  power advantage, acceleration, Arc/NPU execution, BitNet QK256/I2_S behavior,
+  and hidden fallback.
+
+Raw `bitnet slm-warm-session --threads <N>` receipts are therefore useful
+measurement inputs, but they are not validator-ready matrix inputs by
+themselves. The current aggregate receipt has `artifact_kind=slm_cpu_warm_session`,
+records `cpu.threads`, and proves one model/tokenizer load for the warm-session
+process, but it does not emit the `execution_context` block required by the
+matrix builder, does not capture thread environment or process affinity, and
+records power/thermal state as `not_sampled_in_slm_cpu_warm_session`.
+
+The existing committed
+`ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json`
+has the accepted resident-session artifact kind and profile summaries, but it
+is still only a single historical thread context. It does not satisfy #1071
+because power scheme and AC/battery state are not measured, prompt-token counts
+remain `not_exposed`, generated-token visibility is only determinism-group
+stability unless a source is recorded explicitly, and default/1/4/8 variants do
+not exist as separate source receipts.
+
+The next implementation should therefore be a source wrapper or enrichment path
+that emits validator-ready `lunar_lake_cpu_slm_resident_session` receipts per
+variant. It can reuse `slm-warm-session` as the execution primitive, but it
+must add the #1201 execution-context, telemetry, direct-token-source, and claim
+boundary fields before the #1071 physical matrix run is attempted.
+
 The next implementation should add or prove one narrow source surface before
 the physical default / 1-thread / 4-thread / 8-thread matrix is attempted:
 
