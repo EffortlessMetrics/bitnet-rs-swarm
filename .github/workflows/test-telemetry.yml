@@ -37,7 +37,15 @@ env:
 jobs:
   route-test-telemetry:
     name: Route Test Telemetry
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -82,7 +90,15 @@ jobs:
     name: Test Telemetry (JUnit + slow tests)
     needs: route-test-telemetry
     if: needs.route-test-telemetry.outputs.selected == 'true'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 25
     continue-on-error: true
 

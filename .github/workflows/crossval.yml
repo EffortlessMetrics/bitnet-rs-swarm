@@ -71,7 +71,15 @@ jobs:
 
   check-trigger:
     name: Check Trigger Conditions
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 10
     outputs:
       should_run_lane_a: ${{ steps.check.outputs.should_run_lane_a }}
@@ -149,7 +157,15 @@ jobs:
 
   check-no-ffi:
     name: Check No-FFI Compilation
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 20
     # Always run this check (required status check)
 
@@ -203,7 +219,15 @@ jobs:
 
   check-llama-stub:
     name: Check STUB Mode (FFI Without Libs)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 20
     # Always run this check (required status check)
 
@@ -257,7 +281,15 @@ jobs:
     name: Lane B - llama.cpp Cross-Validation
     needs: [check-trigger, check-no-ffi, check-llama-stub]
     if: needs.check-trigger.outputs.should_run_lane_b == 'true'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 45
 
     steps:
@@ -417,7 +449,15 @@ jobs:
     name: Lane A - BitNet.cpp Cross-Validation
     needs: [check-trigger, check-no-ffi, check-llama-stub]
     if: needs.check-trigger.outputs.should_run_lane_a == 'true'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 60
     # Non-blocking: continue-on-error for weekly runs
     continue-on-error: ${{ github.event_name == 'schedule' }}
@@ -518,7 +558,15 @@ jobs:
     name: Cross-Validation Summary
     needs: [check-trigger, check-no-ffi, check-llama-stub, lane-b-llama, lane-a-bitnet]
     if: always()
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 15
     permissions:
       contents: read

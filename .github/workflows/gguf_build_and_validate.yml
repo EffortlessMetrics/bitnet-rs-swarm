@@ -54,7 +54,15 @@ env:
 jobs:
   build-validate:
     name: Export & Validate Clean GGUF
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 60
 
     steps:
@@ -247,7 +255,15 @@ jobs:
 
   quality-gate:
     name: Quality Gate
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 10
     needs: build-validate
     if: always()

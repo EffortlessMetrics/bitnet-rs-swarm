@@ -29,7 +29,15 @@ jobs:
   determine-versions:
     name: Determine BitNet.cpp Versions to Cache
     if: github.repository == 'EffortlessMetrics/BitNet-rs'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 10
     outputs:
       versions: ${{ steps.versions.outputs.versions }}
@@ -60,7 +68,15 @@ jobs:
     name: Build Cache for ${{ matrix.version }}
     needs: determine-versions
     if: github.repository == 'EffortlessMetrics/BitNet-rs'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -174,7 +190,15 @@ jobs:
   cleanup-old-cache:
     name: Cleanup Old Cache Images
     needs: [determine-versions, build-cache]
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 15
     if: always() && github.repository == 'EffortlessMetrics/BitNet-rs'
 
@@ -202,7 +226,15 @@ jobs:
   update-ci-cache-config:
     name: Update CI Cache Configuration
     needs: [determine-versions, build-cache]
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-heavy-medium
+        - trusted-pr
     timeout-minutes: 10
     if: success() && github.repository == 'EffortlessMetrics/BitNet-rs'
 
