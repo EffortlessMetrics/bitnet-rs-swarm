@@ -2,6 +2,8 @@
 
 Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071
 
+Runner contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186
+
 Research date: 2026-05-31
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
@@ -28,6 +30,10 @@ the current evidence. The next implementation should be a small measurement
 receipt/harness that records thread count, Windows scheduling context, power
 state, and resident dense Qwen phase timing across a fixed matrix.
 
+[#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
+owns that narrow runner and receipt-builder contract; #1071 remains the
+physical matrix evidence issue.
+
 ## Current Evidence Map
 
 | Artifact | What It Proves | Why It Is Not Enough |
@@ -41,6 +47,10 @@ state, and resident dense Qwen phase timing across a fixed matrix.
 
 There is no current Lunar Lake command or receipt builder that emits
 `lunar-lake-cpu-slm-thread-core-matrix.json`.
+
+[#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
+tracks the narrow command and receipt-builder contract needed before physical
+matrix evidence can close #1071.
 
 Relevant existing surfaces do not close this gap:
 
@@ -188,6 +198,8 @@ The issue can close only when:
 - optional affinity variants include honest mask and classification evidence;
 - the receipt says this is measurement context, not CPU speedup, default-tuning,
   route-policy, power, accelerator, or BitNet proof.
+- the runner or receipt-builder surface has fail-closed fixture validation for
+  missing required variants, missing fallback status, and non-resident samples.
 
 ## Claim Boundary
 
