@@ -304,20 +304,27 @@ It records the required boundary fields:
 - pipeline construct and generation timings;
 - cache directory and cache status.
 
-The diagnostic receipts validate and preserve the fail-closed result: runtime
-`AUTO` can be requested and can pass the bounded answer gates, but the current
-OpenVINO GenAI receipt source still cannot expose which execution device the
-AUTO plugin selected internally.
+The original diagnostic receipts validate and preserve the fail-closed result:
+runtime `AUTO` can be requested and can pass the bounded answer gates, but the
+public Python OpenVINO GenAI receipt source still cannot expose which execution
+device the AUTO plugin selected internally through a normal property accessor.
+
+The #1212 debug-log follow-up adds a narrower source for the same phase tuple:
+`ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-evidence-20260601.json`
+records `OPENVINO_LOG_LEVEL=2` stdout/stderr capture where the OpenVINO GenAI
+stateful LLM model block prints `EXECUTION_DEVICES: GPU.0` and resolves it to
+`Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)`. The same generated phase receipt
+still records `selected_device_visibility_status=not_exposed` because the
+script has no public GenAI property accessor.
 
 Promotion can only use `AUTO` evidence if it proves the selected device and
-fallback behavior for the target profile. If selected-device visibility is
-missing, keep `AUTO` as diagnostic evidence only. The next useful #1149 PR
-needs a newly identified OpenVINO API, property, plugin log, or receipt source
-that can expose actual selected-device identity for the same tuple. Official
-OpenVINO guidance points at the compiled-model `EXECUTION_DEVICES` property,
-but the current Python `openvino_genai.LLMPipeline` surface does not expose the
-underlying compiled model or a generic property accessor, so a future PR must
-first bridge that API gap or document that it remains unavailable.
+fallback behavior for the target profile. The debug-log source can support
+selected-device review for the observed stateful LLM model block, but it does
+not promote `AUTO`, NPU, low-power routing, cold one-off routing, power
+advantage, speedup, native accelerator execution, or BitNet QK256/I2_S
+behavior. The next useful #1149 step is a claim-boundary review or small
+schema/validator update that decides whether `genai_debug_log` is an accepted
+selected-device visibility source and how narrowly it must be represented.
 
 ## Tokenizer And Asset Reload Gap
 

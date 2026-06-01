@@ -7,24 +7,33 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
+Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1212](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1212), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
 Linked PRs: [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159)
 Support-tier impact: no promotion; review-only AUTO selected-device evidence contract
 Policy impact: no policy exception
 
 ## Recommendation
 
-Keep OpenVINO `AUTO` diagnostic until a receipt proves the device OpenVINO
-actually executed for every route-relevant phase.
+Keep OpenVINO `AUTO` out of route policy until selected-device evidence is
+route-reviewable for the exact profile and phase being claimed.
 
-This review records the #1149 evidence boundary only. It does not run
-inference, add an `AUTO` runtime command, refresh receipts, change route policy,
-promote NPU or GPU, claim speedup, claim power advantage, or add BitNet
+The #1212 debug-log measurement found one concrete selected-device source for
+the governed Qwen2.5 INT4_SYM GenAI `AUTO` tuple: the OpenVINO GenAI stateful
+LLM compiled-model debug dump records `EXECUTION_DEVICES: GPU.0` and resolves
+`GPU.0` to the Arc 140V iGPU. That is useful selected-device signal for the
+stateful LLM model block in that one diagnostic run. It is not a route-policy
+change, NPU proof, `low_power` evidence, power evidence, speedup evidence, or
+BitNet proof.
+
+This review records the #1149 evidence boundary and the #1212 diagnostic
+receipt package. It does not add an `AUTO` runtime command, change route
+policy, promote NPU or GPU, claim speedup, claim power advantage, or add BitNet
 QK256/I2_S behavior evidence.
 
 The review contract is now landed by #1158, and #1159 added the fail-closed
 receipt validator guard for runtime `AUTO` selected-device proof. Issue #1149
-remains open for actual runtime/physical `AUTO` measurement evidence.
+remains open for the parent decision on whether the `genai_debug_log` source
+is acceptable selected-device evidence and how narrowly it must be represented.
 
 The key distinction is:
 
@@ -49,6 +58,7 @@ OpenVINO runtime would select if `AUTO` were requested at the OpenVINO layer.
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-corpus-v2-gpu-npu-auto-20260601.json` | Runtime-layer `AUTO`, explicit `GPU.0`, and explicit `NPU` ran all corpus-v2 cases with no failed answer gates and direct generated-token IDs; `AUTO` selected-device proof remains false |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-phase-validation-20260601.json` and `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-corpus-v2-validation-20260601.json` | Both diagnostic packages validate under `lunar_lake_openvino_route_boundary` |
 | OpenVINO `AUTO` rejects the safe `EXECUTION_DEVICES` property probe in the 2026-06-01 diagnostic package | AUTO remains diagnostic even when answer gates pass |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-evidence-20260601.json` | #1212 reran the same GenAI phase tuple with `OPENVINO_LOG_LEVEL=2`; the stateful LLM model debug block exposes `EXECUTION_DEVICES: GPU.0` and `GPU.0: Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)`, while the generated phase receipt still records selected-device visibility as `not_exposed` because the public Python receipt source has no property accessor |
 
 ## 2026-06-01 Runtime AUTO Diagnostic Package
 
@@ -86,6 +96,47 @@ Treat this package as a diagnostic closeout for the currently exposed
 runtime-layer `AUTO` surface, not as selected-device proof. It does not support
 GPU promotion, NPU promotion, `low_power`, speedup, power advantage, native
 accelerator execution, or BitNet QK256/I2_S claims.
+
+## 2026-06-01 GenAI Debug-Log Measurement
+
+Issue #1212 tested the source found by #1211: OpenVINO GenAI's stateful LLM
+pipeline can print compiled-model properties when `OPENVINO_LOG_LEVEL` is a
+numeric value above warning. The measurement used:
+
+```text
+OPENVINO_LOG_LEVEL=2
+.venv\Scripts\python.exe scripts\openvino_genai_phase_receipt.py --model-dir models\openvino\qwen2.5-0.5b-instruct-int4-sym --devices AUTO --json-out target\bitnet\receipts\lunar-lake\openvino-auto-debug-log-phase-20260601.json
+```
+
+Committed evidence:
+
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-phase-20260601.json`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-stdout-stderr-20260601.txt`
+- `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-auto-debug-log-evidence-20260601.json`
+
+The generated phase receipt records OpenVINO
+`2026.2.0-21903-52ddc073857-releases/2026/2`, OpenVINO GenAI
+`2026.2.0.0-3121-adf73e80e66`, available devices `CPU`, `GPU`, and `NPU`, the
+same Qwen2.5 INT4_SYM export, runtime device `AUTO`, `fallback_used=false`, and
+three passing bounded answer gates.
+
+The debug log adds the missing selected-device signal for the stateful LLM
+model block:
+
+```text
+Model: Stateful LLM model
+  EXECUTION_DEVICES: GPU.0
+  MULTI_DEVICE_PRIORITIES: GPU.0,CPU
+EXECUTION_DEVICES:
+ GPU.0: Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)
+```
+
+The same log also records tokenizer and detokenizer blocks on CPU and an
+earlier paged-attention probe block on CPU. Therefore the honest interpretation
+is narrow: the GenAI debug log exposes the stateful LLM model execution device
+for this runtime `AUTO` diagnostic run. It does not by itself prove
+phase-by-phase route policy, power, low-power, NPU, native accelerator, or
+BitNet behavior.
 
 ## Official API Boundary
 
@@ -140,13 +191,17 @@ selected-device identity for the governed Qwen export/profile/cache tuple.
   They are not runtime `AUTO` selected-device evidence for the governed Qwen
   export, prompt, generation config, answer gate, and cache settings.
 
-After the 2026-06-01 diagnostic package, another #1149 PR should only proceed
-if it identifies a different OpenVINO API, a way to query the GenAI
-pipeline's compiled model, a lower-level equivalent run that preserves the same
-tuple, a runtime property, a supported plugin log, or another receipt source
-that can expose actual selected-device identity for the same tuple. A generic
-schema, validator, route-policy, benchmark, or repeat diagnostic PR is not the
-next useful step while selected-device visibility remains `not_exposed`.
+After the #1212 debug-log package, another #1149 PR should only proceed if it
+does one of two narrow things:
+
+- reviews whether `selected_device_visibility_source=genai_debug_log` is
+  acceptable selected-device evidence for stateful GenAI LLM route receipts; or
+- wires that source into receipt/schema/validator handling without changing
+  route policy.
+
+A generic schema, route-policy, benchmark, or repeat diagnostic PR is not the
+next useful step. The parent question is now claim-boundary review, not another
+search for a source.
 
 ## Required Evidence Package
 
@@ -176,9 +231,11 @@ The receipt or review package must record:
 | Cache | Cache directory, cache settings, cache classification source, and whether classification is runtime truth or diagnostic |
 | Claim boundary | Exact statement of what the receipt does not prove |
 
-If OpenVINO does not expose execution devices, record `not_exposed`. That still
-creates useful diagnostic evidence, but it does not prove selected-device
-identity and cannot support a route promotion.
+If OpenVINO does not expose execution devices, record `not_exposed`. If a
+debug log exposes them, record the source and the model block it applies to.
+That can support selected-device review for the observed block, but it still
+cannot support route promotion unless the profile's other quality, timing,
+fallback, power, and claim-boundary gates pass.
 
 ## Fail-Closed Conditions
 
@@ -234,20 +291,12 @@ QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The review and validator guard are already landed by #1158/#1159. The receipt
-sources now have a diagnostic `--devices AUTO` shape that records
-`not_exposed` instead of silently implying selected-device proof. The
-2026-06-01 diagnostic package exercises that shape on the 258V host and
-preserves the fail-closed result.
-
-The next useful PR is not another generic runtime `AUTO` rerun. It should be
-opened only if a concrete OpenVINO selected-device source is found. The most
-promising source to investigate is the official compiled-model
-`EXECUTION_DEVICES` property path, but the PR must also show how that path maps
-back to the GenAI `LLMPipeline` tuple or explicitly document that it cannot.
-That PR should keep the same Qwen export/profile/cache tuple and replace the
-current `not_exposed` visibility with actual selected-device evidence, or prove
-that a newly inspected source is also unavailable.
+The next useful PR after the #1212 receipt package is a review or small schema
+PR that decides whether `genai_debug_log` is an accepted selected-device
+visibility source for the stateful LLM model block. If accepted, validators and
+receipts should distinguish it from a public API property accessor and keep the
+source scoped to the captured log block. If rejected, runtime `AUTO` remains
+diagnostic despite the log signal.
 
 Do not open another generic schema or validator PR unless the measurement run
 exposes a missing or ambiguous field that #1159 cannot represent. Do not
@@ -259,11 +308,10 @@ unrelated hardware lanes.
 
 This review does not add:
 
-- new Lunar Lake inference;
 - new generated dashboards;
 - route-policy mutation;
 - route promotion or revocation;
-- OpenVINO runtime `AUTO` selected-device proof;
+- broad OpenVINO runtime `AUTO` selected-device proof;
 - GPU, NPU, or `low_power` promotion;
 - speedup or power-advantage evidence;
 - battery-mode evidence;
