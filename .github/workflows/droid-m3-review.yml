@@ -63,7 +63,7 @@ jobs:
       - name: Configure MiniMax M3 BYOK
         shell: bash
         env:
-          MINIMAX: ${{ secrets.MINIMAX }}
+          MINIMAX: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           set -euo pipefail
 
@@ -134,13 +134,13 @@ jobs:
       - name: Droid M3 review
         uses: EffortlessSteven/droid-action@e1b7d598ff1eccee505e1cc9699186190a958a14  # proven Bun fork SHA
         env:
-          MINIMAX: ${{ secrets.MINIMAX }}
+          MINIMAX: ${{ secrets.MINIMAX_API_KEY }}
           ANTHROPIC_AUTH_TOKEN: ""
           ANTHROPIC_BASE_URL: ""
           OPENAI_API_KEY: ""
           OPENAI_BASE_URL: ""
         with:
-          factory_api_key: ${{ secrets.DROID }}
+          factory_api_key: ${{ secrets.FACTORY_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           settings: .factory/byok-settings.json
           automatic_review: true
