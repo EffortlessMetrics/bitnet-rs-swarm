@@ -32,9 +32,19 @@ Committed receipts show:
 - the historical cache experiment reduced a second OpenVINO GenAI process using
   the same cache directory from 28.104s to 0.873s, and the #1160 / #1174 rerun
   records a smaller but still material reduction from 11.164s to 0.945s;
+- the 2026-06-01 current-main cache probe records a first explicit-NPU
+  process at 10.839s pipeline construction and a second process using the same
+  cache directory at 0.893s, with passing answer gates, `fallback_used=false`,
+  direct generated-token IDs, timing-derived cache evidence, and no direct
+  runtime cache-hit metric exposed;
 - a same-process resident session completed 30/30 warm asks with
   `fallback_used=false`, no answer/token/route drift, 764ms mean generation
   wall time, and 221ms mean OpenVINO time to first token;
+- a paired current-main resident diagnostic using the same cache directory
+  completed 10/10 warm asks with `fallback_used=false`, no answer/token/route
+  drift, 315ms mean generation wall time, and 161ms mean OpenVINO time to first
+  token. Treat it as diagnostic cache/resident context, not as a replacement
+  for the 30/30 warm-resident acceptance receipt;
 - the resident receipt also recorded about 692 MB of resident memory growth
   after pipeline construction and warm-loop execution.
 - #1189 / #1191 added the host-side `host_phase_timing` receipt surface and
@@ -64,7 +74,9 @@ Keep that boundary until the measurements below are collected and reviewed.
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cold-start-diagnosis.json` | Derived diagnosis, no new inference | `openvino_pipeline_load_or_device_compile_dominated`; 4 pipeline/load samples, 29.373s min, 32.513s mean, 35.470s max; operator load-to-generation ratio 57.59; phase-runner load-to-generation ratio 68.13 |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-experiment.json` | Two separate OpenVINO GenAI NPU processes, one cache dir | First pipeline construct 28.104s; second construct 0.873s; 0.031 second/first ratio; one 154,693,720-byte cache blob; answer gates passed both runs; no runtime cache-hit metric exposed |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json` | Closed #1160 / #1174 two-process NPU cache rerun, one cache dir | First pipeline construct 11.164s; second construct 0.945s; 0.085 second/first ratio; 10.219s improvement; one 158,052,779-byte cache blob stayed stable; answer gates passed both runs; fallback false; direct generated token IDs available; direct runtime cache-hit metric not exposed |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-probe-20260601T1323Z.json` | Current-main two-process NPU cache diagnostic, one cache dir | First pipeline construct 10.839s; second construct 0.893s; 0.082 second/first ratio; 9.946s improvement; cache file stayed stable; answer gates passed both runs; fallback false; direct generated-token IDs available; direct runtime cache-hit metric not exposed |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-resident-session.json` | Same-process NPU pipeline plus repeated warm asks | Pipeline construct 1.470s with cache requested; 30/30 warm asks passed; warm generation mean 764ms, p95 1171ms; OpenVINO TTFT mean 221ms, p95 257ms; no answer/token/fallback/route drift |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-resident-session-20260601T1325Z.json` | Current-main same-process NPU resident diagnostic using the cache-probe directory | Pipeline construct 0.865s with cache requested; 10/10 warm asks passed; warm generation mean 315ms, p95 468ms; OpenVINO TTFT mean 161ms, p95 176ms; no answer/token/fallback/route drift; diagnostic only, not a new route-promotion receipt |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-auto-npu-warm-resident-math-brief.json` | Operator ask for `warm_resident` route evidence | `profile_id=warm_resident`; selected backend `openvino-npu`; fallback false; answer gate passed; pipeline construct 32.032s and generation wall 862ms, so the receipt is not a cold one-off promotion |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cold-warm-profile-benchmark.json` | Profile benchmark index | NPU remains blocked outside `warm_resident`; `low_power` has no benchmark-qualified promoted route; warm resident timing excludes one-off NPU pipeline construction |
 
