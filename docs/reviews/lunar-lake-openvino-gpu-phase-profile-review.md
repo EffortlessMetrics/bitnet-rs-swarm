@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1113](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1113)
-Linked PRs: n/a
+Linked PRs: [#1114](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1114)
 Support-tier impact: no promotion; review-only claim boundary for existing GPU phase profiles
 Policy impact: no policy exception
 
@@ -36,6 +36,10 @@ implementation, if any, is receipt/status hardening that distinguishes:
 Do not use this review to claim native OpenCL execution, broad acceleration,
 power advantage, BitNet QK256/I2_S behavior, or detailed prefill/decode phase
 speedup.
+
+The review landed in #1114 and closed #1113. It remains a profile-evidence
+review-watch boundary, not an active route-policy or runtime implementation
+queue.
 
 ## Current Ledger State
 
@@ -127,6 +131,10 @@ then route policy should narrow or revoke only the affected profile.
 ## Next Smallest PR
 
 No immediate route-policy PR is recommended.
+
+Issue #1113 is closed by #1114. Future work should open only if a later receipt
+needs machine-readable status fields for the profile-level versus phase-split
+distinction, or if a concrete evidence regression appears.
 
 The next useful implementation is narrow receipt/status hardening if the lane
 needs machine-readable language for this distinction. That PR should add or
