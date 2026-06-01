@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165)
+Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -49,10 +49,12 @@ current:
 - #1156 for the CPU comparison qualification guard: model-format or timing-scope
   mismatch keeps `benchmark_qualified=false` while preserving diagnostic CPU
   candidate context.
-- #1160 for the current OpenVINO NPU cache-rerun evidence package;
+- #1160 for the current OpenVINO NPU cache-rerun evidence package, now closed
+  by #1174 with a dated diagnostic receipt at
+  `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json`;
 - #1165 for operator receipt coverage closeout, which leaves the remaining
-  operator-appliance gaps in #1064, #1069/#1071, #1149, and #1160 rather than a
-  new broad route-policy or receipt cleanup.
+  operator-appliance gaps in #1064, #1069/#1071, and #1149 rather than a new
+  broad route-policy or receipt cleanup.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -221,8 +223,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   receipt-overhead timings become route-policy evidence.
 - #1119 should keep NPU cold/cache evidence diagnostic until cache, phase, and
   cold-start gates are accepted. The current cache-classification guard is
-  already covered by existing validator behavior and #1154 is closed; #1160
-  owns the current cache-rerun evidence package.
+  already covered by existing validator behavior and #1154 is closed. #1160 is
+  now closed by #1174 with current timing-derived diagnostic cache evidence,
+  not direct runtime cache-hit truth or route-policy evidence.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
@@ -234,8 +237,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   work should focus on #1069/#1071 measurement or a newly exposed evidence gap,
   not another generic non-equivalence guard.
 - #1165 closed the current operator receipt follow-up review. Future operator
-  work should cite one of #1064, #1069/#1071, #1149, or #1160 rather than
-  opening another broad operator coverage cleanup.
+  work should cite one of #1064, #1069/#1071, or #1149 rather than opening
+  another broad operator coverage cleanup. Use #1119 for any broader NPU
+  cold/cache research follow-up now that #1160 has closed.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
