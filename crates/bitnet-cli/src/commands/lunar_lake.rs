@@ -71,6 +71,11 @@ const DURABLE_QWEN_CPU_WARM_SESSION: &str = "lunar-lake-durable-qwen25-cpu-warm-
 const CPU_SLM_PHASE_ATTRIBUTION: &str = "lunar-lake-cpu-slm-phase-attribution.json";
 const CPU_SLM_RESIDENT_SESSION: &str = "lunar-lake-cpu-slm-resident-session.json";
 const CPU_SLM_RUNTIME_COMPARISON: &str = "lunar-lake-cpu-slm-runtime-comparison.json";
+const CPU_SLM_THREAD_CORE_MATRIX: &str = "lunar-lake-cpu-slm-thread-core-matrix.json";
+const CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS: &[&str] =
+    &["default", "threads_1", "threads_4", "threads_8"];
+const CPU_SLM_THREAD_CORE_REQUIRED_PROFILES: &[&str] =
+    &["regression_tiny", "ask_short", "ask_normal"];
 const CPU_SLM_PHASE_NOT_EXPOSED: &str = "not_exposed";
 const CPU_SLM_PHASE_REQUIRED_FIELDS: &[&str] = &[
     "cold_warm_mode",
@@ -599,6 +604,31 @@ pub enum LunarLakeAction {
         created_utc: Option<String>,
 
         /// Fail when the runtime comparison cannot classify Rust CPU vs OpenVINO CPU evidence.
+        #[arg(long, default_value_t = false)]
+        strict: bool,
+    },
+
+    /// Build the dense Rust GGUF CPU thread/core matrix from per-variant resident receipts.
+    CpuSlmThreadCoreMatrix {
+        /// Artifact root containing the per-variant resident-session receipts.
+        #[arg(long, default_value = DEFAULT_ARTIFACT_ROOT)]
+        artifact_root: PathBuf,
+
+        /// Matrix variant source in the form <variant_id>=<resident-session-json>.
+        ///
+        /// Required variants are default, threads_1, threads_4, and threads_8.
+        #[arg(long = "variant", value_name = "ID=PATH", required = true)]
+        variants: Vec<String>,
+
+        /// Output JSON CPU dense-SLM thread/core matrix receipt to file.
+        #[arg(long, default_value = CPU_SLM_THREAD_CORE_MATRIX)]
+        json_out: PathBuf,
+
+        /// Override the receipt creation timestamp for reproducible committed receipts.
+        #[arg(long)]
+        created_utc: Option<String>,
+
+        /// Fail when the matrix cannot classify the thread/core evidence.
         #[arg(long, default_value_t = false)]
         strict: bool,
     },
@@ -2365,6 +2395,102 @@ pub struct CpuSlmRuntimeComparisonSources {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LunarLakeCpuSlmThreadCoreMatrix {
+    pub schema_version: String,
+    pub artifact_kind: String,
+    pub proof_stage: String,
+    pub created_utc: String,
+    pub machine_id: String,
+    pub artifact_root: String,
+    pub source_receipts: Vec<CpuSlmThreadCoreMatrixSource>,
+    pub required_variants: Vec<String>,
+    pub required_profiles: Vec<String>,
+    pub model: CpuSlmAttributionModel,
+    pub variants: Vec<CpuSlmThreadCoreVariantSummary>,
+    pub matrix_ready: bool,
+    pub findings: Vec<String>,
+    pub recommended_next_items: Vec<String>,
+    pub gaps: Vec<String>,
+    pub claim_boundary: CpuSlmPerfClaimBoundary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmThreadCoreMatrixSource {
+    pub variant_id: String,
+    pub resident_session_receipt: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmThreadCoreVariantSummary {
+    pub variant_id: String,
+    pub requested_thread_count: Option<u64>,
+    pub requested_thread_count_status: String,
+    pub expected_thread_count: Option<u64>,
+    pub effective_thread_count: Option<u64>,
+    pub effective_thread_count_status: String,
+    pub thread_env: CpuSlmThreadEnv,
+    pub thread_env_status: String,
+    pub process_affinity_mask: Option<String>,
+    pub affinity_classification: Option<String>,
+    pub affinity_classification_status: String,
+    pub windows_power_scheme: Option<String>,
+    pub windows_power_scheme_status: String,
+    pub ac_battery_state: Option<String>,
+    pub ac_battery_state_status: String,
+    pub thermal_availability: String,
+    pub temperature_c: Option<f64>,
+    pub temperature_status: String,
+    pub cpu_utilization_per_logical_processor: Option<Value>,
+    pub cpu_utilization_status: String,
+    pub frequency_or_throttle_proxy: Option<Value>,
+    pub frequency_or_throttle_status: String,
+    pub resident_session_reused: Option<bool>,
+    pub resident_session_status: String,
+    pub model_loaded_once: Option<bool>,
+    pub tokenizer_loaded_once: Option<bool>,
+    pub fallback_used: Option<bool>,
+    pub route_id: String,
+    pub selected_backend: String,
+    pub runtime_api: String,
+    pub profiles: Vec<CpuSlmThreadCoreProfileSummary>,
+    pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmThreadEnv {
+    pub rayon_num_threads: Option<String>,
+    pub bitnet_cpu_threads: Option<String>,
+    pub bitnet_num_threads: Option<String>,
+    pub omp_num_threads: Option<String>,
+    pub openblas_num_threads: Option<String>,
+    pub mkl_num_threads: Option<String>,
+    pub numexpr_num_threads: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CpuSlmThreadCoreProfileSummary {
+    pub profile_id: String,
+    pub case_ids: Vec<String>,
+    pub observed_execution_count: Option<u64>,
+    pub required_execution_count: Option<u64>,
+    pub prompt_token_count: CpuSlmResidentPhaseMetric,
+    pub generated_token_count: CpuSlmResidentMetricSummary,
+    pub tokenize_ms: CpuSlmResidentMetricSummary,
+    pub prefill_ms: CpuSlmResidentMetricSummary,
+    pub first_token_ms: CpuSlmResidentMetricSummary,
+    pub decode_total_ms: CpuSlmResidentMetricSummary,
+    pub detokenize_ms: CpuSlmResidentMetricSummary,
+    pub total_response_ms: CpuSlmResidentMetricSummary,
+    pub answer_gate_passed: Option<bool>,
+    pub generated_token_ids_available: Option<bool>,
+    pub generated_token_ids_source: String,
+    pub fallback_observed: Option<bool>,
+    pub model_reload_observed: Option<bool>,
+    pub tokenizer_reload_observed: Option<bool>,
+    pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CpuSlmRuntimeRouteSummary {
     pub route_id: String,
     pub selected_backend: String,
@@ -3505,6 +3631,33 @@ impl LunarLakeCommand {
                 if *strict && !receipt.comparison_ready {
                     bail!(
                         "Lunar Lake CPU dense SLM runtime comparison failed: {}",
+                        receipt.gaps.join("; ")
+                    );
+                }
+                Ok(())
+            }
+            LunarLakeAction::CpuSlmThreadCoreMatrix {
+                artifact_root,
+                variants,
+                json_out,
+                created_utc,
+                strict,
+            } => {
+                let created_utc = match created_utc {
+                    Some(created_utc) => normalize_created_utc(created_utc)?,
+                    None => chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+                };
+                let variant_sources = parse_cpu_slm_thread_core_variant_args(variants)?;
+                let receipt = build_cpu_slm_thread_core_matrix_with_created_utc(
+                    artifact_root,
+                    &variant_sources,
+                    created_utc,
+                )?;
+                let json_out = resolve_receipt_path(artifact_root, json_out);
+                write_or_print_cpu_slm_thread_core_matrix(&receipt, Some(&json_out))?;
+                if *strict && !receipt.matrix_ready {
+                    bail!(
+                        "Lunar Lake CPU dense SLM thread/core matrix failed: {}",
                         receipt.gaps.join("; ")
                     );
                 }
@@ -8394,6 +8547,694 @@ fn resident_percentile_nearest_rank(sorted_values: &[f64], percentile: f64) -> O
 
 fn sum_f64(values: &[f64]) -> Option<f64> {
     (!values.is_empty()).then(|| values.iter().sum())
+}
+
+fn parse_cpu_slm_thread_core_variant_args(args: &[String]) -> Result<Vec<(String, PathBuf)>> {
+    args.iter()
+        .map(|arg| {
+            let (variant_id, path) = arg
+                .split_once('=')
+                .with_context(|| format!("variant source must be ID=PATH, got {arg:?}"))?;
+            let variant_id = variant_id.trim();
+            let path = path.trim();
+            if variant_id.is_empty() {
+                bail!("variant source is missing an ID: {arg:?}");
+            }
+            if path.is_empty() {
+                bail!("variant source {variant_id} is missing a path");
+            }
+            Ok((variant_id.to_string(), PathBuf::from(path)))
+        })
+        .collect()
+}
+
+pub fn build_cpu_slm_thread_core_matrix_with_created_utc(
+    root: &Path,
+    variant_sources: &[(String, PathBuf)],
+    created_utc: String,
+) -> Result<LunarLakeCpuSlmThreadCoreMatrix> {
+    let mut gaps = Vec::new();
+    let mut source_map = BTreeMap::<String, PathBuf>::new();
+    for (variant_id, path) in variant_sources {
+        if source_map.insert(variant_id.clone(), path.clone()).is_some() {
+            gaps.push(format!("duplicate thread/core matrix variant source: {variant_id}"));
+        }
+    }
+    for required in CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS {
+        if !source_map.contains_key(*required) {
+            gaps.push(format!("missing required thread/core matrix variant {required}"));
+        }
+    }
+
+    let mut source_receipts = Vec::new();
+    let mut variants = Vec::new();
+    let mut model: Option<CpuSlmAttributionModel> = None;
+    let mut model_reference_variant: Option<String> = None;
+
+    for (variant_id, relative_path) in source_map {
+        let receipt_path = resolve_receipt_path(root, &relative_path);
+        let json: Value = read_json_receipt(&receipt_path)
+            .with_context(|| format!("read resident-session receipt for variant {variant_id}"))?;
+        source_receipts.push(CpuSlmThreadCoreMatrixSource {
+            variant_id: variant_id.clone(),
+            resident_session_receipt: path_string(&receipt_path),
+        });
+
+        let variant_model = cpu_slm_thread_core_model(&json);
+        if let Some(reference) = &model {
+            if *reference != variant_model {
+                gaps.push(format!(
+                    "variant {variant_id} model identity differs from variant {}",
+                    model_reference_variant.as_deref().unwrap_or("unknown")
+                ));
+            }
+        } else {
+            model = Some(variant_model.clone());
+            model_reference_variant = Some(variant_id.clone());
+        }
+
+        let summary = cpu_slm_thread_core_variant_summary(&variant_id, &json);
+        for blocker in &summary.blockers {
+            gaps.push(format!("variant {variant_id}: {blocker}"));
+        }
+        variants.push(summary);
+    }
+
+    let variant_ids =
+        variants.iter().map(|variant| variant.variant_id.as_str()).collect::<BTreeSet<_>>();
+    for required in CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS {
+        if variant_ids.contains(required)
+            && !variants
+                .iter()
+                .any(|variant| variant.variant_id == *required && variant.blockers.is_empty())
+        {
+            gaps.push(format!("required variant {required} is present but blocked"));
+        }
+    }
+
+    let mut findings = Vec::new();
+    for variant in &variants {
+        findings.push(format!(
+            "{}_effective_threads={}",
+            variant.variant_id,
+            variant
+                .effective_thread_count
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
+        ));
+        for profile in &variant.profiles {
+            if let Some(mean) = profile.total_response_ms.mean {
+                findings.push(format!(
+                    "{}_{}_mean_total_ms={mean:.3}",
+                    variant.variant_id, profile.profile_id
+                ));
+            }
+        }
+    }
+
+    let recommended_next_items = vec![
+        "LNL258V-CPU-SLM-PERF-004: collect physical default/1/4/8-thread resident CPU matrix evidence".to_string(),
+        "LNL258V-CPU-SLOW-PATH: use the matrix to decide whether Rust GGUF CPU optimization is worthwhile".to_string(),
+        "LNL258V-ROUTE-POLICY-REVIEW: keep CPU route policy unchanged until matrix evidence is reviewed".to_string(),
+    ];
+    gaps.sort();
+    gaps.dedup();
+    let matrix_ready = gaps.is_empty()
+        && CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS
+            .iter()
+            .all(|required| variants.iter().any(|variant| variant.variant_id == *required));
+
+    Ok(LunarLakeCpuSlmThreadCoreMatrix {
+        schema_version: "1.0.0".to_string(),
+        artifact_kind: "lunar_lake_cpu_slm_thread_core_matrix".to_string(),
+        proof_stage: "thread_core_matrix_receipt_validation_no_new_inference".to_string(),
+        created_utc,
+        machine_id: "intel-258v".to_string(),
+        artifact_root: path_string(root),
+        source_receipts,
+        required_variants: CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS
+            .iter()
+            .map(|value| value.to_string())
+            .collect(),
+        required_profiles: CPU_SLM_THREAD_CORE_REQUIRED_PROFILES
+            .iter()
+            .map(|value| value.to_string())
+            .collect(),
+        model: model.unwrap_or_else(empty_cpu_slm_attribution_model),
+        variants,
+        matrix_ready,
+        findings,
+        recommended_next_items,
+        gaps,
+        claim_boundary: CpuSlmPerfClaimBoundary {
+            new_inference_executed: false,
+            route_promotion_changed: false,
+            broad_quality_claim: false,
+            speedup_claim: false,
+            power_advantage_claim: false,
+            acceleration_claim: false,
+            arc_npu_execution_claim: false,
+            bitnet_qk256_i2s_claim: false,
+            hidden_fallback_allowed: false,
+        },
+    })
+}
+
+fn cpu_slm_thread_core_variant_summary(
+    variant_id: &str,
+    json: &Value,
+) -> CpuSlmThreadCoreVariantSummary {
+    let mut blockers = Vec::new();
+    if string_at(json, "artifact_kind").as_deref() != Some("lunar_lake_cpu_slm_resident_session") {
+        blockers.push(
+            "source receipt must have artifact_kind=lunar_lake_cpu_slm_resident_session"
+                .to_string(),
+        );
+    }
+    if bool_at_any(json, &["resident_ready"]) != Some(true) {
+        blockers.push("source resident-session receipt is not resident_ready=true".to_string());
+    }
+
+    let expected_thread_count = expected_cpu_slm_thread_count_for_variant(variant_id);
+    let requested_thread_count = u64_at_any(
+        json,
+        &[
+            "execution_context.requested_thread_count",
+            "threading.requested_thread_count",
+            "requested_thread_count",
+        ],
+    );
+    let requested_thread_count_status =
+        cpu_slm_requested_thread_count_status(variant_id, requested_thread_count);
+    if variant_id != "default" && requested_thread_count != expected_thread_count {
+        blockers.push(format!(
+            "requested thread count must match variant {variant_id}: expected {:?}, got {:?}",
+            expected_thread_count, requested_thread_count
+        ));
+    }
+
+    let effective_thread_count = u64_at_any(
+        json,
+        &[
+            "execution_context.effective_thread_count",
+            "execution_context.thread_count",
+            "threading.effective_thread_count",
+            "cpu.threads",
+        ],
+    );
+    let effective_thread_count_status = if effective_thread_count.is_some() {
+        "measured".to_string()
+    } else {
+        blockers.push("effective thread count is missing".to_string());
+        "missing".to_string()
+    };
+
+    let thread_env = cpu_slm_thread_env(json);
+    let missing_thread_env = missing_cpu_slm_thread_env_fields(json);
+    let thread_env_status = if missing_thread_env.is_empty() {
+        "captured".to_string()
+    } else {
+        blockers.push(format!(
+            "thread environment capture missing fields: {}",
+            missing_thread_env.join(", ")
+        ));
+        format!("missing_fields:{}", missing_thread_env.join(","))
+    };
+
+    let process_affinity_mask = optional_string_at_any(
+        json,
+        &[
+            "execution_context.process_affinity_mask",
+            "affinity.process_affinity_mask",
+            "process_affinity_mask",
+        ],
+    );
+    if process_affinity_mask.is_none() {
+        blockers.push("process affinity mask is missing".to_string());
+    }
+    let affinity_classification = optional_string_at_any(
+        json,
+        &[
+            "execution_context.affinity_classification",
+            "affinity.classification",
+            "affinity_classification",
+        ],
+    );
+    let affinity_classification_status = string_at_any(
+        json,
+        &[
+            "execution_context.affinity_classification_status",
+            "affinity.classification_status",
+            "affinity_classification_status",
+        ],
+    )
+    .unwrap_or_else(|| {
+        blockers.push("affinity classification status is missing".to_string());
+        "missing".to_string()
+    });
+    if affinity_classification_status == "inferred" {
+        blockers.push("affinity classification must not be inferred".to_string());
+    }
+
+    let windows_power_scheme = string_at_any(
+        json,
+        &[
+            "execution_context.windows_power_scheme",
+            "execution_context.power_scheme",
+            "power.power_scheme",
+            "power.active_scheme",
+        ],
+    );
+    let windows_power_scheme_status = string_at_any(
+        json,
+        &[
+            "execution_context.windows_power_scheme_status",
+            "execution_context.power_scheme_status",
+            "power.power_scheme_status",
+        ],
+    )
+    .unwrap_or_else(|| {
+        blockers.push("Windows power scheme status is missing".to_string());
+        "missing".to_string()
+    });
+    if windows_power_scheme.is_none() || windows_power_scheme_status != "measured" {
+        blockers.push("Windows power scheme must be measured".to_string());
+    }
+
+    let ac_battery_state = string_at_any(
+        json,
+        &["execution_context.ac_battery_state", "power.ac_battery_state", "power.battery_status"],
+    );
+    let ac_battery_state_status = string_at_any(
+        json,
+        &["execution_context.ac_battery_state_status", "power.ac_battery_state_status"],
+    )
+    .unwrap_or_else(|| {
+        blockers.push("AC/battery state status is missing".to_string());
+        "missing".to_string()
+    });
+    if ac_battery_state.is_none() || ac_battery_state_status != "measured" {
+        blockers.push("AC/battery state must be measured".to_string());
+    }
+
+    let thermal_availability = string_at_any(
+        json,
+        &[
+            "execution_context.thermal_availability",
+            "telemetry.thermal_availability",
+            "thermal.thermal_availability",
+        ],
+    )
+    .unwrap_or_else(|| "missing".to_string());
+    if thermal_availability == "missing" {
+        blockers.push("thermal availability status is missing".to_string());
+    }
+    let temperature_c = number_at_any(
+        json,
+        &["execution_context.temperature_c", "telemetry.temperature_c", "thermal.temperature_c"],
+    );
+    let temperature_status = string_at_any(
+        json,
+        &[
+            "execution_context.temperature_status",
+            "telemetry.temperature_status",
+            "thermal.temperature_status",
+        ],
+    )
+    .unwrap_or_else(|| {
+        if temperature_c.is_some() {
+            "measured".to_string()
+        } else {
+            blockers.push("temperature status is missing".to_string());
+            "missing".to_string()
+        }
+    });
+
+    let cpu_utilization_per_logical_processor = value_at_any(
+        json,
+        &[
+            "execution_context.cpu_utilization_per_logical_processor",
+            "telemetry.cpu_utilization_per_logical_processor",
+        ],
+    )
+    .cloned();
+    let cpu_utilization_status = string_at_any(
+        json,
+        &["execution_context.cpu_utilization_status", "telemetry.cpu_utilization_status"],
+    )
+    .unwrap_or_else(|| {
+        if cpu_utilization_per_logical_processor.is_some() {
+            "measured".to_string()
+        } else {
+            blockers.push("CPU utilization status is missing".to_string());
+            "missing".to_string()
+        }
+    });
+
+    let frequency_or_throttle_proxy = value_at_any(
+        json,
+        &["execution_context.frequency_or_throttle_proxy", "telemetry.frequency_or_throttle_proxy"],
+    )
+    .cloned();
+    let frequency_or_throttle_status = string_at_any(
+        json,
+        &[
+            "execution_context.frequency_or_throttle_status",
+            "telemetry.frequency_or_throttle_status",
+        ],
+    )
+    .unwrap_or_else(|| {
+        if frequency_or_throttle_proxy.is_some() {
+            "measured".to_string()
+        } else {
+            blockers.push("frequency/throttle proxy status is missing".to_string());
+            "missing".to_string()
+        }
+    });
+
+    let resident_session_reused = match string_at(json, "resident_session.reuse_scope").as_deref() {
+        Some("resident_session") => Some(true),
+        Some(_) => Some(false),
+        None => bool_at_any(
+            json,
+            &["resident_session.resident_session_reused", "session.resident_session_reused"],
+        ),
+    };
+    let resident_session_status = if resident_session_reused == Some(true) {
+        "resident_session_reused".to_string()
+    } else {
+        blockers.push("resident session reuse is not proven".to_string());
+        "missing_or_false".to_string()
+    };
+    let model_loaded_once =
+        bool_at_any(json, &["resident_session.model_loaded_once", "session.model_loaded_once"]);
+    if model_loaded_once != Some(true) {
+        blockers.push("model_loaded_once must be true".to_string());
+    }
+    let tokenizer_loaded_once = bool_at_any(
+        json,
+        &["resident_session.tokenizer_loaded_once", "session.tokenizer_loaded_once"],
+    );
+    if tokenizer_loaded_once != Some(true) {
+        blockers.push("tokenizer_loaded_once must be true".to_string());
+    }
+    let fallback_used = fallback_used(json);
+    if fallback_used != Some(false) {
+        blockers.push("fallback_used must be false".to_string());
+    }
+    for leak in cpu_slm_thread_core_claim_boundary_leaks(json) {
+        blockers.push(leak);
+    }
+
+    let profiles = cpu_slm_thread_core_profiles(json);
+    let profile_ids =
+        profiles.iter().map(|profile| profile.profile_id.as_str()).collect::<BTreeSet<_>>();
+    for required in CPU_SLM_THREAD_CORE_REQUIRED_PROFILES {
+        if !profile_ids.contains(required) {
+            blockers.push(format!("missing required profile {required}"));
+        }
+    }
+    for profile in &profiles {
+        for blocker in &profile.blockers {
+            blockers.push(format!("profile {}: {blocker}", profile.profile_id));
+        }
+    }
+    blockers.sort();
+    blockers.dedup();
+
+    CpuSlmThreadCoreVariantSummary {
+        variant_id: variant_id.to_string(),
+        requested_thread_count,
+        requested_thread_count_status,
+        expected_thread_count,
+        effective_thread_count,
+        effective_thread_count_status,
+        thread_env,
+        thread_env_status,
+        process_affinity_mask,
+        affinity_classification,
+        affinity_classification_status,
+        windows_power_scheme,
+        windows_power_scheme_status,
+        ac_battery_state,
+        ac_battery_state_status,
+        thermal_availability,
+        temperature_c,
+        temperature_status,
+        cpu_utilization_per_logical_processor,
+        cpu_utilization_status,
+        frequency_or_throttle_proxy,
+        frequency_or_throttle_status,
+        resident_session_reused,
+        resident_session_status,
+        model_loaded_once,
+        tokenizer_loaded_once,
+        fallback_used,
+        route_id: string_at(json, "backend.route_id")
+            .unwrap_or_else(|| DEFAULT_ASK_ROUTE.to_string()),
+        selected_backend: string_at(json, "backend.selected_backend")
+            .unwrap_or_else(|| "unknown".to_string()),
+        runtime_api: string_at(json, "backend.runtime_api")
+            .unwrap_or_else(|| "unknown".to_string()),
+        profiles,
+        blockers,
+    }
+}
+
+fn cpu_slm_thread_core_profiles(json: &Value) -> Vec<CpuSlmThreadCoreProfileSummary> {
+    json.get("profiles")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|profile| {
+            let profile_id = string_at(profile, "profile_id")?;
+            let mut blockers = string_array_at(profile, "blockers");
+            let prompt_token_count =
+                resident_phase_metric_from_value(value_at(profile, "prompt_token_count"));
+            if prompt_token_count.exposure != "measured" {
+                blockers.push("prompt token count must be measured".to_string());
+            }
+            let generated_token_count =
+                metric_summary_from_value(value_at(profile, "generated_tokens"));
+            if generated_token_count.sample_count == 0 {
+                blockers.push("generated token count must be measured".to_string());
+            }
+            let generated_token_ids_available =
+                bool_at_any(profile, &["generated_token_ids_available"]);
+            let generated_token_ids_source = string_at(profile, "generated_token_ids_source")
+                .unwrap_or_else(|| {
+                    if bool_at_any(profile, &["deterministic_generated_ids"]).is_some() {
+                        "determinism_group_stability_only".to_string()
+                    } else {
+                        "not_exposed".to_string()
+                    }
+                });
+            if matches!(
+                generated_token_ids_source.as_str(),
+                "not_exposed" | "determinism_group_stability_only"
+            ) {
+                blockers.push("generated token ID source is missing".to_string());
+            }
+            if bool_at_any(profile, &["fallback_observed"]) != Some(false) {
+                blockers.push("fallback must be false for every profile".to_string());
+            }
+            if bool_at_any(profile, &["model_reload_observed"]) != Some(false) {
+                blockers.push("model reload must not occur inside resident loop".to_string());
+            }
+            if bool_at_any(profile, &["tokenizer_reload_observed"]) != Some(false) {
+                blockers.push("tokenizer reload must not occur inside resident loop".to_string());
+            }
+            if bool_at_any(profile, &["answer_gate_passed"]) != Some(true) {
+                blockers.push("answer gate must pass for every profile".to_string());
+            }
+            blockers.sort();
+            blockers.dedup();
+
+            let phase_timings = value_at(profile, "phase_timings_ms");
+            let tokenize_ms =
+                metric_summary_from_value(value_at(profile, "tokenize_ms").or_else(|| {
+                    phase_timings.and_then(|phase| value_at(phase, "tokenize_ms.summary"))
+                }));
+            let prefill_ms =
+                metric_summary_from_value(value_at(profile, "prefill_ms").or_else(|| {
+                    phase_timings.and_then(|phase| value_at(phase, "prefill_ms.summary"))
+                }));
+            let first_token_ms =
+                metric_summary_from_value(value_at(profile, "time_to_first_token_ms").or_else(
+                    || phase_timings.and_then(|phase| value_at(phase, "first_token_ms.summary")),
+                ));
+            let decode_total_ms =
+                metric_summary_from_value(value_at(profile, "decode_total_ms").or_else(|| {
+                    phase_timings.and_then(|phase| value_at(phase, "decode_ms.summary"))
+                }));
+            let detokenize_ms = metric_summary_from_value(
+                phase_timings
+                    .and_then(|phase| value_at(phase, "detokenize_ms.summary"))
+                    .or_else(|| value_at(profile, "detokenize_ms")),
+            );
+            let total_response_ms =
+                metric_summary_from_value(value_at(profile, "total_ms").or_else(|| {
+                    phase_timings.and_then(|phase| value_at(phase, "total_response_ms.summary"))
+                }));
+            Some(CpuSlmThreadCoreProfileSummary {
+                profile_id,
+                case_ids: string_array_at(profile, "case_ids"),
+                observed_execution_count: u64_at(profile, "observed_execution_count"),
+                required_execution_count: u64_at(profile, "required_execution_count"),
+                prompt_token_count,
+                generated_token_count,
+                tokenize_ms,
+                prefill_ms,
+                first_token_ms,
+                decode_total_ms,
+                detokenize_ms,
+                total_response_ms,
+                answer_gate_passed: bool_at_any(profile, &["answer_gate_passed"]),
+                generated_token_ids_available,
+                generated_token_ids_source,
+                fallback_observed: bool_at_any(profile, &["fallback_observed"]),
+                model_reload_observed: bool_at_any(profile, &["model_reload_observed"]),
+                tokenizer_reload_observed: bool_at_any(profile, &["tokenizer_reload_observed"]),
+                blockers,
+            })
+        })
+        .collect()
+}
+
+fn cpu_slm_thread_core_model(json: &Value) -> CpuSlmAttributionModel {
+    CpuSlmAttributionModel {
+        model_family: string_at(json, "model.model_family")
+            .or_else(|| string_at(json, "model.family")),
+        model_architecture: string_at(json, "model.model_architecture")
+            .or_else(|| string_at(json, "model.architecture")),
+        quantization: string_at(json, "model.quantization")
+            .or_else(|| string_at(json, "model.quant_format")),
+        tokenizer_source: string_at(json, "model.tokenizer_source")
+            .or_else(|| string_at(json, "model.tokenizer")),
+        prompt_template: string_at(json, "model.prompt_template")
+            .or_else(|| string_at(json, "generation.prompt_template")),
+    }
+}
+
+fn empty_cpu_slm_attribution_model() -> CpuSlmAttributionModel {
+    CpuSlmAttributionModel {
+        model_family: None,
+        model_architecture: None,
+        quantization: None,
+        tokenizer_source: None,
+        prompt_template: None,
+    }
+}
+
+fn expected_cpu_slm_thread_count_for_variant(variant_id: &str) -> Option<u64> {
+    variant_id.strip_prefix("threads_").and_then(|value| value.parse::<u64>().ok())
+}
+
+fn cpu_slm_requested_thread_count_status(variant_id: &str, value: Option<u64>) -> String {
+    match (variant_id, expected_cpu_slm_thread_count_for_variant(variant_id), value) {
+        ("default", _, None) => "default_unset".to_string(),
+        ("default", _, Some(_)) => "measured".to_string(),
+        (_, Some(expected), Some(actual)) if expected == actual => "measured".to_string(),
+        (_, Some(_), Some(_)) => "mismatch".to_string(),
+        (_, Some(_), None) => "missing".to_string(),
+        (_, None, Some(_)) => "measured_optional".to_string(),
+        (_, None, None) => "optional_unset".to_string(),
+    }
+}
+
+fn cpu_slm_thread_env(json: &Value) -> CpuSlmThreadEnv {
+    CpuSlmThreadEnv {
+        rayon_num_threads: cpu_slm_thread_env_value(json, "RAYON_NUM_THREADS"),
+        bitnet_cpu_threads: cpu_slm_thread_env_value(json, "BITNET_CPU_THREADS"),
+        bitnet_num_threads: cpu_slm_thread_env_value(json, "BITNET_NUM_THREADS"),
+        omp_num_threads: cpu_slm_thread_env_value(json, "OMP_NUM_THREADS"),
+        openblas_num_threads: cpu_slm_thread_env_value(json, "OPENBLAS_NUM_THREADS"),
+        mkl_num_threads: cpu_slm_thread_env_value(json, "MKL_NUM_THREADS"),
+        numexpr_num_threads: cpu_slm_thread_env_value(json, "NUMEXPR_NUM_THREADS"),
+    }
+}
+
+fn cpu_slm_thread_env_value(json: &Value, name: &str) -> Option<String> {
+    let paths = [
+        format!("execution_context.thread_env.{name}"),
+        format!("thread_env.{name}"),
+        format!("env.{name}"),
+    ];
+    paths.iter().find_map(|path| value_at(json, path).and_then(json_value_to_string))
+}
+
+fn missing_cpu_slm_thread_env_fields(json: &Value) -> Vec<String> {
+    [
+        "RAYON_NUM_THREADS",
+        "BITNET_CPU_THREADS",
+        "BITNET_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ]
+    .iter()
+    .filter(|name| !cpu_slm_thread_env_field_present(json, name))
+    .map(|name| (*name).to_string())
+    .collect()
+}
+
+fn cpu_slm_thread_env_field_present(json: &Value, name: &str) -> bool {
+    [
+        format!("execution_context.thread_env.{name}"),
+        format!("thread_env.{name}"),
+        format!("env.{name}"),
+    ]
+    .iter()
+    .any(|path| value_at(json, path).is_some())
+}
+
+fn cpu_slm_thread_core_claim_boundary_leaks(json: &Value) -> Vec<String> {
+    [
+        ("claim_boundary.new_inference_executed", "source receipt claims new inference execution"),
+        ("claim_boundary.route_promotion_changed", "source receipt claims route-promotion change"),
+        ("claim_boundary.speedup_claim", "source receipt claims CPU speedup"),
+        ("claim_boundary.power_advantage_claim", "source receipt claims power advantage"),
+        ("claim_boundary.acceleration_claim", "source receipt claims acceleration"),
+        ("claim_boundary.arc_npu_execution_claim", "source receipt claims Arc/NPU execution"),
+        (
+            "claim_boundary.bitnet_qk256_i2s_claim",
+            "source receipt claims BitNet QK256/I2_S behavior",
+        ),
+        ("claim_boundary.hidden_fallback_allowed", "source receipt permits hidden fallback"),
+    ]
+    .iter()
+    .filter_map(|(path, message)| {
+        (bool_at_any(json, &[*path]) == Some(true)).then(|| (*message).to_string())
+    })
+    .collect()
+}
+
+fn metric_summary_from_value(value: Option<&Value>) -> CpuSlmResidentMetricSummary {
+    let Some(value) = value else {
+        return resident_metric_summary(&[]);
+    };
+    if let Some(number) = value.as_f64() {
+        return resident_metric_summary(&[number]);
+    }
+    CpuSlmResidentMetricSummary {
+        sample_count: u64_at(value, "sample_count").unwrap_or(0),
+        min: number_at_any(value, &["min"]),
+        mean: number_at_any(value, &["mean"]),
+        p95: number_at_any(value, &["p95"]),
+        max: number_at_any(value, &["max"]),
+    }
+}
+
+fn resident_phase_metric_from_value(value: Option<&Value>) -> CpuSlmResidentPhaseMetric {
+    let Some(value) = value else {
+        return resident_phase_not_exposed("prompt_token_count");
+    };
+    CpuSlmResidentPhaseMetric {
+        exposure: string_at(value, "exposure").unwrap_or_else(|| "not_exposed".to_string()),
+        source: string_at(value, "source").unwrap_or_else(|| "prompt_token_count".to_string()),
+        summary: metric_summary_from_value(value_at(value, "summary")),
+    }
 }
 
 pub fn build_cpu_slm_runtime_comparison_with_created_utc(
@@ -14081,6 +14922,25 @@ fn write_or_print_cpu_slm_runtime_comparison(
     Ok(())
 }
 
+fn write_or_print_cpu_slm_thread_core_matrix(
+    receipt: &LunarLakeCpuSlmThreadCoreMatrix,
+    path: Option<&Path>,
+) -> Result<()> {
+    let json = serde_json::to_vec_pretty(receipt)?;
+    if let Some(path) = path {
+        if let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(path, json)?;
+        println!("Lunar Lake CPU dense SLM thread/core matrix written to {}", path.display());
+    } else {
+        println!("{}", String::from_utf8_lossy(&json));
+    }
+    Ok(())
+}
+
 fn write_or_print_openvino_corpus_v2_diagnosis(
     receipt: &LunarLakeOpenVinoCorpusV2Diagnosis,
     path: Option<&Path>,
@@ -18512,6 +19372,10 @@ fn number_at_any(json: &Value, paths: &[&str]) -> Option<f64> {
     paths.iter().find_map(|path| value_at(json, path).and_then(Value::as_f64))
 }
 
+fn u64_at_any(json: &Value, paths: &[&str]) -> Option<u64> {
+    paths.iter().find_map(|path| u64_at(json, path))
+}
+
 fn u64_at(json: &Value, path: &str) -> Option<u64> {
     value_at(json, path).and_then(|value| {
         value
@@ -18535,6 +19399,27 @@ fn value_at<'a>(json: &'a Value, dotted_path: &str) -> Option<&'a Value> {
         current = current.get(segment)?;
     }
     Some(current)
+}
+
+fn value_at_any<'a>(json: &'a Value, paths: &[&str]) -> Option<&'a Value> {
+    paths.iter().find_map(|path| value_at(json, path))
+}
+
+fn optional_string_at_any(json: &Value, paths: &[&str]) -> Option<String> {
+    value_at_any(json, paths).and_then(json_value_to_string)
+}
+
+fn json_value_to_string(value: &Value) -> Option<String> {
+    if value.is_null() {
+        return None;
+    }
+    value
+        .as_str()
+        .map(ToString::to_string)
+        .or_else(|| value.as_i64().map(|value| value.to_string()))
+        .or_else(|| value.as_u64().map(|value| value.to_string()))
+        .or_else(|| value.as_f64().map(|value| value.to_string()))
+        .or_else(|| value.as_bool().map(|value| value.to_string()))
 }
 
 fn path_string(path: &Path) -> String {
@@ -21862,6 +22747,136 @@ mod tests {
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.arc_npu_execution_claim);
         assert!(!receipt.claim_boundary.bitnet_qk256_i2s_claim);
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_slm_thread_core_matrix_accepts_complete_resident_variants() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for (variant, requested, effective) in [
+            ("default", None, Some(8)),
+            ("threads_1", Some(1), Some(1)),
+            ("threads_4", Some(4), Some(4)),
+            ("threads_8", Some(8), Some(8)),
+        ] {
+            write_json(
+                temp.path(),
+                &format!("{variant}.json"),
+                cpu_slm_thread_core_variant_json(variant, requested, effective),
+            )?;
+        }
+
+        let sources = vec![
+            ("default".to_string(), PathBuf::from("default.json")),
+            ("threads_1".to_string(), PathBuf::from("threads_1.json")),
+            ("threads_4".to_string(), PathBuf::from("threads_4.json")),
+            ("threads_8".to_string(), PathBuf::from("threads_8.json")),
+        ];
+        let receipt = build_cpu_slm_thread_core_matrix_with_created_utc(
+            temp.path(),
+            &sources,
+            "2026-06-01T14:00:00Z".to_string(),
+        )?;
+
+        assert!(receipt.matrix_ready, "{:?}", receipt.gaps);
+        assert_eq!(receipt.artifact_kind, "lunar_lake_cpu_slm_thread_core_matrix");
+        assert_eq!(receipt.required_variants, CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS);
+        assert_eq!(receipt.variants.len(), 4);
+        let default = receipt
+            .variants
+            .iter()
+            .find(|variant| variant.variant_id == "default")
+            .context("missing default")?;
+        assert_eq!(default.requested_thread_count, None);
+        assert_eq!(default.requested_thread_count_status, "default_unset");
+        assert_eq!(default.effective_thread_count, Some(8));
+        assert_eq!(default.thread_env_status, "captured");
+        assert_eq!(default.windows_power_scheme_status, "measured");
+        assert_eq!(default.ac_battery_state_status, "measured");
+        let threads_4 = receipt
+            .variants
+            .iter()
+            .find(|variant| variant.variant_id == "threads_4")
+            .context("missing threads_4")?;
+        assert_eq!(threads_4.requested_thread_count, Some(4));
+        assert_eq!(threads_4.effective_thread_count, Some(4));
+        let ask_short = threads_4
+            .profiles
+            .iter()
+            .find(|profile| profile.profile_id == "ask_short")
+            .context("missing ask_short")?;
+        assert_eq!(ask_short.generated_token_ids_available, Some(true));
+        assert_eq!(ask_short.generated_token_ids_source, "resident_prompt_receipt");
+        assert!(!receipt.claim_boundary.new_inference_executed);
+        assert!(!receipt.claim_boundary.route_promotion_changed);
+        assert!(!receipt.claim_boundary.speedup_claim);
+        assert!(!receipt.claim_boundary.arc_npu_execution_claim);
+        assert!(!receipt.claim_boundary.bitnet_qk256_i2s_claim);
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_slm_thread_core_matrix_fails_closed_on_missing_context() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for (variant, requested, effective) in [
+            ("default", None, Some(8)),
+            ("threads_1", Some(1), Some(1)),
+            ("threads_4", Some(4), None),
+            ("threads_8", Some(8), Some(8)),
+        ] {
+            let mut json = cpu_slm_thread_core_variant_json(variant, requested, effective);
+            if variant == "threads_4" {
+                json["execution_context"]["windows_power_scheme"] = Value::Null;
+                json["execution_context"]["cpu_utilization_status"] = Value::Null;
+                json["profiles"][0]["generated_token_ids_source"] = Value::Null;
+            }
+            write_json(temp.path(), &format!("{variant}.json"), json)?;
+        }
+
+        let sources = vec![
+            ("default".to_string(), PathBuf::from("default.json")),
+            ("threads_1".to_string(), PathBuf::from("threads_1.json")),
+            ("threads_4".to_string(), PathBuf::from("threads_4.json")),
+            ("threads_8".to_string(), PathBuf::from("threads_8.json")),
+        ];
+        let receipt = build_cpu_slm_thread_core_matrix_with_created_utc(
+            temp.path(),
+            &sources,
+            "2026-06-01T14:05:00Z".to_string(),
+        )?;
+
+        assert!(!receipt.matrix_ready);
+        assert!(
+            receipt
+                .gaps
+                .iter()
+                .any(|gap| gap.contains("variant threads_4: effective thread count is missing")),
+            "{:?}",
+            receipt.gaps
+        );
+        assert!(
+            receipt
+                .gaps
+                .iter()
+                .any(|gap| gap.contains("variant threads_4: Windows power scheme must be measured")),
+            "{:?}",
+            receipt.gaps
+        );
+        assert!(
+            receipt
+                .gaps
+                .iter()
+                .any(|gap| gap.contains("variant threads_4: CPU utilization status is missing")),
+            "{:?}",
+            receipt.gaps
+        );
+        assert!(
+            receipt.gaps.iter().any(|gap| gap.contains(
+                "variant threads_4: profile regression_tiny: generated token ID source is missing"
+            )),
+            "{:?}",
+            receipt.gaps
+        );
         Ok(())
     }
 
@@ -26413,6 +27428,119 @@ mod tests {
         fs::create_dir_all(root)?;
         fs::write(root.join(file), serde_json::to_vec_pretty(&value)?)?;
         Ok(())
+    }
+
+    fn cpu_slm_thread_core_variant_json(
+        variant: &str,
+        requested_threads: Option<u64>,
+        effective_threads: Option<u64>,
+    ) -> Value {
+        let profile = |profile_id: &str, total_ms: f64| {
+            json!({
+                "profile_id": profile_id,
+                "case_ids": [format!("{profile_id}_case")],
+                "observed_execution_count": 10,
+                "required_execution_count": 10,
+                "model_reload_observed": false,
+                "tokenizer_reload_observed": false,
+                "fallback_observed": false,
+                "answer_gate_passed": true,
+                "deterministic_generated_ids": true,
+                "deterministic_text": true,
+                "generated_token_ids_available": true,
+                "generated_token_ids_source": "resident_prompt_receipt",
+                "prompt_token_count": {
+                    "exposure": "measured",
+                    "source": "prompt_receipt.prompt_token_count",
+                    "summary": {"sample_count": 10, "min": 8.0, "mean": 8.0, "p95": 8.0, "max": 8.0}
+                },
+                "generated_tokens": {"sample_count": 10, "min": 4.0, "mean": 4.0, "p95": 4.0, "max": 4.0},
+                "total_ms": {"sample_count": 10, "min": total_ms, "mean": total_ms, "p95": total_ms, "max": total_ms},
+                "time_to_first_token_ms": {"sample_count": 10, "min": 10.0, "mean": 10.0, "p95": 10.0, "max": 10.0},
+                "prefill_ms": {"sample_count": 10, "min": 8.0, "mean": 8.0, "p95": 8.0, "max": 8.0},
+                "decode_total_ms": {"sample_count": 10, "min": 20.0, "mean": 20.0, "p95": 20.0, "max": 20.0},
+                "phase_timings_ms": {
+                    "detokenize_ms": {
+                        "exposure": "measured",
+                        "source": "timing.detokenize_ms",
+                        "summary": {"sample_count": 10, "min": 1.0, "mean": 1.0, "p95": 1.0, "max": 1.0}
+                    }
+                },
+                "blockers": []
+            })
+        };
+
+        json!({
+            "schema_version": "1.1.0",
+            "artifact_kind": "lunar_lake_cpu_slm_resident_session",
+            "proof_stage": "resident_cpu_no_reload_timing_no_new_inference",
+            "created_utc": "2026-06-01T13:59:00Z",
+            "machine_id": "intel-258v",
+            "artifact_root": "ci/hardware/intel-258v/2026-05-08",
+            "resident_ready": true,
+            "model": {
+                "model_family": "qwen",
+                "model_architecture": "qwen2",
+                "quantization": "Q8_0",
+                "tokenizer_source": "tokenizer.json",
+                "prompt_template": "qwen2.5"
+            },
+            "backend": {
+                "route_id": DEFAULT_ASK_ROUTE,
+                "selected_backend": "cpu-rust",
+                "runtime_api": "cpu",
+                "selected_kernel_or_runtime": "resident_cpu_rust_gguf",
+                "fallback_used": false,
+                "answer_gate_passed": true
+            },
+            "execution_context": {
+                "requested_thread_count": requested_threads,
+                "effective_thread_count": effective_threads,
+                "thread_count": effective_threads,
+                "thread_env": {
+                    "RAYON_NUM_THREADS": null,
+                    "BITNET_CPU_THREADS": requested_threads.map(|value| value.to_string()),
+                    "BITNET_NUM_THREADS": null,
+                    "OMP_NUM_THREADS": null,
+                    "OPENBLAS_NUM_THREADS": null,
+                    "MKL_NUM_THREADS": null,
+                    "NUMEXPR_NUM_THREADS": null
+                },
+                "process_affinity_mask": "0xff",
+                "affinity_classification": null,
+                "affinity_classification_status": "not_exposed",
+                "windows_power_scheme": "Balanced",
+                "windows_power_scheme_status": "measured",
+                "ac_battery_state": "AC",
+                "ac_battery_state_status": "measured",
+                "thermal_availability": "not_exposed",
+                "temperature_status": "not_exposed",
+                "cpu_utilization_status": "not_exposed",
+                "frequency_or_throttle_status": "not_exposed"
+            },
+            "resident_session": {
+                "reuse_scope": "resident_session",
+                "model_loaded_once": true,
+                "tokenizer_loaded_once": true
+            },
+            "profiles": [
+                profile("regression_tiny", 60.0),
+                profile("ask_short", 90.0),
+                profile("ask_normal", 120.0)
+            ],
+            "claim_boundary": {
+                "new_inference_executed": false,
+                "route_promotion_changed": false,
+                "broad_quality_claim": false,
+                "speedup_claim": false,
+                "power_advantage_claim": false,
+                "acceleration_claim": false,
+                "arc_npu_execution_claim": false,
+                "bitnet_qk256_i2s_claim": false,
+                "hidden_fallback_allowed": false
+            },
+            "variant_id": variant
+        })
     }
 
     fn write_low_power_plan_inputs(
