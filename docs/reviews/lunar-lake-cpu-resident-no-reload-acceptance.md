@@ -71,6 +71,33 @@ The CPU slow path is solved, CPU is optimized, or CPU timing can be compared
 as benchmark-qualified against OpenVINO CPU.
 ```
 
+## Current Command Surface
+
+The current command surface preserves the resident no-reload diagnostic
+boundary, but it does not yet collect the physical run that would close #1069.
+
+- `lunar-lake cpu-slm-resident-session` is currently a no-new-inference
+  summarizer over `lunar-lake-cpu-slm-phase-attribution.json` and an existing
+  `slm_cpu_warm_session` source receipt.
+- It emits `artifact_kind=lunar_lake_cpu_slm_resident_session` with
+  `proof_stage=resident_cpu_no_reload_timing_no_new_inference`.
+- The builder validates model/tokenizer loaded-once fields, answer gates,
+  fallback=false, determinism, and summary timing from the source receipt.
+- It does not run a fresh physical resident CPU session, create one separated
+  first resident ask followed by 30 additional warm asks, or measure prompt
+  render, quality-gate, receipt-write, telemetry, full memory lifecycle,
+  utilization, or frequency timing unless a future source receipt records
+  those fields.
+- It does not make resident CPU timing benchmark-equivalent to OpenVINO CPU;
+  #1156 keeps comparison qualification blocked while model formats, timing
+  scopes, prompt-render/tokenization accounting, or matched-profile evidence
+  differ.
+
+The next #1069 PR should add or use a measurement source that emits the
+accepted fresh resident run shape below, then keep the existing
+summarizer/validator path as the fail-closed guard for missing fields. It
+should not be another aggregate refresh from existing receipts.
+
 ## Fresh Measurement Acceptance Rule
 
 A future #1069-closing resident CPU receipt must include one fresh physical run
