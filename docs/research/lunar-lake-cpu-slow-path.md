@@ -4,7 +4,7 @@ Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1035
 
 Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
 
-Post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209
+Closed post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209
 
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
@@ -461,7 +461,7 @@ hiding it:
 | ---: | --- | --- | --- |
 | 1 | Add CPU phase attribution receipt fields and a fixture/test for schema validation | High: makes reload, prefill, decode, and receipt overhead separable | Low: docs/schema/unit-test surface |
 | 2 | Add resident CPU session refresh receipt with per-prompt overhead accounting | High: confirms whether no-reload path is still prefill/decode bound | Medium: hardware run needed, but no route-policy change |
-| 3 | Use #1209 post-matrix CPU review to decide whether the next evidence should be phase attribution, resident no-reload refresh, or matched OpenVINO CPU comparison | High: consumes completed #1208 evidence without changing runtime behavior | Low: docs/review issue shaping |
+| 3 | Open or use a new narrow evidence issue after #1209 when the next target is resident phase attribution, resident no-reload refresh, matched OpenVINO CPU comparison, or topology evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
 | 6 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
@@ -504,10 +504,13 @@ The live CPU slow-path follow-ups and guard status are:
    Treat it as source-receipt enrichment support for #1208, not as an open
    blocker.
 5. [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209)
-   owns the post-matrix CPU slow-path review. It should decide whether the
-   next smallest evidence is resident phase attribution, matched Rust GGUF CPU
-   versus OpenVINO CPU comparison, or a later affinity/topology receipt with
-   stronger placement telemetry.
+   is closed as the post-matrix CPU slow-path review. Treat it as the decision
+   that #1208 does not justify CPU optimization, default thread tuning,
+   OpenVINO CPU promotion, or route-policy changes. The next CPU work should
+   use a new narrow issue only when it names one evidence target: resident
+   phase attribution, a fresh resident no-reload measurement, matched Rust GGUF
+   CPU versus OpenVINO CPU comparison, or a later affinity/topology receipt
+   with stronger placement telemetry.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by

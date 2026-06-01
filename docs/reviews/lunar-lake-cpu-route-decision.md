@@ -51,7 +51,7 @@ BitNet QK256/I2_S behavior.
 | #1071 / #1208 | Thread/core matrix evidence is closed and committed | Measurement evidence, not a route decision by itself |
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
 | #1201 / #1207 | Source-receipt contract for the physical matrix is closed | Source-enrichment support, not an open blocker |
-| #1209 | Post-matrix CPU review is open | Decide the next measurement/review step without optimizing blindly |
+| #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
 
 The refreshed runtime comparison records:
 
@@ -69,7 +69,7 @@ The refreshed runtime comparison records:
 
 | Option | Decision | Why | Next allowed PR |
 | --- | --- | --- | --- |
-| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs, and #1208 argues against blind thread-count tuning, but it still does not identify a safe runtime target or success metric | #1209 post-matrix review, then a narrow phase-attribution or matched-comparison receipt if justified |
+| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs, and #1208 argues against blind thread-count tuning, but it still does not identify a safe runtime target or success metric | A narrow phase-attribution, resident no-reload, matched-comparison, or topology receipt only after a new issue defines the metric |
 | Evaluate OpenVINO CPU | Keep as separate candidate/control | OpenVINO CPU corpus-v2 passes, but GGUF Q8_0 and OpenVINO IR INT4_SYM are different runtime/model scopes | Matched-profile comparison schema or receipt refresh that keeps non-equivalence explicit |
 | Keep CPU fallback/correctness baseline | Yes | Rust GGUF CPU is the known dense SLM local baseline and remains separate from accelerator proof | Docs/review closeout only unless a receipt invalidates it |
 | Promote OpenVINO CPU for auto-route | Blocked | No promotion package proves exact-profile advantage under accepted CPU route scope | Route-policy PR only after fair-benchmark and product-scope gates pass |
@@ -157,22 +157,26 @@ Measurement subissues do not change this status by themselves.
 
 Do not start with CPU optimization.
 
-The remaining next small PRs are:
+The remaining next small PRs are evidence work only:
 
-1. #1209 post-matrix CPU review to decide whether the next evidence should be
-   phase attribution, resident no-reload refresh, matched OpenVINO CPU
-   comparison, or a later affinity/topology receipt.
-2. A new narrow physical resident no-reload measurement source only if the
+1. A new narrow physical resident no-reload measurement source only if the
    existing #1069/#1182 resident-session summarizer cannot provide the needed
    fresh first-ask and 30-warm-ask evidence.
-3. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
+2. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
    can keep model-format, timing-scope, prompt-render, tokenization, and
    benchmark-qualification blockers explicit.
+3. A later affinity/topology receipt only if P-core/E-core placement,
+   frequency, utilization, or thermal context can be exposed accurately enough
+   to make the result reviewable.
 
 The comparison-schema guard that keeps `benchmark_qualified=false` when model
 formats or timing scopes differ landed in #1156. Future CPU comparison work
 should refresh matched-profile evidence, use completed measurement packages, or
 harden a newly exposed gap, not repeat that guard.
+
+Issue #1209 is closed as the post-matrix review. Future CPU work should open
+or use a new narrow issue with explicit evidence fields, acceptance criteria,
+and claim boundaries before any runtime optimization or route-policy PR.
 
 Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed
