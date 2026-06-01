@@ -1,0 +1,982 @@
+{
+  "allocation_audit": {
+    "enabled": false,
+    "method": "not_requested",
+    "scope": "not_requested"
+  },
+  "artifact_kind": "slm_cpu_warm_session_prompt",
+  "artifact_path": "ci\\hardware\\intel-258v\\2026-05-08\\cpu-slm-thread-core-matrix\\default-warm-session-prompts\\03-what-is-22-answer-briefly.json",
+  "case_id": "regression_tiny_math_2_plus_2_brief",
+  "dense_q8_hook": {
+    "after_receipt_field": "dense_q8_hook.q_norm_input_tensor_identity",
+    "artifact_kind": "dense_q8_hook_receipt_identity",
+    "capture_tracking_item": "SLM-CPU-147",
+    "claim_boundary": {
+      "no_allocation_reduction_claim": true,
+      "no_bitnet_qk256_claim": true,
+      "no_q4_q5_runtime_support": true,
+      "no_qwen35_claim": true,
+      "no_runtime_promotion": true,
+      "no_server_or_accelerator_claim": true,
+      "no_sustained_throughput_claim": true,
+      "no_timing_improvement_claim": true
+    },
+    "default_runtime_changed": false,
+    "packed_q8_sidecar_default_enabled": false,
+    "proof_ready": false,
+    "q_norm_input_boundary": "q_norm_input_candle_tensor_boundary",
+    "q_norm_input_tensor_identity": {
+      "boundary": "q_norm_input_candle_tensor_boundary",
+      "dense_hook_identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "dtype": "f32",
+      "identity": "layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:layers.0.attention.q_proj.weight:q_norm_input_candle_tensor_boundary:runtime_disabled",
+      "required_identity_fields": [
+        "q_norm_input.boundary=q_norm_input_candle_tensor_boundary",
+        "q_norm_input.source_tensor=layers.0.attention.q_proj.weight",
+        "q_norm_input.source_stage=attention.q_proj.reshape_q_heads",
+        "q_norm_input.shape",
+        "q_norm_input.dtype",
+        "q_norm_input.dense_hook_identity",
+        "q_norm_input.tensor_fingerprint_sha256_f32_le"
+      ],
+      "shape": null,
+      "source_stage": "attention.q_proj.reshape_q_heads",
+      "source_tensor": "layers.0.attention.q_proj.weight",
+      "tensor_fingerprint_sha256_f32_le": null,
+      "tensor_fingerprint_status": "not_captured_by_warm_session_receipt",
+      "tensor_identity_surface_defined": true
+    },
+    "q_proj_numeric_evidence": {
+      "blocking_reason": "warm-session receipts currently expose source-order candidate identity but not the q_proj numeric comparison evidence required for selector gating",
+      "present": false,
+      "required_boundary": "attention_q_proj_output_pre_optional_qnorm",
+      "required_evidence": [
+        "before_after_q_proj_output_f32_le_fingerprint_or_bounded_vector",
+        "max_abs_diff",
+        "mean_abs_diff",
+        "rms_abs_diff",
+        "first_differing_index",
+        "accepted_absolute_tolerance"
+      ],
+      "required_source_tensor": "embed_tokens.weight",
+      "required_stage": "attention.q_proj_output_pre_optional_qnorm",
+      "status": "not_captured_by_warm_session_receipt",
+      "warm_session_capture_surface": {
+        "activation_scope": "disabled",
+        "claim_boundary": {
+          "before_after_numeric_comparison_claimed": false,
+          "captures_warm_session_runtime_path": false,
+          "runtime_promotion_claimed": false,
+          "speedup_claim": false
+        },
+        "dump_limit": 32,
+        "enabled": false,
+        "full_prompt_trace": false,
+        "jsonl_path": null,
+        "layer": null,
+        "prompt_ids_override": null,
+        "qproj_dump": false
+      }
+    },
+    "remaining_blockers": [
+      "q_norm_input_tensor_fingerprint_not_captured",
+      "qwen3_q8_before_after_receipts_missing",
+      "qwen25_q8_before_after_receipts_missing",
+      "accumulator_order_unproven",
+      "source_order_q8_matvec_behavior_receipt_pairs_missing"
+    ],
+    "required_receipts": [
+      {
+        "model_architecture": "qwen3",
+        "model_id": "qwen3-0.6b-q8_0",
+        "quant_format": "Q8_0",
+        "required_after_receipt": "strict CPU receipt after q_norm_input materialization candidate",
+        "required_before_receipt": "strict CPU eager_f32_candle receipt before q_norm_input materialization candidate",
+        "required_fields": [
+          "model.sha256",
+          "tokenizer.source=gguf_metadata",
+          "tokenizer.strict=true",
+          "prompt_ids",
+          "generated_ids",
+          "decoded_text",
+          "selected_backend=cpu-rust",
+          "selected_kernel identity",
+          "dense_hook identity",
+          "fallback_used=false"
+        ]
+      },
+      {
+        "model_architecture": "qwen2",
+        "model_id": "qwen2.5-0.5b-instruct-q8_0",
+        "quant_format": "Q8_0",
+        "required_after_receipt": "strict CPU receipt after q_norm_input materialization candidate",
+        "required_before_receipt": "strict CPU eager_f32_candle receipt before q_norm_input materialization candidate",
+        "required_fields": [
+          "model.sha256",
+          "tokenizer.source=gguf_metadata",
+          "tokenizer.strict=true",
+          "prompt_ids",
+          "generated_ids",
+          "decoded_text",
+          "selected_backend=cpu-rust",
+          "selected_kernel identity",
+          "dense_hook identity",
+          "fallback_used=false"
+        ]
+      }
+    ],
+    "runtime_compute_enabled": false,
+    "schema": 1,
+    "selected_kernel": "dense-f32-candle-linear",
+    "selected_path": "eager_f32_candle",
+    "selected_tensor": "embed_tokens.weight",
+    "selector_gate_tracking_item": "SLM-CPU-156",
+    "source_order_candidate_receipt_identity": null,
+    "source_order_candidate_runtime_enabled": false,
+    "source_order_q8_matvec_candidate": false,
+    "source_order_qproj_candidate_identity": {
+      "blocking_reason": "no payload-bearing dense Q8 boundary reached this receipt surface",
+      "input_dim": null,
+      "output_dim": null,
+      "present": false,
+      "receipt_identity": null,
+      "runtime_enabled": false,
+      "selected_kernel": null,
+      "selected_path": null,
+      "selected_tensor": "embed_tokens.weight",
+      "status": "no_payload_boundary"
+    },
+    "source_order_selected_kernel": null,
+    "source_order_selected_path": null,
+    "source_order_selector_gate": {
+      "blocking_reason": "source-order q_proj selector promotion requires paired Qwen3 and Qwen2.5 strict CPU receipts with q_proj numeric evidence and unchanged generated behavior",
+      "candidate_kernel": null,
+      "candidate_path": null,
+      "candidate_receipt_identity": null,
+      "candidate_runtime_enabled": false,
+      "decision": "blocked_pending_before_after_receipts",
+      "default_runtime": "eager_f32_candle",
+      "default_runtime_preserved": true,
+      "explicit_runtime_opt_in": false,
+      "q_proj_numeric_evidence_present": false,
+      "required_behavior_fields": [
+        "model.sha256",
+        "tokenizer.source",
+        "tokenizer.strict",
+        "prompt_ids",
+        "generated_ids",
+        "decoded_text",
+        "selected_backend",
+        "selected_kernel",
+        "dense_hook_identity",
+        "q_proj_numeric_evidence",
+        "fallback_used"
+      ],
+      "required_behavior_receipts": [
+        "qwen3_q8_before_receipt",
+        "qwen3_q8_after_receipt",
+        "qwen25_q8_before_receipt",
+        "qwen25_q8_after_receipt"
+      ],
+      "selected_runtime": "eager_f32_candle",
+      "tracking_item": "SLM-CPU-156"
+    },
+    "speedup_claim": false,
+    "tracking_item": "SLM-CPU-109"
+  },
+  "dense_q8_hook_selection": {
+    "all_boundaries_preserve_eager_f32": true,
+    "artifact_kind": "dense_gguf_q8_hook_selection_receipt_gate",
+    "dense_runtime_replaced": false,
+    "example_boundary": {
+      "dense_runtime_replaced": false,
+      "eager_f32_runtime_preserved": true,
+      "generated_id_preservation_required_before_runtime_use": true,
+      "next_receipt_gate": "before_after_qwen3_q8_generated_id_text_receipts",
+      "runtime_compute_enabled": false,
+      "selected_kernel": "dense-f32-candle-linear",
+      "selected_path": "eager_f32_candle",
+      "sidecar_descriptor_present": true,
+      "sidecar_matrix_cols": null,
+      "sidecar_matrix_rows": null,
+      "sidecar_payload_bytes": null,
+      "sidecar_payload_bytes_available": false,
+      "sidecar_payload_contract_valid": false,
+      "sidecar_payload_order_matches_runtime_shape": false,
+      "sidecar_payload_sha256": "4962347ae567a973bff48f8185d1d5e1e071a895da8566cd88a5ee2d3acb2371",
+      "sidecar_q8_block_count": null,
+      "sidecar_role": "TokenEmbedding",
+      "source_order_candidate_receipt_identity": null,
+      "source_order_candidate_runtime_enabled": false,
+      "source_order_input_dim": 896,
+      "source_order_output_dim": 151936,
+      "source_order_q8_matvec_candidate": false,
+      "source_order_selected_kernel": null,
+      "source_order_selected_path": null,
+      "speedup_claim": false,
+      "tensor_name": "embed_tokens.weight"
+    },
+    "fallback_used": false,
+    "hook_boundary_count": 170,
+    "next_safe_step": "run before/after Qwen3 Q8_0 warm-session receipts that record identical model SHA, tokenizer source/strictness, prompt IDs, generated IDs, decoded text, selected CPU backend/kernel identity, dense hook selection identity, and fallback_used=false before enabling packed sidecar compute",
+    "payload_bearing_boundary": null,
+    "payload_bearing_boundary_count": 0,
+    "remaining_blockers": [
+      "packed_q8_sidecar_compute_kernel_not_enabled",
+      "before_after_qwen3_q8_warm_session_receipts_with_hook_selection_identity_missing"
+    ],
+    "runtime_boundary": null,
+    "runtime_compute_enabled": false,
+    "schema": 1,
+    "selected_kernel": "dense-f32-candle-linear",
+    "selected_path": "eager_f32_candle",
+    "sidecar_descriptor_count": 170,
+    "sidecar_descriptors_reached_transformer": true,
+    "speedup_claim": false
+  },
+  "execution": {
+    "fallback_reason": null,
+    "fallback_used": false,
+    "generated_tokens": 8,
+    "phase": "warm_session_decode",
+    "prompt_tokens": 39,
+    "requested_backend": "cpu",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "thread_count": 1
+  },
+  "fallback_reason": null,
+  "fallback_used": false,
+  "kernel": {
+    "family": "i2_s",
+    "implementation": "avx2",
+    "kernel_id": "i2_s-avx2-reference"
+  },
+  "model": {
+    "architecture": "qwen2",
+    "fallback_loader_used": false,
+    "family": "qwen",
+    "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "format": "gguf",
+    "loader_mode": "real_gguf",
+    "path": "C:\\Users\\szim9\\AppData\\Local\\bitnet-rs\\models\\qwen2.5-0.5b-instruct-q8_0\\qwen2.5-0.5b-instruct-q8_0.gguf",
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+    "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "sha256_rehash_skipped": false,
+    "sha256_source": "computed_from_model_file",
+    "tokenizer": "gguf_metadata"
+  },
+  "operator_ux": {
+    "aggregate_receipt_at_exit": true,
+    "clear_failure_messages": true,
+    "interactive_prompt_collection": false,
+    "model_tokenizer_loaded_once_status": "recorded_in_session_receipt",
+    "per_turn_receipts_enabled": true,
+    "progress_enabled": true,
+    "quiet_default_logs": false,
+    "quiet_requested": false,
+    "status_stream": "stderr",
+    "stdout_token_stream": false,
+    "stream_tokens_requested": false,
+    "time_to_first_token_receipt": true,
+    "token_stream": "disabled"
+  },
+  "prompt": "What is 2+2? Answer briefly.",
+  "prompt_generation_identity": {
+    "generation_parameters": {
+      "deterministic": true,
+      "fixed_token_count": false,
+      "greedy": true,
+      "max_new_tokens": 24,
+      "qwen_no_think": false,
+      "repetition_penalty": 1.100000023841858,
+      "seed": null,
+      "stream": false,
+      "temperature": 0.0,
+      "threads": 1,
+      "top_k": 1,
+      "top_p": 1.0
+    },
+    "generation_params_sha256": "b2e78393b19bf0c51bcb0f68a913145dcbf26f58f9bf7457ccaf9c228ee04b95",
+    "identity_sha256": "adeec2cd759f7a60d663bc2404abc0deb91a1dbd440dbab594f1757a1e38b4d2",
+    "schema_version": "1.0.0",
+    "stop_criteria": {
+      "manual_stop_sequences": [],
+      "manual_stop_token_ids": [],
+      "policy": "manual_plus_template_defaults",
+      "stop_sequences": [
+        "<|im_end|>",
+        "<|im_start|>"
+      ],
+      "stop_string_window": null,
+      "stop_token_ids": [
+        151645,
+        151644
+      ]
+    },
+    "stop_criteria_sha256": "c5936988670d421d6dd9d27cf11a3adc64aec6744bc0d370c6b347302c549e82",
+    "stop_sequences_sha256": "bb3dd6ef22aad3c58befc84bdb0900647ebf1c4d1be4288a371bbb4b7096cb9b",
+    "stop_token_ids_sha256": "aa7a4dff015908c4a28593433458cc84ac536e9997dab52b7b924d2e09eb2331",
+    "template": {
+      "family": "qwen25-chat",
+      "source": "bitnet-prompt-templates-core"
+    },
+    "template_family": "qwen25-chat",
+    "template_sha256": "be829f95ac1a95f9fd9b9641a7df864186594cde3285438f6f8fdddc89c428e3",
+    "tokenizer_authority": {
+      "authority": "present",
+      "sha256": null,
+      "source": "gguf_metadata",
+      "strict": true
+    }
+  },
+  "prompt_index": 2,
+  "prompt_policy": {
+    "qwen_no_think": false,
+    "template": "qwen25-chat"
+  },
+  "prompt_prefill": {
+    "exercised": true,
+    "kv_cache_behavior": "prompt_prefix_prefilled_before_decode",
+    "tokens": 38
+  },
+  "prompt_render": {
+    "add_bos": false,
+    "parse_special": true,
+    "qwen_no_think": false,
+    "rendered_sha256": "ebbdae27cd6294724f8d7e1568c236ed907b5d9346da1e6d6e80e7f0f296c99a",
+    "rendered_text": "<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat is 2+2? Answer briefly.<|im_end|>\n<|im_start|>assistant\n",
+    "stop_sequences": [
+      "<|im_end|>",
+      "<|im_start|>"
+    ],
+    "stop_token_ids": [
+      151645,
+      151644
+    ],
+    "template_family": "qwen25-chat"
+  },
+  "prompt_tokenize_contract": {
+    "cache_entry_count": 3,
+    "cache_hit": true,
+    "cache_key_material": {
+      "bos_policy": false,
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "parse_special": true,
+      "prompt_generation_identity_sha256": "adeec2cd759f7a60d663bc2404abc0deb91a1dbd440dbab594f1757a1e38b4d2",
+      "qwen_no_think": false,
+      "rendered_prompt_sha256": "ebbdae27cd6294724f8d7e1568c236ed907b5d9346da1e6d6e80e7f0f296c99a",
+      "scope": "resident_warm_session_single_model_tokenizer",
+      "template_family": "qwen25-chat",
+      "template_source": "bitnet-prompt-templates-core",
+      "tokenizer_authority": "present",
+      "tokenizer_source": "gguf_metadata",
+      "tokenizer_strict": true
+    },
+    "cache_key_sha256": "a688b9364ded81e8c075b4048d81b154f58a58bf842c7d04fbd733dbdb63f93a",
+    "cache_lookup": true,
+    "cache_lookup_result": "hit",
+    "paired_strict_before_after_receipts_required_before_allocation_claim": true,
+    "prompt_ids_sha256": "fa826367581ab8bd5378aeb3a196b048fa24123ff868adac8aafe11f2cd6a0b7",
+    "prompt_token_buffers": {
+      "capacity": 63,
+      "capacity_grew": false,
+      "capacity_sufficient": true,
+      "needed": 63,
+      "previous_capacity": 63
+    },
+    "rendered_prompt_sha256": "ebbdae27cd6294724f8d7e1568c236ed907b5d9346da1e6d6e80e7f0f296c99a",
+    "repo_owned_reuse_surface": [
+      "rendered_prompt_text",
+      "prompt_token_ids",
+      "prompt token vector capacity"
+    ],
+    "runtime_allocation_behavior_changed": true,
+    "scope": "resident_warm_session_prompt_tokenize_cache_evidence",
+    "tokenizer_internal_allocation_policy": "classified_only_until_tokenizer_api_exposes_caller_owned_output_buffer_or_cache_hook",
+    "tokenizer_internal_allocations_classified": true,
+    "version": "1.0.0"
+  },
+  "quality": {
+    "distinct_generated_tokens": 7,
+    "failed_rules": [],
+    "gate_kind": "contains_any",
+    "gate_passed": true,
+    "generated_tokens": 8,
+    "min_distinct_generated_tokens": 1,
+    "min_generated_tokens": 1,
+    "mostly_text": true,
+    "no_replacement_chars": true,
+    "non_degenerate": true,
+    "non_empty": true,
+    "normalized_text": "2+2 equals 4.",
+    "passed": true,
+    "printable_utf8": true,
+    "valid_utf8": true
+  },
+  "repeat_index": 2,
+  "requested_backend": "cpu",
+  "runtime_api": "cpu",
+  "schema_version": "1.0.0",
+  "selected_backend": "cpu-rust",
+  "session_artifact_path": "ci\\hardware\\intel-258v\\2026-05-08\\cpu-slm-thread-core-matrix\\default-warm-session.json",
+  "session_reuse": {
+    "allocation_audit_buffers_reused": true,
+    "buffer_reuse_evidence": {
+      "all_buffers_capacity_sufficient": true,
+      "buffer_capacity_details": {
+        "decode_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "decode_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "embed_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "embed_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "forward_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "forward_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "generated_tokens": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "logits_scratch": {
+          "capacity": 151936,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 151936,
+          "previous_capacity": 151936
+        },
+        "logits_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "logits_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "prefill_embed_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 38
+        },
+        "prefill_forward_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 38
+        },
+        "prefill_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 38
+        },
+        "sample_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "sample_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "stop_tail": {
+          "capacity": 28,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 28,
+          "previous_capacity": 28
+        },
+        "stop_tail_update_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "token_decode_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "token_decode_step_ms": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "token_vector_update_allocs": {
+          "capacity": 24,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 24
+        },
+        "tokens": {
+          "capacity": 63,
+          "capacity_grew": false,
+          "capacity_sufficient": true,
+          "needed": 63,
+          "previous_capacity": 63
+        }
+      },
+      "buffers_cleared_without_reallocation": true,
+      "capacity_grew_buffers": [],
+      "capacity_sufficient_for_prompt": true,
+      "decode_allocation_sample_capacity": 24,
+      "decode_timing_capacity": 24,
+      "generated_token_capacity": 24,
+      "generated_token_capacity_grew": false,
+      "generated_token_capacity_needed": 24,
+      "insufficient_buffers": [],
+      "logits_capacity": 151936,
+      "logits_capacity_grew": false,
+      "logits_capacity_needed": 151936,
+      "prefill_allocation_sample_capacity": 38,
+      "previous_generated_token_capacity": 24,
+      "previous_logits_capacity": 151936,
+      "previous_stop_tail_capacity": 28,
+      "previous_token_capacity": 63,
+      "reset_reused_existing_capacity": true,
+      "stop_tail_capacity": 28,
+      "stop_tail_capacity_grew": false,
+      "stop_tail_capacity_needed": 28,
+      "token_capacity": 63,
+      "token_capacity_grew": false,
+      "token_capacity_needed": 63
+    },
+    "direct_greedy_logits_steps": 1,
+    "generated_token_buffer_reused": true,
+    "kv_cache_allocation_policy": "max_prompt_plus_generation_bounded",
+    "kv_cache_cleared_per_prompt": true,
+    "kv_cache_estimated_f32_bytes": "1523712",
+    "kv_cache_max_seq_len": 62,
+    "kv_cache_model_max_position_embeddings": 32768,
+    "kv_cache_recreated_per_prompt": false,
+    "kv_cache_reuse_policy": "single_kv_cache_cleared_per_prompt_for_prompt_isolation",
+    "kv_cache_reused_across_prompts": true,
+    "logits_buffer_reuse_policy": "full logits Vec extraction bypassed; deterministic greedy no-penalty steps use direct tensor argmax and repetition-penalty steps reuse a preallocated host logits scratch buffer",
+    "logits_scratch_reuse_steps": 7,
+    "logits_vec_extraction_bypassed": true,
+    "logits_vec_extraction_steps": 0,
+    "model_loaded_once": true,
+    "prompt_buffer_pre_sized_before_prompt_loop": true,
+    "prompt_buffer_pre_sizing": {
+      "all_buffers_capacity_sufficient": true,
+      "buffer_capacity_details": {
+        "decode_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "decode_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "embed_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "embed_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "forward_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "forward_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "generated_tokens": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "logits_scratch": {
+          "capacity": 151936,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 151936,
+          "previous_capacity": 0
+        },
+        "logits_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "logits_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "prefill_embed_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 0
+        },
+        "prefill_forward_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 0
+        },
+        "prefill_step_allocs": {
+          "capacity": 38,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 38,
+          "previous_capacity": 0
+        },
+        "sample_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "sample_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "stop_tail": {
+          "capacity": 28,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 28,
+          "previous_capacity": 0
+        },
+        "stop_tail_update_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "token_decode_step_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "token_decode_step_ms": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "token_vector_update_allocs": {
+          "capacity": 24,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 24,
+          "previous_capacity": 0
+        },
+        "tokens": {
+          "capacity": 63,
+          "capacity_grew": true,
+          "capacity_sufficient": true,
+          "needed": 63,
+          "previous_capacity": 0
+        }
+      },
+      "buffers_cleared_without_reallocation": false,
+      "capacity_grew_buffers": [
+        "tokens",
+        "generated_tokens",
+        "decode_step_ms",
+        "embed_step_ms",
+        "forward_step_ms",
+        "logits_step_ms",
+        "sample_step_ms",
+        "token_decode_step_ms",
+        "prefill_step_allocs",
+        "prefill_embed_step_allocs",
+        "prefill_forward_step_allocs",
+        "decode_step_allocs",
+        "embed_step_allocs",
+        "forward_step_allocs",
+        "logits_step_allocs",
+        "sample_step_allocs",
+        "token_vector_update_allocs",
+        "token_decode_step_allocs",
+        "stop_tail_update_allocs",
+        "stop_tail",
+        "logits_scratch"
+      ],
+      "capacity_sufficient_for_prompt": true,
+      "decode_allocation_sample_capacity": 24,
+      "decode_timing_capacity": 24,
+      "generated_token_capacity": 24,
+      "generated_token_capacity_grew": true,
+      "generated_token_capacity_needed": 24,
+      "insufficient_buffers": [],
+      "logits_capacity": 151936,
+      "logits_capacity_grew": true,
+      "logits_capacity_needed": 151936,
+      "pre_sized_before_prompt_loop": true,
+      "pre_sizing_scope": "resident_warm_session_prompt_buffers",
+      "pre_sizing_source": "already_rendered_tokenized_warm_session_prompt_metadata",
+      "prefill_allocation_sample_capacity": 38,
+      "previous_generated_token_capacity": 0,
+      "previous_logits_capacity": 0,
+      "previous_stop_tail_capacity": 0,
+      "previous_token_capacity": 0,
+      "reset_reused_existing_capacity": false,
+      "stop_tail_capacity": 28,
+      "stop_tail_capacity_grew": true,
+      "stop_tail_capacity_needed": 28,
+      "token_capacity": 63,
+      "token_capacity_grew": true,
+      "token_capacity_needed": 63
+    },
+    "prompt_buffer_pre_sizing_source": "already_rendered_tokenized_warm_session_prompt_metadata",
+    "prompt_token_buffer_reused": true,
+    "prompt_token_buffers": {
+      "capacity": 63,
+      "capacity_grew": false,
+      "capacity_sufficient": true,
+      "needed": 63,
+      "previous_capacity": 63
+    },
+    "prompt_token_cache_enabled": true,
+    "prompt_token_cache_entry_count": 3,
+    "prompt_token_cache_hit": true,
+    "prompt_token_cache_policy": "rendered_prompt_token_ids_reused_across_repeated_warm_session_prompts",
+    "reuse_scope": "resident_session",
+    "sampler_recreated_per_prompt": false,
+    "sampler_reuse_policy": "single_sampler_reused_for_temperature_zero_prompt_independence",
+    "sampler_reused_across_prompts": true,
+    "session_owned_buffers": true,
+    "stop_policy_precomputed_once": true,
+    "stop_sequence_count": 2,
+    "stop_tail_buffer_reused": true,
+    "stop_token_id_count": 2,
+    "timing_buffers_reused": true,
+    "tokenizer_loaded_once": true
+  },
+  "speedup_claim": false,
+  "text": "2+2 equals 4.",
+  "timestamp": "2026-06-01T17:09:35.791978200+00:00",
+  "timing": {
+    "decode_steady_state_tok_s": 6.875,
+    "decode_total_ms": 1160.051,
+    "embed_ms": {
+      "count": 8,
+      "max_ms": 0.013,
+      "mean_ms": 0.011,
+      "min_ms": 0.009,
+      "p50_ms": 0.011,
+      "p95_ms": 0.013,
+      "total_ms": 0.085
+    },
+    "first_token_decode_ms": 141.845,
+    "first_token_ms": 4028,
+    "forward_ms": {
+      "count": 8,
+      "max_ms": 107.953,
+      "mean_ms": 102.831,
+      "min_ms": 100.05,
+      "p50_ms": 101.847,
+      "p95_ms": 107.953,
+      "total_ms": 822.648
+    },
+    "logits_ms": {
+      "count": 8,
+      "max_ms": 42.773,
+      "mean_ms": 40.634,
+      "min_ms": 39.607,
+      "p50_ms": 39.961,
+      "p95_ms": 42.773,
+      "total_ms": 325.071
+    },
+    "model_load_ms": 0.0,
+    "prefill_ms": 3886.195,
+    "sample_ms": {
+      "count": 8,
+      "max_ms": 1.829,
+      "mean_ms": 1.507,
+      "min_ms": 0.001,
+      "p50_ms": 1.698,
+      "p95_ms": 1.829,
+      "total_ms": 12.057
+    },
+    "sampling_ms_per_token": 1.507,
+    "session_model_load_ms": 9769.176,
+    "session_model_sha256_ms": 254.713,
+    "session_tokenizer_load_ms": 252.446,
+    "time_to_first_token_ms": 4028,
+    "token_decode_ms": {
+      "count": 8,
+      "max_ms": 0.02,
+      "mean_ms": 0.015,
+      "min_ms": 0.011,
+      "p50_ms": 0.015,
+      "p95_ms": 0.02,
+      "total_ms": 0.123
+    },
+    "tokenize_ms": 0.005,
+    "tokenizer_load_ms": 0.0,
+    "total_ms": 5046.57
+  },
+  "tokenizer": {
+    "bos": 151643,
+    "eos": 151645,
+    "model_family": "gguf_metadata",
+    "pretokenizer_authority": "present",
+    "source": "gguf_metadata",
+    "strict": true,
+    "type": "gguf_metadata"
+  },
+  "tokens": {
+    "generated": 8,
+    "generated_ids": [
+      17,
+      10,
+      17,
+      16819,
+      220,
+      19,
+      13,
+      151645
+    ],
+    "ids": [
+      17,
+      10,
+      17,
+      16819,
+      220,
+      19,
+      13,
+      151645
+    ],
+    "prompt": 39,
+    "prompt_ids": [
+      151644,
+      8948,
+      198,
+      2610,
+      525,
+      1207,
+      16948,
+      11,
+      3465,
+      553,
+      54364,
+      14817,
+      13,
+      1446,
+      525,
+      264,
+      10950,
+      17847,
+      13,
+      151645,
+      198,
+      151644,
+      872,
+      198,
+      3838,
+      374,
+      220,
+      17,
+      10,
+      17,
+      30,
+      21806,
+      26753,
+      13,
+      151645,
+      198,
+      151644,
+      77091,
+      198
+    ],
+    "total": 47
+  }
+}

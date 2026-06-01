@@ -1,0 +1,692 @@
+{
+  "schema_version": "1.2.0",
+  "artifact_kind": "lunar_lake_cpu_slm_resident_session",
+  "proof_stage": "resident_cpu_no_reload_timing_no_new_inference",
+  "created_utc": "2026-06-01T17:16:03Z",
+  "machine_id": "intel-258v",
+  "artifact_root": "ci/hardware/intel-258v/2026-05-08",
+  "source_receipts": {
+    "phase_attribution_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-phase-attribution.json",
+    "repeated_warm_session_receipt": "ci/hardware/intel-258v/2026-05-08/cpu-slm-thread-core-matrix/threads_1-warm-session.json"
+  },
+  "model": {
+    "model_family": "qwen",
+    "model_architecture": "qwen2",
+    "quantization": "Q8_0",
+    "tokenizer_source": "gguf_metadata",
+    "prompt_template": "qwen2.5"
+  },
+  "backend": {
+    "route_id": "dense_slm_default_cpu",
+    "selected_backend": "cpu-rust",
+    "runtime_api": "cpu",
+    "selected_kernel_or_runtime": "resident_cpu_rust_gguf",
+    "fallback_used": false,
+    "answer_gate_passed": true
+  },
+  "execution_context": {
+    "requested_thread_count": 1,
+    "effective_thread_count": 1,
+    "thread_count": 1,
+    "thread_env": {
+      "RAYON_NUM_THREADS": "1",
+      "BITNET_CPU_THREADS": null,
+      "BITNET_NUM_THREADS": null,
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "NUMEXPR_NUM_THREADS": null
+    },
+    "process_affinity_mask": "0xff",
+    "affinity_classification": null,
+    "affinity_classification_status": "not_exposed",
+    "windows_power_scheme": "Balanced",
+    "windows_power_scheme_status": "measured",
+    "power_scheme": "Balanced",
+    "power_scheme_status": "measured",
+    "ac_battery_state": "AC",
+    "ac_battery_state_status": "measured",
+    "thermal_availability": "not_exposed",
+    "temperature_c": null,
+    "temperature_status": "not_exposed",
+    "cpu_utilization_per_logical_processor": null,
+    "cpu_utilization_status": "not_exposed",
+    "frequency_or_throttle_proxy": null,
+    "frequency_or_throttle_status": "not_exposed",
+    "fallback_used": false
+  },
+  "resident_session": {
+    "reuse_scope": "resident_session",
+    "model_loaded_once": true,
+    "tokenizer_loaded_once": true,
+    "model_load_ms": 9777.96,
+    "model_sha256_ms": 307.928,
+    "tokenizer_load_ms": 326.508,
+    "total_session_ms": 185581.773,
+    "prompt_count": 30,
+    "per_prompt_receipts_enabled": true,
+    "session_owned_buffers": true,
+    "prompt_token_buffer_reused": true,
+    "generated_token_buffer_reused": true,
+    "timing_buffers_reused": true,
+    "stop_policy_precomputed_once": true,
+    "resident_memory_bytes": 2807017472,
+    "memory_samples": {
+      "source": "sysinfo_current_process",
+      "before_load_bytes": null,
+      "before_load_status": "not_exposed",
+      "after_load_bytes": null,
+      "after_load_status": "not_exposed",
+      "after_first_ask_bytes": null,
+      "after_first_ask_status": "not_exposed",
+      "after_warm_loop_bytes": 2807017472,
+      "after_warm_loop_status": "measured_after_warm_loop"
+    },
+    "first_resident_prompt": {
+      "prompt_index": 0,
+      "case_id": "regression_tiny_math_2_plus_2_brief",
+      "profile_id": "regression_tiny",
+      "total_ms": 5368.35,
+      "time_to_first_token_ms": 4318.0,
+      "prefill_ms": 4168.708,
+      "decode_total_ms": 1199.159,
+      "tokenize_ms": 0.003,
+      "generated_tokens": 8,
+      "fallback_used": false,
+      "model_reload_observed": false,
+      "tokenizer_reload_observed": false
+    }
+  },
+  "cold_reference": {
+    "profile_id": "ask_short",
+    "total_response_ms": 27986.539,
+    "cold_load_ms": 14250.931,
+    "tokenize_ms": 482.325,
+    "prefill_ms": 9361.503,
+    "first_token_ms": 9726.0,
+    "decode_total_ms": 3242.064,
+    "timing_scope": "cold_one_off_reference_from_cpu_phase_attribution"
+  },
+  "profiles": [
+    {
+      "profile_id": "ask_normal",
+      "case_ids": [
+        "ask_normal_instruction_rust"
+      ],
+      "observed_execution_count": 10,
+      "required_execution_count": 10,
+      "model_reload_observed": false,
+      "tokenizer_reload_observed": false,
+      "fallback_observed": false,
+      "answer_gate_passed": true,
+      "deterministic_generated_ids": true,
+      "deterministic_text": true,
+      "total_ms": {
+        "sample_count": 10,
+        "min": 7344.617,
+        "mean": 7434.133100000001,
+        "p95": 7902.586,
+        "max": 7902.586
+      },
+      "time_to_first_token_ms": {
+        "sample_count": 10,
+        "min": 3831.0,
+        "mean": 3894.0,
+        "p95": 4261.0,
+        "max": 4261.0
+      },
+      "prefill_ms": {
+        "sample_count": 10,
+        "min": 3681.733,
+        "mean": 3742.2827000000007,
+        "p95": 4097.223,
+        "max": 4097.223
+      },
+      "decode_total_ms": {
+        "sample_count": 10,
+        "min": 3634.566,
+        "mean": 3691.2836,
+        "p95": 3804.813,
+        "max": 3804.813
+      },
+      "tokenize_ms": {
+        "sample_count": 10,
+        "min": 0.004,
+        "mean": 0.0049,
+        "p95": 0.006,
+        "max": 0.006
+      },
+      "generated_tokens": {
+        "sample_count": 10,
+        "min": 24.0,
+        "mean": 24.0,
+        "p95": 24.0,
+        "max": 24.0
+      },
+      "prompt_token_count": {
+        "exposure": "measured",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
+        "summary": {
+          "sample_count": 10,
+          "min": 36.0,
+          "mean": 36.0,
+          "p95": 36.0,
+          "max": 36.0
+        }
+      },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.004,
+            "mean": 0.0049,
+            "p95": 0.006,
+            "max": 0.006
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3681.733,
+            "mean": 3742.2827000000007,
+            "p95": 4097.223,
+            "max": 4097.223
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3831.0,
+            "mean": 3894.0,
+            "p95": 4261.0,
+            "max": 4261.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3634.566,
+            "mean": 3691.2836,
+            "p95": 3804.813,
+            "max": 3804.813
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.389,
+            "mean": 0.41269999999999996,
+            "p95": 0.458,
+            "max": 0.458
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 7344.617,
+            "mean": 7434.133100000001,
+            "p95": 7902.586,
+            "max": 7902.586
+          }
+        }
+      },
+      "decode_tokens_per_s_mean": 6.501803329335084,
+      "cold_to_resident_total_ratio": 3.7646002060415085,
+      "blockers": []
+    },
+    {
+      "profile_id": "ask_short",
+      "case_ids": [
+        "ask_short_capital_france"
+      ],
+      "observed_execution_count": 10,
+      "required_execution_count": 10,
+      "model_reload_observed": false,
+      "tokenizer_reload_observed": false,
+      "fallback_observed": false,
+      "answer_gate_passed": true,
+      "deterministic_generated_ids": true,
+      "deterministic_text": true,
+      "total_ms": {
+        "sample_count": 10,
+        "min": 4756.649,
+        "mean": 4836.3479,
+        "p95": 5175.667,
+        "max": 5175.667
+      },
+      "time_to_first_token_ms": {
+        "sample_count": 10,
+        "min": 3703.0,
+        "mean": 3756.1,
+        "p95": 4000.0,
+        "max": 4000.0
+      },
+      "prefill_ms": {
+        "sample_count": 10,
+        "min": 3554.618,
+        "mean": 3606.1831000000006,
+        "p95": 3836.649,
+        "max": 3836.649
+      },
+      "decode_total_ms": {
+        "sample_count": 10,
+        "min": 1196.63,
+        "mean": 1229.7848999999999,
+        "p95": 1338.641,
+        "max": 1338.641
+      },
+      "tokenize_ms": {
+        "sample_count": 10,
+        "min": 0.004,
+        "mean": 0.0048000000000000004,
+        "p95": 0.006,
+        "max": 0.006
+      },
+      "generated_tokens": {
+        "sample_count": 10,
+        "min": 8.0,
+        "mean": 8.0,
+        "p95": 8.0,
+        "max": 8.0
+      },
+      "prompt_token_count": {
+        "exposure": "measured",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
+        "summary": {
+          "sample_count": 10,
+          "min": 35.0,
+          "mean": 35.0,
+          "p95": 35.0,
+          "max": 35.0
+        }
+      },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.004,
+            "mean": 0.0048000000000000004,
+            "p95": 0.006,
+            "max": 0.006
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3554.618,
+            "mean": 3606.1831000000006,
+            "p95": 3836.649,
+            "max": 3836.649
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3703.0,
+            "mean": 3756.1,
+            "p95": 4000.0,
+            "max": 4000.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 1196.63,
+            "mean": 1229.7848999999999,
+            "p95": 1338.641,
+            "max": 1338.641
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.117,
+            "mean": 0.1316,
+            "p95": 0.155,
+            "max": 0.155
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 4756.649,
+            "mean": 4836.3479,
+            "p95": 5175.667,
+            "max": 5175.667
+          }
+        }
+      },
+      "decode_tokens_per_s_mean": 6.505202657798125,
+      "cold_to_resident_total_ratio": 5.786709223296365,
+      "blockers": []
+    },
+    {
+      "profile_id": "regression_tiny",
+      "case_ids": [
+        "regression_tiny_math_2_plus_2_brief"
+      ],
+      "observed_execution_count": 10,
+      "required_execution_count": 10,
+      "model_reload_observed": false,
+      "tokenizer_reload_observed": false,
+      "fallback_observed": false,
+      "answer_gate_passed": true,
+      "deterministic_generated_ids": true,
+      "deterministic_text": true,
+      "total_ms": {
+        "sample_count": 10,
+        "min": 5050.712,
+        "mean": 5174.8593,
+        "p95": 5465.034,
+        "max": 5465.034
+      },
+      "time_to_first_token_ms": {
+        "sample_count": 10,
+        "min": 4022.0,
+        "mean": 4128.6,
+        "p95": 4379.0,
+        "max": 4379.0
+      },
+      "prefill_ms": {
+        "sample_count": 10,
+        "min": 3875.858,
+        "mean": 3980.9977,
+        "p95": 4224.005,
+        "max": 4224.005
+      },
+      "decode_total_ms": {
+        "sample_count": 10,
+        "min": 1167.999,
+        "mean": 1193.4994000000002,
+        "p95": 1240.667,
+        "max": 1240.667
+      },
+      "tokenize_ms": {
+        "sample_count": 10,
+        "min": 0.003,
+        "mean": 0.0049,
+        "p95": 0.006,
+        "max": 0.006
+      },
+      "generated_tokens": {
+        "sample_count": 10,
+        "min": 8.0,
+        "mean": 8.0,
+        "p95": 8.0,
+        "max": 8.0
+      },
+      "prompt_token_count": {
+        "exposure": "measured",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
+        "summary": {
+          "sample_count": 10,
+          "min": 39.0,
+          "mean": 39.0,
+          "p95": 39.0,
+          "max": 39.0
+        }
+      },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
+      "phase_timings_ms": {
+        "prompt_render_ms": {
+          "exposure": "not_exposed",
+          "source": "prompt_render_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "tokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.tokenize_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.003,
+            "mean": 0.0049,
+            "p95": 0.006,
+            "max": 0.006
+          }
+        },
+        "prefill_ms": {
+          "exposure": "measured",
+          "source": "timing.prefill_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 3875.858,
+            "mean": 3980.9977,
+            "p95": 4224.005,
+            "max": 4224.005
+          }
+        },
+        "first_token_ms": {
+          "exposure": "measured",
+          "source": "timing.time_to_first_token_ms|timing.first_token_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 4022.0,
+            "mean": 4128.6,
+            "p95": 4379.0,
+            "max": 4379.0
+          }
+        },
+        "decode_ms": {
+          "exposure": "measured",
+          "source": "timing.decode_total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 1167.999,
+            "mean": 1193.4994000000002,
+            "p95": 1240.667,
+            "max": 1240.667
+          }
+        },
+        "detokenize_ms": {
+          "exposure": "measured",
+          "source": "timing.token_decode_ms.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 0.113,
+            "mean": 0.1233,
+            "p95": 0.149,
+            "max": 0.149
+          }
+        },
+        "quality_gate_ms": {
+          "exposure": "not_exposed",
+          "source": "quality_gate_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "receipt_write_ms": {
+          "exposure": "not_exposed",
+          "source": "receipt_write_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "telemetry_ms": {
+          "exposure": "not_exposed",
+          "source": "telemetry_ms",
+          "summary": {
+            "sample_count": 0,
+            "min": null,
+            "mean": null,
+            "p95": null,
+            "max": null
+          }
+        },
+        "total_response_ms": {
+          "exposure": "measured",
+          "source": "timing.total_ms",
+          "summary": {
+            "sample_count": 10,
+            "min": 5050.712,
+            "mean": 5174.8593,
+            "p95": 5465.034,
+            "max": 5465.034
+          }
+        }
+      },
+      "decode_tokens_per_s_mean": 6.702977814651603,
+      "cold_to_resident_total_ratio": 5.4081738995299835,
+      "blockers": []
+    }
+  ],
+  "resident_ready": true,
+  "findings": [
+    "cold_reference_total_response_ms=27986.539",
+    "resident_session_model_load_ms=9777.960",
+    "resident_ask_normal_mean_total_ms=7434.133",
+    "cold_to_resident_total_ratio_ask_normal=3.765",
+    "resident_ask_short_mean_total_ms=4836.348",
+    "cold_to_resident_total_ratio_ask_short=5.787",
+    "resident_regression_tiny_mean_total_ms=5174.859",
+    "cold_to_resident_total_ratio_regression_tiny=5.408"
+  ],
+  "recommended_next_items": [
+    "LNL258V-CPU-SLM-PERF-003: compare Rust GGUF CPU against OpenVINO CPU for the same Qwen profiles",
+    "LNL258V-GPU-QUAL-001: classify OpenVINO GPU corpus-v2 quality failures before promotion",
+    "LNL258V-NPU-COLD-001: decompose NPU cold load separately from hot decode"
+  ],
+  "gaps": [],
+  "claim_boundary": {
+    "new_inference_executed": false,
+    "route_promotion_changed": false,
+    "broad_quality_claim": false,
+    "speedup_claim": false,
+    "power_advantage_claim": false,
+    "acceleration_claim": false,
+    "arc_npu_execution_claim": false,
+    "bitnet_qk256_i2s_claim": false,
+    "hidden_fallback_allowed": false
+  }
+}

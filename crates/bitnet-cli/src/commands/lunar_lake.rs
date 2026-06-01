@@ -2492,12 +2492,19 @@ pub struct CpuSlmThreadCoreVariantSummary {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CpuSlmThreadEnv {
+    #[serde(rename = "RAYON_NUM_THREADS", alias = "rayon_num_threads")]
     pub rayon_num_threads: Option<String>,
+    #[serde(rename = "BITNET_CPU_THREADS", alias = "bitnet_cpu_threads")]
     pub bitnet_cpu_threads: Option<String>,
+    #[serde(rename = "BITNET_NUM_THREADS", alias = "bitnet_num_threads")]
     pub bitnet_num_threads: Option<String>,
+    #[serde(rename = "OMP_NUM_THREADS", alias = "omp_num_threads")]
     pub omp_num_threads: Option<String>,
+    #[serde(rename = "OPENBLAS_NUM_THREADS", alias = "openblas_num_threads")]
     pub openblas_num_threads: Option<String>,
+    #[serde(rename = "MKL_NUM_THREADS", alias = "mkl_num_threads")]
     pub mkl_num_threads: Option<String>,
+    #[serde(rename = "NUMEXPR_NUM_THREADS", alias = "numexpr_num_threads")]
     pub numexpr_num_threads: Option<String>,
 }
 
@@ -8884,17 +8891,24 @@ pub fn build_cpu_slm_thread_core_matrix_with_created_utc(
         }
     }
 
-    let recommended_next_items = vec![
-        "LNL258V-CPU-SLM-PERF-004: collect physical default/1/4/8-thread resident CPU matrix evidence".to_string(),
-        "LNL258V-CPU-SLOW-PATH: use the matrix to decide whether Rust GGUF CPU optimization is worthwhile".to_string(),
-        "LNL258V-ROUTE-POLICY-REVIEW: keep CPU route policy unchanged until matrix evidence is reviewed".to_string(),
-    ];
     gaps.sort();
     gaps.dedup();
     let matrix_ready = gaps.is_empty()
         && CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS
             .iter()
             .all(|required| variants.iter().any(|variant| variant.variant_id == *required));
+    let recommended_next_items = if matrix_ready {
+        vec![
+            "LNL258V-CPU-SLOW-PATH: review physical matrix evidence before deciding whether Rust GGUF CPU optimization is worthwhile".to_string(),
+            "LNL258V-ROUTE-POLICY-REVIEW: keep CPU route policy unchanged until matrix evidence is reviewed".to_string(),
+        ]
+    } else {
+        vec![
+            "LNL258V-CPU-SLM-PERF-004: collect physical default/1/4/8-thread resident CPU matrix evidence".to_string(),
+            "LNL258V-CPU-SLOW-PATH: use the matrix to decide whether Rust GGUF CPU optimization is worthwhile".to_string(),
+            "LNL258V-ROUTE-POLICY-REVIEW: keep CPU route policy unchanged until matrix evidence is reviewed".to_string(),
+        ]
+    };
 
     Ok(LunarLakeCpuSlmThreadCoreMatrix {
         schema_version: "1.0.0".to_string(),
@@ -9403,11 +9417,16 @@ fn cpu_slm_thread_env(json: &Value) -> CpuSlmThreadEnv {
 }
 
 fn cpu_slm_thread_env_value(json: &Value, name: &str) -> Option<String> {
-    let paths = [
+    let mut paths = vec![
         format!("execution_context.thread_env.{name}"),
         format!("thread_env.{name}"),
         format!("env.{name}"),
     ];
+    if let Some(field_name) = cpu_slm_thread_env_struct_field_name(name) {
+        paths.push(format!("execution_context.thread_env.{field_name}"));
+        paths.push(format!("thread_env.{field_name}"));
+        paths.push(format!("env.{field_name}"));
+    }
     paths.iter().find_map(|path| value_at(json, path).and_then(json_value_to_string))
 }
 
@@ -9428,13 +9447,30 @@ fn missing_cpu_slm_thread_env_fields(json: &Value) -> Vec<String> {
 }
 
 fn cpu_slm_thread_env_field_present(json: &Value, name: &str) -> bool {
-    [
+    let mut paths = vec![
         format!("execution_context.thread_env.{name}"),
         format!("thread_env.{name}"),
         format!("env.{name}"),
-    ]
-    .iter()
-    .any(|path| value_at(json, path).is_some())
+    ];
+    if let Some(field_name) = cpu_slm_thread_env_struct_field_name(name) {
+        paths.push(format!("execution_context.thread_env.{field_name}"));
+        paths.push(format!("thread_env.{field_name}"));
+        paths.push(format!("env.{field_name}"));
+    }
+    paths.iter().any(|path| value_at(json, path).is_some())
+}
+
+fn cpu_slm_thread_env_struct_field_name(name: &str) -> Option<&'static str> {
+    match name {
+        "RAYON_NUM_THREADS" => Some("rayon_num_threads"),
+        "BITNET_CPU_THREADS" => Some("bitnet_cpu_threads"),
+        "BITNET_NUM_THREADS" => Some("bitnet_num_threads"),
+        "OMP_NUM_THREADS" => Some("omp_num_threads"),
+        "OPENBLAS_NUM_THREADS" => Some("openblas_num_threads"),
+        "MKL_NUM_THREADS" => Some("mkl_num_threads"),
+        "NUMEXPR_NUM_THREADS" => Some("numexpr_num_threads"),
+        _ => None,
+    }
 }
 
 fn cpu_slm_thread_core_claim_boundary_leaks(json: &Value) -> Vec<String> {
@@ -23090,11 +23126,62 @@ mod tests {
             .context("missing ask_short")?;
         assert_eq!(ask_short.generated_token_ids_available, Some(true));
         assert_eq!(ask_short.generated_token_ids_source, "resident_prompt_receipt");
+        assert!(
+            receipt
+                .recommended_next_items
+                .iter()
+                .all(|item| !item.contains("collect physical default/1/4/8-thread"))
+        );
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.speedup_claim);
         assert!(!receipt.claim_boundary.arc_npu_execution_claim);
         assert!(!receipt.claim_boundary.bitnet_qk256_i2s_claim);
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_slm_thread_core_matrix_accepts_snake_case_resident_thread_env() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for (variant, requested, effective) in [
+            ("default", None, Some(8)),
+            ("threads_1", Some(1), Some(1)),
+            ("threads_4", Some(4), Some(4)),
+            ("threads_8", Some(8), Some(8)),
+        ] {
+            let mut json = cpu_slm_thread_core_variant_json(variant, requested, effective);
+            json["execution_context"]["thread_env"] = json!({
+                "rayon_num_threads": requested.map(|value| value.to_string()),
+                "bitnet_cpu_threads": null,
+                "bitnet_num_threads": null,
+                "omp_num_threads": null,
+                "openblas_num_threads": null,
+                "mkl_num_threads": null,
+                "numexpr_num_threads": null
+            });
+            write_json(temp.path(), &format!("{variant}.json"), json)?;
+        }
+
+        let sources = vec![
+            ("default".to_string(), PathBuf::from("default.json")),
+            ("threads_1".to_string(), PathBuf::from("threads_1.json")),
+            ("threads_4".to_string(), PathBuf::from("threads_4.json")),
+            ("threads_8".to_string(), PathBuf::from("threads_8.json")),
+        ];
+        let receipt = build_cpu_slm_thread_core_matrix_with_created_utc(
+            temp.path(),
+            &sources,
+            "2026-06-01T14:01:00Z".to_string(),
+        )?;
+
+        assert!(receipt.matrix_ready, "{:?}", receipt.gaps);
+        let threads_4 = receipt
+            .variants
+            .iter()
+            .find(|variant| variant.variant_id == "threads_4")
+            .context("missing threads_4")?;
+        assert_eq!(threads_4.thread_env_status, "captured");
+        assert_eq!(threads_4.thread_env.rayon_num_threads.as_deref(), Some("4"));
         Ok(())
     }
 
