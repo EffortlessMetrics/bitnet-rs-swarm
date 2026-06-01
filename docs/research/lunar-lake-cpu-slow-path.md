@@ -8,6 +8,8 @@ Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-ro
 
 Live physical measurement follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
 
+Live source-receipt follow-up: [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
+
 Closed command/receipt-builder follow-ups: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069) /
 [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182),
 [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186) /
@@ -32,6 +34,9 @@ The strongest evidence says:
   load, prefill, and decode;
 - existing receipts do not explain thread/core behavior on the 4 P-core plus
   4 low-power E-core 258V topology.
+- the #1194 matrix builder now defines the aggregate receipt contract, but
+  #1201 still needs to define or implement the per-variant source receipts
+  before the physical matrix can be collected.
 
 The current route decision is:
 

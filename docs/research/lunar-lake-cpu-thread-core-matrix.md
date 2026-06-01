@@ -4,6 +4,8 @@ Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071
 
 Runner contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186
 
+Source-receipt issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201
+
 Research date: 2026-05-31
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
@@ -33,6 +35,10 @@ state, and resident dense Qwen phase timing across a fixed matrix.
 [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
 owns that narrow runner and receipt-builder contract; #1071 remains the
 physical matrix evidence issue.
+[#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
+now owns the narrower source-receipt question: what measurement wrapper or
+receipt-enrichment path should produce per-variant resident-session receipts
+that the #1194 matrix builder can validate.
 
 ## Current Evidence Map
 
@@ -74,6 +80,11 @@ Relevant existing surfaces do not close this gap:
   receipts.
 - `lunar-lake ask --threads <N>` can produce one-off operator asks, but it is
   not enough for this issue if every variant reloads the model.
+- `bitnet slm-warm-session --threads <N>` can produce dense GGUF warm-session
+  work, but it is not sufficient for #1071 unless the source receipt also
+  records the required thread identity, affinity, power, AC/battery,
+  thermal/utilization/frequency, resident no-reload, token-visibility, and
+  claim-boundary fields.
 - BitNet QK256/I2_S thread matrix receipts are specialist kernel evidence, not
   dense Qwen GGUF resident-route evidence.
 
@@ -81,6 +92,26 @@ The next measurement surface must either run one resident session per variant
 or explicitly mark `resident_session_reused=false` and fail the
 resident-matrix acceptance. This is a measurement-command and receipt-source
 gap, not a route-policy, CPU tuning, OpenVINO CPU promotion, or speedup issue.
+
+## Source-Receipt Contract Gap
+
+Issue #1194 closed the aggregate matrix-builder contract, but it did not create the
+per-variant physical source receipts. #1201 is the current child issue for that
+gap.
+
+The next implementation should add or prove one narrow source surface before
+the physical default / 1-thread / 4-thread / 8-thread matrix is attempted:
+
+- a wrapper around `slm-warm-session` that records the required #1071 context
+  per variant;
+- an enrichment path for an existing resident-session receipt that adds the
+  missing thread, power, telemetry, affinity, and unavailable-field statuses; or
+- a fixture-only guard proving which source-receipt fields are mandatory before
+  the aggregate builder accepts them.
+
+Do not use #1201 to tune CPU defaults, promote OpenVINO CPU, compare speedups,
+or run the physical matrix. It is the evidence-source contract needed before
+issue #1071 can collect measurements that will pass the matrix validator.
 
 ## Required Receipt
 

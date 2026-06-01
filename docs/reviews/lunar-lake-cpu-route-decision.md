@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195)
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
 Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
@@ -27,13 +27,15 @@ This memo records the decision from #1122, landed by #1132. #1156 later added
 the fail-closed comparison guard for the non-equivalence boundary described
 here: CPU comparison receipts must keep benchmark qualification false when
 model formats or timing scopes differ, and the qualification fields must agree.
-#1182 then documented and guarded the `lunar-lake cpu-slm-resident-session`
+Issue #1182 then documented and guarded the `lunar-lake cpu-slm-resident-session`
 command surface as a no-new-inference summarizer/validator over existing
 resident-session receipts. #1194 added the
 `lunar-lake cpu-slm-thread-core-matrix` receipt-builder and validator contract
 for default, 1-thread, 4-thread, and 8-thread variants. Those closeouts
 preserve the evidence boundary: they are command-surface and receipt-builder
 work, not fresh physical measurements.
+Issue #1201 now owns the narrower source-receipt contract needed before #1071 can
+collect physical matrix measurements that pass the #1194 builder.
 This memo does not change route policy, run inference, refresh receipts,
 promote OpenVINO CPU, claim a speedup, claim a power advantage, or prove
 BitNet QK256/I2_S behavior.
@@ -49,6 +51,7 @@ BitNet QK256/I2_S behavior.
 | #1069 / #1182 | #1069 is closed as a resident-session command-surface review; #1182 did not add a fresh physical resident no-reload measurement source | Historical command-surface closeout, not a route decision or optimization unlock |
 | #1071 | Thread/core matrix evidence remains open | Measurement subissue, not a route decision by itself |
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
+| #1201 | Source-receipt contract for the physical matrix is open | Define wrapper/enrichment before collecting manual thread variants |
 
 The refreshed runtime comparison records:
 
@@ -154,9 +157,11 @@ Do not start with CPU optimization.
 
 The remaining next small PRs are:
 
-1. #1071 physical thread/core matrix source receipts for dense Rust GGUF
-   resident asks, using the #1194 builder contract.
-2. A new narrow physical resident no-reload measurement source only if the
+1. #1201 source-receipt wrapper or enrichment for dense Rust GGUF resident
+   thread variants, feeding the #1194 matrix builder without hand-edits.
+2. #1071 physical thread/core matrix receipts for dense Rust GGUF resident asks
+   after the source receipts can satisfy the builder contract.
+3. A new narrow physical resident no-reload measurement source only if the
    existing #1069/#1182 resident-session summarizer cannot provide the needed
    fresh first-ask and 30-warm-ask evidence.
 
