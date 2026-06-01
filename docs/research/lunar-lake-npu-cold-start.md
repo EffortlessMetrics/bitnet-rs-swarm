@@ -335,6 +335,10 @@ BitNet NPU execution.
   #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
+- #1162 closed with #1163 after the route diagnostics guard started failing
+  closed when future `warm_resident` resident-session receipts omit the #1120
+  pipeline, cold-first-ask, warm-loop, drift, token, memory, telemetry, or
+  claim-boundary evidence.
 - #1064 remains the only path to `low_power` battery and energy evidence.
 
 ## Recommended Next Issues
@@ -343,15 +347,11 @@ BitNet NPU execution.
    with explicit OpenVINO version, NPU device properties, and cache snapshots
    that include stable file hashes where practical. Do not reuse the historical
    merged `LNL258V-NPU-CACHE-002` campaign ID for this follow-up.
-2. `LNL258V-NPU-RESIDENT-003`: add only a validator or receipt check for the
-   already-defined #1120 warm-resident acceptance boundary if a future receipt
-   lacks pipeline, cold-first-ask, warm-loop, drift, token, memory, or claim
-   boundary fields.
-3. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
+2. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
    using the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
-4. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
+3. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
    resident, and power evidence is current.
 
 ## Claim Boundary

@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124)
-Linked PRs: n/a
+Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
+Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163)
 Support-tier impact: no promotion; review-only warm resident acceptance rule
 Policy impact: no policy exception
 
@@ -32,7 +32,8 @@ review and when that evidence must fail closed.
 Issue #1120 is closed as answered by this acceptance rule. Issue #1139 closed
 the phase-timing schema work used when future receipts need tighter host setup,
 tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
-receipt-overhead ownership.
+receipt-overhead ownership. Issue #1162 is closed by #1163, which added the
+focused route diagnostics guard for this review boundary.
 
 ## Current Evidence Snapshot
 
@@ -140,10 +141,12 @@ full BitNet inference, packed QK256 decode, or BitNet QK256/I2_S parity.
 
 ## Next Smallest PR
 
-No route-policy PR is required from this review alone.
+No route-policy PR is required from this review alone. No additional resident
+guard PR is currently required after #1163 unless future receipts expose a new
+gap against this boundary.
 
-The next small implementation PR, if needed, should be a validation guard that
-blocks a `warm_resident` NPU route review unless the package includes:
+Any later small implementation PR should stay validation-only and block a
+`warm_resident` NPU route review unless the package includes:
 
 - pipeline construction and cold first ask separated from warm repeats;
 - at least 30 warm repeats for promotion-grade acceptance;
