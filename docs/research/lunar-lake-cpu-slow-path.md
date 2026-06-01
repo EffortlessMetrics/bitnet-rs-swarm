@@ -4,11 +4,15 @@ Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1035
 
 Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
 
+Post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209
+
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
-Live physical measurement follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+Closed physical matrix follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071) /
+[#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208)
 
-Live source-receipt follow-up: [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
+Closed source-receipt follow-up: [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201) /
+[#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207)
 
 Closed command/receipt-builder follow-ups: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069) /
 [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182),
@@ -16,6 +20,7 @@ Closed command/receipt-builder follow-ups: [#1069](https://github.com/Effortless
 [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 
 Research date: 2026-05-30
+Post-matrix refresh: 2026-06-01
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -32,19 +37,22 @@ The strongest evidence says:
 - decode throughput is also low enough to dominate longer outputs;
 - tokenizer and prompt-template setup are visible but much smaller than model
   load, prefill, and decode;
-- existing receipts do not explain thread/core behavior on the 4 P-core plus
-  4 low-power E-core 258V topology.
-- the #1194 matrix builder now defines the aggregate receipt contract, but
-  #1201 still needs to define or implement the per-variant source receipts
-  before the physical matrix can be collected.
+- #1208 records the default / 1-thread / 4-thread / 8-thread physical
+  thread/core matrix with no receipt gaps;
+- the matrix does not show a useful thread-count win: default and `threads_1`
+  both resolved to one effective thread, while `threads_4` and `threads_8`
+  were slower for `regression_tiny`, `ask_short`, and `ask_normal`;
+- the matrix still does not expose P-core/E-core placement, utilization,
+  frequency, or thermal readings, so affinity and default-thread policy remain
+  unproven.
 
 The current route decision is:
 
 - keep Rust GGUF CPU as the correctness, fallback, and comparison plate;
 - treat OpenVINO CPU as a separate diagnostic candidate, not a drop-in
   replacement for the Rust GGUF CPU route;
-- defer Rust GGUF CPU optimization until resident timing, thread/core, and
-  matched comparison evidence identify a single target.
+- defer Rust GGUF CPU optimization until resident phase timing, matched
+  comparison evidence, or a later topology receipt identifies a single target.
 
 Do not start a CPU runtime optimization PR from this research alone. The next
 implementation should be a small receipt or instrumentation PR that makes the
@@ -76,6 +84,7 @@ causes and the measurement plan needed before a runtime change.
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU corpus-v2 now passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
 | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` | Newer OpenVINO CPU/GPU/NPU corpus-v2 receipt | OpenVINO CPU resolved to `Intel(R) Core(TM) Ultra 7 258V`, constructed in 981.455 ms, ran 14/14 corpus-v2 cases with fallback false and direct generated token IDs |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-cpu-corpus-v2-diagnosis.json` | OpenVINO CPU diagnosis | OpenVINO CPU corpus-v2 diagnosis says 14 total, 14 passed, 0 failed, no fallback, direct generated token IDs available |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-thread-core-matrix.json` | Physical Rust GGUF CPU default / 1-thread / 4-thread / 8-thread resident matrix | `matrix_ready=true`, `gaps=[]`; default effective threads = 1; `threads_4` and `threads_8` are slower than default/1-thread across the three measured profiles; no speedup, tuning, route-policy, low-power, accelerator, or BitNet claim |
 
 The OpenVINO CPU comparison evidence was refreshed against the newer
 corpus-v2 run. Do not use the runtime-comparison receipt as a benchmark
@@ -203,20 +212,32 @@ latencies are too large for receipt overhead to be the main explanation.
 
 ### Thread And Core Behavior
 
-Thread/core behavior is a credible missing variable, not a proven root cause.
+Thread/core behavior is now measured for the basic default / 1 / 4 / 8 thread
+matrix, but it is not an optimization target yet.
 
 The 258V platform has 4 P-cores plus 4 low-power E-cores, and the roadmap says
-power mode and thermal profile matter. The receipts do not yet record:
+power mode and thermal profile matter. #1208 records:
 
-- P-core versus E-core affinity;
-- effective thread count at runtime;
-- CPU frequency or throttling;
-- Windows power mode during each phase;
-- per-thread CPU utilization;
-- whether Rayon, OMP, MKL, or BLAS settings affect this path.
+- default, `threads_1`, `threads_4`, and `threads_8` variants;
+- requested and effective thread count;
+- Windows `Balanced` power scheme and AC state;
+- process affinity mask `0xff`;
+- `not_exposed` statuses for affinity classification, thermal readings,
+  utilization, and frequency/throttle proxy.
 
-Do not tune thread counts blindly. First add a small matrix receipt that
-records the above fields.
+The matrix result does not support default thread tuning:
+
+| Variant | Effective threads | `ask_normal` total mean | `ask_short` total mean | `regression_tiny` total mean |
+| --- | ---: | ---: | ---: | ---: |
+| `default` | 1 | 7472.066 ms | 4833.832 ms | 5056.348 ms |
+| `threads_1` | 1 | 7434.133 ms | 4836.348 ms | 5174.859 ms |
+| `threads_4` | 4 | 7771.171 ms | 5161.869 ms | 5479.246 ms |
+| `threads_8` | 8 | 7895.855 ms | 5212.025 ms | 5578.867 ms |
+
+Treat this as evidence against blind thread-count tuning on the current host
+and corpus. It does not prove that affinity, P-core/E-core placement,
+frequency behavior, or battery power mode are irrelevant, because those fields
+remain unavailable or unmeasured in the current matrix.
 
 ## Rust GGUF CPU Versus OpenVINO CPU
 
@@ -302,8 +323,8 @@ Optimization becomes a good PR only after one of these is true:
 
 - resident timing proves a repeated per-prompt sub-phase dominates after model
   and tokenizer load are excluded;
-- the thread/core matrix shows a stable, repeatable topology effect that can be
-  guarded without hurting correctness or low-power evidence;
+- a later topology or affinity receipt shows a stable, repeatable placement
+  effect that can be guarded without hurting correctness or low-power evidence;
 - matched Rust GGUF versus OpenVINO CPU comparison shows that the route decision
   is about model/runtime format, not a missing Rust instrumentation field.
 
@@ -395,6 +416,9 @@ cost and must state that resident proof does not remove cold-start cost.
 
 Detailed plan: `docs/research/lunar-lake-cpu-thread-core-matrix.md`.
 
+Status: completed for the required default / 1-thread / 4-thread / 8-thread
+matrix by #1208.
+
 Run the same resident ask set across a small matrix:
 
 | Variant | Purpose |
@@ -406,7 +430,7 @@ Run the same resident ask set across a small matrix:
 | optional P-core affinity | test performance-core placement |
 | optional E-core affinity | test low-power-core placement |
 
-Required context:
+Required context, as captured or explicitly unavailable in #1208:
 
 - Windows power scheme;
 - battery or AC state;
@@ -437,10 +461,11 @@ hiding it:
 | ---: | --- | --- | --- |
 | 1 | Add CPU phase attribution receipt fields and a fixture/test for schema validation | High: makes reload, prefill, decode, and receipt overhead separable | Low: docs/schema/unit-test surface |
 | 2 | Add resident CPU session refresh receipt with per-prompt overhead accounting | High: confirms whether no-reload path is still prefill/decode bound | Medium: hardware run needed, but no route-policy change |
-| 3 | Collect physical thread/core matrix source receipts under #1071 using the #1194 builder contract | Medium-high: tests the most plausible platform-specific missing variable | Medium: requires Windows affinity and hardware scheduling care |
+| 3 | Use #1209 post-matrix CPU review to decide whether the next evidence should be phase attribution, resident no-reload refresh, or matched OpenVINO CPU comparison | High: consumes completed #1208 evidence without changing runtime behavior | Low: docs/review issue shaping |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
-| 5 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
-| 6 | Change prefill/decode kernels or route policy | Potentially high, but evidence not yet precise enough | High: broad runtime and CI churn risk |
+| 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
+| 6 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
+| 7 | Change prefill/decode kernels or route policy | Potentially high, but evidence not yet precise enough | High: broad runtime and CI churn risk |
 
 ## Current Next Steps
 
@@ -460,9 +485,13 @@ The live CPU slow-path follow-ups and guard status are:
    needed, open or use a new narrow physical measurement issue instead of
    treating #1069 as open.
 2. [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
-   collects the dense Rust GGUF thread/core matrix across current default,
+   is closed by [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208).
+   The dense Rust GGUF thread/core matrix now covers current default,
    1-thread, 4-thread, and 8-thread variants with Windows power, AC/battery,
-   thermal, utilization, frequency, fallback, and claim-boundary context.
+   thermal availability, utilization/frequency unavailability, fallback, and
+   claim-boundary context. It does not justify thread tuning: default and
+   `threads_1` both measured one effective thread, and `threads_4` /
+   `threads_8` were slower across the measured profiles.
    [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
    is closed by [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194),
    which added the smaller runner and receipt-builder contract needed to emit
@@ -470,14 +499,20 @@ The live CPU slow-path follow-ups and guard status are:
 3. [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156)
    landed the current comparison-qualification guard. Treat it as completed
    validation hardening, not as measurement evidence.
-4. After #1071 and any future resident no-reload physical measurement source,
-   refresh the matched Rust GGUF CPU versus OpenVINO CPU comparison with
-   explicit model-format, timing-scope, prompt-render, tokenization, and
-   benchmark-qualification blockers.
+4. [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
+   is closed by [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207).
+   Treat it as source-receipt enrichment support for #1208, not as an open
+   blocker.
+5. [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209)
+   owns the post-matrix CPU slow-path review. It should decide whether the
+   next smallest evidence is resident phase attribution, matched Rust GGUF CPU
+   versus OpenVINO CPU comparison, or a later affinity/topology receipt with
+   stronger placement telemetry.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
-route-policy changes until the resident timing and thread/core evidence explain
-which slow-path target is real.
+route-policy changes from #1208. The matrix answers one platform question by
+showing no thread-count win in the current host/corpus context; it does not
+identify a safe runtime optimization target.
 
 ## Claim Boundary
 

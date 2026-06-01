@@ -3,12 +3,13 @@
 Status: review
 Owner: intel/openvino
 Created: 2026-05-31
+Post-matrix refresh: 2026-06-01
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201)
-Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -31,11 +32,9 @@ Issue #1182 then documented and guarded the `lunar-lake cpu-slm-resident-session
 command surface as a no-new-inference summarizer/validator over existing
 resident-session receipts. #1194 added the
 `lunar-lake cpu-slm-thread-core-matrix` receipt-builder and validator contract
-for default, 1-thread, 4-thread, and 8-thread variants. Those closeouts
-preserve the evidence boundary: they are command-surface and receipt-builder
-work, not fresh physical measurements.
-Issue #1201 now owns the narrower source-receipt contract needed before #1071 can
-collect physical matrix measurements that pass the #1194 builder.
+for default, 1-thread, 4-thread, and 8-thread variants. #1207 closed the
+source-receipt enrichment gap, and #1208 closed #1071 with physical matrix
+evidence. The matrix is now evidence for review, not a CPU tuning unlock.
 This memo does not change route policy, run inference, refresh receipts,
 promote OpenVINO CPU, claim a speedup, claim a power advantage, or prove
 BitNet QK256/I2_S behavior.
@@ -47,11 +46,12 @@ BitNet QK256/I2_S behavior.
 | `lunar-lake-cpu-slow-path.md` | Rust GGUF CPU is slow after reload is removed; prefill, first-token, and decode remain large costs | Optimization needs phase and platform attribution before code changes |
 | `lunar-lake-cpu-slm-runtime-comparison.json` | OpenVINO CPU corpus-v2 now passes, but `benchmark_qualified=false`; #1156 guards this status when model formats or timing scopes differ | Use as route/context evidence, not speedup proof |
 | `lunar-lake-openvino-token-visibility.md` | OpenVINO CPU has direct generated token IDs from the current corpus-v2 evidence | Token visibility is not the CPU comparison blocker |
-| `lunar-lake-cpu-thread-core-matrix.md` | #1194 defines the matrix receipt-builder/validator contract, but physical default, 1-thread, 4-thread, and 8-thread source receipts are still missing | Do not tune thread count or affinity defaults yet |
+| `lunar-lake-cpu-thread-core-matrix.md` | #1208 records the physical default / 1-thread / 4-thread / 8-thread matrix with `matrix_ready=true` and no gaps; default and `threads_1` both resolve to one effective thread, while 4-thread and 8-thread variants are slower in this run | Do not tune thread count or affinity defaults from this evidence |
 | #1069 / #1182 | #1069 is closed as a resident-session command-surface review; #1182 did not add a fresh physical resident no-reload measurement source | Historical command-surface closeout, not a route decision or optimization unlock |
-| #1071 | Thread/core matrix evidence remains open | Measurement subissue, not a route decision by itself |
+| #1071 / #1208 | Thread/core matrix evidence is closed and committed | Measurement evidence, not a route decision by itself |
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
-| #1201 | Source-receipt contract for the physical matrix is open | Define wrapper/enrichment before collecting manual thread variants |
+| #1201 / #1207 | Source-receipt contract for the physical matrix is closed | Source-enrichment support, not an open blocker |
+| #1209 | Post-matrix CPU review is open | Decide the next measurement/review step without optimizing blindly |
 
 The refreshed runtime comparison records:
 
@@ -69,7 +69,7 @@ The refreshed runtime comparison records:
 
 | Option | Decision | Why | Next allowed PR |
 | --- | --- | --- | --- |
-| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs but not the exact target, thread/core behavior, or success metric | New physical resident no-reload measurement source if needed, or #1071 physical thread/core matrix |
+| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs, and #1208 argues against blind thread-count tuning, but it still does not identify a safe runtime target or success metric | #1209 post-matrix review, then a narrow phase-attribution or matched-comparison receipt if justified |
 | Evaluate OpenVINO CPU | Keep as separate candidate/control | OpenVINO CPU corpus-v2 passes, but GGUF Q8_0 and OpenVINO IR INT4_SYM are different runtime/model scopes | Matched-profile comparison schema or receipt refresh that keeps non-equivalence explicit |
 | Keep CPU fallback/correctness baseline | Yes | Rust GGUF CPU is the known dense SLM local baseline and remains separate from accelerator proof | Docs/review closeout only unless a receipt invalidates it |
 | Promote OpenVINO CPU for auto-route | Blocked | No promotion package proves exact-profile advantage under accepted CPU route scope | Route-policy PR only after fair-benchmark and product-scope gates pass |
@@ -102,7 +102,8 @@ formats differ, while timing scopes differ, or while
 `benchmark_qualification.qualified` and
 `timing_scope_alignment.benchmark_qualified` disagree. That guard preserves
 candidate context; it does not promote OpenVINO CPU or close the resident
-timing or thread/core physical measurement issues.
+timing question. The thread/core physical matrix is now closed by #1208, but
+its result is a negative tuning signal, not an optimization unlock.
 
 ## Block And Unblock Conditions
 
@@ -114,8 +115,9 @@ metric:
 - a future physical resident no-reload measurement source records one model
   load, one tokenizer load, one separated first resident ask, and 30 additional
   warm asks if the current #1069/#1182 command-surface closeout is not enough;
-- #1071 records default, 1-thread, 4-thread, and 8-thread dense Rust GGUF
-  resident timing with power, scheduler, and telemetry context;
+- #1208 records default, 1-thread, 4-thread, and 8-thread dense Rust GGUF
+  resident timing with power, scheduler, and telemetry context but does not
+  show a thread-count win;
 - a phase-attribution receipt names whether prefill, first token, decode,
   tokenization, prompt rendering, receipt overhead, or thread placement is the
   target.
@@ -157,13 +159,15 @@ Do not start with CPU optimization.
 
 The remaining next small PRs are:
 
-1. #1201 source-receipt wrapper or enrichment for dense Rust GGUF resident
-   thread variants, feeding the #1194 matrix builder without hand-edits.
-2. #1071 physical thread/core matrix receipts for dense Rust GGUF resident asks
-   after the source receipts can satisfy the builder contract.
-3. A new narrow physical resident no-reload measurement source only if the
+1. #1209 post-matrix CPU review to decide whether the next evidence should be
+   phase attribution, resident no-reload refresh, matched OpenVINO CPU
+   comparison, or a later affinity/topology receipt.
+2. A new narrow physical resident no-reload measurement source only if the
    existing #1069/#1182 resident-session summarizer cannot provide the needed
    fresh first-ask and 30-warm-ask evidence.
+3. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
+   can keep model-format, timing-scope, prompt-render, tokenization, and
+   benchmark-qualification blockers explicit.
 
 The comparison-schema guard that keeps `benchmark_qualified=false` when model
 formats or timing scopes differ landed in #1156. Future CPU comparison work
