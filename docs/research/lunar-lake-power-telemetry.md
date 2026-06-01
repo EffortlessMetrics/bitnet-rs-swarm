@@ -1,6 +1,7 @@
 # Lunar Lake Power Telemetry Research
 
-Research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1033
+Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1033
+Current physical-evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064
 
 Research date: 2026-05-30
 
@@ -13,6 +14,9 @@ The first useful step was to tighten the telemetry model for battery-mode route
 samples. That schema-hardening follow-up is now in place; the remaining blocker
 is a stable physical battery run with valid before/after telemetry, route
 samples, an energy proxy, and refreshed regression/comparison artifacts.
+
+Issue #1064 is the active POWER-006 contract for that physical evidence. The
+older #1033 research issue remains historical context only.
 
 Current evidence says:
 
