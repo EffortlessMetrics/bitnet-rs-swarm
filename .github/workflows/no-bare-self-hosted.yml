@@ -1,0 +1,49 @@
+name: No New Bare Self-Hosted Routes
+
+# Differential M3 guard. Fails only when a PR *adds* bare self-hosted routes
+# (`runs-on: [self-hosted, linux, x64]` or a multiline block without an explicit
+# `group: em-ci-*` + capacity labels). Pre-existing routes are reported as
+# backlog, not failed, so this can run while the staged migration burns them
+# down. Runs on GitHub-hosted ubuntu-latest: no self-hosted runner, no Rust
+# compile, so it is unaffected by the self-hosted runner-image provisioning.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/ci/check-no-new-bare-self-hosted.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: no-bare-self-hosted-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  no-new-bare-self-hosted:
+    name: No New Bare Self-Hosted Routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for newly introduced bare self-hosted routes
+        shell: bash
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          base=""
+          if [ -n "${BASE_REF:-}" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_REF" || true
+            base="$(git rev-parse "origin/$BASE_REF" 2>/dev/null || echo "")"
+          fi
+          if [ -z "$base" ]; then
+            base="$(git rev-parse HEAD~1 2>/dev/null || echo "")"
+          fi
+          chmod +x scripts/ci/check-no-new-bare-self-hosted.sh
+          scripts/ci/check-no-new-bare-self-hosted.sh "$base" HEAD
