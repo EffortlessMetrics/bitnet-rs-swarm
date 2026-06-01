@@ -9035,6 +9035,22 @@ fn cpu_slm_thread_core_profiles(json: &Value) -> Vec<CpuSlmThreadCoreProfileSumm
             ) {
                 blockers.push("generated token ID source is missing".to_string());
             }
+            if generated_token_ids_available != Some(true) {
+                blockers.push(
+                    "generated token IDs must be available from the source receipt".to_string(),
+                );
+            }
+            if !matches!(
+                generated_token_ids_source.as_str(),
+                "resident_prompt_receipt"
+                    | "slm_warm_session_generated_ids"
+                    | "openvino_genai_encoded_results_tokens"
+            ) {
+                blockers.push(
+                    "generated token ID source must be direct, not retokenized or determinism-only"
+                        .to_string(),
+                );
+            }
             if bool_at_any(profile, &["fallback_observed"]) != Some(false) {
                 blockers.push("fallback must be false for every profile".to_string());
             }
@@ -22873,6 +22889,54 @@ mod tests {
         assert!(
             receipt.gaps.iter().any(|gap| gap.contains(
                 "variant threads_4: profile regression_tiny: generated token ID source is missing"
+            )),
+            "{:?}",
+            receipt.gaps
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_slm_thread_core_matrix_fails_closed_on_indirect_token_visibility() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        for (variant, requested, effective) in [
+            ("default", None, Some(8)),
+            ("threads_1", Some(1), Some(1)),
+            ("threads_4", Some(4), Some(4)),
+            ("threads_8", Some(8), Some(8)),
+        ] {
+            let mut json = cpu_slm_thread_core_variant_json(variant, requested, effective);
+            if variant == "threads_1" {
+                json["profiles"][0]["generated_token_ids_available"] = Value::Bool(false);
+                json["profiles"][0]["generated_token_ids_source"] =
+                    Value::String("retokenized_decoded_text".to_string());
+            }
+            write_json(temp.path(), &format!("{variant}.json"), json)?;
+        }
+
+        let sources = vec![
+            ("default".to_string(), PathBuf::from("default.json")),
+            ("threads_1".to_string(), PathBuf::from("threads_1.json")),
+            ("threads_4".to_string(), PathBuf::from("threads_4.json")),
+            ("threads_8".to_string(), PathBuf::from("threads_8.json")),
+        ];
+        let receipt = build_cpu_slm_thread_core_matrix_with_created_utc(
+            temp.path(),
+            &sources,
+            "2026-06-01T14:06:00Z".to_string(),
+        )?;
+
+        assert!(!receipt.matrix_ready);
+        assert!(
+            receipt.gaps.iter().any(|gap| gap.contains(
+                "variant threads_1: profile regression_tiny: generated token IDs must be available from the source receipt"
+            )),
+            "{:?}",
+            receipt.gaps
+        );
+        assert!(
+            receipt.gaps.iter().any(|gap| gap.contains(
+                "variant threads_1: profile regression_tiny: generated token ID source must be direct, not retokenized or determinism-only"
             )),
             "{:?}",
             receipt.gaps
