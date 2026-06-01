@@ -88,6 +88,56 @@ def file_record(path: Path) -> dict[str, Any]:
     }
 
 
+def repo_relative_path(path: Path) -> str:
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return f"<outside-checkout>/{path.name}"
+
+
+def child_script_path() -> Path:
+    script = Path(__file__)
+    try:
+        return script.resolve().relative_to(Path.cwd().resolve())
+    except ValueError:
+        return script
+
+
+def child_command_args(
+    args: argparse.Namespace,
+    iteration: str,
+    child_out: Path,
+    *,
+    recorded: bool,
+) -> list[str]:
+    python = "<python>" if recorded else sys.executable
+    script = child_script_path()
+    path_value = repo_relative_path if recorded else str
+    return [
+        python,
+        script.as_posix() if recorded else str(script),
+        "--child-run",
+        "--child-iteration",
+        iteration,
+        "--model-dir",
+        path_value(args.model_dir),
+        "--cache-dir",
+        path_value(args.cache_dir),
+        "--json-out",
+        path_value(child_out),
+        "--device",
+        args.device,
+        "--question",
+        args.question,
+        "--expect-contains",
+        args.expect_contains,
+        "--max-new-tokens",
+        str(args.max_new_tokens),
+    ]
+
+
 def model_identity(model_dir: Path) -> dict[str, Any]:
     return {
         "source": "Qwen/Qwen2.5-0.5B-Instruct",
@@ -422,34 +472,22 @@ def run_child(args: argparse.Namespace) -> int:
 
 
 def run_child_process(args: argparse.Namespace, iteration: str, child_out: Path) -> dict[str, Any]:
-    command = [
-        sys.executable,
-        str(Path(__file__).resolve()),
-        "--child-run",
-        "--child-iteration",
-        iteration,
-        "--model-dir",
-        str(args.model_dir),
-        "--cache-dir",
-        str(args.cache_dir),
-        "--json-out",
-        str(child_out),
-        "--device",
-        args.device,
-        "--question",
-        args.question,
-        "--expect-contains",
-        args.expect_contains,
-        "--max-new-tokens",
-        str(args.max_new_tokens),
-    ]
+    command = child_command_args(args, iteration, child_out, recorded=False)
+    recorded_command = child_command_args(args, iteration, child_out, recorded=True)
     started = time.perf_counter()
     completed = subprocess.run(command, text=True, capture_output=True, check=False)
     wall_ms = (time.perf_counter() - started) * 1000.0
     child = json.loads(child_out.read_text(encoding="utf-8")) if child_out.exists() else None
     return {
         "iteration": iteration,
-        "command": command,
+        "command": recorded_command,
+        "command_provenance": {
+            "recorded_command_scope": "repo_relative_replay_command",
+            "absolute_checkout_paths_redacted": True,
+            "python_executable_basename": Path(sys.executable).name,
+            "script_path": repo_relative_path(child_script_path()),
+            "path_base": "repository_root",
+        },
         "process_returncode": completed.returncode,
         "process_wall_ms": wall_ms,
         "stdout_tail": completed.stdout[-2000:],
