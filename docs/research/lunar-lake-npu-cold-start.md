@@ -346,7 +346,10 @@ BitNet NPU execution.
 1. `LNL258V-NPU-CACHE-RERUN-001` (#1160): rerun the cache experiment
    with explicit OpenVINO version, NPU device properties, and cache snapshots
    that include stable file hashes where practical. Do not reuse the historical
-   merged `LNL258V-NPU-CACHE-002` campaign ID for this follow-up.
+   merged `LNL258V-NPU-CACHE-001` or `LNL258V-NPU-CACHE-002` campaign IDs for
+   this follow-up. The cache probe should emit
+   `item=LNL258V-NPU-CACHE-RERUN-001` by default, with any historical rerun
+   reproduction using an explicit item override.
 2. `LNL258V-NPU-AUTO-001` (#1149): collect `AUTO` selected-device evidence
    using the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)

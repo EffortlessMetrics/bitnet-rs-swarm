@@ -27,6 +27,8 @@ from openvino_genai_token_utils import public_prompt_evidence
 
 QUESTION = "What is 2+2? Answer briefly."
 EXPECTED = "4"
+DEFAULT_ARTIFACT_ROOT = "ci/hardware/intel-258v/2026-05-08"
+DEFAULT_ITEM = "LNL258V-NPU-CACHE-RERUN-001"
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,6 +43,16 @@ def parse_args() -> argparse.Namespace:
         help="Directory for child process sidecar receipts. Not intended for commit.",
     )
     parser.add_argument("--machine-id", default="intel-258v")
+    parser.add_argument(
+        "--item",
+        default=DEFAULT_ITEM,
+        help="Work item recorded in the emitted receipt.",
+    )
+    parser.add_argument(
+        "--artifact-root-label",
+        default=DEFAULT_ARTIFACT_ROOT,
+        help="Artifact root label recorded in the emitted receipt.",
+    )
     parser.add_argument("--device", default="NPU")
     parser.add_argument("--created-utc")
     parser.add_argument("--question", default=QUESTION)
@@ -319,11 +331,11 @@ def main() -> int:
         "schema_version": "1.0.0",
         "artifact_kind": "lunar_lake_openvino_npu_cache_experiment",
         "campaign": "intel-258v-platform",
-        "item": "LNL258V-NPU-CACHE-001",
+        "item": args.item,
         "created_utc": created_utc,
         "machine_id": args.machine_id,
         "proof_stage": "candidate_route_cache_hit_miss_experiment_no_promotion_change",
-        "artifact_root": "ci/hardware/intel-258v/2026-05-08",
+        "artifact_root": args.artifact_root_label,
         "comparison_scope": "two_separate_openvino_genai_npu_processes_with_one_cache_dir",
         "route_id": "dense_slm_openvino_npu_candidate",
         "requested_backend": "openvino-npu",
