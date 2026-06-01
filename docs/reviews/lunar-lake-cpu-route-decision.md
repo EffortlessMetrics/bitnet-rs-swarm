@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
-Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132)
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -27,6 +27,13 @@ This memo records the decision from #1122, landed by #1132. #1156 later added
 the fail-closed comparison guard for the non-equivalence boundary described
 here: CPU comparison receipts must keep benchmark qualification false when
 model formats or timing scopes differ, and the qualification fields must agree.
+#1182 then documented and guarded the `lunar-lake cpu-slm-resident-session`
+command surface as a no-new-inference summarizer/validator over existing
+resident-session receipts. #1194 added the
+`lunar-lake cpu-slm-thread-core-matrix` receipt-builder and validator contract
+for default, 1-thread, 4-thread, and 8-thread variants. Those closeouts
+preserve the evidence boundary: they are command-surface and receipt-builder
+work, not fresh physical measurements.
 This memo does not change route policy, run inference, refresh receipts,
 promote OpenVINO CPU, claim a speedup, claim a power advantage, or prove
 BitNet QK256/I2_S behavior.
@@ -38,9 +45,10 @@ BitNet QK256/I2_S behavior.
 | `lunar-lake-cpu-slow-path.md` | Rust GGUF CPU is slow after reload is removed; prefill, first-token, and decode remain large costs | Optimization needs phase and platform attribution before code changes |
 | `lunar-lake-cpu-slm-runtime-comparison.json` | OpenVINO CPU corpus-v2 now passes, but `benchmark_qualified=false`; #1156 guards this status when model formats or timing scopes differ | Use as route/context evidence, not speedup proof |
 | `lunar-lake-openvino-token-visibility.md` | OpenVINO CPU has direct generated token IDs from the current corpus-v2 evidence | Token visibility is not the CPU comparison blocker |
-| `lunar-lake-cpu-thread-core-matrix.md` | Dense Rust GGUF CPU lacks a thread/core matrix on 258V | Do not tune thread count or affinity defaults yet |
-| #1069 | Resident CPU no-reload timing refresh remains open | Measurement subissue, not a route decision by itself |
+| `lunar-lake-cpu-thread-core-matrix.md` | #1194 defines the matrix receipt-builder/validator contract, but physical default, 1-thread, 4-thread, and 8-thread source receipts are still missing | Do not tune thread count or affinity defaults yet |
+| #1069 / #1182 | #1069 is closed as a resident-session command-surface review; #1182 did not add a fresh physical resident no-reload measurement source | Historical command-surface closeout, not a route decision or optimization unlock |
 | #1071 | Thread/core matrix evidence remains open | Measurement subissue, not a route decision by itself |
+| #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
 
 The refreshed runtime comparison records:
 
@@ -58,7 +66,7 @@ The refreshed runtime comparison records:
 
 | Option | Decision | Why | Next allowed PR |
 | --- | --- | --- | --- |
-| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs but not the exact target, thread/core behavior, or success metric | #1069 resident no-reload timing refresh or #1071 thread/core matrix |
+| Optimize Rust GGUF CPU now | Defer | Current evidence names likely costs but not the exact target, thread/core behavior, or success metric | New physical resident no-reload measurement source if needed, or #1071 physical thread/core matrix |
 | Evaluate OpenVINO CPU | Keep as separate candidate/control | OpenVINO CPU corpus-v2 passes, but GGUF Q8_0 and OpenVINO IR INT4_SYM are different runtime/model scopes | Matched-profile comparison schema or receipt refresh that keeps non-equivalence explicit |
 | Keep CPU fallback/correctness baseline | Yes | Rust GGUF CPU is the known dense SLM local baseline and remains separate from accelerator proof | Docs/review closeout only unless a receipt invalidates it |
 | Promote OpenVINO CPU for auto-route | Blocked | No promotion package proves exact-profile advantage under accepted CPU route scope | Route-policy PR only after fair-benchmark and product-scope gates pass |
@@ -91,7 +99,7 @@ formats differ, while timing scopes differ, or while
 `benchmark_qualification.qualified` and
 `timing_scope_alignment.benchmark_qualified` disagree. That guard preserves
 candidate context; it does not promote OpenVINO CPU or close the resident
-timing and thread/core measurement issues.
+timing or thread/core physical measurement issues.
 
 ## Block And Unblock Conditions
 
@@ -100,7 +108,9 @@ timing and thread/core measurement issues.
 Blocked until at least one measurement issue identifies a target and success
 metric:
 
-- #1069 refreshes resident no-reload timing with per-prompt phase accounting;
+- a future physical resident no-reload measurement source records one model
+  load, one tokenizer load, one separated first resident ask, and 30 additional
+  warm asks if the current #1069/#1182 command-surface closeout is not enough;
 - #1071 records default, 1-thread, 4-thread, and 8-thread dense Rust GGUF
   resident timing with power, scheduler, and telemetry context;
 - a phase-attribution receipt names whether prefill, first token, decode,
@@ -144,13 +154,16 @@ Do not start with CPU optimization.
 
 The remaining next small PRs are:
 
-1. #1069 resident CPU no-reload timing refresh with stronger phase accounting.
-2. #1071 thread/core matrix receipt for dense Rust GGUF resident asks.
+1. #1071 physical thread/core matrix source receipts for dense Rust GGUF
+   resident asks, using the #1194 builder contract.
+2. A new narrow physical resident no-reload measurement source only if the
+   existing #1069/#1182 resident-session summarizer cannot provide the needed
+   fresh first-ask and 30-warm-ask evidence.
 
 The comparison-schema guard that keeps `benchmark_qualified=false` when model
 formats or timing scopes differ landed in #1156. Future CPU comparison work
-should refresh matched-profile evidence or harden a newly exposed gap, not
-repeat that guard.
+should refresh matched-profile evidence, use completed measurement packages, or
+harden a newly exposed gap, not repeat that guard.
 
 Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed

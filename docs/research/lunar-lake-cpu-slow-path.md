@@ -6,9 +6,12 @@ Decision issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122
 
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
-Live measurement follow-ups: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069),
-[#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071),
-[#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
+Live physical measurement follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
+
+Closed command/receipt-builder follow-ups: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069) /
+[#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182),
+[#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186) /
+[#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 
 Research date: 2026-05-30
 
@@ -429,7 +432,7 @@ hiding it:
 | ---: | --- | --- | --- |
 | 1 | Add CPU phase attribution receipt fields and a fixture/test for schema validation | High: makes reload, prefill, decode, and receipt overhead separable | Low: docs/schema/unit-test surface |
 | 2 | Add resident CPU session refresh receipt with per-prompt overhead accounting | High: confirms whether no-reload path is still prefill/decode bound | Medium: hardware run needed, but no route-policy change |
-| 3 | Add thread/core matrix receipt generator tracked by #1186 | Medium-high: tests the most plausible platform-specific missing variable | Medium: may require Windows affinity and hardware scheduling care |
+| 3 | Collect physical thread/core matrix source receipts under #1071 using the #1194 builder contract | Medium-high: tests the most plausible platform-specific missing variable | Medium: requires Windows affinity and hardware scheduling care |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
 | 6 | Change prefill/decode kernels or route policy | Potentially high, but evidence not yet precise enough | High: broad runtime and CI churn risk |
@@ -444,23 +447,28 @@ not as the next action.
 The live CPU slow-path follow-ups and guard status are:
 
 1. [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069)
-   refreshes resident Rust GGUF CPU no-reload timing. It should separate one
-   first resident ask from 30 additional warm asks for `regression_tiny`,
-   `ask_short`, and `ask_normal`, and keep unavailable sub-phases marked
-   `not_exposed`.
+   is closed by [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182)
+   as a no-new-inference `lunar-lake cpu-slm-resident-session`
+   command-surface review. It did not add a fresh physical source that
+   separates one first resident ask from 30 additional warm asks for
+   `regression_tiny`, `ask_short`, and `ask_normal`. If that evidence is still
+   needed, open or use a new narrow physical measurement issue instead of
+   treating #1069 as open.
 2. [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071)
    collects the dense Rust GGUF thread/core matrix across current default,
    1-thread, 4-thread, and 8-thread variants with Windows power, AC/battery,
    thermal, utilization, frequency, fallback, and claim-boundary context.
    [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186)
-   owns the smaller runner and receipt-builder contract needed to emit that
-   matrix without adding CPU tuning, route policy, or speedup claims.
+   is closed by [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194),
+   which added the smaller runner and receipt-builder contract needed to emit
+   that matrix without adding CPU tuning, route policy, or speedup claims.
 3. [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156)
    landed the current comparison-qualification guard. Treat it as completed
    validation hardening, not as measurement evidence.
-4. After #1069 and #1071, refresh the matched Rust GGUF CPU versus OpenVINO CPU
-   comparison with explicit model-format, timing-scope, prompt-render,
-   tokenization, and benchmark-qualification blockers.
+4. After #1071 and any future resident no-reload physical measurement source,
+   refresh the matched Rust GGUF CPU versus OpenVINO CPU comparison with
+   explicit model-format, timing-scope, prompt-render, tokenization, and
+   benchmark-qualification blockers.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes until the resident timing and thread/core evidence explain
