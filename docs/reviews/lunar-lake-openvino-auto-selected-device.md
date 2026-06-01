@@ -87,6 +87,27 @@ runtime-layer `AUTO` surface, not as selected-device proof. It does not support
 GPU promotion, NPU promotion, `low_power`, speedup, power advantage, native
 accelerator execution, or BitNet QK256/I2_S claims.
 
+## Official API Boundary
+
+OpenVINO documents selected-device visibility for `AUTO` through the compiled
+model property `EXECUTION_DEVICES`, queried from a compiled model after
+`core.compile_model(..., "AUTO")`. The current Lunar Lake GenAI receipts do
+not own that object directly. They construct `openvino_genai.LLMPipeline`, and
+the current Python `LLMPipeline` surface does not expose a compiled model or a
+generic `get_property` accessor.
+
+That means the 2026-06-01 `AUTO` diagnostics should be read carefully:
+
+- the failed `EXECUTION_DEVICES` probe is a plugin/core-level diagnostic from
+  the receipt source, not proof that a GenAI-internal compiled model was queried
+  through the official compiled-model property path;
+- the official OpenVINO property path remains a promising research direction,
+  but it needs a receipt source that can access the GenAI pipeline's compiled
+  model, an equivalent lower-level OpenVINO model run for the same tuple, a
+  supported plugin log, or a future GenAI API;
+- until one of those paths records actual execution devices for the governed
+  Qwen export/profile/cache tuple, runtime `AUTO` remains diagnostic only.
+
 ## Current Command Surface
 
 The current repo can validate and commit runtime `AUTO` diagnostic receipts,
@@ -120,11 +141,12 @@ selected-device identity for the governed Qwen export/profile/cache tuple.
   export, prompt, generation config, answer gate, and cache settings.
 
 After the 2026-06-01 diagnostic package, another #1149 PR should only proceed
-if it identifies a different OpenVINO API, runtime property, plugin log, or
-receipt source that can expose actual selected-device identity for the same
-tuple. A generic schema, validator, route-policy, benchmark, or repeat
-diagnostic PR is not the next useful step while selected-device visibility
-remains `not_exposed`.
+if it identifies a different OpenVINO API, a way to query the GenAI
+pipeline's compiled model, a lower-level equivalent run that preserves the same
+tuple, a runtime property, a supported plugin log, or another receipt source
+that can expose actual selected-device identity for the same tuple. A generic
+schema, validator, route-policy, benchmark, or repeat diagnostic PR is not the
+next useful step while selected-device visibility remains `not_exposed`.
 
 ## Required Evidence Package
 
@@ -219,10 +241,13 @@ sources now have a diagnostic `--devices AUTO` shape that records
 preserves the fail-closed result.
 
 The next useful PR is not another generic runtime `AUTO` rerun. It should be
-opened only if a concrete OpenVINO selected-device source is found. That PR
-should keep the same Qwen export/profile/cache tuple and replace the current
-`not_exposed` visibility with actual selected-device evidence, or prove that a
-newly inspected source is also unavailable.
+opened only if a concrete OpenVINO selected-device source is found. The most
+promising source to investigate is the official compiled-model
+`EXECUTION_DEVICES` property path, but the PR must also show how that path maps
+back to the GenAI `LLMPipeline` tuple or explicitly document that it cannot.
+That PR should keep the same Qwen export/profile/cache tuple and replace the
+current `not_exposed` visibility with actual selected-device evidence, or prove
+that a newly inspected source is also unavailable.
 
 Do not open another generic schema or validator PR unless the measurement run
 exposes a missing or ambiguous field that #1159 cannot represent. Do not
