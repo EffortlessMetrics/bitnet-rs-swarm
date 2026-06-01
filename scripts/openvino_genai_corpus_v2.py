@@ -25,7 +25,10 @@ DEVICE_BACKENDS = {
     "CPU": ("openvino-cpu", "dense_slm_openvino_cpu", "openvino-genai-llmpipeline-cpu"),
     "GPU.0": ("openvino-gpu", "dense_slm_openvino_gpu_arc140v", "openvino-genai-llmpipeline-gpu0"),
     "NPU": ("openvino-npu", "dense_slm_openvino_npu", "openvino-genai-llmpipeline-npu"),
+    "AUTO": ("openvino-auto", "dense_slm_openvino_auto", "openvino-genai-llmpipeline-auto"),
 }
+
+OPENVINO_RUNTIME_AUTO_SCOPE = "openvino_runtime_auto"
 
 SPECIAL_TOKEN_RE = re.compile(r"<\|[^|]+?\|>")
 KNOWN_STOP_MARKERS = ("<|im_end|>", "<|end_of_text|>", "<|endoftext|>", "<|eot_id|>", "<|im_start|>")
@@ -174,6 +177,81 @@ def readable_words(text: str) -> list[str]:
 
 def prompt_evidence(tokenizer: Any, question: str) -> dict[str, Any]:
     return public_prompt_evidence(ov_prompt_evidence(tokenizer, question))
+
+
+def json_safe(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {str(key): json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [json_safe(item) for item in value]
+    return str(value)
+
+
+def safe_get_property(ov_core: Any, device: str, property_name: str) -> dict[str, Any]:
+    try:
+        value = ov_core.get_property(device, property_name)
+    except Exception as exc:  # pragma: no cover - depends on installed runtime devices.
+        return {
+            "property": property_name,
+            "available": False,
+            "value": None,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    return {
+        "property": property_name,
+        "available": True,
+        "value": json_safe(value),
+        "error": None,
+    }
+
+
+def is_openvino_runtime_auto(device: str) -> bool:
+    return device.upper() == "AUTO"
+
+
+def runtime_auto_receipt_fields(ov_core: Any, device: str) -> dict[str, Any]:
+    if not is_openvino_runtime_auto(device):
+        return {}
+    return {
+        "auto_scope": OPENVINO_RUNTIME_AUTO_SCOPE,
+        "requested_openvino_device": "AUTO",
+        "openvino_requested_device": "AUTO",
+        "requested_runtime_device": "AUTO",
+        "runtime_requested_device": "AUTO",
+        "selected_device_visibility_status": "not_exposed",
+        "execution_devices_status": "not_exposed",
+        "execution_device_evidence": {
+            "status": "not_exposed",
+            "source": "openvino_genai_llmpipeline_receipt_source",
+            "phase_scope": [
+                "pipeline_construction",
+                "generation",
+                "openvino_genai_perf_metrics",
+            ],
+            "property_probe": safe_get_property(ov_core, device, "EXECUTION_DEVICES"),
+            "actual_selected_device_available": False,
+            "actual_selected_device": None,
+            "not_exposed_reason": (
+                "OpenVINO GenAI LLMPipeline did not expose selected execution devices "
+                "to this receipt source"
+            ),
+        },
+        "selected_device_proof": False,
+        "openvino_runtime_auto_selected_device_proof": False,
+        "promotion_eligible_for_profile": False,
+        "low_power_evidence": False,
+        "power_advantage_claim": False,
+        "acceleration_claim": False,
+    }
+
+
+def fallback_status_for_device(device: str) -> str:
+    if is_openvino_runtime_auto(device):
+        return "no_application_fallback_used_auto_requested_selected_device_not_exposed"
+    normalized = device.lower().replace(".", "")
+    return f"no_fallback_used_{normalized}_device_requested_and_llmpipeline_constructed"
 
 
 def mean_std(pair: Any) -> dict[str, float | None]:
@@ -354,6 +432,7 @@ def run_device(
         device,
         (f"openvino-{device.lower()}", f"dense_slm_openvino_{device.lower()}", f"openvino-genai-llmpipeline-{device.lower()}"),
     )
+    auto_fields = runtime_auto_receipt_fields(ov_core, device)
     try:
         resolved_device = ov_core.get_property(device, "FULL_DEVICE_NAME")
     except Exception as exc:  # pragma: no cover - depends on installed runtime devices.
@@ -453,6 +532,7 @@ def run_device(
                 "backend_lane": backend_lane,
                 "selected_kernel_or_runtime": runtime,
                 "status": "passed" if quality["passed"] else "quality_failed",
+                **auto_fields,
             }
         )
 
@@ -465,7 +545,7 @@ def run_device(
         "resolved_device": resolved_device,
         "backend_lane": backend_lane,
         "fallback_used": False,
-        "fallback_status": f"no_fallback_used_{device.lower().replace('.', '')}_device_requested_and_llmpipeline_constructed",
+        "fallback_status": fallback_status_for_device(device),
         "selected_kernel_or_runtime": runtime,
         "pipeline_construct_wall_ms": construct_wall_ms,
         "promotion_status": "candidate_only_not_promoted",
@@ -483,7 +563,13 @@ def run_device(
             "detokenization_duration": "openvino_genai_perf_metrics",
             "decode_128": "not_measured_corpus_v2_bounded_quality_lens_only",
             "prefill_512": "not_measured_corpus_v2_bounded_quality_lens_only",
+            "selected_device_visibility": (
+                "not_exposed_by_openvino_genai_llmpipeline_receipt_source"
+                if is_openvino_runtime_auto(device)
+                else "explicit_device_requested"
+            ),
         },
+        **auto_fields,
     }
 
 
@@ -525,6 +611,31 @@ def main() -> int:
     fallback_used_any = any(device["fallback_used"] for device in devices)
     manifest = load_json(Path(args.manifest))
     created = args.created_utc or utc_now()
+    runtime_auto_requested_any = any(is_openvino_runtime_auto(device) for device in args.devices)
+    may_claim = [
+        "The bounded Lunar Lake answer corpus v2 was executed on the requested OpenVINO candidate routes.",
+        "The receipt records per-case profile/category answer-gate evidence, OpenVINO GenAI runtime identity, PerfMetrics, prompt token evidence, generated text, and fallback_used=false for the requested OpenVINO routes when observed.",
+        "The receipt collects candidate-route evidence for later profile promotion work without changing route policy.",
+    ]
+    must_not_claim = [
+        "OpenVINO GPU or NPU is promoted for any Lunar Lake route profile.",
+        "OpenVINO GPU or NPU speedup, acceleration, or benchmark-qualified advantage is proven.",
+        "Broad dense SLM answer quality is proven beyond bounded corpus v2 evidence.",
+        "OpenVINO GPU evidence proves native OpenCL execution.",
+        "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+        "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+        "BitNet QK256/I2_S behavior changed.",
+    ]
+    if runtime_auto_requested_any:
+        may_claim.append(
+            "Runtime-layer OpenVINO AUTO was requested and selected-device visibility was recorded as not_exposed by this receipt source."
+        )
+        must_not_claim.extend(
+            [
+                "OpenVINO runtime AUTO selected-device proof is available.",
+                "OpenVINO runtime AUTO proves GPU, NPU, low_power, speedup, power advantage, route promotion, or acceleration evidence.",
+            ]
+        )
 
     out = {
         "schema_version": "1.0.0",
@@ -616,20 +727,8 @@ def main() -> int:
             "quality_failures_are_evidence_not_route_policy": True,
         },
         "claim_boundary": {
-            "may_claim": [
-                "The bounded Lunar Lake answer corpus v2 was executed on OpenVINO CPU, GPU.0/Arc 140V, and NPU candidate routes on the same 258V machine.",
-                "The receipt records per-case profile/category answer-gate evidence, OpenVINO GenAI runtime identity, PerfMetrics, prompt token evidence, generated text, and fallback_used=false for the requested OpenVINO routes when observed.",
-                "The receipt collects candidate-route evidence for later profile promotion work without changing route policy.",
-            ],
-            "must_not_claim": [
-                "OpenVINO GPU or NPU is promoted for any Lunar Lake route profile.",
-                "OpenVINO GPU or NPU speedup, acceleration, or benchmark-qualified advantage is proven.",
-                "Broad dense SLM answer quality is proven beyond bounded corpus v2 evidence.",
-                "OpenVINO GPU evidence proves native OpenCL execution.",
-                "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
-                "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
-                "BitNet QK256/I2_S behavior changed.",
-            ],
+            "may_claim": may_claim,
+            "must_not_claim": must_not_claim,
         },
     }
 

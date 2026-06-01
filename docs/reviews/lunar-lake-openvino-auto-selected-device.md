@@ -59,6 +59,14 @@ yet expose the measurement command that would close #1149.
 - The same validator keeps `not_exposed` diagnostic: a receipt that cannot see
   execution devices must not claim selected-device proof, promotion,
   acceleration, power, or `low_power` evidence.
+- `scripts/openvino_genai_phase_receipt.py` and
+  `scripts/openvino_genai_corpus_v2.py` treat `--devices AUTO` as runtime-layer
+  OpenVINO `AUTO` diagnostics by recording `auto_scope=openvino_runtime_auto`,
+  requested runtime `AUTO`, explicit `not_exposed` selected-device visibility,
+  false selected-device proof booleans, and the `EXECUTION_DEVICES` property
+  probe result when available. This makes future `AUTO` script receipts
+  validator-compatible, but still does not collect physical selected-device
+  evidence or close #1149 by itself.
 - `crates/bitnet-cli/src/commands/lunar_lake.rs` currently indexes CLI
   `--device auto` operator-ask receipts and explicit OpenVINO GPU/NPU route
   evidence. That is route-selector evidence, not OpenVINO runtime-layer `AUTO`
@@ -162,9 +170,11 @@ QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The review and validator guard are already landed by #1158/#1159. The next PR
-should be a narrow measurement or receipt-source update only when the 258V host
-is ready to collect runtime `AUTO` selected-device evidence. That package
+The review and validator guard are already landed by #1158/#1159. The receipt
+sources now have a diagnostic `--devices AUTO` shape that records
+`not_exposed` instead of silently implying selected-device proof. The next PR
+that can close #1149 should be a narrow measurement package from the 258V host,
+not another generic schema, validator, or route-policy change. That package
 should record:
 
 - `auto_scope`;
