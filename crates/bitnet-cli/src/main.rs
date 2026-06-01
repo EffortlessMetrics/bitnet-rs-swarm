@@ -9616,6 +9616,7 @@ async fn run_slm_warm_session(
             } else {
                 serde_json::Value::Null
             },
+            "prompt_token_count": prompt_token_count,
             "generated_tokens": generated_tokens.len(),
             "generated_token_ids": generated_tokens.clone(),
             "quality": prompt_receipt["quality"].clone(),
@@ -9702,6 +9703,15 @@ async fn run_slm_warm_session(
         .map(|prompt| prompt.min_distinct_generated_tokens)
         .min()
         .unwrap_or(min_distinct_generated_tokens);
+    let memory_context = slm_cpu_warm_session_memory_context_json();
+    let thermal_context = slm_cpu_warm_session_thermal_context_json();
+    let power_context = slm_cpu_warm_session_power_context_json();
+    let execution_context = slm_cpu_warm_session_execution_context_json(
+        threads,
+        thread_count,
+        &power_context,
+        &thermal_context,
+    );
     let aggregate = serde_json::json!({
         "schema_version": "1.0.0",
         "artifact_kind": slm_warm_session_artifact_kind(backend_identity.requested_backend.as_str()),
@@ -9861,9 +9871,11 @@ async fn run_slm_warm_session(
             "features": &cpu_features,
             "threads": thread_count,
         },
-        "memory": slm_cpu_warm_session_memory_context_json(),
-        "thermal": slm_cpu_warm_session_thermal_context_json(),
-        "power": slm_cpu_warm_session_power_context_json(),
+        "execution_context": execution_context,
+        "thread_env": slm_cpu_warm_session_thread_env_json(),
+        "memory": memory_context,
+        "thermal": thermal_context,
+        "power": power_context,
         "storage": slm_cpu_warm_session_storage_context_json(&model_path, &json_out),
         "counts": {
             "n_kv": n_kv,
@@ -11953,6 +11965,8 @@ fn slm_cpu_warm_session_memory_context_json() -> serde_json::Value {
 fn slm_cpu_warm_session_thermal_context_json() -> serde_json::Value {
     serde_json::json!({
         "temperature_c": serde_json::Value::Null,
+        "thermal_availability": "not_exposed",
+        "temperature_status": "not_exposed",
         "source": "not_sampled_in_slm_cpu_warm_session",
         "available": false,
     })
@@ -11960,11 +11974,154 @@ fn slm_cpu_warm_session_thermal_context_json() -> serde_json::Value {
 
 #[cfg(feature = "full-cli")]
 fn slm_cpu_warm_session_power_context_json() -> serde_json::Value {
+    let active_scheme = slm_cpu_warm_session_platform_power_mode();
+    let (active_scheme_guid, active_scheme_name) =
+        lunar_lake_operator_ask_power_scheme_fields(active_scheme.as_deref());
+    let power_scheme = active_scheme_name.clone().or_else(|| active_scheme.clone());
+    let battery_status = slm_cpu_warm_session_platform_battery_status();
+    let ac_battery_state =
+        slm_cpu_warm_session_ac_battery_state_from_status(battery_status.as_deref());
+    let source = if active_scheme.is_some() || battery_status.is_some() {
+        "os_power_probe"
+    } else {
+        "not_exposed_in_slm_cpu_warm_session"
+    };
     serde_json::json!({
-        "mode": serde_json::Value::Null,
-        "source": "not_sampled_in_slm_cpu_warm_session",
-        "available": false,
+        "mode": power_scheme.clone().or_else(|| ac_battery_state.clone()),
+        "active_scheme": active_scheme,
+        "active_scheme_guid": active_scheme_guid,
+        "active_scheme_name": active_scheme_name,
+        "power_scheme": power_scheme,
+        "power_scheme_status": if active_scheme.is_some() { "measured" } else { source },
+        "battery_status": battery_status,
+        "ac_battery_state": ac_battery_state,
+        "ac_battery_state_status": if battery_status.is_some() { "measured" } else { source },
+        "source": source,
+        "available": active_scheme.is_some() || battery_status.is_some(),
     })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_execution_context_json(
+    requested_threads: usize,
+    effective_threads: usize,
+    power_context: &serde_json::Value,
+    thermal_context: &serde_json::Value,
+) -> serde_json::Value {
+    serde_json::json!({
+        "requested_thread_count": if requested_threads > 0 {
+            serde_json::json!(requested_threads)
+        } else {
+            serde_json::Value::Null
+        },
+        "effective_thread_count": effective_threads,
+        "thread_count": effective_threads,
+        "thread_env": slm_cpu_warm_session_thread_env_json(),
+        "process_affinity_mask": slm_cpu_warm_session_process_affinity_mask(),
+        "affinity_classification": serde_json::Value::Null,
+        "affinity_classification_status": "not_exposed",
+        "windows_power_scheme": power_context
+            .get("active_scheme_name")
+            .and_then(serde_json::Value::as_str)
+            .or_else(|| power_context.get("power_scheme").and_then(serde_json::Value::as_str))
+            .or_else(|| power_context.get("active_scheme").and_then(serde_json::Value::as_str)),
+        "windows_power_scheme_status": power_context
+            .get("power_scheme_status")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("not_exposed"),
+        "ac_battery_state": power_context
+            .get("ac_battery_state")
+            .and_then(serde_json::Value::as_str),
+        "ac_battery_state_status": power_context
+            .get("ac_battery_state_status")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("not_exposed"),
+        "thermal_availability": thermal_context
+            .get("thermal_availability")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("not_exposed"),
+        "temperature_c": thermal_context.get("temperature_c").cloned().unwrap_or(serde_json::Value::Null),
+        "temperature_status": thermal_context
+            .get("temperature_status")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("not_exposed"),
+        "cpu_utilization_per_logical_processor": serde_json::Value::Null,
+        "cpu_utilization_status": "not_exposed",
+        "frequency_or_throttle_proxy": serde_json::Value::Null,
+        "frequency_or_throttle_status": "not_exposed",
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_thread_env_json() -> serde_json::Value {
+    serde_json::json!({
+        "RAYON_NUM_THREADS": slm_cpu_warm_session_env_value("RAYON_NUM_THREADS"),
+        "BITNET_CPU_THREADS": slm_cpu_warm_session_env_value("BITNET_CPU_THREADS"),
+        "BITNET_NUM_THREADS": slm_cpu_warm_session_env_value("BITNET_NUM_THREADS"),
+        "OMP_NUM_THREADS": slm_cpu_warm_session_env_value("OMP_NUM_THREADS"),
+        "OPENBLAS_NUM_THREADS": slm_cpu_warm_session_env_value("OPENBLAS_NUM_THREADS"),
+        "MKL_NUM_THREADS": slm_cpu_warm_session_env_value("MKL_NUM_THREADS"),
+        "NUMEXPR_NUM_THREADS": slm_cpu_warm_session_env_value("NUMEXPR_NUM_THREADS"),
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_env_value(name: &str) -> Option<String> {
+    std::env::var(name).ok().filter(|value| !value.trim().is_empty())
+}
+
+#[cfg(all(feature = "full-cli", target_os = "windows"))]
+fn slm_cpu_warm_session_platform_power_mode() -> Option<String> {
+    let (stdout, success) = command_stdout_text("powercfg", &["/GETACTIVESCHEME"]);
+    success.then(|| stdout.trim().to_string()).filter(|value| !value.is_empty())
+}
+
+#[cfg(all(feature = "full-cli", not(target_os = "windows")))]
+fn slm_cpu_warm_session_platform_power_mode() -> Option<String> {
+    None
+}
+
+#[cfg(all(feature = "full-cli", target_os = "windows"))]
+fn slm_cpu_warm_session_platform_battery_status() -> Option<String> {
+    let (stdout, success) = command_stdout_text(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-Command",
+            "$b = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1; if ($null -eq $b) { '' } else { \"BatteryStatus=$($b.BatteryStatus);EstimatedChargeRemaining=$($b.EstimatedChargeRemaining)\" }",
+        ],
+    );
+    success.then(|| stdout.trim().to_string()).filter(|value| !value.is_empty())
+}
+
+#[cfg(all(feature = "full-cli", not(target_os = "windows")))]
+fn slm_cpu_warm_session_platform_battery_status() -> Option<String> {
+    None
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_ac_battery_state_from_status(raw: Option<&str>) -> Option<String> {
+    match lunar_lake_operator_ask_battery_status_field_i64(raw, "BatteryStatus") {
+        Some(1) => Some("Battery".to_string()),
+        Some(2 | 6 | 7 | 8 | 9 | 11) => Some("AC".to_string()),
+        _ => None,
+    }
+}
+
+#[cfg(all(feature = "full-cli", target_os = "windows"))]
+fn slm_cpu_warm_session_process_affinity_mask() -> Option<String> {
+    let script = format!(
+        "$p = Get-Process -Id {}; if ($null -eq $p) {{ '' }} else {{ '0x{{0:x}}' -f [int64]$p.ProcessorAffinity }}",
+        std::process::id()
+    );
+    let (stdout, success) =
+        command_stdout_text("powershell", &["-NoProfile", "-Command", script.as_str()]);
+    success.then(|| stdout.trim().to_string()).filter(|value| !value.is_empty())
+}
+
+#[cfg(all(feature = "full-cli", not(target_os = "windows")))]
+fn slm_cpu_warm_session_process_affinity_mask() -> Option<String> {
+    None
 }
 
 #[cfg(feature = "full-cli")]
