@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+Linked issues: [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178)
 Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
@@ -38,6 +38,9 @@ current:
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
 - #1135 for route ID and canonical proof-family mapping, now closed by #1137
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
+- #1178 for BitNet semantic-intake freshness; current intake remains ready, but
+  future shared BitNet semantic changes must rerun affected CPU reference
+  evidence before BitNet route-policy changes;
 - #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
   as route-policy evidence, with the current evidence contract recorded by
   #1158 in
@@ -74,7 +77,7 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | `structured` | `dense_slm_default_cpu` | keep CPU until structured OpenVINO evidence has its own promotion package |
 | `low_power` | none | blocked by #1064 until real battery-mode route samples and energy proxy exist |
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only after #1163 guarded the acceptance boundary; does not imply cold one-off or low-power promotion |
-| `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence |
+| `bitnet_strict_reference` | `bitnet_reference_cpu` | keep separate from dense SLM OpenVINO evidence; #1178 owns semantic-intake freshness |
 
 NPU phase-timing schema work is defined by #1139/#1141 and must not become a
 route-policy shortcut. New timer fields can support review only after their
@@ -126,7 +129,7 @@ These rules apply before profile-specific promotion language:
 | Thermal readings are unavailable | Keep thermal as an explicit gap; do not invent measured temperature evidence |
 | NPU evidence excludes pipeline construction | May support `warm_resident`; must not support cold one-off promotion |
 | Cache hit is timing-derived rather than runtime-reported | Use for diagnosis only unless a later accepted policy allows it |
-| Shared BitNet semantic fix lands after current CPU reference evidence | Rerun affected BitNet CPU reference evidence before changing BitNet route policy |
+| Shared BitNet semantic fix lands after current CPU reference evidence | Rerun affected BitNet CPU reference evidence through #1178 before changing BitNet route policy |
 | Dense SLM OpenVINO evidence passes | Do not infer BitNet QK256/I2_S behavior, native OpenCL, native NPU kernels, or full BitNet accelerator inference |
 | Old-repo Lunar Lake text or stale generated dashboard disagrees with swarm receipts | Treat swarm receipts and swarm issues as current; do not update route policy from old-repo wording |
 
@@ -185,7 +188,8 @@ by #1064.
 `bitnet_reference_cpu` is a separate specialist route. Dense Qwen CPU, GPU, or
 NPU success must not be treated as BitNet QK256/I2_S proof. Shared BitNet
 semantic-intake changes must rerun the affected CPU reference receipts before
-BitNet route policy changes.
+BitNet route policy changes. #1178 owns that freshness contract; this review
+does not require a rerun while the current semantic intake remains ready.
 
 ## Route Mutation Checklist
 
@@ -228,6 +232,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   not direct runtime cache-hit truth or route-policy evidence.
 - Future receipt or validator work should use the #1135/#1137 route-ID
   proof-family map before depending on route identity.
+- #1178 owns BitNet semantic-intake freshness. Current intake stays ready
+  unless a shared BitNet semantic change, validator gap, or receipt gap makes a
+  targeted CPU reference rerun necessary.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
   records the current fail-closed contract from #1158, and #1159 has landed the

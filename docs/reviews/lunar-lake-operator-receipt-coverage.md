@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+Linked issues: [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178)
 Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
@@ -73,7 +73,7 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 | Blocked `ask` | `lunar-lake-operator-ask-auto-low-power-blocked.json` | Present for fail-closed route selection, `fallback_used=false`, no model load, no new inference, runbook, and next evidence | Keep; this is correct blocker evidence, not low-power proof |
 | `validate --strict` | `lunar-lake-operator-readiness.json` | Linked aggregate for operator readiness, route policy, route model identity coverage, power-profile blockers, thermal availability, and blocked ask evidence | Keep as readiness aggregate; do not treat it as a live answer receipt |
 | `profile-compare --strict` | `lunar-lake-route-profile-comparison.json` | Present for per-profile route evidence, model identity, quality, timing, telemetry, blockers, and promotion eligibility | Keep as route-profile authority; continue mapping campaign route IDs to canonical proof families in future schemas |
-| `regress --strict` | `lunar-lake-regression-bundle-v2.json` | Linked aggregate for corpus-v2, route profile, durability, BitNet semantic intake, power-profile evidence, ask receipts, blocked low-power, and claim boundary | Keep as regression bundle; use it to detect drift, not to replace source receipt fields |
+| `regress --strict` | `lunar-lake-regression-bundle-v2.json` | Linked aggregate for corpus-v2, route profile, durability, BitNet semantic intake, power-profile evidence, ask receipts, blocked low-power, and claim boundary | Keep as regression bundle; use it to detect drift, not to replace source receipt fields; #1178 owns future semantic-intake freshness |
 | `compare --strict` | `lunar-lake-operator-comparison.json` | Linked aggregate for readiness and regression surfaces, no hidden fallback, route scope, and low-power blocker state | Keep as comparison summary; do not use it for new route claims |
 | Power and telemetry | `lunar-lake-power-profile-evidence.json`, `lunar-lake-power-thermal-context.json` | Present for AC-only context, battery blocker, thermal availability, energy-proxy status, and no power claim | Keep; POWER-006 still needs physical battery-mode evidence |
 
@@ -91,7 +91,7 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 | Timing | Present with caveat | Ask receipts include OpenVINO wall and perf metric timing; #1111/#1112 added status handling so future receipts do not treat `-1.0` sentinels as measured latency. |
 | Power and thermal context | Linked historically; direct builder support for future asks | Aggregate route/profile/regression receipts index telemetry, and #1110/#1127 added a non-promotional ask-level telemetry context when a linked telemetry receipt is available. |
 | Known blockers and next evidence | Present for blocked low-power, linked in aggregates | Low-power blocker fields are clear and should remain the active POWER-006 evidence contract. |
-| BitNet proof boundary | Present | Claim-boundary fields keep dense SLM evidence separate from BitNet QK256/I2_S proof. |
+| BitNet proof boundary | Present | Claim-boundary fields keep dense SLM evidence separate from BitNet QK256/I2_S proof; #1178 owns future semantic-intake rerun decisions. |
 
 ## Findings
 
@@ -191,6 +191,10 @@ native NPU, or BitNet proof.
 4. [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119)
    remains the broader NPU cold/cache research parent for any future phase or
    cache-boundary follow-up.
+5. [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178)
+   owns BitNet semantic-intake freshness if shared BitNet semantics, receipt
+   validation, or claim-boundary evidence later require a targeted CPU
+   reference rerun.
 
 Do not open a new operator receipt PR unless one of those evidence packages or a
 new review exposes a concrete field, schema, or validator gap.
@@ -212,9 +216,9 @@ This review does not find a reason to mutate route policy.
 Issue #1108 closed when this review landed. Its named follow-ups for telemetry
 context (#1110/#1127), timing sentinel status (#1111/#1112), and route ID proof
 family mapping (#1135/#1137) are now also closed. This review still must not be
-used to close POWER-006, #1069, #1071, #1149, or any physical measurement
-issue. #1160 is closed by its own diagnostic receipt package in #1174, not by
-this operator coverage review.
+used to close POWER-006, #1069, #1071, #1149, #1178, or any physical
+measurement issue. The #1160 diagnostic receipt package closed in #1174, not
+by this operator coverage review.
 
 ## Claim Boundary
 
