@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
-Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163)
+Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174)
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
 
@@ -32,12 +32,12 @@ Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 is also
 closed after #1145 aligned the committed NPU diagnosis and route-promotion
 receipts for direct validation. #1154 is closed because existing validator
 coverage already rejects treating timing-derived cache diagnostics as direct
-runtime cache-hit truth without direct runtime evidence fields. #1160 is the
-current cache-rerun evidence issue for collecting a fresh cache snapshot package
-under those boundaries. The 2026-06-01 #1160 rerun now provides a current
-diagnostic cache snapshot package, but it still uses timing-derived cache
-classification and does not expose direct runtime cache-hit truth. #1162 is
-closed by #1163 after the warm-resident validator started enforcing the
+runtime cache-hit truth without direct runtime evidence fields. #1160 is closed
+by #1174 after collecting the current cache-rerun evidence package under those
+boundaries. The 2026-06-01 rerun provides a current diagnostic cache snapshot
+package, but it still uses timing-derived cache classification and does not
+expose direct runtime cache-hit truth. #1162 is closed by #1163 after the
+warm-resident validator started enforcing the
 resident-session acceptance boundary. Keep any future follow-up limited to the
 specific cache, phase, resident, or validation gap being measured instead of
 widening this review into route policy.
@@ -50,10 +50,10 @@ widening this review into route policy.
 | `lunar-lake-openvino-npu-cache-experiment.json` | Cache starts empty, then one 154693720-byte blob exists after both process runs | File evidence supports cache reuse diagnosis |
 | `lunar-lake-openvino-npu-cache-experiment.json` | `cache_hit_runtime_metric_available=false` | Promotion-grade cache-hit claims remain blocked |
 | `lunar-lake-openvino-npu-cache-experiment.json` | First and second process answer gates pass, fallback is false, direct generated-token IDs are available | Route identity and quality are suitable for diagnostic comparison |
-| `lunar-lake-openvino-npu-cache-rerun-20260601.json` | Current #1160 rerun uses explicit NPU on OpenVINO 2026.2.0 / GenAI 2026.2.0.0; first construct is 11163.864 ms, second construct is 944.647 ms, ratio is 0.085, improvement is 10219.218 ms | Current receipt confirms the cache effect remains material under the new receipt contract |
+| `lunar-lake-openvino-npu-cache-rerun-20260601.json` | Closed #1160 / #1174 rerun uses explicit NPU on OpenVINO 2026.2.0 / GenAI 2026.2.0.0; first construct is 11163.864 ms, second construct is 944.647 ms, ratio is 0.085, improvement is 10219.218 ms | Committed receipt confirms the cache effect remains material under the new receipt contract |
 | `lunar-lake-openvino-npu-cache-rerun-20260601.json` | Cache starts empty, then one stable 158052779-byte blob remains after both process runs | File evidence supports cache reuse diagnosis for the current model/export/runtime/device tuple |
 | `lunar-lake-openvino-npu-cache-rerun-20260601.json` | `cache_evidence_source=timing_derived`; `direct_runtime_cache_hit_status.available=false`; command provenance uses repo-relative replay commands | Cache-hit truth remains diagnostic, while the committed receipt avoids stale local checkout paths |
-| `lunar-lake-openvino-npu-cache-rerun-20260601.json` | First and second process answer gates pass, fallback is false, direct generated-token IDs are available, and profile applicability is marked non-promotion smoke evidence | Suitable #1160 diagnostic package; still not route-promotion evidence |
+| `lunar-lake-openvino-npu-cache-rerun-20260601.json` | First and second process answer gates pass, fallback is false, direct generated-token IDs are available, and profile applicability is marked non-promotion smoke evidence | Suitable closed #1160 diagnostic package; still not route-promotion evidence |
 | `lunar-lake-openvino-npu-cold-start-diagnosis.json` | `cold_load_decomposition` records first-process cache miss, second-process cache reuse, timing-derived cache classification, and missing direct cache metrics | Decomposition is review-ready, but still diagnostic |
 | `lunar-lake-npu-cold-start.md` | Cold startup remains dominated by pipeline construction, compile/load, transfer, cache, tokenizer/setup, and first-ask costs | Do not promote cold one-off NPU from cache evidence alone |
 
@@ -143,17 +143,18 @@ proof, full BitNet inference, packed QK256 decode, or BitNet QK256/I2_S parity.
 
 No route-policy PR is required from this review alone.
 
-The current #1160 receipt-only PR shape is acceptable: add the dated cache
-rerun artifact and update research/review pointers without refreshing route
-policy, promotion ledgers, benchmark matrices, or generated dashboards.
+The receipt-only #1160 PR shape has landed in #1174: the dated cache rerun
+artifact is committed and the evidence remains diagnostic. No follow-up PR is
+needed unless a newly exposed direct cache metric, runtime log, or stricter
+missing field creates a specific gap.
 
 The cache-truth guard and direct-validation alignment have already landed: #1145
 aligned current receipts for direct validation, and existing validator coverage
 closed #1154 by enforcing the timing-derived-versus-runtime-cache-truth
 boundary. The next small implementation PR, if needed, should be scoped through
-issue #1160 or the #1119 parent issue. It should preserve these constraints when
-new cache evidence is added or when a newly exposed field creates a more
-specific gap:
+the #1119 parent issue or a new precise cache-evidence issue, not another broad
+rerun of #1160. It should preserve these constraints when new cache evidence is
+added or when a newly exposed field creates a more specific gap:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
   `file_reuse`, `timing_derived`, or `not_exposed`;
