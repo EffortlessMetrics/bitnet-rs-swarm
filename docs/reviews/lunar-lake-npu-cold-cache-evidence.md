@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149)
+Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
 Linked PRs: n/a
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
@@ -32,9 +32,11 @@ Issue #1139 closed the narrow phase-timing schema gap. Issue #1143 is also
 closed after #1145 aligned the committed NPU diagnosis and route-promotion
 receipts for direct validation. #1154 is closed because existing validator
 coverage already rejects treating timing-derived cache diagnostics as direct
-runtime cache-hit truth without direct runtime evidence fields. Keep any future
-follow-up limited to the specific cache, phase, resident, or validation gap
-being measured instead of widening this review into route policy.
+runtime cache-hit truth without direct runtime evidence fields. #1160 is the
+current cache-rerun evidence issue for collecting a fresh cache snapshot package
+under those boundaries. Keep any future follow-up limited to the specific
+cache, phase, resident, or validation gap being measured instead of widening
+this review into route policy.
 
 ## Current Evidence Snapshot
 
@@ -137,9 +139,9 @@ The cache-truth guard and direct-validation alignment have already landed: #1145
 aligned current receipts for direct validation, and existing validator coverage
 closed #1154 by enforcing the timing-derived-versus-runtime-cache-truth
 boundary. The next small implementation PR, if needed, should be scoped through
-the #1119 parent issue or a later cache-specific follow-up. It should preserve
-these constraints when new cache evidence is added or when a newly exposed field
-creates a more specific gap:
+#1160 or the #1119 parent issue. It should preserve these constraints when new
+cache evidence is added or when a newly exposed field creates a more specific
+gap:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
   `file_reuse`, `timing_derived`, or `not_exposed`;

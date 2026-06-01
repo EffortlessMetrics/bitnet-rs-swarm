@@ -2,6 +2,7 @@
 
 Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1032
 Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
+Current cache rerun issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160
 Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139 / PR #1141
 Receipt-validation alignment closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143 / PR #1145
 Cache-classification guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1154
@@ -338,9 +339,10 @@ BitNet NPU execution.
 
 ## Recommended Next Issues
 
-1. `LNL258V-NPU-CACHE-002`: rerun the cache experiment with explicit OpenVINO
-   version, NPU device properties, and cache snapshots that include stable file
-   hashes where practical.
+1. `LNL258V-NPU-CACHE-RERUN-001` (#1160): rerun the cache experiment
+   with explicit OpenVINO version, NPU device properties, and cache snapshots
+   that include stable file hashes where practical. Do not reuse the historical
+   merged `LNL258V-NPU-CACHE-002` campaign ID for this follow-up.
 2. `LNL258V-NPU-RESIDENT-003`: add only a validator or receipt check for the
    already-defined #1120 warm-resident acceptance boundary if a future receipt
    lacks pipeline, cold-first-ask, warm-loop, drift, token, memory, or claim
