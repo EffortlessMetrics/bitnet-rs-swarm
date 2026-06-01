@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
-Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163)
+Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1164](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1164)
 Support-tier impact: no promotion; review-only warm resident acceptance rule
 Policy impact: no policy exception
 
@@ -124,9 +124,11 @@ construction for ordinary one-off asks.
 
 ### Cold One-Off And Cache
 
-Keep cold one-off NPU blocked until #1119 defines accepted cache and phase
-evidence. Timing-derived cache classification is diagnostic unless a later
-review accepts it as promotion-grade.
+Keep cold one-off NPU blocked until #1119 accepts promotion-grade cache and
+phase evidence for that exact mode. The current #1119 contract is defined, but
+the committed cache evidence is still timing/file-derived diagnostic evidence
+unless a later review accepts a stricter proxy policy or direct runtime
+cache-hit source.
 
 ### `low_power`
 
