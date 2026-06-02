@@ -8445,22 +8445,78 @@ fn cpu_slm_resident_execution_context(json: &Value) -> CpuSlmResidentExecutionCo
 }
 
 fn cpu_slm_resident_memory_samples(json: &Value) -> CpuSlmResidentMemorySamples {
-    let after_warm_loop_bytes = u64_at(json, "memory.resident_memory_bytes");
+    let before_load_bytes = u64_at_any(
+        json,
+        &[
+            "memory.lifecycle.before_load_bytes",
+            "memory.lifecycle.before_load.resident_memory_bytes",
+        ],
+    );
+    let after_load_bytes = u64_at_any(
+        json,
+        &["memory.lifecycle.after_load_bytes", "memory.lifecycle.after_load.resident_memory_bytes"],
+    );
+    let after_first_ask_bytes = u64_at_any(
+        json,
+        &[
+            "memory.lifecycle.after_first_ask_bytes",
+            "memory.lifecycle.after_first_ask.resident_memory_bytes",
+        ],
+    );
+    let after_warm_loop_bytes = u64_at_any(
+        json,
+        &[
+            "memory.lifecycle.after_warm_loop_bytes",
+            "memory.lifecycle.after_warm_loop.resident_memory_bytes",
+            "memory.resident_memory_bytes",
+        ],
+    );
     CpuSlmResidentMemorySamples {
-        source: string_at(json, "memory.resident_memory_source"),
-        before_load_bytes: None,
-        before_load_status: "not_exposed".to_string(),
-        after_load_bytes: None,
-        after_load_status: "not_exposed".to_string(),
-        after_first_ask_bytes: None,
-        after_first_ask_status: "not_exposed".to_string(),
+        source: string_at_any(json, &["memory.lifecycle.source", "memory.resident_memory_source"]),
+        before_load_bytes,
+        before_load_status: cpu_slm_resident_memory_sample_status(
+            json,
+            &["memory.lifecycle.before_load_status", "memory.lifecycle.before_load.status"],
+            before_load_bytes,
+            "measured_before_load",
+        ),
+        after_load_bytes,
+        after_load_status: cpu_slm_resident_memory_sample_status(
+            json,
+            &["memory.lifecycle.after_load_status", "memory.lifecycle.after_load.status"],
+            after_load_bytes,
+            "measured_after_model_tokenizer_load",
+        ),
+        after_first_ask_bytes,
+        after_first_ask_status: cpu_slm_resident_memory_sample_status(
+            json,
+            &["memory.lifecycle.after_first_ask_status", "memory.lifecycle.after_first_ask.status"],
+            after_first_ask_bytes,
+            "measured_after_first_ask",
+        ),
         after_warm_loop_bytes,
-        after_warm_loop_status: if after_warm_loop_bytes.is_some() {
-            "measured_after_warm_loop".to_string()
-        } else {
-            "not_exposed".to_string()
-        },
+        after_warm_loop_status: cpu_slm_resident_memory_sample_status(
+            json,
+            &["memory.lifecycle.after_warm_loop_status", "memory.lifecycle.after_warm_loop.status"],
+            after_warm_loop_bytes,
+            "measured_after_warm_loop",
+        ),
     }
+}
+
+fn cpu_slm_resident_memory_sample_status(
+    json: &Value,
+    paths: &[&str],
+    bytes: Option<u64>,
+    measured_status: &str,
+) -> String {
+    string_at_any(json, paths).unwrap_or_else(|| {
+        if bytes.is_some() {
+            measured_status.to_string()
+        } else {
+            CPU_SLM_PHASE_NOT_EXPOSED.to_string()
+        }
+    })
 }
 
 fn cpu_slm_first_resident_prompt(json: &Value) -> Option<CpuSlmResidentFirstPromptEvidence> {
@@ -8524,7 +8580,9 @@ struct ResidentProfileAccumulator {
     prefill_ms: Vec<f64>,
     decode_total_ms: Vec<f64>,
     tokenize_ms: Vec<f64>,
+    prompt_render_ms: Vec<f64>,
     detokenize_ms: Vec<f64>,
+    quality_gate_ms: Vec<f64>,
     generated_tokens: Vec<f64>,
     prompt_token_counts: Vec<f64>,
     generated_token_ids_available: bool,
@@ -8600,11 +8658,13 @@ fn cpu_slm_resident_profiles(
             push_number(prompt, "timing.prefill_ms", &mut entry.prefill_ms);
             push_number(prompt, "timing.decode_total_ms", &mut entry.decode_total_ms);
             push_number(prompt, "timing.tokenize_ms", &mut entry.tokenize_ms);
+            push_number(prompt, "timing.prompt_render_ms", &mut entry.prompt_render_ms);
             push_first_number(
                 prompt,
                 &["timing.detokenize_ms", "timing.token_decode_ms.total_ms"],
                 &mut entry.detokenize_ms,
             );
+            push_number(prompt, "timing.quality_gate_ms", &mut entry.quality_gate_ms);
             if let Some(tokens) = u64_at(prompt, "generated_tokens") {
                 entry.generated_tokens.push(tokens as f64);
             }
@@ -8674,7 +8734,10 @@ fn cpu_slm_resident_profiles(
             let decode_total_ms = resident_metric_summary(&entry.decode_total_ms);
             let generated_tokens = resident_metric_summary(&entry.generated_tokens);
             let phase_timings_ms = CpuSlmResidentProfilePhaseTimings {
-                prompt_render_ms: resident_phase_not_exposed("prompt_render_ms"),
+                prompt_render_ms: resident_phase_metric(
+                    &entry.prompt_render_ms,
+                    "timing.prompt_render_ms",
+                ),
                 tokenize_ms: resident_phase_metric(&entry.tokenize_ms, "timing.tokenize_ms"),
                 prefill_ms: resident_phase_metric(&entry.prefill_ms, "timing.prefill_ms"),
                 first_token_ms: resident_phase_metric(
@@ -8686,7 +8749,10 @@ fn cpu_slm_resident_profiles(
                     &entry.detokenize_ms,
                     "timing.token_decode_ms.total_ms",
                 ),
-                quality_gate_ms: resident_phase_not_exposed("quality_gate_ms"),
+                quality_gate_ms: resident_phase_metric(
+                    &entry.quality_gate_ms,
+                    "timing.quality_gate_ms",
+                ),
                 receipt_write_ms: resident_phase_not_exposed("receipt_write_ms"),
                 telemetry_ms: resident_phase_not_exposed("telemetry_ms"),
                 total_response_ms: resident_phase_metric(&entry.total_ms, "timing.total_ms"),
@@ -23515,7 +23581,21 @@ mod tests {
                     "timing_buffers_reused": true,
                     "stop_policy_precomputed_once": true
                 },
-                "memory": {"resident_memory_bytes": 1000},
+                "memory": {
+                    "resident_memory_bytes": 1300,
+                    "resident_memory_source": "sysinfo_current_process",
+                    "lifecycle": {
+                        "source": "sysinfo_current_process",
+                        "before_load_bytes": 800,
+                        "before_load_status": "measured_before_load",
+                        "after_load_bytes": 1200,
+                        "after_load_status": "measured_after_model_tokenizer_load",
+                        "after_first_ask_bytes": 1250,
+                        "after_first_ask_status": "measured_after_first_ask",
+                        "after_warm_loop_bytes": 1300,
+                        "after_warm_loop_status": "measured_after_warm_loop"
+                    }
+                },
                 "timing": {
                     "model_load_ms": 100.0,
                     "model_sha256_ms": 5.0,
@@ -23534,11 +23614,13 @@ mod tests {
                         "timing": {
                             "model_load_ms": 0.0,
                             "tokenizer_load_ms": 0.0,
+                            "prompt_render_ms": 1.0,
                             "total_ms": 80.0,
                             "time_to_first_token_ms": 30.0,
                             "prefill_ms": 20.0,
                             "decode_total_ms": 40.0,
-                            "tokenize_ms": 2.0
+                            "tokenize_ms": 2.0,
+                            "quality_gate_ms": 0.5
                         }
                     },
                     {
@@ -23552,11 +23634,13 @@ mod tests {
                         "timing": {
                             "model_load_ms": 0.0,
                             "tokenizer_load_ms": 0.0,
+                            "prompt_render_ms": 2.0,
                             "total_ms": 100.0,
                             "first_token_ms": 40.0,
                             "prefill_ms": 22.0,
                             "decode_total_ms": 44.0,
-                            "tokenize_ms": 3.0
+                            "tokenize_ms": 3.0,
+                            "quality_gate_ms": 0.75
                         }
                     }
                 ]
@@ -23585,9 +23669,25 @@ mod tests {
         assert_eq!(receipt.resident_session.model_loaded_once, Some(true));
         assert_eq!(receipt.resident_session.tokenizer_loaded_once, Some(true));
         assert_eq!(
+            receipt.resident_session.memory_samples.before_load_status,
+            "measured_before_load"
+        );
+        assert_eq!(receipt.resident_session.memory_samples.before_load_bytes, Some(800));
+        assert_eq!(
+            receipt.resident_session.memory_samples.after_load_status,
+            "measured_after_model_tokenizer_load"
+        );
+        assert_eq!(receipt.resident_session.memory_samples.after_load_bytes, Some(1200));
+        assert_eq!(
+            receipt.resident_session.memory_samples.after_first_ask_status,
+            "measured_after_first_ask"
+        );
+        assert_eq!(receipt.resident_session.memory_samples.after_first_ask_bytes, Some(1250));
+        assert_eq!(
             receipt.resident_session.memory_samples.after_warm_loop_status,
             "measured_after_warm_loop"
         );
+        assert_eq!(receipt.resident_session.memory_samples.after_warm_loop_bytes, Some(1300));
         let first_prompt = receipt
             .resident_session
             .first_resident_prompt
@@ -23609,8 +23709,10 @@ mod tests {
         assert_eq!(profile.phase_timings_ms.tokenize_ms.exposure, "measured");
         assert_eq!(profile.phase_timings_ms.tokenize_ms.summary.p95, Some(3.0));
         assert_eq!(profile.phase_timings_ms.detokenize_ms.exposure, "not_exposed");
-        assert_eq!(profile.phase_timings_ms.prompt_render_ms.exposure, "not_exposed");
-        assert_eq!(profile.phase_timings_ms.quality_gate_ms.exposure, "not_exposed");
+        assert_eq!(profile.phase_timings_ms.prompt_render_ms.exposure, "measured");
+        assert_eq!(profile.phase_timings_ms.prompt_render_ms.summary.mean, Some(1.5));
+        assert_eq!(profile.phase_timings_ms.quality_gate_ms.exposure, "measured");
+        assert_eq!(profile.phase_timings_ms.quality_gate_ms.summary.p95, Some(0.75));
         assert_eq!(profile.prompt_token_count.exposure, "measured");
         assert_eq!(profile.prompt_token_count.summary.mean, Some(8.0));
         assert_eq!(profile.generated_token_ids_available, Some(true));
@@ -23641,7 +23743,7 @@ mod tests {
         assert!(
             receipt.measurement_qualification.blockers.iter().any(|blocker| {
                 blocker.contains(
-                    "profile ask_short missing measured phase fields: prompt_render_ms, detokenize_ms, quality_gate_ms, receipt_write_ms, telemetry_ms",
+                    "profile ask_short missing measured phase fields: detokenize_ms, receipt_write_ms, telemetry_ms",
                 )
             }),
             "{:?}",
