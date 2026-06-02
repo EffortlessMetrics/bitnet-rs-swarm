@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "artifact_kind": "lunar_lake_cpu_slm_resident_session",
   "proof_stage": "resident_cpu_no_reload_timing_no_new_inference",
   "created_utc": "2026-05-17T09:30:00Z",
@@ -25,11 +25,34 @@
     "answer_gate_passed": true
   },
   "execution_context": {
+    "requested_thread_count": null,
+    "effective_thread_count": 1,
     "thread_count": 1,
+    "thread_env": {
+      "RAYON_NUM_THREADS": null,
+      "BITNET_CPU_THREADS": null,
+      "BITNET_NUM_THREADS": null,
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "NUMEXPR_NUM_THREADS": null
+    },
+    "process_affinity_mask": null,
+    "affinity_classification": null,
+    "affinity_classification_status": "not_exposed",
+    "windows_power_scheme": null,
+    "windows_power_scheme_status": "not_sampled_in_slm_cpu_warm_session",
     "power_scheme": null,
     "power_scheme_status": "not_sampled_in_slm_cpu_warm_session",
     "ac_battery_state": null,
     "ac_battery_state_status": "not_sampled_in_slm_cpu_warm_session",
+    "thermal_availability": "not_exposed",
+    "temperature_c": null,
+    "temperature_status": "not_exposed",
+    "cpu_utilization_per_logical_processor": null,
+    "cpu_utilization_status": "not_exposed",
+    "frequency_or_throttle_proxy": null,
+    "frequency_or_throttle_status": "not_exposed",
     "fallback_used": false
   },
   "resident_session": {
@@ -142,7 +165,7 @@
       },
       "prompt_token_count": {
         "exposure": "not_exposed",
-        "source": "prompt_token_count",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
         "summary": {
           "sample_count": 0,
           "min": null,
@@ -151,6 +174,8 @@
           "max": null
         }
       },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
       "phase_timings_ms": {
         "prompt_render_ms": {
           "exposure": "not_exposed",
@@ -265,7 +290,9 @@
       },
       "decode_tokens_per_s_mean": 3.037978990552493,
       "cold_to_resident_total_ratio": 1.70572958624116,
-      "blockers": []
+      "blockers": [
+        "resident profile has no measured prompt token counts"
+      ]
     },
     {
       "profile_id": "ask_short",
@@ -324,7 +351,7 @@
       },
       "prompt_token_count": {
         "exposure": "not_exposed",
-        "source": "prompt_token_count",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
         "summary": {
           "sample_count": 0,
           "min": null,
@@ -333,6 +360,8 @@
           "max": null
         }
       },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
       "phase_timings_ms": {
         "prompt_render_ms": {
           "exposure": "not_exposed",
@@ -447,7 +476,9 @@
       },
       "decode_tokens_per_s_mean": 3.0506814798720265,
       "cold_to_resident_total_ratio": 2.5080353310902685,
-      "blockers": []
+      "blockers": [
+        "resident profile has no measured prompt token counts"
+      ]
     },
     {
       "profile_id": "regression_tiny",
@@ -506,7 +537,7 @@
       },
       "prompt_token_count": {
         "exposure": "not_exposed",
-        "source": "prompt_token_count",
+        "source": "prompts[].prompt_token_count|prompts[].tokens.prompt",
         "summary": {
           "sample_count": 0,
           "min": null,
@@ -515,6 +546,8 @@
           "max": null
         }
       },
+      "generated_token_ids_available": true,
+      "generated_token_ids_source": "slm_warm_session_generated_ids",
       "phase_timings_ms": {
         "prompt_render_ms": {
           "exposure": "not_exposed",
@@ -629,10 +662,30 @@
       },
       "decode_tokens_per_s_mean": 2.981474607526137,
       "cold_to_resident_total_ratio": 2.2725957715705047,
-      "blockers": []
+      "blockers": [
+        "resident profile has no measured prompt token counts"
+      ]
     }
   ],
-  "resident_ready": true,
+  "measurement_qualification": {
+    "resident_phase_qualified": false,
+    "benchmark_qualified": false,
+    "status": "resident_phase_blocked_for_measurement_qualification",
+    "required_warm_asks_after_first": 30,
+    "observed_warm_asks_after_first": 29,
+    "blockers": [
+      "profile ask_normal missing measured phase fields: prompt_token_count, prompt_render_ms, quality_gate_ms, receipt_write_ms, telemetry_ms",
+      "profile ask_short missing measured phase fields: prompt_token_count, prompt_render_ms, quality_gate_ms, receipt_write_ms, telemetry_ms",
+      "profile regression_tiny missing measured phase fields: prompt_token_count, prompt_render_ms, quality_gate_ms, receipt_write_ms, telemetry_ms",
+      "resident memory lifecycle samples are incomplete: before_load_bytes, after_load_bytes, after_first_ask_bytes",
+      "resident warm loop has 29/30 required asks after the first resident ask"
+    ],
+    "benchmark_blockers": [
+      "resident phase evidence is incomplete for benchmark qualification",
+      "resident receipt is not a matched CPU runtime benchmark comparison"
+    ]
+  },
+  "resident_ready": false,
   "findings": [
     "cold_reference_total_response_ms=27986.539",
     "resident_session_model_load_ms=13592.773",
