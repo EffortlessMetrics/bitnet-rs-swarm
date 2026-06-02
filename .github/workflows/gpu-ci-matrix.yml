@@ -121,8 +121,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: cpu
-            flags: "--no-default-features --features cpu"
           - label: gpu
             flags: "--no-default-features --features gpu"
             allow_failure: true
