@@ -1,18 +1,18 @@
-timestamp = "2026-05-25T20:08:46Z"
+timestamp = "2026-06-02T05:33:48Z"
 campaign = "intel-a770"
 item = "A770-064"
-event = "in_progress"
-previous_status = "none"
-new_status = "ready"
-branch = "codex/intel-a770/A770-064-focused-raw-operands"
+event = "pr_open"
 actor = "codex-a770"
-claim_allowed = false
-diagnostic_only = true
-summary = "Queued A770-064 to capture focused raw QK256 operands and feed them into selected-device production replay instrumentation."
+previous_status = "in_progress"
+new_status = "pr_open"
+branch = "codex/intel-a770/A770-064-focused-raw-operands"
+pr = 1257
+head_sha = "aaa54fb3b75bb8c0931b9e2a70010f5eb67f44a6"
+summary = "Opened PR #1257 with focused raw QK256 operand capture and selected-device production replay classification."
 notes = [
-  "A770-063 classified the focused production operand context as summary-only with raw activations_i8 and packed_qk256 bytes missing.",
-  "A770-064 is scoped to opt-in raw operand capture for the focused q_proj first mismatch and to classifying selected-device production replay on that focused row.",
-  "No production QK256 dispatch, answer scoring, sampling, runtime math, CPU/A770 parity, answer readiness, broad answer quality, residency, speed, trusted partial acceleration, or full BitNet inference claim may move.",
+  "The focused raw activation row and packed QK256 bytes are captured for a770_summary_seed770024_keywords_014 at first mismatch index 9.",
+  "Selected-device production replay reproduces the A770 output bit while the focused host policy remains one bit apart.",
+  "The PR keeps answer parity, quality, residency, speed, trusted partial acceleration, and full BitNet inference claims closed.",
 ]
 
 [claim_boundary]
