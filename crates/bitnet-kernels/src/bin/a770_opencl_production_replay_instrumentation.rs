@@ -430,11 +430,23 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
         FocusedReceiptKind::HostPolicyExpressionSplit => {
             focused_host_policy_expression_split_classification(&context, replay_outcome.as_ref())
         }
+        FocusedReceiptKind::HostSummaryPolicySemanticFix => {
+            focused_host_summary_policy_semantic_fix_classification(
+                &context,
+                replay_outcome.as_ref(),
+            )
+        }
+    };
+    let focused_policy_bits_for_receipt = match receipt_kind {
+        FocusedReceiptKind::HostSummaryPolicySemanticFix => {
+            context.host_summary_policy_semantic_fix_bits.or(context.focused_policy_bits)
+        }
+        _ => context.focused_policy_bits,
     };
     let focused_summary_divergence_available =
-        context.focused_device_output_bits.is_some() && context.focused_policy_bits.is_some();
+        context.focused_device_output_bits.is_some() && focused_policy_bits_for_receipt.is_some();
     let focused_summary_device_vs_policy_bits_match =
-        match (context.focused_device_output_bits, context.focused_policy_bits) {
+        match (context.focused_device_output_bits, focused_policy_bits_for_receipt) {
             (Some(device), Some(policy)) => Some(device == policy),
             _ => None,
         };
@@ -460,6 +472,12 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
         }
         FocusedReceiptKind::HostPolicyExpressionSplit => {
             focused_host_policy_expression_split_next_diagnostic(&context, replay_outcome.as_ref())
+        }
+        FocusedReceiptKind::HostSummaryPolicySemanticFix => {
+            focused_host_summary_policy_semantic_fix_next_diagnostic(
+                &context,
+                replay_outcome.as_ref(),
+            )
         }
     };
     let (host_to_device_bytes, device_to_host_bytes, kernel_invocations) = match &replay_outcome {
@@ -531,7 +549,10 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             "int_dot": context.int_dot,
             "adjusted_dot": context.adjusted_dot,
             "focused_device_output_bits": context.focused_device_output_bits,
-            "focused_policy_bits": context.focused_policy_bits,
+            "focused_policy_bits": focused_policy_bits_for_receipt,
+            "source_host_summary_policy_bits": context.focused_policy_bits,
+            "host_summary_policy_semantic_fix_applied": context.host_summary_policy_semantic_fix_applied,
+            "host_summary_policy_semantic_fix_bits": context.host_summary_policy_semantic_fix_bits,
             "host_policy_div_then_mul_bits": context.host_policy_div_then_mul_bits,
             "host_policy_mul_then_div_bits": context.host_policy_mul_then_div_bits,
             "host_policy_reciprocal_then_mul_bits": context.host_policy_reciprocal_then_mul_bits,
@@ -593,6 +614,27 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             }
             object.insert("host_policy_expression_split".to_string(), split);
         }
+    } else if receipt_kind == FocusedReceiptKind::HostSummaryPolicySemanticFix {
+        let fix = focused_host_summary_policy_semantic_fix_json(&context, replay_outcome.as_ref());
+        if let Some(object) = receipt.as_object_mut() {
+            if let Some(source_receipts) =
+                object.get_mut("source_receipts").and_then(Value::as_object_mut)
+            {
+                source_receipts.insert(
+                    "focused_host_policy_expression_split".to_string(),
+                    json!(
+                        "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-focused-host-policy-expression-split.json"
+                    ),
+                );
+                source_receipts.insert(
+                    "focused_raw_operand_replay".to_string(),
+                    json!(
+                        "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-focused-raw-operands-replay.json"
+                    ),
+                );
+            }
+            object.insert("host_summary_policy_semantic_fix".to_string(), fix);
+        }
     }
     Ok(serde_json::to_string_pretty(&receipt)? + "\n")
 }
@@ -601,12 +643,15 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
 enum FocusedReceiptKind {
     RawOperandReplay,
     HostPolicyExpressionSplit,
+    HostSummaryPolicySemanticFix,
 }
 
 impl FocusedReceiptKind {
     fn from_receipt_path(path: &Path) -> Self {
         let path = path.to_string_lossy().replace('\\', "/");
-        if path.contains("focused-host-policy-expression-split") {
+        if path.contains("host-summary-policy-semantic-fix") {
+            Self::HostSummaryPolicySemanticFix
+        } else if path.contains("focused-host-policy-expression-split") {
             Self::HostPolicyExpressionSplit
         } else {
             Self::RawOperandReplay
@@ -617,6 +662,7 @@ impl FocusedReceiptKind {
         match self {
             Self::RawOperandReplay => "A770-064",
             Self::HostPolicyExpressionSplit => "A770-065",
+            Self::HostSummaryPolicySemanticFix => "A770-066",
         }
     }
 
@@ -625,6 +671,9 @@ impl FocusedReceiptKind {
             Self::RawOperandReplay => "a770_opencl_qk256_focused_raw_operand_replay",
             Self::HostPolicyExpressionSplit => {
                 "a770_opencl_qk256_focused_host_policy_expression_split"
+            }
+            Self::HostSummaryPolicySemanticFix => {
+                "a770_opencl_qk256_host_summary_policy_semantic_fix"
             }
         }
     }
@@ -636,6 +685,9 @@ impl FocusedReceiptKind {
             }
             Self::HostPolicyExpressionSplit => {
                 "diagnostic_focused_host_policy_expression_split_classified"
+            }
+            Self::HostSummaryPolicySemanticFix => {
+                "diagnostic_host_summary_policy_semantic_fix_classified"
             }
         }
     }
@@ -674,6 +726,8 @@ struct FocusedContext {
     adjusted_dot: Option<i64>,
     focused_device_output_bits: Option<u64>,
     focused_policy_bits: Option<u64>,
+    host_summary_policy_semantic_fix_applied: Option<bool>,
+    host_summary_policy_semantic_fix_bits: Option<u64>,
     host_policy_div_then_mul_bits: Option<u64>,
     host_policy_mul_then_div_bits: Option<u64>,
     host_policy_reciprocal_then_mul_bits: Option<u64>,
@@ -986,6 +1040,18 @@ fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -
         .and_then(|trace| trace.get("samples"))
         .and_then(Value::as_array)
         .and_then(|samples| samples.first());
+    let qk256_expression_row = find_case_row(
+        source.pointer("/generated_output_qk256_device_expression_frontier/rows"),
+        case_id,
+    );
+    let host_summary_policy_semantic_fix = expression_sample
+        .and_then(|sample| sample.get("host_summary_policy_semantic_fix"))
+        .or_else(|| {
+            qk256_expression_row.and_then(|row| {
+                row.pointer("/right/host_summary_policy_semantic_fix")
+                    .or_else(|| row.pointer("/left/host_summary_policy_semantic_fix"))
+            })
+        });
     let raw_activation_i8_available = any_array_at(
         right_replay,
         &[
@@ -1062,6 +1128,11 @@ fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -
             u64_field(sample, "div_then_mul_bits")
                 .or_else(|| u64_field(sample, "f64_div_then_mul_cast_bits"))
         }),
+        host_summary_policy_semantic_fix_applied: host_summary_policy_semantic_fix
+            .and_then(|fix| fix.get("applied"))
+            .and_then(Value::as_bool),
+        host_summary_policy_semantic_fix_bits: host_summary_policy_semantic_fix
+            .and_then(|fix| u64_field(fix, "fixed_policy_bits")),
         host_policy_div_then_mul_bits: expression_sample
             .and_then(|sample| u64_field(sample, "div_then_mul_bits")),
         host_policy_mul_then_div_bits: expression_sample
@@ -1330,6 +1401,168 @@ fn focused_host_policy_expression_split_json(
     }
 }
 
+fn focused_host_summary_policy_semantic_fix_classification(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
+    if !context.case_found || !context.qkv_context_available {
+        return "a770_qk256_host_summary_policy_semantic_fix_missing_context";
+    }
+    let Some(FocusedReplayOutcome::Executed { replay, .. }) = replay_outcome else {
+        return if matches!(replay_outcome, Some(FocusedReplayOutcome::Failed { .. })) {
+            "a770_qk256_host_summary_policy_semantic_fix_replay_failed"
+        } else {
+            "a770_qk256_host_summary_policy_semantic_fix_missing_raw_operands"
+        };
+    };
+    let Some(sample) = replay.samples.first() else {
+        return "a770_qk256_host_summary_policy_semantic_fix_missing_samples";
+    };
+    let Some(device_bits) = context.focused_device_output_bits else {
+        return "a770_qk256_host_summary_policy_semantic_fix_missing_device_bits";
+    };
+    let Some(fixed_policy_bits) = context.host_summary_policy_semantic_fix_bits else {
+        return "a770_qk256_host_summary_policy_semantic_fix_missing_fixed_policy_bits";
+    };
+    if context.host_summary_policy_semantic_fix_applied != Some(true) {
+        return "a770_qk256_host_summary_policy_semantic_fix_not_applied";
+    }
+    if fixed_policy_bits != device_bits {
+        return "a770_qk256_host_summary_policy_semantic_fix_fixed_policy_mismatch";
+    }
+
+    let production_bits = u64::from(sample.production_output_bits);
+    let replay_bits = u64::from(sample.replay_output_bits);
+    let final_bits = u64::from(sample.final_scaled_value_bits);
+    if production_bits == device_bits && replay_bits == device_bits && final_bits == device_bits {
+        "a770_qk256_host_summary_policy_semantic_fix_focused_row_matches_selected_device_replay"
+    } else {
+        "a770_qk256_host_summary_policy_semantic_fix_selected_device_replay_mismatch"
+    }
+}
+
+fn focused_host_summary_policy_semantic_fix_next_diagnostic(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
+    match focused_host_summary_policy_semantic_fix_classification(context, replay_outcome) {
+        "a770_qk256_host_summary_policy_semantic_fix_focused_row_matches_selected_device_replay" => {
+            "expand to multi-case focused QK256 replay before any production QK256 promotion"
+        }
+        "a770_qk256_host_summary_policy_semantic_fix_fixed_policy_mismatch"
+        | "a770_qk256_host_summary_policy_semantic_fix_not_applied" => {
+            "repair the bounded host summary-policy semantic fix before any production QK256 promotion"
+        }
+        "a770_qk256_host_summary_policy_semantic_fix_selected_device_replay_mismatch" => {
+            "inspect selected-device production replay after the host summary-policy semantic fix"
+        }
+        _ => "restore focused raw operand replay context before any production QK256 policy change",
+    }
+}
+
+fn focused_host_summary_policy_semantic_fix_json(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> Value {
+    match replay_outcome {
+        Some(FocusedReplayOutcome::Executed { replay, .. }) => {
+            let sample = replay.samples.first();
+            let device_bits = context.focused_device_output_bits;
+            let source_policy_bits = context.focused_policy_bits;
+            let fixed_policy_bits = context.host_summary_policy_semantic_fix_bits;
+            let production_bits = sample.map(|sample| u64::from(sample.production_output_bits));
+            let replay_bits = sample.map(|sample| u64::from(sample.replay_output_bits));
+            let final_bits = sample.map(|sample| u64::from(sample.final_scaled_value_bits));
+            json!({
+                "classification": focused_host_summary_policy_semantic_fix_classification(
+                    context,
+                    replay_outcome,
+                ),
+                "localized_to": "host_summary_policy_semantic_fix",
+                "selected_device_route": {
+                    "selected_backend": "intel-arc-a770-opencl",
+                    "runtime_api": "opencl",
+                    "runtime_device": context.runtime_device,
+                    "fallback_used": false,
+                    "production_replay_executed": true,
+                    "kernel_invocations": replay.kernel_invocations
+                },
+                "policy_bits": {
+                    "semantic_fix_applied": context.host_summary_policy_semantic_fix_applied,
+                    "source_host_summary_policy_bits": source_policy_bits,
+                    "fixed_host_summary_policy_bits": fixed_policy_bits,
+                    "focused_device_output_bits": device_bits,
+                    "source_policy_bit_delta": bit_delta(device_bits, source_policy_bits),
+                    "fixed_policy_bit_delta": bit_delta(device_bits, fixed_policy_bits),
+                    "source_policy_matches_device_bits": source_policy_bits
+                        .zip(device_bits)
+                        .map(|(source, device)| source == device),
+                    "fixed_policy_matches_device_bits": fixed_policy_bits
+                        .zip(device_bits)
+                        .map(|(fixed, device)| fixed == device)
+                },
+                "selected_device_replay": {
+                    "production_output_bits": production_bits,
+                    "replay_output_bits": replay_bits,
+                    "final_scaled_value_bits": final_bits,
+                    "production_output_matches_device_bits": production_bits
+                        .zip(device_bits)
+                        .map(|(production, device)| production == device),
+                    "replay_output_matches_device_bits": replay_bits
+                        .zip(device_bits)
+                        .map(|(replay, device)| replay == device),
+                    "final_scaled_value_matches_device_bits": final_bits
+                        .zip(device_bits)
+                        .map(|(final_bits, device)| final_bits == device),
+                    "fixed_policy_matches_production_output_bits": fixed_policy_bits
+                        .zip(production_bits)
+                        .map(|(fixed, production)| fixed == production)
+                },
+                "claim_boundary": {
+                    "production_qk256_policy_change": false,
+                    "answer_scoring_change": false,
+                    "sampling_change": false,
+                    "cpu_a770_parity_claim": false,
+                    "strict_answer_readiness_claim": false,
+                    "broad_a770_quality_claim": false,
+                    "bitnet_inference": false,
+                    "qk256_decode": false,
+                    "claim_allowed": false,
+                    "diagnostic_only": true,
+                    "performance_claim": false,
+                    "full_residency_claim": false
+                }
+            })
+        }
+        Some(FocusedReplayOutcome::Failed { error }) => json!({
+            "classification": focused_host_summary_policy_semantic_fix_classification(
+                context,
+                replay_outcome,
+            ),
+            "replay_error": error,
+            "claim_boundary": {
+                "production_qk256_policy_change": false,
+                "bitnet_inference": false,
+                "claim_allowed": false,
+                "diagnostic_only": true
+            }
+        }),
+        None => json!({
+            "classification": focused_host_summary_policy_semantic_fix_classification(
+                context,
+                replay_outcome,
+            ),
+            "missing_raw_operand_fields": context.missing_raw_operand_fields,
+            "claim_boundary": {
+                "production_qk256_policy_change": false,
+                "bitnet_inference": false,
+                "claim_allowed": false,
+                "diagnostic_only": true
+            }
+        }),
+    }
+}
+
 fn focused_classification(
     context: &FocusedContext,
     replay_outcome: Option<&FocusedReplayOutcome>,
@@ -1463,6 +1696,11 @@ fn find_row<'a>(
                 && usize_field(row, "first_mismatch_index") == Some(first_mismatch_index)
         })
     })
+}
+
+fn find_case_row<'a>(rows: Option<&'a Value>, case_id: &str) -> Option<&'a Value> {
+    rows.and_then(Value::as_array)
+        .and_then(|rows| rows.iter().find(|row| str_field(row, "case_id") == Some(case_id)))
 }
 
 fn any_array_at(root: Option<&Value>, paths: &[&[&str]]) -> bool {
