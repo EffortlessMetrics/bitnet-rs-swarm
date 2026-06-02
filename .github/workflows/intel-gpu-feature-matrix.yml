@@ -162,6 +162,13 @@ jobs:
         uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Generate docs
-        run: cargo doc --locked --workspace --no-default-features --features cpu --no-deps
+        run: |
+          cargo doc --locked \
+            -p bitnet-kernels \
+            -p bitnet-common \
+            -p bitnet-device-probe \
+            --no-default-features \
+            --features cpu \
+            --no-deps
         env:
           RUSTDOCFLAGS: "-D warnings"

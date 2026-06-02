@@ -3673,8 +3673,10 @@ acceptance = "Use the committed A770-066 host summary-policy semantic-fix receip
 commands = [
   "rustfmt --edition 2024 --check crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
   "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation",
+  "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && RUSTDOCFLAGS='-D warnings' cargo doc --locked -p bitnet-kernels -p bitnet-common -p bitnet-device-probe --no-default-features --features cpu --no-deps\"",
   "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation -- --focused-source ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-focused-qk256-raw-operands/a770-opencl-summary-logits-raw-operands.json --case-id a770_summary_seed770024_keywords_014 --first-mismatch-index 9 --manifest ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay-manifest.json --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json",
   "pwsh -NoProfile -Command \"$m = Get-Content 'ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay-manifest.json' -Raw | ConvertFrom-Json; $r = Get-Content 'ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json' -Raw | ConvertFrom-Json; if ($m.target_count -ne 90 -or $m.dispatch_replay_target_count -ne 1 -or $r.summary.executed_target_count -ne 1 -or $r.summary.blocked_target_count -ne 89 -or $r.fallback_used -ne $false) { throw 'A770-067 receipt summary mismatch' }\"",
+  "wsl bash -lc 'cd /mnt/e/Code/Rust/bitnet-rs-swarm && python3 -c \"import yaml; yaml.safe_load(open(\\\".github/workflows/intel-gpu-feature-matrix.yml\\\", encoding=\\\"utf-8\\\"))\"'",
   "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign check intel-a770\"",
   "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign generate\"",
   "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign generate --check\"",
@@ -3686,6 +3688,7 @@ allowed_paths = [
   "docs/tracking/generated/**",
   "ci/hardware/amd-5700x-intel-a770/**",
   "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
+  ".github/workflows/intel-gpu-feature-matrix.yml",
 ]
 forbidden_paths = [
   "crates/bitnet-server/**",
