@@ -1769,6 +1769,8 @@ pub struct ProfileRouteEvidence {
     pub timing: ProfileTimingSummary,
     pub timing_applicability: ProfileTimingApplicability,
     pub benchmark_qualified_advantage: bool,
+    #[serde(default)]
+    pub phase_claim_boundary: PhaseClaimBoundary,
     pub promotion_eligible_for_profile: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profile_quality: Option<ProfileQualityEvidence>,
@@ -1778,6 +1780,16 @@ pub struct ProfileRouteEvidence {
     pub route_advantage_context: Option<ProfileRouteAdvantageContext>,
     pub evidence: Vec<String>,
     pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct PhaseClaimBoundary {
+    pub profile_timing_available: bool,
+    pub profile_total_response_benchmark_qualified: bool,
+    pub prefill_split_available: bool,
+    pub decode_split_available: bool,
+    pub phase_split_claim_allowed: bool,
+    pub notes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -17879,6 +17891,9 @@ fn evaluate_workload_profile(
         })
         .collect::<Result<Vec<_>>>()?;
     attach_route_advantage_context(profile, &mut route_evidence);
+    for route in &mut route_evidence {
+        route.phase_claim_boundary = phase_claim_boundary_for_route(route);
+    }
 
     let mut gaps = Vec::new();
     if route_evidence.is_empty() {
@@ -18062,6 +18077,7 @@ fn evaluate_profile_route(
         timing,
         timing_applicability,
         benchmark_qualified_advantage: false,
+        phase_claim_boundary: PhaseClaimBoundary::default(),
         promotion_eligible_for_profile,
         profile_quality,
         telemetry,
@@ -18224,6 +18240,51 @@ fn attach_route_advantage_context(
         }
         route.route_advantage_context =
             Some(profile_route_advantage_context(profile, &baseline, route));
+    }
+}
+
+fn phase_claim_boundary_for_route(route: &ProfileRouteEvidence) -> PhaseClaimBoundary {
+    let profile_timing_available = route.timing_applicability.timing_matches_profile
+        && route.timing.total_response_ms.is_some();
+    let profile_total_response_benchmark_qualified = route.benchmark_qualified_advantage;
+    let openvino_route = is_openvino_candidate_route(&route.route_id);
+    let prefill_split_available = route.timing.prefill_ms.is_some() && !openvino_route;
+    let decode_split_available = route.timing.decode_total_ms.is_some() && !openvino_route;
+    let phase_split_claim_allowed =
+        profile_timing_available && prefill_split_available && decode_split_available;
+
+    let mut notes = Vec::new();
+    if profile_total_response_benchmark_qualified {
+        notes.push(
+            "profile total-response timing is benchmark-qualified for route selection only"
+                .to_string(),
+        );
+    }
+    if openvino_route {
+        notes.push(
+            "OpenVINO profile timing does not expose isolated prefill/decode split evidence"
+                .to_string(),
+        );
+        if route.timing.decode_total_ms.is_some() {
+            notes.push(
+                "OpenVINO generation wall timing is not an isolated decode split".to_string(),
+            );
+        }
+    }
+    if phase_split_claim_allowed {
+        notes
+            .push("direct prefill/decode split timing fields are present for this row".to_string());
+    } else {
+        notes.push("do not claim isolated prefill/decode phase speed from this row".to_string());
+    }
+
+    PhaseClaimBoundary {
+        profile_timing_available,
+        profile_total_response_benchmark_qualified,
+        prefill_split_available,
+        decode_split_available,
+        phase_split_claim_allowed,
+        notes,
     }
 }
 
@@ -20000,6 +20061,7 @@ mod tests {
                 notes: vec![],
             },
             benchmark_qualified_advantage: true,
+            phase_claim_boundary: PhaseClaimBoundary::default(),
             promotion_eligible_for_profile: true,
             profile_quality: None,
             telemetry: None,
@@ -20021,6 +20083,7 @@ mod tests {
             timing,
             timing_applicability: ProfileTimingApplicability::default(),
             benchmark_qualified_advantage: false,
+            phase_claim_boundary: PhaseClaimBoundary::default(),
             promotion_eligible_for_profile: false,
             profile_quality: None,
             telemetry: None,
@@ -22261,6 +22324,17 @@ mod tests {
             coverage
                 == "profile_timing_from_openvino_profile_run_case_prefill_heavy_route_policy_long_context"
         }));
+        assert!(gpu_prefill.phase_claim_boundary.profile_timing_available);
+        assert!(!gpu_prefill.phase_claim_boundary.prefill_split_available);
+        assert!(!gpu_prefill.phase_claim_boundary.decode_split_available);
+        assert!(!gpu_prefill.phase_claim_boundary.phase_split_claim_allowed);
+        assert!(
+            gpu_prefill
+                .phase_claim_boundary
+                .notes
+                .iter()
+                .any(|note| note.contains("does not expose isolated prefill/decode"))
+        );
 
         let decode = profiles
             .profiles
@@ -22275,6 +22349,8 @@ mod tests {
         assert_eq!(npu_decode.timing_applicability.measured_prompt_tokens, Some(66));
         assert_eq!(npu_decode.timing_applicability.measured_output_tokens, Some(512));
         assert!(npu_decode.timing_applicability.timing_matches_profile);
+        assert!(npu_decode.phase_claim_boundary.profile_timing_available);
+        assert!(!npu_decode.phase_claim_boundary.phase_split_claim_allowed);
         assert_eq!(profiles.timing_coverage.candidate_proxy_or_missing_route_count, 0);
         assert!(
             !profiles
