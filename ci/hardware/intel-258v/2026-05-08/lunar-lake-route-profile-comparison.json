@@ -100,6 +100,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -202,6 +212,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -324,6 +347,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -468,6 +503,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -584,6 +632,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -706,6 +764,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -850,6 +920,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -966,6 +1049,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -1088,6 +1181,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -1233,6 +1338,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -1348,6 +1466,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -1471,6 +1599,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -1617,6 +1757,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -1732,6 +1885,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -1855,6 +2018,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -1994,6 +2169,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -2110,6 +2295,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -2215,6 +2410,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -2345,6 +2552,18 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -2484,6 +2703,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -2602,6 +2834,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": true,
+            "decode_split_available": true,
+            "phase_split_claim_allowed": true,
+            "notes": [
+              "direct prefill/decode split timing fields are present for this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-answer-corpus-qwen25-cpu-corpus-v2.json",
@@ -2724,6 +2966,19 @@
             ]
           },
           "benchmark_qualified_advantage": true,
+          "phase_claim_boundary": {
+            "profile_timing_available": true,
+            "profile_total_response_benchmark_qualified": true,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "profile total-response timing is benchmark-qualified for route selection only",
+              "OpenVINO profile timing does not expose isolated prefill/decode split evidence",
+              "OpenVINO generation wall timing is not an isolated decode split",
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": false,
           "profile_quality": {
             "source_receipt": "ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json",
@@ -2850,6 +3105,16 @@
             ]
           },
           "benchmark_qualified_advantage": false,
+          "phase_claim_boundary": {
+            "profile_timing_available": false,
+            "profile_total_response_benchmark_qualified": false,
+            "prefill_split_available": false,
+            "decode_split_available": false,
+            "phase_split_claim_allowed": false,
+            "notes": [
+              "do not claim isolated prefill/decode phase speed from this row"
+            ]
+          },
           "promotion_eligible_for_profile": true,
           "telemetry": {
             "telemetry_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-power-thermal-context.json",
