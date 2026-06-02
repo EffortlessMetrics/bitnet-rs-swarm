@@ -21,6 +21,8 @@ Closed command/receipt-builder follow-ups: [#1069](https://github.com/Effortless
 [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186) /
 [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
 
+Closed resident qualification follow-up: [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
+
 Research date: 2026-05-30
 Post-matrix refresh: 2026-06-01
 
@@ -47,6 +49,9 @@ The strongest evidence says:
 - the matrix still does not expose P-core/E-core placement, utilization,
   frequency, or thermal readings, so affinity and default-thread policy remain
   unproven.
+- #1255 records the current resident CPU receipt as explicitly
+  `resident_phase_blocked_for_measurement_qualification`, separating no-reload
+  diagnostic readiness from benchmark-ready resident phase evidence.
 
 The current route decision is:
 
@@ -83,7 +88,7 @@ causes and the measurement plan needed before a runtime change.
 | Receipt | Scope | Key CPU findings |
 | --- | --- | --- |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-phase-attribution.json` | Derived CPU phase attribution, no new inference | Cold one-off total response 27986.539 ms; cold load 14250.931 ms; tokenize 482.325 ms; prefill 9361.503 ms; first token 9726 ms; decode 3242.064 ms for 9 output tokens |
-| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json` | Resident Rust GGUF CPU prompt loop, no model/tokenizer reload per prompt | Model loaded once; tokenizer loaded once; ask_short mean total 11158.750 ms; ask_normal mean total 16407.372 ms; no model or tokenizer reload observed |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json` | Resident Rust GGUF CPU prompt loop, no model/tokenizer reload per prompt | Model loaded once; tokenizer loaded once; ask_short mean total 11158.750 ms; ask_normal mean total 16407.372 ms; no model or tokenizer reload observed; #1255 adds `measurement_qualification.status=resident_phase_blocked_for_measurement_qualification`, `resident_phase_qualified=false`, `benchmark_qualified=false`, and `observed_warm_asks_after_first=29` against the 30-after-first contract |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-profile-run.json` | Explicit Rust GGUF CPU heavy-profile timing | prefill_heavy total 1373681.117 ms for 2734 prompt tokens and 16 generated tokens; decode_heavy total 123115.592 ms for 67 prompt tokens and 512 generated tokens |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU corpus-v2 now passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
 | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` | Newer OpenVINO CPU/GPU/NPU corpus-v2 receipt | OpenVINO CPU resolved to `Intel(R) Core(TM) Ultra 7 258V`, constructed in 981.455 ms, ran 14/14 corpus-v2 cases with fallback false and direct generated token IDs |
@@ -415,6 +420,14 @@ block:
 
 Acceptance: resident timing must keep model-load cost separate from per-prompt
 cost and must state that resident proof does not remove cold-start cost.
+
+The current committed resident receipt already fails closed after #1255 because
+the accepted fields are not yet all present: profile prompt-token counts,
+prompt-render timing, quality-gate timing, receipt-write timing, telemetry
+timing, before-load memory, after-load memory, after-first-ask memory, and a
+full 30 warm asks after the first resident ask remain missing or not exposed.
+That closeout is qualification support, not the physical resident phase
+evidence package.
 
 ### Thread/Core Matrix Receipt
 
