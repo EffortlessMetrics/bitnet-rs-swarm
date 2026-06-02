@@ -1395,10 +1395,14 @@ pub struct BitnetSemanticIntakeRegressionSummary {
     pub closed_shared_change_count: usize,
     pub merged_to_main_count: usize,
     pub stale_after_merged_count: usize,
+    #[serde(default)]
+    pub diagnostic_only_no_rerun_count: usize,
     pub source_lanes: Vec<String>,
     pub pending_changes: Vec<String>,
     #[serde(default)]
     pub closed_changes: Vec<String>,
+    #[serde(default)]
+    pub diagnostic_only_no_rerun_changes: Vec<String>,
     pub required_reruns: Vec<String>,
     pub claim_boundary_preserved: bool,
     pub regression_ready: bool,
@@ -3306,6 +3310,10 @@ pub struct BitnetSemanticSourceChange {
     pub semantic_scope: Vec<String>,
     #[serde(default)]
     pub requires_lunar_lake_rerun_when_merged_to_main: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classification: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub touched_shared_surfaces: Vec<String>,
     pub claim_boundary: String,
 }
 
@@ -3338,11 +3346,15 @@ pub struct BitnetSemanticSourceChangeSummary {
     pub closed_shared_change_count: usize,
     pub merged_to_main_count: usize,
     pub stale_after_merged_count: usize,
+    #[serde(default)]
+    pub diagnostic_only_no_rerun_count: usize,
     pub source_lanes: Vec<String>,
     pub pending_changes: Vec<String>,
     #[serde(default)]
     pub closed_changes: Vec<String>,
     pub merged_changes: Vec<String>,
+    #[serde(default)]
+    pub diagnostic_only_no_rerun_changes: Vec<String>,
     pub notes: Vec<String>,
 }
 
@@ -3364,6 +3376,10 @@ pub struct BitnetSemanticChangeIntake {
     pub status: String,
     pub semantic_scope: Vec<String>,
     pub requires_lunar_lake_rerun_when_merged_to_main: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classification: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub touched_shared_surfaces: Vec<String>,
     pub merged_at_utc: Option<String>,
     pub stale_after_cpu_reference: bool,
     pub stale_after_operator_comparison: bool,
@@ -6027,9 +6043,13 @@ fn inspect_bitnet_semantic_intake_regression(
         closed_shared_change_count: intake.source_change_summary.closed_shared_change_count,
         merged_to_main_count: intake.source_change_summary.merged_to_main_count,
         stale_after_merged_count: intake.source_change_summary.stale_after_merged_count,
+        diagnostic_only_no_rerun_count: intake.source_change_summary.diagnostic_only_no_rerun_count,
         source_lanes: intake.source_change_summary.source_lanes,
         pending_changes: intake.source_change_summary.pending_changes,
         closed_changes: intake.source_change_summary.closed_changes,
+        diagnostic_only_no_rerun_changes: intake
+            .source_change_summary
+            .diagnostic_only_no_rerun_changes,
         required_reruns: intake.required_reruns,
         claim_boundary_preserved,
         regression_ready: gaps.is_empty(),
@@ -6751,6 +6771,7 @@ fn bitnet_semantic_intake_regression_notes(
         format!("closed_shared_change_count={}", summary.closed_shared_change_count),
         format!("merged_to_main_count={}", summary.merged_to_main_count),
         format!("stale_after_merged_count={}", summary.stale_after_merged_count),
+        format!("diagnostic_only_no_rerun_count={}", summary.diagnostic_only_no_rerun_count),
         format!("source_lanes={}", summary.source_lanes.join(",")),
         format!("claim_boundary_preserved={}", summary.claim_boundary_preserved),
     ];
@@ -13676,6 +13697,7 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
     let mut pending_changes = Vec::new();
     let mut closed_changes = Vec::new();
     let mut merged_changes = Vec::new();
+    let mut diagnostic_only_no_rerun_changes = Vec::new();
     let mut changes = Vec::new();
     let mut stale_after_merged_count = 0usize;
 
@@ -13699,6 +13721,45 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
         if change.claim_boundary.trim().is_empty() {
             gaps.push(format!("{change_label} must record a claim boundary"));
         }
+        let classification = change
+            .classification
+            .as_deref()
+            .map(str::trim)
+            .filter(|classification| !classification.is_empty());
+        let diagnostic_only_scope =
+            change.semantic_scope.iter().any(|scope| scope == "diagnostic_only");
+        let diagnostic_only_no_rerun =
+            classification == Some("merged_diagnostic_only_no_lunar_lake_rerun");
+        if diagnostic_only_no_rerun {
+            if !merged_to_main {
+                gaps.push(format!(
+                    "{change_label} uses merged_diagnostic_only_no_lunar_lake_rerun classification without merged_to_main status"
+                ));
+            }
+            if change.requires_lunar_lake_rerun_when_merged_to_main {
+                gaps.push(format!(
+                    "{change_label} cannot be diagnostic-only non-trigger while requiring Lunar Lake rerun on merge"
+                ));
+            }
+            if !diagnostic_only_scope {
+                gaps.push(format!(
+                    "{change_label} diagnostic-only non-trigger classification requires semantic_scope=diagnostic_only"
+                ));
+            }
+            if change.touched_shared_surfaces.is_empty() {
+                gaps.push(format!(
+                    "{change_label} diagnostic-only non-trigger classification requires touched_shared_surfaces"
+                ));
+            }
+            diagnostic_only_no_rerun_changes.push(change_label.clone());
+        } else if merged_to_main
+            && diagnostic_only_scope
+            && !change.requires_lunar_lake_rerun_when_merged_to_main
+        {
+            gaps.push(format!(
+                "{change_label} is merged diagnostic-only shared-surface work but missing classification=merged_diagnostic_only_no_lunar_lake_rerun"
+            ));
+        }
 
         let mut notes = Vec::new();
         let merged_at = match change.merged_at_utc.as_deref() {
@@ -13715,6 +13776,11 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
             }
             None => None,
         };
+        if diagnostic_only_no_rerun && merged_to_main && merged_at.is_none() {
+            gaps.push(format!(
+                "{change_label} diagnostic-only non-trigger classification requires merged_at_utc"
+            ));
+        }
 
         let stale_after_cpu_reference = merged_at
             .zip(cpu_created)
@@ -13742,6 +13808,11 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
                 "shared semantic change is closed or superseded without main merge; no Lunar Lake rerun is required"
                     .to_string(),
             );
+        } else if diagnostic_only_no_rerun {
+            notes.push(
+                "merged diagnostic-only shared-surface touch is reviewed as a Lunar Lake semantic-intake non-trigger"
+                    .to_string(),
+            );
         } else if change.requires_lunar_lake_rerun_when_merged_to_main {
             notes.push(
                 "pending shared semantic change will require Lunar Lake reruns after main merge"
@@ -13761,6 +13832,8 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
             semantic_scope: change.semantic_scope.clone(),
             requires_lunar_lake_rerun_when_merged_to_main: change
                 .requires_lunar_lake_rerun_when_merged_to_main,
+            classification: change.classification.clone(),
+            touched_shared_surfaces: change.touched_shared_surfaces.clone(),
             merged_at_utc: change.merged_at_utc.clone(),
             stale_after_cpu_reference,
             stale_after_operator_comparison,
@@ -13772,6 +13845,7 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
     pending_changes.sort();
     closed_changes.sort();
     merged_changes.sort();
+    diagnostic_only_no_rerun_changes.sort();
     let mut source_lanes = source_lanes.into_iter().collect::<Vec<_>>();
     source_lanes.sort();
 
@@ -13809,6 +13883,12 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
                 .to_string(),
         );
     }
+    if !diagnostic_only_no_rerun_changes.is_empty() {
+        notes.push(
+            "merged diagnostic-only shared-surface changes are classified as reviewed non-triggers and do not require Lunar Lake reruns"
+                .to_string(),
+        );
+    }
     if stale_after_merged_count == 0 {
         notes.push(
             "no merged-to-main shared semantic change currently stales Lunar Lake evidence"
@@ -13832,10 +13912,12 @@ pub fn build_bitnet_semantic_intake_with_created_utc(
             closed_shared_change_count: closed_changes.len(),
             merged_to_main_count: merged_changes.len(),
             stale_after_merged_count,
+            diagnostic_only_no_rerun_count: diagnostic_only_no_rerun_changes.len(),
             source_lanes,
             pending_changes,
             closed_changes,
             merged_changes,
+            diagnostic_only_no_rerun_changes,
             notes,
         },
         lunar_lake_evidence: BitnetSemanticLunarLakeEvidence {
@@ -20180,6 +20262,62 @@ mod tests {
         assert_eq!(receipt.source_change_summary.closed_changes.len(), 1);
         assert!(receipt.required_reruns.is_empty());
         assert!(receipt.changes[0].notes.iter().any(|note| note.contains("closed")));
+        Ok(())
+    }
+
+    #[test]
+    fn bitnet_semantic_intake_records_diagnostic_only_merged_non_trigger() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_diagnostic_bitnet_semantic_intake_inputs(
+            temp.path(),
+            Some("merged_diagnostic_only_no_lunar_lake_rerun"),
+        )?;
+
+        let receipt = build_bitnet_semantic_intake_with_created_utc(
+            temp.path(),
+            Path::new(BITNET_SEMANTIC_SOURCE_CHANGES),
+            Path::new(BITNET_CPU_BUNDLE),
+            Path::new(OPERATOR_COMPARISON),
+            "2026-06-02T08:45:00Z".to_string(),
+        )?;
+
+        assert!(receipt.intake_ready, "{:?}", receipt.gaps);
+        assert!(!receipt.rerun_required);
+        assert_eq!(receipt.source_change_summary.merged_to_main_count, 1);
+        assert_eq!(receipt.source_change_summary.stale_after_merged_count, 0);
+        assert_eq!(receipt.source_change_summary.diagnostic_only_no_rerun_count, 1);
+        assert_eq!(
+            receipt.source_change_summary.diagnostic_only_no_rerun_changes,
+            vec!["a770#1257 [codex] A770-064 focused raw operand replay".to_string()]
+        );
+        assert_eq!(
+            receipt.changes[0].classification.as_deref(),
+            Some("merged_diagnostic_only_no_lunar_lake_rerun")
+        );
+        assert!(receipt.changes[0].notes.iter().any(|note| note.contains("non-trigger")));
+        assert!(!receipt.claim_boundary.dense_slm_as_bitnet_proof);
+        Ok(())
+    }
+
+    #[test]
+    fn bitnet_semantic_intake_blocks_ambiguous_diagnostic_only_merged_touch() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_diagnostic_bitnet_semantic_intake_inputs(temp.path(), None)?;
+
+        let receipt = build_bitnet_semantic_intake_with_created_utc(
+            temp.path(),
+            Path::new(BITNET_SEMANTIC_SOURCE_CHANGES),
+            Path::new(BITNET_CPU_BUNDLE),
+            Path::new(OPERATOR_COMPARISON),
+            "2026-06-02T08:45:00Z".to_string(),
+        )?;
+
+        assert!(!receipt.intake_ready);
+        assert!(!receipt.rerun_required);
+        assert_eq!(receipt.source_change_summary.diagnostic_only_no_rerun_count, 0);
+        assert!(receipt.gaps.iter().any(|gap| {
+            gap.contains("missing classification=merged_diagnostic_only_no_lunar_lake_rerun")
+        }));
         Ok(())
     }
 
@@ -27684,9 +27822,11 @@ mod tests {
             closed_shared_change_count: 0,
             merged_to_main_count: 0,
             stale_after_merged_count: 0,
+            diagnostic_only_no_rerun_count: 0,
             source_lanes: vec!["a770".to_string()],
             pending_changes: vec!["shared BitNet semantic fix pending".to_string()],
             closed_changes: vec![],
+            diagnostic_only_no_rerun_changes: vec![],
             required_reruns: vec![],
             claim_boundary_preserved: true,
             regression_ready: true,
@@ -28175,6 +28315,75 @@ mod tests {
             json!({
                 "artifact_kind": "lunar_lake_operator_comparison",
                 "created_utc": operator_created_utc,
+                "machine_id": "intel-258v",
+                "comparison_ready": true,
+                "claim_boundary": {
+                    "hidden_fallback_allowed": false
+                }
+            }),
+        )?;
+        Ok(())
+    }
+
+    fn write_diagnostic_bitnet_semantic_intake_inputs(
+        root: &Path,
+        classification: Option<&str>,
+    ) -> Result<()> {
+        write_json(
+            root,
+            BITNET_SEMANTIC_SOURCE_CHANGES,
+            json!({
+                "schema_version": "1.0.0",
+                "artifact_kind": "lunar_lake_bitnet_semantic_source_changes",
+                "created_utc": "2026-06-02T08:45:00Z",
+                "machine_id": "intel-258v",
+                "changes": [
+                    {
+                        "source_lane": "a770",
+                        "source_pr": 1257,
+                        "title": "[codex] A770-064 focused raw operand replay",
+                        "status": "merged_to_main",
+                        "base_ref": "main",
+                        "head_sha": "1cbc81cc6af21894574a5ecb10e525d0850a0d52",
+                        "merge_sha": "1cbc81cc6af21894574a5ecb10e525d0850a0d52",
+                        "merged_at_utc": "2026-06-02T05:41:31Z",
+                        "semantic_scope": [
+                            "diagnostic_only",
+                            "qk256_raw_operand_replay",
+                            "a770_instrumentation"
+                        ],
+                        "requires_lunar_lake_rerun_when_merged_to_main": false,
+                        "classification": classification,
+                        "touched_shared_surfaces": [
+                            "crates/bitnet-models/src/bitnet.rs",
+                            "crates/bitnet-qk256-dispatch/src/lib.rs",
+                            "crates/bitnet-transformer/src/attention_forward.rs",
+                            "crates/bitnet-transformer/src/lib.rs",
+                            "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs"
+                        ],
+                        "claim_boundary": "diagnostic-only A770 raw operand replay instrumentation; no Lunar Lake BitNet CPU reference rerun, route promotion, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim"
+                    }
+                ]
+            }),
+        )?;
+        write_json(
+            root,
+            BITNET_CPU_BUNDLE,
+            json!({
+                "artifact_kind": "intel_258v_cpu_reference_bundle",
+                "captured_at_utc": "2026-05-12T18:43:14Z",
+                "machine_id": "intel-258v",
+                "cpu_reference": {
+                    "fallback_used": false
+                }
+            }),
+        )?;
+        write_json(
+            root,
+            OPERATOR_COMPARISON,
+            json!({
+                "artifact_kind": "lunar_lake_operator_comparison",
+                "created_utc": "2026-05-20T06:20:10Z",
                 "machine_id": "intel-258v",
                 "comparison_ready": true,
                 "claim_boundary": {
