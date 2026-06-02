@@ -7,6 +7,21 @@ repos:
       - id: check-merge-conflict
       - id: mixed-line-ending
 
+  # Markdown autofix — shift-left of the Markdownlint CI lane.
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.14.0
+    hooks:
+      - id: markdownlint-cli2-fix
+        args: ["--config", ".markdownlint.jsonc"]
+        exclude: '^(archive/|CROSSVAL_IMPLEMENTATION_COMPLETE\.md)'
+
+  # GitHub Actions linting — shift-left of the Lint Workflows CI lane.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        files: ^\.github/workflows/.*\.ya?ml$
+
   - repo: local
     hooks:
       - id: shellcheck
@@ -15,6 +30,13 @@ repos:
         language: system
         files: ^scripts/.*\.sh$
 
+      - id: workflow-guards
+        name: workflow guards (SHA pins, no floating refs, --locked)
+        entry: bash scripts/hooks/workflow-guards.sh
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+
       - id: guards
         name: unit/env guards
         entry: bash -lc './scripts/check-units.sh && ./scripts/check-envlock.sh && ./scripts/check-units-imports.sh'
@@ -22,8 +44,8 @@ repos:
         pass_filenames: false
 
       - id: cargo-fmt
-        name: cargo fmt (check)
-        entry: bash -c 'cargo fmt --all -- --check'
+        name: cargo fmt (autofix)
+        entry: bash -c 'cargo fmt --all'
         language: system
         files: '\.rs$'
         pass_filenames: false

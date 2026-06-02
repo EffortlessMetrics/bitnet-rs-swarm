@@ -38,7 +38,15 @@ env:
 jobs:
   route-performance:
     name: Route Performance Tracking
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 5
     outputs:
       selected: ${{ steps.route.outputs.selected }}
@@ -84,7 +92,15 @@ jobs:
     name: Cargo Tests (smoke)
     needs: route-performance
     if: needs.route-performance.outputs.selected == 'true'
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -478,7 +494,15 @@ jobs:
     name: Performance Summary
     needs: performance-benchmark
     if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
 
     steps:
