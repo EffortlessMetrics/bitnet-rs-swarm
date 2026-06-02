@@ -1,0 +1,42 @@
+timestamp = "2026-06-02T14:52:29Z"
+campaign = "intel-a770"
+item = "A770-068"
+event = "merged"
+actor = "codex-a770"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/intel-a770/A770-068-one-more-qk256-replay-target"
+pr = 1293
+head_sha = "420a709a1881a459bb56d29477843abf71d34c1c"
+merge_sha = "c8a3410604fdaef3ca4d95042c8a416e7ec2202b"
+merged_at = "2026-06-02T14:52:29Z"
+summary = "Merged PR #1293 with the A770-068 one-more focused QK256 replay target packet."
+notes = [
+  "The committed packet keeps the A770-067 90-target manifest shape while overlaying one supplemental k_proj raw-operand target.",
+  "The selected-device Intel Arc A770 OpenCL replay executed 2 runnable targets with fallback_used=false and matched selected-device bits.",
+  "The packet ledgers 88 dispatch_replay_missing blockers and keeps answer parity, quality, residency, speed, trusted partial acceleration, production QK256 policy, and full inference claims closed.",
+  "The next narrow frontier is the matching layer-0 v_proj target before any speed or trusted-partial acceleration claim.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-068 may record that one additional A770-067 dispatch_replay_missing Q/K/V manifest target was converted into selected-device Intel Arc A770 OpenCL replay with fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
