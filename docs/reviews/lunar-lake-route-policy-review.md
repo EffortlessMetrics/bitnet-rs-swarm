@@ -43,8 +43,9 @@ evidence contracts current:
   #1182 as a resident-session command-surface review, #1186 is closed by #1194
   as the thread/core matrix builder contract, #1071 is closed by #1208 as the
   physical thread/core matrix evidence package, #1232 is the parent resident
-  Rust GGUF phase evidence successor, #1280 owns the physical resident package,
-  and #1291 is closed by #1292 as the receipt-write / telemetry scope contract;
+  Rust GGUF phase evidence successor, #1280 is closed by #1334 as the physical
+  resident package, and #1291 is closed by #1292 as the receipt-write /
+  telemetry scope contract;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
   #1244 owns future token-visibility schema or checker work if a later receipt
@@ -171,11 +172,12 @@ resident-session command-surface work, #1186 is closed by #1194 as matrix
 builder work, #1071 is closed by #1208 as physical thread/core evidence, and
 issue #1232 owns any further resident Rust GGUF phase/no-reload evidence before
 CPU optimization, matched OpenVINO CPU comparison, or route-policy work. The
-next physical resident CPU package belongs to #1280. PR #1292 closed the #1291
-scope decision by keeping profile `receipt_write_ms` and `telemetry_ms`
-not backfilled unless a later contract defines their source, scope, and summarizer
-rule. That contract is not route-policy evidence and does not make Rust GGUF CPU
-resident timing benchmark-qualified.
+physical resident CPU package from #1334 closes #1280 and remains diagnostic,
+not route-policy evidence. PR #1292 closed the #1291 scope decision by keeping
+profile `receipt_write_ms` and `telemetry_ms` not backfilled unless a later
+contract defines their source, scope, and summarizer rule. That contract is not
+route-policy evidence and does not make Rust GGUF CPU resident timing
+benchmark-qualified.
 
 ### OpenVINO GPU
 
@@ -282,11 +284,14 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   unless a shared BitNet semantic change, validator gap, or receipt gap makes a
   targeted CPU reference rerun necessary. #1263 is closed by #1267 as the
   current diagnostic-only classification path for reviewed merged
-  shared-surface touches such as #1257/#1264. Current post-`c8076ea` A770-071
-  replay/closeout work (#1305/#1306) is docs/receipts/tracking-only and does
-  not change the BitNet semantic intake state; future ambiguous diagnostic
-  replay indexing should be another narrow diagnostic-only refresh under
-  #1178, not a BitNet reference rerun.
+  shared-surface touches such as #1257/#1264. Current post-`3080b3cca` movement
+  through #1338 is A770 diagnostic replay/tracker work plus Lunar Lake CPU
+  resident status/docs/evidence work. The only matched code surface in that
+  range is #1319's `crates/bitnet-cli/src/commands/lunar_lake.rs` resident
+  status update, which preserves BitNet claim boundaries and does not change
+  the BitNet semantic intake state. Future ambiguous diagnostic replay indexing
+  should be another narrow diagnostic-only refresh under #1178, not a BitNet
+  reference rerun.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
   records the current fail-closed contract from #1158, and #1159 has landed the
@@ -299,12 +304,12 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   perform route review after the selected-device, quality, timing, fallback,
   profile, and power gates exist.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
-  work should use #1232 and #1280 for resident Rust GGUF phase/no-reload
-  evidence, with #1292 as the current receipt-write / telemetry scope boundary,
-  or a separate narrow issue for matched OpenVINO CPU comparison or later
-  topology evidence once the target is concrete. Do not repeat the generic
-  non-equivalence guard or backfill unavailable profile fields from aggregate
-  observations.
+  work should use #1232 for further resident Rust GGUF phase/no-reload evidence
+  after the closed #1280/#1334 physical package, with #1292 as the current
+  receipt-write / telemetry scope boundary, or a separate narrow issue for
+  matched OpenVINO CPU comparison or later topology evidence once the target is
+  concrete. Do not repeat the generic non-equivalence guard or backfill
+  unavailable profile fields from aggregate observations.
 - #1165 closed the current operator receipt follow-up review. Future operator
   work should cite one of #1064, #1149, #1178, #1232, or a new narrow physical
   CPU measurement/comparison issue rather than opening another broad operator

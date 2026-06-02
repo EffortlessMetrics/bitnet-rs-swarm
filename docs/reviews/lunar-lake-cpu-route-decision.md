@@ -8,12 +8,13 @@ Post-source-run refresh: 2026-06-02
 Post-field rerun refresh: 2026-06-02
 Post-scope-contract refresh: 2026-06-02
 Post-reviewability-contract refresh: 2026-06-02
+Post-physical-package refresh: 2026-06-02
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1266](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1266), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1283](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1283), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1266](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1266), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1283](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1283), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319), [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -45,15 +46,16 @@ BitNet QK256/I2_S behavior.
 PR #1255 later added a resident CPU `measurement_qualification` guard to make
 the same decision visible in the current receipt: resident no-reload context
 remains useful, but resident phase evidence is not benchmark-qualified.
-PR #1279 then added the resident-specific source fixture for the next physical
-CPU package, and #1280 proved in a local run that the fixture can produce 33
-prompts and 32 warm asks after the first resident ask with fallback false. No
-artifacts from #1280 were committed because the strict resident summary still
-failed closed. #1281 then closed through #1290, which added prompt-render
+PR #1279 then added the resident-specific source fixture for the physical CPU
+package, and #1280 is now closed by #1334. The committed package records 33
+prompts and 32 warm asks after the first resident ask with fallback false,
+model/tokenizer loaded once, quality passing, and determinism passing. #1281
+then closed through #1290, which added prompt-render
 timing, quality-gate timing, detokenization summary exposure, and clearly
-defined resident memory lifecycle samples. A post-#1290 target-only rerun
-narrows the remaining resident strict blockers to `receipt_write_ms` and
-`telemetry_ms`. #1291 is closed by #1292: current resident summaries must keep
+defined resident memory lifecycle samples. #1334 shows those fields in the
+committed summary and narrows the remaining resident strict blockers to
+`receipt_write_ms` and `telemetry_ms`. #1291 is closed by #1292: current
+resident summaries must keep
 profile `receipt_write_ms` and `telemetry_ms` as explicit `not_exposed` fields
 instead of backfilling them from aggregate/session observations unless a later
 spec or research contract defines the source, scope, and summarizer rule.
@@ -64,6 +66,9 @@ contract-not-exposed fields, while preserving strict
 `resident_phase_qualified=false` and `benchmark_qualified=false`.
 PR #1283 recorded the original boundary in the CPU slow-path research note,
 and #1319 made the reviewable-versus-qualified split visible in receipts.
+#1334 applies that split to the physical resident package:
+`diagnostic_package_reviewable=true`, `resident_phase_qualified=false`, and
+`benchmark_qualified=false`.
 
 ## Current Evidence
 
@@ -78,9 +83,9 @@ and #1319 made the reviewable-versus-qualified split visible in receipts.
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
 | #1201 / #1207 | Source-receipt contract for the physical matrix is closed | Source-enrichment support, not an open blocker |
 | #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
-| #1232 / #1255 | Resident Rust GGUF phase evidence successor remains open; #1255 adds `measurement_qualification` to the current committed resident receipt | Current committed resident receipt fails closed with `resident_phase_qualified=false`, `benchmark_qualified=false`, missing prompt-token/phase/memory fields, and 29 observed warm asks after first against the 30-after-first contract |
+| #1232 / #1255 | Resident Rust GGUF phase evidence successor remains open; #1255 added the original `measurement_qualification` fail-closed guard | #1334 now supplies the physical resident package and diagnostic-reviewable status, but strict `resident_phase_qualified=false` and `benchmark_qualified=false` remain |
 | #1277 / #1279 | Resident source-shape successor is closed by the committed `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` fixture | Source fixture yields 33 prompts and 32 warm asks after first; it is not physical evidence by itself |
-| #1280 / #1281 / #1291 / #1292 / #1311 / #1319 | Local physical source runs fixed the warm-count source gap; #1290 made prompt-render, quality-gate, detokenize, and memory lifecycle fields measurable; #1292 closed the receipt-write and telemetry scope contract by keeping those profile fields explicit `not_exposed`; #1319 closed #1311 by adding separate diagnostic reviewability while preserving strict false qualification | Do not optimize CPU, change route policy, or commit another source-shape-only #1280 run. Refresh physical resident artifacts only if they preserve strict false qualification, benchmark false qualification, explicit contract-not-exposed blockers, and no route-policy or optimization claim |
+| #1280 / #1281 / #1291 / #1292 / #1311 / #1319 / #1334 | #1334 closes #1280 with the physical resident package; #1290 made prompt-render, quality-gate, detokenize, and memory lifecycle fields measurable; #1292 closed the receipt-write and telemetry scope contract by keeping those profile fields explicit `not_exposed`; #1319 closed #1311 by adding separate diagnostic reviewability while preserving strict false qualification | Treat the package as diagnostic resident CPU evidence for #1232. Do not optimize CPU, change route policy, promote OpenVINO CPU, claim benchmark qualification, or repeat #1280 artifacts unless a later issue defines a narrower missing evidence target |
 
 The refreshed runtime comparison records:
 
@@ -141,9 +146,9 @@ its result is a negative tuning signal, not an optimization unlock.
 Blocked until at least one measurement issue identifies a target and success
 metric:
 
-- a future physical resident no-reload measurement source records one model
-  load, one tokenizer load, one separated first resident ask, and 30 additional
-  warm asks if the current #1069/#1182 command-surface closeout is not enough;
+- #1334 records one model load, one tokenizer load, one separated first
+  resident ask, and 32 additional warm asks as diagnostic resident evidence,
+  while preserving strict false qualification;
 - #1208 records default, 1-thread, 4-thread, and 8-thread dense Rust GGUF
   resident timing with power, scheduler, and telemetry context but does not
   show a thread-count win;
@@ -188,25 +193,16 @@ Do not start with CPU optimization.
 
 The remaining next small PRs are evidence work only:
 
-1. Apply the accepted [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291)
-   / [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
-   receipt-write and telemetry timing contract. Profile `receipt_write_ms` and
-   `telemetry_ms` must remain explicit `not_exposed` fields in current resident
-   summaries and must not be backfilled from aggregate/session observations
-   unless a later spec or research contract defines the source, scope, and
-   summarizer rule.
-2. Refresh the physical resident CPU package under [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280)
-   using the closed [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-   / [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
-   status contract: strict qualification remains false, benchmark
-   qualification remains false, and separate diagnostic reviewability is
-   allowed only when the remaining blockers are the #1291/#1292 unavailable
-   fields. Do not commit another source-shape-only run just to repeat the
-   local result.
-3. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
+1. Use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
+   to decide the next resident phase-evidence follow-up after the committed
+   #1280/#1334 package. A follow-up may define scoped aggregate
+   receipt-write/telemetry fields, a matched comparison package, or a topology
+   receipt, but it must keep strict resident qualification and benchmark
+   qualification false unless a later contract revises the rule.
+2. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
    can keep model-format, timing-scope, prompt-render, tokenization, and
    benchmark-qualification blockers explicit.
-4. A later affinity/topology receipt only if P-core/E-core placement,
+3. A later affinity/topology receipt only if P-core/E-core placement,
    frequency, utilization, or thermal context can be exposed accurately enough
    to make the result reviewable.
 
@@ -216,9 +212,9 @@ should refresh matched-profile evidence, use completed measurement packages, or
 harden a newly exposed gap, not repeat that guard.
 
 Issue #1209 is closed as the post-matrix review. Issue #1232 remains the parent
-resident phase evidence contract, while #1280 owns the physical source package.
-The #1291 issue is closed by #1292 as the accepted receipt-write/telemetry
-scope boundary, and #1311 is closed by #1319 as the
+resident phase evidence contract, while #1280 is closed by #1334 as the
+physical source package. The #1291 issue is closed by #1292 as the accepted
+receipt-write/telemetry scope boundary, and #1311 is closed by #1319 as the
 reviewable-versus-qualified status decision before any runtime optimization or
 route-policy PR.
 
