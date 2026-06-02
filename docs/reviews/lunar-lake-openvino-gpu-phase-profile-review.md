@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1113](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1113), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241)
-Linked PRs: [#1114](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1114)
+Linked PRs: [#1114](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1114), [#1268](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1268)
 Support-tier impact: no promotion; review-only claim boundary for existing GPU phase profiles
 Policy impact: no policy exception
 
@@ -41,10 +41,10 @@ The review landed in #1114 and closed #1113. It remains a profile-evidence
 review-watch boundary, not an active route-policy or runtime implementation
 queue.
 
-Issue #1241 is the live evidence-contract follow-up for this boundary. It owns
-the question of whether future receipts or status surfaces should make the
-profile-level total-response evidence versus isolated prefill/decode phase
-claim boundary machine-readable.
+Issue #1241 was the evidence-contract follow-up for this boundary and is now
+closed by #1268. It answered the current question by making the profile-level
+total-response evidence versus isolated prefill/decode phase claim boundary
+machine-readable.
 
 The route-profile receipt now serializes that boundary per route as
 `phase_claim_boundary`. For the OpenVINO GPU `prefill_heavy` and
@@ -143,9 +143,9 @@ then route policy should narrow or revoke only the affected profile.
 
 No immediate route-policy PR is recommended.
 
-Issue #1113 is closed by #1114. Issue #1241 owns the machine-readable
-profile-level versus phase-split distinction, and the current receipt hardening
-adds or derives fields such as:
+Issue #1113 is closed by #1114. Issue #1241 is closed by #1268, which added the
+machine-readable profile-level versus phase-split distinction through fields
+such as:
 
 - `profile_timing_available=true`;
 - `profile_total_response_benchmark_qualified=true`;
@@ -155,8 +155,9 @@ adds or derives fields such as:
 
 These fields make future reviews and operator summaries avoid treating
 profile-level total response as isolated prefill/decode phase evidence. Future
-work under #1241 should only continue if a concrete evidence regression appears
-or a later receipt can expose true isolated prefill/decode splits.
+work should open a new narrow issue, or route through #1245, only if a concrete
+evidence regression appears or a later receipt can expose true isolated
+prefill/decode splits.
 
 ## Claim Boundary
 

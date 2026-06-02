@@ -4,9 +4,14 @@ Review issues:
 
 - Original review: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1034
 - Current refresh: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121
+- Closed duplicate refresh: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1225
+- Closed phase-boundary follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241
+- Current token-visibility watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244
+- Current route-policy watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245
 
 Review date: 2026-05-30
 Refresh date: 2026-05-31
+Post-phase-boundary refresh: 2026-06-02
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -25,6 +30,16 @@ receipt-invalidatable, and the token-visibility review records that current
 OpenVINO GPU corpus-v2 evidence has direct generated-token IDs from
 `openvino_genai_encoded_results_tokens`. Those reviews remove route-policy and
 token-visibility drift as reasons to narrow the two GPU ask profiles.
+
+The 2026-06-02 phase-boundary refresh also keeps the conclusion unchanged. Issue
+`#1241` is now closed by #1268, which added machine-readable
+`phase_claim_boundary` fields to route-profile rows. For OpenVINO GPU
+`prefill_heavy` and `decode_heavy`, those fields keep profile-level
+total-response route evidence separate from isolated prefill/decode phase
+claims with `prefill_split_available=false`,
+`decode_split_available=false`, and `phase_split_claim_allowed=false`. That
+hardening protects the broader GPU ledger without changing the `ask_short` /
+`ask_normal` promotion decision.
 
 This is a narrow dense SLM OpenVINO recommendation. It is not:
 
@@ -223,9 +238,12 @@ Keep GPU promoted for:
 - `ask_normal`.
 
 Also keep the existing ledger state for `prefill_heavy` and `decode_heavy` for
-now, but treat their prefill/decode phase split as weaker evidence than their
-profile-level total response and corpus gates. If a later route-policy review
-targets those two profiles, require explicit prefill/decode phase receipts.
+now. #1268 makes their split boundary explicit in the route-profile receipt:
+profile-level total-response evidence is benchmark-qualified route evidence,
+while isolated prefill/decode split evidence remains unavailable for the
+OpenVINO GPU rows. If a later route-policy review targets those two profiles,
+require either true isolated prefill/decode phase receipts or a concrete
+receipt contradiction before narrowing or broadening the ledger.
 
 Do not promote GPU for:
 
@@ -243,14 +261,21 @@ Small follow-ups that still fit the current research-first operating mode:
 
 1. Keep the GPU corpus-v2 status refresh tied to the route-promotion ledger and
    route-profile comparison when those artifacts change.
-2. Use #1241 for any profile-phase receipt or status-hardening work that splits
-   prefill and decode claim boundaries for `prefill_heavy` and `decode_heavy`.
+2. Treat #1241 as satisfied by #1268 for the current phase-boundary hardening.
+   Open a new narrow issue only if later receipts can expose true isolated
+   prefill/decode splits or if a future artifact regresses the
+   `phase_claim_boundary` fields.
 3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
    battery-mode samples and energy-proxy evidence.
+4. Use #1244 only for future direct-vs-retokenized token-visibility schema or
+   checker gaps.
+5. Use #1245 only after a linked evidence issue names a concrete keep,
+   conditional, narrow, revoke, or blocked decision.
 
 No immediate implementation PR follows from #1121. If `prefill_heavy` or
-`decode_heavy` needs review, open a separate focused profile-phase issue rather
-than expanding this `ask_short` / `ask_normal` review.
+`decode_heavy` needs more review, open a separate focused profile-phase issue
+or route the decision through #1245 rather than expanding this `ask_short` /
+`ask_normal` review.
 
 ## Claim Boundary
 
