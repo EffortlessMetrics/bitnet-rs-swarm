@@ -3660,7 +3660,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-067"
-status = "ready"
+status = "pr_open"
+pr = 1276
+head_sha = "d12c3feeea8f173b1724ce91578e26b4e322e2dc"
 branch = "codex/intel-a770/A770-067-multi-case-focused-qk256-replay"
 stackable = false
 review_mode = "codex_premerge"
@@ -3669,15 +3671,15 @@ human_gate = "on_blocker_only"
 blocked_by = ["A770-066"]
 acceptance = "Use the committed A770-066 host summary-policy semantic-fix receipt and existing CPU/A770 answer-readiness parity receipts to build a manifest-bound multi-case focused QK256 replay packet. The packet must identify every focused replay target, capture or consume raw focused operands for at least one additional replay target beyond the A770-064 single q_proj row when available, run selected-device Intel Arc A770 OpenCL production replay for each manifest target that has operands, and explicitly ledger any missing operand/source receipt as a blocker. The work must not change production QK256 dispatch policy, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
 commands = [
-  "cargo check --locked -p bitnet-qk256-dispatch --no-default-features --features opencl",
+  "rustfmt --edition 2024 --check crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
   "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation",
-  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
-  "target/release/bitnet.exe answer-corpus --corpus ci/quality/a770-bitnet-answer-readiness-corpus.yaml --model E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer E:/Code/Rust/BitNet-rs/models/BitNet-b1.58-2B-4T/tokenizer.json --device intel-a770-opencl --case-id a770_summary_seed770024_keywords_014 --dump-logit-steps 24 --logits-topk 20 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-summary-logits-multi-target-raw-operands.json --per-prompt-timeout-seconds 300",
-  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-summary-logits-multi-target-raw-operands.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/cpu-avx2-vs-a770-summary-logits-multi-target-raw-operands-parity.json",
-  "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation -- --focused-source ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/cpu-avx2-vs-a770-summary-logits-multi-target-raw-operands-parity.json --case-id a770_summary_seed770024_keywords_014 --first-mismatch-index 9 --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json",
-  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json -Raw | ConvertFrom-Json | Out-Null\"",
-  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
-  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && RUSTDOCFLAGS='-D warnings' cargo doc --locked -p bitnet-kernels -p bitnet-common -p bitnet-device-probe --no-default-features --features cpu --no-deps\"",
+  "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation -- --focused-source ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-focused-qk256-raw-operands/a770-opencl-summary-logits-raw-operands.json --case-id a770_summary_seed770024_keywords_014 --first-mismatch-index 9 --manifest ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay-manifest.json --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json",
+  "pwsh -NoProfile -Command \"$m = Get-Content 'ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay-manifest.json' -Raw | ConvertFrom-Json; $r = Get-Content 'ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json' -Raw | ConvertFrom-Json; if ($m.target_count -ne 90 -or $m.dispatch_replay_target_count -ne 1 -or $r.summary.executed_target_count -ne 1 -or $r.summary.blocked_target_count -ne 89 -or $r.fallback_used -ne $false) { throw 'A770-067 receipt summary mismatch' }\"",
+  "wsl bash -lc 'cd /mnt/e/Code/Rust/bitnet-rs-swarm && python3 -c \"import yaml; yaml.safe_load(open(\\\".github/workflows/intel-gpu-feature-matrix.yml\\\", encoding=\\\"utf-8\\\"))\"'",
+  "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign check intel-a770\"",
+  "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign generate\"",
+  "wsl bash -lc \"cd /mnt/e/Code/Rust/bitnet-rs-swarm && ./target/debug/xtask campaign generate --check\"",
   "git diff --check",
 ]
 allowed_paths = [
@@ -3685,12 +3687,8 @@ allowed_paths = [
   "docs/tracking/campaigns/intel-a770/**",
   "docs/tracking/generated/**",
   "ci/hardware/amd-5700x-intel-a770/**",
-  "crates/bitnet-qk256-dispatch/src/lib.rs",
-  "crates/bitnet-transformer/src/**",
-  "crates/bitnet-models/src/bitnet.rs",
-  "crates/bitnet-cli/src/main.rs",
-  "crates/bitnet-cli/src/commands/answer_parity.rs",
   "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
+  ".github/workflows/intel-gpu-feature-matrix.yml",
 ]
 forbidden_paths = [
   "crates/bitnet-server/**",

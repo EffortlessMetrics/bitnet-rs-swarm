@@ -1,0 +1,42 @@
+timestamp = "2026-06-02T10:18:34Z"
+campaign = "intel-a770"
+item = "A770-067"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+branch = "codex/intel-a770/A770-067-multi-case-focused-qk256-replay"
+pr = 1276
+head_sha = "d12c3feeea8f173b1724ce91578e26b4e322e2dc"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #1276 for the A770-067 manifest-bound focused QK256 replay packet."
+notes = [
+  "The PR adds manifest mode to a770-opencl-production-replay-instrumentation and commits the manifest plus selected-device replay receipt.",
+  "The receipt classifies the packet as a770_qk256_multi_case_focused_replay_partial_manifest_blocked_on_missing_raw_operands.",
+  "The packet identifies 90 targets, executes 1 selected-device Intel Arc A770 OpenCL target with fallback_used=false, and ledgers 89 dispatch_replay_missing blockers.",
+  "The PR keeps production_qk256_policy_change=false, bitnet_inference=false, qk256_decode=false, claim_allowed=false, diagnostic_only=true, performance_claim=false, and full_residency_claim=false.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-067 may define and execute a manifest-bound focused QK256 replay packet for committed CPU/A770 divergence targets with selected Intel Arc A770 OpenCL identity and fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

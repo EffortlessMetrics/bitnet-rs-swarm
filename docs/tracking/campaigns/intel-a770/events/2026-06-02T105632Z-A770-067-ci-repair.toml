@@ -1,0 +1,42 @@
+timestamp = "2026-06-02T10:56:32Z"
+campaign = "intel-a770"
+item = "A770-067"
+event = "pr_open"
+previous_status = "pr_open"
+new_status = "pr_open"
+branch = "codex/intel-a770/A770-067-multi-case-focused-qk256-replay"
+pr = 1276
+head_sha = "750223224a34c3ffe7a241dd4543274dd08ed498"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Scoped the Intel GPU feature-matrix documentation check after repeated full-workspace rustdoc timeouts."
+notes = [
+  "The Intel GPU Feature Matrix workflow triggers only for bitnet-kernels, bitnet-common, bitnet-device-probe, and the workflow file itself.",
+  "The Documentation Check previously ran cargo doc for the full workspace and canceled twice at the 15-minute job limit while documenting unrelated workspace crates.",
+  "The repair scopes cargo doc to bitnet-kernels, bitnet-common, and bitnet-device-probe with no default features and the cpu feature, matching the workflow path boundary.",
+  "This is a CI repair only; it does not change A770 proof claims, production QK256 dispatch, CPU/A770 parity, readiness, residency, speed, trusted partial acceleration, or full inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-067 may define and execute a manifest-bound focused QK256 replay packet for committed CPU/A770 divergence targets with selected Intel Arc A770 OpenCL identity and fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

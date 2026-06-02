@@ -1,0 +1,40 @@
+timestamp = "2026-06-02T10:13:58Z"
+campaign = "intel-a770"
+item = "A770-067"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-067-multi-case-focused-qk256-replay"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-067 and generated a manifest-bound focused QK256 replay packet from committed raw operand receipts."
+notes = [
+  "The packet identifies 90 Q/K/V first-mismatch projection targets for case a770_summary_seed770024_keywords_014 at first_mismatch_index 9.",
+  "One object-valued dispatch replay/raw focused operand target is available: layer 0 q_proj.",
+  "The selected-device Intel Arc A770 OpenCL production replay executed that one target with fallback_used=false and matched the selected-device output bits.",
+  "The remaining 89 manifest targets are ledgered as dispatch_replay_missing blockers; this is diagnostic-only and does not promote production QK256 policy, CPU/A770 parity, readiness, residency, speed, trusted partial acceleration, or full inference.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-067 may define and execute a manifest-bound focused QK256 replay packet for committed CPU/A770 divergence targets with selected Intel Arc A770 OpenCL identity and fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
