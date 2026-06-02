@@ -9,7 +9,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
-Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234)
+Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
 
@@ -26,6 +26,9 @@ for `regression_tiny`, `ask_short`, and `ask_normal`. It does not satisfy the
 fresh measurement target because it does not count one first resident ask plus
 30 additional warm asks in a new run, and it still lacks direct prompt-render,
 quality-gate, receipt-write, telemetry, and full memory lifecycle timing.
+PR #1255 made that boundary machine-readable in the committed receipt through a
+`measurement_qualification` block. The current status is explicitly blocked,
+not benchmark-ready.
 
 Do not optimize CPU kernels, change route policy, tune thread defaults, promote
 OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
@@ -58,6 +61,10 @@ OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
 | Quality gate timing | `not_exposed` | Receipt overhead gap remains |
 | Receipt write timing | `not_exposed` | Receipt overhead gap remains |
 | Telemetry timing | `not_exposed` | Measurement overhead gap remains |
+| Measurement qualification | `resident_phase_blocked_for_measurement_qualification` | #1255 keeps resident no-reload evidence separate from benchmark-ready #1232 phase evidence |
+| Resident phase qualified | `false` | Fresh resident phase package still missing |
+| Benchmark qualified | `false` | No CPU speedup, OpenVINO CPU promotion, or route-policy claim |
+| Warm asks after first resident ask | 29 observed, 30 required | Current source remains one short of the accepted 30-after-first contract |
 
 The useful current conclusion is:
 
@@ -86,6 +93,9 @@ defined by #1232.
   `proof_stage=resident_cpu_no_reload_timing_no_new_inference`.
 - The builder validates model/tokenizer loaded-once fields, answer gates,
   fallback=false, determinism, and summary timing from the source receipt.
+- Since #1255, the builder also emits `measurement_qualification` and fails
+  closed for the current #1232 blockers instead of letting no-reload
+  diagnostics look benchmark-ready.
 - It does not run a fresh physical resident CPU session, create one separated
   first resident ask followed by 30 additional warm asks, or measure prompt
   render, quality-gate, receipt-write, telemetry, full memory lifecycle,
@@ -172,8 +182,10 @@ power proxy.
 
 ## Next Smallest PR
 
-The next implementation PR should be a receipt/schema guard or measurement
-command refresh that:
+No additional qualification-only PR is currently needed after #1255. The next
+implementation PR should be a measurement command refresh, physical evidence
+package, or narrow receipt/schema follow-up only if the accepted contract
+changes. That work should:
 
 - distinguishes first resident ask from the 30 measured warm asks;
 - records the missing prompt-render, quality-gate, receipt-write, and telemetry
