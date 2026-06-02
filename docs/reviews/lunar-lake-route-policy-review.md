@@ -43,8 +43,9 @@ evidence contracts current:
   #1182 as a resident-session command-surface review, #1186 is closed by #1194
   as the thread/core matrix builder contract, #1071 is closed by #1208 as the
   physical thread/core matrix evidence package, #1232 is the parent resident
-  Rust GGUF phase evidence successor, #1280 owns the physical resident package,
-  and #1291 is closed by #1292 as the receipt-write / telemetry scope contract;
+  Rust GGUF phase evidence successor, #1280 is closed by #1334 as the physical
+  resident package, and #1291 is closed by #1292 as the receipt-write /
+  telemetry scope contract;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
   #1244 owns future token-visibility schema or checker work if a later receipt
