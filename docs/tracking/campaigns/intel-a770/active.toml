@@ -999,9 +999,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-065"
-status = "pr_open"
+status = "merged"
 pr = 1260
-head_sha = "bf50f7f093eefd329d1b67b3761b57b7e2aefb48"
+head_sha = "6346b5e129dc434e77bca3284ff0175881cdad7b"
+merge_sha = "4e0df9787094efbed604bb5335d8ede773a2df49"
+merged_at = "2026-06-02T06:57:30Z"
 branch = "codex/intel-a770/A770-065-host-policy-expression-split"
 stackable = false
 review_mode = "codex_premerge"
@@ -1035,6 +1037,66 @@ forbidden_paths = [
 ]
 may_claim = [
   "A770-065 may classify the focused host-policy versus selected-device production replay expression split for the single A770-064 captured row.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-066"
+status = "ready"
+branch = "codex/intel-a770/A770-066-host-summary-policy-semantic-fix"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-065"]
+acceptance = "Use the committed A770-065 focused host-policy expression-split receipt to apply a bounded host summary-policy semantic fix, regenerate the focused CPU/A770 parity summary from stored receipts, rerun selected-device production replay for the A770-064 focused row, and classify whether host summary-policy bits now match the selected A770 OpenCL production output bit, without changing production QK256 dispatch policy, answer scoring, sampling, CPU/A770 parity, strict answer readiness, broad A770 quality, residency, speed, trusted-partial acceleration, or full BitNet inference claims."
+commands = [
+  "cargo check --locked -p bitnet-qk256-dispatch --no-default-features --features opencl",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl -- answer-parity --left ci/hardware/amd-5700x-intel-a770/2026-05-22/a770-answer-readiness-prompt-contract-summary-logits/cpu-avx2-summary-logits.json --right ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-focused-qk256-raw-operands/a770-opencl-summary-logits-raw-operands.json --left-label amd-5700x-cpu-avx2 --right-label intel-a770-opencl --machine amd-5700x-intel-a770 --json-out ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-host-summary-policy-semantic-fix/cpu-avx2-vs-a770-summary-logits-host-summary-policy-fix.json",
+  "cargo run --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation -- --focused-source ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-host-summary-policy-semantic-fix/cpu-avx2-vs-a770-summary-logits-host-summary-policy-fix.json --case-id a770_summary_seed770024_keywords_014 --first-mismatch-index 9 --receipt ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-host-summary-policy-semantic-fix-replay.json",
+  "pwsh -NoProfile -Command \"Get-Content ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-host-summary-policy-semantic-fix-replay.json -Raw | ConvertFrom-Json | Out-Null\"",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "crates/bitnet-cli/src/main.rs",
+  "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
+  "crates/bitnet-models/src/bitnet.rs",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-transformer/src/**",
+]
+forbidden_paths = [
+  "crates/bitnet-server/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-066 may apply a bounded host summary-policy diagnostic semantic fix and classify whether the A770-064 focused row now matches selected-device production replay bits.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",
