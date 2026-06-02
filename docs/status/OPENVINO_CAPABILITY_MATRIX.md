@@ -29,6 +29,7 @@ bitnet receipts explain <receipt.json>
 | Route promotion gates | `docs/specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md` |
 | BitNet proof boundary | `docs/specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md` |
 | Lunar Lake route ID/proof-family map | `docs/reviews/lunar-lake-route-id-proof-family-map.md` |
+| Route-policy watch boundary | `docs/reviews/lunar-lake-route-policy-review.md`, [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245) |
 | Rust bridge boundary | `docs/specs/BITNET-SPEC-OPENVINO-RUST-BRIDGE.md` |
 | Server boundary | `docs/specs/BITNET-SPEC-OPENVINO-SERVER.md` |
 | Implementation plan | `plans/openvino-lunar-lake/implementation-plan.md` |
@@ -101,6 +102,7 @@ bitnet validate open-vino-lunar-lake `
 | Qwen2.5 OpenVINO GPU | Keep current profile-scoped promotion. #1241 owns any future phase-split receipts or status fields that refine prefill/decode claim boundaries, but no broader GPU promotion or power claim follows without a fresh route review. `low_power` remains blocked by #1064. |
 | Qwen2.5 OpenVINO NPU | Keep `warm_resident` scoped promotion only. Cold/cache work stays under #1119 until direct cache truth, an accepted stricter proxy policy, or profile-matched phase evidence exists for the exact mode. #1242 is only AUTO debug-log parser/source planning; no cold one-off, `ask_short`, `ask_normal`, or `low_power` expansion follows from cache timing or AUTO debug-log evidence alone. |
 | OpenVINO generated-token visibility | Use #1244 for future schema or checker work that distinguishes direct pipeline IDs from retokenized or text-only evidence. Token visibility alone does not promote routes, prove matched CPU/OpenVINO format parity, or satisfy BitNet QK256/I2_S evidence. |
+| Route-policy watch | Use #1245 only after a linked evidence issue names a concrete keep, conditional, narrow, revoke, or blocked decision. Do not mutate route policy from review-watch status, schema support, or stale old-repo wording alone. |
 | OpenVINO server | Add exact-profile server receipts only after the underlying ask/chat route is promoted or explicitly candidate-scoped. |
 | BitNet OpenVINO subgraphs | Continue static-shape CPU-reference parity for selected subgraphs; keep QK256/dynamic decode out of scope until separately proven. |
 
