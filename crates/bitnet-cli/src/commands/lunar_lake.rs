@@ -116,6 +116,7 @@ const OPENVINO_NPU_CACHE_EXPERIMENT: &str = "lunar-lake-openvino-npu-cache-exper
 const OPENVINO_GENERATION_BUDGET_SENSITIVITY: &str =
     "lunar-lake-openvino-generation-budget-sensitivity.json";
 const OPENVINO_PROFILE_RUN: &str = "lunar-lake-openvino-profile-run.json";
+const CPU_PROFILE_RUN: &str = "lunar-lake-cpu-profile-run.json";
 const OPENVINO_GPU_PROFILE_PROMOTION_TARGETS: &[&str] =
     &["ask_short", "ask_normal", "prefill_heavy", "decode_heavy"];
 const OPENVINO_NPU_PROFILE_PROMOTION_TARGETS: &[&str] = &["warm_resident"];
@@ -1769,6 +1770,8 @@ pub struct ProfileRouteEvidence {
     pub timing: ProfileTimingSummary,
     pub timing_applicability: ProfileTimingApplicability,
     pub benchmark_qualified_advantage: bool,
+    #[serde(default)]
+    pub phase_claim_boundary: PhaseClaimBoundary,
     pub promotion_eligible_for_profile: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profile_quality: Option<ProfileQualityEvidence>,
@@ -1778,6 +1781,16 @@ pub struct ProfileRouteEvidence {
     pub route_advantage_context: Option<ProfileRouteAdvantageContext>,
     pub evidence: Vec<String>,
     pub blockers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct PhaseClaimBoundary {
+    pub profile_timing_available: bool,
+    pub profile_total_response_benchmark_qualified: bool,
+    pub prefill_split_available: bool,
+    pub decode_split_available: bool,
+    pub phase_split_claim_allowed: bool,
+    pub notes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -3534,6 +3547,8 @@ impl LunarLakeCommand {
                     Some(created_utc) => normalize_created_utc(created_utc)?,
                     None => chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
                 };
+                let effective_cpu_profile_run =
+                    effective_cpu_profile_run(artifact_root, cpu_profile_run.as_deref());
                 let receipt =
                     build_route_profile_comparison_with_created_utc_and_budget_diagnostics(
                         artifact_root,
@@ -3549,7 +3564,7 @@ impl LunarLakeCommand {
                         npu_resident_session.as_deref(),
                         npu_cache_experiment.as_deref(),
                         openvino_budget_sensitivity.as_deref(),
-                        cpu_profile_run.as_deref(),
+                        effective_cpu_profile_run.as_deref(),
                         created_utc,
                     )?;
                 write_or_print_route_profile_comparison(&receipt, json_out.as_deref())?;
@@ -15575,6 +15590,12 @@ fn resolve_receipt_path(root: &Path, path: &Path) -> PathBuf {
     if path.is_absolute() || path.exists() { path.to_path_buf() } else { root.join(path) }
 }
 
+fn effective_cpu_profile_run(root: &Path, cpu_profile_run: Option<&Path>) -> Option<PathBuf> {
+    cpu_profile_run
+        .map(Path::to_path_buf)
+        .or_else(|| root.join(CPU_PROFILE_RUN).exists().then(|| PathBuf::from(CPU_PROFILE_RUN)))
+}
+
 fn compare_route(route: &OperatorRoute, evidence: &[EvidenceStatus]) -> RouteComparison {
     let attached = [&route.answer_gate_evidence, &route.phase_evidence]
         .into_iter()
@@ -17879,6 +17900,9 @@ fn evaluate_workload_profile(
         })
         .collect::<Result<Vec<_>>>()?;
     attach_route_advantage_context(profile, &mut route_evidence);
+    for route in &mut route_evidence {
+        route.phase_claim_boundary = phase_claim_boundary_for_route(route);
+    }
 
     let mut gaps = Vec::new();
     if route_evidence.is_empty() {
@@ -18062,6 +18086,7 @@ fn evaluate_profile_route(
         timing,
         timing_applicability,
         benchmark_qualified_advantage: false,
+        phase_claim_boundary: PhaseClaimBoundary::default(),
         promotion_eligible_for_profile,
         profile_quality,
         telemetry,
@@ -18224,6 +18249,51 @@ fn attach_route_advantage_context(
         }
         route.route_advantage_context =
             Some(profile_route_advantage_context(profile, &baseline, route));
+    }
+}
+
+fn phase_claim_boundary_for_route(route: &ProfileRouteEvidence) -> PhaseClaimBoundary {
+    let profile_timing_available = route.timing_applicability.timing_matches_profile
+        && route.timing.total_response_ms.is_some();
+    let profile_total_response_benchmark_qualified = route.benchmark_qualified_advantage;
+    let openvino_route = is_openvino_candidate_route(&route.route_id);
+    let prefill_split_available = route.timing.prefill_ms.is_some() && !openvino_route;
+    let decode_split_available = route.timing.decode_total_ms.is_some() && !openvino_route;
+    let phase_split_claim_allowed =
+        profile_timing_available && prefill_split_available && decode_split_available;
+
+    let mut notes = Vec::new();
+    if profile_total_response_benchmark_qualified {
+        notes.push(
+            "profile total-response timing is benchmark-qualified for route selection only"
+                .to_string(),
+        );
+    }
+    if openvino_route {
+        notes.push(
+            "OpenVINO profile timing does not expose isolated prefill/decode split evidence"
+                .to_string(),
+        );
+        if route.timing.decode_total_ms.is_some() {
+            notes.push(
+                "OpenVINO generation wall timing is not an isolated decode split".to_string(),
+            );
+        }
+    }
+    if phase_split_claim_allowed {
+        notes
+            .push("direct prefill/decode split timing fields are present for this row".to_string());
+    } else {
+        notes.push("do not claim isolated prefill/decode phase speed from this row".to_string());
+    }
+
+    PhaseClaimBoundary {
+        profile_timing_available,
+        profile_total_response_benchmark_qualified,
+        prefill_split_available,
+        decode_split_available,
+        phase_split_claim_allowed,
+        notes,
     }
 }
 
@@ -20000,6 +20070,7 @@ mod tests {
                 notes: vec![],
             },
             benchmark_qualified_advantage: true,
+            phase_claim_boundary: PhaseClaimBoundary::default(),
             promotion_eligible_for_profile: true,
             profile_quality: None,
             telemetry: None,
@@ -20021,6 +20092,7 @@ mod tests {
             timing,
             timing_applicability: ProfileTimingApplicability::default(),
             benchmark_qualified_advantage: false,
+            phase_claim_boundary: PhaseClaimBoundary::default(),
             promotion_eligible_for_profile: false,
             profile_quality: None,
             telemetry: None,
@@ -21524,6 +21596,170 @@ mod tests {
     }
 
     #[test]
+    fn route_profile_compare_defaults_to_artifact_cpu_profile_run_when_present() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_minimal_receipts(temp.path(), false)?;
+        write_route_corpus_v2_receipts(temp.path())?;
+        write_route_model_identity_manifests(temp.path())?;
+        write_json(
+            temp.path(),
+            DENSE_CPU_OPERATOR_ASK,
+            json!({
+                "artifact_kind": "lunar_lake_operator_ask",
+                "fallback_used": false,
+                "answer_gate_passed": true,
+                "timing": {
+                    "model_load_ms": 100.0,
+                    "tokenize_ms": 2.0,
+                    "prefill_ms": 20.0,
+                    "first_token_ms": 30.0,
+                    "decode_total_ms": 90.0,
+                    "decode_steady_state_tok_s": 10.0
+                },
+                "latency": {"total_ms": 150.0},
+                "tokens": {"prompt_count": 38, "generated_count": 8}
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            DENSE_PHASE_COMPARISON,
+            json!({
+                "artifact_kind": "intel_258v_dense_slm_openvino_phase_comparison",
+                "fallback_used": false,
+                "gguf_cpu_reference": {"timing": {"prefill_512": {}, "decode_128": {}}}
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            CPU_PROFILE_RUN,
+            json!({
+                "artifact_kind": "lunar_lake_cpu_profile_run",
+                "fallback_used": false,
+                "cases": [
+                    {
+                        "id": "prefill_heavy_cpu_baseline",
+                        "profile": "prefill_heavy",
+                        "route_id": DEFAULT_ASK_ROUTE,
+                        "selected_backend": "cpu-rust",
+                        "fallback_used": false,
+                        "prompt_token_count": 2300,
+                        "generated_token_count": 64,
+                        "timing": {
+                            "model_load_ms": 1000.0,
+                            "tokenize_ms": 20.0,
+                            "generation_wall_ms": 44000.0,
+                            "first_token_ms": 1200.0,
+                            "total_response_ms": 45020.0
+                        }
+                    },
+                    {
+                        "id": "decode_heavy_cpu_baseline",
+                        "profile": "decode_heavy",
+                        "route_id": DEFAULT_ASK_ROUTE,
+                        "selected_backend": "cpu-rust",
+                        "fallback_used": false,
+                        "prompt_token_count": 128,
+                        "generated_token_count": 512,
+                        "timing": {
+                            "model_load_ms": 1000.0,
+                            "tokenize_ms": 6.0,
+                            "generation_wall_ms": 91000.0,
+                            "first_token_ms": 800.0,
+                            "total_response_ms": 92006.0
+                        }
+                    }
+                ]
+            }),
+        )?;
+
+        let operator = build_operator_readiness_receipt_with_created_utc(
+            temp.path(),
+            "2026-05-14T17:00:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(OPERATOR_READINESS), serde_json::to_vec_pretty(&operator)?)?;
+        let regression = build_regression_bundle_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            "2026-05-14T17:05:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(REGRESSION_BUNDLE), serde_json::to_vec_pretty(&regression)?)?;
+        let comparison = build_comparison_receipt_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(REGRESSION_BUNDLE),
+            "2026-05-14T17:10:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(OPERATOR_COMPARISON), serde_json::to_vec_pretty(&comparison)?)?;
+        let ledger = build_route_promotion_ledger_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(OPERATOR_COMPARISON),
+            "2026-05-14T17:15:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(ROUTE_PROMOTION_LEDGER), serde_json::to_vec_pretty(&ledger)?)?;
+
+        let cpu_profile_run = effective_cpu_profile_run(temp.path(), None)
+            .context("expected default CPU profile-run receipt")?;
+        assert_eq!(cpu_profile_run, PathBuf::from(CPU_PROFILE_RUN));
+        let profiles = build_route_profile_comparison_with_created_utc_and_budget_diagnostics(
+            temp.path(),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Path::new(DENSE_PHASE_COMPARISON),
+            None,
+            Some(Path::new(DENSE_CPU_CORPUS_V2)),
+            Some(Path::new(DENSE_OV_CORPUS_V2)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(cpu_profile_run.as_path()),
+            "2026-05-19T07:20:00Z".to_string(),
+        )?;
+
+        for profile_id in ["prefill_heavy", "decode_heavy"] {
+            let profile = profiles
+                .profiles
+                .iter()
+                .find(|profile| profile.profile_id == profile_id)
+                .with_context(|| format!("missing {profile_id} profile"))?;
+            let cpu_route = profile
+                .route_evidence
+                .iter()
+                .find(|route| route.route_id == DEFAULT_ASK_ROUTE)
+                .with_context(|| format!("missing {profile_id} CPU route"))?;
+            assert!(cpu_route.timing_applicability.timing_matches_profile);
+            assert!(
+                cpu_route
+                    .timing
+                    .source_receipts
+                    .iter()
+                    .any(|source| source.ends_with(CPU_PROFILE_RUN)),
+                "{:?}",
+                cpu_route.timing.source_receipts
+            );
+            assert!(
+                cpu_route.timing.phase_coverage.iter().any(|coverage| {
+                    coverage.starts_with("profile_timing_from_rust_gguf_cpu_profile_run_case_")
+                }),
+                "{:?}",
+                cpu_route.timing.phase_coverage
+            );
+            assert!(
+                !profiles
+                    .timing_coverage
+                    .proxy_or_missing_routes
+                    .contains(&format!("{profile_id}:{DEFAULT_ASK_ROUTE}")),
+                "{:?}",
+                profiles.timing_coverage.proxy_or_missing_routes
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
     fn route_profile_comparison_indexes_corpus_v2_profile_quality_blockers() -> Result<()> {
         let temp = tempfile::tempdir()?;
         write_minimal_receipts(temp.path(), false)?;
@@ -22261,6 +22497,17 @@ mod tests {
             coverage
                 == "profile_timing_from_openvino_profile_run_case_prefill_heavy_route_policy_long_context"
         }));
+        assert!(gpu_prefill.phase_claim_boundary.profile_timing_available);
+        assert!(!gpu_prefill.phase_claim_boundary.prefill_split_available);
+        assert!(!gpu_prefill.phase_claim_boundary.decode_split_available);
+        assert!(!gpu_prefill.phase_claim_boundary.phase_split_claim_allowed);
+        assert!(
+            gpu_prefill
+                .phase_claim_boundary
+                .notes
+                .iter()
+                .any(|note| note.contains("does not expose isolated prefill/decode"))
+        );
 
         let decode = profiles
             .profiles
@@ -22275,6 +22522,8 @@ mod tests {
         assert_eq!(npu_decode.timing_applicability.measured_prompt_tokens, Some(66));
         assert_eq!(npu_decode.timing_applicability.measured_output_tokens, Some(512));
         assert!(npu_decode.timing_applicability.timing_matches_profile);
+        assert!(npu_decode.phase_claim_boundary.profile_timing_available);
+        assert!(!npu_decode.phase_claim_boundary.phase_split_claim_allowed);
         assert_eq!(profiles.timing_coverage.candidate_proxy_or_missing_route_count, 0);
         assert!(
             !profiles

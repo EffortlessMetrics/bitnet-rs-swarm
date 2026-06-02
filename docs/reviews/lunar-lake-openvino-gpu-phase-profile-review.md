@@ -46,6 +46,12 @@ the question of whether future receipts or status surfaces should make the
 profile-level total-response evidence versus isolated prefill/decode phase
 claim boundary machine-readable.
 
+The route-profile receipt now serializes that boundary per route as
+`phase_claim_boundary`. For the OpenVINO GPU `prefill_heavy` and
+`decode_heavy` rows, the field records profile timing and benchmark-qualified
+total-response evidence while keeping `prefill_split_available=false`,
+`decode_split_available=false`, and `phase_split_claim_allowed=false`.
+
 ## Current Ledger State
 
 `ci/hardware/intel-258v/2026-05-08/lunar-lake-route-promotion.json` records
@@ -137,13 +143,9 @@ then route policy should narrow or revoke only the affected profile.
 
 No immediate route-policy PR is recommended.
 
-Issue #1113 is closed by #1114. Issue #1241 now owns future work if a later
-receipt needs machine-readable status fields for the profile-level versus
-phase-split distinction, or if a concrete evidence regression appears.
-
-The next useful implementation is narrow receipt/status hardening if the lane
-needs machine-readable language for this distinction. That PR should add or
-derive fields such as:
+Issue #1113 is closed by #1114. Issue #1241 owns the machine-readable
+profile-level versus phase-split distinction, and the current receipt hardening
+adds or derives fields such as:
 
 - `profile_timing_available=true`;
 - `profile_total_response_benchmark_qualified=true`;
@@ -151,8 +153,10 @@ derive fields such as:
 - `decode_split_available=false`;
 - `phase_split_claim_allowed=false`.
 
-That would make future reviews and operator summaries avoid treating
-profile-level total response as isolated prefill/decode phase evidence.
+These fields make future reviews and operator summaries avoid treating
+profile-level total response as isolated prefill/decode phase evidence. Future
+work under #1241 should only continue if a concrete evidence regression appears
+or a later receipt can expose true isolated prefill/decode splits.
 
 ## Claim Boundary
 
