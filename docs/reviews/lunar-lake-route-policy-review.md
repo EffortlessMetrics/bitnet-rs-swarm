@@ -36,13 +36,15 @@ evidence contracts current:
 - #1121 for OpenVINO GPU `ask_short` / `ask_normal` review, now closed with
   the keep decision recorded in
   [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
-  #1241 owns the separate review-watch evidence contract for GPU
-  `prefill_heavy` / `decode_heavy` phase-split claim boundaries;
+  #1241 is closed by #1268 for the current GPU `prefill_heavy` /
+  `decode_heavy` phase-claim-boundary hardening; future true phase-split or
+  route-policy decisions should use a new narrow evidence issue or #1245;
 - #1122 and #1132 for the CPU route posture decision; #1069 is now closed by
   #1182 as a resident-session command-surface review, #1186 is closed by #1194
   as the thread/core matrix builder contract, #1071 is closed by #1208 as the
-  physical thread/core matrix evidence package, and #1232 is the live resident
-  Rust GGUF phase evidence successor;
+  physical thread/core matrix evidence package, #1232 is the parent resident
+  Rust GGUF phase evidence successor, #1280 owns the physical resident package,
+  and #1291 is closed by #1292 as the receipt-write / telemetry scope contract;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
   #1244 owns future token-visibility schema or checker work if a later receipt
@@ -89,8 +91,8 @@ The committed `lunar-lake-route-promotion.json` currently records:
 | `regression_tiny` | `dense_slm_default_cpu` | keep CPU as cheap strict regression route |
 | `ask_short` | `dense_slm_openvino_gpu_candidate` | keep after #1121 confirmed corpus, timing, fallback, and token visibility remain valid |
 | `ask_normal` | `dense_slm_openvino_gpu_candidate` | keep after #1121 confirmed corpus, timing, fallback, and token visibility remain valid |
-| `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
-| `decode_heavy` | `dense_slm_openvino_gpu_candidate` | review-watch because prefill/decode split evidence is weaker than total-response evidence |
+| `prefill_heavy` | `dense_slm_openvino_gpu_candidate` | keep with review-watch after #1268: total-response evidence remains route evidence, isolated prefill/decode split claims remain blocked |
+| `decode_heavy` | `dense_slm_openvino_gpu_candidate` | keep with review-watch after #1268: total-response evidence remains route evidence, isolated prefill/decode split claims remain blocked |
 | `structured` | `dense_slm_default_cpu` | keep CPU until structured OpenVINO evidence has its own promotion package |
 | `low_power` | none | blocked by #1064 until real battery-mode route samples and energy proxy exist |
 | `warm_resident` | `dense_slm_openvino_npu_candidate` | keep as resident-only after #1163 guarded the acceptance boundary; does not imply cold one-off or low-power promotion |
@@ -104,9 +106,11 @@ Recent guard closeouts make the current route posture easier to preserve but do
 not change it. #1159 blocks ambiguous runtime `AUTO` selected-device proof,
 while #1163 blocks incomplete `warm_resident` NPU evidence, #1165 confirms
 that operator receipt follow-ups are now physical evidence or deferred
-measurement items rather than another route-policy cleanup, and #1182/#1194
+measurement items rather than another route-policy cleanup, #1182/#1194
 separate CPU command-surface and receipt-builder closeouts from physical CPU
-measurement evidence.
+measurement evidence, #1268 keeps GPU heavy-profile phase-split claims
+machine-readable and false when splits are absent, and #1292 keeps CPU resident
+receipt-write / telemetry scope from being backfilled into per-profile timing.
 
 The ledger's route IDs remain campaign-local names. The route-ID proof-family
 map records how future OpenVINO receipts and validators should relate those
@@ -164,7 +168,12 @@ SLM correctness and fallback baseline. #1069 is closed by #1182 as historical
 resident-session command-surface work, #1186 is closed by #1194 as matrix
 builder work, #1071 is closed by #1208 as physical thread/core evidence, and
 issue #1232 owns any further resident Rust GGUF phase/no-reload evidence before
-CPU optimization, matched OpenVINO CPU comparison, or route-policy work.
+CPU optimization, matched OpenVINO CPU comparison, or route-policy work. The
+next physical resident CPU package belongs to #1280. PR #1292 closed the #1291
+scope decision by keeping profile `receipt_write_ms` and `telemetry_ms`
+not backfilled unless a later contract defines their source, scope, and summarizer
+rule. That contract is not route-policy evidence and does not make Rust GGUF CPU
+resident timing benchmark-qualified.
 
 ### OpenVINO GPU
 
@@ -181,8 +190,9 @@ OpenVINO GPU may stay promoted only for profiles whose evidence still has:
 
 The `ask_short` and `ask_normal` profile decision lives in #1121. The current
 ledger also promotes `prefill_heavy` and `decode_heavy`; keep those on
-review-watch until prefill/decode split evidence is refreshed or a later review
-decides whether to keep, narrow, or mark them conditional.
+review-watch with the #1268 machine-readable phase boundary unless a later
+review links true isolated prefill/decode phase evidence or a concrete receipt
+contradiction and decides whether to keep, narrow, or mark them conditional.
 
 ### OpenVINO NPU
 
@@ -244,8 +254,10 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 - #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
   evidence map; future GPU mutation needs a new concrete regression or review
   finding.
-- #1241 now owns the focused profile-phase issue for `prefill_heavy` and
-  `decode_heavy`; do not bundle that work into #1121 or route policy.
+- #1241 is closed by #1268 for the current `prefill_heavy` and `decode_heavy`
+  phase-claim-boundary hardening. Future GPU heavy-profile mutation needs a new
+  concrete evidence issue or a #1245 keep, conditional, narrow, revoke, or
+  blocked finding; do not bundle that work into #1121.
 - #1120 has defined the NPU `warm_resident` route acceptance rule, and
   #1162/#1163 landed the current guard. Future resident-session policy changes
   should cite that review directly only if new evidence exposes a new gap.
@@ -275,10 +287,12 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   test a concrete selected-device API/bridge, or perform route review after the
   selected-device, quality, timing, fallback, profile, and power gates exist.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
-  work should use #1232 for resident Rust GGUF phase/no-reload evidence, or a
-  separate narrow issue for matched OpenVINO CPU comparison or later topology
-  evidence once the target is concrete. Do not repeat the generic
-  non-equivalence guard.
+  work should use #1232 and #1280 for resident Rust GGUF phase/no-reload
+  evidence, with #1292 as the current receipt-write / telemetry scope boundary,
+  or a separate narrow issue for matched OpenVINO CPU comparison or later
+  topology evidence once the target is concrete. Do not repeat the generic
+  non-equivalence guard or backfill unavailable profile fields from aggregate
+  observations.
 - #1165 closed the current operator receipt follow-up review. Future operator
   work should cite one of #1064, #1149, #1178, #1232, or a new narrow physical
   CPU measurement/comparison issue rather than opening another broad operator
