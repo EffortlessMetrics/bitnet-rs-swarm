@@ -2,11 +2,11 @@
 
 ## Current State
 
-The A770 lane is useful but still diagnostic. A770-074 extends the focused
-QK256 replay packet from seven runnable Q/K/V targets to eight: the layer-0
-Q/K/V trio, the layer-1 Q/K/V trio, and layer-2 `q_proj` plus `k_proj` for the
-committed summary-logits first mismatch. The selected device is Intel Arc A770
-OpenCL and the replay receipts keep
+The A770 lane is useful but still diagnostic. A770-075 extends the focused
+QK256 replay packet from eight runnable Q/K/V targets to nine: the layer-0,
+layer-1, and layer-2 Q/K/V trios for the committed summary-logits first
+mismatch. The selected device is Intel Arc A770 OpenCL and the replay receipts
+keep
 `fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
 
 That is a good correctness frontier, not an inference-performance frontier. It
@@ -18,11 +18,11 @@ acceleration, or full BitNet inference.
 
 1. The current proof is too narrow.
 
-   A770-074 covers eight focused Q/K/V rows for one case and one first
-   mismatch: the layer-0 and layer-1 Q/K/V trios plus layer-2 `q_proj` and
-   `k_proj`. Fast inference needs the same kind of selected-device confidence
-   across the remaining Q/K/V/O projection replay targets, MLP linears, and
-   logits-facing paths that can affect generated tokens.
+   A770-075 covers nine focused Q/K/V rows for one case and one first
+   mismatch: the layer-0, layer-1, and layer-2 Q/K/V trios. Fast inference
+   needs the same kind of selected-device confidence across the remaining
+   Q/K/V/O projection replay targets, MLP linears, and logits-facing paths that
+   can affect generated tokens.
 
 2. Production dispatch is not promotable yet.
 
@@ -90,9 +90,9 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-After A770-074, the next honest step is one more focused replay target, not a
-speed PR: capture and replay layer-2 `v_proj`, or the next remaining
+After A770-075, the next honest step is one more focused replay target, not a
+speed PR: capture and replay layer-3 `q_proj`, or the next remaining
 `dispatch_replay_missing` target selected by the manifest, under the same
-one-case, one-mismatch, selected-device, fallback-free receipt rules. Its job
-is to keep widening the correctness surface before any production QK256 policy,
+one-case, one-mismatch, selected-device, fallback-free receipt rules. Its job is
+to keep widening the correctness surface before any production QK256 policy,
 residency, answer-quality, or speed promotion.
