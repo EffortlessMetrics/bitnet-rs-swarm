@@ -11,6 +11,7 @@ AUTO selected-device issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm
 AUTO selected-device review: [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
 Host phase timing receipt guard closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189 / PR #1191
 AUTO debug-log evidence validator closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216 / PR #1217
+AUTO debug-log parser integration issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242
 
 Research date: 2026-05-30
 
@@ -431,7 +432,8 @@ BitNet NPU execution.
   selected-device visibility as `not_exposed`; the current review contract is
   recorded in
   [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md);
-  #1119 remains the broader cold/cache parent.
+  #1242 owns the narrower parser or receipt-source integration for accepted
+  `genai_debug_log` fields; #1119 remains the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
 - #1162 closed with #1163 after the route diagnostics guard started failing
@@ -456,12 +458,12 @@ BitNet NPU execution.
    gaps. Do not reopen a generic schema or cache-rerun PR from #1119 alone.
 2. `LNL258V-NPU-AUTO-001` (#1149): do not repeat a generic runtime `AUTO`
    rerun or generic schema/validator PR. #1217 already admits the current
-   `genai_debug_log` evidence artifact. Open the next PR only for a parser or
-   receipt-source integration that emits those accepted fields from a future
-   debug-log capture, a public GenAI API or equivalent lower-level OpenVINO
-   selected-device bridge for the same tuple, or a route review after the
-   exact selected-device, quality, timing, fallback, profile, and power gates
-   exist. Use the contract in
+   `genai_debug_log` evidence artifact. Use #1242 for a parser or receipt-source
+   integration that emits those accepted fields from a future debug-log capture.
+   Open other #1149 work only for a public GenAI API or equivalent lower-level
+   OpenVINO selected-device bridge for the same tuple, or a route review after
+   the exact selected-device, quality, timing, fallback, profile, and power
+   gates exist. Use the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 3. A future cache follow-up should be opened only for a newly exposed direct

@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160)
+Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244)
 Linked PRs: [#1101](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1101), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138)
 Support-tier impact: no promotion; review-only token evidence policy
 Policy impact: no policy exception
@@ -36,6 +36,11 @@ future receipts.
 The review note was added by #1101 and the #1123 closeout landed in #1138. It
 remains a future fail-closed strategy, not an active implementation queue or a
 reason to open another inference PR.
+
+Issue #1244 is the live review-watch issue for future generated-token
+visibility schema or checker work. It owns the question of whether a later
+receipt needs a central `visibility_level`, a fail-closed promotion-review
+guard, or a stale-receipt cleanup without changing route policy.
 
 ## Current Evidence Map
 
@@ -154,7 +159,8 @@ first-token evidence.
 
 ## Next Smallest PR
 
-No immediate implementation PR is required from this review. The next small PR
+No immediate implementation PR is required from this review. Issue #1244 owns
+future schema or checker work if a concrete ambiguity appears. The next small PR
 should be one of:
 
 - add a central schema helper for `visibility_level` if future receipts keep
