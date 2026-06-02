@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1216](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162), [#1189](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189)
+Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1216](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162), [#1189](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189)
 Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1191](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1191), [#1217](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1217), [#1282](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1282), [#1286](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1286)
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
@@ -54,6 +54,13 @@ supported-property enumeration, and release-note cache/import compatibility
 context. It still does not expose a direct GenAI receipt field that proves a
 specific `LLMPipeline` run hit cache, so the committed cache receipts remain
 timing/file-derived diagnostics.
+
+Generated-token visibility uses the same successor split: #1123 is the closed
+historical review issue, and #1244 is the live watch issue for future direct,
+retokenized, or text-only token-visibility schema/checker gaps. Direct NPU
+generated-token IDs keep cache and resident diagnostics honest, but they do not
+turn timing-derived cache evidence into direct cache-hit truth or route
+promotion evidence.
 
 ## Current Evidence Snapshot
 
