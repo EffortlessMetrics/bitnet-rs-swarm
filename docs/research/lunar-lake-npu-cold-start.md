@@ -13,10 +13,13 @@ Host phase timing receipt guard closed by: https://github.com/EffortlessMetrics/
 AUTO debug-log evidence validator closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216 / PR #1217
 AUTO debug-log parser integration closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242 / PR #1248
 AUTO debug-log capture source integration closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251 / PR #1252
-OpenVINO generated-token visibility watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244
+AUTO debug-log warning-boundary hardening closed by: PR #1254
+OpenVINO generated-token visibility watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244 / PR #1350 / PR #1355
 Original token visibility review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123 / PR #1138
+Route-policy watch issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245 / PR #1358
 
 Research date: 2026-05-30
+Watch refresh: 2026-06-02
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -63,11 +66,20 @@ Committed receipts show:
   capture wrapper for that block-scoped OpenVINO GenAI `AUTO` debug-log
   evidence shape. This is receipt-source support only; it is not a route-policy
   change, NPU promotion, `low_power` evidence, or a power/speedup claim.
+- #1254 preserved SDPA warning and AUTO startup/running fallback-disabled line
+  references when those lines appear in the raw debug log. That keeps the
+  diagnostic context reviewable, but it does not change the paired phase
+  receipt's application `fallback_used=false` decision or create selected-device
+  proof.
 - #1244 is the live watch issue for future OpenVINO generated-token visibility
-  schema or checker gaps. The original token visibility review issue #1123 is
-  closed; NPU cache and resident evidence still need direct generated-token IDs
-  for promotion-grade token-drift claims, but token visibility alone does not
-  change cold/cache, `low_power`, or route-policy blockers.
+  schema or checker gaps. PR #1350 and PR #1355 anchor the current shared
+  direct-token helper and fail-closed validator path, so #1244 remains
+  watch-only unless a future receipt bypasses that helper or exposes ambiguous
+  direct/proxy/unavailable token status. The original token visibility review
+  issue #1123 is closed; NPU cache and resident evidence still need direct
+  generated-token IDs for promotion-grade token-drift claims, but token
+  visibility alone does not change cold/cache, `low_power`, or route-policy
+  blockers.
 
 That evidence is promising for a resident NPU profile, but it is not a broad
 NPU route promotion, power-advantage, native BitNet, or low-power claim.
@@ -84,6 +96,9 @@ NPU route promotion, power-advantage, native BitNet, or low-power claim.
   claim.
 
 Keep that boundary until the measurements below are collected and reviewed.
+The #1245 route-policy watch was refreshed by #1358 with the same boundary:
+future NPU route-policy work still needs a linked evidence finding before any
+keep, conditional, narrow, revoke, or blocked decision changes the ledger.
 
 ## Evidence Map
 
@@ -391,6 +406,13 @@ receipt, promote `AUTO`, promote NPU, change low-power routing, prove cold
 one-off routing, claim power advantage, claim speedup, prove native accelerator
 execution, or prove BitNet QK256/I2_S behavior.
 
+PR #1254 adds warning-context hardening for the same debug-log source: SDPA
+attention-backend warning lines and AUTO fallback-disabled startup/running
+lines stay addressable when present in the raw log. Those warning references
+help future reviews explain the diagnostic environment, but they are not an
+application fallback override and they do not convert `AUTO` debug logs into
+route-policy proof.
+
 ## Tokenizer And Asset Reload Gap
 
 The committed historical receipts identify the model and tokenizer artifacts,
@@ -490,9 +512,12 @@ BitNet NPU execution.
   [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md);
   #1242 is closed by #1248 after landing the narrower parser helper for accepted
   `genai_debug_log` fields, and #1251 is closed by #1252 after landing the
-  repeatable capture wrapper. Future #1149 work should use that wrapper only
-  for materially useful evidence packages, API-bridge checks, or route review
-  after the other gates exist. #1119 remains the broader cold/cache parent.
+  repeatable capture wrapper. PR #1254 then preserves SDPA warning and AUTO
+  fallback-disabled line references without changing generated phase-receipt
+  selected-device proof or application fallback status. Future #1149 work
+  should use that wrapper only for materially useful evidence packages,
+  API-bridge checks, or route review after the other gates exist. #1119 remains
+  the broader cold/cache parent.
 - #1120 closed with the warm-resident acceptance rule defined in
   [lunar-lake-npu-warm-resident-acceptance.md](../reviews/lunar-lake-npu-warm-resident-acceptance.md).
 - #1162 closed with #1163 after the route diagnostics guard started failing
@@ -519,11 +544,13 @@ BitNet NPU execution.
    rerun or generic schema/validator PR. #1217 already admits the current
    `genai_debug_log` evidence artifact, and #1248 added the parser helper for
    captured debug logs. #1252 added the repeatable capture wrapper for that
-   accepted evidence shape. Open other #1149 work only to persist a materially
-   useful wrapper-generated evidence package, test a public GenAI API or
-   equivalent lower-level OpenVINO selected-device bridge for the same tuple,
-   or run a route review after the exact selected-device, quality, timing,
-   fallback, profile, and power gates exist. Use the contract in
+   accepted evidence shape, and #1254 preserved warning/internal-policy line
+   references without changing the selected-device or fallback proof boundary.
+   Open other #1149 work only to persist a materially useful wrapper-generated
+   evidence package, test a public GenAI API or equivalent lower-level OpenVINO
+   selected-device bridge for the same tuple, or run a route review after the
+   exact selected-device, quality, timing, fallback, profile, and power gates
+   exist. Use the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
 3. A future cache follow-up should be opened only for a newly exposed direct
