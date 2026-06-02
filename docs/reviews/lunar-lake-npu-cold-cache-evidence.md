@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1143](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1143), [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1216](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162), [#1189](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1189)
-Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1191](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1191), [#1217](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1217), [#1282](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1282)
+Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1191](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1191), [#1217](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1217), [#1282](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1282), [#1286](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1286)
 Support-tier impact: no promotion; review-only cold/cache evidence contract
 Policy impact: no policy exception
 
@@ -46,13 +46,14 @@ promotion evidence. Keep any future follow-up limited to the specific cache,
 phase, resident, or validation gap being measured instead of widening this
 review into route policy.
 
-PR #1282 adds the current OpenVINO cache source-boundary audit to the NPU
-cold-start research note. The public source boundary supports cache
-configuration and provenance fields such as `CACHE_DIR`, `NPUW_CACHE_DIR`,
-`EXPORT_BLOB` / `BLOB_PATH`, supported-property enumeration, and release-note
-cache/import compatibility context. It still does not expose a direct GenAI
-receipt field that proves a specific `LLMPipeline` run hit cache, so the
-committed cache receipts remain timing/file-derived diagnostics.
+PR #1282 added the current OpenVINO cache source-boundary audit to the NPU
+cold-start research note, and #1286 aligned this review with that boundary. The
+public source boundary supports cache configuration and provenance fields such
+as `CACHE_DIR`, `NPUW_CACHE_DIR`, `EXPORT_BLOB` / `BLOB_PATH`,
+supported-property enumeration, and release-note cache/import compatibility
+context. It still does not expose a direct GenAI receipt field that proves a
+specific `LLMPipeline` run hit cache, so the committed cache receipts remain
+timing/file-derived diagnostics.
 
 ## Current Evidence Snapshot
 
@@ -71,7 +72,7 @@ committed cache receipts remain timing/file-derived diagnostics.
 | `lunar-lake-openvino-npu-resident-session-20260601T1325Z.json` | Paired same-cache resident diagnostic constructs the pipeline in 864.753 ms and completes 10/10 warm asks with fallback false, no answer/token/fallback/route drift, 314.739 ms mean generation wall, and 161.381 ms mean OpenVINO TTFT | Useful current-main resident context, but not a replacement for the existing 30/30 warm-resident acceptance receipt and not a new promotion claim |
 | `lunar-lake-openvino-npu-cold-start-diagnosis.json` | `cold_load_decomposition` records first-process cache miss, second-process cache reuse, timing-derived cache classification, and missing direct cache metrics | Decomposition is review-ready, but still diagnostic |
 | `lunar-lake-npu-cold-start.md` | Cold startup remains dominated by pipeline construction, compile/load, transfer, cache, tokenizer/setup, and first-ask costs | Do not promote cold one-off NPU from cache evidence alone |
-| `lunar-lake-npu-cold-start.md` | #1282 records the OpenVINO cache source boundary: current docs justify cache configuration/provenance receipt fields, but do not expose direct GenAI runtime cache-hit truth for these receipts | Future cache work needs a documented runtime cache-hit property, parseable runtime log, or precise cache/blob/compiler/compatibility provenance gap |
+| `lunar-lake-npu-cold-start.md` and this review | #1282/#1286 record the OpenVINO cache source boundary: current docs justify cache configuration/provenance receipt fields, but do not expose direct GenAI runtime cache-hit truth for these receipts | Future cache work needs a documented runtime cache-hit property, parseable runtime log, or precise cache/blob/compiler/compatibility provenance gap |
 
 The useful current claim is:
 
@@ -184,9 +185,9 @@ validation for sentinels, coarse-versus-narrow phase ownership, and
 timing-derived cache status. The next small implementation PR, if needed,
 should be scoped through the #1119 parent issue or a new precise cache-evidence
 issue, not another broad rerun of #1160, repeat of the #1189 schema guard, or
-repeat of the #1282 source-boundary audit. It should preserve these constraints
-when new cache evidence is added or when a newly exposed field creates a more
-specific gap:
+repeat of the #1282/#1286 source-boundary audit. It should preserve these
+constraints when new cache evidence is added or when a newly exposed field
+creates a more specific gap:
 
 - requires cache classification source to be `runtime_metric`, `runtime_log`,
   `file_reuse`, `timing_derived`, or `not_exposed`;
