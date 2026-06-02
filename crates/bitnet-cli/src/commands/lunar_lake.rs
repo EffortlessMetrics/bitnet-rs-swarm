@@ -116,6 +116,7 @@ const OPENVINO_NPU_CACHE_EXPERIMENT: &str = "lunar-lake-openvino-npu-cache-exper
 const OPENVINO_GENERATION_BUDGET_SENSITIVITY: &str =
     "lunar-lake-openvino-generation-budget-sensitivity.json";
 const OPENVINO_PROFILE_RUN: &str = "lunar-lake-openvino-profile-run.json";
+const CPU_PROFILE_RUN: &str = "lunar-lake-cpu-profile-run.json";
 const OPENVINO_GPU_PROFILE_PROMOTION_TARGETS: &[&str] =
     &["ask_short", "ask_normal", "prefill_heavy", "decode_heavy"];
 const OPENVINO_NPU_PROFILE_PROMOTION_TARGETS: &[&str] = &["warm_resident"];
@@ -3546,6 +3547,8 @@ impl LunarLakeCommand {
                     Some(created_utc) => normalize_created_utc(created_utc)?,
                     None => chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
                 };
+                let effective_cpu_profile_run =
+                    effective_cpu_profile_run(artifact_root, cpu_profile_run.as_deref());
                 let receipt =
                     build_route_profile_comparison_with_created_utc_and_budget_diagnostics(
                         artifact_root,
@@ -3561,7 +3564,7 @@ impl LunarLakeCommand {
                         npu_resident_session.as_deref(),
                         npu_cache_experiment.as_deref(),
                         openvino_budget_sensitivity.as_deref(),
-                        cpu_profile_run.as_deref(),
+                        effective_cpu_profile_run.as_deref(),
                         created_utc,
                     )?;
                 write_or_print_route_profile_comparison(&receipt, json_out.as_deref())?;
@@ -15587,6 +15590,12 @@ fn resolve_receipt_path(root: &Path, path: &Path) -> PathBuf {
     if path.is_absolute() || path.exists() { path.to_path_buf() } else { root.join(path) }
 }
 
+fn effective_cpu_profile_run(root: &Path, cpu_profile_run: Option<&Path>) -> Option<PathBuf> {
+    cpu_profile_run
+        .map(Path::to_path_buf)
+        .or_else(|| root.join(CPU_PROFILE_RUN).exists().then(|| PathBuf::from(CPU_PROFILE_RUN)))
+}
+
 fn compare_route(route: &OperatorRoute, evidence: &[EvidenceStatus]) -> RouteComparison {
     let attached = [&route.answer_gate_evidence, &route.phase_evidence]
         .into_iter()
@@ -21583,6 +21592,170 @@ mod tests {
             candidate_routes: vec![],
         };
         assert!(timing_applicability_for_profile(&profile, &timing).timing_matches_profile);
+        Ok(())
+    }
+
+    #[test]
+    fn route_profile_compare_defaults_to_artifact_cpu_profile_run_when_present() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_minimal_receipts(temp.path(), false)?;
+        write_route_corpus_v2_receipts(temp.path())?;
+        write_route_model_identity_manifests(temp.path())?;
+        write_json(
+            temp.path(),
+            DENSE_CPU_OPERATOR_ASK,
+            json!({
+                "artifact_kind": "lunar_lake_operator_ask",
+                "fallback_used": false,
+                "answer_gate_passed": true,
+                "timing": {
+                    "model_load_ms": 100.0,
+                    "tokenize_ms": 2.0,
+                    "prefill_ms": 20.0,
+                    "first_token_ms": 30.0,
+                    "decode_total_ms": 90.0,
+                    "decode_steady_state_tok_s": 10.0
+                },
+                "latency": {"total_ms": 150.0},
+                "tokens": {"prompt_count": 38, "generated_count": 8}
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            DENSE_PHASE_COMPARISON,
+            json!({
+                "artifact_kind": "intel_258v_dense_slm_openvino_phase_comparison",
+                "fallback_used": false,
+                "gguf_cpu_reference": {"timing": {"prefill_512": {}, "decode_128": {}}}
+            }),
+        )?;
+        write_json(
+            temp.path(),
+            CPU_PROFILE_RUN,
+            json!({
+                "artifact_kind": "lunar_lake_cpu_profile_run",
+                "fallback_used": false,
+                "cases": [
+                    {
+                        "id": "prefill_heavy_cpu_baseline",
+                        "profile": "prefill_heavy",
+                        "route_id": DEFAULT_ASK_ROUTE,
+                        "selected_backend": "cpu-rust",
+                        "fallback_used": false,
+                        "prompt_token_count": 2300,
+                        "generated_token_count": 64,
+                        "timing": {
+                            "model_load_ms": 1000.0,
+                            "tokenize_ms": 20.0,
+                            "generation_wall_ms": 44000.0,
+                            "first_token_ms": 1200.0,
+                            "total_response_ms": 45020.0
+                        }
+                    },
+                    {
+                        "id": "decode_heavy_cpu_baseline",
+                        "profile": "decode_heavy",
+                        "route_id": DEFAULT_ASK_ROUTE,
+                        "selected_backend": "cpu-rust",
+                        "fallback_used": false,
+                        "prompt_token_count": 128,
+                        "generated_token_count": 512,
+                        "timing": {
+                            "model_load_ms": 1000.0,
+                            "tokenize_ms": 6.0,
+                            "generation_wall_ms": 91000.0,
+                            "first_token_ms": 800.0,
+                            "total_response_ms": 92006.0
+                        }
+                    }
+                ]
+            }),
+        )?;
+
+        let operator = build_operator_readiness_receipt_with_created_utc(
+            temp.path(),
+            "2026-05-14T17:00:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(OPERATOR_READINESS), serde_json::to_vec_pretty(&operator)?)?;
+        let regression = build_regression_bundle_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            "2026-05-14T17:05:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(REGRESSION_BUNDLE), serde_json::to_vec_pretty(&regression)?)?;
+        let comparison = build_comparison_receipt_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(REGRESSION_BUNDLE),
+            "2026-05-14T17:10:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(OPERATOR_COMPARISON), serde_json::to_vec_pretty(&comparison)?)?;
+        let ledger = build_route_promotion_ledger_with_created_utc(
+            temp.path(),
+            Path::new(OPERATOR_READINESS),
+            Path::new(OPERATOR_COMPARISON),
+            "2026-05-14T17:15:00Z".to_string(),
+        )?;
+        fs::write(temp.path().join(ROUTE_PROMOTION_LEDGER), serde_json::to_vec_pretty(&ledger)?)?;
+
+        let cpu_profile_run = effective_cpu_profile_run(temp.path(), None)
+            .context("expected default CPU profile-run receipt")?;
+        assert_eq!(cpu_profile_run, PathBuf::from(CPU_PROFILE_RUN));
+        let profiles = build_route_profile_comparison_with_created_utc_and_budget_diagnostics(
+            temp.path(),
+            Path::new(ROUTE_PROMOTION_LEDGER),
+            Path::new(DENSE_PHASE_COMPARISON),
+            None,
+            Some(Path::new(DENSE_CPU_CORPUS_V2)),
+            Some(Path::new(DENSE_OV_CORPUS_V2)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(cpu_profile_run.as_path()),
+            "2026-05-19T07:20:00Z".to_string(),
+        )?;
+
+        for profile_id in ["prefill_heavy", "decode_heavy"] {
+            let profile = profiles
+                .profiles
+                .iter()
+                .find(|profile| profile.profile_id == profile_id)
+                .with_context(|| format!("missing {profile_id} profile"))?;
+            let cpu_route = profile
+                .route_evidence
+                .iter()
+                .find(|route| route.route_id == DEFAULT_ASK_ROUTE)
+                .with_context(|| format!("missing {profile_id} CPU route"))?;
+            assert!(cpu_route.timing_applicability.timing_matches_profile);
+            assert!(
+                cpu_route
+                    .timing
+                    .source_receipts
+                    .iter()
+                    .any(|source| source.ends_with(CPU_PROFILE_RUN)),
+                "{:?}",
+                cpu_route.timing.source_receipts
+            );
+            assert!(
+                cpu_route.timing.phase_coverage.iter().any(|coverage| {
+                    coverage.starts_with("profile_timing_from_rust_gguf_cpu_profile_run_case_")
+                }),
+                "{:?}",
+                cpu_route.timing.phase_coverage
+            );
+            assert!(
+                !profiles
+                    .timing_coverage
+                    .proxy_or_missing_routes
+                    .contains(&format!("{profile_id}:{DEFAULT_ASK_ROUTE}")),
+                "{:?}",
+                profiles.timing_coverage.proxy_or_missing_routes
+            );
+        }
         Ok(())
     }
 
