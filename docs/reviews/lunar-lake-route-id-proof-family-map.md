@@ -201,15 +201,22 @@ changes or receipt/validator gaps require a targeted CPU reference rerun. The
 diagnostic-only non-trigger classification from #1263/#1267 covers reviewed
 merged BitNet-adjacent instrumentation touches that are not changing Lunar Lake
 BitNet CPU reference semantics. Current #1178 state after the post-#1267 audit
-through swarm `main` `6e5eedcb0159b716031c3fe84a8ed98a80a6e5cc` remains
+through swarm `main` `79a19ecc6003f0b8cdf8a07990045c24604af961` remains
 `rerun_required=false`, `intake_ready=true`, and
 `dense_slm_as_bitnet_proof=false`. Post-`3080b3cca` movement through #1338 is
 classified as A770 diagnostic replay/tracker work plus Lunar Lake CPU resident
 status/docs/evidence work. PR #1319 is the only matched code-surface change in
 that range: it updates `crates/bitnet-cli/src/commands/lunar_lake.rs` resident
 status handling, preserves BitNet claim boundaries, and does not change BitNet
-CPU reference semantics. Future ambiguous shared-surface touches should open a
-new narrow child under #1178 rather than reuse closed #1263.
+CPU reference semantics. Post-#1338 movement through #1341 is route-policy and
+semantic-intake review text only; it does not touch BitNet CPU reference
+receipts, shared BitNet runtime semantics, production QK256 dispatch policy, or
+dense-SLM-to-BitNet proof status. Post-#1341 movement through #1343 is A770
+layer-5 `v_proj` replay-target evidence, A770 tracker/dashboard refresh, and
+A770 closeout tracker work only for this audit; it likewise does not change
+Lunar Lake BitNet CPU reference semantics. Future ambiguous shared-surface
+touches should open a new narrow child under #1178 rather than reuse the
+closed #1263/#1267 classifications.
 
 ### Low Power
 
