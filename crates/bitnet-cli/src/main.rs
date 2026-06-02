@@ -8789,6 +8789,7 @@ async fn run_slm_warm_session(
         })?;
     let temperature = if greedy { 0.0 } else { temperature };
     let session_start = std::time::Instant::now();
+    let memory_before_load = slm_cpu_warm_session_memory_context_json();
 
     let loader = bitnet_models::loader::ModelLoader::new(Device::Cpu);
     let load_config = bitnet_models::loader::LoadConfig {
@@ -8957,6 +8958,7 @@ async fn run_slm_warm_session(
     let logits_capacity = config.model.vocab_size.max(tokenizer.vocab_size());
     let sampling_config =
         SamplingConfig { temperature, top_k: top_k as u32, top_p, repetition_penalty, seed };
+    let memory_after_load = slm_cpu_warm_session_memory_context_json();
     let sampler_reuse_enabled = warm_session_sampler_reuse_enabled(&sampling_config);
     let sampler_reuse_policy = warm_session_sampler_reuse_policy(sampler_reuse_enabled);
     let kv_cache_reuse_policy = "single_kv_cache_cleared_per_prompt_for_prompt_isolation";
@@ -9009,6 +9011,7 @@ async fn run_slm_warm_session(
     });
     let mut sampler_reused_prompt_count = 0usize;
     let mut sampler_recreated_prompt_count = 0usize;
+    let mut memory_after_first_ask = None;
     bitnet_transformer::reset_dense_q8_sidecar_instrumentation();
     for (index, prompt_input) in prompt_inputs.iter().enumerate() {
         output.status(format!(
@@ -9019,12 +9022,14 @@ async fn run_slm_warm_session(
         let prompt_alloc_start = AllocationAuditSnapshot::current();
         let prompt = &prompt_input.prompt;
         let prompt_start = std::time::Instant::now();
+        let prompt_render_start = std::time::Instant::now();
         let formatted_prompt = apply_qwen_no_think_prompt_policy(
             template_type,
             template_type.apply(prompt, system_prompt.as_deref()),
             no_think,
         )?;
         let rendered_prompt_sha256 = compute_sha256_bytes(formatted_prompt.as_bytes());
+        let prompt_render_ms = elapsed_ms(prompt_render_start);
 
         let bos_policy = template_type.should_add_bos();
         let parse_special = template_type.parse_special();
@@ -9330,6 +9335,7 @@ async fn run_slm_warm_session(
         } else {
             None
         };
+        let quality_gate_start = std::time::Instant::now();
         let quality = slm_warm_session_quality_receipt(
             &generated_text,
             generated_tokens,
@@ -9337,6 +9343,7 @@ async fn run_slm_warm_session(
             prompt_input.min_distinct_generated_tokens,
             prompt_input.gate.as_ref(),
         );
+        let quality_gate_ms = elapsed_ms(quality_gate_start);
         let quality_passed = quality["passed"].as_bool().unwrap_or(false);
         if !quality_passed {
             quality_failed_prompts.push(index);
@@ -9423,6 +9430,7 @@ async fn run_slm_warm_session(
                 "session_model_load_ms": rounded_ms(model_load_ms),
                 "session_tokenizer_load_ms": rounded_ms(tokenizer_load_ms),
                 "session_model_sha256_ms": rounded_ms(model_sha256_ms),
+                "prompt_render_ms": rounded_ms(prompt_render_ms),
                 "tokenize_ms": rounded_ms(prompt_tokenize_ms),
                 "prefill_ms": rounded_ms(prefill_ms),
                 "first_token_ms": first_token_ms,
@@ -9431,6 +9439,7 @@ async fn run_slm_warm_session(
                 "decode_total_ms": rounded_ms(decode_total_ms),
                 "decode_steady_state_tok_s": decode_steady_state_tok_s,
                 "sampling_ms_per_token": sampling_ms_per_token.map(rounded_ms),
+                "quality_gate_ms": rounded_ms(quality_gate_ms),
                 "total_ms": rounded_ms(prompt_total_ms),
                 "embed_ms": timing_samples_json(embed_step_ms),
                 "forward_ms": timing_samples_json(forward_step_ms),
@@ -9639,6 +9648,9 @@ async fn run_slm_warm_session(
         if output.write_prompt_receipts {
             prompt_receipts.push(prompt_receipt_path.display().to_string());
         }
+        if index == 0 && memory_after_first_ask.is_none() {
+            memory_after_first_ask = Some(slm_cpu_warm_session_memory_context_json());
+        }
         aggregate_direct_greedy_logits_steps += direct_greedy_logits_steps;
         aggregate_logits_vec_extraction_steps += logits_vec_extraction_steps;
         aggregate_logits_scratch_reuse_steps += logits_scratch_reuse_steps;
@@ -9703,7 +9715,16 @@ async fn run_slm_warm_session(
         .map(|prompt| prompt.min_distinct_generated_tokens)
         .min()
         .unwrap_or(min_distinct_generated_tokens);
-    let memory_context = slm_cpu_warm_session_memory_context_json();
+    let mut memory_context = slm_cpu_warm_session_memory_context_json();
+    let memory_lifecycle = slm_cpu_warm_session_memory_lifecycle_json(
+        &memory_before_load,
+        &memory_after_load,
+        memory_after_first_ask.as_ref(),
+        &memory_context,
+    );
+    if let Some(object) = memory_context.as_object_mut() {
+        object.insert("lifecycle".to_string(), memory_lifecycle);
+    }
     let thermal_context = slm_cpu_warm_session_thermal_context_json();
     let power_context = slm_cpu_warm_session_power_context_json();
     let execution_context = slm_cpu_warm_session_execution_context_json(
@@ -11959,6 +11980,115 @@ fn slm_cpu_warm_session_memory_context_json() -> serde_json::Value {
             "available": false,
         })
     }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_memory_lifecycle_json(
+    before_load: &serde_json::Value,
+    after_load: &serde_json::Value,
+    after_first_ask: Option<&serde_json::Value>,
+    after_warm_loop: &serde_json::Value,
+) -> serde_json::Value {
+    let before_load = slm_cpu_warm_session_memory_lifecycle_stage(
+        "before_load",
+        "before_model_loader_load_with_config",
+        Some(before_load),
+        "measured_before_load",
+    );
+    let after_load = slm_cpu_warm_session_memory_lifecycle_stage(
+        "after_load",
+        "after_model_and_tokenizer_load_before_prompt_token_cache_pre_sizing",
+        Some(after_load),
+        "measured_after_model_tokenizer_load",
+    );
+    let after_first_ask = slm_cpu_warm_session_memory_lifecycle_stage(
+        "after_first_ask",
+        "after_prompt_index_0_receipt_handling_before_remaining_warm_loop",
+        after_first_ask,
+        "measured_after_first_ask",
+    );
+    let after_warm_loop = slm_cpu_warm_session_memory_lifecycle_stage(
+        "after_warm_loop",
+        "after_all_prompt_receipts_before_aggregate_receipt_write",
+        Some(after_warm_loop),
+        "measured_after_warm_loop",
+    );
+    let stages = [&before_load, &after_load, &after_first_ask, &after_warm_loop];
+    let source = stages
+        .iter()
+        .filter_map(|stage| stage.get("source").and_then(serde_json::Value::as_str))
+        .find(|source| *source == "sysinfo_current_process")
+        .or_else(|| {
+            stages
+                .iter()
+                .filter_map(|stage| stage.get("source").and_then(serde_json::Value::as_str))
+                .next()
+        })
+        .unwrap_or("not_exposed");
+    let measured_count = stages
+        .iter()
+        .filter(|stage| stage.get("available").and_then(serde_json::Value::as_bool) == Some(true))
+        .count();
+    let status = match measured_count {
+        4 => "measured",
+        1..=3 => "partially_measured",
+        _ => "not_exposed",
+    };
+
+    serde_json::json!({
+        "source": source,
+        "scope": "current_process_resident_memory_bytes",
+        "status": status,
+        "before_load_bytes": before_load["resident_memory_bytes"].clone(),
+        "before_load_status": before_load["status"].clone(),
+        "after_load_bytes": after_load["resident_memory_bytes"].clone(),
+        "after_load_status": after_load["status"].clone(),
+        "after_first_ask_bytes": after_first_ask["resident_memory_bytes"].clone(),
+        "after_first_ask_status": after_first_ask["status"].clone(),
+        "after_warm_loop_bytes": after_warm_loop["resident_memory_bytes"].clone(),
+        "after_warm_loop_status": after_warm_loop["status"].clone(),
+        "before_load": before_load,
+        "after_load": after_load,
+        "after_first_ask": after_first_ask,
+        "after_warm_loop": after_warm_loop,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_cpu_warm_session_memory_lifecycle_stage(
+    stage: &str,
+    definition: &str,
+    sample: Option<&serde_json::Value>,
+    measured_status: &str,
+) -> serde_json::Value {
+    let resident_memory_bytes = sample
+        .and_then(|sample| sample.get("resident_memory_bytes"))
+        .and_then(serde_json::Value::as_u64);
+    let virtual_memory_bytes = sample
+        .and_then(|sample| sample.get("virtual_memory_bytes"))
+        .and_then(serde_json::Value::as_u64);
+    let source = sample
+        .and_then(|sample| sample.get("resident_memory_source"))
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("not_exposed");
+    let available = sample
+        .and_then(|sample| sample.get("available"))
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false)
+        && resident_memory_bytes.is_some();
+    let status = if available { measured_status } else { source };
+    let error = sample.and_then(|sample| sample.get("error")).and_then(serde_json::Value::as_str);
+
+    serde_json::json!({
+        "stage": stage,
+        "definition": definition,
+        "resident_memory_bytes": resident_memory_bytes,
+        "virtual_memory_bytes": virtual_memory_bytes,
+        "source": source,
+        "status": status,
+        "available": available,
+        "error": error,
+    })
 }
 
 #[cfg(feature = "full-cli")]
@@ -16463,6 +16593,49 @@ mod tests {
         .expect_err("no-thinking should be qwen-only");
 
         assert!(err.to_string().contains("--prompt-template qwen"));
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_memory_lifecycle_records_stage_statuses() {
+        let before = serde_json::json!({
+            "resident_memory_bytes": 100,
+            "virtual_memory_bytes": 1000,
+            "resident_memory_source": "sysinfo_current_process",
+            "available": true,
+        });
+        let after_load = serde_json::json!({
+            "resident_memory_bytes": 200,
+            "virtual_memory_bytes": 2000,
+            "resident_memory_source": "sysinfo_current_process",
+            "available": true,
+        });
+        let after_first = serde_json::json!({
+            "resident_memory_bytes": 250,
+            "virtual_memory_bytes": 2500,
+            "resident_memory_source": "sysinfo_current_process",
+            "available": true,
+        });
+        let after_loop = serde_json::json!({
+            "resident_memory_bytes": 300,
+            "virtual_memory_bytes": 3000,
+            "resident_memory_source": "sysinfo_current_process",
+            "available": true,
+        });
+
+        let lifecycle = slm_cpu_warm_session_memory_lifecycle_json(
+            &before,
+            &after_load,
+            Some(&after_first),
+            &after_loop,
+        );
+
+        assert_eq!(lifecycle["source"], "sysinfo_current_process");
+        assert_eq!(lifecycle["status"], "measured");
+        assert_eq!(lifecycle["before_load_bytes"], 100);
+        assert_eq!(lifecycle["after_load_status"], "measured_after_model_tokenizer_load");
+        assert_eq!(lifecycle["after_first_ask_bytes"], 250);
+        assert_eq!(lifecycle["after_warm_loop_status"], "measured_after_warm_loop");
     }
 
     #[test]
