@@ -13,6 +13,8 @@ Host phase timing receipt guard closed by: https://github.com/EffortlessMetrics/
 AUTO debug-log evidence validator closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216 / PR #1217
 AUTO debug-log parser integration closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242 / PR #1248
 AUTO debug-log capture source integration closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251 / PR #1252
+OpenVINO generated-token visibility watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244
+Original token visibility review issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123 / PR #1138
 
 Research date: 2026-05-30
 
@@ -61,6 +63,11 @@ Committed receipts show:
   capture wrapper for that block-scoped OpenVINO GenAI `AUTO` debug-log
   evidence shape. This is receipt-source support only; it is not a route-policy
   change, NPU promotion, `low_power` evidence, or a power/speedup claim.
+- #1244 is the live watch issue for future OpenVINO generated-token visibility
+  schema or checker gaps. The original token visibility review issue #1123 is
+  closed; NPU cache and resident evidence still need direct generated-token IDs
+  for promotion-grade token-drift claims, but token visibility alone does not
+  change cold/cache, `low_power`, or route-policy blockers.
 
 That evidence is promising for a resident NPU profile, but it is not a broad
 NPU route promotion, power-advantage, native BitNet, or low-power claim.
