@@ -8072,8 +8072,23 @@ pub struct TransformerQkvProjectionDispatchReplayTensors {
     pub a770_output: Option<Tensor>,
     pub device_expression_trace: Option<TransformerQk256DeviceExpressionTrace>,
     pub device_intermediate_trace: Option<TransformerQk256DeviceIntermediateTrace>,
+    pub focused_operands: Option<TransformerQk256FocusedRawOperands>,
     pub cpu: TransformerQkvProjectionDispatchReplayCpuStats,
     pub a770: TransformerQkvProjectionDispatchReplayA770Stats,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransformerQk256FocusedRawOperands {
+    pub input_row_index: usize,
+    pub output_index: usize,
+    pub cols: usize,
+    pub row_stride_bytes: usize,
+    pub packed_qk256_scope: String,
+    pub activation_sum: i32,
+    pub activation_scale_bits: u32,
+    pub weight_scale_bits: u32,
+    pub activations_i8: Vec<i8>,
+    pub packed_qk256: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]

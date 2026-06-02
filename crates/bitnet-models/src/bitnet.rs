@@ -109,8 +109,23 @@ pub struct ModelQkvProjectionDispatchReplayContext {
     pub a770_output: Option<ConcreteTensor>,
     pub device_expression_trace: Option<ModelQk256DeviceExpressionTraceContext>,
     pub device_intermediate_trace: Option<ModelQk256DeviceIntermediateTraceContext>,
+    pub focused_operands: Option<ModelQk256FocusedRawOperandsContext>,
     pub cpu: ModelQkvProjectionDispatchReplayCpuContext,
     pub a770: ModelQkvProjectionDispatchReplayA770Context,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModelQk256FocusedRawOperandsContext {
+    pub input_row_index: usize,
+    pub output_index: usize,
+    pub cols: usize,
+    pub row_stride_bytes: usize,
+    pub packed_qk256_scope: String,
+    pub activation_sum: i32,
+    pub activation_scale_bits: u32,
+    pub weight_scale_bits: u32,
+    pub activations_i8: Vec<i8>,
+    pub packed_qk256: Vec<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -1054,6 +1069,20 @@ impl Model for BitNetModel {
                                     .collect(),
                             },
                         ),
+                        focused_operands: replay.focused_operands.as_ref().map(|operands| {
+                            ModelQk256FocusedRawOperandsContext {
+                                input_row_index: operands.input_row_index,
+                                output_index: operands.output_index,
+                                cols: operands.cols,
+                                row_stride_bytes: operands.row_stride_bytes,
+                                packed_qk256_scope: operands.packed_qk256_scope.clone(),
+                                activation_sum: operands.activation_sum,
+                                activation_scale_bits: operands.activation_scale_bits,
+                                weight_scale_bits: operands.weight_scale_bits,
+                                activations_i8: operands.activations_i8.clone(),
+                                packed_qk256: operands.packed_qk256.clone(),
+                            }
+                        }),
                         cpu: ModelQkvProjectionDispatchReplayCpuContext {
                             scalar_invocations: replay.cpu.scalar_invocations,
                             execution_path: replay.cpu.execution_path.clone(),

@@ -14,7 +14,7 @@ use super::{
     TransformerQk256CpuHotPathDelta, TransformerQk256DeviceExpressionSample,
     TransformerQk256DeviceExpressionTrace, TransformerQk256DeviceIntermediateSample,
     TransformerQk256DeviceIntermediateTrace, TransformerQk256DispatchDelta,
-    TransformerQkvProjectionDispatchReplayA770Stats,
+    TransformerQk256FocusedRawOperands, TransformerQkvProjectionDispatchReplayA770Stats,
     TransformerQkvProjectionDispatchReplayCpuStats, TransformerQkvProjectionDispatchReplayTensors,
     TransformerQkvProjectionSourceTensors, attention_f16_dot_input, attention_score_key_input,
     dbg_finite, dbg_stats, debug_attn_enabled, debug_attn_scale_enabled, debug_gqa_enabled,
@@ -922,6 +922,20 @@ fn transformer_dispatch_replay_tensors(
                         volatile_div_then_mul: sample.volatile_div_then_mul,
                     })
                     .collect(),
+            }
+        }),
+        focused_operands: replay.focused_operands.map(|operands| {
+            TransformerQk256FocusedRawOperands {
+                input_row_index: operands.input_row_index,
+                output_index: operands.output_index,
+                cols: operands.cols,
+                row_stride_bytes: operands.row_stride_bytes,
+                packed_qk256_scope: operands.packed_qk256_scope.to_string(),
+                activation_sum: operands.activation_sum,
+                activation_scale_bits: operands.activation_scale_bits,
+                weight_scale_bits: operands.weight_scale_bits,
+                activations_i8: operands.activations_i8,
+                packed_qk256: operands.packed_qk256,
             }
         }),
         cpu: TransformerQkvProjectionDispatchReplayCpuStats {

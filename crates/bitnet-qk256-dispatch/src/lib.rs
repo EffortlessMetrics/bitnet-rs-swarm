@@ -133,10 +133,38 @@ pub struct Qk256CpuA770DispatchReplay {
     pub device_expression_trace: Option<Qk256DeviceExpressionTrace>,
     /// Compact selected-device debug-kernel trace for sampled intermediates.
     pub device_intermediate_trace: Option<Qk256DeviceIntermediateTrace>,
+    /// Optional raw focused operands for replaying a single QK256 output row
+    /// through selected-device production instrumentation.
+    pub focused_operands: Option<Qk256FocusedRawOperands>,
     /// CPU replay stats.
     pub cpu: Qk256CpuDispatchReplayStats,
     /// A770 replay stats.
     pub a770: Qk256A770DispatchReplayStats,
+}
+
+/// Raw diagnostic operands for one focused QK256 replay row.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Qk256FocusedRawOperands {
+    /// Materialized input row index used for the activation vector.
+    pub input_row_index: usize,
+    /// Output row index within the projection matrix.
+    pub output_index: usize,
+    /// Number of input columns.
+    pub cols: usize,
+    /// Packed QK256 byte stride for each output row.
+    pub row_stride_bytes: usize,
+    /// Scope of the packed QK256 bytes.
+    pub packed_qk256_scope: &'static str,
+    /// Sum of the prequantized I8_S activation row.
+    pub activation_sum: i32,
+    /// Raw `f32` bits for the activation scale.
+    pub activation_scale_bits: u32,
+    /// Raw `f32` bits for the BitNet inline weight scale.
+    pub weight_scale_bits: u32,
+    /// Quantized I8_S activation row.
+    pub activations_i8: Vec<i8>,
+    /// Packed QK256 bytes for the selected output row.
+    pub packed_qk256: Vec<u8>,
 }
 
 /// Compact diagnostic trace for selected QK256 output expression policy.
@@ -739,6 +767,12 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
     let mut cpu_scalar_invocations = 0u64;
     let mut device_expression_trace = None;
     let mut device_intermediate_trace = None;
+    let capture_raw_operands = env_truthy("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_RAW_OPERANDS");
+    let raw_operand_input_row =
+        env_usize("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_RAW_OPERAND_INPUT_ROW").unwrap_or(0);
+    let raw_operand_output_index =
+        env_usize("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_RAW_OPERAND_OUTPUT_INDEX").unwrap_or(0);
+    let mut focused_operands = None;
 
     for (input_row_index, input_row) in prepared.input_rows.iter().enumerate() {
         let mut output_row = vec![0.0f32; prepared.layout.rows];
@@ -774,6 +808,26 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         if device_expression_trace.is_none() {
             let (q, activation_scale, activation_sum) =
                 quantize_row_i8_s_activation(input_row, prepared.layout.cols);
+            if capture_raw_operands
+                && focused_operands.is_none()
+                && input_row_index == raw_operand_input_row
+                && raw_operand_output_index < prepared.layout.rows
+            {
+                let row_start = raw_operand_output_index * prepared.layout.row_stride_bytes;
+                let row_end = row_start + prepared.layout.row_stride_bytes;
+                focused_operands = Some(Qk256FocusedRawOperands {
+                    input_row_index,
+                    output_index: raw_operand_output_index,
+                    cols: prepared.layout.cols,
+                    row_stride_bytes: prepared.layout.row_stride_bytes,
+                    packed_qk256_scope: "single_output_row",
+                    activation_sum,
+                    activation_scale_bits: activation_scale.to_bits(),
+                    weight_scale_bits: weight_scale.to_bits(),
+                    activations_i8: q.clone(),
+                    packed_qk256: prepared.flat_bytes[row_start..row_end].to_vec(),
+                });
+            }
             device_expression_trace = Some(qk256_device_expression_trace_for_row(
                 &prepared.flat_bytes,
                 &q,
@@ -817,6 +871,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         a770_output,
         device_expression_trace,
         device_intermediate_trace,
+        focused_operands,
         cpu: Qk256CpuDispatchReplayStats {
             scalar_invocations: cpu_scalar_invocations,
             execution_path: "cpu_qk256_i2s_i8s_scaled_scalar_replay",
@@ -1616,4 +1671,8 @@ fn env_truthy(name: &str) -> bool {
     std::env::var(name)
         .map(|value| matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
         .unwrap_or(false)
+}
+
+fn env_usize(name: &str) -> Option<usize> {
+    std::env::var(name).ok().and_then(|value| value.parse::<usize>().ok())
 }
