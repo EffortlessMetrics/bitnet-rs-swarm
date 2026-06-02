@@ -16,7 +16,15 @@ env:
 jobs:
   security-audit:
     name: Security Audit
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 30
     steps:
     - name: Checkout code
@@ -115,7 +123,15 @@ jobs:
 
   supply-chain-security:
     name: Supply Chain Security
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     steps:
     - name: Checkout code
@@ -151,7 +167,15 @@ jobs:
 
   license-compliance:
     name: License Compliance
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     steps:
     - name: Checkout code
@@ -196,7 +220,15 @@ jobs:
 
   miri-test:
     name: Miri Undefined Behavior Detection
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 30
     steps:
     - name: Checkout code
@@ -231,7 +263,15 @@ jobs:
 
   security-scorecard:
     name: OpenSSF Scorecard
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     permissions:
       security-events: write
