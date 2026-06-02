@@ -78,6 +78,30 @@ const CPU_SLM_THREAD_CORE_REQUIRED_PROFILES: &[&str] =
     &["regression_tiny", "ask_short", "ask_normal"];
 const CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST: u64 = 30;
 const CPU_SLM_PHASE_NOT_EXPOSED: &str = "not_exposed";
+const CPU_SLM_RESIDENT_PROFILE_CONTRACT_NOT_EXPOSED_FIELDS: &[&str] =
+    &["receipt_write_ms", "telemetry_ms"];
+const CPU_SLM_RESIDENT_DIAGNOSTIC_REQUIRED_MEASURED_FIELDS: &[&str] = &[
+    "resident_session.first_resident_prompt",
+    "resident_session.memory_samples.before_load_bytes",
+    "resident_session.memory_samples.after_load_bytes",
+    "resident_session.memory_samples.after_first_ask_bytes",
+    "resident_session.memory_samples.after_warm_loop_bytes",
+    "profiles[].observed_execution_count",
+    "profiles[].fallback_observed",
+    "profiles[].answer_gate_passed",
+    "profiles[].deterministic_generated_ids",
+    "profiles[].deterministic_text",
+    "profiles[].generated_token_ids_available",
+    "profiles[].prompt_token_count",
+    "profiles[].phase_timings_ms.prompt_render_ms",
+    "profiles[].phase_timings_ms.tokenize_ms",
+    "profiles[].phase_timings_ms.prefill_ms",
+    "profiles[].phase_timings_ms.first_token_ms",
+    "profiles[].phase_timings_ms.decode_ms",
+    "profiles[].phase_timings_ms.detokenize_ms",
+    "profiles[].phase_timings_ms.quality_gate_ms",
+    "profiles[].phase_timings_ms.total_response_ms",
+];
 const CPU_SLM_PHASE_REQUIRED_FIELDS: &[&str] = &[
     "cold_warm_mode",
     "process_start_ms",
@@ -2421,18 +2445,30 @@ pub struct CpuSlmResidentProfilePhaseTimings {
 pub struct CpuSlmResidentMeasurementQualification {
     pub resident_phase_qualified: bool,
     pub benchmark_qualified: bool,
+    #[serde(default)]
+    pub diagnostic_package_reviewable: bool,
     pub status: String,
+    #[serde(default = "default_cpu_slm_resident_diagnostic_status")]
+    pub diagnostic_status: String,
     pub required_warm_asks_after_first: u64,
     pub observed_warm_asks_after_first: Option<u64>,
     pub blockers: Vec<String>,
     pub benchmark_blockers: Vec<String>,
+    #[serde(default = "cpu_slm_resident_diagnostic_required_measured_fields")]
+    pub diagnostic_required_measured_fields: Vec<String>,
+    #[serde(default = "cpu_slm_resident_contract_not_exposed_profile_fields")]
+    pub diagnostic_contract_not_exposed_fields: Vec<String>,
+    #[serde(default)]
+    pub diagnostic_blockers: Vec<String>,
 }
 
 fn default_cpu_slm_resident_measurement_qualification() -> CpuSlmResidentMeasurementQualification {
     CpuSlmResidentMeasurementQualification {
         resident_phase_qualified: false,
         benchmark_qualified: false,
+        diagnostic_package_reviewable: false,
         status: "legacy_receipt_without_measurement_qualification".to_string(),
+        diagnostic_status: default_cpu_slm_resident_diagnostic_status(),
         required_warm_asks_after_first: CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST,
         observed_warm_asks_after_first: None,
         blockers: vec![
@@ -2441,7 +2477,31 @@ fn default_cpu_slm_resident_measurement_qualification() -> CpuSlmResidentMeasure
         benchmark_blockers: vec![
             "resident receipt is not a matched CPU runtime benchmark comparison".to_string(),
         ],
+        diagnostic_required_measured_fields: cpu_slm_resident_diagnostic_required_measured_fields(),
+        diagnostic_contract_not_exposed_fields:
+            cpu_slm_resident_contract_not_exposed_profile_fields(),
+        diagnostic_blockers: vec![
+            "legacy resident receipt has no diagnostic reviewability block".to_string(),
+        ],
     }
+}
+
+fn default_cpu_slm_resident_diagnostic_status() -> String {
+    "legacy_receipt_without_diagnostic_reviewability".to_string()
+}
+
+fn cpu_slm_resident_diagnostic_required_measured_fields() -> Vec<String> {
+    CPU_SLM_RESIDENT_DIAGNOSTIC_REQUIRED_MEASURED_FIELDS
+        .iter()
+        .map(|field| (*field).to_string())
+        .collect()
+}
+
+fn cpu_slm_resident_contract_not_exposed_profile_fields() -> Vec<String> {
+    CPU_SLM_RESIDENT_PROFILE_CONTRACT_NOT_EXPOSED_FIELDS
+        .iter()
+        .map(|field| format!("profiles[].phase_timings_ms.{field}"))
+        .collect()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -8808,28 +8868,40 @@ fn cpu_slm_resident_measurement_qualification(
     let observed_warm_asks_after_first =
         resident_session.prompt_count.map(|count| count.saturating_sub(1));
     let mut blockers = Vec::new();
+    let mut diagnostic_blockers = Vec::new();
     if resident_session.first_resident_prompt.is_none() {
-        blockers.push("first resident prompt is not separated from the warm loop".to_string());
+        let blocker = "first resident prompt is not separated from the warm loop".to_string();
+        blockers.push(blocker.clone());
+        diagnostic_blockers.push(blocker);
     }
     match observed_warm_asks_after_first {
         Some(observed) if observed >= CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST => {}
-        Some(observed) => blockers.push(format!(
-            "resident warm loop has {observed}/{} required asks after the first resident ask",
-            CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST
-        )),
-        None => blockers.push(
-            "resident warm loop prompt count is missing, so asks after the first resident ask cannot be qualified"
-                .to_string(),
-        ),
+        Some(observed) => {
+            let blocker = format!(
+                "resident warm loop has {observed}/{} required asks after the first resident ask",
+                CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST
+            );
+            blockers.push(blocker.clone());
+            diagnostic_blockers.push(blocker);
+        }
+        None => {
+            let blocker =
+                "resident warm loop prompt count is missing, so asks after the first resident ask cannot be qualified"
+                    .to_string();
+            blockers.push(blocker.clone());
+            diagnostic_blockers.push(blocker);
+        }
     }
 
     let missing_memory_samples =
         cpu_slm_resident_missing_memory_lifecycle_samples(resident_session);
     if !missing_memory_samples.is_empty() {
-        blockers.push(format!(
+        let blocker = format!(
             "resident memory lifecycle samples are incomplete: {}",
             missing_memory_samples.join(", ")
-        ));
+        );
+        blockers.push(blocker.clone());
+        diagnostic_blockers.push(blocker);
     }
     for profile in profiles {
         let missing_fields = cpu_slm_resident_missing_measured_phase_fields(profile);
@@ -8839,12 +8911,30 @@ fn cpu_slm_resident_measurement_qualification(
                 profile.profile_id,
                 missing_fields.join(", ")
             ));
+            let diagnostic_missing_fields = missing_fields
+                .iter()
+                .filter(|field| !cpu_slm_resident_profile_contract_not_exposed_field(field))
+                .cloned()
+                .collect::<Vec<_>>();
+            if !diagnostic_missing_fields.is_empty() {
+                diagnostic_blockers.push(format!(
+                    "profile {} missing measured phase fields: {}",
+                    profile.profile_id,
+                    diagnostic_missing_fields.join(", ")
+                ));
+            }
+        }
+        for blocker in &profile.blockers {
+            diagnostic_blockers.push(format!("profile {} blocker: {blocker}", profile.profile_id));
         }
     }
     blockers.sort();
     blockers.dedup();
+    diagnostic_blockers.sort();
+    diagnostic_blockers.dedup();
 
     let resident_phase_qualified = blockers.is_empty();
+    let diagnostic_package_reviewable = diagnostic_blockers.is_empty();
     let mut benchmark_blockers =
         vec!["resident receipt is not a matched CPU runtime benchmark comparison".to_string()];
     if !resident_phase_qualified {
@@ -8857,16 +8947,32 @@ fn cpu_slm_resident_measurement_qualification(
     CpuSlmResidentMeasurementQualification {
         resident_phase_qualified,
         benchmark_qualified: false,
+        diagnostic_package_reviewable,
         status: if resident_phase_qualified {
             "resident_phase_ready_context_only_not_benchmark_qualified".to_string()
         } else {
             "resident_phase_blocked_for_measurement_qualification".to_string()
         },
+        diagnostic_status: if resident_phase_qualified {
+            "strict_resident_phase_qualified_context_only_not_benchmark_qualified".to_string()
+        } else if diagnostic_package_reviewable {
+            "diagnostic_package_reviewable_only_contract_not_exposed_profile_fields".to_string()
+        } else {
+            "diagnostic_package_blocked_for_measured_fields".to_string()
+        },
         required_warm_asks_after_first: CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST,
         observed_warm_asks_after_first,
         blockers,
         benchmark_blockers,
+        diagnostic_required_measured_fields: cpu_slm_resident_diagnostic_required_measured_fields(),
+        diagnostic_contract_not_exposed_fields:
+            cpu_slm_resident_contract_not_exposed_profile_fields(),
+        diagnostic_blockers,
     }
+}
+
+fn cpu_slm_resident_profile_contract_not_exposed_field(field: &str) -> bool {
+    CPU_SLM_RESIDENT_PROFILE_CONTRACT_NOT_EXPOSED_FIELDS.contains(&field)
 }
 
 fn cpu_slm_resident_strict_blockers(receipt: &LunarLakeCpuSlmResidentSession) -> Vec<String> {
@@ -23722,9 +23828,14 @@ mod tests {
         assert!(profile.blockers.is_empty());
         assert!(!receipt.measurement_qualification.resident_phase_qualified);
         assert!(!receipt.measurement_qualification.benchmark_qualified);
+        assert!(!receipt.measurement_qualification.diagnostic_package_reviewable);
         assert_eq!(
             receipt.measurement_qualification.status,
             "resident_phase_blocked_for_measurement_qualification"
+        );
+        assert_eq!(
+            receipt.measurement_qualification.diagnostic_status,
+            "diagnostic_package_blocked_for_measured_fields"
         );
         assert_eq!(
             receipt.measurement_qualification.required_warm_asks_after_first,
@@ -23749,6 +23860,44 @@ mod tests {
             "{:?}",
             receipt.measurement_qualification.blockers
         );
+        assert!(
+            receipt
+                .measurement_qualification
+                .diagnostic_blockers
+                .iter()
+                .any(|blocker| blocker.contains("resident warm loop has 1/30")),
+            "{:?}",
+            receipt.measurement_qualification.diagnostic_blockers
+        );
+        assert!(
+            receipt.measurement_qualification.diagnostic_blockers.iter().any(|blocker| {
+                blocker.contains("profile ask_short missing measured phase fields: detokenize_ms")
+            }),
+            "{:?}",
+            receipt.measurement_qualification.diagnostic_blockers
+        );
+        assert!(
+            !receipt
+                .measurement_qualification
+                .diagnostic_blockers
+                .iter()
+                .any(|blocker| blocker.contains("receipt_write_ms")
+                    || blocker.contains("telemetry_ms")),
+            "{:?}",
+            receipt.measurement_qualification.diagnostic_blockers
+        );
+        assert!(
+            receipt
+                .measurement_qualification
+                .diagnostic_required_measured_fields
+                .contains(&"profiles[].phase_timings_ms.detokenize_ms".to_string())
+        );
+        assert!(
+            receipt
+                .measurement_qualification
+                .diagnostic_contract_not_exposed_fields
+                .contains(&"profiles[].phase_timings_ms.receipt_write_ms".to_string())
+        );
         assert!(receipt.measurement_qualification.benchmark_blockers.contains(
             &"resident receipt is not a matched CPU runtime benchmark comparison".to_string()
         ));
@@ -23757,6 +23906,165 @@ mod tests {
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.arc_npu_execution_claim);
         assert!(!receipt.claim_boundary.bitnet_qk256_i2s_claim);
+        Ok(())
+    }
+
+    #[test]
+    fn cpu_slm_resident_session_marks_contract_only_gap_diagnostic_reviewable() -> Result<()> {
+        let temp = tempfile::tempdir()?;
+        write_json(
+            temp.path(),
+            "phase-attribution.json",
+            json!({
+                "artifact_kind": "lunar_lake_cpu_slm_phase_attribution",
+                "attribution_ready": true,
+                "cold_one_off": {
+                    "profile_id": "ask_short",
+                    "timing": {"total_response_ms": 200.0}
+                }
+            }),
+        )?;
+
+        let mut prompt_indices = Vec::new();
+        let mut prompts = Vec::new();
+        for prompt_index in 0..31_u64 {
+            prompt_indices.push(json!(prompt_index));
+            prompts.push(json!({
+                "prompt_index": prompt_index,
+                "case_id": "ask_short_math",
+                "fallback_used": false,
+                "prompt_token_count": 8,
+                "generated_tokens": 4,
+                "generated_token_ids": [1, 2, 3, 4],
+                "quality": {"passed": true},
+                "timing": {
+                    "model_load_ms": 0.0,
+                    "tokenizer_load_ms": 0.0,
+                    "prompt_render_ms": 1.0,
+                    "total_ms": 80.0,
+                    "time_to_first_token_ms": 30.0,
+                    "prefill_ms": 20.0,
+                    "decode_total_ms": 40.0,
+                    "tokenize_ms": 2.0,
+                    "detokenize_ms": 0.5,
+                    "quality_gate_ms": 0.25
+                }
+            }));
+        }
+
+        write_json(
+            temp.path(),
+            "resident.json",
+            json!({
+                "artifact_kind": "slm_cpu_warm_session",
+                "selected_backend": "cpu-rust",
+                "runtime_api": "cpu",
+                "fallback_used": false,
+                "speedup_claim": false,
+                "quality_summary": {"passed": true},
+                "determinism": {
+                    "passed": true,
+                    "groups": [
+                        {
+                            "case_id": "ask_short_math",
+                            "attempt_count": 31,
+                            "stable_generated_token_ids": true,
+                            "stable_text": true,
+                            "prompt_indices": prompt_indices
+                        }
+                    ]
+                },
+                "claim_boundary": {
+                    "speedup_claim": false,
+                    "broad_performance_claim": false,
+                    "full_metal_inference_claimed": false,
+                    "bitnet_quality_claimed": false
+                },
+                "model": {
+                    "family": "qwen",
+                    "architecture": "qwen2",
+                    "quant_format": "Q8_0",
+                    "tokenizer": "tokenizer.json"
+                },
+                "generation": {"prompt_template": "qwen2.5"},
+                "session": {
+                    "reuse_scope": "resident_session",
+                    "model_loaded_once": true,
+                    "tokenizer_loaded_once": true,
+                    "prompt_count": 31
+                },
+                "memory": {
+                    "lifecycle": {
+                        "source": "sysinfo_current_process",
+                        "before_load_bytes": 800,
+                        "before_load_status": "measured_before_load",
+                        "after_load_bytes": 1200,
+                        "after_load_status": "measured_after_model_tokenizer_load",
+                        "after_first_ask_bytes": 1250,
+                        "after_first_ask_status": "measured_after_first_ask",
+                        "after_warm_loop_bytes": 1300,
+                        "after_warm_loop_status": "measured_after_warm_loop"
+                    }
+                },
+                "timing": {"model_load_ms": 100.0, "tokenizer_load_ms": 10.0},
+                "prompts": prompts
+            }),
+        )?;
+
+        let receipt = build_cpu_slm_resident_session_with_created_utc(
+            temp.path(),
+            Path::new("phase-attribution.json"),
+            Path::new("resident.json"),
+            30,
+            "2026-06-02T12:00:00Z".to_string(),
+        )?;
+
+        assert!(receipt.resident_ready, "{:?}", receipt.gaps);
+        assert!(!receipt.measurement_qualification.resident_phase_qualified);
+        assert!(!receipt.measurement_qualification.benchmark_qualified);
+        assert!(receipt.measurement_qualification.diagnostic_package_reviewable);
+        assert_eq!(
+            receipt.measurement_qualification.status,
+            "resident_phase_blocked_for_measurement_qualification"
+        );
+        assert_eq!(
+            receipt.measurement_qualification.diagnostic_status,
+            "diagnostic_package_reviewable_only_contract_not_exposed_profile_fields"
+        );
+        assert_eq!(receipt.measurement_qualification.observed_warm_asks_after_first, Some(30));
+        assert!(
+            receipt.measurement_qualification.blockers.iter().any(|blocker| blocker.contains(
+                "profile ask_short missing measured phase fields: receipt_write_ms, telemetry_ms"
+            )),
+            "{:?}",
+            receipt.measurement_qualification.blockers
+        );
+        assert!(receipt.measurement_qualification.diagnostic_blockers.is_empty());
+        assert!(
+            receipt
+                .measurement_qualification
+                .diagnostic_required_measured_fields
+                .contains(&"resident_session.memory_samples.after_warm_loop_bytes".to_string())
+        );
+        assert!(
+            receipt
+                .measurement_qualification
+                .diagnostic_required_measured_fields
+                .contains(&"profiles[].phase_timings_ms.total_response_ms".to_string())
+        );
+        assert_eq!(
+            receipt.measurement_qualification.diagnostic_contract_not_exposed_fields,
+            vec![
+                "profiles[].phase_timings_ms.receipt_write_ms".to_string(),
+                "profiles[].phase_timings_ms.telemetry_ms".to_string(),
+            ]
+        );
+        assert!(receipt.measurement_qualification.benchmark_blockers.contains(
+            &"resident phase evidence is incomplete for benchmark qualification".to_string()
+        ));
+        assert!(receipt.measurement_qualification.benchmark_blockers.contains(
+            &"resident receipt is not a matched CPU runtime benchmark comparison".to_string()
+        ));
         Ok(())
     }
 
