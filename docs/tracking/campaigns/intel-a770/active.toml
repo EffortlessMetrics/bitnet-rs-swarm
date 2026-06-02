@@ -3844,9 +3844,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-070"
-status = "pr_open"
+status = "merged"
 pr = 1302
-head_sha = "04c17675b4fe6129474e772fa1bec5b09a498375"
+head_sha = "bd5426fc2c542237649e1c63afbc5087e4a353c7"
+merge_sha = "6cb5fa4a0d817c791a72db66ffb04852915610a7"
+merged_at = "2026-06-02T15:30:35Z"
 branch = "codex/intel-a770/A770-070-layer1-q-proj-replay-target"
 stackable = false
 review_mode = "codex_premerge"
