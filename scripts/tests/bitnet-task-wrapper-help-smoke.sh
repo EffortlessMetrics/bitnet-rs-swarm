@@ -7,7 +7,7 @@ MANIFEST_PATH="$ROOT/Cargo.toml"
 mapfile -t WRAPPERS < <(
   while IFS= read -r wrapper; do
     # We only treat top-level scripts/*.sh wrappers as in-scope for this compatibility smoke.
-    if rg -q '^[[:space:]]*(exec[[:space:]]+)?(cargo[[:space:]]+run[[:space:]].*bitnet-task([[:space:]]|$)|bitnet-task[[:space:]]+--)' "$wrapper"; then
+    if grep -Eq '^[[:space:]]*(exec[[:space:]]+)?(cargo[[:space:]]+run[[:space:]].*bitnet-task([[:space:]]|$)|bitnet-task[[:space:]]+--)' "$wrapper"; then
       printf '%s\n' "$wrapper"
     fi
   done < <(find "$ROOT/scripts" -maxdepth 1 -type f -name '*.sh' | sort)
@@ -21,7 +21,7 @@ fi
 assert_normalized_wrapper() {
   local wrapper="$1"
 
-  if ! rg -q '^exec cargo run --quiet --locked --manifest-path "\$ROOT/Cargo.toml" -p bitnet-task --' \
+  if ! grep -Eq '^exec cargo run --quiet --locked --manifest-path "\$ROOT/Cargo.toml" -p bitnet-task --' \
     "$wrapper"; then
     echo "wrapper is not normalized: ${wrapper#$ROOT/}" >&2
     echo "expected an exec line using the bitnet-task facade contract" >&2
