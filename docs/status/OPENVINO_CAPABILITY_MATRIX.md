@@ -43,6 +43,7 @@ bitnet receipts explain <receipt.json>
 | GPU profile promotion review boundary | `docs/reviews/lunar-lake-openvino-gpu-promotion-review.md`, `docs/reviews/lunar-lake-openvino-gpu-phase-profile-review.md`, [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241) |
 | NPU cold/cache and warm-resident boundary | `docs/research/lunar-lake-npu-cold-start.md`, `docs/reviews/lunar-lake-npu-cold-cache-evidence.md`, `docs/reviews/lunar-lake-npu-warm-resident-acceptance.md`, [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119) |
 | NPU runtime AUTO selected-device boundary | `docs/reviews/lunar-lake-openvino-auto-selected-device.md`, [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149); parser helper closed by [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242) / [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248) |
+| BitNet semantic-intake boundary | `docs/reviews/lunar-lake-route-policy-review.md`, `docs/reviews/lunar-lake-route-id-proof-family-map.md`, [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178); diagnostic-only shared-surface classification under [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263) |
 | Low-power evidence boundary | [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064) |
 
 ## Current OpenVINO Rows
@@ -103,6 +104,7 @@ bitnet validate open-vino-lunar-lake `
 | Qwen2.5 OpenVINO NPU | Keep `warm_resident` scoped promotion only. Cold/cache work stays under #1119 until direct cache truth, an accepted stricter proxy policy, or profile-matched phase evidence exists for the exact mode. #1242/#1248 closed the AUTO debug-log parser helper; future source wiring must stay under #1149 or a new narrow child issue. No cold one-off, `ask_short`, `ask_normal`, or `low_power` expansion follows from cache timing or AUTO debug-log evidence alone. |
 | OpenVINO generated-token visibility | Use #1244 for future schema or checker work that distinguishes direct pipeline IDs from retokenized or text-only evidence. Token visibility alone does not promote routes, prove matched CPU/OpenVINO format parity, or satisfy BitNet QK256/I2_S evidence. |
 | Route-policy watch | Use #1245 only after a linked evidence issue names a concrete keep, conditional, narrow, revoke, or blocked decision. Do not mutate route policy from review-watch status, schema support, or stale old-repo wording alone. |
+| BitNet semantic intake | Use #1178 for true shared BitNet semantic freshness and targeted CPU reference rerun decisions. Use #1263 only for reviewed diagnostic-only merged shared-surface touches; ambiguous shared-surface scope must not be treated as current BitNet evidence. |
 | OpenVINO server | Add exact-profile server receipts only after the underlying ask/chat route is promoted or explicitly candidate-scoped. |
 | BitNet OpenVINO subgraphs | Continue static-shape CPU-reference parity for selected subgraphs; keep QK256/dynamic decode out of scope until separately proven. |
 
