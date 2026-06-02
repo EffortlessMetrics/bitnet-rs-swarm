@@ -240,6 +240,46 @@ reuse, records required NPU timing and answer-gate fields for each run, and
 marks missing direct cache-hit metrics as timing-derived rather than runtime
 truth.
 
+## OpenVINO Cache Source Boundary
+
+OpenVINO's current NPU documentation supports cache configuration and cache
+provenance as receipt fields, but it does not by itself expose a direct
+promotion-grade cache-hit truth signal for the OpenVINO GenAI `LLMPipeline`
+receipts used by this lane.
+
+Relevant source boundary:
+
+- GenAI NPU docs describe `CACHE_DIR` as the preferred device-neutral compiled
+  model cache mechanism and keep `NPUW_CACHE_DIR` as the older NPU-specific
+  option. They also describe `EXPORT_BLOB` / `BLOB_PATH` ahead-of-time import
+  and export flows. These are configuration and provenance sources, not
+  evidence that a specific receipt observed a runtime cache hit.
+- NPU device docs describe two cache layers: UMD dynamic model caching and
+  OpenVINO model caching via `ov::cache_dir`. They explain that a later cache
+  hit imports a model instead of recompiling it, but the docs do not identify a
+  read-only GenAI receipt field that reports "this run hit the cache".
+- Query-device-property docs make `ov::supported_properties` the way to inspect
+  available property names and mutability. Future receipt-source work should
+  query and record the supported-property set before treating any cache or
+  selected-device field as available.
+- OpenVINO 2026 release notes add useful cache/import provenance and
+  compatibility fields, including runtime requirements, compatibility checks,
+  compiler-version traceability, and cache/export support details. Those fields
+  can harden future receipts, but they still do not replace a direct cache-hit
+  metric or accepted runtime log.
+
+Current #1119 consequence:
+
+- Keep committed cache receipts classified as `timing_derived` or
+  file-reuse-derived when `direct_runtime_cache_hit_status.available=false`.
+- A future narrow child issue is justified only for one of these source shapes:
+  a documented runtime cache-hit property, a parseable OpenVINO/NPU runtime log
+  that distinguishes import-from-cache from compile, or provenance hardening for
+  cache path/blob/compiler/compatibility metadata.
+- Do not open another generic cache rerun, cold/default NPU route PR,
+  `low_power` promotion, speedup/power claim, native NPU claim, or BitNet
+  QK256/I2_S claim from cache configuration support alone.
+
 ## Resident-Session Experiment Plan
 
 Purpose: prove whether a long-lived NPU session can be a useful route target
@@ -518,3 +558,5 @@ and the acceptance criteria for future small PRs.
   https://docs.openvino.ai/2026/openvino-workflow/running-inference/inference-devices-and-modes/query-device-properties.html
 - OpenVINO documentation: automatic device selection,
   https://docs.openvino.ai/2026/openvino-workflow/running-inference/inference-devices-and-modes/auto-device-selection.html
+- OpenVINO documentation: release notes,
+  https://docs.openvino.ai/2026/about-openvino/release-notes-openvino.html
