@@ -9,7 +9,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
-Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -38,6 +38,9 @@ evidence. The matrix is now evidence for review, not a CPU tuning unlock.
 This memo does not change route policy, run inference, refresh receipts,
 promote OpenVINO CPU, claim a speedup, claim a power advantage, or prove
 BitNet QK256/I2_S behavior.
+PR #1255 later added a resident CPU `measurement_qualification` guard to make
+the same decision visible in the current receipt: resident no-reload context
+remains useful, but resident phase evidence is not benchmark-qualified.
 
 ## Current Evidence
 
@@ -52,7 +55,7 @@ BitNet QK256/I2_S behavior.
 | #1186 / #1194 | #1186 is closed by the no-inference thread/core matrix builder and validator in #1194 | Receipt-builder closeout, not physical matrix evidence |
 | #1201 / #1207 | Source-receipt contract for the physical matrix is closed | Source-enrichment support, not an open blocker |
 | #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
-| #1232 | Resident Rust GGUF phase evidence successor is open | Use for resident phase/no-reload evidence before any CPU optimization or matched comparison PR |
+| #1232 / #1255 | Resident Rust GGUF phase evidence successor is open; #1255 adds `measurement_qualification` to the current resident receipt | Current resident receipt fails closed with `resident_phase_qualified=false`, `benchmark_qualified=false`, missing prompt-token/phase/memory fields, and 29 observed warm asks after first against the 30-after-first contract |
 
 The refreshed runtime comparison records:
 
@@ -162,7 +165,9 @@ The remaining next small PRs are evidence work only:
 
 1. Use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
    for resident Rust GGUF phase/no-reload evidence before adding a physical
-   measurement source, receipt-builder fields, or matched-comparison work.
+   measurement source, receipt-builder fields, or matched-comparison work. The
+   #1255 qualification guard is already landed; do not repeat it unless the
+   evidence contract changes.
 2. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
    can keep model-format, timing-scope, prompt-render, tokenization, and
    benchmark-qualification blockers explicit.
