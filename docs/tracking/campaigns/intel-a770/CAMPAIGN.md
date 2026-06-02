@@ -96,7 +96,7 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-064 | merged | #1257 captured opt-in raw focused QK256 operands and proved selected-device production replay reproduces the A770 output bit for the focused row while keeping the one-bit host-policy split non-promoting. |
 | A770-065 | merged | #1260 localized the focused host-policy versus selected-device production replay expression split to a one-bit host summary-policy replay difference. |
 | A770-066 | merged | #1264 applied the bounded host summary-policy semantic fix and classified the focused row as matching selected-device production replay bits while keeping production QK256 promotion, parity, residency, speed, and inference claims closed. |
-| A770-067 | in_progress | Built a manifest-bound focused QK256 replay packet: 90 Q/K/V targets identified, 1 selected-device A770 OpenCL replay executed with fallback_used=false and matching selected-device bits, 89 targets ledgered as dispatch_replay_missing blockers. |
+| A770-067 | pr_open | #1276 builds a manifest-bound focused QK256 replay packet: 90 Q/K/V targets identified, 1 selected-device A770 OpenCL replay executed with fallback_used=false and matching selected-device bits, 89 targets ledgered as dispatch_replay_missing blockers. |
 
 ## Current Claim Boundary
 

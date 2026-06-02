@@ -3660,7 +3660,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-067"
-status = "in_progress"
+status = "pr_open"
+pr = 1276
+head_sha = "d12c3feeea8f173b1724ce91578e26b4e322e2dc"
 branch = "codex/intel-a770/A770-067-multi-case-focused-qk256-replay"
 stackable = false
 review_mode = "codex_premerge"
