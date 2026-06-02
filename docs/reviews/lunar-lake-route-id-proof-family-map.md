@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267)
 Support-tier impact: no promotion; review-only route identity map
 Policy impact: no policy exception
 
@@ -156,7 +156,7 @@ claim-bearing receipt should record the canonical fields directly.
 | Dense SLM proof family is used as BitNet QK256/I2_S proof | Reject the claim boundary |
 | BitNet CPU reference evidence is used as dense SLM route quality | Reject the claim boundary |
 | Shared BitNet semantic fix lands after current CPU reference evidence | Rerun affected BitNet CPU reference evidence through #1178 before changing BitNet route claims |
-| Diagnostic-only shared BitNet-adjacent instrumentation touches route/proof surfaces | Record the reviewed non-trigger through #1263 before treating it as non-stale; ambiguous scope remains blocked |
+| Diagnostic-only shared BitNet-adjacent instrumentation touches route/proof surfaces | Record the reviewed non-trigger through the #1263/#1267 pattern before treating it as non-stale; ambiguous scope remains blocked and needs a new narrow #1178 child |
 | `openvino-auto` lacks per-phase execution-device evidence | Diagnostic only |
 | `low_power` has no battery-mode route samples or energy proxy | Keep profile blocked before promotion |
 | `fallback_used=true` in any selected route evidence | Block selected-route promotion or proof-family claim |
@@ -198,9 +198,14 @@ mapped to `openvino_dense_slm_cpu` just because both execute on the CPU.
 SLM CPU/GPU/NPU evidence must never close BitNet strict-reference gates.
 Issue #1178 owns semantic-intake freshness if future shared BitNet semantic
 changes or receipt/validator gaps require a targeted CPU reference rerun. The
-diagnostic-only non-trigger classification in #1263 covers merged
-BitNet-adjacent instrumentation touches that are reviewed as not changing Lunar
-Lake BitNet CPU reference semantics.
+diagnostic-only non-trigger classification from #1263/#1267 covers reviewed
+merged BitNet-adjacent instrumentation touches that are not changing Lunar Lake
+BitNet CPU reference semantics. Current #1178 state after the post-#1267 audit
+through swarm `main` `d6197833b299ea3b5d547f32f72cc8eef2ed88bc` remains
+`rerun_required=false`, `intake_ready=true`, and
+`dense_slm_as_bitnet_proof=false`; post-`c8076ea` A770-071 replay/closeout
+work (#1305/#1306) is docs/receipts/tracking-only and future ambiguous touches
+should open a new narrow #1178 child rather than reuse closed #1263.
 
 ### Low Power
 
