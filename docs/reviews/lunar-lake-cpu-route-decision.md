@@ -7,12 +7,13 @@ Post-matrix refresh: 2026-06-01
 Post-source-run refresh: 2026-06-02
 Post-field rerun refresh: 2026-06-02
 Post-scope-contract refresh: 2026-06-02
+Post-reviewability-contract refresh: 2026-06-02
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1266](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1266), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1283](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1283), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
+Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1266](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1266), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1283](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1283), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
 
@@ -56,11 +57,13 @@ narrows the remaining resident strict blockers to `receipt_write_ms` and
 profile `receipt_write_ms` and `telemetry_ms` as explicit `not_exposed` fields
 instead of backfilling them from aggregate/session observations unless a later
 spec or research contract defines the source, scope, and summarizer rule.
-Issue #1311 now owns the narrower status-contract question of whether those
-fields keep the package diagnostic-only under strict qualification, or whether
-a separate `reviewable` status should be added while preserving
+Issue #1311 is closed by #1319. The accepted status contract adds a separate
+diagnostic-reviewability path when the only remaining blockers are the
+#1291/#1292 profile `receipt_write_ms` and `telemetry_ms`
+contract-not-exposed fields, while preserving strict
 `resident_phase_qualified=false` and `benchmark_qualified=false`.
-PR #1283 recorded the original boundary in the CPU slow-path research note.
+PR #1283 recorded the original boundary in the CPU slow-path research note,
+and #1319 made the reviewable-versus-qualified split visible in receipts.
 
 ## Current Evidence
 
@@ -77,7 +80,7 @@ PR #1283 recorded the original boundary in the CPU slow-path research note.
 | #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
 | #1232 / #1255 | Resident Rust GGUF phase evidence successor remains open; #1255 adds `measurement_qualification` to the current committed resident receipt | Current committed resident receipt fails closed with `resident_phase_qualified=false`, `benchmark_qualified=false`, missing prompt-token/phase/memory fields, and 29 observed warm asks after first against the 30-after-first contract |
 | #1277 / #1279 | Resident source-shape successor is closed by the committed `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` fixture | Source fixture yields 33 prompts and 32 warm asks after first; it is not physical evidence by itself |
-| #1280 / #1281 / #1291 / #1292 / #1311 | Local physical source runs fixed the warm-count source gap; #1290 made prompt-render, quality-gate, detokenize, and memory lifecycle fields measurable; #1292 closed the receipt-write and telemetry scope contract by keeping those profile fields explicit `not_exposed`; #1311 owns whether reviewable diagnostic status should be separate from strict qualification | Do not optimize CPU, change route policy, or commit another diagnostic-only #1280 run from the source-shape result; refresh physical resident artifacts only when #1311 or a later contract defines how strict qualification and diagnostic reviewability should be represented |
+| #1280 / #1281 / #1291 / #1292 / #1311 / #1319 | Local physical source runs fixed the warm-count source gap; #1290 made prompt-render, quality-gate, detokenize, and memory lifecycle fields measurable; #1292 closed the receipt-write and telemetry scope contract by keeping those profile fields explicit `not_exposed`; #1319 closed #1311 by adding separate diagnostic reviewability while preserving strict false qualification | Do not optimize CPU, change route policy, or commit another source-shape-only #1280 run. Refresh physical resident artifacts only if they preserve strict false qualification, benchmark false qualification, explicit contract-not-exposed blockers, and no route-policy or optimization claim |
 
 The refreshed runtime comparison records:
 
@@ -193,11 +196,13 @@ The remaining next small PRs are evidence work only:
    unless a later spec or research contract defines the source, scope, and
    summarizer rule.
 2. Refresh the physical resident CPU package under [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280)
-   only after [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-   or a later field contract defines whether strict qualification remains the
-   only status, or whether a separate diagnostic reviewability status is
-   allowed for #1291/#1292 unavailable fields. Do not commit another
-   diagnostic-only run just to repeat the local source-shape result.
+   using the closed [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
+   / [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
+   status contract: strict qualification remains false, benchmark
+   qualification remains false, and separate diagnostic reviewability is
+   allowed only when the remaining blockers are the #1291/#1292 unavailable
+   fields. Do not commit another source-shape-only run just to repeat the
+   local result.
 3. A matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only after it
    can keep model-format, timing-scope, prompt-render, tokenization, and
    benchmark-qualification blockers explicit.
@@ -213,8 +218,9 @@ harden a newly exposed gap, not repeat that guard.
 Issue #1209 is closed as the post-matrix review. Issue #1232 remains the parent
 resident phase evidence contract, while #1280 owns the physical source package.
 The #1291 issue is closed by #1292 as the accepted receipt-write/telemetry
-scope boundary, and #1311 owns the remaining reviewable-versus-qualified status
-decision before any runtime optimization or route-policy PR.
+scope boundary, and #1311 is closed by #1319 as the
+reviewable-versus-qualified status decision before any runtime optimization or
+route-policy PR.
 
 Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed

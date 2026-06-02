@@ -17,7 +17,8 @@ Closed resident field-gap issue: https://github.com/EffortlessMetrics/bitnet-rs-
 Closed receipt-write/telemetry scope issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291 /
 https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292
 
-Live resident reviewable/qualified contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311
+Closed resident reviewable/qualified contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311 /
+https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319
 
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
@@ -38,6 +39,7 @@ Research date: 2026-05-30
 Post-matrix refresh: 2026-06-01
 Post-source-run refresh: 2026-06-02
 Post-field rerun refresh: 2026-06-02
+Post-reviewability-contract refresh: 2026-06-02
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -84,10 +86,11 @@ The strongest evidence says:
   current resident summaries instead of backfilling them from aggregate/session
   observations unless a later contract defines the source, scope, and
   qualification rule.
-- #1311 is the live contract issue for the remaining status question: keep the
-  current strict `resident_phase_qualified=false` behavior, or add a separate
-  diagnostic reviewability status while preserving strict qualification and
-  benchmark qualification as false.
+- #1311 is closed by #1319. The accepted contract adds a separate
+  diagnostic-reviewability status for packages whose only remaining blockers
+  are the #1291/#1292 `receipt_write_ms` and `telemetry_ms`
+  contract-not-exposed fields, while preserving strict
+  `resident_phase_qualified=false` and `benchmark_qualified=false`.
 
 The current route decision is:
 
@@ -105,7 +108,10 @@ and the closed
 [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291) /
 [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
 receipt-field contract, and
-[#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311).
+the closed
+[#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311) /
+[#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
+diagnostic-reviewability contract.
 Together they define resident Rust GGUF phase evidence before any optimization,
 matched-comparison, or route-policy PR.
 
@@ -299,9 +305,9 @@ Accepted current contract from #1291/#1292:
   should not justify a behavior change or CPU optimization PR. A later
   contract may relax resident-phase qualification only if it records why
   aggregate/session overhead is outside the profile timing surface.
-- #1311 owns the narrower decision of whether to keep that strict behavior only
-  or add a separate diagnostic `reviewable` status for packages whose only
-  blockers are these contractually unavailable fields.
+- #1311 is closed by #1319. Current summaries keep strict qualification false,
+  but may expose a separate diagnostic-reviewable status when these two
+  contractually unavailable fields are the only remaining blockers.
 - `benchmark_qualified` remains false regardless of this contract unless the
   compared routes share benchmark-equivalent model format, prompt scope,
   timing scope, token visibility, and route identity.
@@ -592,7 +598,7 @@ hiding it:
 | Rank | Candidate | Expected signal | CI/runtime risk |
 | ---: | --- | --- | --- |
 | 1 | Apply the #1291/#1292 receipt-write and telemetry timing scope contract | High: preserves the accepted profile-versus-aggregate boundary and prevents backfilled strict fields | Low: docs/contract surface; no runtime behavior change |
-| 2 | Use #1311 to decide strict-only qualification versus a separate diagnostic reviewability status before refreshing #1280 artifacts | High: prevents a target-only resident package from being mistaken for strict phase qualification or benchmark evidence | Low: docs/schema decision before any artifact commit |
+| 2 | Apply the closed #1311/#1319 diagnostic-reviewability contract before refreshing #1280 artifacts | High: prevents a target-only resident package from being mistaken for strict phase qualification or benchmark evidence | Low: docs/schema decision is complete; next PR can be evidence-only if it preserves the status boundary |
 | 3 | Use #1232 as the parent evidence issue for resident Rust GGUF phase attribution and no-reload evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
@@ -661,11 +667,13 @@ The live CPU slow-path follow-ups and guard status are:
    relaxation until a later issue or spec defines different accepted receipt
    fields and summarizer rules.
 9. [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-   is open as the resident status contract issue. It asks whether a future
-   receipt should distinguish diagnostic reviewability from strict
-   `resident_phase_qualified` evidence when the only blockers are #1291/#1292
-   `not_exposed` fields. Do not commit #1280 artifacts or relax qualification
-   semantics from a local target-only run until this contract is settled.
+   is closed by [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
+   as the resident status contract issue. Current receipts may distinguish
+   diagnostic reviewability from strict `resident_phase_qualified` evidence
+   when the only blockers are the #1291/#1292 `not_exposed` fields. Refresh
+   #1280 artifacts only if the package preserves strict false qualification,
+   benchmark false qualification, explicit contract-not-exposed blockers, and
+   no route-policy or optimization claim.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by
