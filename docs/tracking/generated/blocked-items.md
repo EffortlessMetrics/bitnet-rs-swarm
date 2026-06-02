@@ -554,6 +554,8 @@
 | intel-a770 | A770-018 | A770-017 | merged |
 | intel-a770 | A770-019 | A770-018 | merged |
 | intel-a770 | A770-020 | A770-019 | merged |
+| intel-a770 | A770-064 | A770-063 | merged |
+| intel-a770 | A770-065 | A770-064 | ready |
 | intel-a770 | A770-034 | A770-033 | merged |
 | intel-a770 | A770-035 | A770-034 | merged |
 | intel-a770 | A770-036 | A770-035 | merged |
