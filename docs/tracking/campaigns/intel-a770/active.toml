@@ -3723,7 +3723,6 @@ must_not_claim = [
 id = "A770-068"
 status = "pr_open"
 pr = 1293
-head_sha = "f301632a38dde0eaec01dae158fd6dc1268e3ac5"
 branch = "codex/intel-a770/A770-068-one-more-qk256-replay-target"
 stackable = false
 review_mode = "codex_premerge"
