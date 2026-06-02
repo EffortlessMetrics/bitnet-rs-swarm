@@ -1,7 +1,7 @@
 timestamp = "2026-06-02T07:00:21Z"
 campaign = "intel-a770"
 item = "A770-066"
-event = "ready"
+event = "in_progress"
 previous_status = "none"
 new_status = "ready"
 branch = "codex/intel-a770/A770-066-host-summary-policy-semantic-fix"
