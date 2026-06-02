@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
+Linked issues: [#1120](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1120), [#1139](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1162](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1162)
 Linked PRs: [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1164](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1164)
 Support-tier impact: no promotion; review-only warm resident acceptance rule
 Policy impact: no policy exception
@@ -34,6 +34,12 @@ the phase-timing schema work used when future receipts need tighter host setup,
 tokenizer/template, pipeline, compile/load/cache, first-ask, warm-ask, or
 receipt-overhead ownership. Issue #1162 is closed by #1163, which added the
 focused route diagnostics guard for this review boundary.
+
+Generated-token visibility is similarly split: issue #1123 is the closed
+historical review issue, while #1244 is the live watch issue for future
+direct-versus-retokenized schema or checker gaps. Warm-resident acceptance still
+requires direct token visibility or an explicit lower claim boundary, and token
+visibility alone cannot expand NPU beyond `warm_resident`.
 
 ## Current Evidence Snapshot
 
