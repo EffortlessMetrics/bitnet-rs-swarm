@@ -245,7 +245,10 @@ governed Qwen export/profile/cache tuple.
   stdout/stderr under numeric `OPENVINO_LOG_LEVEL`, records log provenance and
   hashes, and emits the validator-admitted debug-log evidence artifact while
   preserving the generated phase receipt's `not_exposed` selected-device
-  boundary.
+  boundary. The wrapper also preserves SDPA attention-backend warning context
+  and AUTO startup/running fallback-disabled lines when they appear in the raw
+  log, without changing the phase receipt's application `fallback_used=false`
+  decision.
 - `crates/bitnet-cli/src/commands/lunar_lake.rs` currently indexes CLI
   `--device auto` operator-ask receipts and explicit OpenVINO GPU/NPU route
   evidence. That is route-selector evidence, not OpenVINO runtime-layer `AUTO`

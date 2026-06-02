@@ -18,6 +18,10 @@ from openvino_genai_auto_debug_log_parser import build_debug_log_evidence
 
 ARTIFACT_KIND = "lunar_lake_openvino_auto_genai_debug_log_evidence"
 DEFAULT_PHASE_SCRIPT = Path(__file__).resolve().parent / "openvino_genai_phase_receipt.py"
+ATTENTION_BACKEND_WARNING = (
+    "Paged Attention backend initialization failed. Falling back to SDPA backend."
+)
+AUTO_FALLBACK_DISABLED_MARKERS = ("enable_startup_fallback", "enable_running_fallback")
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,7 +89,15 @@ def requested_devices_from_phase(phase_receipt: dict[str, Any], fallback: list[s
     return requested or fallback
 
 
-def same_run_answer_and_fallback(auto_device: dict[str, Any] | None) -> dict[str, Any]:
+def matching_log_lines(text: str, markers: tuple[str, ...]) -> list[dict[str, Any]]:
+    matches = []
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if any(marker in line for marker in markers):
+            matches.append({"line": line_no, "text": line.rstrip()})
+    return matches
+
+
+def same_run_answer_and_fallback(auto_device: dict[str, Any] | None, debug_log_text: str) -> dict[str, Any]:
     cases = []
     if auto_device:
         for case in auto_device.get("cases") or []:
@@ -106,6 +118,9 @@ def same_run_answer_and_fallback(auto_device: dict[str, Any] | None) -> dict[str
                 }
             )
 
+    attention_warning_lines = matching_log_lines(debug_log_text, (ATTENTION_BACKEND_WARNING,))
+    auto_fallback_disabled_lines = matching_log_lines(debug_log_text, AUTO_FALLBACK_DISABLED_MARKERS)
+
     return {
         "phase_receipt_runtime_device": "AUTO",
         "phase_receipt_fallback_used": bool(auto_device.get("fallback_used")) if auto_device else False,
@@ -117,6 +132,15 @@ def same_run_answer_and_fallback(auto_device: dict[str, Any] | None) -> dict[str
         "case_count": len(cases),
         "all_answer_gates_passed": bool(cases) and all(case["answer_gate_passed"] for case in cases),
         "cases": cases,
+        "attention_backend_warning_observed": bool(attention_warning_lines),
+        "attention_backend_warning_lines": attention_warning_lines,
+        "attention_backend_warning_boundary": (
+            "The SDPA warning is recorded as an attention-backend implementation fallback, "
+            "not as application route/device fallback; application fallback_used remains "
+            "false in the phase receipt."
+        ),
+        "auto_startup_running_fallback_disabled_observed": bool(auto_fallback_disabled_lines),
+        "auto_startup_running_fallback_disabled_lines": auto_fallback_disabled_lines,
     }
 
 
@@ -157,7 +181,8 @@ def run_phase_script(args: argparse.Namespace) -> list[str]:
 def build_evidence_receipt(args: argparse.Namespace, command: list[str]) -> dict[str, Any]:
     phase_receipt = load_json(args.phase_json_out)
     auto_device = auto_device_block(phase_receipt)
-    parsed_evidence = build_debug_log_evidence(args.debug_log_out.read_text(encoding="utf-8"))
+    debug_log_text = args.debug_log_out.read_text(encoding="utf-8")
+    parsed_evidence = build_debug_log_evidence(debug_log_text)
     phase_record = file_record(args.phase_json_out)
     log_record = file_record(args.debug_log_out)
     phase_record.update(
@@ -210,7 +235,7 @@ def build_evidence_receipt(args: argparse.Namespace, command: list[str]) -> dict
             "model": phase_receipt.get("model"),
         },
         "genai_debug_log_evidence": parsed_evidence,
-        "same_run_answer_and_fallback": same_run_answer_and_fallback(auto_device),
+        "same_run_answer_and_fallback": same_run_answer_and_fallback(auto_device, debug_log_text),
         "claim_boundary": {
             "may_claim": [
                 "A repeatable receipt-source path captured OpenVINO GenAI runtime AUTO debug logs.",
