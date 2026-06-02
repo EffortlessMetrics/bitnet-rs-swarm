@@ -554,7 +554,6 @@
 | intel-a770 | A770-018 | A770-017 | merged |
 | intel-a770 | A770-019 | A770-018 | merged |
 | intel-a770 | A770-020 | A770-019 | merged |
-| intel-a770 | A770-075 | A770-074 | pr_open |
 | intel-a770 | A770-034 | A770-033 | merged |
 | intel-a770 | A770-035 | A770-034 | merged |
 | intel-a770 | A770-036 | A770-035 | merged |
@@ -609,6 +608,7 @@
 | intel-a770 | A770-072 | A770-071 | merged |
 | intel-a770 | A770-073 | A770-072 | merged |
 | intel-a770 | A770-074 | A770-073 | merged |
+| intel-a770 | A770-075 | A770-074 | merged |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
