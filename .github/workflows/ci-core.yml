@@ -84,7 +84,15 @@ env:
 jobs:
   classify-changes:
     name: Classify Changes
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 5
     outputs:
       tracker_only: ${{ steps.classify.outputs.tracker_only }}
@@ -224,7 +232,15 @@ jobs:
 
   tracker-fast-path:
     name: No-Rust Fast Path
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
     needs: [classify-changes]
     if: needs.classify-changes.outputs.fast_path_checks_required == 'true'
@@ -281,7 +297,15 @@ jobs:
   # Job name reflects the self-hosted Linux runner required for core CI.
   build-test-linux:
     name: Build & Test (self-hosted linux x64)
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     # Keep this above the normal completion time for the expanded core test
     # lane. CI timeouts are guardrails against wedged jobs, not targets that
     # should routinely cancel useful proof near completion.
@@ -583,7 +607,15 @@ jobs:
   # PR, so functional regressions to those crates are caught regardless.
   grid-check:
     name: BDD Grid Check
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 20
     needs: [classify-changes]
     if: >-
@@ -621,7 +653,15 @@ jobs:
   # Job 4: Clippy linting
   clippy:
     name: Clippy
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 10
     needs: [classify-changes]
     env:
@@ -741,7 +781,15 @@ jobs:
   # Job 6: Documentation build
   docs:
     name: Documentation
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 15
     needs: [classify-changes]
     steps:
@@ -780,7 +828,15 @@ jobs:
   # Summary job (required for branch protection)
   ci-core-success:
     name: CI Core Success
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 5
     needs: [classify-changes, tracker-fast-path, build-test-linux, grid-check, clippy, docs]
     if: always()
