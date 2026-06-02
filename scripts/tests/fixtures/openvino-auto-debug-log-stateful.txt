@@ -1,0 +1,14 @@
+[00:00:00.0000]I[auto_schedule.cpp:159][AUTO] select device:GPU.0
+[00:00:01.0000]I[auto_schedule.cpp:337][AUTO] Device: [GPU.0]: Compile model took 123.000000 ms
+Model: Stateful LLM model
+  NETWORK_NAME: Model0
+  EXECUTION_DEVICES: GPU.0
+  PERFORMANCE_HINT: LATENCY
+  OPTIMAL_NUMBER_OF_INFER_REQUESTS: 1
+  MULTI_DEVICE_PRIORITIES: GPU.0,CPU
+  GPU.0:
+    EXECUTION_DEVICES: GPU.0
+    CACHE_MODE: optimize_speed
+EXECUTION_DEVICES:
+ GPU.0: Intel(R) Arc(TM) 140V GPU (16GB) (iGPU)
+[00:00:02.0000]I[schedule.cpp:312][AUTO] scheduler ending
