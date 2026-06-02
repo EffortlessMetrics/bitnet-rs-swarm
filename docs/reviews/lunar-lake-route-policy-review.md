@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1251](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267), [#1294](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1294), [#1298](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1298)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -53,10 +53,10 @@ evidence contracts current:
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1178 for BitNet semantic-intake freshness; current intake remains ready, but
   future shared BitNet semantic changes must rerun affected CPU reference
-  evidence before BitNet route-policy changes; #1263 owns the narrower
-  diagnostic-only shared-surface classification question when a merged
-  BitNet-adjacent instrumentation touch should be recorded as a reviewed
-  non-trigger instead of forcing a CPU reference rerun;
+  evidence before BitNet route-policy changes. #1263 is closed by #1267 as the
+  diagnostic-only shared-surface classification path; future ambiguous
+  BitNet-adjacent instrumentation touches should open a new narrow child under
+  #1178 rather than weaken true semantic rerun behavior;
 - #1149 for `AUTO` selected-device evidence before any `AUTO` receipt is used
   as route-policy evidence, with the current evidence contract recorded by
   #1158 in
@@ -155,7 +155,7 @@ These rules apply before profile-specific promotion language:
 | NPU evidence excludes pipeline construction | May support `warm_resident`; must not support cold one-off promotion |
 | Cache hit is timing-derived rather than runtime-reported | Use for diagnosis only unless a later accepted policy allows it |
 | Shared BitNet semantic fix lands after current CPU reference evidence | Rerun affected BitNet CPU reference evidence through #1178 before changing BitNet route policy |
-| Merged BitNet-adjacent diagnostic-only instrumentation touches shared surfaces | Classify through #1263 as a reviewed non-trigger before treating it as safe; ambiguous classification remains blocked |
+| Merged BitNet-adjacent diagnostic-only instrumentation touches shared surfaces | Classify through the #1263/#1267 reviewed non-trigger pattern before treating it as safe; ambiguous classification remains blocked and needs a new narrow #1178 child |
 | Dense SLM OpenVINO evidence passes | Do not infer BitNet QK256/I2_S behavior, native OpenCL, native NPU kernels, or full BitNet accelerator inference |
 | Old-repo Lunar Lake text or stale generated dashboard disagrees with swarm receipts | Treat swarm receipts and swarm issues as current; do not update route policy from old-repo wording |
 
@@ -223,11 +223,16 @@ by #1064.
 `bitnet_reference_cpu` is a separate specialist route. Dense Qwen CPU, GPU, or
 NPU success must not be treated as BitNet QK256/I2_S proof. Shared BitNet
 semantic-intake changes must rerun the affected CPU reference receipts before
-BitNet route policy changes. #1178 owns that freshness contract; #1263 owns the
-child classification for merged diagnostic-only shared-surface touches that
-should be reviewed and recorded without turning into a stale BitNet CPU
-reference trigger. This review does not require a rerun while the current
-semantic intake remains ready.
+BitNet route policy changes. #1178 owns that freshness contract. #1263 is
+closed by #1267 as the current diagnostic-only shared-surface non-trigger
+classification path, which records reviewed merged instrumentation without
+turning it into a stale BitNet CPU reference trigger. The current #1178 audit
+through swarm `main` `d6197833b299ea3b5d547f32f72cc8eef2ed88bc` keeps
+`rerun_required=false`, `intake_ready=true`, and
+`dense_slm_as_bitnet_proof=false`; the post-`c8076ea` A770-071 replay and
+closeout commits (#1305/#1306) are docs/receipts/tracking-only non-triggers.
+This review does not require a rerun while the current semantic intake remains
+ready.
 
 ## Route Mutation Checklist
 
@@ -275,10 +280,13 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   proof-family map before depending on route identity.
 - #1178 owns BitNet semantic-intake freshness. Current intake stays ready
   unless a shared BitNet semantic change, validator gap, or receipt gap makes a
-  targeted CPU reference rerun necessary. #1263 owns the narrower
-  diagnostic-only classification path for merged shared-surface touches that
-  should remain reviewed non-triggers without weakening true semantic rerun
-  behavior.
+  targeted CPU reference rerun necessary. #1263 is closed by #1267 as the
+  current diagnostic-only classification path for reviewed merged
+  shared-surface touches such as #1257/#1264. Current post-`c8076ea` A770-071
+  replay/closeout work (#1305/#1306) is docs/receipts/tracking-only and does
+  not change the BitNet semantic intake state; future ambiguous diagnostic
+  replay indexing should be another narrow diagnostic-only refresh under
+  #1178, not a BitNet reference rerun.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
   records the current fail-closed contract from #1158, and #1159 has landed the
