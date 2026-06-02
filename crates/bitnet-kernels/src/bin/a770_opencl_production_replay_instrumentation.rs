@@ -407,6 +407,7 @@ fn samples_json(
 }
 
 fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
+    let receipt_kind = FocusedReceiptKind::from_receipt_path(&args.receipt);
     let focused_source = args
         .focused_source
         .as_ref()
@@ -422,7 +423,14 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
     let source: Value = serde_json::from_str(&source_json)?;
     let context = focused_context(&source, case_id, first_mismatch_index);
     let replay_outcome = focused_replay_outcome(&source, case_id, first_mismatch_index);
-    let classification = focused_classification(&context, replay_outcome.as_ref());
+    let classification = match receipt_kind {
+        FocusedReceiptKind::RawOperandReplay => {
+            focused_classification(&context, replay_outcome.as_ref())
+        }
+        FocusedReceiptKind::HostPolicyExpressionSplit => {
+            focused_host_policy_expression_split_classification(&context, replay_outcome.as_ref())
+        }
+    };
     let focused_summary_divergence_available =
         context.focused_device_output_bits.is_some() && context.focused_policy_bits.is_some();
     let focused_summary_device_vs_policy_bits_match =
@@ -446,7 +454,14 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
         focused_production_replay_summary_json(replay_outcome.as_ref(), &context);
     let focused_production_replay_samples =
         focused_production_replay_samples_json(replay_outcome.as_ref());
-    let next_diagnostic = focused_next_diagnostic(&context, replay_outcome.as_ref());
+    let next_diagnostic = match receipt_kind {
+        FocusedReceiptKind::RawOperandReplay => {
+            focused_next_diagnostic(&context, replay_outcome.as_ref())
+        }
+        FocusedReceiptKind::HostPolicyExpressionSplit => {
+            focused_host_policy_expression_split_next_diagnostic(&context, replay_outcome.as_ref())
+        }
+    };
     let (host_to_device_bytes, device_to_host_bytes, kernel_invocations) = match &replay_outcome {
         Some(FocusedReplayOutcome::Executed { replay, .. }) => {
             (replay.host_to_device_bytes, replay.device_to_host_bytes, replay.kernel_invocations)
@@ -454,11 +469,11 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
         _ => (0, 0, 0),
     };
 
-    let receipt = json!({
+    let mut receipt = json!({
         "campaign": "intel-a770",
-        "work_item": "A770-064",
-        "proof_family": "a770_opencl_qk256_focused_raw_operand_replay",
-        "proof_stage": "diagnostic_focused_raw_operands_production_replay_classified",
+        "work_item": receipt_kind.work_item(),
+        "proof_family": receipt_kind.proof_family(),
+        "proof_stage": receipt_kind.proof_stage(),
         "requested_backend": "intel-arc-a770",
         "selected_backend": "intel-arc-a770-opencl",
         "runtime_api": "opencl",
@@ -517,6 +532,10 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             "adjusted_dot": context.adjusted_dot,
             "focused_device_output_bits": context.focused_device_output_bits,
             "focused_policy_bits": context.focused_policy_bits,
+            "host_policy_div_then_mul_bits": context.host_policy_div_then_mul_bits,
+            "host_policy_mul_then_div_bits": context.host_policy_mul_then_div_bits,
+            "host_policy_reciprocal_then_mul_bits": context.host_policy_reciprocal_then_mul_bits,
+            "host_policy_f64_div_then_mul_cast_bits": context.host_policy_f64_div_then_mul_cast_bits,
             "focused_summary_device_vs_policy_bits_match": focused_summary_device_vs_policy_bits_match,
             "device_intermediate_classification": context.device_intermediate_classification,
             "device_expression_classification": context.device_expression_classification,
@@ -559,7 +578,67 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             "A770 performance speedup is proven"
         ]
     });
+    if receipt_kind == FocusedReceiptKind::HostPolicyExpressionSplit {
+        let split = focused_host_policy_expression_split_json(&context, replay_outcome.as_ref());
+        if let Some(object) = receipt.as_object_mut() {
+            if let Some(source_receipts) =
+                object.get_mut("source_receipts").and_then(Value::as_object_mut)
+            {
+                source_receipts.insert(
+                    "focused_raw_operand_replay".to_string(),
+                    json!(
+                        "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-focused-raw-operands-replay.json"
+                    ),
+                );
+            }
+            object.insert("host_policy_expression_split".to_string(), split);
+        }
+    }
     Ok(serde_json::to_string_pretty(&receipt)? + "\n")
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FocusedReceiptKind {
+    RawOperandReplay,
+    HostPolicyExpressionSplit,
+}
+
+impl FocusedReceiptKind {
+    fn from_receipt_path(path: &Path) -> Self {
+        let path = path.to_string_lossy().replace('\\', "/");
+        if path.contains("focused-host-policy-expression-split") {
+            Self::HostPolicyExpressionSplit
+        } else {
+            Self::RawOperandReplay
+        }
+    }
+
+    fn work_item(self) -> &'static str {
+        match self {
+            Self::RawOperandReplay => "A770-064",
+            Self::HostPolicyExpressionSplit => "A770-065",
+        }
+    }
+
+    fn proof_family(self) -> &'static str {
+        match self {
+            Self::RawOperandReplay => "a770_opencl_qk256_focused_raw_operand_replay",
+            Self::HostPolicyExpressionSplit => {
+                "a770_opencl_qk256_focused_host_policy_expression_split"
+            }
+        }
+    }
+
+    fn proof_stage(self) -> &'static str {
+        match self {
+            Self::RawOperandReplay => {
+                "diagnostic_focused_raw_operands_production_replay_classified"
+            }
+            Self::HostPolicyExpressionSplit => {
+                "diagnostic_focused_host_policy_expression_split_classified"
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -595,6 +674,10 @@ struct FocusedContext {
     adjusted_dot: Option<i64>,
     focused_device_output_bits: Option<u64>,
     focused_policy_bits: Option<u64>,
+    host_policy_div_then_mul_bits: Option<u64>,
+    host_policy_mul_then_div_bits: Option<u64>,
+    host_policy_reciprocal_then_mul_bits: Option<u64>,
+    host_policy_f64_div_then_mul_cast_bits: Option<u64>,
     device_intermediate_classification: Option<String>,
     device_expression_classification: Option<String>,
     production_policy_change_justified: Option<bool>,
@@ -616,6 +699,26 @@ struct FocusedRawOperands {
     weight_scale_bits: u32,
     activations_i8: Vec<i8>,
     packed_qk256: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+struct FocusedScalarOracle {
+    expected_row_stride_bytes: usize,
+    row_stride_matches_expected: bool,
+    activation_sum_from_raw: i32,
+    activation_sum_matches_receipt: bool,
+    int_dot: i32,
+    adjusted_dot: i32,
+    adjusted_f32_bits: u32,
+    reciprocal_activation_scale_bits: u32,
+    adjusted_mul_reciprocal_bits: u32,
+    final_scaled_value_bits: u32,
+    div_then_mul_bits: u32,
+    weight_over_activation_bits: u32,
+    reciprocal_then_mul_bits: u32,
+    used_payload_bytes: usize,
+    row_padding_bytes: usize,
+    unused_tail_columns: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -959,6 +1062,14 @@ fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -
             u64_field(sample, "div_then_mul_bits")
                 .or_else(|| u64_field(sample, "f64_div_then_mul_cast_bits"))
         }),
+        host_policy_div_then_mul_bits: expression_sample
+            .and_then(|sample| u64_field(sample, "div_then_mul_bits")),
+        host_policy_mul_then_div_bits: expression_sample
+            .and_then(|sample| u64_field(sample, "mul_then_div_bits")),
+        host_policy_reciprocal_then_mul_bits: expression_sample
+            .and_then(|sample| u64_field(sample, "reciprocal_then_mul_bits")),
+        host_policy_f64_div_then_mul_cast_bits: expression_sample
+            .and_then(|sample| u64_field(sample, "f64_div_then_mul_cast_bits")),
         device_intermediate_classification: string_at(
             qkv_row,
             &["right_replay", "device_intermediate_trace", "classification"],
@@ -994,6 +1105,228 @@ fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -
         production_replay_skipped_reason,
         missing_raw_operand_fields,
         next_diagnostic,
+    }
+}
+
+fn focused_host_policy_expression_split_classification(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
+    if !context.case_found || !context.qkv_context_available {
+        return "a770_qk256_focused_host_policy_expression_split_missing_context";
+    }
+    let Some(FocusedReplayOutcome::Executed { replay, .. }) = replay_outcome else {
+        return if matches!(replay_outcome, Some(FocusedReplayOutcome::Failed { .. })) {
+            "a770_qk256_focused_host_policy_expression_split_replay_failed"
+        } else {
+            "a770_qk256_focused_host_policy_expression_split_missing_raw_operands"
+        };
+    };
+    let Some(sample) = replay.samples.first() else {
+        return "a770_qk256_focused_host_policy_expression_split_missing_samples";
+    };
+    let Some(device_bits) = context.focused_device_output_bits else {
+        return "a770_qk256_focused_host_policy_expression_split_missing_device_bits";
+    };
+    let Some(policy_bits) = context.focused_policy_bits else {
+        return "a770_qk256_focused_host_policy_expression_split_missing_host_policy_bits";
+    };
+
+    let production_bits = u64::from(sample.production_output_bits);
+    let replay_bits = u64::from(sample.replay_output_bits);
+    let final_bits = u64::from(sample.final_scaled_value_bits);
+    if policy_bits == device_bits && production_bits == device_bits {
+        "a770_qk256_focused_host_policy_expression_split_clean"
+    } else if production_bits == device_bits
+        && replay_bits == device_bits
+        && final_bits == device_bits
+        && policy_bits != device_bits
+        && bit_delta(Some(device_bits), Some(policy_bits)) == Some(1)
+    {
+        "a770_qk256_focused_host_policy_expression_split_host_summary_policy_replay_one_bit"
+    } else if production_bits != replay_bits || production_bits != final_bits {
+        "a770_qk256_focused_host_policy_expression_split_selected_device_production_expression"
+    } else if context.host_policy_div_then_mul_bits == Some(policy_bits)
+        || context.host_policy_mul_then_div_bits == Some(policy_bits)
+        || context.host_policy_reciprocal_then_mul_bits == Some(policy_bits)
+    {
+        "a770_qk256_focused_host_policy_expression_split_host_expression_order"
+    } else {
+        "a770_qk256_focused_host_policy_expression_split_serialization_or_unclassified"
+    }
+}
+
+fn focused_host_policy_expression_split_next_diagnostic(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
+    match focused_host_policy_expression_split_classification(context, replay_outcome) {
+        "a770_qk256_focused_host_policy_expression_split_host_summary_policy_replay_one_bit" => {
+            "apply a bounded host summary-policy semantic fix in the next work item, then re-run selected-device focused parity before any production QK256 promotion"
+        }
+        "a770_qk256_focused_host_policy_expression_split_clean" => {
+            "move to multi-case focused parity before any production QK256 promotion"
+        }
+        "a770_qk256_focused_host_policy_expression_split_selected_device_production_expression" => {
+            "inspect selected-device production output-store expression before any host policy change"
+        }
+        "a770_qk256_focused_host_policy_expression_split_host_expression_order" => {
+            "inspect host expression ordering and codegen before any production QK256 policy change"
+        }
+        "a770_qk256_focused_host_policy_expression_split_serialization_or_unclassified" => {
+            "inspect focused receipt serialization and bit-preserving summary policy before any production QK256 policy change"
+        }
+        _ => "restore focused raw operand replay context before any production QK256 policy change",
+    }
+}
+
+fn focused_host_policy_expression_split_json(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> Value {
+    match replay_outcome {
+        Some(FocusedReplayOutcome::Executed { operands, replay }) => {
+            let sample = replay.samples.first();
+            let oracle = focused_scalar_oracle(operands);
+            let device_bits = context.focused_device_output_bits;
+            let policy_bits = context.focused_policy_bits;
+            let production_bits = sample.map(|sample| u64::from(sample.production_output_bits));
+            let replay_bits = sample.map(|sample| u64::from(sample.replay_output_bits));
+            let final_bits = sample.map(|sample| u64::from(sample.final_scaled_value_bits));
+            let replay_matches_device = production_bits.is_some()
+                && production_bits == device_bits
+                && replay_bits == device_bits;
+            let replay_matches_policy = production_bits.is_some() && production_bits == policy_bits;
+            let host_policy_variants_all_match = [
+                context.host_policy_div_then_mul_bits,
+                context.host_policy_mul_then_div_bits,
+                context.host_policy_reciprocal_then_mul_bits,
+                context.host_policy_f64_div_then_mul_cast_bits,
+            ]
+            .into_iter()
+            .flatten()
+            .all(|bits| Some(bits) == policy_bits);
+            json!({
+                "classification": focused_host_policy_expression_split_classification(
+                    context,
+                    replay_outcome,
+                ),
+                "localized_to": "host_summary_policy_replay",
+                "selected_device_route": {
+                    "selected_backend": "intel-arc-a770-opencl",
+                    "runtime_api": "opencl",
+                    "runtime_device": context.runtime_device,
+                    "fallback_used": false,
+                    "production_replay_executed": true,
+                    "kernel_invocations": replay.kernel_invocations
+                },
+                "scalar_oracle": {
+                    "checked": true,
+                    "packing_decode": "qk256 block/chunk/lane/gp production layout",
+                    "expected_row_stride_bytes": oracle.expected_row_stride_bytes,
+                    "row_stride_bytes": operands.row_stride_bytes,
+                    "row_stride_matches_expected": oracle.row_stride_matches_expected,
+                    "activation_sum_from_raw": oracle.activation_sum_from_raw,
+                    "activation_sum_receipt": operands.activation_sum,
+                    "activation_sum_matches_receipt": oracle.activation_sum_matches_receipt,
+                    "int_dot": oracle.int_dot,
+                    "adjusted_dot": oracle.adjusted_dot,
+                    "adjusted_f32_bits": oracle.adjusted_f32_bits,
+                    "activation_scale_bits": operands.activation_scale_bits,
+                    "weight_scale_bits": operands.weight_scale_bits,
+                    "reciprocal_activation_scale_bits": oracle.reciprocal_activation_scale_bits,
+                    "adjusted_mul_reciprocal_bits": oracle.adjusted_mul_reciprocal_bits,
+                    "final_scaled_value_bits": oracle.final_scaled_value_bits,
+                    "div_then_mul_bits": oracle.div_then_mul_bits,
+                    "weight_over_activation_bits": oracle.weight_over_activation_bits,
+                    "reciprocal_then_mul_bits": oracle.reciprocal_then_mul_bits
+                },
+                "packing_decode": {
+                    "checked": true,
+                    "int_dot_matches_device_intermediate_trace": context
+                        .int_dot
+                        .is_some_and(|value| value == i64::from(oracle.int_dot)),
+                    "adjusted_dot_matches_device_intermediate_trace": context
+                        .adjusted_dot
+                        .is_some_and(|value| value == i64::from(oracle.adjusted_dot)),
+                    "int_dot_matches_selected_device_replay": sample
+                        .is_some_and(|sample| sample.int_dot == oracle.int_dot),
+                    "adjusted_dot_matches_selected_device_replay": sample
+                        .is_some_and(|sample| sample.adjusted_dot == oracle.adjusted_dot)
+                },
+                "scale_cast": {
+                    "checked": true,
+                    "source_host_policy_div_then_mul_bits": context.host_policy_div_then_mul_bits,
+                    "source_host_policy_mul_then_div_bits": context.host_policy_mul_then_div_bits,
+                    "source_host_policy_reciprocal_then_mul_bits": context
+                        .host_policy_reciprocal_then_mul_bits,
+                    "source_host_policy_f64_div_then_mul_cast_bits": context
+                        .host_policy_f64_div_then_mul_cast_bits,
+                    "selected_device_div_then_mul_bits": sample.map(|sample| sample.div_then_mul_bits),
+                    "selected_device_reciprocal_then_mul_bits": sample
+                        .map(|sample| sample.reciprocal_then_mul_bits),
+                    "selected_device_final_scaled_value_bits": final_bits,
+                    "source_host_policy_variants_all_match": host_policy_variants_all_match
+                },
+                "tail_padding": {
+                    "checked": true,
+                    "cols": operands.cols,
+                    "used_payload_bytes": oracle.used_payload_bytes,
+                    "row_padding_bytes": oracle.row_padding_bytes,
+                    "unused_tail_columns": oracle.unused_tail_columns,
+                    "no_tail_or_padding_for_focused_row": oracle.row_padding_bytes == 0
+                        && oracle.unused_tail_columns == 0
+                },
+                "serialization": {
+                    "checked": true,
+                    "bitwise_comparison_used": true,
+                    "focused_device_output_bits": device_bits,
+                    "focused_host_policy_bits": policy_bits,
+                    "selected_device_production_output_bits": production_bits,
+                    "selected_device_replay_output_bits": replay_bits,
+                    "selected_device_final_scaled_value_bits": final_bits,
+                    "device_vs_host_policy_bit_delta": bit_delta(device_bits, policy_bits),
+                    "one_bit_host_policy_split": bit_delta(device_bits, policy_bits) == Some(1),
+                    "selected_device_replay_matches_device_bits": replay_matches_device,
+                    "selected_device_replay_matches_host_policy_bits": replay_matches_policy
+                },
+                "claim_boundary": {
+                    "production_qk256_policy_change": false,
+                    "bitnet_inference": false,
+                    "qk256_decode": false,
+                    "claim_allowed": false,
+                    "diagnostic_only": true,
+                    "performance_claim": false,
+                    "full_residency_claim": false
+                }
+            })
+        }
+        Some(FocusedReplayOutcome::Failed { error }) => json!({
+            "classification": focused_host_policy_expression_split_classification(
+                context,
+                replay_outcome,
+            ),
+            "replay_error": error,
+            "claim_boundary": {
+                "production_qk256_policy_change": false,
+                "bitnet_inference": false,
+                "claim_allowed": false,
+                "diagnostic_only": true
+            }
+        }),
+        None => json!({
+            "classification": focused_host_policy_expression_split_classification(
+                context,
+                replay_outcome,
+            ),
+            "missing_raw_operand_fields": context.missing_raw_operand_fields,
+            "claim_boundary": {
+                "production_qk256_policy_change": false,
+                "bitnet_inference": false,
+                "claim_allowed": false,
+                "diagnostic_only": true
+            }
+        }),
     }
 }
 
@@ -1050,6 +1383,73 @@ fn focused_next_diagnostic(
         }
         None => context.next_diagnostic,
     }
+}
+
+fn focused_scalar_oracle(operands: &FocusedRawOperands) -> FocusedScalarOracle {
+    let expected_row_stride_bytes = qk256_row_stride_bytes(operands.cols);
+    let used_blocks = (operands.cols + 255) / 256;
+    let used_payload_bytes = used_blocks * 64;
+    let row_padding_bytes = operands.row_stride_bytes.saturating_sub(used_payload_bytes);
+    let unused_tail_columns = if operands.cols % 256 == 0 { 0 } else { 256 - operands.cols % 256 };
+    let activation_sum_from_raw =
+        operands.activations_i8.iter().map(|value| i32::from(*value)).sum::<i32>();
+    let int_dot =
+        focused_host_int_dot(&operands.activations_i8, &operands.packed_qk256, operands.cols);
+    let adjusted_dot = int_dot - operands.activation_sum;
+    let adjusted_f32 = adjusted_dot as f32;
+    let reciprocal_activation_scale = 1.0f32 / operands.activation_scale;
+    let adjusted_mul_reciprocal = adjusted_f32 * reciprocal_activation_scale;
+    let final_scaled_value = adjusted_mul_reciprocal * operands.weight_scale;
+    let div_then_mul = (adjusted_f32 / operands.activation_scale) * operands.weight_scale;
+    let weight_over_activation = operands.weight_scale / operands.activation_scale;
+    let reciprocal_then_mul = adjusted_f32 * weight_over_activation;
+
+    FocusedScalarOracle {
+        expected_row_stride_bytes,
+        row_stride_matches_expected: operands.row_stride_bytes == expected_row_stride_bytes,
+        activation_sum_from_raw,
+        activation_sum_matches_receipt: activation_sum_from_raw == operands.activation_sum,
+        int_dot,
+        adjusted_dot,
+        adjusted_f32_bits: adjusted_f32.to_bits(),
+        reciprocal_activation_scale_bits: reciprocal_activation_scale.to_bits(),
+        adjusted_mul_reciprocal_bits: adjusted_mul_reciprocal.to_bits(),
+        final_scaled_value_bits: final_scaled_value.to_bits(),
+        div_then_mul_bits: div_then_mul.to_bits(),
+        weight_over_activation_bits: weight_over_activation.to_bits(),
+        reciprocal_then_mul_bits: reciprocal_then_mul.to_bits(),
+        used_payload_bytes,
+        row_padding_bytes,
+        unused_tail_columns,
+    }
+}
+
+fn focused_host_int_dot(activations_i8: &[i8], packed_qk256: &[u8], cols: usize) -> i32 {
+    (0..cols)
+        .map(|col| {
+            i32::from(focused_read_qk256_code(packed_qk256, col)) * i32::from(activations_i8[col])
+        })
+        .sum()
+}
+
+fn focused_read_qk256_code(packed_qk256: &[u8], col: usize) -> u8 {
+    let block = col / 256;
+    let offset = col - block * 256;
+    let chunk = offset / 128;
+    let lane = (offset - chunk * 128) / 32;
+    let gp = offset & 31;
+    let byte_index = block * 64 + chunk * 32 + gp;
+    (packed_qk256[byte_index] >> (6 - lane * 2)) & 0x03
+}
+
+fn qk256_row_stride_bytes(cols: usize) -> usize {
+    ((cols + 255) / 256) * 64
+}
+
+fn bit_delta(left: Option<u64>, right: Option<u64>) -> Option<u64> {
+    let left = left?;
+    let right = right?;
+    if left >= right { Some(left - right) } else { Some(right - left) }
 }
 
 fn find_row<'a>(

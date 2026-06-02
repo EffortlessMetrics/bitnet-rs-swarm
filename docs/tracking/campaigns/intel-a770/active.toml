@@ -999,7 +999,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-065"
-status = "ready"
+status = "pr_open"
+pr = 1260
+head_sha = "bf50f7f093eefd329d1b67b3761b57b7e2aefb48"
 branch = "codex/intel-a770/A770-065-host-policy-expression-split"
 stackable = false
 review_mode = "codex_premerge"
