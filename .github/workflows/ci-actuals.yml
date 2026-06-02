@@ -20,7 +20,15 @@ concurrency:
 jobs:
   record:
     name: Record CI actuals
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-tiny
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-tiny
+        - trusted-pr
     timeout-minutes: 10
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
     steps:
