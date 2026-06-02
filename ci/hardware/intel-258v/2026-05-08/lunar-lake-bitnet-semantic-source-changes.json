@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_bitnet_semantic_source_changes",
-  "created_utc": "2026-05-21T06:49:14Z",
+  "created_utc": "2026-06-02T08:45:00Z",
   "machine_id": "intel-258v",
   "changes": [
     {
@@ -92,6 +92,53 @@
       ],
       "requires_lunar_lake_rerun_when_merged_to_main": false,
       "claim_boundary": "shared CPU/A770 runtime correctness fix candidate was closed without main merge; no Lunar Lake rerun, route promotion, speedup, acceleration, or BitNet QK256/I2_S behavior-change claim is made"
+    },
+    {
+      "source_lane": "a770",
+      "source_pr": 1257,
+      "title": "[codex] A770-064 focused raw operand replay",
+      "status": "merged_to_main",
+      "base_ref": "main",
+      "head_sha": "1cbc81cc6af21894574a5ecb10e525d0850a0d52",
+      "merge_sha": "1cbc81cc6af21894574a5ecb10e525d0850a0d52",
+      "merged_at_utc": "2026-06-02T05:41:31Z",
+      "semantic_scope": [
+        "diagnostic_only",
+        "qk256_raw_operand_replay",
+        "a770_instrumentation"
+      ],
+      "requires_lunar_lake_rerun_when_merged_to_main": false,
+      "classification": "merged_diagnostic_only_no_lunar_lake_rerun",
+      "touched_shared_surfaces": [
+        "crates/bitnet-models/src/bitnet.rs",
+        "crates/bitnet-qk256-dispatch/src/lib.rs",
+        "crates/bitnet-transformer/src/attention_forward.rs",
+        "crates/bitnet-transformer/src/lib.rs",
+        "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs"
+      ],
+      "claim_boundary": "diagnostic-only A770 raw operand replay instrumentation; no Lunar Lake BitNet CPU reference rerun, route promotion, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim"
+    },
+    {
+      "source_lane": "a770",
+      "source_pr": 1264,
+      "title": "A770-066 host summary policy semantic fix",
+      "status": "merged_to_main",
+      "base_ref": "main",
+      "head_sha": "b06afb59e3501dce7afb6993832024cde236763a",
+      "merge_sha": "ea33a387bfa6ec51ec6cfc779672928c6a982357",
+      "merged_at_utc": "2026-06-02T09:01:45Z",
+      "semantic_scope": [
+        "diagnostic_only",
+        "qk256_host_summary_policy",
+        "a770_instrumentation"
+      ],
+      "requires_lunar_lake_rerun_when_merged_to_main": false,
+      "classification": "merged_diagnostic_only_no_lunar_lake_rerun",
+      "touched_shared_surfaces": [
+        "crates/bitnet-cli/src/commands/answer_parity.rs",
+        "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs"
+      ],
+      "claim_boundary": "diagnostic-only A770 host summary-policy reporting and replay instrumentation; no Lunar Lake BitNet CPU reference rerun, route promotion, dense-SLM-as-BitNet proof, production QK256 dispatch-policy change, or BitNet QK256/I2_S behavior-change claim"
     }
   ]
 }
