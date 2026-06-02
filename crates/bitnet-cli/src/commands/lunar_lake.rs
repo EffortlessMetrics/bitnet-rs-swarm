@@ -76,6 +76,7 @@ const CPU_SLM_THREAD_CORE_REQUIRED_VARIANTS: &[&str] =
     &["default", "threads_1", "threads_4", "threads_8"];
 const CPU_SLM_THREAD_CORE_REQUIRED_PROFILES: &[&str] =
     &["regression_tiny", "ask_short", "ask_normal"];
+const CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST: u64 = 30;
 const CPU_SLM_PHASE_NOT_EXPOSED: &str = "not_exposed";
 const CPU_SLM_PHASE_REQUIRED_FIELDS: &[&str] = &[
     "cold_warm_mode",
@@ -2223,6 +2224,8 @@ pub struct LunarLakeCpuSlmResidentSession {
     pub resident_session: CpuSlmResidentSessionEvidence,
     pub cold_reference: CpuSlmResidentColdReference,
     pub profiles: Vec<CpuSlmResidentProfileSummary>,
+    #[serde(default = "default_cpu_slm_resident_measurement_qualification")]
+    pub measurement_qualification: CpuSlmResidentMeasurementQualification,
     pub resident_ready: bool,
     pub findings: Vec<String>,
     pub recommended_next_items: Vec<String>,
@@ -2395,6 +2398,33 @@ pub struct CpuSlmResidentProfilePhaseTimings {
     pub receipt_write_ms: CpuSlmResidentPhaseMetric,
     pub telemetry_ms: CpuSlmResidentPhaseMetric,
     pub total_response_ms: CpuSlmResidentPhaseMetric,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmResidentMeasurementQualification {
+    pub resident_phase_qualified: bool,
+    pub benchmark_qualified: bool,
+    pub status: String,
+    pub required_warm_asks_after_first: u64,
+    pub observed_warm_asks_after_first: Option<u64>,
+    pub blockers: Vec<String>,
+    pub benchmark_blockers: Vec<String>,
+}
+
+fn default_cpu_slm_resident_measurement_qualification() -> CpuSlmResidentMeasurementQualification {
+    CpuSlmResidentMeasurementQualification {
+        resident_phase_qualified: false,
+        benchmark_qualified: false,
+        status: "legacy_receipt_without_measurement_qualification".to_string(),
+        required_warm_asks_after_first: CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST,
+        observed_warm_asks_after_first: None,
+        blockers: vec![
+            "legacy resident receipt has no measurement qualification block".to_string(),
+        ],
+        benchmark_blockers: vec![
+            "resident receipt is not a matched CPU runtime benchmark comparison".to_string(),
+        ],
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -3640,9 +3670,10 @@ impl LunarLakeCommand {
                 let json_out = resolve_receipt_path(artifact_root, json_out);
                 write_or_print_cpu_slm_resident_session(&receipt, Some(&json_out))?;
                 if *strict && !receipt.resident_ready {
+                    let blockers = cpu_slm_resident_strict_blockers(&receipt);
                     bail!(
                         "Lunar Lake CPU dense SLM resident-session check failed: {}",
-                        receipt.gaps.join("; ")
+                        blockers.join("; ")
                     );
                 }
                 Ok(())
@@ -8111,6 +8142,8 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
     if profiles.is_empty() {
         gaps.push("resident session has no repeated profile timing summaries".to_string());
     }
+    let measurement_qualification =
+        cpu_slm_resident_measurement_qualification(&resident_session, &profiles);
 
     let mut findings = Vec::new();
     if let Some(total) = cold_reference.total_response_ms {
@@ -8182,6 +8215,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
         resident_session,
         cold_reference,
         profiles,
+        measurement_qualification,
         resident_ready,
         findings,
         recommended_next_items,
@@ -8663,6 +8697,142 @@ fn cpu_slm_resident_profiles(
             }
         })
         .collect()
+}
+
+fn cpu_slm_resident_measurement_qualification(
+    resident_session: &CpuSlmResidentSessionEvidence,
+    profiles: &[CpuSlmResidentProfileSummary],
+) -> CpuSlmResidentMeasurementQualification {
+    let observed_warm_asks_after_first =
+        resident_session.prompt_count.map(|count| count.saturating_sub(1));
+    let mut blockers = Vec::new();
+    if resident_session.first_resident_prompt.is_none() {
+        blockers.push("first resident prompt is not separated from the warm loop".to_string());
+    }
+    match observed_warm_asks_after_first {
+        Some(observed) if observed >= CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST => {}
+        Some(observed) => blockers.push(format!(
+            "resident warm loop has {observed}/{} required asks after the first resident ask",
+            CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST
+        )),
+        None => blockers.push(
+            "resident warm loop prompt count is missing, so asks after the first resident ask cannot be qualified"
+                .to_string(),
+        ),
+    }
+
+    let missing_memory_samples =
+        cpu_slm_resident_missing_memory_lifecycle_samples(resident_session);
+    if !missing_memory_samples.is_empty() {
+        blockers.push(format!(
+            "resident memory lifecycle samples are incomplete: {}",
+            missing_memory_samples.join(", ")
+        ));
+    }
+    for profile in profiles {
+        let missing_fields = cpu_slm_resident_missing_measured_phase_fields(profile);
+        if !missing_fields.is_empty() {
+            blockers.push(format!(
+                "profile {} missing measured phase fields: {}",
+                profile.profile_id,
+                missing_fields.join(", ")
+            ));
+        }
+    }
+    blockers.sort();
+    blockers.dedup();
+
+    let resident_phase_qualified = blockers.is_empty();
+    let mut benchmark_blockers =
+        vec!["resident receipt is not a matched CPU runtime benchmark comparison".to_string()];
+    if !resident_phase_qualified {
+        benchmark_blockers
+            .push("resident phase evidence is incomplete for benchmark qualification".to_string());
+    }
+    benchmark_blockers.sort();
+    benchmark_blockers.dedup();
+
+    CpuSlmResidentMeasurementQualification {
+        resident_phase_qualified,
+        benchmark_qualified: false,
+        status: if resident_phase_qualified {
+            "resident_phase_ready_context_only_not_benchmark_qualified".to_string()
+        } else {
+            "resident_phase_blocked_for_measurement_qualification".to_string()
+        },
+        required_warm_asks_after_first: CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST,
+        observed_warm_asks_after_first,
+        blockers,
+        benchmark_blockers,
+    }
+}
+
+fn cpu_slm_resident_strict_blockers(receipt: &LunarLakeCpuSlmResidentSession) -> Vec<String> {
+    let mut blockers = receipt.gaps.clone();
+    for profile in &receipt.profiles {
+        blockers.extend(
+            profile
+                .blockers
+                .iter()
+                .map(|blocker| format!("profile {}: {blocker}", profile.profile_id)),
+        );
+    }
+    if blockers.is_empty() {
+        blockers.push("resident_ready=false".to_string());
+    }
+    blockers.sort();
+    blockers.dedup();
+    blockers
+}
+
+fn cpu_slm_resident_missing_memory_lifecycle_samples(
+    resident_session: &CpuSlmResidentSessionEvidence,
+) -> Vec<String> {
+    let samples = &resident_session.memory_samples;
+    [
+        ("before_load_bytes", samples.before_load_bytes, samples.before_load_status.as_str()),
+        ("after_load_bytes", samples.after_load_bytes, samples.after_load_status.as_str()),
+        (
+            "after_first_ask_bytes",
+            samples.after_first_ask_bytes,
+            samples.after_first_ask_status.as_str(),
+        ),
+        (
+            "after_warm_loop_bytes",
+            samples.after_warm_loop_bytes,
+            samples.after_warm_loop_status.as_str(),
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(field, value, status)| {
+        (value.is_none() || status == CPU_SLM_PHASE_NOT_EXPOSED).then(|| field.to_string())
+    })
+    .collect()
+}
+
+fn cpu_slm_resident_missing_measured_phase_fields(
+    profile: &CpuSlmResidentProfileSummary,
+) -> Vec<String> {
+    let timings = &profile.phase_timings_ms;
+    [
+        ("prompt_token_count", &profile.prompt_token_count),
+        ("prompt_render_ms", &timings.prompt_render_ms),
+        ("tokenize_ms", &timings.tokenize_ms),
+        ("prefill_ms", &timings.prefill_ms),
+        ("first_token_ms", &timings.first_token_ms),
+        ("decode_ms", &timings.decode_ms),
+        ("detokenize_ms", &timings.detokenize_ms),
+        ("quality_gate_ms", &timings.quality_gate_ms),
+        ("receipt_write_ms", &timings.receipt_write_ms),
+        ("telemetry_ms", &timings.telemetry_ms),
+        ("total_response_ms", &timings.total_response_ms),
+    ]
+    .into_iter()
+    .filter_map(|(field, metric)| {
+        (metric.exposure != "measured" || metric.summary.sample_count == 0)
+            .then(|| field.to_string())
+    })
+    .collect()
 }
 
 fn cpu_slm_resident_generated_token_ids_source(prompt: &Value) -> Option<&'static str> {
@@ -23061,6 +23231,38 @@ mod tests {
         assert_eq!(profile.decode_tokens_per_s_mean, Some(8.0 / 0.084));
         assert_eq!(profile.cold_to_resident_total_ratio, Some(200.0 / 90.0));
         assert!(profile.blockers.is_empty());
+        assert!(!receipt.measurement_qualification.resident_phase_qualified);
+        assert!(!receipt.measurement_qualification.benchmark_qualified);
+        assert_eq!(
+            receipt.measurement_qualification.status,
+            "resident_phase_blocked_for_measurement_qualification"
+        );
+        assert_eq!(
+            receipt.measurement_qualification.required_warm_asks_after_first,
+            CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST
+        );
+        assert_eq!(receipt.measurement_qualification.observed_warm_asks_after_first, Some(1));
+        assert!(
+            receipt
+                .measurement_qualification
+                .blockers
+                .iter()
+                .any(|blocker| blocker.contains("resident warm loop has 1/30")),
+            "{:?}",
+            receipt.measurement_qualification.blockers
+        );
+        assert!(
+            receipt.measurement_qualification.blockers.iter().any(|blocker| {
+                blocker.contains(
+                    "profile ask_short missing measured phase fields: prompt_render_ms, detokenize_ms, quality_gate_ms, receipt_write_ms, telemetry_ms",
+                )
+            }),
+            "{:?}",
+            receipt.measurement_qualification.blockers
+        );
+        assert!(receipt.measurement_qualification.benchmark_blockers.contains(
+            &"resident receipt is not a matched CPU runtime benchmark comparison".to_string()
+        ));
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.speedup_claim);
         assert!(!receipt.claim_boundary.route_promotion_changed);
