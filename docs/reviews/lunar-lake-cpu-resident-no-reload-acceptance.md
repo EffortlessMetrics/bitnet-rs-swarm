@@ -4,12 +4,13 @@ Status: review
 Owner: intel/openvino
 Created: 2026-05-31
 Post-matrix refresh: 2026-06-01
+Resident package refresh: 2026-06-02
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
-Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
+Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319), [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
 
@@ -17,36 +18,39 @@ Policy impact: no policy exception
 
 Treat #1069 as closed historical command-surface work and use #1232 as the
 live resident Rust GGUF phase evidence contract. The current
-`lunar-lake-cpu-slm-resident-session.json` remains a useful no-reload
-diagnostic baseline, not a fresh post-#1209 physical measurement package.
+`lunar-lake-cpu-slm-resident-session.json` is now the #1334 physical resident
+package from the #1279 fixture and #1290/#1292 measured-field work, not the
+older #1255-only diagnostic baseline.
 
-The current receipt proves that the existing resident Rust GGUF CPU prompt loop
-can keep the model and tokenizer loaded once while recording per-profile timing
-for `regression_tiny`, `ask_short`, and `ask_normal`. It does not satisfy the
-fresh measurement target because it does not count one first resident ask plus
-30 additional warm asks in a new run, and it still lacks direct prompt-render,
-quality-gate, receipt-write, telemetry, and full memory lifecycle timing.
-PR #1255 made that boundary machine-readable in the committed receipt through a
-`measurement_qualification` block. The current status is explicitly blocked,
-not benchmark-ready.
+The current package records that the resident Rust GGUF CPU prompt loop keeps
+the model and tokenizer loaded once, then runs one first resident ask plus 32
+warm asks after first across `regression_tiny`, `ask_short`, and `ask_normal`.
+It now records prompt-token counts, prompt render, tokenize, prefill, first
+token, decode, detokenize, quality gate, total response, generated-token ID
+availability, deterministic text/IDs, fallback false, and before/after memory
+lifecycle fields. It remains diagnostic instead of benchmark-ready because
+profile `receipt_write_ms` and `telemetry_ms` are explicit `not_exposed` fields
+under #1291/#1292. PR #1319 closed #1311 by allowing
+`diagnostic_package_reviewable=true` while preserving strict
+`resident_phase_qualified=false` and `benchmark_qualified=false`.
 
-Issue #1277 defines the source-command boundary for the next physical package.
+Issue #1277 defines the source-command boundary for the resident physical
+package.
 The new resident-specific corpus lives at
 `ci/quality/lunar-lake-resident-qwen25-cpu.yaml`. It keeps the same three
 initial profile cases as the durability corpus but uses `repeat_runs=11`, so
 `slm-warm-session --corpus ci/quality/lunar-lake-resident-qwen25-cpu.yaml`
 produces 33 prompts: one first resident ask plus 32 warm asks after first. This
-defines source shape only. It does not replace the committed diagnostic
-receipt or make the resident session benchmark-qualified until a fresh physical
-receipt records the remaining phase, token, memory, and telemetry fields.
+defines the resident source shape used by the current #1334 package. It does
+not make the resident session benchmark-qualified while profile receipt-write
+and telemetry timing remain contract-not-exposed fields.
 
-Issue #1280 target-only reruns after #1290 now show that the source shape can
-produce 33 prompts with fallback false, deterministic output, measured prompt
-render, quality gate, detokenization, and memory lifecycle fields. The package
-still stays diagnostic because profile `receipt_write_ms` and `telemetry_ms`
-are explicit `not_exposed` under #1291/#1292, and #1311 must decide whether a
-separate diagnostic reviewability status is allowed while strict
-`resident_phase_qualified` and `benchmark_qualified` remain false.
+Issue #1280 is closed by #1334. Issue #1281/#1290 added source-side prompt
+render, quality gate, detokenization, and memory lifecycle measurements. The
+tracking in #1291/#1292 kept receipt-write and telemetry phase timing explicit
+`not_exposed` values. Issue #1311/#1319 added the diagnostic-reviewable status
+so this package can be reviewed without becoming strict phase or benchmark
+evidence.
 
 Do not optimize CPU kernels, change route policy, tune thread defaults, promote
 OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
@@ -57,32 +61,33 @@ OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
 
 | Field | Current value | Acceptance relevance |
 | --- | --- | --- |
-| Schema | `1.1.0` | Includes explicit gap fields from #1085 |
+| Schema | `1.2.0` | Includes diagnostic-reviewable qualification from #1319 |
 | Route | `dense_slm_default_cpu` | CPU correctness/fallback route |
 | Backend | `cpu-rust` | Rust GGUF dense Qwen path |
 | Runtime | `resident_cpu_rust_gguf` | Resident prompt loop context |
 | Fallback | `false` | Required for strict CPU route evidence |
 | Model loaded once | `true` | No model reload observed in source receipt |
 | Tokenizer loaded once | `true` | No tokenizer reload observed in source receipt |
-| Model load | 13592.773 ms | One-time load cost remains separate |
-| Tokenizer load | 568.949 ms | One-time tokenizer load remains separate |
-| Prompt count | 30 | Existing warm-loop evidence count |
+| Model load | 9892.535 ms | One-time load cost remains separate |
+| Tokenizer load | 253.471 ms | One-time tokenizer load remains separate |
+| Prompt count | 33 | One first resident ask plus 32 warm asks after first |
 | Thread count | 1 | #1071 is closed by #1208; no thread-count tuning follows |
-| Power scheme | `not_sampled_in_slm_cpu_warm_session` | Telemetry gap, not zero evidence |
-| AC/battery state | `not_sampled_in_slm_cpu_warm_session` | Telemetry gap, not low-power evidence |
-| Memory before load | `not_exposed` | Lifecycle gap remains |
-| Memory after load | `not_exposed` | Lifecycle gap remains |
-| Memory after first ask | `not_exposed` | Lifecycle gap remains |
-| Memory after warm loop | 2801647616 bytes | Only after-loop memory sample is measured |
-| Prompt token counts | `not_exposed` in profile summaries | Profile applicability gap remains |
-| Prompt render timing | `not_exposed` | Host setup gap remains |
-| Quality gate timing | `not_exposed` | Receipt overhead gap remains |
+| Power scheme | `Balanced` | Measured context, not low-power evidence |
+| AC/battery state | `AC` | Measured context, not battery-mode evidence |
+| Memory before load | 20213760 bytes | Lifecycle field measured |
+| Memory after load | 2792079360 bytes | Lifecycle field measured |
+| Memory after first ask | 2802257920 bytes | Lifecycle field measured |
+| Memory after warm loop | 2802737152 bytes | Lifecycle field measured |
+| Prompt token counts | measured in profile summaries | Profile applicability field present |
+| Prompt render timing | measured in profile summaries | Host setup field present |
+| Quality gate timing | measured in profile summaries | Quality-check overhead field present |
 | Receipt write timing | `not_exposed` | Receipt overhead gap remains |
 | Telemetry timing | `not_exposed` | Measurement overhead gap remains |
-| Measurement qualification | `resident_phase_blocked_for_measurement_qualification` | #1255 keeps resident no-reload evidence separate from benchmark-ready #1232 phase evidence |
-| Resident phase qualified | `false` | Fresh resident phase package still missing |
+| Measurement qualification | `resident_phase_blocked_for_measurement_qualification` | Strict phase qualification remains blocked by `receipt_write_ms` and `telemetry_ms` |
+| Diagnostic package reviewable | `true` | #1319 allows review without strict qualification |
+| Resident phase qualified | `false` | Phase package is diagnostic only |
 | Benchmark qualified | `false` | No CPU speedup, OpenVINO CPU promotion, or route-policy claim |
-| Warm asks after first resident ask | 29 observed, 30 required | Current source remains one short of the accepted 30-after-first contract |
+| Warm asks after first resident ask | 32 observed, 30 required | Run-shape count is satisfied, but strict phase fields remain incomplete |
 
 The useful current conclusion is:
 
@@ -101,33 +106,32 @@ as benchmark-qualified against OpenVINO CPU.
 ## Current Command Surface
 
 The current command surface preserves the resident no-reload diagnostic
-boundary, but it does not yet collect the physical resident phase run now
-defined by #1232.
+boundary and now indexes the #1334 physical resident source package.
 
-- `lunar-lake cpu-slm-resident-session` is currently a no-new-inference
-  summarizer over `lunar-lake-cpu-slm-phase-attribution.json` and an existing
-  `slm_cpu_warm_session` source receipt.
+- `lunar-lake cpu-slm-resident-session` is a no-new-inference summarizer over
+  `lunar-lake-cpu-slm-phase-attribution.json` and the physical
+  `lunar-lake-resident-qwen25-cpu-warm-session.json` source receipt.
 - It emits `artifact_kind=lunar_lake_cpu_slm_resident_session` with
   `proof_stage=resident_cpu_no_reload_timing_no_new_inference`.
 - The builder validates model/tokenizer loaded-once fields, answer gates,
   fallback=false, determinism, and summary timing from the source receipt.
-- Since #1255, the builder also emits `measurement_qualification` and fails
-  closed for the current #1232 blockers instead of letting no-reload
-  diagnostics look benchmark-ready.
-- It does not run a fresh physical resident CPU session, create one separated
-  first resident ask followed by 30 additional warm asks, or measure prompt
-  render, quality-gate, receipt-write, telemetry, full memory lifecycle,
-  utilization, or frequency timing unless a future source receipt records
-  those fields.
+- Since #1255, the builder emits `measurement_qualification` and fails closed
+  instead of letting no-reload diagnostics look benchmark-ready.
+- Since #1319/#1334, the builder can mark the package
+  `diagnostic_package_reviewable=true` when all diagnostic fields are measured
+  and only contract-not-exposed profile fields remain.
+- It does not make profile `receipt_write_ms` or `telemetry_ms` measured, and
+  it does not expose utilization, frequency, or thermal timing unless a future
+  source receipt records those fields.
 - It does not make resident CPU timing benchmark-equivalent to OpenVINO CPU;
   #1156 keeps comparison qualification blocked while model formats, timing
   scopes, prompt-render/tokenization accounting, or matched-profile evidence
   differ.
 
-The next #1232 PR should add or use a measurement source that emits the
-accepted fresh resident run shape below, then keep the existing
-summarizer/validator path as the fail-closed guard for missing fields. It
-should not be another aggregate refresh from existing receipts.
+The next #1232 PR should not be another aggregate refresh from existing
+receipts. It should be issue-shaped first, then either add a narrowly scoped
+measurement source for a named remaining field or define a matched CPU
+comparison plan.
 
 The preferred source shape is now explicit:
 
@@ -143,13 +147,14 @@ cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -
 
 The exact model path remains operator-local. The source receipt should be
 summarized through `lunar-lake cpu-slm-resident-session` with
-`--repeated-warm-session lunar-lake-resident-qwen25-cpu-warm-session.json`
-after the physical run exists. Until then, the current default diagnostic
-receipt remains the committed no-new-inference baseline.
+`--repeated-warm-session lunar-lake-resident-qwen25-cpu-warm-session.json`.
+The current committed summary remains diagnostic-only because strict
+qualification still requires fields that the current contract marks
+`not_exposed`.
 
 ## Fresh Measurement Acceptance Rule
 
-A future #1232 resident CPU phase receipt must include one fresh physical run
+A strict-qualified #1232 resident CPU phase receipt must include a physical run
 with all of these gates:
 
 | Gate | Required evidence |
@@ -196,12 +201,12 @@ change route policy.
 
 ### CPU Optimization
 
-CPU optimization remains blocked until the fresh #1232 resident receipt
-identifies a target and success metric. The #1071/#1208 thread/core matrix is
-already complete and does not justify default thread tuning. The likely target
-is still prefill, first token, or decode, but the current receipt does not
-isolate kernel-internal causes such as attention, MLP, dequantization,
-KV-cache writes, sampling, or logits work.
+CPU optimization remains blocked until #1232 or a successor issue identifies a
+target and success metric. The #1334 package shows resident asks are dominated
+by prefill, first-token, and decode timing, but it does not isolate
+kernel-internal causes such as attention, MLP, dequantization, KV-cache writes,
+sampling, or logits work. The #1071/#1208 thread/core matrix is already
+complete and does not justify default thread tuning.
 
 ### OpenVINO CPU
 
@@ -218,18 +223,17 @@ power proxy.
 
 ## Next Smallest PR
 
-No additional qualification-only PR is currently needed after #1255. The next
-status/schema decision belongs to #1311. Only after that decision should the
-next implementation PR be a measurement command refresh, physical evidence
-package, or narrow receipt/schema follow-up. That work should:
+No additional qualification/status PR is currently needed after #1319/#1334.
+The next #1232 follow-up should be issue-shaped before implementation. Good
+next PR candidates are:
 
-- distinguish first resident ask from the 30 measured warm asks;
-- records accepted measured prompt-render, quality-gate, detokenize, memory,
-  and phase fields;
-- preserves explicit `not_exposed` values for profile receipt-write and
-  telemetry fields unless #1311 or a later contract revises the status rule;
-- keeps the closed #1071/#1208 thread/core matrix as review evidence, not a
-  tuning unlock.
+- scoped aggregate receipt-write or telemetry fields, only if a later contract
+  names their timing scope;
+- a matched Rust GGUF CPU versus OpenVINO CPU comparison plan that names model
+  format, prompt rendering, timing scope, and profile coverage boundaries;
+- topology, affinity, utilization, frequency, or thermal evidence if those
+  fields become available through a narrow source;
+- a receipt or validator gap discovered by a future resident run.
 
 Do not combine that PR with CPU optimization, OpenVINO CPU promotion, route
 policy mutation, broad benchmark refresh, or generated-dashboard churn.
@@ -248,5 +252,5 @@ This review does not add:
 - native accelerator proof;
 - BitNet QK256/I2_S behavior proof.
 
-It only defines the acceptance boundary for the next resident Rust GGUF CPU
-no-reload timing refresh.
+It only updates the acceptance boundary for the current resident Rust GGUF CPU
+no-reload diagnostic package and the next #1232 research-shaped follow-up.
