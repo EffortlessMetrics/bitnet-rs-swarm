@@ -172,11 +172,12 @@ resident-session command-surface work, #1186 is closed by #1194 as matrix
 builder work, #1071 is closed by #1208 as physical thread/core evidence, and
 issue #1232 owns any further resident Rust GGUF phase/no-reload evidence before
 CPU optimization, matched OpenVINO CPU comparison, or route-policy work. The
-next physical resident CPU package belongs to #1280. PR #1292 closed the #1291
-scope decision by keeping profile `receipt_write_ms` and `telemetry_ms`
-not backfilled unless a later contract defines their source, scope, and summarizer
-rule. That contract is not route-policy evidence and does not make Rust GGUF CPU
-resident timing benchmark-qualified.
+physical resident CPU package from #1334 closes #1280 and remains diagnostic,
+not route-policy evidence. PR #1292 closed the #1291 scope decision by keeping
+profile `receipt_write_ms` and `telemetry_ms` not backfilled unless a later
+contract defines their source, scope, and summarizer rule. That contract is not
+route-policy evidence and does not make Rust GGUF CPU resident timing
+benchmark-qualified.
 
 ### OpenVINO GPU
 
@@ -303,12 +304,12 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   perform route review after the selected-device, quality, timing, fallback,
   profile, and power gates exist.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
-  work should use #1232 and #1280 for resident Rust GGUF phase/no-reload
-  evidence, with #1292 as the current receipt-write / telemetry scope boundary,
-  or a separate narrow issue for matched OpenVINO CPU comparison or later
-  topology evidence once the target is concrete. Do not repeat the generic
-  non-equivalence guard or backfill unavailable profile fields from aggregate
-  observations.
+  work should use #1232 for further resident Rust GGUF phase/no-reload evidence
+  after the closed #1280/#1334 physical package, with #1292 as the current
+  receipt-write / telemetry scope boundary, or a separate narrow issue for
+  matched OpenVINO CPU comparison or later topology evidence once the target is
+  concrete. Do not repeat the generic non-equivalence guard or backfill
+  unavailable profile fields from aggregate observations.
 - #1165 closed the current operator receipt follow-up review. Future operator
   work should cite one of #1064, #1149, #1178, #1232, or a new narrow physical
   CPU measurement/comparison issue rather than opening another broad operator
