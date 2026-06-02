@@ -20207,6 +20207,32 @@ cases:
     }
 
     #[test]
+    #[cfg(feature = "full-cli")]
+    fn lunar_lake_resident_cpu_corpus_records_thirty_plus_warm_asks_after_first()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../ci/quality/lunar-lake-resident-qwen25-cpu.yaml");
+
+        let corpus = SlmWarmSessionCorpus::load(&path)?;
+        assert_eq!(corpus.artifact_kind, "slm_cpu_warm_session_corpus");
+        assert_eq!(corpus.name, "lunar-lake-qwen25-cpu-resident-phase-source");
+        assert_eq!(corpus.defaults.repeat_runs, Some(11));
+        assert_eq!(corpus.cases.len(), 3);
+
+        let prompts = warm_session_prompt_inputs(&[], Some(&corpus), 2, 1, 1)?;
+        assert_eq!(prompts.len(), 33);
+        assert_eq!(prompts.len().saturating_sub(1), 32);
+        assert!(
+            prompts.len().saturating_sub(1) >= 30,
+            "resident source must leave at least 30 warm asks after the first resident ask"
+        );
+        assert_eq!(prompts[0].case_id, "regression_tiny_math_2_plus_2_brief");
+        assert_eq!(prompts[11].case_id, "ask_short_capital_france");
+        assert_eq!(prompts[22].case_id, "ask_normal_instruction_rust");
+        Ok(())
+    }
+
+    #[test]
     fn lunar_lake_probe_receipt_is_visibility_only() {
         let probe = bitnet_device_probe::probe_lnl258v_platform();
         let receipt = build_lunar_lake_probe_receipt(

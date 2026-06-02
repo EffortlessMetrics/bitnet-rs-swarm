@@ -8,7 +8,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277)
 Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
@@ -29,6 +29,16 @@ quality-gate, receipt-write, telemetry, and full memory lifecycle timing.
 PR #1255 made that boundary machine-readable in the committed receipt through a
 `measurement_qualification` block. The current status is explicitly blocked,
 not benchmark-ready.
+
+#1277 defines the source-command boundary for the next physical package. The
+new resident-specific corpus lives at
+`ci/quality/lunar-lake-resident-qwen25-cpu.yaml`. It keeps the same three
+initial profile cases as the durability corpus but uses `repeat_runs=11`, so
+`slm-warm-session --corpus ci/quality/lunar-lake-resident-qwen25-cpu.yaml`
+produces 33 prompts: one first resident ask plus 32 warm asks after first. This
+defines source shape only. It does not replace the committed diagnostic
+receipt or make the resident session benchmark-qualified until a fresh physical
+receipt records the remaining phase, token, memory, and telemetry fields.
 
 Do not optimize CPU kernels, change route policy, tune thread defaults, promote
 OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
@@ -110,6 +120,24 @@ The next #1232 PR should add or use a measurement source that emits the
 accepted fresh resident run shape below, then keep the existing
 summarizer/validator path as the fail-closed guard for missing fields. It
 should not be another aggregate refresh from existing receipts.
+
+The preferred source shape is now explicit:
+
+```powershell
+cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- `
+  slm-warm-session `
+  --model <qwen2.5-0.5b-instruct-q8_0.gguf> `
+  --corpus ci/quality/lunar-lake-resident-qwen25-cpu.yaml `
+  --strict-loader --strict-tokenizer `
+  --fail-on-quality --require-determinism `
+  --json-out ci/hardware/intel-258v/2026-05-08/lunar-lake-resident-qwen25-cpu-warm-session.json
+```
+
+The exact model path remains operator-local. The source receipt should be
+summarized through `lunar-lake cpu-slm-resident-session` with
+`--repeated-warm-session lunar-lake-resident-qwen25-cpu-warm-session.json`
+after the physical run exists. Until then, the current default diagnostic
+receipt remains the committed no-new-inference baseline.
 
 ## Fresh Measurement Acceptance Rule
 
