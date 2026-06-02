@@ -8,7 +8,7 @@ Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVIN
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1251](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -64,7 +64,9 @@ evidence contracts current:
   and the runtime `AUTO` proof-boundary guard landed by #1159; #1242 is closed
   by #1248 and #1251 is closed by #1252, which landed the narrower GenAI
   debug-log parser helper and repeatable capture wrapper without changing
-  route policy or generated phase-receipt selected-device status;
+  route policy or generated phase-receipt selected-device status; #1254 then
+  preserved SDPA warning and AUTO fallback-disabled line refs without changing
+  the paired phase receipt's application `fallback_used=false` decision;
 - #1154 / existing validator coverage for the NPU cache-classification guard:
   timing-derived cache evidence stays diagnostic and cannot become direct
   runtime cache-hit truth without direct runtime evidence fields.
@@ -282,10 +284,12 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   records the current fail-closed contract from #1158, and #1159 has landed the
   validator guard. Route policy must keep `AUTO` diagnostic while
   selected-device proof is missing or ambiguous. #1242/#1248 and #1251/#1252
-  cover the accepted `genai_debug_log` parser shape and capture wrapper; future
-  #1149 work should only persist materially useful wrapper-generated evidence,
-  test a concrete selected-device API/bridge, or perform route review after the
-  selected-device, quality, timing, fallback, profile, and power gates exist.
+  cover the accepted `genai_debug_log` parser shape and capture wrapper, while
+  #1254 preserves warning/internal-policy line context without changing
+  fallback status. Future #1149 work should only persist materially useful
+  wrapper-generated evidence, test a concrete selected-device API/bridge, or
+  perform route review after the selected-device, quality, timing, fallback,
+  profile, and power gates exist.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
   work should use #1232 and #1280 for resident Rust GGUF phase/no-reload
   evidence, with #1292 as the current receipt-write / telemetry scope boundary,
