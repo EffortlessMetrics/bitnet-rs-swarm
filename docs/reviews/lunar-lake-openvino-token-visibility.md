@@ -3,12 +3,13 @@
 Status: review
 Owner: intel/openvino
 Created: 2026-05-31
+Post-anchor refresh: 2026-06-02
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245)
-Linked PRs: [#1101](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1101), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138)
+Linked PRs: [#1101](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1101), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1350](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1350)
 Support-tier impact: no promotion; review-only token evidence policy
 Policy impact: no policy exception
 
@@ -38,9 +39,12 @@ remains a future fail-closed strategy, not an active implementation queue or a
 reason to open another inference PR.
 
 Issue #1244 is the live review-watch issue for future generated-token
-visibility schema or checker work. It owns the question of whether a later
-receipt needs a central `visibility_level`, a fail-closed promotion-review
-guard, or a stale-receipt cleanup without changing route policy.
+visibility schema or checker work. PR #1350 refreshed this review with the
+current shared direct-token helper and validator anchors, so #1244 is not an
+implementation queue while current receipt producers continue to use those
+anchors. It owns the question of whether a later receipt needs a central
+`visibility_level`, a fail-closed promotion-review guard, or a stale-receipt
+cleanup without changing route policy.
 
 Issue #1124 is the closed historical route-policy review issue. If a later
 token-visibility gap needs a keep, conditional, narrow, revoke, candidate-only,
@@ -117,6 +121,8 @@ So #1244 remains a watch issue, not an implementation queue. A future PR is
 justified only if a new receipt path bypasses the shared helper, emits
 retokenized or text-only evidence without explicit status, or needs a central
 `visibility_level` field to remove repeated one-off wording.
+Do not open a generic token-visibility implementation PR while the current
+OpenVINO GenAI receipt producers still flow through the #1350 anchors above.
 
 ## Required Receipt Shape
 
