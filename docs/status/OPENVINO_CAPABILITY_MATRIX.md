@@ -37,6 +37,10 @@ bitnet receipts explain <receipt.json>
 | OpenVINO corpus-v2 receipt | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` |
 | GPU corpus-v2 diagnosis status refresh | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-gpu-corpus-v2-diagnosis-status-refresh.json` |
 | OpenVINO phase runner | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-phase-runner.json` |
+| CPU slow-path and OpenVINO CPU decision boundary | `docs/research/lunar-lake-cpu-slow-path.md`, `docs/reviews/lunar-lake-cpu-route-decision.md`, [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232) |
+| GPU profile promotion review boundary | `docs/reviews/lunar-lake-openvino-gpu-promotion-review.md`, `docs/reviews/lunar-lake-openvino-gpu-phase-profile-review.md` |
+| NPU cold/cache and warm-resident boundary | `docs/research/lunar-lake-npu-cold-start.md`, `docs/reviews/lunar-lake-npu-cold-cache-evidence.md`, `docs/reviews/lunar-lake-npu-warm-resident-acceptance.md`, [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119) |
+| Low-power evidence boundary | [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064) |
 
 ## Current OpenVINO Rows
 
@@ -91,9 +95,9 @@ bitnet validate open-vino-lunar-lake `
 
 | Row | Next proof |
 | --- | --- |
-| Qwen2.5 OpenVINO CPU | Decide whether OpenVINO CPU can beat the dense GGUF CPU default for any exact profile after quality and timing review. |
-| Qwen2.5 OpenVINO GPU | Keep current profile-scoped promotion; add explicit prefill/decode split receipts before making stronger phase claims, and keep `low_power` blocked until POWER-006 evidence exists. |
-| Qwen2.5 OpenVINO NPU | Keep `warm_resident` scoped promotion; decompose cold-load and cache behavior before any cold one-off route promotion, and keep `low_power` blocked until POWER-006 evidence exists. |
+| Qwen2.5 OpenVINO CPU | Use #1232 resident Rust GGUF phase evidence to isolate per-prompt cost before any matched Rust GGUF versus OpenVINO CPU comparison. No OpenVINO CPU promotion or speedup claim is valid while model-format, timing-scope, prompt-render, tokenization, and runtime-scope mismatches remain unresolved or unaccepted. |
+| Qwen2.5 OpenVINO GPU | Keep current profile-scoped promotion. Future phase-split receipts may refine prefill/decode claim boundaries, but no broader GPU promotion or power claim follows without a fresh route review. `low_power` remains blocked by #1064. |
+| Qwen2.5 OpenVINO NPU | Keep `warm_resident` scoped promotion only. Cold/cache work stays under #1119 until direct cache truth, an accepted stricter proxy policy, or profile-matched phase evidence exists for the exact mode; no cold one-off, `ask_short`, `ask_normal`, or `low_power` expansion follows from cache timing alone. |
 | OpenVINO server | Add exact-profile server receipts only after the underlying ask/chat route is promoted or explicitly candidate-scoped. |
 | BitNet OpenVINO subgraphs | Continue static-shape CPU-reference parity for selected subgraphs; keep QK256/dynamic decode out of scope until separately proven. |
 
