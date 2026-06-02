@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245)
 Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
@@ -17,9 +17,13 @@ Policy impact: no policy exception
 Keep the current Lunar Lake route policy in force, but treat every promoted
 route as profile-scoped and receipt-invalidatable.
 
-Do not open a route-policy mutation PR from this review alone. The current
-smallest useful follow-up is to keep the profile reviews and evidence contracts
-current:
+Do not open a route-policy mutation PR from this review alone. Issue #1245 is
+the live watch issue for future keep, narrow, conditional, revoke, or blocked
+decisions after #1124 closed. It requires a concrete linked evidence finding
+before any route-policy PR.
+
+The current smallest useful follow-up is to keep the profile reviews and
+evidence contracts current:
 
 - #1064 for battery-mode `low_power` evidence;
 - #1119 for NPU cold/cache decomposition;
@@ -41,6 +45,8 @@ current:
   Rust GGUF phase evidence successor;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
+  #1244 owns future token-visibility schema or checker work if a later receipt
+  exposes ambiguity;
 - #1135 for route ID and canonical proof-family mapping, now closed by #1137
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1178 for BitNet semantic-intake freshness; current intake remains ready, but
@@ -223,8 +229,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 ## Next Work
 
-- Future token-visibility schema or validator work should use the #1123/#1138
-  strategy before token-ID gaps become one-off wording in each receipt.
+- Future token-visibility schema or validator work should use #1244 and the
+  #1123/#1138 strategy before token-ID gaps become one-off wording in each
+  receipt.
 - #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
   evidence map; future GPU mutation needs a new concrete regression or review
   finding.
@@ -264,6 +271,9 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   coverage cleanup. Use #1119 for any broader NPU cold/cache research follow-up
   now that #1160 has closed.
 - #1064 remains the only current path to `low_power` promotion evidence.
+- #1245 owns future route-policy watch updates. Use it only after a linked
+  evidence issue names a concrete keep, conditional, narrow, revoke, or blocked
+  decision; it is not a standing route-policy mutation queue.
 
 ## Claim Boundary
 
