@@ -1,0 +1,41 @@
+timestamp = "2026-06-02T09:01:45Z"
+campaign = "intel-a770"
+item = "A770-066"
+event = "merged"
+actor = "codex-a770"
+previous_status = "pr_open"
+new_status = "merged"
+branch = "codex/intel-a770/A770-066-host-summary-policy-semantic-fix"
+pr = 1264
+head_sha = "b06afb59e3501dce7afb6993832024cde236763a"
+merge_sha = "ea33a387bfa6ec51ec6cfc779672928c6a982357"
+merged_at = "2026-06-02T09:01:45Z"
+summary = "Merged PR #1264 with the A770-066 bounded host summary-policy semantic fix."
+notes = [
+  "The committed focused parity receipt records source host summary-policy bits 3215804926 and fixed selected-device bits 3215804927.",
+  "The selected-device A770 OpenCL replay receipt classifies the focused row as a770_qk256_host_summary_policy_semantic_fix_focused_row_matches_selected_device_replay.",
+  "A770-066 keeps production QK256 dispatch policy, answer scoring, sampling, CPU/A770 parity, answer readiness, broad quality, residency, speed, trusted partial acceleration, and full inference claims closed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-066 may apply a bounded host summary-policy diagnostic semantic fix and classify whether the A770-064 focused row now matches selected-device production replay bits.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
