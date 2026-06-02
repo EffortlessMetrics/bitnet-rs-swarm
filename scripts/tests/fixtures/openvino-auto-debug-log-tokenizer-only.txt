@@ -1,0 +1,5 @@
+Model: OV Tokenizer
+  NETWORK_NAME: tokenizer
+  EXECUTION_DEVICES: CPU
+EXECUTION_DEVICES:
+ CPU: Intel(R) Core(TM) Ultra 7 258V

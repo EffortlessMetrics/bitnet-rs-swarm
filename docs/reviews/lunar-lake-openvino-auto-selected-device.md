@@ -229,6 +229,12 @@ governed Qwen export/profile/cache tuple.
   probe result when available. This makes future `AUTO` script receipts
   validator-compatible, but still does not collect physical selected-device
   evidence or close #1149 by itself.
+- `scripts/openvino_genai_auto_debug_log_parser.py` parses captured
+  `OPENVINO_LOG_LEVEL=2` OpenVINO GenAI debug logs into the accepted #1242
+  `genai_debug_log` selected-device evidence block. It extracts only the
+  stateful LLM model block, line references, execution devices, resolved device
+  names, `AUTO` scheduler lines, and compile lines; if the accepted block is
+  absent, it emits an unavailable status rather than an empty proof.
 - `crates/bitnet-cli/src/commands/lunar_lake.rs` currently indexes CLI
   `--device auto` operator-ask receipts and explicit OpenVINO GPU/NPU route
   evidence. That is route-selector evidence, not OpenVINO runtime-layer `AUTO`
