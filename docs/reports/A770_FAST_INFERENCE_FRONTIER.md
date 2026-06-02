@@ -2,9 +2,10 @@
 
 ## Current State
 
-The A770 lane is useful but still diagnostic. A770-066 records that the bounded
-host summary-policy semantic fix makes the previously focused q_proj row match
-selected-device Intel Arc A770 OpenCL production replay bits. The receipt keeps
+The A770 lane is useful but still diagnostic. A770-068 extends the focused
+QK256 replay packet from one runnable Q/K/V target to two: layer-0 `q_proj` and
+layer-0 `k_proj` for the committed summary-logits first mismatch. The selected
+device is Intel Arc A770 OpenCL and the replay receipts keep
 `fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
 
 That is a good correctness frontier, not an inference-performance frontier. It
@@ -16,10 +17,10 @@ acceleration, or full BitNet inference.
 
 1. The current proof is too narrow.
 
-   A770-066 covers one focused q_proj row. Fast inference needs the same kind of
-   selected-device confidence across the remaining Q/K/V/O projection replay
-   targets, MLP linears, and logits-facing paths that can affect generated
-   tokens.
+   A770-068 covers two focused layer-0 Q/K rows for one case and one first
+   mismatch. Fast inference needs the same kind of selected-device confidence
+   across the remaining Q/K/V/O projection replay targets, MLP linears, and
+   logits-facing paths that can affect generated tokens.
 
 2. Production dispatch is not promotable yet.
 
@@ -50,10 +51,10 @@ acceleration, or full BitNet inference.
 
 1. Expand focused QK256 replay.
 
-   A770-067 should create a manifest-bound multi-case focused replay packet.
-   The packet should name each target, consume or capture raw focused operands,
-   run selected-device A770 OpenCL production replay for available targets, and
-   ledger missing operands as blockers.
+   The current manifest shape names each target, consumes or captures raw
+   focused operands, runs selected-device A770 OpenCL production replay for
+   available targets, and ledgers missing operands as blockers. The next narrow
+   step is to finish layer-0 `v_proj`, then expand the same method outward.
 
 2. Promote from rows to projections.
 
@@ -86,7 +87,8 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-A770-067 is the next honest step: multi-case focused QK256 replay before any
-production QK256 policy promotion. It is intentionally not a speed PR. Its job
-is to make the correctness surface wide enough that a later fast path can be
-trusted rather than merely timed.
+After A770-068, the next honest step is one more focused replay target, not a
+speed PR: capture and replay the matching layer-0 `v_proj` target under the same
+one-case, one-mismatch, selected-device, fallback-free receipt rules. Its job is
+to keep widening the correctness surface before any production QK256 policy,
+residency, answer-quality, or speed promotion.

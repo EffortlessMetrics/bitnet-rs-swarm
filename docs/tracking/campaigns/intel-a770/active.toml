@@ -3721,7 +3721,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-068"
-status = "ready"
+status = "merged"
+pr = 1293
+head_sha = "420a709a1881a459bb56d29477843abf71d34c1c"
+merge_sha = "c8a3410604fdaef3ca4d95042c8a416e7ec2202b"
+merged_at = "2026-06-02T14:52:29Z"
 branch = "codex/intel-a770/A770-068-one-more-qk256-replay-target"
 stackable = false
 review_mode = "codex_premerge"
