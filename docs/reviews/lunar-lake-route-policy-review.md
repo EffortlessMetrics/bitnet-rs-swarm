@@ -225,16 +225,21 @@ by #1064.
 `bitnet_reference_cpu` is a separate specialist route. Dense Qwen CPU, GPU, or
 NPU success must not be treated as BitNet QK256/I2_S proof. Shared BitNet
 semantic-intake changes must rerun the affected CPU reference receipts before
-BitNet route policy changes. #1178 owns that freshness contract. #1263 is
-closed by #1267 as the current diagnostic-only shared-surface non-trigger
-classification path, which records reviewed merged instrumentation without
-turning it into a stale BitNet CPU reference trigger. The current #1178 audit
-through swarm `main` `d6197833b299ea3b5d547f32f72cc8eef2ed88bc` keeps
+BitNet route policy changes. #1178 owns that freshness contract. #1263/#1267 are
+the current diagnostic-only shared-surface non-trigger classification path,
+which records reviewed merged instrumentation without turning it into a stale
+BitNet CPU reference trigger. The current #1178 audit through swarm `main`
+`6fb1cec132591fb7668b51ac362787e7075dce31` keeps
 `rerun_required=false`, `intake_ready=true`, and
-`dense_slm_as_bitnet_proof=false`; the post-`c8076ea` A770-071 replay and
-closeout commits (#1305/#1306) are docs/receipts/tracking-only non-triggers.
-This review does not require a rerun while the current semantic intake remains
-ready.
+`dense_slm_as_bitnet_proof=false`. Post-`3080b3cca` movement through #1338 is
+A770 diagnostic replay/tracker work plus Lunar Lake CPU resident
+status/docs/evidence work; #1319 is the only matched code-surface update and it
+preserves BitNet claim boundaries. Post-#1338 movement through #1341 is
+route-policy and semantic-intake review text only. Post-#1341 through #1344 is
+A770 replay-target evidence, A770 tracker/dashboard refresh, A770 closeout
+tracker work, and PR Plan A770 evidence metadata fast-path work only for this
+audit. This review does not require a BitNet CPU reference rerun while the
+current semantic intake remains ready.
 
 ## Route Mutation Checklist
 
@@ -285,13 +290,13 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   targeted CPU reference rerun necessary. #1263 is closed by #1267 as the
   current diagnostic-only classification path for reviewed merged
   shared-surface touches such as #1257/#1264. Current post-`3080b3cca` movement
-  through #1338 is A770 diagnostic replay/tracker work plus Lunar Lake CPU
-  resident status/docs/evidence work. The only matched code surface in that
-  range is #1319's `crates/bitnet-cli/src/commands/lunar_lake.rs` resident
-  status update, which preserves BitNet claim boundaries and does not change
-  the BitNet semantic intake state. Future ambiguous diagnostic replay indexing
-  should be another narrow diagnostic-only refresh under #1178, not a BitNet
-  reference rerun.
+  through swarm `main` `6fb1cec132591fb7668b51ac362787e7075dce31` is classified
+  by the #1342 route-ID proof-family refresh and #1178 issue update: #1319 is
+  the only matched code-surface update, #1339/#1340/#1341 are route-policy or
+  semantic-intake review text only, #1337/#1343 are A770 replay/tracker state
+  only, and #1344 is PR Plan A770 evidence metadata fast-path work only. Future
+  ambiguous diagnostic replay indexing should be another narrow diagnostic-only
+  refresh under #1178, not a BitNet reference rerun.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
   records the current fail-closed contract from #1158, and #1159 has landed the
