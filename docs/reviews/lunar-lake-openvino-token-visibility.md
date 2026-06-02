@@ -65,6 +65,59 @@ Lake OpenVINO receipts. The blocker is inconsistent claim scope: direct IDs can
 support route/profile evidence, while retokenized or text-only evidence must
 stay diagnostic.
 
+## Current Code Anchors
+
+Current-main receipt producers already use one shared direct-token helper for
+OpenVINO GenAI generation:
+
+```text
+scripts/openvino_genai_token_utils.py::generate_with_direct_token_ids
+```
+
+That helper generates from OpenVINO GenAI tokenized inputs and records:
+
+```text
+generated_token_ids
+generated_token_ids_available_from_pipeline=true
+generated_token_ids_source=openvino_genai_encoded_results_tokens
+```
+
+The main Lunar Lake OpenVINO receipt-producing scripts call that helper for the
+route surfaces this review depends on:
+
+```text
+scripts/openvino_genai_corpus_v2.py
+scripts/openvino_genai_operator_ask.py
+scripts/openvino_genai_profile_run.py
+scripts/openvino_genai_phase_receipt.py
+scripts/openvino_genai_npu_cache_probe.py
+scripts/openvino_genai_npu_resident_session.py
+scripts/openvino_genai_generation_budget_sensitivity.py
+```
+
+The NPU cache and resident scripts also emit a summary
+`generated_token_visibility` block for their evidence packages. That keeps
+direct-token visibility visible at the receipt level while the cache-hit,
+phase-timing, resident-stability, and power gates remain separate blockers.
+
+The current validator surface already fails closed on the known ambiguous
+states:
+
+- `crates/bitnet-receipts-core/src/lib.rs` rejects OpenVINO generated-token IDs
+  that lack source marking, marks unavailable pipeline IDs as retokenized-only,
+  and rejects retokenized sources when pipeline IDs are marked available.
+- `crates/bitnet-cli/src/commands/lunar_lake.rs` summarizes OpenVINO corpus
+  direct versus retokenized token visibility and adds route blockers when
+  direct IDs are missing where a review needs them.
+- The same Lunar Lake CLI path checks NPU resident/cache evidence for direct
+  generated-token IDs before treating resident or cache evidence as usable for
+  its scoped review.
+
+So #1244 remains a watch issue, not an implementation queue. A future PR is
+justified only if a new receipt path bypasses the shared helper, emits
+retokenized or text-only evidence without explicit status, or needs a central
+`visibility_level` field to remove repeated one-off wording.
+
 ## Required Receipt Shape
 
 Every Lunar Lake OpenVINO route, diagnosis, comparison, and promotion-review
