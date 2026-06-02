@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{receipt}");
         return Ok(());
     }
-    if args.focused_source.is_some() {
+    if !args.focused_sources.is_empty() {
         let receipt = focused_receipt_to_json(&args)?;
         if let Some(parent) = args.receipt.parent() {
             std::fs::create_dir_all(parent)?;
@@ -73,9 +73,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 struct Args {
     receipt: PathBuf,
     manifest: Option<PathBuf>,
-    focused_source: Option<PathBuf>,
+    focused_sources: Vec<PathBuf>,
     case_id: Option<String>,
     first_mismatch_index: Option<usize>,
+    work_item: Option<String>,
 }
 
 impl Args {
@@ -84,9 +85,10 @@ impl Args {
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from(DEFAULT_RECEIPT));
         let mut manifest = None;
-        let mut focused_source = None;
+        let mut focused_sources = Vec::new();
         let mut case_id = None;
         let mut first_mismatch_index = None;
+        let mut work_item = None;
         let mut args = env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
@@ -103,8 +105,8 @@ impl Args {
                     ));
                 }
                 "--focused-source" => {
-                    focused_source =
-                        Some(PathBuf::from(args.next().ok_or_else(|| {
+                    focused_sources
+                        .push(PathBuf::from(args.next().ok_or_else(|| {
                             io_error("--focused-source requires a path argument")
                         })?));
                 }
@@ -124,9 +126,14 @@ impl Args {
                         )
                     })?);
                 }
+                "--work-item" => {
+                    work_item = Some(
+                        args.next().ok_or_else(|| io_error("--work-item requires an argument"))?,
+                    );
+                }
                 "--help" | "-h" => {
                     println!(
-                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>] [--focused-source <path> --case-id <id> --first-mismatch-index <n>] [--focused-source <path> --manifest <path> [--case-id <id>] [--first-mismatch-index <n>]]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV, classifies a focused first-mismatch operand receipt, or builds an A770-067 multi-target focused replay packet."
+                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>] [--focused-source <path> --case-id <id> --first-mismatch-index <n>] [--focused-source <path>... --manifest <path> [--case-id <id>] [--first-mismatch-index <n>] [--work-item <id>]]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV, classifies a focused first-mismatch operand receipt, or builds an A770 multi-target focused replay packet."
                     );
                     std::process::exit(0);
                 }
@@ -134,10 +141,13 @@ impl Args {
             }
         }
         if manifest.is_some() {
-            if focused_source.is_none() {
+            if focused_sources.is_empty() {
                 return Err(io_error("--manifest requires --focused-source"));
             }
-        } else if focused_source.is_some() {
+        } else if !focused_sources.is_empty() {
+            if focused_sources.len() > 1 {
+                return Err(io_error("multiple --focused-source values require --manifest"));
+            }
             if case_id.is_none() {
                 return Err(io_error("--focused-source requires --case-id"));
             }
@@ -146,7 +156,7 @@ impl Args {
             }
         }
 
-        Ok(Self { receipt, manifest, focused_source, case_id, first_mismatch_index })
+        Ok(Self { receipt, manifest, focused_sources, case_id, first_mismatch_index, work_item })
     }
 }
 
@@ -436,8 +446,8 @@ fn samples_json(
 fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
     let receipt_kind = FocusedReceiptKind::from_receipt_path(&args.receipt);
     let focused_source = args
-        .focused_source
-        .as_ref()
+        .focused_sources
+        .first()
         .ok_or_else(|| io_error("focused receipt requested without --focused-source"))?;
     let case_id = args
         .case_id
@@ -731,6 +741,7 @@ struct ManifestTarget {
     qk256_key: Option<String>,
     source_context_available: bool,
     dispatch_replay: Option<Value>,
+    dispatch_replay_source: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -753,13 +764,25 @@ struct ManifestTargetResult {
 
 fn multi_case_focused_replay_to_json(args: &Args) -> Result<(String, String), Box<dyn Error>> {
     let focused_source = args
-        .focused_source
-        .as_ref()
+        .focused_sources
+        .first()
         .ok_or_else(|| io_error("multi-target replay requested without --focused-source"))?;
-    let source_json = fs::read_to_string(focused_source)?;
-    let source: Value = serde_json::from_str(&source_json)?;
-    let targets =
-        manifest_targets(&source, args.case_id.as_deref(), args.first_mismatch_index.as_ref())?;
+    let mut targets = manifest_targets_from_source_path(
+        focused_source,
+        args.case_id.as_deref(),
+        args.first_mismatch_index.as_ref(),
+    )?;
+    for supplemental_source in args.focused_sources.iter().skip(1) {
+        let supplemental_targets = manifest_targets_from_source_path(
+            supplemental_source,
+            args.case_id.as_deref(),
+            args.first_mismatch_index.as_ref(),
+        )?;
+        apply_supplemental_focused_targets(&mut targets, supplemental_targets);
+    }
+    let focused_sources =
+        args.focused_sources.iter().map(|path| path_json_value(path)).collect::<Vec<_>>();
+    let work_item = args.work_item.as_deref().unwrap_or("A770-067");
     let manifest_target_count = targets.len();
     let manifest_dispatch_replay_target_count =
         targets.iter().filter(|target| target.dispatch_replay.is_some()).count();
@@ -771,7 +794,7 @@ fn multi_case_focused_replay_to_json(args: &Args) -> Result<(String, String), Bo
         "schema_version": "1.0.0",
         "manifest_kind": "a770_multi_case_focused_qk256_replay_manifest",
         "campaign": "intel-a770",
-        "work_item": "A770-067",
+        "work_item": work_item,
         "diagnostic_only": true,
         "claim_allowed": false,
         "target_policy": {
@@ -783,6 +806,9 @@ fn multi_case_focused_replay_to_json(args: &Args) -> Result<(String, String), Bo
         },
         "source_receipts": {
             "focused_source": path_json_value(focused_source),
+            "focused_sources": focused_sources,
+            "a770_067_multi_case_focused_replay_manifest": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay-manifest.json",
+            "a770_067_multi_case_focused_replay": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-multi-case-focused-qk256-replay/a770-opencl-qk256-multi-case-focused-replay.json",
             "a770_066_host_summary_policy_semantic_fix_replay": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-opencl-qk256-host-summary-policy-semantic-fix-replay.json",
             "a770_066_host_summary_policy_semantic_fix_parity": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-host-summary-policy-semantic-fix/cpu-avx2-vs-a770-summary-logits-host-summary-policy-fix.json",
             "a770_064_focused_raw_operands_parity": "ci/hardware/amd-5700x-intel-a770/2026-05-25/a770-focused-qk256-raw-operands/cpu-avx2-vs-a770-summary-logits-raw-operands-parity.json"
@@ -839,7 +865,7 @@ fn multi_case_focused_replay_to_json(args: &Args) -> Result<(String, String), Bo
     let receipt = json!({
         "schema_version": "1.0.0",
         "campaign": "intel-a770",
-        "work_item": "A770-067",
+        "work_item": work_item,
         "proof_family": "a770_opencl_qk256_multi_case_focused_replay",
         "proof_stage": "diagnostic_multi_case_focused_qk256_replay_packet",
         "requested_backend": "intel-arc-a770",
@@ -967,6 +993,7 @@ fn manifest_targets(
                         .get("dispatch_replay")
                         .filter(|value| value.is_object())
                         .cloned(),
+                    dispatch_replay_source: None,
                 });
             }
         }
@@ -975,6 +1002,42 @@ fn manifest_targets(
         return Err(io_error("focused source did not yield any manifest replay targets"));
     }
     Ok(targets)
+}
+
+fn manifest_targets_from_source_path(
+    path: &Path,
+    case_filter: Option<&str>,
+    first_mismatch_index_filter: Option<&usize>,
+) -> Result<Vec<ManifestTarget>, Box<dyn Error>> {
+    let source_json = fs::read_to_string(path)?;
+    let source: Value = serde_json::from_str(&source_json)?;
+    let dispatch_replay_source = path_json_value(path);
+    let mut targets = manifest_targets(&source, case_filter, first_mismatch_index_filter)?;
+    for target in &mut targets {
+        if target.dispatch_replay.is_some() {
+            target.dispatch_replay_source = Some(dispatch_replay_source.clone());
+        }
+    }
+    Ok(targets)
+}
+
+fn apply_supplemental_focused_targets(
+    targets: &mut [ManifestTarget],
+    supplemental_targets: Vec<ManifestTarget>,
+) {
+    for supplemental_target in supplemental_targets {
+        if !manifest_target_has_raw_operands(&supplemental_target) {
+            continue;
+        }
+        if let Some(target) =
+            targets.iter_mut().find(|target| target.target_id == supplemental_target.target_id)
+        {
+            if !manifest_target_has_raw_operands(target) {
+                target.dispatch_replay = supplemental_target.dispatch_replay;
+                target.dispatch_replay_source = supplemental_target.dispatch_replay_source;
+            }
+        }
+    }
 }
 
 fn manifest_target_json(target: &ManifestTarget) -> Value {
@@ -996,6 +1059,7 @@ fn manifest_target_json(target: &ManifestTarget) -> Value {
         "qk256_key": target.qk256_key,
         "source_context_available": target.source_context_available,
         "dispatch_replay_available": target.dispatch_replay.is_some(),
+        "dispatch_replay_source": target.dispatch_replay_source,
         "raw_focused_operands_available": raw_operands_available,
         "blocker": blocker,
     })
@@ -1046,6 +1110,7 @@ fn manifest_target_result(target: &ManifestTarget) -> Result<ManifestTargetResul
                 "projection": target.projection,
                 "tensor_name": target.tensor_name,
                 "qk256_key": target.qk256_key,
+                "dispatch_replay_source": target.dispatch_replay_source,
                 "classification": classification,
                 "raw_focused_operands_available": true,
                 "production_replay": {
@@ -1113,6 +1178,7 @@ fn manifest_target_result(target: &ManifestTarget) -> Result<ManifestTargetResul
                 "projection": target.projection,
                 "tensor_name": target.tensor_name,
                 "qk256_key": target.qk256_key,
+                "dispatch_replay_source": target.dispatch_replay_source,
                 "classification": "a770_qk256_multi_case_focused_replay_failed",
                 "raw_focused_operands_available": true,
                 "production_replay": {
@@ -1160,6 +1226,7 @@ fn blocked_manifest_target_result(
         "projection": target.projection,
         "tensor_name": target.tensor_name,
         "qk256_key": target.qk256_key,
+        "dispatch_replay_source": target.dispatch_replay_source,
         "classification": "a770_qk256_multi_case_focused_replay_blocked",
         "raw_focused_operands_available": false,
         "blocker": blocker,
