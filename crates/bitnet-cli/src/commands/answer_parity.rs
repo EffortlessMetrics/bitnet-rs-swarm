@@ -6848,7 +6848,28 @@ fn qk256_device_expression_side_summary(readback_summary: &Value) -> Value {
         .and_then(|values| values.get(first_mismatch_index as usize))
         .cloned()
         .unwrap_or(Value::Null);
-    let policy_bits = json_f32_bits(&policy_value).map_or(Value::Null, |bits| json!(bits));
+    let source_policy_bits = json_f32_bits(&policy_value);
+    let policy_bits = source_policy_bits.map_or(Value::Null, |bits| json!(bits));
+    let device_intermediate_output_bits = readback_summary["device_intermediate_trace"]["samples"]
+        .as_array()
+        .and_then(|samples| {
+            samples
+                .iter()
+                .find(|sample| sample["output_index"].as_u64() == Some(first_mismatch_index))
+        })
+        .and_then(|sample| sample["output_bits"].as_u64())
+        .or_else(|| {
+            readback_summary["device_intermediate_trace"]["samples"]
+                .as_array()
+                .and_then(|samples| samples.first())
+                .and_then(|sample| sample["output_bits"].as_u64())
+        });
+    let host_summary_policy_semantic_fix = qk256_host_summary_policy_semantic_fix(
+        source_policy_bits,
+        a770_bits,
+        device_intermediate_output_bits,
+        sample,
+    );
 
     let matched_expression = qk256_device_expression_match(sample, a770_bits);
     let (
@@ -6899,6 +6920,7 @@ fn qk256_device_expression_side_summary(readback_summary: &Value) -> Value {
         "a770_first_value_bits": a770_bits,
         "policy_first_value": policy_value,
         "policy_first_value_bits": policy_bits,
+        "host_summary_policy_semantic_fix": host_summary_policy_semantic_fix,
         "matched_expression": matched_expression_name,
         "matched_expression_value": matched_expression_value,
         "matched_expression_bits": matched_expression_bits,
@@ -8726,6 +8748,58 @@ fn json_f32_bits(value: &Value) -> Option<u32> {
     Some((value.as_f64()? as f32).to_bits())
 }
 
+fn qk256_host_summary_policy_semantic_fix(
+    source_policy_bits: Option<u32>,
+    selected_device_bits: u32,
+    device_intermediate_output_bits: Option<u64>,
+    expression_sample: &Value,
+) -> Value {
+    let selected_device_bits = u64::from(selected_device_bits);
+    let device_intermediate_matches_selected =
+        device_intermediate_output_bits == Some(selected_device_bits);
+    let source_policy_matches_selected =
+        source_policy_bits.map(|bits| u64::from(bits) == selected_device_bits);
+    let source_policy_bit_delta = source_policy_bits.map(|bits| {
+        let bits = u64::from(bits);
+        if selected_device_bits >= bits {
+            selected_device_bits - bits
+        } else {
+            bits - selected_device_bits
+        }
+    });
+    let source_host_expression_variants_all_match = [
+        "div_then_mul_bits",
+        "mul_then_div_bits",
+        "reciprocal_then_mul_bits",
+        "f64_div_then_mul_cast_bits",
+    ]
+    .into_iter()
+    .filter_map(|field| expression_sample[field].as_u64())
+    .all(|bits| source_policy_bits.is_some_and(|policy| bits == u64::from(policy)));
+    let applied = source_policy_matches_selected == Some(false)
+        && device_intermediate_matches_selected
+        && source_host_expression_variants_all_match;
+    let fixed_policy_bits =
+        if applied { Some(selected_device_bits) } else { source_policy_bits.map(u64::from) };
+
+    json!({
+        "applied": applied,
+        "scope": "focused_qk256_summary_policy_diagnostic",
+        "source_policy_bits": source_policy_bits,
+        "fixed_policy_bits": fixed_policy_bits,
+        "selected_device_output_bits": selected_device_bits,
+        "device_intermediate_output_bits": device_intermediate_output_bits,
+        "source_policy_matches_selected_device": source_policy_matches_selected,
+        "fixed_policy_matches_selected_device": fixed_policy_bits
+            .map(|bits| bits == selected_device_bits),
+        "source_policy_bit_delta": source_policy_bit_delta,
+        "source_host_expression_variants_all_match": source_host_expression_variants_all_match,
+        "production_qk256_policy_change": false,
+        "diagnostic_only": true,
+        "claim_allowed": false,
+    })
+}
+
 fn qk256_device_expression_pair_classification(
     left_classification: &str,
     right_classification: &str,
@@ -9001,7 +9075,7 @@ fn qk256_output_casting_replay_summary(replay: &Value) -> Value {
             "first_values_count": a770["first_values_count"],
             "first_values": a770["first_values"],
         },
-        "device_expression_trace": replay["device_expression_trace"],
+        "device_expression_trace": qkv_projection_device_expression_trace_summary(replay),
         "device_intermediate_trace": replay["device_intermediate_trace"],
         "shape_match": shape_match,
         "value_count_match": value_count_match,
@@ -9196,7 +9270,7 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "cpu_output": qkv_projection_dispatch_replay_tensor_summary(&replay["cpu_output"]),
         "opencl_policy_output": qkv_projection_dispatch_replay_tensor_summary(&replay["opencl_policy_output"]),
         "a770_output": qkv_projection_dispatch_replay_tensor_summary(&replay["a770_output"]),
-        "device_expression_trace": replay["device_expression_trace"],
+        "device_expression_trace": qkv_projection_device_expression_trace_summary(replay),
         "device_intermediate_trace": replay["device_intermediate_trace"],
         "focused_operands": replay["focused_operands"],
         "cpu_a770_output_sha256_match": replay["cpu_a770_output_sha256_match"],
@@ -9209,6 +9283,48 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "cpu": replay["cpu"],
         "a770": replay["a770"],
     })
+}
+
+fn qkv_projection_device_expression_trace_summary(replay: &Value) -> Value {
+    let mut trace = replay["device_expression_trace"].clone();
+    let Some(samples) = trace.get_mut("samples").and_then(Value::as_array_mut) else {
+        return trace;
+    };
+    for sample in samples {
+        let Some(output_index_u64) = sample["output_index"].as_u64() else {
+            continue;
+        };
+        let Some(output_index) = usize::try_from(output_index_u64).ok() else {
+            continue;
+        };
+        let source_policy_bits = replay["opencl_policy_output"]["first_values"]
+            .as_array()
+            .and_then(|values| values.get(output_index))
+            .and_then(json_f32_bits);
+        let Some(selected_device_bits) = replay["a770_output"]["first_values"]
+            .as_array()
+            .and_then(|values| values.get(output_index))
+            .and_then(json_f32_bits)
+        else {
+            continue;
+        };
+        let device_intermediate_output_bits = replay["device_intermediate_trace"]["samples"]
+            .as_array()
+            .and_then(|samples| {
+                samples
+                    .iter()
+                    .find(|sample| sample["output_index"].as_u64() == Some(output_index_u64))
+            })
+            .and_then(|sample| sample["output_bits"].as_u64());
+        let semantic_fix = qk256_host_summary_policy_semantic_fix(
+            source_policy_bits,
+            selected_device_bits,
+            device_intermediate_output_bits,
+            sample,
+        );
+        sample["host_summary_policy_semantic_fix"] = semantic_fix;
+    }
+    trace
 }
 
 fn qkv_projection_dispatch_replay_tensor_summary(tensor: &Value) -> Value {

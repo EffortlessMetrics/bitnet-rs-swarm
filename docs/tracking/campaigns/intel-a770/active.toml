@@ -1059,7 +1059,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-066"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-066-host-summary-policy-semantic-fix"
 stackable = false
 review_mode = "codex_premerge"
