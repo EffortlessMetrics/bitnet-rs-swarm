@@ -39,26 +39,46 @@ dominate:
 - **`em-ci-routed-rust` is the cache-warm executor** (container + sccache +
   `/mnt/ci-cache`, org-discovery routing to idle cx43/cx53, normalized
   "BitNet Rust Small Result").
-- **Routing is done** (PR #1231 merged; #1237 in flight): control-plane →
+- **Routing is done** (PRs #1231 + #1237 merged): control-plane →
   `em-ci-nano` (CX23), light Rust → `em-ci-tiny` (CX33), heavy → `em-ci-small`
   with `rust-medium` / `rust-heavy-medium`.
 - **Shared-cache plumbing exists** (PR #1247): `.github/actions/rust-shared-cache`
   (fail-open `sccache` setup, persistent `/mnt/ci-cache` when present).
 
-## Hard constraint: branch protection is currently unverified
+## Hard constraint: branch protection requires individual checks (confirmed Case B)
 
-There is no read access to `main`'s branch-protection config from the agent
-environment. GitHub's behavior is asymmetric and must be respected:
+The agent has no read access to `main`'s branch-protection config, but a
+**merge attempt on #1237 confirmed the regime empirically**: the API rejected
+the merge with
+
+```
+405: Required status check "BitNet Rust Small Result" is expected.
+```
+
+So `main` requires **individual named status checks** (at minimum the
+routed-rust normalized `BitNet Rust Small Result`), with "require branches up to
+date before merging" on — it is **not** `PR Gate`-only. This is the conservative
+"Case B" the design already assumed, now confirmed, with two consequences:
+
+1. Consolidation (Phase C) **cannot** simply drop retired lanes — each required
+   check name must keep reporting (truthful Success or wrapper) until the
+   required-checks list is edited in lockstep (admin action).
+2. Merging agent PRs needs the branch **up to date**; on the saturated fleet,
+   prefer **auto-merge** (GitHub drives update→green→merge) over manual
+   refresh-then-merge, which races main and re-cancels in-flight runs.
+
+GitHub's behavior is asymmetric and must be respected:
 
 - A workflow **skipped by `paths:`/`branches:` filters** leaves a *required*
   check **Pending** → wedges the PR.
 - A job **skipped by an `if:` condition reports success** → safe for required
   checks.
 
-**Rule for this design:** never let a possibly-required check go missing.
-Either keep the workflow triggering and emit a truthful Success (the `ci-core`
-pattern), or preserve the check name with a thin always-reporting wrapper,
-until branch protection is confirmed to require **only `PR Gate`**.
+**Rule for this design:** never let a required check go missing. Either keep the
+workflow triggering and emit a truthful Success (the `ci-core` pattern), or
+preserve the check name with a thin always-reporting wrapper. The full
+required-checks set should still be enumerated (admin) before Phase C so every
+name is accounted for.
 
 ## Design — three phases, cheapest/safest first
 
