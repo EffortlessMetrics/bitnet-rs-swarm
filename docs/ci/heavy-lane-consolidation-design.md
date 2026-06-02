@@ -105,6 +105,57 @@ fought over by 25 independent workflows:
   thin wrapper job that mirrors the shard's conclusion. Renaming/removing a
   required check before updating branch protection wedges merges.
 
+## Runner tiering (route to the smallest safe tier by actual workload)
+
+Hosted Linux is **exception-only**; self-hosted `em-ci-*` is the default.
+Cross-repo queueing on the shared groups is acceptable backpressure — do **not**
+add `ubuntu-latest` fallback just to avoid a queue.
+
+| Workload | Group | Key labels |
+|----------|-------|------------|
+| non-build / control / policy / workflow metadata | `em-ci-nano` | `workflow-nano` / `policy-nano` |
+| review / LLM / droid review | `em-ci-review` | `review-nano` / `llm-review` / `droid-review` |
+| tiny Rust (`cargo metadata`, small `cargo check`, fmt, light xtask) | `em-ci-tiny` | `rust`, `rust-tiny` / `backfill-rust-small` |
+| normal Rust builds / test shards / clippy / docs | `em-ci-small` | `rust`, `rust-small` / `rust-medium` |
+| heavy Rust (coverage, full compatibility, big linking, model gates, large matrix) | `em-ci-small` | `rust`, `rust-heavy-medium` / `rust-16gb` |
+| single heaviest lane only | `em-ci-small` | `rust`, `rust-large` |
+
+All self-hosted lanes carry `[self-hosted, Linux, X64, em-ci, trusted-pr]`.
+`rust-large` is reserved for the one or two genuinely heaviest jobs — if every
+repo marks its hardest job `rust-large`, the whole org serializes behind the one
+CX53.
+
+### Hosted-runner exceptions (the only allowed cases)
+
+macOS/iOS signing; Windows-specific tests; untrusted **fork** PR code; a one-off
+migration bootstrap (file an issue); a job needing an unavailable
+OS/tool/hardware; or explicit owner approval. Everything else queues on
+`em-ci-*` (a self-hosted job may sit queued up to GitHub's 24 h limit — that is
+acceptable, paid hosted capacity is not the escape hatch).
+
+## Concurrency policy (classify before changing — never mass-flip)
+
+- **proof / evidence / gate-polling / nightly / perf** → `cancel-in-progress:
+  false` so the in-progress proof finishes and only the latest *pending* run
+  waits. The current `false` settings on these lanes are intentional; do not
+  blindly flip them.
+- **cheap lint / format / metadata PR checks** → PR-only cancellation is fine
+  where repo policy allows (this is why `ci-core`'s
+  `cancel-in-progress: ${{ github.event_name == 'pull_request' }}` is correct
+  and stays as-is).
+
+Always use a per-workflow/per-ref group so stale pending runs don't pile up.
+
+## Safety guards (required before expanding self-hosted usage)
+
+A *queued* job is fine; a *hung / disk-full / wedged* runner is not. Each
+migrated lane relies on (platform action or repo fallback): `trusted-pr` gating,
+explicit group+labels, a disk preflight (`>=20 GB` free), `if: always()`
+workspace cleanup, a bounded `SCCACHE_CACHE_SIZE`, a `timeout-minutes` on every
+job, no privileged Docker / host socket without approval, and no fork-PR secrets
+on self-hosted. Avoid casual `docker system prune -af --volumes` in repo lanes —
+that is runner-tier policy.
+
 ## Branch-protection change (human / admin gate)
 
 This is the only step the agent cannot self-serve. One of:
@@ -135,6 +186,21 @@ reporting.
 | `/mnt/ci-cache` disk fill | `SCCACHE_CACHE_SIZE` cap + reuse routed-rust disk-guard; per-runner dirs |
 | sccache binary/runner drift | action is fail-open (builds uncached on miss) |
 | Each phase | Independently revertable; no phase deletes a check before protection is updated |
+
+## Migration PR acceptance checklist
+
+A heavy-lane migration/consolidation PR is acceptable when it answers:
+
+- [ ] Which branch-protection checks are required (or: assumed individual)?
+- [ ] Which jobs still use hosted Linux, and which exception applies?
+- [ ] Are required check names preserved (truthful Success / wrapper)?
+- [ ] Are `paths:` filters applied only where the check still reports?
+- [ ] Is each job on the smallest safe tier per the table above?
+- [ ] Do heavy Rust jobs use shared `sccache`/cargo cache or the routed path?
+- [ ] Are proof/evidence concurrency semantics preserved (no blind flips)?
+- [ ] Are disk guard, cleanup, cache bound, and timeouts present?
+- [ ] Are fork/untrusted PRs kept off trusted self-hosted runners?
+- [ ] Is `rust-large` reserved for only the heaviest lane(s)?
 
 ## Non-goals
 
