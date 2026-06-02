@@ -8,9 +8,11 @@ Closed post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-
 
 Live resident phase evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232
 
-Live resident source-shape issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277
+Closed resident source-shape issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277 /
+https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279
 
-Live physical resident run issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280
+Closed physical resident run issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280 /
+https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334
 
 Closed resident field-gap issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281
 
@@ -40,6 +42,7 @@ Post-matrix refresh: 2026-06-01
 Post-source-run refresh: 2026-06-02
 Post-field rerun refresh: 2026-06-02
 Post-reviewability-contract refresh: 2026-06-02
+Post-physical-package refresh: 2026-06-02
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -67,20 +70,19 @@ The strongest evidence says:
 - #1255 records the current resident CPU receipt as explicitly
   `resident_phase_blocked_for_measurement_qualification`, separating no-reload
   diagnostic readiness from benchmark-ready resident phase evidence.
-- #1277 now has an explicit source fixture,
-  `ci/quality/lunar-lake-resident-qwen25-cpu.yaml`, for the next physical
-  resident package. It keeps the `regression_tiny`, `ask_short`, and
-  `ask_normal` cases but uses `repeat_runs=11`, producing 33 prompts and 32
-  warm asks after the first resident ask.
-- #1280 records a local physical source run from that fixture. The expected
-  cached Qwen2.5 Q8_0 GGUF matched the pinned SHA256, `--device cpu` was
-  required, and the source receipt produced 33 prompts / 32 warm asks with
-  `fallback_used=false`, but no artifacts were committed because the strict
-  resident summary still failed closed.
-- #1281 is closed by #1290. A post-#1290 local #1280-style rerun shows
+- #1277 is closed by #1279. The source fixture
+  `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` keeps the
+  `regression_tiny`, `ask_short`, and `ask_normal` cases and uses
+  `repeat_runs=11`, producing 33 prompts and 32 warm asks after the first
+  resident ask.
+- #1280 is closed by #1334. The committed physical package records the pinned
+  Qwen2.5 Q8_0 GGUF SHA, explicit `--device cpu`, 33 prompts / 32 warm asks,
+  `fallback_used=false`, `model_loaded_once=true`, `tokenizer_loaded_once=true`,
+  quality passing, and determinism passing.
+- #1281 is closed by #1290, and the #1334 summary now shows
   `prompt_render_ms`, `quality_gate_ms`, `detokenize_ms`, and resident memory
-  lifecycle samples now measure in the resident summary. The remaining strict
-  blockers are only `receipt_write_ms` and `telemetry_ms`.
+  lifecycle samples measured in the committed resident summary. The remaining
+  strict blockers are only `receipt_write_ms` and `telemetry_ms`.
 - #1291 is closed by #1292. The accepted scope contract keeps profile
   `receipt_write_ms` and `telemetry_ms` explicit `not_exposed` fields in
   current resident summaries instead of backfilling them from aggregate/session
@@ -91,6 +93,10 @@ The strongest evidence says:
   are the #1291/#1292 `receipt_write_ms` and `telemetry_ms`
   contract-not-exposed fields, while preserving strict
   `resident_phase_qualified=false` and `benchmark_qualified=false`.
+- The #1334 resident summary now exposes that status:
+  `diagnostic_package_reviewable=true`, `resident_phase_qualified=false`, and
+  `benchmark_qualified=false`. The remaining resident blockers are only the
+  per-profile `receipt_write_ms` and `telemetry_ms` fields.
 
 The current route decision is:
 
@@ -101,10 +107,12 @@ The current route decision is:
   comparison evidence, or a later topology receipt identifies a single target.
 
 Do not start a CPU runtime optimization PR from this research alone. The live
-next CPU planning issues are
+CPU planning issue is
 [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232),
-[#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280),
-and the closed
+with the closed
+[#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280) /
+[#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
+physical package,
 [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291) /
 [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
 receipt-field contract, and
@@ -136,10 +144,9 @@ causes and the measurement plan needed before a runtime change.
 | Receipt | Scope | Key CPU findings |
 | --- | --- | --- |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-phase-attribution.json` | Derived CPU phase attribution, no new inference | Cold one-off total response 27986.539 ms; cold load 14250.931 ms; tokenize 482.325 ms; prefill 9361.503 ms; first token 9726 ms; decode 3242.064 ms for 9 output tokens |
-| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json` | Resident Rust GGUF CPU prompt loop, no model/tokenizer reload per prompt | Model loaded once; tokenizer loaded once; ask_short mean total 11158.750 ms; ask_normal mean total 16407.372 ms; no model or tokenizer reload observed; #1255 adds `measurement_qualification.status=resident_phase_blocked_for_measurement_qualification`, `resident_phase_qualified=false`, `benchmark_qualified=false`, and `observed_warm_asks_after_first=29` against the 30-after-first contract |
-| `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` | Source fixture for future physical resident run, no inference by itself | 3 cases x `repeat_runs=11`, yielding 33 prompts / 32 warm asks after first. This fixes the source shape found in #1277 without changing route policy or refreshing hardware evidence |
-| Local #1280 physical source run, 2026-06-02, not committed | Local resident Rust GGUF CPU run from the committed fixture and cached model before #1290 | Cached Qwen2.5 Q8_0 GGUF matched the fixture SHA; `slm-warm-session --device cpu` succeeded with 33 prompts, 32 warm asks after first, selected backend `cpu-rust`, runtime `cpu`, fallback false, and deterministic generated IDs/text. Strict resident summary stayed `resident_phase_qualified=false` and `benchmark_qualified=false` because prompt-render, quality-gate, receipt-write, telemetry, and memory lifecycle fields were missing |
-| Post-#1290 local #1280 rerun, 2026-06-02, not committed | Target-only local resident Rust GGUF CPU run from the same fixture and cached model after #1290 | 33 prompts, fallback false, deterministic output, and `memory.lifecycle.status=measured`; strict resident summary now measures `prompt_render_ms`, `quality_gate_ms`, `detokenize_ms`, and before/after memory lifecycle samples. `resident_phase_qualified=false` and `benchmark_qualified=false` remain because only `receipt_write_ms` and `telemetry_ms` are still `not_exposed` |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json` | Current #1334 resident Rust GGUF CPU prompt-loop summary, no model/tokenizer reload per prompt | Model loaded once; tokenizer loaded once; 33 prompts and 32 warm asks after first; ask_short mean total 4774.776 ms; ask_normal mean total 7271.792 ms; no fallback observed; quality and determinism passed; `diagnostic_package_reviewable=true`, `resident_phase_qualified=false`, and `benchmark_qualified=false`; remaining blockers are profile `receipt_write_ms` and `telemetry_ms` |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-resident-qwen25-cpu-warm-session.json` | #1334 physical resident Rust GGUF CPU source receipt from the committed fixture | Pinned Qwen2.5 Q8_0 GGUF SHA matched; `slm-warm-session --device cpu` produced 33 prompts and per-prompt receipts, selected backend `cpu-rust`, runtime `cpu`, fallback false, quality passing, deterministic generated IDs/text, and model/tokenizer loaded once |
+| `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` | Closed #1279 source fixture for the physical resident run, no inference by itself | 3 cases x `repeat_runs=11`, yielding 33 prompts / 32 warm asks after first. This fixed the source shape found in #1277 without changing route policy |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-profile-run.json` | Explicit Rust GGUF CPU heavy-profile timing | prefill_heavy total 1373681.117 ms for 2734 prompt tokens and 16 generated tokens; decode_heavy total 123115.592 ms for 67 prompt tokens and 512 generated tokens |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU corpus-v2 now passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
 | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` | Newer OpenVINO CPU/GPU/NPU corpus-v2 receipt | OpenVINO CPU resolved to `Intel(R) Core(TM) Ultra 7 258V`, constructed in 981.455 ms, ran 14/14 corpus-v2 cases with fallback false and direct generated token IDs |
@@ -270,12 +277,12 @@ PR #1290 now isolates quality-gate evaluation time. Receipt overhead may matter
 for tight benchmark loops, but the existing latencies are too large for
 receipt overhead to be the main explanation.
 
-Issue #1280 keeps this boundary live: the first local source run produced useful
-resident means, but the strict summary still blocked measurement qualification
-because several fields were missing. #1290 closed the clear source/summarizer
-gap for prompt rendering, quality gates, detokenization, and memory lifecycle
-samples. The post-#1290 target-only rerun narrows the unresolved overhead
-question to `receipt_write_ms` and `telemetry_ms` only.
+#1280 is closed by #1334. The committed physical package records useful
+resident means, and the strict summary now measures prompt rendering, quality
+gates, detokenization, and memory lifecycle samples. The unresolved overhead
+question is narrowed to `receipt_write_ms` and `telemetry_ms` only, and those
+fields remain profile-level `not_exposed` blockers under the #1291/#1292
+contract.
 
 ### Receipt Write And Telemetry Contract
 
@@ -514,34 +521,20 @@ block:
 Acceptance: resident timing must keep model-load cost separate from per-prompt
 cost and must state that resident proof does not remove cold-start cost.
 
-The current committed resident receipt already fails closed after #1255 because
-the accepted fields are not yet all present: profile prompt-token counts,
-prompt-render timing, quality-gate timing, receipt-write timing, telemetry
-timing, before-load memory, after-load memory, after-first-ask memory, and a
-full 30 warm asks after the first resident ask remain missing or not exposed.
-That closeout is qualification support, not the physical resident phase
-evidence package.
+The current committed resident receipt from #1334 now records the physical
+resident phase package from the #1279 fixture. It fixes the old warm-count,
+prompt-token, prompt-render, quality-gate, detokenization, and memory lifecycle
+gaps while preserving the accepted status boundary:
+`diagnostic_package_reviewable=true`, `resident_phase_qualified=false`, and
+`benchmark_qualified=false`.
 
-The first #1280 local run fixed the warm-count source shape with 32 warm asks
-after the first resident ask, but it did not make the package
-benchmark-qualified. Its measured means are diagnostic only:
+The #1334 measured means are diagnostic only:
 
 | Profile | Count | Mean total | Mean TTFT | Mean prefill | Mean decode | Generated tokens |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `regression_tiny` | 11 | 5124.317 ms | 4093.545 ms | 3948.732 ms | 1175.229 ms | 8 |
-| `ask_short` | 11 | 4802.380 ms | 3759.818 ms | 3612.480 ms | 1189.533 ms | 8 |
-| `ask_normal` | 11 | 7312.362 ms | 3862.818 ms | 3716.436 ms | 3595.233 ms | 24 |
-
-After #1290, the same target-only rerun shape measures prompt rendering,
-quality gates, detokenization, and resident memory lifecycle. Its means are
-still diagnostic, and artifacts remain uncommitted because profile
-`receipt_write_ms` and `telemetry_ms` are still `not_exposed`:
-
-| Profile | Count | Mean total | Mean TTFT | Mean prefill | Mean decode |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `regression_tiny` | 11 | 5450.061 ms | 4359.727 ms | 4206.403 ms | 1243.310 ms |
-| `ask_short` | 11 | 5100.609 ms | 3990.636 ms | 3834.768 ms | 1265.498 ms |
-| `ask_normal` | 11 | 7781.281 ms | 4120.000 ms | 3962.204 ms | 3818.423 ms |
+| `regression_tiny` | 11 | 5084.737 ms | 4064.818 ms | 3921.156 ms | 1163.243 ms | 8 |
+| `ask_short` | 11 | 4774.776 ms | 3734.455 ms | 3588.079 ms | 1186.351 ms | 8 |
+| `ask_normal` | 11 | 7271.792 ms | 3843.909 ms | 3697.454 ms | 3573.740 ms | 24 |
 
 The next narrow step is not another receipt-builder PR by default. The
 closed #1291/#1292 contract already decides that current resident summaries
@@ -598,9 +591,9 @@ hiding it:
 | Rank | Candidate | Expected signal | CI/runtime risk |
 | ---: | --- | --- | --- |
 | 1 | Apply the #1291/#1292 receipt-write and telemetry timing scope contract | High: preserves the accepted profile-versus-aggregate boundary and prevents backfilled strict fields | Low: docs/contract surface; no runtime behavior change |
-| 2 | Apply the closed #1311/#1319 diagnostic-reviewability contract before refreshing #1280 artifacts | High: prevents a target-only resident package from being mistaken for strict phase qualification or benchmark evidence | Low: docs/schema decision is complete; next PR can be evidence-only if it preserves the status boundary |
-| 3 | Use #1232 as the parent evidence issue for resident Rust GGUF phase attribution and no-reload evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
-| 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
+| 2 | Use #1232 to decide the next resident phase-evidence follow-up after the committed #1280/#1334 package | High: keeps diagnostic-reviewable resident evidence from becoming an optimization or benchmark claim | Low: issue/research shaping before any new physical run |
+| 3 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
+| 4 | Add scoped aggregate receipt-write or telemetry fields only if a later contract names their scope and qualification effect | Medium: could explain host overhead without corrupting per-profile phase timing | Low-medium: schema/receipt hardening if tightly scoped |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
 | 6 | Optimize tokenizer/template setup | Low-medium: visible hundreds of milliseconds, but not dominant | Low-medium: local code change risk depends on tokenizer ownership |
 | 7 | Change prefill/decode kernels or route policy | Potentially high, but evidence not yet precise enough | High: broad runtime and CI churn risk |
@@ -650,11 +643,12 @@ The live CPU slow-path follow-ups and guard status are:
    Rust GGUF CPU versus OpenVINO CPU comparison or later affinity/topology work
    still needs a separate narrow issue once the evidence target is concrete.
 6. [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280)
-   is open as the physical resident run issue. A 2026-06-02 local source run
-   proved the committed fixture can produce the expected 33 prompts and 32
-   warm asks after the first resident ask with fallback false, but no artifacts
-   were committed because the strict resident summary remained measurement
-   blocked.
+   is closed by [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
+   as the physical resident run issue. The committed package records 33
+   prompts, 32 warm asks after first, fallback false, model/tokenizer loaded
+   once, quality passing, determinism passing, and
+   `diagnostic_package_reviewable=true` while preserving
+   `resident_phase_qualified=false` and `benchmark_qualified=false`.
 7. [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281)
    is closed by [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290).
    It added prompt-render timing, quality-gate timing, detokenization summary
@@ -670,10 +664,11 @@ The live CPU slow-path follow-ups and guard status are:
    is closed by [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
    as the resident status contract issue. Current receipts may distinguish
    diagnostic reviewability from strict `resident_phase_qualified` evidence
-   when the only blockers are the #1291/#1292 `not_exposed` fields. Refresh
-   #1280 artifacts only if the package preserves strict false qualification,
-   benchmark false qualification, explicit contract-not-exposed blockers, and
-   no route-policy or optimization claim.
+   when the only blockers are the #1291/#1292 `not_exposed` fields. #1334 uses
+   that status split for the committed physical package. Future #1232 follow-up
+   packages must preserve strict false qualification, benchmark false
+   qualification, explicit contract-not-exposed blockers, and no route-policy
+   or optimization claim unless a later contract revises the rule.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by
