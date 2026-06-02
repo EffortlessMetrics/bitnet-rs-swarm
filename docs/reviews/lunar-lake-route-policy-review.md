@@ -282,11 +282,14 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   unless a shared BitNet semantic change, validator gap, or receipt gap makes a
   targeted CPU reference rerun necessary. #1263 is closed by #1267 as the
   current diagnostic-only classification path for reviewed merged
-  shared-surface touches such as #1257/#1264. Current post-`c8076ea` A770-071
-  replay/closeout work (#1305/#1306) is docs/receipts/tracking-only and does
-  not change the BitNet semantic intake state; future ambiguous diagnostic
-  replay indexing should be another narrow diagnostic-only refresh under
-  #1178, not a BitNet reference rerun.
+  shared-surface touches such as #1257/#1264. Current post-`3080b3cca` movement
+  through #1338 is A770 diagnostic replay/tracker work plus Lunar Lake CPU
+  resident status/docs/evidence work. The only matched code surface in that
+  range is #1319's `crates/bitnet-cli/src/commands/lunar_lake.rs` resident
+  status update, which preserves BitNet claim boundaries and does not change
+  the BitNet semantic intake state. Future ambiguous diagnostic replay indexing
+  should be another narrow diagnostic-only refresh under #1178, not a BitNet
+  reference rerun.
 - #1149 should own any runtime `AUTO` selected-device measurement follow-up;
   [lunar-lake-openvino-auto-selected-device.md](lunar-lake-openvino-auto-selected-device.md)
   records the current fail-closed contract from #1158, and #1159 has landed the
