@@ -2,9 +2,9 @@
 """Emit a static PR Plan for narrow no-Rust evidence diffs.
 
 This helper intentionally covers only the stable schema-1 plan shape used by
-empty-label docs and ``ci/hardware/**`` evidence PRs. Workflow, policy,
-tracker, manifest, Rust, labelled, and unknown diffs fall back to the Rust
-planner in ``xtask ci plan``.
+empty-label docs, campaign/tracker metadata, ``ci/hardware/**`` evidence, and
+small repository metadata PRs. Workflow, policy, manifest, Rust, labelled, and
+unknown diffs fall back to the Rust planner in ``xtask ci plan``.
 """
 
 from __future__ import annotations
@@ -168,6 +168,10 @@ def is_tracker_path(path: str) -> bool:
     return path.startswith("docs/tracking/") or path.startswith(".codex/campaigns/")
 
 
+def is_repo_metadata_path(path: str) -> bool:
+    return path.startswith(".rails/") or path.startswith(".uselesskey/")
+
+
 def is_hardware_receipt_path(path: str) -> bool:
     return path.startswith("ci/hardware/")
 
@@ -230,23 +234,32 @@ def eligible(paths: list[str], labels: list[str]) -> tuple[bool, str]:
     for path in paths:
         if is_control_plane_path(path):
             return False, f"control-plane path requires Rust planner: {path}"
-        if is_tracker_path(path):
-            return False, f"tracker path requires Rust planner: {path}"
         if is_policy_docs_path(path):
             return False, f"policy/docs path requires Rust planner: {path}"
         if is_rust_input_path(path):
             return False, f"Rust-input path requires Rust planner: {path}"
-        if not (is_docs_path(path) or is_hardware_receipt_path(path)):
+        if not (
+            is_docs_path(path)
+            or is_tracker_path(path)
+            or is_hardware_receipt_path(path)
+            or is_repo_metadata_path(path)
+        ):
             return False, f"unsupported fast-path path: {path}"
 
-    return True, "eligible no-Rust evidence/doc path set"
+    return True, "eligible no-Rust docs/tracker/evidence metadata path set"
 
 
 def build_plan(paths: list[str], labels: list[str]) -> dict[str, Any]:
     docs_only = all(is_docs_path(path) and not is_tracker_path(path) for path in paths)
+    tracker_only = all(is_tracker_path(path) for path in paths)
+    tracker_or_campaign_only = tracker_only
     hardware_receipt_only = all(is_hardware_receipt_path(path) for path in paths)
     model_validation_changed = any(is_hardware_receipt_path(path) for path in paths)
-    risk_packs = ["docs_tracking"] if any(is_docs_path(path) for path in paths) else []
+    risk_packs = (
+        ["docs_tracking"]
+        if any(is_docs_path(path) or is_tracker_path(path) for path in paths)
+        else []
+    )
 
     return {
         "schema_version": 1,
@@ -259,8 +272,8 @@ def build_plan(paths: list[str], labels: list[str]) -> dict[str, Any]:
         "classification": {
             "no_rust_inputs": True,
             "docs_only": docs_only,
-            "tracker_only": False,
-            "tracker_or_campaign_only": False,
+            "tracker_only": tracker_only,
+            "tracker_or_campaign_only": tracker_or_campaign_only,
             "hardware_receipt_only": hardware_receipt_only,
             "policy_docs_only": False,
             "rust_inputs_changed": False,
@@ -308,7 +321,10 @@ def append_summary(path: str | None, plan: dict[str, Any]) -> None:
     lines = [
         "## CI Plan",
         "",
-        "Fast path: empty-label no-Rust docs / hardware evidence PR; Rust planner compile skipped.",
+        (
+            "Fast path: empty-label no-Rust docs / tracker / hardware evidence PR; "
+            "Rust planner compile skipped."
+        ),
         "",
         "### Selected lanes",
         "",

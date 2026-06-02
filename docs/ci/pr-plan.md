@@ -73,16 +73,18 @@ protection still remains a separate repository setting.
 ## No-Rust Evidence Fast Path
 
 PR Plan may emit the stable schema-1 no-Rust plan without compiling `xtask`
-when an empty-label PR changes only ordinary docs plus `ci/hardware/**`
-evidence receipts. This preserves the same lane set and package-selection
-boundary as `xtask ci plan`: route jobs plus always-on guards, no selected Rust
-packages, `no_rust_inputs=true`, and `model_validation_changed=true` when a
-hardware receipt is present.
+when an empty-label PR changes only ordinary docs, campaign/tracker metadata,
+`ci/hardware/**` evidence receipts, `.rails/**`, or `.uselesskey/**` metadata.
+This preserves the same lane set and package-selection boundary as
+`xtask ci plan`: route jobs plus always-on guards, no selected Rust packages,
+`no_rust_inputs=true`, `tracker_or_campaign_only=true` for tracker-only diffs,
+and `model_validation_changed=true` when a hardware receipt is present.
 
 The fast path is intentionally narrow. Labelled PRs, workflow/control-plane
-edits, policy docs, tracker/campaign files, manifests, Rust inputs, and unknown
-paths fall back to `xtask ci plan` so the Rust planner remains authoritative for
-anything that can affect routing policy or generated campaign state.
+edits, policy docs, manifests, Rust inputs, scripts/tools, and unknown paths
+fall back to `xtask ci plan` so the Rust planner remains authoritative for
+anything that can affect routing policy, executable code, dependencies, or
+generated campaign behavior.
 
 ## Fixture Coverage
 
@@ -90,8 +92,12 @@ Schema fixture tests cover:
 
 - docs-only changes,
 - tracker-only changes,
+- mixed docs, tracker, and hardware evidence changes,
+- `.rails/**` and `.uselesskey/**` metadata changes,
 - hardware receipt-only changes,
 - policy docs-only changes,
+- workflow-only changes,
+- mixed docs and Rust changes,
 - ordinary Rust changes,
 - manifest/toolchain and public API changes,
 - GPU and macOS changes,
