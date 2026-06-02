@@ -14,7 +14,8 @@ Live physical resident run issue: https://github.com/EffortlessMetrics/bitnet-rs
 
 Closed resident field-gap issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281
 
-Live receipt-write/telemetry scope issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291
+Closed receipt-write/telemetry scope issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291 /
+https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292
 
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
@@ -76,9 +77,11 @@ The strongest evidence says:
   `prompt_render_ms`, `quality_gate_ms`, `detokenize_ms`, and resident memory
   lifecycle samples now measure in the resident summary. The remaining strict
   blockers are only `receipt_write_ms` and `telemetry_ms`.
-- #1291 owns the remaining scope question: these two fields must not be
-  backfilled from aggregate/session observations unless a contract defines the
-  source, scope, and qualification rule.
+- #1291 is closed by #1292. The accepted scope contract keeps profile
+  `receipt_write_ms` and `telemetry_ms` explicit `not_exposed` fields in
+  current resident summaries instead of backfilling them from aggregate/session
+  observations unless a later contract defines the source, scope, and
+  qualification rule.
 
 The current route decision is:
 
@@ -92,11 +95,11 @@ Do not start a CPU runtime optimization PR from this research alone. The live
 next CPU planning issues are
 [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232),
 [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280),
-and
-[#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291).
-Together they define resident Rust GGUF phase evidence and the missing
-receipt-field contract before any optimization, matched-comparison, or
-route-policy PR.
+and the closed
+[#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291) /
+[#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
+receipt-field contract. Together they define resident Rust GGUF phase evidence
+before any optimization, matched-comparison, or route-policy PR.
 
 ## Current CPU Route Context
 
@@ -265,7 +268,7 @@ question to `receipt_write_ms` and `telemetry_ms` only.
 Do not backfill per-profile resident phase metrics from aggregate/session
 observations.
 
-Accepted current contract for #1291:
+Accepted current contract from #1291/#1292:
 
 - `receipt_write_ms` is not a per-prompt phase metric in current
   `slm-warm-session` receipts. A prompt receipt cannot truthfully include the
@@ -523,11 +526,12 @@ still diagnostic, and artifacts remain uncommitted because profile
 | `ask_short` | 11 | 5100.609 ms | 3990.636 ms | 3834.768 ms | 1265.498 ms |
 | `ask_normal` | 11 | 7781.281 ms | 4120.000 ms | 3962.204 ms | 3818.423 ms |
 
-The next narrow step is not another receipt-builder PR by default. First use
-issue #1291 to decide whether `receipt_write_ms` and `telemetry_ms` are required
-profile metrics, accepted explicit-unavailable fields, or separately named
-aggregate/session context. Keep `resident_phase_qualified=false` unless the
-full #1232 contract is satisfied or explicitly revised.
+The next narrow step is not another receipt-builder PR by default. The
+closed #1291/#1292 contract already decides that current resident summaries
+keep profile `receipt_write_ms` and `telemetry_ms` as explicit `not_exposed`
+fields instead of backfilling aggregate/session observations. Keep
+`resident_phase_qualified=false` unless the full #1232 contract is satisfied or
+explicitly revised.
 
 ### Thread/Core Matrix Receipt
 
@@ -576,8 +580,8 @@ hiding it:
 
 | Rank | Candidate | Expected signal | CI/runtime risk |
 | ---: | --- | --- | --- |
-| 1 | Resolve #1291 receipt-write and telemetry timing scope | High: decides whether the remaining blockers are profile phases, aggregate context, or accepted unavailable fields | Low: docs/contract surface; no runtime behavior change |
-| 2 | Refresh #1280 resident CPU package only after #1291 is accepted | High: confirms whether the no-reload path is still prefill/decode bound with the accepted qualification fields | Medium: hardware run needed, but no route-policy change |
+| 1 | Apply the #1291/#1292 receipt-write and telemetry timing scope contract | High: preserves the accepted profile-versus-aggregate boundary and prevents backfilled strict fields | Low: docs/contract surface; no runtime behavior change |
+| 2 | Refresh #1280 resident CPU package only after the accepted contract or a later schema makes the strict summary reviewable | High: confirms whether the no-reload path is still prefill/decode bound with accepted qualification fields | Medium: hardware run needed, but no route-policy change |
 | 3 | Use #1232 as the parent evidence issue for resident Rust GGUF phase attribution and no-reload evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
@@ -640,10 +644,11 @@ The live CPU slow-path follow-ups and guard status are:
    exposure, and resident memory lifecycle support without route-policy,
    optimization, speedup, power, accelerator, or BitNet claims.
 8. [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291)
-   owns the remaining `receipt_write_ms` and `telemetry_ms` scope decision.
-   Do not implement a two-pass receipt write, broad telemetry layer, or
-   qualification relaxation until that issue defines the exact accepted
-   receipt fields and summarizer rule.
+   is closed by [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
+   as the `receipt_write_ms` and `telemetry_ms` scope decision. Do not
+   implement a two-pass receipt write, broad telemetry layer, or qualification
+   relaxation until a later issue or spec defines different accepted receipt
+   fields and summarizer rules.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by
