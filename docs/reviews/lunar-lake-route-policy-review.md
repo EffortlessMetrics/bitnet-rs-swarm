@@ -3,12 +3,13 @@
 Status: review
 Owner: intel/openvino
 Created: 2026-05-31
+Post-watch refresh: 2026-06-02
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
 Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1251](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267), [#1294](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1294), [#1298](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1298), [#1349](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1349), [#1350](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1350)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267), [#1294](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1294), [#1298](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1298), [#1349](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1349), [#1350](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1350), [#1352](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1352), [#1354](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1354), [#1355](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1355)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -48,13 +49,16 @@ evidence contracts current:
   as the thread/core matrix builder contract, #1071 is closed by #1208 as the
   physical thread/core matrix evidence package, #1232 is the parent resident
   Rust GGUF phase evidence successor, #1280 is closed by #1334 as the physical
-  resident package, and #1291 is closed by #1292 as the receipt-write /
-  telemetry scope contract;
+  resident package, #1291 is closed by #1292 as the receipt-write /
+  telemetry scope contract, #1352 indexes that diagnostic-reviewable but
+  strict-unqualified CPU boundary in the capability matrix, and #1354 carries
+  it into the operator-surface review without route-policy effect;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
   #1244 owns future token-visibility schema or checker work if a later receipt
-  exposes ambiguity, with #1350 recording the current shared direct-token
-  helper and fail-closed validator anchors without changing route policy;
+  exposes ambiguity, with #1350/#1355 recording the current shared direct-token
+  helper, fail-closed validator anchors, and watch-only boundary without
+  changing route policy;
 - #1135 for route ID and canonical proof-family mapping, now closed by #1137
   in [lunar-lake-route-id-proof-family-map.md](lunar-lake-route-id-proof-family-map.md);
 - #1178 for BitNet semantic-intake freshness; current intake remains ready, but
@@ -82,9 +86,10 @@ evidence contracts current:
 - #1160 for the current OpenVINO NPU cache-rerun evidence package, now closed
   by #1174 with a dated diagnostic receipt at
   `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json`;
-- #1165 for operator receipt coverage closeout, which leaves the remaining
-  operator-appliance gaps in #1064, #1149, #1178, and #1232 rather than a new
-  broad route-policy or receipt cleanup.
+- #1165 for operator receipt coverage closeout, with #1354 refreshing the
+  current operator review around the live #1232 CPU parent and the no-claim
+  boundary; remaining operator-appliance gaps stay in #1064, #1149, #1178, and
+  #1232 rather than a new broad route-policy or receipt cleanup.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -120,8 +125,11 @@ measurement evidence, #1268 keeps GPU heavy-profile phase-split claims
 machine-readable and false when splits are absent, #1292 keeps CPU resident
 receipt-write / telemetry scope from being backfilled into per-profile timing,
 PR #1349 keeps POWER-006 blocked until real battery-mode route samples exist,
-and PR #1350 keeps token visibility watch-only by anchoring the current
-direct-token producer and validators.
+PR #1352 keeps the OpenVINO capability matrix aligned with the CPU
+diagnostic-reviewable but strict-unqualified boundary, PR #1354 carries that
+operator-surface boundary into the current operator review, and PR #1350/#1355
+keep token visibility watch-only by anchoring the current direct-token producer,
+validators, and #1244 follow-up boundary.
 
 The ledger's route IDs remain campaign-local names. The route-ID proof-family
 map records how future OpenVINO receipts and validators should relate those
@@ -186,6 +194,10 @@ profile `receipt_write_ms` and `telemetry_ms` not backfilled unless a later
 contract defines their source, scope, and summarizer rule. That contract is not
 route-policy evidence and does not make Rust GGUF CPU resident timing
 benchmark-qualified.
+PR #1352 records the same CPU posture in the OpenVINO capability matrix, and
+PR #1354 carries it into the operator-surface review: the current CPU evidence
+is diagnostic-reviewable and strict-unqualified, not OpenVINO CPU promotion,
+CPU tuning, matched-format speedup, or route-policy evidence.
 
 ### OpenVINO GPU
 
@@ -272,10 +284,10 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
 
 - Future token-visibility schema or validator work should use #1244 and the
   #1123/#1138 strategy before token-ID gaps become one-off wording in each
-  receipt. #1350 records the current direct-token helper and validator anchors;
-  future token work should wait for a new receipt path that bypasses that
-  helper, emits ambiguous direct/proxy/unavailable status, or needs a central
-  `visibility_level` helper.
+  receipt. #1350/#1355 record the current direct-token helper, validator
+  anchors, and watch-only boundary; future token work should wait for a new
+  receipt path that bypasses that helper, emits ambiguous direct, proxy, or
+  unavailable status, or needs a central `visibility_level` helper.
 - #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
   evidence map; future GPU mutation needs a new concrete regression or review
   finding.
@@ -326,11 +338,12 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   matched OpenVINO CPU comparison or later topology evidence once the target is
   concrete. Do not repeat the generic non-equivalence guard or backfill
   unavailable profile fields from aggregate observations.
-- #1165 closed the current operator receipt follow-up review. Future operator
-  work should cite one of #1064, #1149, #1178, #1232, or a new narrow physical
-  CPU measurement/comparison issue rather than opening another broad operator
-  coverage cleanup. Use #1119 for any broader NPU cold/cache research follow-up
-  now that #1160 has closed.
+- #1165 closed the current operator receipt follow-up review, and #1354 refreshes
+  that review with the live #1232 CPU parent and no-claim boundary. Future
+  operator work should cite one of #1064, #1149, #1178, #1232, or a new narrow
+  physical CPU measurement/comparison issue rather than opening another broad
+  operator coverage cleanup. Use #1119 for any broader NPU cold/cache research
+  follow-up now that #1160 has closed.
 - #1064 remains the only current path to `low_power` promotion evidence. #1349
   makes the accepted battery predicate explicit; future POWER work should not
   treat AC-only predicate refreshes, schema support, or point samples as route
