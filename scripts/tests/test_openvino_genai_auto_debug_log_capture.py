@@ -23,6 +23,24 @@ class OpenVinoGenAiAutoDebugLogCaptureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             fixture = FIXTURES_DIR / "openvino-auto-debug-log-stateful.txt"
+            capture_log_fixture = tmp_path / "captured-debug-log.txt"
+            capture_log_fixture.write_text(
+                "\n".join(
+                    [
+                        "[WARNING] Paged Attention backend initialization failed. Falling back to SDPA backend.",
+                        (
+                            "[12:00:00.0000]W[plugin.cpp:967][AUTO] Setting property "
+                            "ov::intel_auto::enable_startup_fallback to false for stateful model."
+                        ),
+                        (
+                            "[12:00:00.0001]W[plugin.cpp:971][AUTO] Setting property "
+                            "ov::intel_auto::enable_running_fallback to false for stateful model."
+                        ),
+                        fixture.read_text(encoding="utf-8"),
+                    ]
+                ),
+                encoding="utf-8",
+            )
             fake_phase = tmp_path / "fake_phase_receipt.py"
             fake_phase.write_text(
                 textwrap.dedent(
@@ -91,7 +109,7 @@ class OpenVinoGenAiAutoDebugLogCaptureTests(unittest.TestCase):
             phase_json = tmp_path / "phase.json"
             log_out = tmp_path / "debug-log.txt"
             evidence_json = tmp_path / "evidence.json"
-            env = dict(**os.environ, FAKE_OPENVINO_LOG_FIXTURE=str(fixture))
+            env = dict(**os.environ, FAKE_OPENVINO_LOG_FIXTURE=str(capture_log_fixture))
             subprocess.run(
                 [
                     sys.executable,
@@ -125,6 +143,16 @@ class OpenVinoGenAiAutoDebugLogCaptureTests(unittest.TestCase):
         self.assertEqual(evidence["genai_debug_log_evidence"]["visibility_status"], "exposed_by_genai_debug_log")
         self.assertEqual(evidence["genai_debug_log_evidence"]["execution_devices"], ["GPU.0"])
         self.assertTrue(evidence["same_run_answer_and_fallback"]["all_answer_gates_passed"])
+        self.assertTrue(evidence["same_run_answer_and_fallback"]["attention_backend_warning_observed"])
+        self.assertTrue(evidence["same_run_answer_and_fallback"]["auto_startup_running_fallback_disabled_observed"])
+        self.assertEqual(
+            len(evidence["same_run_answer_and_fallback"]["auto_startup_running_fallback_disabled_lines"]),
+            2,
+        )
+        self.assertIn(
+            "not as application route/device fallback",
+            evidence["same_run_answer_and_fallback"]["attention_backend_warning_boundary"],
+        )
         self.assertIn("No route policy changed.", evidence["claim_boundary"]["must_not_claim"])
 
 
