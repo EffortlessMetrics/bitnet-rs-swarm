@@ -17,6 +17,8 @@ Closed resident field-gap issue: https://github.com/EffortlessMetrics/bitnet-rs-
 Closed receipt-write/telemetry scope issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291 /
 https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292
 
+Live resident reviewable/qualified contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311
+
 Decision memo: [Lunar Lake CPU Route Decision Memo](../reviews/lunar-lake-cpu-route-decision.md)
 
 Closed physical matrix follow-up: [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071) /
@@ -82,6 +84,10 @@ The strongest evidence says:
   current resident summaries instead of backfilling them from aggregate/session
   observations unless a later contract defines the source, scope, and
   qualification rule.
+- #1311 is the live contract issue for the remaining status question: keep the
+  current strict `resident_phase_qualified=false` behavior, or add a separate
+  diagnostic reviewability status while preserving strict qualification and
+  benchmark qualification as false.
 
 The current route decision is:
 
@@ -98,8 +104,10 @@ next CPU planning issues are
 and the closed
 [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291) /
 [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
-receipt-field contract. Together they define resident Rust GGUF phase evidence
-before any optimization, matched-comparison, or route-policy PR.
+receipt-field contract, and
+[#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311).
+Together they define resident Rust GGUF phase evidence before any optimization,
+matched-comparison, or route-policy PR.
 
 ## Current CPU Route Context
 
@@ -291,6 +299,9 @@ Accepted current contract from #1291/#1292:
   should not justify a behavior change or CPU optimization PR. A later
   contract may relax resident-phase qualification only if it records why
   aggregate/session overhead is outside the profile timing surface.
+- #1311 owns the narrower decision of whether to keep that strict behavior only
+  or add a separate diagnostic `reviewable` status for packages whose only
+  blockers are these contractually unavailable fields.
 - `benchmark_qualified` remains false regardless of this contract unless the
   compared routes share benchmark-equivalent model format, prompt scope,
   timing scope, token visibility, and route identity.
@@ -581,7 +592,7 @@ hiding it:
 | Rank | Candidate | Expected signal | CI/runtime risk |
 | ---: | --- | --- | --- |
 | 1 | Apply the #1291/#1292 receipt-write and telemetry timing scope contract | High: preserves the accepted profile-versus-aggregate boundary and prevents backfilled strict fields | Low: docs/contract surface; no runtime behavior change |
-| 2 | Refresh #1280 resident CPU package only after the accepted contract or a later schema makes the strict summary reviewable | High: confirms whether the no-reload path is still prefill/decode bound with accepted qualification fields | Medium: hardware run needed, but no route-policy change |
+| 2 | Use #1311 to decide strict-only qualification versus a separate diagnostic reviewability status before refreshing #1280 artifacts | High: prevents a target-only resident package from being mistaken for strict phase qualification or benchmark evidence | Low: docs/schema decision before any artifact commit |
 | 3 | Use #1232 as the parent evidence issue for resident Rust GGUF phase attribution and no-reload evidence | High: keeps completed #1208 evidence from becoming an optimization shortcut | Low-medium: docs/receipt issue shaping before any physical run |
 | 4 | Refresh Rust GGUF CPU versus OpenVINO CPU comparison | Medium: clarifies whether OpenVINO CPU is a route candidate or only diagnostic context | Medium: OpenVINO hardware/software run, but docs/receipt only |
 | 5 | Add a later affinity/topology receipt only if P-core/E-core placement can be exposed accurately | Medium: may explain placement behavior the current matrix could not expose | Medium: requires Windows affinity and scheduler care |
@@ -649,6 +660,12 @@ The live CPU slow-path follow-ups and guard status are:
    implement a two-pass receipt write, broad telemetry layer, or qualification
    relaxation until a later issue or spec defines different accepted receipt
    fields and summarizer rules.
+9. [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
+   is open as the resident status contract issue. It asks whether a future
+   receipt should distinguish diagnostic reviewability from strict
+   `resident_phase_qualified` evidence when the only blockers are #1291/#1292
+   `not_exposed` fields. Do not commit #1280 artifacts or relax qualification
+   semantics from a local target-only run until this contract is settled.
 
 Do not start CPU optimization, default thread tuning, OpenVINO CPU promotion, or
 route-policy changes from #1208. The matrix answers one platform question by

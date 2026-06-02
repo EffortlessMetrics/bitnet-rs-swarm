@@ -8,7 +8,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
 Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
@@ -30,8 +30,8 @@ PR #1255 made that boundary machine-readable in the committed receipt through a
 `measurement_qualification` block. The current status is explicitly blocked,
 not benchmark-ready.
 
-#1277 defines the source-command boundary for the next physical package. The
-new resident-specific corpus lives at
+Issue #1277 defines the source-command boundary for the next physical package.
+The new resident-specific corpus lives at
 `ci/quality/lunar-lake-resident-qwen25-cpu.yaml`. It keeps the same three
 initial profile cases as the durability corpus but uses `repeat_runs=11`, so
 `slm-warm-session --corpus ci/quality/lunar-lake-resident-qwen25-cpu.yaml`
@@ -39,6 +39,14 @@ produces 33 prompts: one first resident ask plus 32 warm asks after first. This
 defines source shape only. It does not replace the committed diagnostic
 receipt or make the resident session benchmark-qualified until a fresh physical
 receipt records the remaining phase, token, memory, and telemetry fields.
+
+Issue #1280 target-only reruns after #1290 now show that the source shape can
+produce 33 prompts with fallback false, deterministic output, measured prompt
+render, quality gate, detokenization, and memory lifecycle fields. The package
+still stays diagnostic because profile `receipt_write_ms` and `telemetry_ms`
+are explicit `not_exposed` under #1291/#1292, and #1311 must decide whether a
+separate diagnostic reviewability status is allowed while strict
+`resident_phase_qualified` and `benchmark_qualified` remain false.
 
 Do not optimize CPU kernels, change route policy, tune thread defaults, promote
 OpenVINO CPU, or claim CPU speedup from the current no-reload evidence.
@@ -211,15 +219,15 @@ power proxy.
 ## Next Smallest PR
 
 No additional qualification-only PR is currently needed after #1255. The next
-implementation PR should be a measurement command refresh, physical evidence
-package, or narrow receipt/schema follow-up only if the accepted contract
-changes. That work should:
+status/schema decision belongs to #1311. Only after that decision should the
+next implementation PR be a measurement command refresh, physical evidence
+package, or narrow receipt/schema follow-up. That work should:
 
-- distinguishes first resident ask from the 30 measured warm asks;
-- records the missing prompt-render, quality-gate, receipt-write, and telemetry
-  timers;
-- captures the full memory lifecycle;
-- preserves explicit `not_exposed` values for unavailable telemetry;
+- distinguish first resident ask from the 30 measured warm asks;
+- records accepted measured prompt-render, quality-gate, detokenize, memory,
+  and phase fields;
+- preserves explicit `not_exposed` values for profile receipt-write and
+  telemetry fields unless #1311 or a later contract revises the status rule;
 - keeps the closed #1071/#1208 thread/core matrix as review evidence, not a
   tuning unlock.
 
