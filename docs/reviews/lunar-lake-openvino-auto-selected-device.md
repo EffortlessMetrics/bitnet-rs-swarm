@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1216](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216), [#1214](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1214), [#1212](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1212), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135)
+Linked issues: [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1216](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1216), [#1214](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1214), [#1212](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1212), [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064), [#1123](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1123), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242)
 Linked PRs: [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1213](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1213), [#1215](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1215), [#1217](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1217)
 Support-tier impact: no promotion; review-only AUTO selected-device evidence contract
 Policy impact: no policy exception
@@ -39,6 +39,10 @@ same block-scoped boundary. Issue #1149 remains open as the parent
 selected-device gate because this still is not generated phase-receipt
 selected-device proof and does not relax any promotion, timing, fallback, power,
 or profile evidence requirement.
+
+Issue #1242 is the live child issue for the next parser or receipt-source
+integration boundary. It must keep the debug-log source block-scoped and must
+not convert runtime `AUTO` evidence into route-policy evidence by itself.
 
 The key distinction is:
 
@@ -240,8 +244,8 @@ After the #1212 debug-log package, #1214 review decision, and #1217 validator
 closeout, another #1149 PR should only proceed if it does one of three narrow
 things:
 
-- emits the accepted `genai_debug_log` fields directly from a future parser or
-  receipt source without changing route policy;
+- uses #1242 to emit the accepted `genai_debug_log` fields directly from a
+  future parser or receipt source without changing route policy;
 - records actual selected-device evidence through a future public GenAI API or
   equivalent lower-level OpenVINO run for the same tuple; or
 - opens a route review only after selected-device, quality, timing, fallback,
@@ -342,12 +346,12 @@ decision PR is required after this #1214/#1217 closeout unless new evidence
 changes the source boundary.
 
 After #1217, no additional generic schema or validator PR is needed for
-machine-readable `genai_debug_log` selected-device evidence. The next useful PR
-under issue #1149 is a parser or receipt-source integration that emits the
-accepted fields from a future debug-log capture, a future public API or
-lower-level OpenVINO selected-device bridge for the same tuple, or a route
-review only after the selected-device, quality, timing, fallback, profile, and
-power gates exist for the claim being reviewed.
+machine-readable `genai_debug_log` selected-device evidence. Issue #1242 owns
+the parser or receipt-source integration that emits the accepted fields from a
+future debug-log capture. Other #1149 work should wait for a future public API
+or lower-level OpenVINO selected-device bridge for the same tuple, or for a
+route review only after the selected-device, quality, timing, fallback,
+profile, and power gates exist for the claim being reviewed.
 
 Do not open another generic schema or validator PR unless the measurement run
 exposes a missing or ambiguous field that #1159/#1217 cannot represent. Do not

@@ -7,7 +7,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1113](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1113)
+Linked issues: [#1113](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1113), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241)
 Linked PRs: [#1114](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1114)
 Support-tier impact: no promotion; review-only claim boundary for existing GPU phase profiles
 Policy impact: no policy exception
@@ -40,6 +40,11 @@ speedup.
 The review landed in #1114 and closed #1113. It remains a profile-evidence
 review-watch boundary, not an active route-policy or runtime implementation
 queue.
+
+Issue #1241 is the live evidence-contract follow-up for this boundary. It owns
+the question of whether future receipts or status surfaces should make the
+profile-level total-response evidence versus isolated prefill/decode phase
+claim boundary machine-readable.
 
 ## Current Ledger State
 
@@ -132,9 +137,9 @@ then route policy should narrow or revoke only the affected profile.
 
 No immediate route-policy PR is recommended.
 
-Issue #1113 is closed by #1114. Future work should open only if a later receipt
-needs machine-readable status fields for the profile-level versus phase-split
-distinction, or if a concrete evidence regression appears.
+Issue #1113 is closed by #1114. Issue #1241 now owns future work if a later
+receipt needs machine-readable status fields for the profile-level versus
+phase-split distinction, or if a concrete evidence regression appears.
 
 The next useful implementation is narrow receipt/status hardening if the lane
 needs machine-readable language for this distinction. That PR should add or

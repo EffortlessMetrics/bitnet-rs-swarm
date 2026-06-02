@@ -243,8 +243,8 @@ Small follow-ups that still fit the current research-first operating mode:
 
 1. Keep the GPU corpus-v2 status refresh tied to the route-promotion ledger and
    route-profile comparison when those artifacts change.
-2. Add profile-phase receipts that split prefill and decode for
-   `prefill_heavy` and `decode_heavy`.
+2. Use #1241 for any profile-phase receipt or status-hardening work that splits
+   prefill and decode claim boundaries for `prefill_heavy` and `decode_heavy`.
 3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
    battery-mode samples and energy-proxy evidence.
 
