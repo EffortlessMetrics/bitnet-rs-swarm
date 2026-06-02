@@ -4,6 +4,7 @@ Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/is
 Current physical-evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064
 
 Research date: 2026-05-30
+Current-state refresh: 2026-06-02
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -37,6 +38,13 @@ Current evidence says:
   local property set does not provide direct route-level watts, battery drain,
   or temperature readings. OpenVINO data should support device identity and
   cache-mode evidence, not power claims.
+- As of the 2026-06-02 current-state refresh, the host is still AC/online:
+  `Win32_Battery.BatteryStatus=2`, `EstimatedChargeRemaining=99`,
+  `root\wmi BatteryStatus.PowerOnline=True`, `Discharging=False`,
+  `RemainingCapacity=69460`, and `FullChargedCapacity=70000`. A strict
+  `telemetry-context --require-battery --strict` run failed closed with
+  `battery_mode_sample_recorded=false` and `requirement_satisfied=false`. This
+  is blocker evidence only and must not start the route-sample matrix.
 
 The next useful implementation should stay small and operational: collect the
 physical battery-mode evidence named by the runbook only after strict preflight
@@ -69,6 +77,24 @@ Relevant source:
   - `infer_ac_power_from_battery_status`
   - `infer_ac_power_from_power_sources`
 
+The current strict POWER-006 predicate is:
+
+- `capture_requirements.battery_mode_required=true`;
+- `capture_requirements.battery_mode_sample_recorded=true`;
+- `capture_requirements.requirement_satisfied=true`;
+- `power.ac_power_inferred=false`;
+- when WMI fields are exposed, useful corroboration is
+  `power.wmi_battery_status.power_online=false` and
+  `power.wmi_battery_status.discharging=true`.
+
+The implementation derives `ac_power_inferred` from both `Win32_Battery` and
+`root\wmi` `BatteryStatus` when available. If those sources disagree, the
+implementation treats the state as unsafe/AC and blocks battery-mode evidence.
+If neither source can identify AC/battery state, `--require-battery --strict`
+also blocks. Do not run CPU/GPU/NPU `low_power` samples until the before
+telemetry receipt passes this predicate; also reject the battery window if the
+after receipt does not pass the same predicate.
+
 The committed run-harness receipt currently records an AC-blocked preflight:
 
 - `ci/hardware/intel-258v/2026-05-08/lunar-lake-low-power-run-harness.json`
@@ -89,6 +115,7 @@ to AC:
 | 2026-05-30T18:43:35Z | `telemetry-context --require-battery --strict` | failed closed | `BatteryStatus=2`, charge 97%, `ac_power_inferred=true`, `requirement_satisfied=false` |
 | 2026-05-30T18:43:35Z | `low-power-harness --strict` | failed closed | `battery_preflight_passed=false`, `model_inference_allowed=false` |
 | 2026-05-31T03:44:25Z | `telemetry-context --require-battery --strict` | failed closed | `BatteryStatus=2`, charge 97%, `wmi_power_online=true`, `wmi_discharging=false`, `wmi_remaining_capacity=68350`, `wmi_full_charged_capacity=70000`, `ac_power_inferred=true`, `requirement_satisfied=false` |
+| 2026-06-02T20:53Z | `telemetry-context --require-battery --strict` | failed closed | `BatteryStatus=2`, charge 99%, `wmi_power_online=true`, `wmi_discharging=false`, `wmi_remaining_capacity=69460`, `wmi_full_charged_capacity=70000`, `ac_power_inferred=true`, `battery_mode_sample_recorded=false`, `requirement_satisfied=false` |
 
 That behavior is correct. It also means the battery run needs a stable
 preflight/start/end receipt sequence, not one opportunistic point sample.
@@ -329,6 +356,13 @@ Required fields:
 - `gaps`
 - `claim_boundary`
 
+For accepted POWER-006 battery evidence, the preflight/before/after receipt
+must expose `power.ac_power_inferred=false`; AC, charging, unknown, missing, or
+conflicting power sources are blocker evidence. WMI `power_online=false` and
+`discharging=true` are not required when WMI is unavailable, but when present
+they should corroborate the battery state and should be carried into the energy
+proxy receipt.
+
 Optional fields:
 
 - `system_power_status`
@@ -410,6 +444,9 @@ Required fields:
 
 - preflight or before/after receipts report AC, charging, unknown, or
   `ac_power_inferred=true`;
+- `Win32_Battery` and WMI power-state evidence disagree about AC/discharge;
+- `capture_requirements.requirement_satisfied=true` is missing from either the
+  before or after telemetry receipt;
 - before and after samples are not both battery-mode samples;
 - route sample receipts are missing for CPU, OpenVINO GPU, or OpenVINO NPU;
 - any route sample uses hidden fallback or omits selected backend/runtime
@@ -455,6 +492,9 @@ battery-mode evidence.
    `access_denied`, and `probe_unavailable`.
 5. Preserve the claim boundary in every refresh: no speedup, power-advantage,
    acceleration, or `low_power` promotion claim from AC-only evidence.
+6. Treat repeated AC-only preflight refreshes as issue comments or scratch
+   blocker evidence, not as implementation PRs, unless the predicate accepts an
+   unsafe state or a required receipt field is missing/ambiguous.
 
 ## References
 
