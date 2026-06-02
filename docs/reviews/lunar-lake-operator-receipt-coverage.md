@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1108](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1108), [#1110](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1110), [#1111](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1111), [#1135](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1135), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263), [#1273](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1273), [#1275](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1275)
+Linked PRs: [#1109](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1109), [#1112](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1112), [#1116](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1116), [#1127](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1127), [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267), [#1278](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1278), [#1294](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1294)
 Support-tier impact: no promotion; review-only operator receipt coverage audit
 Policy impact: no policy exception
 
@@ -72,7 +72,7 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 | Successful `ask` | auto GPU `ask_short` / `ask_normal`, auto NPU `warm_resident` ask receipts | Present for selected route, profile, backend, runtime, model/export, tokenizer/template, prompt IDs, generated IDs, answer gate, fallback, route reason, claim boundary, and timing; builder support now exists for telemetry context and OpenVINO timing status on newly emitted receipts | Keep; historical committed ask receipts may still rely on linked aggregate telemetry until refreshed by a real evidence run |
 | Blocked `ask` | `lunar-lake-operator-ask-auto-low-power-blocked.json` | Present for fail-closed route selection, `fallback_used=false`, no model load, no new inference, runbook, and next evidence | Keep; this is correct blocker evidence, not low-power proof |
 | `validate --strict` | `lunar-lake-operator-readiness.json` | Linked aggregate for operator readiness, route policy, route model identity coverage, power-profile blockers, thermal availability, and blocked ask evidence | Keep as readiness aggregate; do not treat it as a live answer receipt |
-| `profile-compare --strict` | `lunar-lake-route-profile-comparison.json` | Present for per-profile route evidence, model identity, quality, timing, telemetry, blockers, and promotion eligibility | Keep as route-profile authority; continue mapping campaign route IDs to canonical proof families in future schemas |
+| `profile-compare --strict` | `lunar-lake-route-profile-comparison.json` | Present for per-profile route evidence, model identity, quality, timing, telemetry, blockers, and promotion eligibility; #1278 keeps default command output aligned with the committed CPU profile-run evidence when that receipt is present | Keep as route-profile authority; continue mapping campaign route IDs to canonical proof families in future schemas; missing CPU profile-run evidence must still fail closed as proxy or missing timing |
 | `regress --strict` | `lunar-lake-regression-bundle-v2.json` | Linked aggregate for corpus-v2, route profile, durability, BitNet semantic intake, power-profile evidence, ask receipts, blocked low-power, and claim boundary | Keep as regression bundle; use it to detect drift, not to replace source receipt fields; #1178 owns future semantic-intake freshness |
 | `compare --strict` | `lunar-lake-operator-comparison.json` | Linked aggregate for readiness and regression surfaces, no hidden fallback, route scope, and low-power blocker state | Keep as comparison summary; do not use it for new route claims |
 | Power and telemetry | `lunar-lake-power-profile-evidence.json`, `lunar-lake-power-thermal-context.json` | Present for AC-only context, battery blocker, thermal availability, energy-proxy status, and no power claim | Keep; POWER-006 still needs physical battery-mode evidence |
@@ -91,7 +91,7 @@ benchmark refresh, or generated dashboard edit was performed for this review.
 | Timing | Present with caveat | Ask receipts include OpenVINO wall and perf metric timing; #1111/#1112 added status handling so future receipts do not treat `-1.0` sentinels as measured latency. |
 | Power and thermal context | Linked historically; direct builder support for future asks | Aggregate route/profile/regression receipts index telemetry, and #1110/#1127 added a non-promotional ask-level telemetry context when a linked telemetry receipt is available. |
 | Known blockers and next evidence | Present for blocked low-power, linked in aggregates | Low-power blocker fields are clear and should remain the active POWER-006 evidence contract. |
-| BitNet proof boundary | Present | Claim-boundary fields keep dense SLM evidence separate from BitNet QK256/I2_S proof; #1178 owns future semantic-intake rerun decisions, and #1263 owns reviewed diagnostic-only shared-surface non-trigger classification. |
+| BitNet proof boundary | Present | Claim-boundary fields keep dense SLM evidence separate from BitNet QK256/I2_S proof; #1178 owns future semantic-intake rerun decisions, and #1263 closed through #1267 for reviewed diagnostic-only shared-surface non-trigger classification. |
 
 ## Findings
 
@@ -197,9 +197,15 @@ native NPU, or BitNet proof.
    owns BitNet semantic-intake freshness if shared BitNet semantics, receipt
    validation, or claim-boundary evidence later require a targeted CPU
    reference rerun. [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
-   is the child issue for recording merged diagnostic-only shared-surface
-   touches as reviewed non-triggers when they do not change Lunar Lake BitNet
-   CPU reference semantics.
+   closed through #1267 after adding the current diagnostic-only shared-surface
+   non-trigger classification path; future ambiguous shared-surface touches
+   should open a new narrow child under #1178 instead of reusing #1263.
+6. [#1273](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1273)
+   remains the operator-surface watch issue for future command gaps. The
+   concrete `profile-compare` default gap in #1275 is closed by #1278: when the
+   committed CPU profile-run receipt is present, default strict output discovers
+   it; when it is absent, proxy or missing timing stays visible instead of
+   becoming hidden promotion evidence.
 
 Do not open a new operator receipt PR unless one of those evidence packages or a
 new review exposes a concrete field, schema, or validator gap.
@@ -213,6 +219,9 @@ This review does not find a reason to mutate route policy.
   timing evidence.
 - OpenVINO NPU `warm_resident` remains resident-scoped and does not erase the
   cold-start or low-power blockers.
+- `profile-compare --strict` now uses the committed CPU profile-run receipt by
+  default when present, and still exposes missing CPU profile timing as a gap
+  when that receipt is unavailable.
 - `low_power` fails closed before model load and remains blocked on POWER-006.
 - Dense SLM receipts remain separate from BitNet QK256/I2_S proof.
 
