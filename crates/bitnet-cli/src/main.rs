@@ -15601,6 +15601,10 @@ fn compact_qkv_projection_dispatch_replay(
             .device_intermediate_trace
             .as_ref()
             .map(compact_qk256_device_intermediate_trace),
+        "focused_operands": replay
+            .focused_operands
+            .as_ref()
+            .map(compact_qk256_focused_operands),
         "cpu_a770_output_sha256_match": cpu_a770_sha256_match,
         "cpu_opencl_policy_output_sha256_match": cpu_opencl_policy_sha256_match,
         "opencl_policy_a770_output_sha256_match": opencl_policy_a770_sha256_match,
@@ -15643,6 +15647,29 @@ fn compact_qkv_projection_dispatch_replay(
             "execution_path": replay.a770.execution_path,
         },
         "source_context_available": cpu_available && opencl_policy_available && a770_available,
+    })
+}
+
+fn compact_qk256_focused_operands(
+    operands: &bitnet_models::ModelQk256FocusedRawOperandsContext,
+) -> serde_json::Value {
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "context_kind": "decode_step_qk256_focused_raw_operands",
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "input_row_index": operands.input_row_index,
+        "output_index": operands.output_index,
+        "cols": operands.cols,
+        "row_stride_bytes": operands.row_stride_bytes,
+        "packed_qk256_scope": &operands.packed_qk256_scope,
+        "activation_sum": operands.activation_sum,
+        "activation_scale_bits": operands.activation_scale_bits,
+        "weight_scale_bits": operands.weight_scale_bits,
+        "activation_i8_len": operands.activations_i8.len(),
+        "packed_qk256_len": operands.packed_qk256.len(),
+        "activations_i8": &operands.activations_i8,
+        "packed_qk256": &operands.packed_qk256,
     })
 }
 
