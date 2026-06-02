@@ -12,7 +12,17 @@ concurrency:
 
 jobs:
   shellcheck:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-nano
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - ci-nano
+        - workflow-nano
+        - trusted-pr
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
       - uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38  # v2.0.0

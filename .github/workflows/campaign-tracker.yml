@@ -35,7 +35,15 @@ permissions:
 jobs:
   campaign-tracker:
     name: Doctor + Generated Dashboards
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-tiny
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-tiny
+        - trusted-pr
     timeout-minutes: 15
     env:
       CARGO_TERM_COLOR: always
