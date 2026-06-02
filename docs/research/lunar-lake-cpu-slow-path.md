@@ -168,14 +168,22 @@ timing scopes differ.
 
 This is the strongest current root-cause candidate for resident asks.
 
-Resident CPU receipts remove per-prompt model and tokenizer reload, but the
-route is still slow:
+The current #1334 resident summary removes per-prompt model and tokenizer
+reload, measures the prompt loop from the physical #1279 fixture, and still
+shows prefill, first-token, and decode as the material costs:
 
-| Profile | Mean total | Mean time to first token | Mean prefill | Mean decode | Mean tokenize |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| `ask_short` | 11158.750 ms | 8531.800 ms | 7656.633 ms | 2950.161 ms | 466.206 ms |
-| `ask_normal` | 16407.372 ms | 8834.200 ms | 7961.152 ms | 7899.989 ms | 465.554 ms |
-| `regression_tiny` | 12314.790 ms | 9660.900 ms | 8737.639 ms | 3018.640 ms | 476.496 ms |
+| Profile | Count | Mean total | Mean time to first token | Mean prefill | Mean decode | Mean tokenize | Generated tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `ask_short` | 11 | 4774.776 ms | 3734.455 ms | 3588.079 ms | 1186.351 ms | 0.004 ms | 8 |
+| `ask_normal` | 11 | 7271.792 ms | 3843.909 ms | 3697.454 ms | 3573.740 ms | 0.004 ms | 24 |
+| `regression_tiny` | 11 | 5084.737 ms | 4064.818 ms | 3921.156 ms | 1163.243 ms | 0.004 ms | 8 |
+
+The older #1086 runtime-comparison receipt still carries larger Rust resident
+context totals: `ask_short` 11158.750 ms, `ask_normal` 16407.372 ms, and
+`regression_tiny` 12314.790 ms. Keep those values as
+runtime-comparison context only until a later #1232 matched comparison package
+revises the comparison scope. Do not treat them as the current #1334 resident
+qualification surface.
 
 Warm phase receipts point the same way:
 
@@ -202,8 +210,10 @@ quickly.
 
 Evidence:
 
-- resident `ask_short` generated 9 tokens at about 3.051 tokens/s;
-- resident `ask_normal` generated 24 tokens at about 3.038 tokens/s;
+- current #1334 resident `ask_short` generated 8 tokens at about
+  6.745 tokens/s;
+- current #1334 resident `ask_normal` generated 24 tokens at about
+  6.716 tokens/s;
 - warm `decode_128` generated 128 tokens at about 7.560 tokens/s;
 - explicit `decode_heavy` generated 512 tokens with 111754.248 ms decode time,
   about 4.578 tokens/s.
@@ -236,14 +246,15 @@ The resident-session receipt records:
 
 - model loaded once: true;
 - tokenizer loaded once: true;
-- resident model load: 13592.773 ms;
-- model SHA-256: 579.851 ms;
-- tokenizer load: 568.949 ms;
-- prompt count: 30;
+- resident model load: 9892.535 ms;
+- model SHA-256: 240.837 ms;
+- tokenizer load: 253.471 ms;
+- prompt count: 33;
+- warm asks after first resident ask: 32;
 - no per-prompt model or tokenizer reload observed.
 
 Removing reload improved total latency. The cold-to-resident total ratio was
-2.508 for `ask_short`, 1.706 for `ask_normal`, and 2.273 for
+5.861 for `ask_short`, 3.849 for `ask_normal`, and 5.504 for
 `regression_tiny`.
 
 That is enough to justify resident-session measurement, but not enough to say
@@ -256,9 +267,12 @@ reload is the full root cause.
 Tokenizer work is measurable but not dominant in current receipts:
 
 - cold one-off tokenize: 482.325 ms;
-- resident ask_short tokenize mean: 466.206 ms;
-- resident ask_normal tokenize mean: 465.554 ms;
-- resident tokenizer load: 568.949 ms.
+- current #1334 resident ask_short tokenize mean: 0.004 ms;
+- current #1334 resident ask_normal tokenize mean: 0.004 ms;
+- #1086 runtime-comparison context tokenize means: ask_short 466.206 ms,
+  ask_normal 465.554 ms, and regression_tiny 476.496 ms;
+- current #1334 resident tokenizer load: 253.471 ms as a one-time session
+  cost, not a repeated per-prompt reload.
 
 This is worth cleaning up after the larger prefill/decode and cold-load
 questions, but it is not the top slow-path cause.
@@ -277,7 +291,7 @@ PR #1290 now isolates quality-gate evaluation time. Receipt overhead may matter
 for tight benchmark loops, but the existing latencies are too large for
 receipt overhead to be the main explanation.
 
-#1280 is closed by #1334. The committed physical package records useful
+Issue #1280 is closed by #1334. The committed physical package records useful
 resident means, and the strict summary now measures prompt rendering, quality
 gates, detokenization, and memory lifecycle samples. The unresolved overhead
 question is narrowed to `receipt_write_ms` and `telemetry_ms` only, and those
@@ -362,8 +376,13 @@ Newer OpenVINO CPU corpus-v2 evidence:
 - 14/14 corpus-v2 cases passed;
 - direct generated token IDs available.
 
-OpenVINO CPU profile timing in that receipt is far lower than Rust GGUF CPU
-resident prompt-loop timing, for example:
+This table intentionally cites the #1086 runtime-comparison receipt, not the
+newer #1334 resident summary. It remains useful for non-equivalent Rust GGUF
+CPU versus OpenVINO CPU context, but it is not the current #1334 resident
+qualification surface and is not benchmark-qualified.
+
+OpenVINO CPU profile timing in that receipt is far lower than its Rust GGUF
+CPU comparison context, for example:
 
 | Profile | Rust GGUF CPU mean total | OpenVINO CPU mean generation wall | OpenVINO CPU cases |
 | --- | ---: | ---: | ---: |
