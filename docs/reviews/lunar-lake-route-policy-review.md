@@ -7,8 +7,8 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195)
-Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
+Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
 
@@ -34,8 +34,9 @@ current:
   [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
 - #1122 and #1132 for the CPU route posture decision; #1069 is now closed by
   #1182 as a resident-session command-surface review, #1186 is closed by #1194
-  as the thread/core matrix builder contract, and #1071 remains the live
-  physical thread/core matrix evidence issue;
+  as the thread/core matrix builder contract, #1071 is closed by #1208 as the
+  physical thread/core matrix evidence package, and #1232 is the live resident
+  Rust GGUF phase evidence successor;
 - #1123 for generated-token visibility rules, now closed by #1138 and defined
   in [lunar-lake-openvino-token-visibility.md](lunar-lake-openvino-token-visibility.md);
 - #1135 for route ID and canonical proof-family mapping, now closed by #1137
@@ -58,9 +59,8 @@ current:
   by #1174 with a dated diagnostic receipt at
   `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-npu-cache-rerun-20260601.json`;
 - #1165 for operator receipt coverage closeout, which leaves the remaining
-  operator-appliance gaps in #1064, #1071, #1149, and any future narrow
-  resident no-reload physical measurement source rather than a new broad
-  route-policy or receipt cleanup.
+  operator-appliance gaps in #1064, #1149, #1178, and #1232 rather than a new
+  broad route-policy or receipt cleanup.
 
 This review adds a decision table and shared fail-closed rules only. It does
 not run inference, refresh receipts, promote a route, revoke a route, claim a
@@ -147,8 +147,9 @@ accelerator has a stronger exact-profile package. CPU route evidence is not an
 acceleration claim. #1122, closed by #1132, keeps Rust GGUF CPU as the dense
 SLM correctness and fallback baseline. #1069 is closed by #1182 as historical
 resident-session command-surface work, #1186 is closed by #1194 as matrix
-builder work, and #1071 remains the live physical thread/core measurement
-follow-up.
+builder work, #1071 is closed by #1208 as physical thread/core evidence, and
+issue #1232 owns any further resident Rust GGUF phase/no-reload evidence before
+CPU optimization, matched OpenVINO CPU comparison, or route-policy work.
 
 ### OpenVINO GPU
 
@@ -248,14 +249,15 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   validator guard. Route policy must keep `AUTO` diagnostic while
   selected-device proof is missing or ambiguous.
 - #1156 has landed the current CPU comparison qualification guard; CPU follow-up
-  work should focus on #1071 physical thread/core measurement, a new narrow
-  resident no-reload physical measurement source if needed, or a newly exposed
-  evidence gap, not another generic non-equivalence guard.
+  work should use #1232 for resident Rust GGUF phase/no-reload evidence, or a
+  separate narrow issue for matched OpenVINO CPU comparison or later topology
+  evidence once the target is concrete. Do not repeat the generic
+  non-equivalence guard.
 - #1165 closed the current operator receipt follow-up review. Future operator
-  work should cite one of #1064, #1071, #1149, or a new narrow physical CPU
-  measurement issue rather than opening another broad operator coverage
-  cleanup. Use #1119 for any broader NPU cold/cache research follow-up now that
-  #1160 has closed.
+  work should cite one of #1064, #1149, #1178, #1232, or a new narrow physical
+  CPU measurement/comparison issue rather than opening another broad operator
+  coverage cleanup. Use #1119 for any broader NPU cold/cache research follow-up
+  now that #1160 has closed.
 - #1064 remains the only current path to `low_power` promotion evidence.
 
 ## Claim Boundary
