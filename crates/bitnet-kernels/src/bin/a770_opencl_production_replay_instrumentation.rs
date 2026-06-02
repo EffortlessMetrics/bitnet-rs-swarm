@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use std::{
     env,
     error::Error,
@@ -419,7 +421,8 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
     let source_json = fs::read_to_string(focused_source)?;
     let source: Value = serde_json::from_str(&source_json)?;
     let context = focused_context(&source, case_id, first_mismatch_index);
-    let classification = focused_classification(&context);
+    let replay_outcome = focused_replay_outcome(&source, case_id, first_mismatch_index);
+    let classification = focused_classification(&context, replay_outcome.as_ref());
     let focused_summary_divergence_available =
         context.focused_device_output_bits.is_some() && context.focused_policy_bits.is_some();
     let focused_summary_device_vs_policy_bits_match =
@@ -427,12 +430,35 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             (Some(device), Some(policy)) => Some(device == policy),
             _ => None,
         };
+    let production_replay_executed =
+        matches!(&replay_outcome, Some(FocusedReplayOutcome::Executed { .. }));
+    let production_replay_error = match &replay_outcome {
+        Some(FocusedReplayOutcome::Failed { error }) => Some(error.as_str()),
+        _ => None,
+    };
+    let production_replay_skipped_reason = match &replay_outcome {
+        Some(FocusedReplayOutcome::Executed { .. }) => None,
+        Some(FocusedReplayOutcome::Failed { .. }) => Some("focused_raw_operands_replay_failed"),
+        None => Some(context.production_replay_skipped_reason),
+    };
+    let focused_raw_operand_summary = focused_raw_operand_summary_json(replay_outcome.as_ref());
+    let focused_production_replay_summary =
+        focused_production_replay_summary_json(replay_outcome.as_ref(), &context);
+    let focused_production_replay_samples =
+        focused_production_replay_samples_json(replay_outcome.as_ref());
+    let next_diagnostic = focused_next_diagnostic(&context, replay_outcome.as_ref());
+    let (host_to_device_bytes, device_to_host_bytes, kernel_invocations) = match &replay_outcome {
+        Some(FocusedReplayOutcome::Executed { replay, .. }) => {
+            (replay.host_to_device_bytes, replay.device_to_host_bytes, replay.kernel_invocations)
+        }
+        _ => (0, 0, 0),
+    };
 
     let receipt = json!({
         "campaign": "intel-a770",
-        "work_item": "A770-063",
-        "proof_family": "a770_opencl_qk256_focused_production_operands",
-        "proof_stage": "diagnostic_focused_production_operand_context_classified",
+        "work_item": "A770-064",
+        "proof_family": "a770_opencl_qk256_focused_raw_operand_replay",
+        "proof_stage": "diagnostic_focused_raw_operands_production_replay_classified",
         "requested_backend": "intel-arc-a770",
         "selected_backend": "intel-arc-a770-opencl",
         "runtime_api": "opencl",
@@ -475,10 +501,12 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             "device_expression_trace_available": context.device_expression_trace_available,
             "device_intermediate_trace_available": context.device_intermediate_trace_available,
             "can_feed_production_replay": context.raw_activation_i8_available && context.raw_packed_qk256_available,
-            "production_replay_executed": false,
-            "production_replay_skipped_reason": context.production_replay_skipped_reason,
+            "production_replay_executed": production_replay_executed,
+            "production_replay_skipped_reason": production_replay_skipped_reason,
+            "production_replay_error": production_replay_error,
             "missing_raw_operand_fields": context.missing_raw_operand_fields
         },
+        "focused_raw_operand_summary": focused_raw_operand_summary,
         "focused_trace_replay_summary": {
             "available": focused_summary_divergence_available,
             "output_index": context.focused_output_index,
@@ -494,18 +522,20 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
             "device_expression_classification": context.device_expression_classification,
             "production_policy_change_justified": context.production_policy_change_justified
         },
+        "focused_production_replay_summary": focused_production_replay_summary,
+        "focused_production_replay_samples": focused_production_replay_samples,
         "captured_intermediates": {
             "adjusted_dot": context.adjusted_dot.is_some(),
             "activation_scale": context.activation_scale_bits.is_some(),
             "weight_scale": context.weight_scale_bits.is_some(),
-            "reciprocal_path_intermediate_bits": false,
-            "final_scaled_value_bits": false,
-            "output_store_bits": false
+            "reciprocal_path_intermediate_bits": production_replay_executed,
+            "final_scaled_value_bits": production_replay_executed,
+            "output_store_bits": production_replay_executed
         },
-        "production_replay_instrumentation_captured": false,
-        "host_to_device_bytes": 0,
-        "device_to_host_bytes": 0,
-        "kernel_invocations": 0,
+        "production_replay_instrumentation_captured": production_replay_executed,
+        "host_to_device_bytes": host_to_device_bytes,
+        "device_to_host_bytes": device_to_host_bytes,
+        "kernel_invocations": kernel_invocations,
         "fallback_used": false,
         "cpu_fallback_allowed": false,
         "bitnet_inference": false,
@@ -515,7 +545,7 @@ fn focused_receipt_to_json(args: &Args) -> Result<String, Box<dyn Error>> {
         "diagnostic_only": true,
         "performance_claim": false,
         "full_residency_claim": false,
-        "next_diagnostic": context.next_diagnostic,
+        "next_diagnostic": next_diagnostic,
         "must_not_claim": [
             "CPU/A770 answer parity is proven",
             "Reference parity is proven",
@@ -571,6 +601,250 @@ struct FocusedContext {
     production_replay_skipped_reason: &'static str,
     missing_raw_operand_fields: Vec<&'static str>,
     next_diagnostic: &'static str,
+}
+
+#[derive(Debug, Clone)]
+struct FocusedRawOperands {
+    input_row_index: usize,
+    output_index: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+    activation_sum: i32,
+    activation_scale: f32,
+    activation_scale_bits: u32,
+    weight_scale: f32,
+    weight_scale_bits: u32,
+    activations_i8: Vec<i8>,
+    packed_qk256: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+enum FocusedReplayOutcome {
+    Executed { operands: FocusedRawOperands, replay: A770OpenClQk256ProductionReplayResult },
+    Failed { error: String },
+}
+
+fn focused_replay_outcome(
+    source: &Value,
+    case_id: &str,
+    first_mismatch_index: usize,
+) -> Option<FocusedReplayOutcome> {
+    let operands = match focused_raw_operands(source, case_id, first_mismatch_index) {
+        Ok(Some(operands)) => operands,
+        Ok(None) => return None,
+        Err(err) => return Some(FocusedReplayOutcome::Failed { error: err.to_string() }),
+    };
+    match run_a770_qk256_i8s_scaled_gemv_production_replay(A770OpenClQk256ProductionReplay {
+        activations_i8: &operands.activations_i8,
+        packed_qk256: &operands.packed_qk256,
+        rows: 1,
+        cols: operands.cols,
+        row_stride_bytes: operands.row_stride_bytes,
+        activation_sum: operands.activation_sum,
+        activation_scale: operands.activation_scale,
+        weight_scale: operands.weight_scale,
+        sample_limit: 1,
+    }) {
+        Ok(replay) => Some(FocusedReplayOutcome::Executed { operands, replay }),
+        Err(err) => Some(FocusedReplayOutcome::Failed { error: err.to_string() }),
+    }
+}
+
+fn focused_raw_operands(
+    source: &Value,
+    case_id: &str,
+    first_mismatch_index: usize,
+) -> Result<Option<FocusedRawOperands>, Box<dyn Error>> {
+    let qkv_row = find_row(
+        source.pointer("/generated_output_qkv_projection_dispatch_replay_frontier/rows"),
+        case_id,
+        first_mismatch_index,
+    );
+    let right_replay = match qkv_row.and_then(|row| row.get("right_replay")) {
+        Some(value) => value,
+        None => return Ok(None),
+    };
+    let operands_root = right_replay
+        .get("focused_operands")
+        .or_else(|| right_replay.get("operands"))
+        .unwrap_or(right_replay);
+    let activations_i8 = match i8_array_at(
+        Some(right_replay),
+        &[
+            &["focused_operands", "activations_i8"],
+            &["operands", "activations_i8"],
+            &["activations_i8"],
+        ],
+    )? {
+        Some(values) => values,
+        None => return Ok(None),
+    };
+    let packed_qk256 = match u8_array_at(
+        Some(right_replay),
+        &[&["focused_operands", "packed_qk256"], &["operands", "packed_qk256"], &["packed_qk256"]],
+    )? {
+        Some(values) => values,
+        None => return Ok(None),
+    };
+
+    let cols = usize_field(operands_root, "cols")
+        .or_else(|| usize_field(right_replay, "cols"))
+        .ok_or_else(|| io_error("focused raw operands missing cols"))?;
+    let row_stride_bytes = usize_field(operands_root, "row_stride_bytes")
+        .or_else(|| usize_field(right_replay, "row_stride_bytes"))
+        .ok_or_else(|| io_error("focused raw operands missing row_stride_bytes"))?;
+    if activations_i8.len() != cols {
+        return Err(io_error(format!(
+            "focused raw operands activation length {} does not match cols {cols}",
+            activations_i8.len()
+        )));
+    }
+    if packed_qk256.len() != row_stride_bytes {
+        return Err(io_error(format!(
+            "focused packed QK256 length {} does not match row_stride_bytes {row_stride_bytes}",
+            packed_qk256.len()
+        )));
+    }
+
+    let input_row_index = usize_field(operands_root, "input_row_index").unwrap_or(0);
+    let output_index = usize_field(operands_root, "output_index").unwrap_or(0);
+    let activation_sum = i64_field(operands_root, "activation_sum")
+        .or_else(|| {
+            right_replay
+                .pointer("/device_intermediate_trace/samples/0/activation_sum")
+                .and_then(Value::as_i64)
+        })
+        .ok_or_else(|| io_error("focused raw operands missing activation_sum"))?;
+    let activation_sum = i32::try_from(activation_sum)
+        .map_err(|_| io_error("focused raw operands activation_sum outside i32 range"))?;
+    let activation_scale_bits = u32_field(operands_root, "activation_scale_bits")
+        .or_else(|| {
+            right_replay
+                .pointer("/device_intermediate_trace/samples/0/activation_scale_bits")
+                .and_then(Value::as_u64)
+                .and_then(|value| u32::try_from(value).ok())
+        })
+        .ok_or_else(|| io_error("focused raw operands missing activation_scale_bits"))?;
+    let weight_scale_bits = u32_field(operands_root, "weight_scale_bits")
+        .or_else(|| {
+            right_replay
+                .pointer("/device_intermediate_trace/samples/0/weight_scale_bits")
+                .and_then(Value::as_u64)
+                .and_then(|value| u32::try_from(value).ok())
+        })
+        .ok_or_else(|| io_error("focused raw operands missing weight_scale_bits"))?;
+
+    Ok(Some(FocusedRawOperands {
+        input_row_index,
+        output_index,
+        cols,
+        row_stride_bytes,
+        activation_sum,
+        activation_scale: f32::from_bits(activation_scale_bits),
+        activation_scale_bits,
+        weight_scale: f32::from_bits(weight_scale_bits),
+        weight_scale_bits,
+        activations_i8,
+        packed_qk256,
+    }))
+}
+
+fn focused_raw_operand_summary_json(outcome: Option<&FocusedReplayOutcome>) -> Value {
+    match outcome {
+        Some(FocusedReplayOutcome::Executed { operands, .. }) => json!({
+            "available": true,
+            "input_row_index": operands.input_row_index,
+            "output_index": operands.output_index,
+            "rows": 1,
+            "cols": operands.cols,
+            "row_stride_bytes": operands.row_stride_bytes,
+            "activation_sum": operands.activation_sum,
+            "activation_scale_bits": operands.activation_scale_bits,
+            "weight_scale_bits": operands.weight_scale_bits,
+            "activation_i8_len": operands.activations_i8.len(),
+            "packed_qk256_len": operands.packed_qk256.len(),
+            "packed_qk256_scope": "single_output_row",
+        }),
+        Some(FocusedReplayOutcome::Failed { error }) => json!({
+            "available": false,
+            "error": error,
+        }),
+        None => json!({
+            "available": false,
+            "reason": "focused_raw_operands_missing",
+        }),
+    }
+}
+
+fn focused_production_replay_summary_json(
+    outcome: Option<&FocusedReplayOutcome>,
+    context: &FocusedContext,
+) -> Value {
+    match outcome {
+        Some(FocusedReplayOutcome::Executed { operands, replay }) => {
+            let first_sample = replay.samples.first();
+            let production_output_matches_focused_device_bits =
+                match (first_sample, context.focused_device_output_bits) {
+                    (Some(sample), Some(bits)) => {
+                        Some(u64::from(sample.production_output_bits) == bits)
+                    }
+                    _ => None,
+                };
+            json!({
+                "executed": true,
+                "input_row_index": operands.input_row_index,
+                "source_output_index": operands.output_index,
+                "replay_output_index": first_sample.map(|sample| sample.output_index),
+                "sample_count": replay.samples.len(),
+                "focused_device_output_bits": context.focused_device_output_bits,
+                "production_output_bits": first_sample.map(|sample| sample.production_output_bits),
+                "replay_output_bits": first_sample.map(|sample| sample.replay_output_bits),
+                "final_scaled_value_bits": first_sample.map(|sample| sample.final_scaled_value_bits),
+                "output_store_matches_replay_output": first_sample.map(|sample| sample.output_store_matches_replay_output),
+                "output_store_matches_final_scaled_value": first_sample.map(|sample| sample.output_store_matches_final_scaled_value),
+                "production_output_matches_focused_device_bits": production_output_matches_focused_device_bits,
+            })
+        }
+        Some(FocusedReplayOutcome::Failed { error }) => json!({
+            "executed": false,
+            "error": error,
+        }),
+        None => json!({
+            "executed": false,
+            "reason": "focused_raw_operands_missing",
+        }),
+    }
+}
+
+fn focused_production_replay_samples_json(outcome: Option<&FocusedReplayOutcome>) -> Value {
+    match outcome {
+        Some(FocusedReplayOutcome::Executed { replay, .. }) => {
+            Value::Array(replay.samples.iter().map(focused_replay_sample_json).collect())
+        }
+        _ => Value::Array(Vec::new()),
+    }
+}
+
+fn focused_replay_sample_json(sample: &A770OpenClQk256ProductionReplaySample) -> Value {
+    json!({
+        "output_index": sample.output_index,
+        "int_dot": sample.int_dot,
+        "activation_sum": sample.activation_sum,
+        "adjusted_dot": sample.adjusted_dot,
+        "activation_scale_bits": sample.activation_scale_bits,
+        "weight_scale_bits": sample.weight_scale_bits,
+        "adjusted_f32_bits": sample.adjusted_f32_bits,
+        "reciprocal_activation_scale_bits": sample.reciprocal_activation_scale_bits,
+        "adjusted_mul_reciprocal_bits": sample.adjusted_mul_reciprocal_bits,
+        "final_scaled_value_bits": sample.final_scaled_value_bits,
+        "div_then_mul_bits": sample.div_then_mul_bits,
+        "weight_over_activation_bits": sample.weight_over_activation_bits,
+        "reciprocal_then_mul_bits": sample.reciprocal_then_mul_bits,
+        "replay_output_bits": sample.replay_output_bits,
+        "production_output_bits": sample.production_output_bits,
+        "output_store_matches_replay_output": sample.output_store_matches_replay_output,
+        "output_store_matches_final_scaled_value": sample.output_store_matches_final_scaled_value,
+    })
 }
 
 fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -> FocusedContext {
@@ -723,15 +997,58 @@ fn focused_context(source: &Value, case_id: &str, first_mismatch_index: usize) -
     }
 }
 
-fn focused_classification(context: &FocusedContext) -> &'static str {
+fn focused_classification(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
     if !context.case_found || !context.qkv_context_available {
         "a770_qk256_focused_production_operands_missing_context"
+    } else if let Some(FocusedReplayOutcome::Executed { replay, .. }) = replay_outcome {
+        if replay.samples.is_empty() {
+            "a770_qk256_focused_raw_operands_replay_missing_samples"
+        } else if context.focused_device_output_bits.is_some_and(|bits| {
+            replay.samples.iter().any(|sample| u64::from(sample.production_output_bits) == bits)
+        }) {
+            "a770_qk256_focused_raw_operands_replay_matches_focused_device_output"
+        } else if context.focused_device_output_bits.is_some() {
+            "a770_qk256_focused_raw_operands_replay_differs_from_focused_device_output"
+        } else {
+            "a770_qk256_focused_raw_operands_replay_executed_missing_focused_output_context"
+        }
+    } else if matches!(replay_outcome, Some(FocusedReplayOutcome::Failed { .. })) {
+        "a770_qk256_focused_raw_operands_replay_failed"
     } else if context.raw_activation_i8_available && context.raw_packed_qk256_available {
         "a770_qk256_focused_production_operands_raw_operands_available"
     } else if context.summary_qk256_trace_available {
         "a770_qk256_focused_production_operands_summary_context_only_raw_operands_missing"
     } else {
         "a770_qk256_focused_production_operands_missing_context"
+    }
+}
+
+fn focused_next_diagnostic(
+    context: &FocusedContext,
+    replay_outcome: Option<&FocusedReplayOutcome>,
+) -> &'static str {
+    match replay_outcome {
+        Some(FocusedReplayOutcome::Executed { replay, .. })
+            if !replay.samples.is_empty()
+                && context.focused_device_output_bits.is_some_and(|bits| {
+                    replay
+                        .samples
+                        .iter()
+                        .any(|sample| u64::from(sample.production_output_bits) == bits)
+                }) =>
+        {
+            "localize focused host-policy versus selected-device production replay expression split before any production QK256 policy change"
+        }
+        Some(FocusedReplayOutcome::Executed { .. }) => {
+            "compare focused production replay output against focused device trace before any production QK256 policy change"
+        }
+        Some(FocusedReplayOutcome::Failed { .. }) => {
+            "repair focused raw operand production replay execution before any production QK256 policy change"
+        }
+        None => context.next_diagnostic,
     }
 }
 
@@ -758,6 +1075,58 @@ fn any_array_at(root: Option<&Value>, paths: &[&[&str]]) -> bool {
     })
 }
 
+fn i8_array_at(root: Option<&Value>, paths: &[&[&str]]) -> Result<Option<Vec<i8>>, Box<dyn Error>> {
+    for path in paths {
+        let mut value = root;
+        for key in *path {
+            value = value.and_then(|value| value.get(*key));
+        }
+        if let Some(array) = value.and_then(Value::as_array) {
+            let values = array
+                .iter()
+                .map(|value| {
+                    let value = value.as_i64().ok_or_else(|| {
+                        io_error("focused raw operands activations_i8 contains non-integer value")
+                    })?;
+                    i8::try_from(value).map_err(|_| {
+                        io_error(format!(
+                            "focused raw operands activations_i8 value {value} outside i8 range"
+                        ))
+                    })
+                })
+                .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+            return Ok(Some(values));
+        }
+    }
+    Ok(None)
+}
+
+fn u8_array_at(root: Option<&Value>, paths: &[&[&str]]) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
+    for path in paths {
+        let mut value = root;
+        for key in *path {
+            value = value.and_then(|value| value.get(*key));
+        }
+        if let Some(array) = value.and_then(Value::as_array) {
+            let values = array
+                .iter()
+                .map(|value| {
+                    let value = value.as_u64().ok_or_else(|| {
+                        io_error("focused raw operands packed_qk256 contains non-integer value")
+                    })?;
+                    u8::try_from(value).map_err(|_| {
+                        io_error(format!(
+                            "focused raw operands packed_qk256 value {value} outside u8 range"
+                        ))
+                    })
+                })
+                .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+            return Ok(Some(values));
+        }
+    }
+    Ok(None)
+}
+
 fn path_json_value(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
@@ -776,6 +1145,10 @@ fn usize_field(value: &Value, key: &str) -> Option<usize> {
 
 fn u64_field(value: &Value, key: &str) -> Option<u64> {
     value.get(key).and_then(Value::as_u64)
+}
+
+fn u32_field(value: &Value, key: &str) -> Option<u32> {
+    value.get(key).and_then(Value::as_u64).and_then(|value| value.try_into().ok())
 }
 
 fn i64_field(value: &Value, key: &str) -> Option<i64> {

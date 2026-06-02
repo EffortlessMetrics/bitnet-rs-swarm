@@ -1,0 +1,39 @@
+timestamp = "2026-05-25T20:09:01Z"
+campaign = "intel-a770"
+item = "A770-064"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-064-focused-raw-operands"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-064 focused raw QK256 operand capture and production replay classification."
+notes = [
+  "The slice adds opt-in diagnostic raw operand capture to the existing QKV projection dispatch replay surface.",
+  "The focused parity receipt remains divergent; answer parity failure is retained as diagnostic input, not promoted as pass evidence.",
+  "The selected-device production replay classifier must keep fallback_used=false, cpu_fallback_allowed=false, bitnet_inference=false, qk256_decode=false, production_qk256_policy_change=false, claim_allowed=false, and diagnostic_only=true.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-064 may capture opt-in focused raw QK256 diagnostic operands and classify selected-device production replay on that focused row.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

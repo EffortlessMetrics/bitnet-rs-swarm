@@ -9198,6 +9198,7 @@ fn qkv_projection_dispatch_replay_summary(replay: &Value) -> Value {
         "a770_output": qkv_projection_dispatch_replay_tensor_summary(&replay["a770_output"]),
         "device_expression_trace": replay["device_expression_trace"],
         "device_intermediate_trace": replay["device_intermediate_trace"],
+        "focused_operands": replay["focused_operands"],
         "cpu_a770_output_sha256_match": replay["cpu_a770_output_sha256_match"],
         "cpu_opencl_policy_output_sha256_match": replay["cpu_opencl_policy_output_sha256_match"],
         "opencl_policy_a770_output_sha256_match": replay["opencl_policy_a770_output_sha256_match"],
