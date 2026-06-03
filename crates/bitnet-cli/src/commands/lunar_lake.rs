@@ -68,6 +68,7 @@ const LOW_POWER_RUN_HARNESS_FILE: &str = "lunar-lake-low-power-run-harness.json"
 const DURABILITY_BUNDLE: &str =
     "ci/hardware/intel-258v/2026-05-08/lunar-lake-durability-bundle.json";
 const DURABLE_QWEN_CPU_WARM_SESSION: &str = "lunar-lake-durable-qwen25-cpu-warm-session.json";
+const RESIDENT_QWEN_CPU_WARM_SESSION: &str = "lunar-lake-resident-qwen25-cpu-warm-session.json";
 const CPU_SLM_PHASE_ATTRIBUTION: &str = "lunar-lake-cpu-slm-phase-attribution.json";
 const CPU_SLM_RESIDENT_SESSION: &str = "lunar-lake-cpu-slm-resident-session.json";
 const CPU_SLM_RUNTIME_COMPARISON: &str = "lunar-lake-cpu-slm-runtime-comparison.json";
@@ -581,7 +582,7 @@ pub enum LunarLakeAction {
 
         /// Repeated dense Qwen CPU warm-session receipt to inspect.
         /// Relative paths are resolved under artifact-root.
-        #[arg(long, default_value = DURABLE_QWEN_CPU_WARM_SESSION)]
+        #[arg(long, default_value = RESIDENT_QWEN_CPU_WARM_SESSION)]
         repeated_warm_session: PathBuf,
 
         /// Repeated executions required before the resident session can be treated as covered.
