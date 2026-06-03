@@ -234,6 +234,32 @@ Acceptance additions:
 - Existing committed OpenVINO corpus, phase, route-profile, route-promotion,
   operator-ask, and NPU cold-start diagnosis receipts pass the new validator.
 
+### Work item: LNL258V-OPENVINO-VALIDATE-ASK-001
+
+Status: in progress
+Blocked by: `LNL258V-OPENVINO-VALIDATE-001`, issue #1445
+
+Add standalone validation for appliance-wrapped successful OpenVINO operator
+ask receipts with `artifact_kind=lunar_lake_operator_ask`.
+
+Production delta: receipt validation only. No inference, route-policy mutation,
+route promotion, runtime execution change, committed hardware receipt refresh,
+or generated-dashboard hand edit.
+
+Acceptance additions:
+
+- `bitnet validate open-vino-lunar-lake --receipt <path>` accepts committed
+  successful OpenVINO appliance ask receipts for `ask_short`, `ask_normal`, and
+  `warm_resident`.
+- The wrapper validator requires OpenVINO route/backend/runtime identity,
+  `fallback_used=false`, a passing answer gate, generated-token IDs with a
+  matching count, tokenizer/source-run context, and no BitNet/QK256, native
+  accelerator, speedup, power, or broad-quality claim leakage.
+- CPU/Rust wrappers, backend/route mismatches, fallback, missing generated
+  tokens, token-count drift, and claim leakage fail closed.
+- Blocked `low_power` stays on the blocked-ask/regression path and is not
+  treated as successful generated-token evidence.
+
 ### Work item: LNL258V-OPENVINO-STATUS-001
 
 Status: merged
