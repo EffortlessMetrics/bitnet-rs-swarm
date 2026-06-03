@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_operator_comparison",
   "proof_stage": "operator_routes_compared",
-  "created_utc": "2026-05-23T19:25:00Z",
+  "created_utc": "2026-06-03T10:30:00Z",
   "machine_id": "intel-258v",
   "artifact_root": "ci/hardware/intel-258v/2026-05-08",
   "operator_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-readiness.json",
@@ -30,6 +30,11 @@
     "ask_short_auto_ask_ready": true,
     "ask_normal_ask_receipt_indexed": true,
     "ask_normal_auto_ask_ready": true,
+    "gpu_ask_profile_guard_ready": true,
+    "gpu_ask_profile_guarded_profiles": [
+      "ask_short",
+      "ask_normal"
+    ],
     "warm_resident_ask_receipt_indexed": true,
     "warm_resident_auto_ask_ready": true,
     "blocked_ask_receipt_indexed": true,
@@ -859,6 +864,8 @@
         "route_model_identity_rows=23/23",
         "route_model_tokenizer_template_rows=23/23",
         "promotion_blocker_summary_count=9",
+        "gpu_ask_profile_guard_ready=true",
+        "gpu_ask_profile_guarded_profiles=ask_short,ask_normal",
         "openvino_gpu_promoted_profiles=ask_normal,ask_short,decode_heavy,prefill_heavy",
         "openvino_npu_promoted_profiles=warm_resident",
         "profile_scoped_promotion_only=true"
@@ -917,8 +924,9 @@
         "rerun_required=false",
         "pending_shared_change_count=0",
         "closed_shared_change_count=6",
-        "merged_to_main_count=0",
+        "merged_to_main_count=2",
         "stale_after_merged_count=0",
+        "diagnostic_only_no_rerun_count=2",
         "source_lanes=a770",
         "claim_boundary_preserved=true"
       ]
