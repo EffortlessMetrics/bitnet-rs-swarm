@@ -634,7 +634,7 @@
 | intel-a770 | A770-098 | A770-097 | merged |
 | intel-a770 | A770-099 | A770-098 | merged |
 | intel-a770 | A770-100 | A770-099 | merged |
-| intel-a770 | A770-101 | A770-100 | in_progress |
+| intel-a770 | A770-101 | A770-100 | pr_open |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
