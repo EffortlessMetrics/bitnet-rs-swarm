@@ -143,6 +143,7 @@ const OPENVINO_PROFILE_RUN: &str = "lunar-lake-openvino-profile-run.json";
 const CPU_PROFILE_RUN: &str = "lunar-lake-cpu-profile-run.json";
 const OPENVINO_GPU_PROFILE_PROMOTION_TARGETS: &[&str] =
     &["ask_short", "ask_normal", "prefill_heavy", "decode_heavy"];
+const GPU_ASK_PROFILE_GUARD_TARGETS: &[&str] = &["ask_short", "ask_normal"];
 const OPENVINO_NPU_PROFILE_PROMOTION_TARGETS: &[&str] = &["warm_resident"];
 const DENSE_PHASE_COMPARISON: &str = "slm-openvino-cpu-gpu-npu-phase-comparison.json";
 const DENSE_CPU_OPERATOR_ASK: &str = "lunar-lake-operator-ask-math-brief.json";
@@ -1213,6 +1214,10 @@ pub struct RegressionSurfaceSummary {
     #[serde(default)]
     pub ask_normal_auto_ask_ready: bool,
     #[serde(default)]
+    pub gpu_ask_profile_guard_ready: bool,
+    #[serde(default)]
+    pub gpu_ask_profile_guarded_profiles: Vec<String>,
+    #[serde(default)]
     pub warm_resident_ask_receipt_indexed: bool,
     #[serde(default)]
     pub warm_resident_auto_ask_ready: bool,
@@ -1267,6 +1272,8 @@ impl Default for RegressionSurfaceSummary {
             ask_short_auto_ask_ready: false,
             ask_normal_ask_receipt_indexed: false,
             ask_normal_auto_ask_ready: false,
+            gpu_ask_profile_guard_ready: true,
+            gpu_ask_profile_guarded_profiles: Vec::new(),
             warm_resident_ask_receipt_indexed: false,
             warm_resident_auto_ask_ready: false,
             blocked_ask_receipt_indexed: false,
@@ -1354,6 +1361,8 @@ pub struct RouteProfileRegressionSummary {
     pub default_route_id: String,
     pub profiles: Vec<String>,
     #[serde(default)]
+    pub gpu_ask_profile_guards: Vec<GpuAskProfilePromotionGuard>,
+    #[serde(default)]
     pub timing_coverage: TimingApplicabilityCoverageSummary,
     #[serde(default)]
     pub route_model_identity_coverage: RouteModelIdentityCoverage,
@@ -1368,6 +1377,34 @@ pub struct RouteProfileRegressionSummary {
     #[serde(default)]
     pub route_promotion_scope: RoutePromotionScopeSummary,
     pub regression_ready: bool,
+    pub gaps: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct GpuAskProfilePromotionGuard {
+    pub profile_id: String,
+    pub guard_ready: bool,
+    pub promoted_route: Option<String>,
+    pub profile_status: Option<String>,
+    pub route_id: Option<String>,
+    pub route_status: Option<String>,
+    pub ledger_route_status: Option<String>,
+    pub selected_backend: Option<String>,
+    pub runtime_api: Option<String>,
+    pub fallback_used: Option<bool>,
+    pub answer_gate_passed: Option<bool>,
+    pub phase_timing_present: Option<bool>,
+    pub timing_applicability_profile: Option<String>,
+    pub timing_matches_profile: Option<bool>,
+    pub total_response_ms_present: bool,
+    pub benchmark_qualified_advantage: Option<bool>,
+    pub route_advantage_benchmark_qualified: Option<bool>,
+    pub direct_generated_token_ids_recorded: bool,
+    pub profile_quality_present: Option<bool>,
+    pub profile_quality_failed: Option<u64>,
+    pub profile_quality_fallback_used: Option<bool>,
+    pub promotion_eligible_for_profile: Option<bool>,
+    pub blocker_count: usize,
     pub gaps: Vec<String>,
 }
 
@@ -5411,6 +5448,25 @@ fn build_regression_surface_summary(
         summary.gaps.push("Arc/NPU bounded proof evidence is not regression-ready".to_string());
     }
 
+    let mut gpu_ask_profile_guarded_profiles = Vec::new();
+    let ask_short_profile_guard_ready = validate_gpu_ask_profile_guard(
+        route_profile_comparison,
+        ask_short_ask_receipt,
+        "ask_short",
+        &mut gpu_ask_profile_guarded_profiles,
+        &mut summary.gaps,
+    );
+    let ask_normal_profile_guard_ready = validate_gpu_ask_profile_guard(
+        route_profile_comparison,
+        ask_normal_ask_receipt,
+        "ask_normal",
+        &mut gpu_ask_profile_guarded_profiles,
+        &mut summary.gaps,
+    );
+    summary.gpu_ask_profile_guard_ready =
+        ask_short_profile_guard_ready && ask_normal_profile_guard_ready;
+    summary.gpu_ask_profile_guarded_profiles = gpu_ask_profile_guarded_profiles;
+
     let npu_warm_resident_promoted = summary
         .route_promotion_scope
         .openvino_npu_promoted_profiles
@@ -5538,6 +5594,109 @@ fn build_regression_surface_summary(
     summary.gaps.dedup();
     summary.strict_ready = summary.gaps.is_empty();
     summary
+}
+
+fn validate_gpu_ask_profile_guard(
+    route_profile_comparison: Option<&RouteProfileRegressionSummary>,
+    ask_receipt: Option<&OperatorAskRegressionSummary>,
+    profile_id: &str,
+    guarded_profiles: &mut Vec<String>,
+    gaps: &mut Vec<String>,
+) -> bool {
+    let profile_is_promoted = route_profile_comparison.is_some_and(|summary| {
+        summary
+            .route_promotion_scope
+            .openvino_gpu_promoted_profiles
+            .iter()
+            .any(|profile| profile == profile_id)
+    });
+    let guard_required = profile_is_promoted || ask_receipt.is_some();
+    if !guard_required {
+        return true;
+    }
+    guarded_profiles.push(profile_id.to_string());
+
+    let Some(route_profiles) = route_profile_comparison else {
+        gaps.push(format!(
+            "{profile_id} GPU ask profile guard requires route-profile comparison evidence"
+        ));
+        return false;
+    };
+    let Some(guard) =
+        route_profiles.gpu_ask_profile_guards.iter().find(|guard| guard.profile_id == profile_id)
+    else {
+        gaps.push(format!("{profile_id} GPU ask profile guard is missing"));
+        return false;
+    };
+
+    let mut guard_ready = guard.guard_ready;
+    if !guard.guard_ready {
+        gaps.push(format!(
+            "{profile_id} GPU ask profile guard is not ready: {}",
+            guard.gaps.join("; ")
+        ));
+    }
+
+    let Some(ask) = ask_receipt else {
+        gaps.push(format!(
+            "{profile_id} GPU ask profile guard has no auto ask receipt to bind to route-profile evidence"
+        ));
+        return false;
+    };
+
+    let expected_route = guard.route_id.as_deref().unwrap_or("none");
+    if ask.profile_id != guard.profile_id
+        || ask.selected_route.as_str() != expected_route
+        || Some(ask.selected_backend.as_str()) != guard.selected_backend.as_deref()
+        || Some(ask.runtime_api.as_str()) != guard.runtime_api.as_deref()
+    {
+        guard_ready = false;
+        gaps.push(format!(
+            "{profile_id} auto GPU ask receipt does not match route-profile guard: ask profile={} route={} backend={} api={}, guard route={} backend={} api={}",
+            ask.profile_id,
+            ask.selected_route,
+            ask.selected_backend,
+            ask.runtime_api,
+            expected_route,
+            guard.selected_backend.as_deref().unwrap_or("none"),
+            guard.runtime_api.as_deref().unwrap_or("none")
+        ));
+    }
+
+    if ask.route_profile_status.as_deref() != guard.profile_status.as_deref()
+        || ask.promotion_status != "promoted"
+        || guard.route_status.as_deref() != Some("promoted")
+        || guard.ledger_route_status.as_deref() != Some("promoted")
+    {
+        guard_ready = false;
+        gaps.push(format!(
+            "{profile_id} auto GPU ask promotion status drifted: ask promotion={} ask profile_status={} guard profile_status={} guard route_status={} guard ledger_status={}",
+            ask.promotion_status,
+            ask.route_profile_status.as_deref().unwrap_or("none"),
+            guard.profile_status.as_deref().unwrap_or("none"),
+            guard.route_status.as_deref().unwrap_or("none"),
+            guard.ledger_route_status.as_deref().unwrap_or("none")
+        ));
+    }
+
+    if guard.fallback_used != Some(ask.fallback_used)
+        || guard.answer_gate_passed != Some(ask.answer_gate_passed)
+        || !ask.generated_token_ids_available
+        || !guard.direct_generated_token_ids_recorded
+    {
+        guard_ready = false;
+        gaps.push(format!(
+            "{profile_id} auto GPU ask evidence drifted from route-profile guard: ask fallback={} guard fallback={:?} ask answer_gate={} guard answer_gate={:?} ask direct_tokens={} guard direct_tokens={}",
+            ask.fallback_used,
+            guard.fallback_used,
+            ask.answer_gate_passed,
+            guard.answer_gate_passed,
+            ask.generated_token_ids_available,
+            guard.direct_generated_token_ids_recorded
+        ));
+    }
+
+    guard_ready
 }
 
 fn strict_regression_v2_gaps(receipt: &LunarLakeRegressionBundle) -> Vec<String> {
@@ -5720,6 +5879,8 @@ fn inspect_route_profile_regression(path: &Path) -> Result<RouteProfileRegressio
         &mut gaps,
     );
     let route_promotion_scope = route_promotion_scope_from_profile_comparison(&comparison.profiles);
+    let gpu_ask_profile_guards =
+        gpu_ask_profile_promotion_guards_from_profile_comparison(&comparison.profiles);
     for profile in &comparison.profiles {
         for route in &profile.route_evidence {
             if route.fallback_used == Some(true) {
@@ -5780,6 +5941,7 @@ fn inspect_route_profile_regression(path: &Path) -> Result<RouteProfileRegressio
         profile_comparison_ready: comparison.profile_comparison_ready,
         default_route_id: comparison.default_route_id,
         profiles,
+        gpu_ask_profile_guards,
         timing_coverage,
         route_model_identity_ready: route_model_identity_coverage_ready(
             &route_model_identity_coverage,
@@ -5794,6 +5956,180 @@ fn inspect_route_profile_regression(path: &Path) -> Result<RouteProfileRegressio
         regression_ready: gaps.is_empty(),
         gaps,
     })
+}
+
+fn gpu_ask_profile_promotion_guards_from_profile_comparison(
+    profiles: &[WorkloadProfileEvaluation],
+) -> Vec<GpuAskProfilePromotionGuard> {
+    GPU_ASK_PROFILE_GUARD_TARGETS
+        .iter()
+        .map(|profile_id| gpu_ask_profile_promotion_guard(profiles, profile_id))
+        .collect()
+}
+
+fn gpu_ask_profile_promotion_guard(
+    profiles: &[WorkloadProfileEvaluation],
+    profile_id: &str,
+) -> GpuAskProfilePromotionGuard {
+    let mut gaps = Vec::new();
+    let expected_route = "dense_slm_openvino_gpu_candidate";
+    let Some(profile) = profiles.iter().find(|profile| profile.profile_id == profile_id) else {
+        return GpuAskProfilePromotionGuard {
+            profile_id: profile_id.to_string(),
+            guard_ready: false,
+            gaps: vec![format!("missing route-profile row for {profile_id}")],
+            ..GpuAskProfilePromotionGuard::default()
+        };
+    };
+
+    if profile.promoted_route.as_deref() != Some(expected_route) {
+        gaps.push(format!(
+            "expected promoted_route={expected_route}; got {}",
+            profile.promoted_route.as_deref().unwrap_or("none")
+        ));
+    }
+    if profile.profile_status != "promoted_route_ready" {
+        gaps.push(format!(
+            "expected profile_status=promoted_route_ready; got {}",
+            profile.profile_status
+        ));
+    }
+
+    let Some(route) = profile.route_evidence.iter().find(|route| route.route_id == expected_route)
+    else {
+        return GpuAskProfilePromotionGuard {
+            profile_id: profile_id.to_string(),
+            guard_ready: false,
+            promoted_route: profile.promoted_route.clone(),
+            profile_status: Some(profile.profile_status.clone()),
+            gaps: {
+                gaps.push(format!("missing {expected_route} route evidence for {profile_id}"));
+                gaps
+            },
+            ..GpuAskProfilePromotionGuard::default()
+        };
+    };
+
+    if route.route_status != "promoted" {
+        gaps.push(format!("expected route_status=promoted; got {}", route.route_status));
+    }
+    if route.ledger_route_status != "promoted" {
+        gaps.push(format!(
+            "expected ledger_route_status=promoted; got {}",
+            route.ledger_route_status
+        ));
+    }
+    if route.selected_backend != "openvino-gpu" {
+        gaps.push(format!(
+            "expected selected_backend=openvino-gpu; got {}",
+            route.selected_backend
+        ));
+    }
+    if route.runtime_api != "openvino_genai" {
+        gaps.push(format!("expected runtime_api=openvino_genai; got {}", route.runtime_api));
+    }
+    if route.fallback_used != Some(false) {
+        gaps.push(format!("expected fallback_used=false; got {:?}", route.fallback_used));
+    }
+    if route.answer_gate_passed != Some(true) {
+        gaps.push(format!("expected answer_gate_passed=true; got {:?}", route.answer_gate_passed));
+    }
+    if route.phase_timing_present != Some(true) {
+        gaps.push(format!(
+            "expected phase_timing_present=true; got {:?}",
+            route.phase_timing_present
+        ));
+    }
+    if route.timing_applicability.profile_id != profile_id {
+        gaps.push(format!(
+            "timing applicability profile drifted to {}",
+            route.timing_applicability.profile_id
+        ));
+    }
+    if !route.timing_applicability.timing_matches_profile {
+        gaps.push(format!("timing evidence is not profile-specific for {profile_id}"));
+    }
+    if route.timing.total_response_ms.is_none() {
+        gaps.push(format!("missing total_response_ms for {profile_id} GPU route"));
+    }
+    if !route.benchmark_qualified_advantage {
+        gaps.push(format!("benchmark_qualified_advantage is false for {profile_id} GPU route"));
+    }
+    let route_advantage_benchmark_qualified =
+        route.route_advantage_context.as_ref().map(|context| context.benchmark_qualified);
+    if route_advantage_benchmark_qualified != Some(true) {
+        gaps.push(format!(
+            "route_advantage_context.benchmark_qualified is not true for {profile_id}"
+        ));
+    }
+    let direct_generated_token_ids_recorded = route
+        .timing
+        .phase_coverage
+        .iter()
+        .any(|coverage| coverage.contains("direct_openvino_generated_token_ids"));
+    if !direct_generated_token_ids_recorded {
+        gaps.push(format!(
+            "route-profile timing does not record direct OpenVINO generated-token IDs for {profile_id}"
+        ));
+    }
+    let profile_quality_present =
+        route.profile_quality.as_ref().map(|quality| quality.profile_present);
+    let profile_quality_failed = route.profile_quality.as_ref().map(|quality| quality.failed);
+    let profile_quality_fallback_used =
+        route.profile_quality.as_ref().and_then(|quality| quality.fallback_used);
+    if profile_quality_present != Some(true) {
+        gaps.push(format!("profile quality is not present for {profile_id}"));
+    }
+    if profile_quality_failed != Some(0) {
+        gaps.push(format!(
+            "profile quality failed count is not zero for {profile_id}; got {:?}",
+            profile_quality_failed
+        ));
+    }
+    if profile_quality_fallback_used != Some(false) {
+        gaps.push(format!(
+            "profile quality fallback_used is not false for {profile_id}; got {:?}",
+            profile_quality_fallback_used
+        ));
+    }
+    if !route.promotion_eligible_for_profile {
+        gaps.push(format!("GPU route is not promotion-eligible for {profile_id}"));
+    }
+    if !route.blockers.is_empty() {
+        gaps.push(format!(
+            "GPU route has blockers for {profile_id}: {}",
+            route.blockers.join("; ")
+        ));
+    }
+
+    gaps.sort();
+    gaps.dedup();
+    GpuAskProfilePromotionGuard {
+        profile_id: profile_id.to_string(),
+        guard_ready: gaps.is_empty(),
+        promoted_route: profile.promoted_route.clone(),
+        profile_status: Some(profile.profile_status.clone()),
+        route_id: Some(route.route_id.clone()),
+        route_status: Some(route.route_status.clone()),
+        ledger_route_status: Some(route.ledger_route_status.clone()),
+        selected_backend: Some(route.selected_backend.clone()),
+        runtime_api: Some(route.runtime_api.clone()),
+        fallback_used: route.fallback_used,
+        answer_gate_passed: route.answer_gate_passed,
+        phase_timing_present: route.phase_timing_present,
+        timing_applicability_profile: Some(route.timing_applicability.profile_id.clone()),
+        timing_matches_profile: Some(route.timing_applicability.timing_matches_profile),
+        total_response_ms_present: route.timing.total_response_ms.is_some(),
+        benchmark_qualified_advantage: Some(route.benchmark_qualified_advantage),
+        route_advantage_benchmark_qualified,
+        direct_generated_token_ids_recorded,
+        profile_quality_present,
+        profile_quality_failed,
+        profile_quality_fallback_used,
+        promotion_eligible_for_profile: Some(route.promotion_eligible_for_profile),
+        blocker_count: route.blockers.len(),
+        gaps,
+    }
 }
 
 fn inspect_cold_warm_regression(path: &Path) -> Result<ColdWarmRegressionSummary> {
@@ -6732,6 +7068,19 @@ fn route_profile_regression_notes(summary: &RouteProfileRegressionSummary) -> Ve
         format!(
             "promotion_blocker_summary_count={}",
             summary.gpu_npu_promotion_blocker_summary.len()
+        ),
+        format!(
+            "gpu_ask_profile_guard_ready={}",
+            summary.gpu_ask_profile_guards.iter().all(|guard| guard.guard_ready)
+        ),
+        format!(
+            "gpu_ask_profile_guarded_profiles={}",
+            summary
+                .gpu_ask_profile_guards
+                .iter()
+                .map(|guard| guard.profile_id.as_str())
+                .collect::<Vec<_>>()
+                .join(",")
         ),
         format!(
             "openvino_gpu_promoted_profiles={}",
@@ -26605,6 +26954,60 @@ mod tests {
     }
 
     #[test]
+    fn regression_surface_rejects_gpu_auto_ask_when_route_profile_guard_drifts() -> Result<()> {
+        let mut route_profiles = ready_route_profile_regression_with_npu_warm_resident();
+        let mut cold_warm = ready_cold_warm_regression_with_npu_warm_resident();
+        for scope in
+            [&mut route_profiles.route_promotion_scope, &mut cold_warm.route_promotion_scope]
+        {
+            scope.openvino_gpu_promoted_profiles = vec!["ask_short".to_string()];
+            scope.openvino_npu_promoted_profiles.clear();
+            scope.openvino_npu_remains_candidate = true;
+            scope.notes = vec!["OpenVINO GPU is profile-promoted only for ask_short".to_string()];
+        }
+        let guard = route_profiles
+            .gpu_ask_profile_guards
+            .iter_mut()
+            .find(|guard| guard.profile_id == "ask_short")
+            .context("missing ask_short GPU profile guard")?;
+        guard.guard_ready = false;
+        guard.benchmark_qualified_advantage = Some(false);
+        guard
+            .gaps
+            .push("benchmark_qualified_advantage is false for ask_short GPU route".to_string());
+
+        let corpus = ready_answer_corpus_v2_summary();
+        let durability = ready_durability_summary();
+        let intake = ready_bitnet_semantic_intake_summary();
+        let power = ready_power_profile_summary();
+        let operator = ready_operator_receipt_with_arc_npu_bounded_evidence();
+        let ask = ready_gpu_operator_ask_summary("ask_short", AUTO_GPU_ASK_SHORT_ASK_RECEIPT);
+        let summary = build_regression_surface_summary(
+            Some(&corpus),
+            Some(&route_profiles),
+            Some(&cold_warm),
+            Some(&durability),
+            Some(&intake),
+            Some(&power),
+            None,
+            Some(&ask),
+            None,
+            None,
+            None,
+            &operator,
+        );
+
+        assert!(!summary.strict_ready);
+        assert!(!summary.gpu_ask_profile_guard_ready);
+        assert!(summary.gpu_ask_profile_guarded_profiles.contains(&"ask_short".to_string()));
+        assert!(summary.gaps.iter().any(|gap| {
+            gap.contains("ask_short GPU ask profile guard is not ready")
+                && gap.contains("benchmark_qualified_advantage")
+        }));
+        Ok(())
+    }
+
+    #[test]
     fn regression_surface_requires_auto_ask_when_gpu_ask_normal_is_promoted() -> Result<()> {
         let mut route_profiles = ready_route_profile_regression_with_npu_warm_resident();
         let mut cold_warm = ready_cold_warm_regression_with_npu_warm_resident();
@@ -28233,6 +28636,10 @@ mod tests {
                 .iter()
                 .map(|profile| (*profile).to_string())
                 .collect(),
+            gpu_ask_profile_guards: vec![
+                ready_gpu_ask_profile_guard("ask_short"),
+                ready_gpu_ask_profile_guard("ask_normal"),
+            ],
             timing_coverage: ready_timing_coverage(),
             route_model_identity_coverage: ready_route_model_identity_coverage(),
             route_model_identity_ready: true,
@@ -28491,6 +28898,35 @@ mod tests {
             generated_token_ids_available: true,
             source_run_receipt: Some(path.replace(".json", "-source-run.json")),
             regression_ready: true,
+            gaps: vec![],
+        }
+    }
+
+    fn ready_gpu_ask_profile_guard(profile_id: &str) -> GpuAskProfilePromotionGuard {
+        GpuAskProfilePromotionGuard {
+            profile_id: profile_id.to_string(),
+            guard_ready: true,
+            promoted_route: Some("dense_slm_openvino_gpu_candidate".to_string()),
+            profile_status: Some("promoted_route_ready".to_string()),
+            route_id: Some("dense_slm_openvino_gpu_candidate".to_string()),
+            route_status: Some("promoted".to_string()),
+            ledger_route_status: Some("promoted".to_string()),
+            selected_backend: Some("openvino-gpu".to_string()),
+            runtime_api: Some("openvino_genai".to_string()),
+            fallback_used: Some(false),
+            answer_gate_passed: Some(true),
+            phase_timing_present: Some(true),
+            timing_applicability_profile: Some(profile_id.to_string()),
+            timing_matches_profile: Some(true),
+            total_response_ms_present: true,
+            benchmark_qualified_advantage: Some(true),
+            route_advantage_benchmark_qualified: Some(true),
+            direct_generated_token_ids_recorded: true,
+            profile_quality_present: Some(true),
+            profile_quality_failed: Some(0),
+            profile_quality_fallback_used: Some(false),
+            promotion_eligible_for_profile: Some(true),
+            blocker_count: 0,
             gaps: vec![],
         }
     }
