@@ -8521,6 +8521,12 @@ pub fn validate_lunar_lake_openvino_receipt_json(receipt: &Value) -> Result<()> 
         require_string_eq(receipt, "runtime_api", "openvino_genai")?;
     }
 
+    if artifact_kind == LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND {
+        validate_lunar_lake_openvino_operator_ask_wrapper(receipt)?;
+        validate_lunar_lake_openvino_forbidden_claims_only(receipt, "$")?;
+        return Ok(());
+    }
+
     if artifact_kind == LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND {
         validate_lunar_lake_openvino_auto_debug_log_evidence(receipt)?;
     }
@@ -8549,13 +8555,103 @@ fn is_lunar_lake_openvino_artifact_kind(artifact_kind: &str) -> bool {
             | "lunar_lake_openvino_npu_resident_session"
             | LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND
             | "lunar_lake_openvino_operator_ask"
+            | LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND
             | "lunar_lake_route_profile_comparison"
             | "lunar_lake_route_promotion_ledger"
     )
 }
 
+const LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND: &str = "lunar_lake_operator_ask";
+
 const LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND: &str =
     "lunar_lake_openvino_auto_genai_debug_log_evidence";
+
+fn validate_lunar_lake_openvino_operator_ask_wrapper(receipt: &Value) -> Result<()> {
+    require_string_eq(receipt, "artifact_kind", LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND)?;
+    require_string_eq(receipt, "machine_id", "intel-258v")?;
+    require_string_non_empty(receipt, "profile_id")?;
+    require_string_eq(receipt, "runtime_api", "openvino_genai")?;
+    require_bool_eq(receipt, "fallback_used", false)?;
+    require_bool_eq(receipt, "answer_gate_passed", true)?;
+    validate_lunar_lake_openvino_backend_object(receipt, "$")?;
+
+    let route_id = required_string(receipt, "route_id")?;
+    let selected_backend = required_string(receipt, "selected_backend")?;
+    validate_lunar_lake_openvino_operator_ask_route_backend(route_id, selected_backend, "$")?;
+
+    if let Some(selected_route) = receipt.get("selected_route").and_then(Value::as_str)
+        && selected_route != route_id
+    {
+        return Err(anyhow!(
+            "selected_route `{selected_route}` must match route_id `{route_id}` for OpenVINO operator ask validation"
+        ));
+    }
+
+    let tokens = object_field(receipt, "tokens")?;
+    let generated_ids = array_field(tokens, "generated_ids")?;
+    if generated_ids.is_empty() {
+        return Err(anyhow!(
+            "tokens.generated_ids must contain direct generated token IDs for successful OpenVINO operator ask validation"
+        ));
+    }
+    let generated_count = required_u64(tokens, "generated_count")?;
+    if generated_count as usize != generated_ids.len() {
+        return Err(anyhow!(
+            "tokens.generated_count must match tokens.generated_ids length for OpenVINO operator ask validation"
+        ));
+    }
+    require_string_non_empty(receipt, "tokenizer_source")?;
+
+    if let Some(source_path) = receipt.get("source_run_receipt").and_then(Value::as_str)
+        && source_path.trim().is_empty()
+    {
+        return Err(anyhow!("source_run_receipt must not be empty when present"));
+    }
+    let source_receipt = object_field(receipt, "source_receipt")?;
+    require_string_eq(source_receipt, "artifact_kind", "lunar_lake_openvino_operator_ask")?;
+    validate_lunar_lake_openvino_receipt_json(source_receipt)?;
+
+    require_optional_bool_eq(receipt, "speedup_claim", false)?;
+    require_optional_bool_eq(receipt, "acceleration_claim", false)?;
+    require_optional_bool_eq(receipt, "broad_quality_claim", false)?;
+    require_optional_bool_eq(receipt, "bitnet_qk256_i2s_claim", false)?;
+    require_optional_bool_eq(receipt, "arc_or_npu_execution_claim", false)?;
+
+    let claim_boundary = object_field(receipt, "claim_boundary")?;
+    require_optional_bool_eq(claim_boundary, "default_route_changed", false)?;
+    require_optional_bool_eq(claim_boundary, "fallback_used", false)?;
+    require_optional_bool_eq(claim_boundary, "acceleration_claim", false)?;
+    require_optional_bool_eq(claim_boundary, "arc_or_npu_acceleration_claim", false)?;
+    require_optional_bool_eq(claim_boundary, "broad_dense_slm_quality_claim", false)?;
+    require_optional_bool_eq(claim_boundary, "bitnet_qk256_i2s_claim", false)?;
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_operator_ask_route_backend(
+    route_id: &str,
+    selected_backend: &str,
+    path: &str,
+) -> Result<()> {
+    match route_id {
+        "dense_slm_openvino_gpu_candidate" if selected_backend == "openvino-gpu" => Ok(()),
+        "dense_slm_openvino_gpu_candidate" => Err(anyhow!(
+            "{path} GPU OpenVINO operator ask must select openvino-gpu, got `{selected_backend}`"
+        )),
+        "dense_slm_openvino_npu_candidate" if selected_backend == "openvino-npu" => Ok(()),
+        "dense_slm_openvino_npu_candidate" => Err(anyhow!(
+            "{path} NPU OpenVINO operator ask must select openvino-npu, got `{selected_backend}`"
+        )),
+        route if route.contains("cpu") || selected_backend.contains("cpu") => {
+            Err(anyhow!(
+                "{path} CPU operator ask wrappers are not valid for OpenVINO appliance ask validation"
+            ))
+        }
+        _ => Err(anyhow!(
+            "{path} artifact_kind=lunar_lake_operator_ask is only valid for Lunar Lake OpenVINO GPU/NPU route wrappers"
+        )),
+    }
+}
 
 fn validate_lunar_lake_openvino_auto_debug_log_evidence(receipt: &Value) -> Result<()> {
     require_string_eq(
@@ -8652,6 +8748,28 @@ fn validate_lunar_lake_openvino_value(value: &Value, path: &str) -> Result<()> {
         Value::Array(items) => {
             for (index, child) in items.iter().enumerate() {
                 validate_lunar_lake_openvino_value(child, &format!("{path}[{index}]"))?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_forbidden_claims_only(value: &Value, path: &str) -> Result<()> {
+    match value {
+        Value::Object(object) => {
+            for (key, child) in object {
+                let child_path = format!("{path}.{key}");
+                validate_lunar_lake_openvino_forbidden_claim(key, child, &child_path)?;
+                validate_lunar_lake_openvino_forbidden_claims_only(child, &child_path)?;
+            }
+        }
+        Value::Array(items) => {
+            for (index, child) in items.iter().enumerate() {
+                validate_lunar_lake_openvino_forbidden_claims_only(
+                    child,
+                    &format!("{path}[{index}]"),
+                )?;
             }
         }
         _ => {}
@@ -9590,6 +9708,17 @@ fn require_bool_eq(object: &Value, field: &str, expected: bool) -> Result<()> {
     Ok(())
 }
 
+fn require_optional_bool_eq(object: &Value, field: &str, expected: bool) -> Result<()> {
+    let Some(value) = object.get(field) else {
+        return Ok(());
+    };
+    let actual = value.as_bool().ok_or_else(|| anyhow!("field `{field}` must be a bool"))?;
+    if actual != expected {
+        return Err(anyhow!("field `{field}` must be `{expected}`, got `{actual}`"));
+    }
+    Ok(())
+}
+
 fn require_bool_alias_eq(
     object: &Value,
     fields: &[&str],
@@ -10442,6 +10571,51 @@ mod tests {
         })
     }
 
+    fn minimal_lunar_lake_operator_ask_wrapper_receipt() -> Value {
+        json!({
+            "schema_version": "1.0.0",
+            "artifact_kind": "lunar_lake_operator_ask",
+            "machine_id": "intel-258v",
+            "proof_stage": "operator_candidate_route_executed_through_lunar_lake_ask",
+            "profile_id": "ask_short",
+            "requested_device": "auto",
+            "requested_route": "auto",
+            "selected_route": "dense_slm_openvino_gpu_candidate",
+            "route_id": "dense_slm_openvino_gpu_candidate",
+            "requested_backend": "openvino-gpu",
+            "selected_backend": "openvino-gpu",
+            "runtime_api": "openvino_genai",
+            "fallback_used": false,
+            "answer_gate_passed": true,
+            "promotion_status": "promoted",
+            "tokenizer_source": "hf_tokenizer_export",
+            "model_family": "qwen",
+            "model_architecture": "qwen2",
+            "prompt_template": "qwen2.5",
+            "tokens": {
+                "generated_ids": [17, 488, 17],
+                "generated_count": 3,
+                "prompt_count": 32
+            },
+            "source_run_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-operator-ask-gpu-math-brief.json",
+            "source_receipt": minimal_lunar_lake_openvino_gpu_receipt(),
+            "claim_boundary": {
+                "openvino_candidate_route_executed": true,
+                "default_route_changed": false,
+                "fallback_used": false,
+                "acceleration_claim": false,
+                "broad_dense_slm_quality_claim": false,
+                "bitnet_qk256_i2s_claim": false,
+                "arc_or_npu_acceleration_claim": false
+            },
+            "speedup_claim": false,
+            "acceleration_claim": false,
+            "broad_quality_claim": false,
+            "bitnet_qk256_i2s_claim": false,
+            "arc_or_npu_execution_claim": false
+        })
+    }
+
     fn minimal_lunar_lake_openvino_runtime_auto_receipt() -> Value {
         let mut receipt = minimal_lunar_lake_openvino_gpu_receipt();
         receipt["requested_backend"] = json!("openvino-auto");
@@ -10529,6 +10703,94 @@ mod tests {
         let result =
             validate_lunar_lake_openvino_receipt_json(&minimal_lunar_lake_openvino_gpu_receipt());
         assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_operator_ask_wrapper_receipt() {
+        let result = validate_lunar_lake_openvino_receipt_json(
+            &minimal_lunar_lake_operator_ask_wrapper_receipt(),
+        );
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_accepts_npu_operator_ask_wrapper_receipt() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["selected_route"] = json!("dense_slm_openvino_npu_candidate");
+        receipt["route_id"] = json!("dense_slm_openvino_npu_candidate");
+        receipt["requested_backend"] = json!("openvino-npu");
+        receipt["selected_backend"] = json!("openvino-npu");
+        receipt["profile_id"] = json!("warm_resident");
+        receipt["source_receipt"]["requested_backend"] = json!("openvino-npu");
+        receipt["source_receipt"]["selected_backend"] = json!("openvino-npu");
+        receipt["source_receipt"]["runtime_device"] = json!("NPU");
+        receipt["source_receipt"]["route_id"] = json!("dense_slm_openvino_npu_candidate");
+        let result = validate_lunar_lake_openvino_receipt_json(&receipt);
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_cpu_operator_ask_wrapper() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["selected_route"] = json!("dense_slm_default_cpu");
+        receipt["route_id"] = json!("dense_slm_default_cpu");
+        receipt["requested_backend"] = json!("cpu-rust");
+        receipt["selected_backend"] = json!("cpu-rust");
+        receipt["runtime_api"] = json!("cpu");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("runtime_api"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_openvino_cpu_operator_ask_wrapper() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["selected_route"] = json!("dense_slm_openvino_cpu_candidate");
+        receipt["route_id"] = json!("dense_slm_openvino_cpu_candidate");
+        receipt["requested_backend"] = json!("openvino-cpu");
+        receipt["selected_backend"] = json!("openvino-cpu");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("CPU operator ask wrappers"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_operator_ask_wrapper_fallback() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["fallback_used"] = json!(true);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("fallback_used"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_operator_ask_wrapper_missing_tokens() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["tokens"]["generated_ids"] = json!([]);
+        receipt["tokens"]["generated_count"] = json!(0);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("tokens.generated_ids"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_operator_ask_wrapper_token_count_mismatch() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["tokens"]["generated_count"] = json!(2);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("generated_count"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_operator_ask_wrapper_route_backend_mismatch() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["selected_backend"] = json!("openvino-npu");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("GPU OpenVINO"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_validator_rejects_operator_ask_wrapper_claim_leakage() {
+        let mut receipt = minimal_lunar_lake_operator_ask_wrapper_receipt();
+        receipt["bitnet_qk256_i2s_claim"] = json!(true);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("bitnet_qk256_i2s_claim"), "got: {err}");
     }
 
     #[test]
