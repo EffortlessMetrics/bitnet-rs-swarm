@@ -12651,7 +12651,7 @@ fn low_power_battery_plan_commands() -> Vec<LowPowerBatteryPlanCommand> {
             step: "energy_proxy".to_string(),
             purpose: "Build the battery-drain proxy only from battery-mode before/after telemetry.".to_string(),
             command: vec![
-                "target/debug/bitnet.exe lunar-lake energy-proxy --artifact-root ci/hardware/intel-258v/2026-05-08 --before-telemetry-context lunar-lake-low-power-battery-before.json --after-telemetry-context lunar-lake-low-power-battery-after.json --route dense_slm_openvino_npu_candidate --profile low_power --sample-count <battery-run-sample-count> --json-out lunar-lake-low-power-energy-proxy.json --created-utc <battery-run-end-utc> --strict".to_string(),
+                "target/debug/bitnet.exe lunar-lake energy-proxy --artifact-root ci/hardware/intel-258v/2026-05-08 --before-telemetry lunar-lake-low-power-battery-before.json --after-telemetry lunar-lake-low-power-battery-after.json --route-id dense_slm_openvino_npu_candidate --profile-id low_power --sample-count <battery-run-sample-count> --json-out lunar-lake-low-power-energy-proxy.json --created-utc <battery-run-end-utc> --strict".to_string(),
             ],
             continue_if: vec!["energy_proxy_recorded=true and battery_mode_sample_recorded=true".to_string()],
             stop_if: vec!["before or after telemetry is not a battery-mode sample".to_string()],
@@ -25900,6 +25900,24 @@ mod tests {
                 .iter()
                 .any(|blocker| blocker.contains("valid battery-mode energy proxy is missing"))
         );
+        let energy_step = receipt
+            .command_sequence
+            .iter()
+            .find(|step| step.step == "energy_proxy")
+            .context("missing energy_proxy step")?;
+        let energy_command = energy_step
+            .command
+            .iter()
+            .find(|command| command.contains("lunar-lake energy-proxy"))
+            .context("missing energy-proxy command")?;
+        assert!(energy_command.contains("--before-telemetry "));
+        assert!(energy_command.contains("--after-telemetry "));
+        assert!(energy_command.contains("--route-id dense_slm_openvino_npu_candidate"));
+        assert!(energy_command.contains("--profile-id low_power"));
+        assert!(!energy_command.contains("--before-telemetry-context"));
+        assert!(!energy_command.contains("--after-telemetry-context"));
+        assert!(!energy_command.contains("--route dense_slm_openvino_npu_candidate"));
+        assert!(!energy_command.contains("--profile low_power"));
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.route_promotion_changed);
         assert!(!receipt.claim_boundary.power_advantage_claim);

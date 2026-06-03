@@ -210,10 +210,10 @@ Build the energy proxy only from battery-mode before/after telemetry:
 ```powershell
 target/debug/bitnet.exe lunar-lake energy-proxy `
   --artifact-root ci/hardware/intel-258v/2026-05-08 `
-  --before-telemetry-context lunar-lake-low-power-battery-before.json `
-  --after-telemetry-context lunar-lake-low-power-battery-after.json `
-  --route dense_slm_openvino_npu_candidate `
-  --profile low_power `
+  --before-telemetry lunar-lake-low-power-battery-before.json `
+  --after-telemetry lunar-lake-low-power-battery-after.json `
+  --route-id dense_slm_openvino_npu_candidate `
+  --profile-id low_power `
   --sample-count <battery-run-sample-count> `
   --json-out lunar-lake-low-power-energy-proxy.json `
   --created-utc <battery-run-end-utc> `
