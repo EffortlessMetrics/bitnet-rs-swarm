@@ -7536,6 +7536,59 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "LNL258V-OPENVINO-VALIDATE-ASK-001"
+status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-OPENVINO-VALIDATE-ASK-001-operator-ask-validator"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-OPENVINO-VALIDATE-001"]
+acceptance = "Add standalone Lunar Lake OpenVINO validation for appliance-wrapped successful operator ask receipts with artifact_kind=lunar_lake_operator_ask, requiring OpenVINO route/backend/runtime identity, fallback_used=false, answer_gate_passed=true, generated token IDs with matching count, tokenizer/source-run context, and no claim leakage, while rejecting CPU wrappers, fallback, route/backend mismatch, missing generated IDs, token-count drift, and BitNet/QK256/native accelerator/speedup/power claim leakage. Preserve no inference, no route-policy mutation, no route promotion, no committed hardware receipt refresh, and keep blocked low_power on the blocked-ask/regression path."
+commands = [
+  "cargo test --locked -p bitnet-receipts-core lunar_lake_openvino_validator -- --nocapture",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- validate open-vino-lunar-lake --receipt ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-auto-gpu-ask-short-math-brief.json --json-out target/lnl258v-openvino-validate-ask/ask-short-validation.json",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- validate open-vino-lunar-lake --receipt ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-auto-gpu-ask-normal-math-brief.json --json-out target/lnl258v-openvino-validate-ask/ask-normal-validation.json",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- validate open-vino-lunar-lake --receipt ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-ask-auto-npu-warm-resident-math-brief.json --json-out target/lnl258v-openvino-validate-ask/warm-resident-validation.json",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "plans/openvino-lunar-lake/implementation-plan.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "ci/hardware/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "crates/bitnet-cli/src/main.rs",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-qk256-layout-core/**",
+  "crates/bitnet-tokenizers/**",
+  "scripts/**",
+]
+may_claim = [
+  "bitnet validate open-vino-lunar-lake can validate successful appliance-wrapped OpenVINO operator ask receipts for ask_short, ask_normal, and warm_resident.",
+  "The validator rejects CPU wrappers, fallback, route/backend mismatch, missing generated IDs, token-count drift, and claim leakage for successful OpenVINO operator ask wrappers.",
+]
+must_not_claim = [
+  "New inference was run by this PR.",
+  "Any route policy, route promotion, or route revocation changed.",
+  "OpenVINO GPU or NPU speedup is claimed by this PR.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "low_power has successful generated-token evidence.",
+  "Dense SLM OpenVINO receipts prove BitNet QK256/I2_S behavior.",
+]
+
+[[work_item]]
 id = "LNL258V-OPENVINO-QUAL-RERUN-001"
 status = "merged"
 pr = 5650
