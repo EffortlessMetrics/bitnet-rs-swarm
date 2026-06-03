@@ -12,6 +12,8 @@ Live matched CPU comparison issue: https://github.com/EffortlessMetrics/bitnet-r
 
 Live CPU topology/affinity evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370
 
+Live resident overhead scope issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374
+
 Closed resident source-shape issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277 /
 https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279
 
@@ -47,6 +49,7 @@ Post-source-run refresh: 2026-06-02
 Post-field rerun refresh: 2026-06-02
 Post-reviewability-contract refresh: 2026-06-02
 Post-physical-package refresh: 2026-06-02
+Post-overhead-scope issue refresh: 2026-06-03
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -96,6 +99,10 @@ The strongest evidence says:
   current resident summaries instead of backfilling them from aggregate/session
   observations unless a later contract defines the source, scope, and
   qualification rule.
+- #1374 is the live follow-up for that later contract. It may define
+  aggregate/session overhead fields such as summary-builder receipt write time
+  or telemetry collection time, but those fields must not satisfy per-profile
+  `receipt_write_ms` or `telemetry_ms` blockers by implication.
 - #1311 is closed by #1319. The accepted contract adds a separate
   diagnostic-reviewability status for packages whose only remaining blockers
   are the #1291/#1292 `receipt_write_ms` and `telemetry_ms`
@@ -105,6 +112,9 @@ The strongest evidence says:
   `diagnostic_package_reviewable=true`, `resident_phase_qualified=false`, and
   `benchmark_qualified=false`. The remaining resident blockers are only the
   per-profile `receipt_write_ms` and `telemetry_ms` fields.
+- #1374 owns the positive aggregate/session overhead question left after
+  #1291/#1292. Future overhead fields must use scope-specific names and remain
+  diagnostic unless a later accepted contract changes the qualification rule.
 
 The current route decision is:
 
@@ -333,6 +343,10 @@ Accepted current contract from #1291/#1292:
   scope, for example `timing.aggregate_receipt_write_ms` or
   `telemetry.collection_ms`, and the resident summarizer should not use them to
   satisfy per-profile phase timing unless a spec explicitly says so.
+- The live scope owner for those aggregate/session names is
+  [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374).
+  Its first PR should be no-new-inference unless the issue is updated with a
+  concrete physical-run requirement.
 - For the current Rust GGUF CPU resident-session scope, explicit
   `not_exposed` statuses for profile `receipt_write_ms` and `telemetry_ms`
   should remain measurement blockers for the strict #1232 contract, but they
@@ -575,6 +589,12 @@ fields instead of backfilling aggregate/session observations. Keep
 `resident_phase_qualified=false` unless the full #1232 contract is satisfied or
 explicitly revised.
 
+If a future PR wants aggregate overhead visibility, use #1374 first to define
+scope-specific fields such as `timing.aggregate_receipt_write_ms` or
+`telemetry.collection_ms`, plus the summarizer source and qualification effect.
+Do not add a two-pass receipt write, broad telemetry layer, or qualification
+relaxation without that accepted contract.
+
 ### Thread/Core Matrix Receipt
 
 Detailed plan: `docs/research/lunar-lake-cpu-thread-core-matrix.md`.
@@ -693,8 +713,8 @@ The live CPU slow-path follow-ups and guard status are:
    is closed by [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292)
    as the `receipt_write_ms` and `telemetry_ms` scope decision. Do not
    implement a two-pass receipt write, broad telemetry layer, or qualification
-   relaxation until a later issue or spec defines different accepted receipt
-   fields and summarizer rules.
+   relaxation until #1374 or a later issue/spec defines different accepted
+   receipt fields and summarizer rules.
 9. [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
    is closed by [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
    as the resident status contract issue. Current receipts may distinguish

@@ -13,7 +13,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311), [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365)
+Linked issues: [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1201](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311), [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365), [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374)
 Linked PRs: [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1207](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1207), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1266](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1266), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1283](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1283), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319), [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
 Support-tier impact: no promotion; review-only CPU route decision
 Policy impact: no policy exception
@@ -74,6 +74,10 @@ contract. It keeps OpenVINO CPU as a diagnostic candidate/control while the
 next comparison package names model-format alignment, timing-scope alignment,
 direct-token visibility, fallback status, telemetry context, and fail-closed
 benchmark qualification.
+Issue #1374 now owns the aggregate/session overhead scope that follows the
+closed #1291/#1292 negative contract. It may define scoped overhead fields for
+diagnostic visibility, but it must keep profile `receipt_write_ms` and
+`telemetry_ms` `not_exposed` unless a truthful per-profile source is accepted.
 
 ## Current Evidence
 
@@ -90,6 +94,7 @@ benchmark qualification.
 | #1209 | Post-matrix CPU review is closed | The review consumes #1208 and leaves only measurement-first follow-ups; do not optimize blindly |
 | #1232 / #1255 | Resident Rust GGUF phase evidence successor remains open; #1255 added the original `measurement_qualification` fail-closed guard | #1334 now supplies the physical resident package and diagnostic-reviewable status, but strict `resident_phase_qualified=false` and `benchmark_qualified=false` remain |
 | #1365 | Matched Rust GGUF CPU versus OpenVINO CPU comparison issue is open | Owns future CPU comparison package shape; does not promote OpenVINO CPU or claim speedup while model-format and timing-scope gates remain unresolved |
+| #1374 | Aggregate/session receipt-write and telemetry overhead issue is open | Owns future scoped overhead fields; does not backfill profile phase timing, strict resident qualification, benchmark qualification, route policy, or CPU optimization |
 | #1277 / #1279 | Resident source-shape successor is closed by the committed `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` fixture | Source fixture yields 33 prompts and 32 warm asks after first; it is not physical evidence by itself |
 | #1280 / #1281 / #1291 / #1292 / #1311 / #1319 / #1334 | #1334 closes #1280 with the physical resident package; #1290 made prompt-render, quality-gate, detokenize, and memory lifecycle fields measurable; #1292 closed the receipt-write and telemetry scope contract by keeping those profile fields explicit `not_exposed`; #1319 closed #1311 by adding separate diagnostic reviewability while preserving strict false qualification | Treat the package as diagnostic resident CPU evidence for #1232. Do not optimize CPU, change route policy, promote OpenVINO CPU, claim benchmark qualification, or repeat #1280 artifacts unless a later issue defines a narrower missing evidence target |
 
@@ -202,7 +207,9 @@ The remaining next small PRs are evidence work only:
 1. Use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
    to decide the next resident phase-evidence follow-up after the committed
    #1280/#1334 package. A follow-up may define scoped aggregate
-   receipt-write/telemetry fields or a topology receipt, but it must keep
+   receipt-write/telemetry fields through
+   [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374)
+   or define a topology receipt, but it must keep
    strict resident qualification and benchmark qualification false unless a
    later contract revises the rule.
 2. Use [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365)
@@ -224,7 +231,8 @@ resident phase evidence contract, while #1280 is closed by #1334 as the
 physical source package. The #1291 issue is closed by #1292 as the accepted
 receipt-write/telemetry scope boundary, and #1311 is closed by #1319 as the
 reviewable-versus-qualified status decision before any runtime optimization or
-route-policy PR.
+route-policy PR. Issue #1374 is the open successor for scoped aggregate/session
+overhead fields only.
 
 Those PRs should remain docs, receipt, schema, or validation scoped.
 None should change route policy unless a later review links a completed

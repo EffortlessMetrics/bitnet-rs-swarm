@@ -9,7 +9,7 @@ Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar
 Linked specs: [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1122](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1122), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1277](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277), [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280), [#1281](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1281), [#1291](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1291), [#1311](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1311), [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374)
 Linked PRs: [#1085](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1085), [#1107](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1107), [#1132](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1132), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1234](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1234), [#1255](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1255), [#1279](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279), [#1290](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1290), [#1292](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1292), [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319), [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
 Support-tier impact: no promotion; review-only CPU resident timing acceptance
 Policy impact: no policy exception
@@ -33,6 +33,10 @@ profile `receipt_write_ms` and `telemetry_ms` are explicit `not_exposed` fields
 under #1291/#1292. PR #1319 closed #1311 by allowing
 `diagnostic_package_reviewable=true` while preserving strict
 `resident_phase_qualified=false` and `benchmark_qualified=false`.
+Issue #1374 now owns the follow-up aggregate/session overhead scope. It may
+define scope-specific receipt-write or telemetry collection fields for future
+diagnostic visibility, but those fields must not backfill profile phase timing
+or relax qualification by implication.
 
 Issue #1277 defines the source-command boundary for the resident physical
 package.
@@ -123,6 +127,8 @@ boundary and now indexes the #1334 physical resident source package.
 - It does not make profile `receipt_write_ms` or `telemetry_ms` measured, and
   it does not expose utilization, frequency, or thermal timing unless a future
   source receipt records those fields.
+- Future aggregate/session overhead fields should be named and qualified under
+  #1374 before implementation; current profile fields remain `not_exposed`.
 - It does not make resident CPU timing benchmark-equivalent to OpenVINO CPU;
   #1156 keeps comparison qualification blocked while model formats, timing
   scopes, prompt-render/tokenization accounting, or matched-profile evidence
@@ -227,8 +233,8 @@ No additional qualification/status PR is currently needed after #1319/#1334.
 The next #1232 follow-up should be issue-shaped before implementation. Good
 next PR candidates are:
 
-- scoped aggregate receipt-write or telemetry fields, only if a later contract
-  names their timing scope;
+- scoped aggregate receipt-write or telemetry fields under #1374, only if that
+  issue names their timing scope and qualification effect;
 - a matched Rust GGUF CPU versus OpenVINO CPU comparison plan that names model
   format, prompt rendering, timing scope, and profile coverage boundaries;
 - topology, affinity, utilization, frequency, or thermal evidence if those
