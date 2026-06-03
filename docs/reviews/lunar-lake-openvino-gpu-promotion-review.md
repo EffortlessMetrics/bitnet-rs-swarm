@@ -8,10 +8,12 @@ Review issues:
 - Closed phase-boundary follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241
 - Current token-visibility watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244
 - Current route-policy watch: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245
+- Current ask-profile guard: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1373
 
 Review date: 2026-05-30
 Refresh date: 2026-05-31
 Post-phase-boundary refresh: 2026-06-02
+Ask-guard refresh: 2026-06-03
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -40,6 +42,16 @@ claims with `prefill_split_available=false`,
 `decode_split_available=false`, and `phase_split_claim_allowed=false`. That
 hardening protects the broader GPU ledger without changing the `ask_short` /
 `ask_normal` promotion decision.
+
+The 2026-06-03 ask-guard refresh adds #1373 as the active receipt-invalidation
+contract for `ask_short` and `ask_normal`. That issue does not request new
+inference or a route-policy mutation. It says the two ask profiles may stay
+promoted only while route identity, ledger/profile state, `fallback_used=false`,
+answer gates, corpus-v2 quality, direct generated-token visibility,
+profile-matched timing, benchmark qualification, selected-device evidence, and
+negative claim-boundary fields remain present and uncontradicted. Any future
+contradiction should first produce a narrow guard, status, or review update; a
+route-policy mutation still goes through #1245.
 
 This is a narrow dense SLM OpenVINO recommendation. It is not:
 
@@ -259,17 +271,22 @@ No route-policy PR is recommended from this review.
 
 Small follow-ups that still fit the current research-first operating mode:
 
-1. Keep the GPU corpus-v2 status refresh tied to the route-promotion ledger and
+1. Use #1373 as the active guard for `ask_short` / `ask_normal` receipt
+   invalidation. It is the right place for a future checker, schema, status, or
+   review update if those profiles lose route identity, fallback-free evidence,
+   corpus quality, direct-token visibility, timing applicability, benchmark
+   qualification, selected-device clarity, or claim-boundary fields.
+2. Keep the GPU corpus-v2 status refresh tied to the route-promotion ledger and
    route-profile comparison when those artifacts change.
-2. Treat #1241 as satisfied by #1268 for the current phase-boundary hardening.
+3. Treat #1241 as satisfied by #1268 for the current phase-boundary hardening.
    Open a new narrow issue only if later receipts can expose true isolated
    prefill/decode splits or if a future artifact regresses the
    `phase_claim_boundary` fields.
-3. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
+4. Keep `low_power` blocked until `LNL258V-POWER-006` produces real
    battery-mode samples and energy-proxy evidence.
-4. Use #1244 only for future direct-vs-retokenized token-visibility schema or
+5. Use #1244 only for future direct-vs-retokenized token-visibility schema or
    checker gaps.
-5. Use #1245 only after a linked evidence issue names a concrete keep,
+6. Use #1245 only after a linked evidence issue names a concrete keep,
    conditional, narrow, revoke, or blocked decision.
 
 No immediate implementation PR follows from #1121. If `prefill_heavy` or
