@@ -5749,7 +5749,9 @@ must_not_claim = [
 ]
 [[work_item]]
 id = "A770-104"
-status = "in_progress"
+status = "pr_open"
+pr = 1412
+head_sha = "eb608feb168b9da0e0b8f7676ad0af812f1d7603"
 branch = "codex/intel-a770/A770-104-layer12-k-proj-replay-target"
 stackable = false
 review_mode = "codex_premerge"
