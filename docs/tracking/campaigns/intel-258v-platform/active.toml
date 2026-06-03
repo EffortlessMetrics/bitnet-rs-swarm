@@ -7537,7 +7537,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-OPENVINO-VALIDATE-ASK-001"
-status = "in_progress"
+status = "merged"
+pr = 1447
 branch = "codex/lunar-lake/LNL258V-OPENVINO-VALIDATE-ASK-001-operator-ask-validator"
 stackable = false
 review_mode = "codex_premerge"
