@@ -209,7 +209,8 @@ The remaining next small PRs are evidence work only:
    for a matched Rust GGUF CPU versus OpenVINO CPU comparison refresh only
    after it can keep model-format, timing-scope, prompt-render, tokenization,
    and benchmark-qualification blockers explicit.
-3. A later affinity/topology receipt only if P-core/E-core placement,
+3. Use [#1370](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370)
+   for a later affinity/topology receipt only if P-core/E-core placement,
    frequency, utilization, or thermal context can be exposed accurately enough
    to make the result reviewable.
 
