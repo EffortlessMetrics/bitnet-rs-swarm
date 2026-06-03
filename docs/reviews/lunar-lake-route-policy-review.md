@@ -4,11 +4,12 @@ Status: review
 Owner: intel/openvino
 Created: 2026-05-31
 Post-watch refresh: 2026-06-02
+GPU ask-guard refresh: 2026-06-03
 Linked proposal: [BITNET-PROP-0004](../proposals/BITNET-PROP-0004-openvino-lunar-lake-productization.md)
 Linked specs: [BITNET-SPEC-OPENVINO-ROUTE-CONTRACT](../specs/BITNET-SPEC-OPENVINO-ROUTE-CONTRACT.md), [BITNET-SPEC-OPENVINO-ROUTE-PROMOTION](../specs/BITNET-SPEC-OPENVINO-ROUTE-PROMOTION.md), [BITNET-SPEC-OPENVINO-QUALITY-CORPUS](../specs/BITNET-SPEC-OPENVINO-QUALITY-CORPUS.md), [BITNET-SPEC-OPENVINO-PHASE-TIMING](../specs/BITNET-SPEC-OPENVINO-PHASE-TIMING.md), [BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE](../specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md), [BITNET-SPEC-OPENVINO-BITNET-BOUNDARY](../specs/BITNET-SPEC-OPENVINO-BITNET-BOUNDARY.md)
 Linked ADRs: n/a
 Linked plan: [OpenVINO Lunar Lake implementation plan](../../plans/openvino-lunar-lake/implementation-plan.md)
-Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1251](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263)
+Linked issues: [#1069](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1069), [#1071](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1071), [#1124](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1124), [#1149](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1149), [#1160](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160), [#1178](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1178), [#1186](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1186), [#1195](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1195), [#1209](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1209), [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1241](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1241), [#1242](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1242), [#1244](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1244), [#1245](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1245), [#1251](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1251), [#1263](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1263), [#1373](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1373)
 Linked PRs: [#1137](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1137), [#1138](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1138), [#1141](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1141), [#1156](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1156), [#1158](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1158), [#1159](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1159), [#1163](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1163), [#1165](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1165), [#1174](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174), [#1182](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1182), [#1194](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1194), [#1208](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1208), [#1233](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1233), [#1248](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1248), [#1252](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1252), [#1254](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1254), [#1267](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1267), [#1294](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1294), [#1298](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1298), [#1349](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1349), [#1350](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1350), [#1352](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1352), [#1354](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1354), [#1355](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1355)
 Support-tier impact: no promotion; review-only route policy guard
 Policy impact: no policy exception
@@ -41,6 +42,12 @@ evidence contracts current:
 - #1121 for OpenVINO GPU `ask_short` / `ask_normal` review, now closed with
   the keep decision recorded in
   [lunar-lake-openvino-gpu-promotion-review.md](lunar-lake-openvino-gpu-promotion-review.md);
+  #1373 is the active ask-profile guard for keeping those two promotions
+  receipt-invalidatable without opening a route-policy mutation. It owns future
+  guard/status/review follow-up if route identity, fallback-free evidence,
+  corpus quality, direct-token visibility, profile timing, benchmark
+  qualification, selected-device evidence, or negative claim-boundary fields
+  become missing or contradicted;
   #1241 is closed by #1268 for the current GPU `prefill_heavy` /
   `decode_heavy` phase-claim-boundary hardening; future true phase-split or
   route-policy decisions should use a new narrow evidence issue or #1245;
@@ -289,8 +296,10 @@ benchmark matrices, generated dashboard churn, or unrelated hardware lanes.
   receipt path that bypasses that helper, emits ambiguous direct, proxy, or
   unavailable status, or needs a central `visibility_level` helper.
 - #1121 has kept GPU `ask_short` / `ask_normal` promotion with a current
-  evidence map; future GPU mutation needs a new concrete regression or review
-  finding.
+  evidence map. #1373 is now the current ask-profile guard for those two
+  profiles; use it for future receipt invalidation, status, or checker
+  hardening before escalating to #1245 for a keep, conditional, narrow, revoke,
+  or blocked route-policy decision.
 - #1241 is closed by #1268 for the current `prefill_heavy` and `decode_heavy`
   phase-claim-boundary hardening. Future GPU heavy-profile mutation needs a new
   concrete evidence issue or a #1245 keep, conditional, narrow, revoke, or
