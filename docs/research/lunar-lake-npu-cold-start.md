@@ -2,6 +2,7 @@
 
 Original research issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1032
 Current cold/cache parent: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119
+Direct cache-hit truth child: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1371
 Closed cache rerun issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1160
 Cache rerun closeout PR: https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1174
 Phase-timing schema closed by: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1139 / PR #1141
@@ -20,6 +21,7 @@ Route-policy watch issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/i
 
 Research date: 2026-05-30
 Watch refresh: 2026-06-02
+Cache-truth child refresh: 2026-06-03
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -294,10 +296,11 @@ Current #1119 consequence:
 
 - Keep committed cache receipts classified as `timing_derived` or
   file-reuse-derived when `direct_runtime_cache_hit_status.available=false`.
-- A future narrow child issue is justified only for one of these source shapes:
-  a documented runtime cache-hit property, a parseable OpenVINO/NPU runtime log
-  that distinguishes import-from-cache from compile, or provenance hardening for
-  cache path/blob/compiler/compatibility metadata.
+- #1371 is the current narrow child for direct OpenVINO GenAI NPU cache-hit
+  truth. Use it only for one of these source shapes: a documented runtime
+  cache-hit property, a parseable OpenVINO/NPU runtime log that distinguishes
+  import-from-cache from compile, explicit `not_exposed` cache-hit truth, or
+  provenance hardening for cache path/blob/compiler/compatibility metadata.
 - Do not open another generic cache rerun, cold/default NPU route PR,
   `low_power` promotion, speedup/power claim, native NPU claim, or BitNet
   QK256/I2_S claim from cache configuration support alone.
@@ -492,6 +495,11 @@ BitNet NPU execution.
 
 - #1119 remains the cold/cache research parent and keeps timing-derived cache
   classification diagnostic until a stricter policy is accepted.
+- #1371 owns the direct cache-hit truth follow-up. It should distinguish
+  `runtime_metric`, `runtime_log`, `file_reuse`, `timing_derived`, and
+  `not_exposed` evidence, keep first-process and second-process phase timing
+  separate, and fail closed if timing/file-derived evidence is labeled as a
+  direct runtime cache hit.
 - #1139 closed with the phase-timing schema contract for host setup,
   tokenizer/template setup, `LLMPipeline`, compile/load/cache behavior, first
   ask, warm asks, and receipt overhead.
@@ -553,10 +561,11 @@ BitNet NPU execution.
    exist. Use the contract in
    [lunar-lake-openvino-auto-selected-device.md](../reviews/lunar-lake-openvino-auto-selected-device.md)
    before any route-policy use of `AUTO`.
-3. A future cache follow-up should be opened only for a newly exposed direct
-   cache metric, runtime log, or stricter missing field. It should cite #1119
-   or a new precise issue rather than reopening #1160 as another generic rerun
-   or repeating the #1189 host phase guard.
+3. Direct cache-hit truth follow-up should use #1371. Open work there only for
+   a newly exposed direct cache metric, parseable runtime log, stricter missing
+   field, explicit unavailable truth-source handling, or precise
+   cache/blob/compiler/compatibility provenance hardening. Do not reopen #1160
+   as another generic rerun or repeat the #1189 host phase guard.
 4. `LNL258V-ROUTE-REVIEW-001`: review route policy only after the phase, cache,
    resident, and power evidence is current.
 
