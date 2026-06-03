@@ -8230,6 +8230,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
 
     let cold_reference = cpu_slm_resident_cold_reference(&phase_attribution_json);
     let profiles = cpu_slm_resident_profiles(
+        root,
         &repeated_json,
         required_repeats,
         cold_reference.total_response_ms,
@@ -8650,6 +8651,7 @@ struct ResidentProfileAccumulator {
 }
 
 fn cpu_slm_resident_profiles(
+    root: &Path,
     json: &Value,
     required_repeats: u64,
     cold_reference_total_ms: Option<f64>,
@@ -8728,15 +8730,7 @@ fn cpu_slm_resident_profiles(
             if let Some(tokens) = u64_at(prompt, "generated_tokens") {
                 entry.generated_tokens.push(tokens as f64);
             }
-            if let Some(tokens) = u64_at_any(
-                prompt,
-                &[
-                    "prompt_token_count",
-                    "tokens.prompt",
-                    "prompt.prompt_token_count",
-                    "execution.prompt_tokens",
-                ],
-            ) {
+            if let Some(tokens) = cpu_slm_resident_prompt_token_count(root, prompt) {
                 entry.prompt_token_counts.push(tokens as f64);
             }
             if let Some(source) = cpu_slm_resident_generated_token_ids_source(prompt) {
@@ -8846,7 +8840,7 @@ fn cpu_slm_resident_profiles(
                 generated_tokens,
                 prompt_token_count: resident_phase_metric(
                     &entry.prompt_token_counts,
-                    "prompts[].prompt_token_count|prompts[].tokens.prompt",
+                    "prompts[].prompt_token_count|prompts[].tokens.prompt|prompts[].receipt_path.execution.prompt_tokens",
                 ),
                 generated_token_ids_available: Some(entry.generated_token_ids_available),
                 generated_token_ids_source: cpu_slm_resident_profile_generated_token_ids_source(
@@ -8859,6 +8853,32 @@ fn cpu_slm_resident_profiles(
             }
         })
         .collect()
+}
+
+fn cpu_slm_resident_prompt_token_count(root: &Path, prompt: &Value) -> Option<u64> {
+    u64_at_any(
+        prompt,
+        &[
+            "prompt_token_count",
+            "tokens.prompt",
+            "prompt.prompt_token_count",
+            "execution.prompt_tokens",
+        ],
+    )
+    .or_else(|| {
+        let receipt_path = string_at(prompt, "receipt_path")?;
+        let receipt = read_cpu_slm_profile_receipt(root, &receipt_path).ok()?;
+        u64_at_any(
+            &receipt,
+            &[
+                "prompt_token_count",
+                "prompt_tokens",
+                "tokens.prompt",
+                "prompt.prompt_token_count",
+                "execution.prompt_tokens",
+            ],
+        )
+    })
 }
 
 fn cpu_slm_resident_measurement_qualification(
@@ -23929,11 +23949,13 @@ mod tests {
         let mut prompts = Vec::new();
         for prompt_index in 0..31_u64 {
             prompt_indices.push(json!(prompt_index));
+            let prompt_receipt = format!("prompt-{prompt_index}.json");
+            write_json(temp.path(), &prompt_receipt, json!({"prompt_tokens": 8}))?;
             prompts.push(json!({
                 "prompt_index": prompt_index,
                 "case_id": "ask_short_math",
+                "receipt_path": prompt_receipt,
                 "fallback_used": false,
-                "prompt_token_count": 8,
                 "generated_tokens": 4,
                 "generated_token_ids": [1, 2, 3, 4],
                 "quality": {"passed": true},
@@ -24020,6 +24042,13 @@ mod tests {
         )?;
 
         assert!(receipt.resident_ready, "{:?}", receipt.gaps);
+        let ask_short = receipt
+            .profiles
+            .iter()
+            .find(|profile| profile.profile_id == "ask_short")
+            .context("missing ask_short profile")?;
+        assert_eq!(ask_short.prompt_token_count.summary.sample_count, 31);
+        assert_eq!(ask_short.prompt_token_count.summary.mean, Some(8.0));
         assert!(!receipt.measurement_qualification.resident_phase_qualified);
         assert!(!receipt.measurement_qualification.benchmark_qualified);
         assert!(receipt.measurement_qualification.diagnostic_package_reviewable);
