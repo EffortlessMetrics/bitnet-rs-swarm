@@ -4,6 +4,11 @@ A collection of development automation tools for bitnet-rs, providing convenient
 
 `xtask` is the internal developer control plane. The separate `tools/bitnet-task` crate exists only as a compatibility facade for migrated `scripts/*.sh` entrypoints; new internal workflows should land in `xtask` unless they must preserve an existing shell interface.
 
+The CI tool substrate standard keeps upstream tools in the engine room and makes
+`cargo xtask ...` the stable repo-facing surface for agents, CI jobs, and local
+proof. See [`docs/ci/tool-substrate-standard.md`](../docs/ci/tool-substrate-standard.md)
+before adding new workflow-facing tool invocations.
+
 ## Installation
 
 The xtask is automatically available in the workspace. No additional installation required.
