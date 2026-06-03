@@ -2,9 +2,10 @@
 
 ## Current State
 
-The A770 lane is useful but still diagnostic. A770-117 extends the focused
-QK256 replay packet from fifty runnable Q/K/V targets to fifty-one: the layer-0
-through layer-16 Q/K/V trios for the committed summary-logits first mismatch.
+The A770 lane is useful but still diagnostic. A770-118 extends the focused
+QK256 replay packet from fifty-one runnable Q/K/V targets to fifty-two: the
+layer-0 through layer-16 Q/K/V trios plus layer-17 `q_proj` for the committed
+summary-logits first mismatch.
 The selected device is Intel Arc A770 OpenCL and the replay receipts keep
 `fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
 
@@ -17,8 +18,8 @@ acceleration, or full BitNet inference.
 
 1. The current proof is too narrow.
 
-   A770-117 covers fifty-one focused Q/K/V rows for one case and one first
-   mismatch: the layer-0 through layer-16 Q/K/V trios.
+   A770-118 covers fifty-two focused Q/K/V rows for one case and one first
+   mismatch: the layer-0 through layer-16 Q/K/V trios plus layer-17 `q_proj`.
    Fast inference needs the same kind of selected-device
    confidence across the remaining Q/K/V/O projection replay targets, MLP
    linears, and logits-facing paths that can affect generated tokens.
@@ -89,8 +90,8 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-After A770-117, the next honest step is one more focused replay target, not a
-speed PR: capture and replay layer-17 `q_proj`, or the next remaining
+After A770-118, the next honest step is one more focused replay target, not a
+speed PR: capture and replay layer-17 `k_proj`, or the next remaining
 `dispatch_replay_missing` target selected by the manifest, under the same
 one-case, one-mismatch, selected-device, fallback-free receipt rules. Its job is
 to keep widening the correctness surface before any production QK256 policy,
