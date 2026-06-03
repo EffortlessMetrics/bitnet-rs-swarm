@@ -10,6 +10,8 @@ Live resident phase evidence issue: https://github.com/EffortlessMetrics/bitnet-
 
 Live matched CPU comparison issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365
 
+Live CPU topology/affinity evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370
+
 Closed resident source-shape issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277 /
 https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279
 
@@ -69,6 +71,10 @@ The strongest evidence says:
 - the matrix still does not expose P-core/E-core placement, utilization,
   frequency, or thermal readings, so affinity and default-thread policy remain
   unproven.
+- #1370 now owns any future Rust GGUF CPU topology/affinity evidence. It must
+  stay diagnostic unless it records reviewable P-core/E-core, affinity,
+  utilization, frequency, thermal, route/profile, and fallback context without
+  changing CPU defaults or route policy.
 - #1255 records the current resident CPU receipt as explicitly
   `resident_phase_blocked_for_measurement_qualification`, separating no-reload
   diagnostic readiness from benchmark-ready resident phase evidence.
@@ -668,8 +674,9 @@ The live CPU slow-path follow-ups and guard status are:
    for resident Rust GGUF phase attribution and no-reload evidence. Matched
    Rust GGUF CPU versus OpenVINO CPU comparison now uses
    [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365);
-   later affinity/topology work still needs a separate narrow issue once the
-   evidence target is concrete.
+   later affinity/topology work now uses
+   [#1370](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370)
+   for the narrow topology/affinity evidence contract.
 6. [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280)
    is closed by [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
    as the physical resident run issue. The committed package records 33
