@@ -1,0 +1,19 @@
+timestamp = "2026-06-03T17:59:05Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-OPENVINO-VALIDATE-ASK-001"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 1447
+branch = "codex/lunar-lake/LNL258V-OPENVINO-VALIDATE-ASK-001-operator-ask-validator"
+head_sha = "04877636aa3555f9630e0ac2381b7dc740d20bcb"
+merge_sha = "2274237a3182bc2f7355434a64ebb956cf09142a"
+merged_at = "2026-06-03T17:59:05Z"
+actor = "codex"
+summary = "Marked LNL258V-OPENVINO-VALIDATE-ASK-001 merged after PR #1447 landed by squash automerge."
+notes = [
+  "PR #1447 added a dedicated validator path for successful appliance-wrapped artifact_kind=lunar_lake_operator_ask OpenVINO receipts.",
+  "The validator accepts committed ask_short, ask_normal, and warm_resident OpenVINO ask wrappers while rejecting Rust CPU wrappers, OpenVINO CPU wrappers, fallback, route/backend mismatch, missing generated IDs, token-count drift, and claim leakage.",
+  "The merged change is validation and tracker state only.",
+  "No new inference, route-policy mutation, route promotion or revocation, committed hardware receipt refresh, speedup claim, power-advantage claim, native OpenCL/NPU execution claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S proof was added.",
+]
