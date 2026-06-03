@@ -443,7 +443,9 @@ Acceptance additions:
 
 ### Work item: LNL258V-QUAL-010
 
-Status: in progress
+Status: merged
+Linked PR: #5681
+Merge commit: `baec0c19728f1eb7670aa0394def0ac71d0a5e8d`
 Blocked by: `LNL258V-QUAL-009`
 
 Tighten the remaining `prefill_heavy` and `decode_heavy` corpus-v2 fixtures to
