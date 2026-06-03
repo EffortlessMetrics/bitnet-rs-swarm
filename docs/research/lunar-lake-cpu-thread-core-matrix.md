@@ -6,6 +6,8 @@ Runner contract issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issu
 
 Source-receipt issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1201
 
+Live topology/affinity follow-up: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370
+
 Research date: 2026-05-31
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
@@ -107,7 +109,11 @@ conversion path.
 This note now records the physical #1071 matrix evidence produced from those
 source receipts. Future work should consume the matrix in CPU slow-path review;
 it should not keep refreshing #1071 unless the host, model, corpus, or runner
-contract materially changes.
+contract materially changes. Live issue #1370 owns any later topology/affinity
+evidence that tries to expose P-core/E-core placement, process or worker-thread
+affinity, utilization, frequency or throttle context, and thermal availability.
+That work must remain diagnostic unless a later accepted contract ties it to
+resident phase or matched-comparison qualification.
 
 ## Current Source-Surface Audit
 
