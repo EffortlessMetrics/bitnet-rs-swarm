@@ -3328,7 +3328,7 @@ acceptance = "Add a no-new-inference Lunar Lake dense Qwen CPU resident-session 
 commands = [
   "rustfmt --check --config skip_children=true,newline_style=Unix --edition 2024 crates/bitnet-cli/src/commands/lunar_lake.rs",
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet commands::lunar_lake::tests::cpu_slm_resident_session_summarizes_no_reload_warm_loop -- --exact --nocapture",
-  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet -- lunar-lake cpu-slm-resident-session --artifact-root ci/hardware/intel-258v/2026-05-08 --phase-attribution lunar-lake-cpu-slm-phase-attribution.json --repeated-warm-session lunar-lake-durable-qwen25-cpu-warm-session.json --required-repeats 10 --json-out lunar-lake-cpu-slm-resident-session.json --created-utc 2026-05-17T09:30:00Z --strict",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet -- lunar-lake cpu-slm-resident-session --artifact-root ci/hardware/intel-258v/2026-05-08 --phase-attribution lunar-lake-cpu-slm-phase-attribution.json --repeated-warm-session lunar-lake-resident-qwen25-cpu-warm-session.json --required-repeats 10 --json-out lunar-lake-cpu-slm-resident-session.json --created-utc 2026-05-17T09:30:00Z --strict",
   "python -m json.tool ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-resident-session.json",
   "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
