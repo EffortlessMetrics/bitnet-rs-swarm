@@ -1,0 +1,42 @@
+timestamp = "2026-06-03T18:53:31Z"
+campaign = "intel-a770"
+item = "A770-120"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 1451
+branch = "codex/intel-a770/A770-120-layer17-v-proj-replay-target"
+head_sha = "a5b3577044a0c8059074f3eb89cd413d19a6cdb0"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Opened PR #1451 for the A770-120 layer-17 v_proj selected-device replay packet."
+notes = [
+  "The PR records one new focused source, one combined manifest, and one selected-device replay receipt.",
+  "The replay receipt executes fifty-four Q/K/V targets with fallback_used=false and leaves thirty-six dispatch_replay_missing blockers.",
+  "The first remaining blocker is layer-18 q_proj for the same case and first-mismatch index.",
+  "Answer parity, broad answer quality, residency, speed, trusted partial acceleration, and full BitNet inference claims remain closed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-120 may record that layer-17 v_proj was converted into selected-device Intel Arc A770 OpenCL replay with fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
