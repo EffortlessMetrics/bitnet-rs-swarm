@@ -128,7 +128,8 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-096 | merged | #1393 converted layer-9 `v_proj` into selected-device A770 OpenCL replay beyond A770-095, executing thirty Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
 | A770-097 | merged | #1397 converted layer-10 `q_proj` into selected-device A770 OpenCL replay beyond A770-096, executing thirty-one Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
 | A770-098 | merged | #1399 converted layer-10 `k_proj` into selected-device A770 OpenCL replay beyond A770-097, executing thirty-two Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
-| A770-099 | pr_open | #1401 converts layer-10 `v_proj` into selected-device A770 OpenCL replay beyond A770-098; the receipt executes thirty-three Q/K/V targets with fallback_used=false and keeps all promotion, residency, speed, and full-inference claims closed. |
+| A770-099 | merged | #1401 converted layer-10 `v_proj` into selected-device A770 OpenCL replay beyond A770-098, executing thirty-three Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
+| A770-100 | ready | Convert layer-11 `q_proj` into the next selected-device A770 OpenCL replay target beyond A770-099, keeping the proof one target wide and all promotion, residency, speed, and full-inference claims closed. |
 
 ## Current Claim Boundary
 
