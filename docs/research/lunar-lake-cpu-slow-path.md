@@ -8,6 +8,8 @@ Closed post-matrix review issue: https://github.com/EffortlessMetrics/bitnet-rs-
 
 Live resident phase evidence issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232
 
+Live matched CPU comparison issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365
+
 Closed resident source-shape issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1277 /
 https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1279
 
@@ -103,11 +105,12 @@ The current route decision is:
 - keep Rust GGUF CPU as the correctness, fallback, and comparison plate;
 - treat OpenVINO CPU as a separate diagnostic candidate, not a drop-in
   replacement for the Rust GGUF CPU route;
-- defer Rust GGUF CPU optimization until #1232 resident phase timing, matched
-  comparison evidence, or a later topology receipt identifies a single target.
+- defer Rust GGUF CPU optimization until #1232 resident phase timing, #1365
+  matched comparison evidence, or a later topology receipt identifies a single
+  target.
 
 Do not start a CPU runtime optimization PR from this research alone. The live
-CPU planning issue is
+CPU resident planning issue is
 [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232),
 with the closed
 [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280) /
@@ -121,7 +124,11 @@ the closed
 [#1319](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1319)
 diagnostic-reviewability contract.
 Together they define resident Rust GGUF phase evidence before any optimization,
-matched-comparison, or route-policy PR.
+or route-policy PR. The separate
+[#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365)
+issue now owns the matched Rust GGUF CPU versus OpenVINO CPU comparison package
+and keeps benchmark qualification fail-closed while model format or timing
+scope differ.
 
 ## Current CPU Route Context
 
@@ -181,7 +188,7 @@ shows prefill, first-token, and decode as the material costs:
 The older #1086 runtime-comparison receipt still carries larger Rust resident
 context totals: `ask_short` 11158.750 ms, `ask_normal` 16407.372 ms, and
 `regression_tiny` 12314.790 ms. Keep those values as
-runtime-comparison context only until a later #1232 matched comparison package
+runtime-comparison context only until a later #1365 matched comparison package
 revises the comparison scope. Do not treat them as the current #1334 resident
 qualification surface.
 
@@ -659,8 +666,10 @@ The live CPU slow-path follow-ups and guard status are:
    OpenVINO CPU promotion, or route-policy changes. The next CPU work should
    use [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232)
    for resident Rust GGUF phase attribution and no-reload evidence. Matched
-   Rust GGUF CPU versus OpenVINO CPU comparison or later affinity/topology work
-   still needs a separate narrow issue once the evidence target is concrete.
+   Rust GGUF CPU versus OpenVINO CPU comparison now uses
+   [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365);
+   later affinity/topology work still needs a separate narrow issue once the
+   evidence target is concrete.
 6. [#1280](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1280)
    is closed by [#1334](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1334)
    as the physical resident run issue. The committed package records 33
