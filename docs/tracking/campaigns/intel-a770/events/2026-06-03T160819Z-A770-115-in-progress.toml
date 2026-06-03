@@ -1,0 +1,46 @@
+timestamp = "2026-06-03T16:08:19Z"
+campaign = "intel-a770"
+item = "A770-115"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-115-layer16-q-proj-replay-target"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Captured the A770-115 layer-16 q_proj selected-device replay packet."
+notes = [
+  "The opt-in focused source captures exactly one new layer-16 q_proj target for a770_summary_seed770024_keywords_014 at first_mismatch_index=9.",
+  "The combined manifest now has 49 dispatch replay targets and 49 runnable targets.",
+  "The selected-device replay receipt executed 49 targets on Intel Arc A770 OpenCL with fallback_used=false and matched all selected-device bits.",
+  "The remaining first blocker advanced to layer-16 k_proj with dispatch_replay_missing.",
+  "Answer parity, broad answer quality, residency, speed, trusted partial acceleration, and full BitNet inference claims remain closed.",
+]
+
+[receipts]
+focused_source = "ci/hardware/amd-5700x-intel-a770/2026-06-03/a770-layer16-q-proj-qk256-replay-target/a770-opencl-summary-logits-layer16-q-proj-raw-operands.json"
+manifest = "ci/hardware/amd-5700x-intel-a770/2026-06-03/a770-layer16-q-proj-qk256-replay-target/a770-opencl-qk256-layer16-q-proj-target-replay-manifest.json"
+replay = "ci/hardware/amd-5700x-intel-a770/2026-06-03/a770-layer16-q-proj-qk256-replay-target/a770-opencl-qk256-layer16-q-proj-target-replay.json"
+
+[claim_boundary]
+may_claim = [
+  "A770-115 records that layer-16 q_proj was converted into selected-device Intel Arc A770 OpenCL replay with fallback_used=false.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
