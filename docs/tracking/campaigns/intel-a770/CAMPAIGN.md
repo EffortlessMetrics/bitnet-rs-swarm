@@ -146,7 +146,8 @@ Make the Intel Arc A770 a receipt-backed OpenCL-first BitNet acceleration lane. 
 | A770-114 | merged | #1435 captured layer-15 `v_proj` as the next selected-device A770 OpenCL replay target beyond A770-113, executing forty-eight Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
 | A770-115 | merged | #1437 captured layer-16 `q_proj` as the next selected-device A770 OpenCL replay target beyond A770-114, executing forty-nine Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
 | A770-116 | merged | #1440 captured layer-16 `k_proj` as the next selected-device A770 OpenCL replay target beyond A770-115, executing fifty Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
-| A770-117 | in_progress | Captured layer-16 `v_proj` as the next selected-device A770 OpenCL replay target beyond A770-116, executing fifty-one Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
+| A770-117 | merged | #1442 captured layer-16 `v_proj` as the next selected-device A770 OpenCL replay target beyond A770-116, executing fifty-one Q/K/V targets with fallback_used=false while keeping all promotion, residency, speed, and full-inference claims closed. |
+| A770-118 | ready | Convert layer-17 `q_proj` into the next selected-device A770 OpenCL replay target beyond A770-117, still one case, one first-mismatch index, one kernel family, and one newly runnable manifest target wide. |
 
 ## Current Claim Boundary
 
