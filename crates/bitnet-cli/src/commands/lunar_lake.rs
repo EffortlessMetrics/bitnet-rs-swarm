@@ -10595,9 +10595,10 @@ pub fn build_cpu_slm_runtime_comparison_with_created_utc(
     }
 
     let recommended_next_items = vec![
-        "LNL258V-GPU-QUAL-001: classify OpenVINO GPU corpus-v2 quality failures before promotion".to_string(),
-        "LNL258V-NPU-COLD-001: decompose NPU cold load separately from hot decode".to_string(),
-        "LNL258V-ROUTE-005: keep route promotion blocked until profile quality and timing evidence are benchmark-qualified".to_string(),
+        "LNL258V-CPU-RESIDENT-PHASE-001: keep Rust GGUF CPU resident phase evidence diagnostic until scoped overhead and qualification blockers are resolved".to_string(),
+        "LNL258V-CPU-MATCHED-COMPARE-001: define a matched Rust GGUF CPU versus OpenVINO CPU comparison package before any CPU speedup or promotion claim".to_string(),
+        "LNL258V-CPU-OVERHEAD-001: define scope-specific aggregate/session receipt-write and telemetry overhead fields without satisfying per-profile phase blockers by implication".to_string(),
+        "LNL258V-CPU-TOPOLOGY-001: collect reviewable topology, affinity, utilization, frequency, and thermal context before considering CPU thread or affinity changes".to_string(),
     ];
     let comparison_ready = gaps.is_empty();
 
@@ -24873,6 +24874,15 @@ mod tests {
         assert_eq!(receipt.model_format_comparison.openvino_cpu.model_format, "OpenVINO IR");
         assert!(!receipt.model_format_comparison.model_formats_match);
         assert!(!receipt.benchmark_qualification.qualified);
+        assert_eq!(
+            receipt.recommended_next_items,
+            vec![
+                "LNL258V-CPU-RESIDENT-PHASE-001: keep Rust GGUF CPU resident phase evidence diagnostic until scoped overhead and qualification blockers are resolved",
+                "LNL258V-CPU-MATCHED-COMPARE-001: define a matched Rust GGUF CPU versus OpenVINO CPU comparison package before any CPU speedup or promotion claim",
+                "LNL258V-CPU-OVERHEAD-001: define scope-specific aggregate/session receipt-write and telemetry overhead fields without satisfying per-profile phase blockers by implication",
+                "LNL258V-CPU-TOPOLOGY-001: collect reviewable topology, affinity, utilization, frequency, and thermal context before considering CPU thread or affinity changes",
+            ]
+        );
 
         let mut mismatched_model_claim = receipt.clone();
         mismatched_model_claim.benchmark_qualification.qualified = true;

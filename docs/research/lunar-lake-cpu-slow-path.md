@@ -50,6 +50,7 @@ Post-field rerun refresh: 2026-06-02
 Post-reviewability-contract refresh: 2026-06-02
 Post-physical-package refresh: 2026-06-02
 Post-overhead-scope issue refresh: 2026-06-03
+Post-runtime-comparison current-source refresh: 2026-06-03
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -171,19 +172,19 @@ causes and the measurement plan needed before a runtime change.
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-resident-qwen25-cpu-warm-session.json` | #1334 physical resident Rust GGUF CPU source receipt from the committed fixture | Pinned Qwen2.5 Q8_0 GGUF SHA matched; `slm-warm-session --device cpu` produced 33 prompts and per-prompt receipts, selected backend `cpu-rust`, runtime `cpu`, fallback false, quality passing, deterministic generated IDs/text, and model/tokenizer loaded once |
 | `ci/quality/lunar-lake-resident-qwen25-cpu.yaml` | Closed #1279 source fixture for the physical resident run, no inference by itself | 3 cases x `repeat_runs=11`, yielding 33 prompts / 32 warm asks after first. This fixed the source shape found in #1277 without changing route policy |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-profile-run.json` | Explicit Rust GGUF CPU heavy-profile timing | prefill_heavy total 1373681.117 ms for 2734 prompt tokens and 16 generated tokens; decode_heavy total 123115.592 ms for 67 prompt tokens and 512 generated tokens |
-| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident ask_short mean 11158.750 ms and ask_normal mean 16407.372 ms; OpenVINO CPU corpus-v2 now passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
+| `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-runtime-comparison.json` | Refreshed Rust GGUF CPU versus OpenVINO CPU diagnostic comparison | Rust resident source now matches the #1334 package: ask_short mean 4774.776 ms, ask_normal mean 7271.792 ms, and regression_tiny mean 5084.737 ms; OpenVINO CPU corpus-v2 passes 14/14 with fallback false, but the receipt remains context-only because model format, timing scope, prompt-render, tokenization, and matched-profile gaps block benchmark qualification |
 | `ci/hardware/intel-258v/2026-05-08/slm-openvino-cpu-gpu-npu-corpus-v2.json` | Newer OpenVINO CPU/GPU/NPU corpus-v2 receipt | OpenVINO CPU resolved to `Intel(R) Core(TM) Ultra 7 258V`, constructed in 981.455 ms, ran 14/14 corpus-v2 cases with fallback false and direct generated token IDs |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-openvino-cpu-corpus-v2-diagnosis.json` | OpenVINO CPU diagnosis | OpenVINO CPU corpus-v2 diagnosis says 14 total, 14 passed, 0 failed, no fallback, direct generated token IDs available |
 | `ci/hardware/intel-258v/2026-05-08/lunar-lake-cpu-slm-thread-core-matrix.json` | Physical Rust GGUF CPU default / 1-thread / 4-thread / 8-thread resident matrix | `matrix_ready=true`, `gaps=[]`; default effective threads = 1; `threads_4` and `threads_8` are slower than default/1-thread across the three measured profiles; no speedup, tuning, route-policy, low-power, accelerator, or BitNet claim |
 
 The OpenVINO CPU comparison evidence was refreshed against the newer
-corpus-v2 run. Do not use the runtime-comparison receipt as a benchmark
-speedup claim: Rust GGUF CPU uses Q8_0 GGUF and OpenVINO CPU uses INT4_SYM
-OpenVINO IR, timing scopes still differ, OpenVINO tokenization/detokenization
-metrics are not fully exposed, and several corpus-v2 profiles lack matched
-Rust resident evidence. #1156 now enforces that boundary in the comparison
-builder: benchmark qualification must remain false while model formats or
-timing scopes differ.
+corpus-v2 run and the current #1334 resident Rust GGUF CPU source. Do not use
+the runtime-comparison receipt as a benchmark speedup claim: Rust GGUF CPU
+uses Q8_0 GGUF and OpenVINO CPU uses INT4_SYM OpenVINO IR, timing scopes still
+differ, OpenVINO tokenization/detokenization metrics are not fully exposed, and
+several corpus-v2 profiles lack matched Rust resident evidence. #1156 now
+enforces that boundary in the comparison builder: benchmark qualification must
+remain false while model formats or timing scopes differ.
 
 ## Top Likely Causes
 
@@ -201,12 +202,11 @@ shows prefill, first-token, and decode as the material costs:
 | `ask_normal` | 11 | 7271.792 ms | 3843.909 ms | 3697.454 ms | 3573.740 ms | 0.004 ms | 24 |
 | `regression_tiny` | 11 | 5084.737 ms | 4064.818 ms | 3921.156 ms | 1163.243 ms | 0.004 ms | 8 |
 
-The older #1086 runtime-comparison receipt still carries larger Rust resident
-context totals: `ask_short` 11158.750 ms, `ask_normal` 16407.372 ms, and
-`regression_tiny` 12314.790 ms. Keep those values as
-runtime-comparison context only until a later #1365 matched comparison package
-revises the comparison scope. Do not treat them as the current #1334 resident
-qualification surface.
+The runtime-comparison receipt now consumes the current #1334 resident source
+instead of the older #1086-era Rust resident context. This removes the stale
+larger resident comparison totals from the committed artifact, but it does not
+change qualification: the comparison is still context-only and not benchmark
+qualified.
 
 Warm phase receipts point the same way:
 
@@ -292,8 +292,6 @@ Tokenizer work is measurable but not dominant in current receipts:
 - cold one-off tokenize: 482.325 ms;
 - current #1334 resident ask_short tokenize mean: 0.004 ms;
 - current #1334 resident ask_normal tokenize mean: 0.004 ms;
-- #1086 runtime-comparison context tokenize means: ask_short 466.206 ms,
-  ask_normal 465.554 ms, and regression_tiny 476.496 ms;
 - current #1334 resident tokenizer load: 253.471 ms as a one-time session
   cost, not a repeated per-prompt reload.
 
@@ -403,19 +401,18 @@ Newer OpenVINO CPU corpus-v2 evidence:
 - 14/14 corpus-v2 cases passed;
 - direct generated token IDs available.
 
-This table intentionally cites the #1086 runtime-comparison receipt, not the
-newer #1334 resident summary. It remains useful for non-equivalent Rust GGUF
-CPU versus OpenVINO CPU context, but it is not the current #1334 resident
-qualification surface and is not benchmark-qualified.
+The runtime-comparison receipt now cites the current #1334 resident Rust GGUF
+CPU source. It remains useful for non-equivalent Rust GGUF CPU versus OpenVINO
+CPU context, but it is still not benchmark-qualified.
 
 OpenVINO CPU profile timing in that receipt is far lower than its Rust GGUF
 CPU comparison context, for example:
 
 | Profile | Rust GGUF CPU mean total | OpenVINO CPU mean generation wall | OpenVINO CPU cases |
 | --- | ---: | ---: | ---: |
-| `ask_short` | 11158.750 ms | 109.298 ms | 2 |
-| `ask_normal` | 16407.372 ms | 232.792 ms | 3 |
-| `regression_tiny` | 12314.790 ms | 250.786 ms | 4 |
+| `ask_short` | 4774.776 ms | 109.298 ms | 2 |
+| `ask_normal` | 7271.792 ms | 232.792 ms | 3 |
+| `regression_tiny` | 5084.737 ms | 250.786 ms | 4 |
 
 Do not promote OpenVINO CPU from this table:
 
