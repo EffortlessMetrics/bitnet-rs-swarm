@@ -26576,6 +26576,65 @@ mod tests {
     }
 
     #[test]
+    fn regression_surface_requires_auto_ask_when_gpu_ask_normal_is_promoted() -> Result<()> {
+        let mut route_profiles = ready_route_profile_regression_with_npu_warm_resident();
+        let mut cold_warm = ready_cold_warm_regression_with_npu_warm_resident();
+        for scope in
+            [&mut route_profiles.route_promotion_scope, &mut cold_warm.route_promotion_scope]
+        {
+            scope.openvino_gpu_promoted_profiles = vec!["ask_normal".to_string()];
+            scope.openvino_npu_promoted_profiles.clear();
+            scope.openvino_npu_remains_candidate = true;
+            scope.notes = vec!["OpenVINO GPU is profile-promoted only for ask_normal".to_string()];
+        }
+        let corpus = ready_answer_corpus_v2_summary();
+        let durability = ready_durability_summary();
+        let intake = ready_bitnet_semantic_intake_summary();
+        let power = ready_power_profile_summary();
+        let operator = ready_operator_receipt_with_arc_npu_bounded_evidence();
+
+        let missing = build_regression_surface_summary(
+            Some(&corpus),
+            Some(&route_profiles),
+            Some(&cold_warm),
+            Some(&durability),
+            Some(&intake),
+            Some(&power),
+            None,
+            None,
+            None,
+            None,
+            None,
+            &operator,
+        );
+        assert!(!missing.strict_ready);
+        assert!(missing.gaps.iter().any(|gap| {
+            gap.contains("OpenVINO GPU is promoted for ask_normal")
+                && gap.contains("no successful auto ask receipt")
+        }));
+
+        let ask = ready_gpu_operator_ask_summary("ask_normal", AUTO_GPU_ASK_NORMAL_ASK_RECEIPT);
+        let ready = build_regression_surface_summary(
+            Some(&corpus),
+            Some(&route_profiles),
+            Some(&cold_warm),
+            Some(&durability),
+            Some(&intake),
+            Some(&power),
+            None,
+            None,
+            Some(&ask),
+            None,
+            None,
+            &operator,
+        );
+        assert!(ready.ask_normal_ask_receipt_indexed);
+        assert!(ready.ask_normal_auto_ask_ready);
+        assert!(ready.strict_ready, "{:?}", ready.gaps);
+        Ok(())
+    }
+
+    #[test]
     fn regression_surface_requires_auto_ask_when_npu_warm_resident_is_promoted() -> Result<()> {
         let route_profiles = ready_route_profile_regression_with_npu_warm_resident();
         let cold_warm = ready_cold_warm_regression_with_npu_warm_resident();
