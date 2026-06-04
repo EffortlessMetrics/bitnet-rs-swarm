@@ -18045,7 +18045,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-006-REVIEW-001"
-status = "in_progress"
+status = "pr_open"
+pr = 1547
+head_sha = "26cd40247c45ba17b65683e05d659b2e3c19c8c1"
 branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"
