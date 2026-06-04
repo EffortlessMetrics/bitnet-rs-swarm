@@ -17997,7 +17997,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-OPENVINO-PLAN-001"
-status = "in_progress"
+status = "pr_open"
+pr = 1521
 branch = "codex/lunar-lake/LNL258V-OPENVINO-PLAN-001-review-first-blockers"
 stackable = false
 review_mode = "codex_premerge"
