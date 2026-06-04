@@ -14056,8 +14056,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-243"
-status = "ready"
+status = "merged"
+pr = 1529
 branch = "codex/slm-cpu/slm-cpu-243-warm-session-no-bias-descriptor"
+head_sha = "021fad5375e57ffed44dd8624fb3aab6651ced34"
+merge_sha = "22572c5359604996655c2763537c6af0b0657a3a"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -14100,6 +14103,64 @@ evidence = [
 may_claim = [
   "SLM-CPU-243 may construct or precisely block production warm-session prompt/session descriptor construction and propagation through the SLM-CPU-242 opt-in model path for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
   "SLM-CPU-243 may prepare later fail-closed dispatch and candidate-off/candidate-on receipt capture only if the descriptor reaches the exact callsite while candidate execution remains disabled.",
+]
+must_not_claim = [
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "Generated IDs, decoded text, prompt IDs, model SHA, tokenizer source, backend/kernel identity, selected/candidate path identity, or fallback status are preserved for an executed candidate path without fresh strict candidate-off/candidate-on receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-244"
+status = "ready"
+branch = "codex/slm-cpu/slm-cpu-244-no-bias-dispatch-candidate-receipts"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-243"]
+acceptance = "Consume the SLM-CPU-243 production warm-session prompt/session descriptor path and add or precisely block the fail-closed no-bias apply_linear dispatch branch for the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj callsite. A valid implementation must execute dense_linear_no_bias_candidate_forward only when the explicit gate is enabled, the prompt/session descriptor is present, the tensor and callsite identity match exactly, the model family is Qwen3 or Qwen2.5 with quant_format=Q8_0, bias_present=false, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, and the default eager_f32_candle path remains selected when the gate is absent. If candidate-on execution is wired, it must capture fresh candidate-off/candidate-on receipts proving same prompt IDs, generated IDs, decoded text, model SHA, tokenizer source and strictness, selected backend/kernel identity, selected/candidate path identity, and fallback=false for both Qwen3 and Qwen2.5. A valid blocker must name the exact missing dispatch condition, descriptor validation, tensor/callsite identity, post-decode receipt emitter, command surface, or runtime ownership boundary. This item must not claim timing improvement, allocation reduction, speedup, sustained throughput, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-243-warm-session-no-bias-descriptor.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-244-no-bias-dispatch-candidate-receipts.json",
+  "cargo test --locked -p bitnet-transformer no_bias -- --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_no_bias -- --nocapture",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-235 validates strict Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on request-gate identity while candidate execution remains disabled.",
+  "SLM-CPU-241 adds a fail-closed optional prompt-bound no-bias descriptor argument at FeedForward::apply_linear.",
+  "SLM-CPU-242 adds opt-in TransformerModel/TransformerBlock/FeedForward propagation to the exact apply_linear down_proj callsite.",
+  "SLM-CPU-243 records production warm-session prompt/session descriptor construction and model-forward passage under the explicit gate while generated IDs/text and candidate execution remain unbound.",
+]
+may_claim = [
+  "SLM-CPU-244 may add or precisely block a fail-closed no-bias dispatch branch for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "SLM-CPU-244 may capture candidate-off/candidate-on receipts only if candidate-on actually executes dense_linear_no_bias_candidate_forward and generated IDs plus decoded text are preserved.",
 ]
 must_not_claim = [
   "No-bias apply-linear candidate execution is enabled by default.",
