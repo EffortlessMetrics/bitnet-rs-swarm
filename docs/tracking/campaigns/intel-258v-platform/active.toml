@@ -18045,9 +18045,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-POWER-006-REVIEW-001"
-status = "pr_open"
+status = "merged"
 pr = 1547
-head_sha = "26cd40247c45ba17b65683e05d659b2e3c19c8c1"
+head_sha = "13b94bd87da7135d3e59887222e344161629a2dc"
+merge_sha = "34cdf065e42bff6fdb51b95a5bdcc81f20951364"
+merged_at = "2026-06-04T23:12:09Z"
 branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"
