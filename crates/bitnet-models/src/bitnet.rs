@@ -10,7 +10,8 @@ use bitnet_common::{
     BitNetConfig, BitNetError, BitNetTensor, ConcreteTensor, Device, Result, Tensor,
 };
 use bitnet_transformer::{
-    DenseLinearPackedQ8Payload, DenseLinearRuntimeHookDescriptor, DenseLinearRuntimeHookRegistry,
+    DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary, DenseLinearPackedQ8Payload,
+    DenseLinearRuntimeHookDescriptor, DenseLinearRuntimeHookRegistry,
 };
 use candle_core::{DType, Tensor as CandleTensor};
 use std::collections::HashMap;
@@ -253,6 +254,17 @@ pub trait Model: Send + Sync {
         input: &ConcreteTensor,
         cache: &mut dyn std::any::Any,
     ) -> Result<ConcreteTensor>;
+    fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        input: &ConcreteTensor,
+        cache: &mut dyn std::any::Any,
+        descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<ConcreteTensor> {
+        let _ = (input, cache, descriptor);
+        Err(BitNetError::Validation(
+            "prompt-bound no-bias apply-linear descriptor forwarding is only implemented for transformer-backed GGUF models".to_string(),
+        ))
+    }
     fn forward_with_source_context(
         &self,
         input: &ConcreteTensor,
@@ -811,6 +823,28 @@ impl Model for BitNetModel {
         let output = transformer.forward(input_tensor, kv_cache)?;
 
         // Convert back to ConcreteTensor
+        Ok(self.candle_to_concrete(output))
+    }
+
+    fn forward_with_no_bias_callsite_descriptor(
+        &self,
+        input: &ConcreteTensor,
+        cache: &mut dyn std::any::Any,
+        descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    ) -> Result<ConcreteTensor> {
+        let transformer = self.transformer.as_ref().ok_or_else(|| {
+            BitNetError::Model(bitnet_common::ModelError::LoadingFailed {
+                reason: "BitNetModel::transformer not initialized (GGUF load failed or build_transformer returned error)".to_string()
+            })
+        })?;
+
+        let kv_cache = cache.downcast_mut::<KVCache>();
+        let input_tensor = self.to_candle_tensor(input)?;
+        let output = transformer.forward_with_no_bias_callsite_descriptor(
+            input_tensor,
+            kv_cache,
+            descriptor,
+        )?;
         Ok(self.candle_to_concrete(output))
     }
 
