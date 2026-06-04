@@ -18045,9 +18045,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-CPU-SLOWPATH-REVIEW-001"
-status = "pr_open"
+status = "merged"
 pr = 1527
-head_sha = "1b6338ca7152ddbceae6855d45ba7e92d9eda7cb"
+head_sha = "49af9c342d3ceed8aa110b180fee2edd94f21157"
+merge_sha = "10e1d5a7db8358ecc85359f6df54e011aa5001d6"
+merged_at = "2026-06-04T21:06:49Z"
 branch = "codex/lunar-lake/LNL258V-CPU-SLOWPATH-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"
