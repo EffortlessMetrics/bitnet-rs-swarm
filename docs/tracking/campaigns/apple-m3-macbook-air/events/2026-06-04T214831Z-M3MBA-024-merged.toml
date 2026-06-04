@@ -1,0 +1,35 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-024"
+event = "merged"
+timestamp = "2026-06-04T21:48:31Z"
+actor = "codex"
+pr = 1534
+head_sha = "978bc94535b6d33775786fadacfdeb31ed20c292"
+merge_sha = "d791c5b53e1b2612f72636d961fe8e79b0bded28"
+branch = "codex/apple-m3-macbook-air/M3MBA-024-artifact-unblock-preflight-20260604"
+
+summary = "Merged #1534 with refreshed secondary BitNet artifact authority and storage preflight evidence for the M3 Air lane."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1534",
+  "ci/model-artifacts/apple-m3-secondary-unblock-preflight.toml",
+  "docs/reports/apple-silicon-macbook-m3-air-secondary-artifact-unblock.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "M3MBA-024 keeps both secondary 1bitLLM candidates blocked because the official repositories still expose safetensors/tokenizer files but no runner-ready GGUF for the intended M3 command shapes.",
+  "The merge records current local storage headroom and keeps the 3B shards blocked because they would drop the cache volume below the hard free-space floor.",
+  "No model contents were downloaded, no model binary was committed, and no third-party artifact was approved.",
+  "No BitNet answer-quality claim, Apple backend support claim, M4 Mac mini proof, Metal/MPSGraph/Neural Engine execution claim, QK256 claim, speedup, or broad Apple Silicon performance claim is made.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
