@@ -22,6 +22,21 @@ const SAMPLE_LIMIT: usize = 2;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse()?;
+    if args.projection_source.is_some() {
+        let (manifest, receipt) = projection_level_qkv_replay_to_json(&args)?;
+        let manifest_path =
+            args.manifest.as_ref().ok_or_else(|| io_error("manifest path missing after parse"))?;
+        if let Some(parent) = manifest_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(manifest_path, &manifest)?;
+        if let Some(parent) = args.receipt.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(&args.receipt, &receipt)?;
+        println!("{receipt}");
+        return Ok(());
+    }
     if args.manifest.is_some() {
         let (manifest, receipt) = multi_case_focused_replay_to_json(&args)?;
         let manifest_path =
@@ -77,6 +92,8 @@ struct Args {
     case_id: Option<String>,
     first_mismatch_index: Option<usize>,
     work_item: Option<String>,
+    projection_source: Option<PathBuf>,
+    projection_layer: Option<i64>,
 }
 
 impl Args {
@@ -89,6 +106,8 @@ impl Args {
         let mut case_id = None;
         let mut first_mismatch_index = None;
         let mut work_item = None;
+        let mut projection_source = None;
+        let mut projection_layer = None;
         let mut args = env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
@@ -131,16 +150,41 @@ impl Args {
                         args.next().ok_or_else(|| io_error("--work-item requires an argument"))?,
                     );
                 }
+                "--projection-source" => {
+                    projection_source = Some(PathBuf::from(args.next().ok_or_else(|| {
+                        io_error("--projection-source requires a path argument")
+                    })?));
+                }
+                "--projection-layer" => {
+                    let value = args
+                        .next()
+                        .ok_or_else(|| io_error("--projection-layer requires an argument"))?;
+                    projection_layer = Some(value.parse::<i64>().map_err(|err| {
+                        io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            format!("invalid --projection-layer {value:?}: {err}"),
+                        )
+                    })?);
+                }
                 "--help" | "-h" => {
                     println!(
-                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>] [--focused-source <path> --case-id <id> --first-mismatch-index <n>] [--focused-source <path>... --manifest <path> [--case-id <id>] [--first-mismatch-index <n>] [--work-item <id>]]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV, classifies a focused first-mismatch operand receipt, or builds an A770 multi-target focused replay packet."
+                        "Usage: a770-opencl-production-replay-instrumentation [--receipt <path>] [--focused-source <path> --case-id <id> --first-mismatch-index <n>] [--focused-source <path>... --manifest <path> [--case-id <id>] [--first-mismatch-index <n>] [--work-item <id>]] [--projection-source <path> --manifest <path> --receipt <path> --case-id <id> --first-mismatch-index <n> [--projection-layer <n>] [--work-item <id>]]\n\nRuns diagnostic production replay instrumentation for selected Intel Arc A770 OpenCL QK256 scaled GEMV, classifies a focused first-mismatch operand receipt, builds an A770 multi-target focused replay packet, or ledgers the first projection-level Q/K/V replay boundary from committed focused row evidence."
                     );
                     std::process::exit(0);
                 }
                 other => return Err(io_error(format!("unknown argument {other:?}"))),
             }
         }
-        if manifest.is_some() {
+        if projection_source.is_some() {
+            if manifest.is_none() {
+                return Err(io_error("--projection-source requires --manifest"));
+            }
+            if !focused_sources.is_empty() {
+                return Err(io_error(
+                    "--projection-source cannot be combined with --focused-source",
+                ));
+            }
+        } else if manifest.is_some() {
             if focused_sources.is_empty() {
                 return Err(io_error("--manifest requires --focused-source"));
             }
@@ -156,7 +200,16 @@ impl Args {
             }
         }
 
-        Ok(Self { receipt, manifest, focused_sources, case_id, first_mismatch_index, work_item })
+        Ok(Self {
+            receipt,
+            manifest,
+            focused_sources,
+            case_id,
+            first_mismatch_index,
+            work_item,
+            projection_source,
+            projection_layer,
+        })
     }
 }
 
@@ -1280,6 +1333,265 @@ fn multi_case_classification(
     } else {
         "a770_qk256_multi_case_focused_replay_has_selected_device_mismatch"
     }
+}
+
+fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), Box<dyn Error>> {
+    let source_path = args
+        .projection_source
+        .as_ref()
+        .ok_or_else(|| io_error("projection-level replay requested without --projection-source"))?;
+    let source_json = fs::read_to_string(source_path)?;
+    let source: Value = serde_json::from_str(&source_json)?;
+    let target_results = source
+        .get("target_results")
+        .and_then(Value::as_array)
+        .ok_or_else(|| io_error("projection source missing target_results array"))?;
+    let case_id = args
+        .case_id
+        .as_deref()
+        .or_else(|| target_results.iter().find_map(|target| str_field(target, "case_id")))
+        .ok_or_else(|| io_error("projection source missing case_id"))?;
+    let first_mismatch_index = args
+        .first_mismatch_index
+        .or_else(|| {
+            target_results.iter().find_map(|target| usize_field(target, "first_mismatch_index"))
+        })
+        .ok_or_else(|| io_error("projection source missing first_mismatch_index"))?;
+    let projection_layer = args
+        .projection_layer
+        .or_else(|| {
+            target_results
+                .iter()
+                .filter(|target| {
+                    str_field(target, "case_id") == Some(case_id)
+                        && usize_field(target, "first_mismatch_index") == Some(first_mismatch_index)
+                })
+                .filter_map(|target| i64_field(target, "target_layer_idx"))
+                .min()
+        })
+        .ok_or_else(|| io_error("projection source missing target_layer_idx"))?;
+    let work_item = args.work_item.as_deref().unwrap_or("A770-157");
+    let projections = ["q_proj", "k_proj", "v_proj"];
+    let mut targets = Vec::with_capacity(projections.len());
+    let mut row_evidence_count = 0usize;
+    let mut clean_row_evidence_count = 0usize;
+    let mut row_selected_device_match_count = 0usize;
+    let mut row_fallback_false_count = 0usize;
+    let mut projection_blocked_count = 0usize;
+
+    for projection in projections {
+        let row = target_results.iter().find(|target| {
+            str_field(target, "case_id") == Some(case_id)
+                && usize_field(target, "first_mismatch_index") == Some(first_mismatch_index)
+                && i64_field(target, "target_layer_idx") == Some(projection_layer)
+                && str_field(target, "projection") == Some(projection)
+        });
+        let row_evidence_available = row.is_some();
+        let row_executed = row
+            .and_then(|target| target.pointer("/production_replay/executed"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let row_fallback_false = row
+            .and_then(|target| target.pointer("/production_replay/fallback_used"))
+            .and_then(Value::as_bool)
+            == Some(false);
+        let row_matches_selected_device = row
+            .and_then(|target| {
+                target.pointer("/production_replay/production_output_matches_selected_device_bits")
+            })
+            .and_then(Value::as_bool)
+            == Some(true);
+        let clean_row_evidence = row_evidence_available
+            && row_executed
+            && row_fallback_false
+            && row_matches_selected_device;
+        if row_evidence_available {
+            row_evidence_count += 1;
+        }
+        if row_fallback_false {
+            row_fallback_false_count += 1;
+        }
+        if row_matches_selected_device {
+            row_selected_device_match_count += 1;
+        }
+        if clean_row_evidence {
+            clean_row_evidence_count += 1;
+        }
+        projection_blocked_count += 1;
+
+        let target_id = format!(
+            "{case_id}:step{first_mismatch_index}:{projection_layer}:{projection}:projection"
+        );
+        let blockers = if clean_row_evidence {
+            vec!["projection_level_full_operands_missing", "projection_level_replay_hook_missing"]
+        } else {
+            vec!["projection_level_row_evidence_not_clean"]
+        };
+        targets.push(json!({
+            "target_id": target_id,
+            "case_id": case_id,
+            "first_mismatch_index": first_mismatch_index,
+            "target_layer_idx": projection_layer,
+            "projection": projection,
+            "tensor_name": row.and_then(|target| string_field(target, "tensor_name")),
+            "qk256_key": row.and_then(|target| string_field(target, "qk256_key")),
+            "row_evidence": {
+                "available": row_evidence_available,
+                "source_target_id": row.and_then(|target| string_field(target, "target_id")),
+                "dispatch_replay_source": row.and_then(|target| string_field(target, "dispatch_replay_source")),
+                "executed": row_executed,
+                "selected_backend": row
+                    .and_then(|target| target.pointer("/production_replay/selected_backend"))
+                    .and_then(Value::as_str),
+                "runtime_api": row
+                    .and_then(|target| target.pointer("/production_replay/runtime_api"))
+                    .and_then(Value::as_str),
+                "runtime_device": row
+                    .and_then(|target| target.pointer("/production_replay/runtime_device"))
+                    .and_then(Value::as_str),
+                "fallback_used": row
+                    .and_then(|target| target.pointer("/production_replay/fallback_used"))
+                    .and_then(Value::as_bool),
+                "source_output_index": row
+                    .and_then(|target| target.pointer("/production_replay/source_output_index"))
+                    .and_then(Value::as_u64),
+                "focused_device_output_bits": row
+                    .and_then(|target| target.pointer("/production_replay/focused_device_output_bits"))
+                    .and_then(Value::as_u64),
+                "production_output_bits": row
+                    .and_then(|target| target.pointer("/production_replay/production_output_bits"))
+                    .and_then(Value::as_u64),
+                "production_output_matches_selected_device_bits": row_matches_selected_device,
+                "clean_for_projection_boundary": clean_row_evidence
+            },
+            "projection_replay": {
+                "executed": false,
+                "selected_backend": "intel-arc-a770-opencl",
+                "runtime_api": "opencl",
+                "fallback_used": false,
+                "reason": blockers[0],
+                "blockers": blockers,
+                "current_operand_scope": "single_focused_output_row",
+                "required_operand_scope": "full_projection_output_rows",
+                "projection_level_replay_hook_available": false
+            },
+            "classification": "a770_qk256_projection_level_replay_blocked",
+            "claim_boundary": {
+                "production_qk256_policy_change": false,
+                "answer_scoring_change": false,
+                "sampling_change": false,
+                "cpu_a770_parity_claim": false,
+                "strict_answer_readiness_claim": false,
+                "broad_a770_quality_claim": false,
+                "bitnet_inference": false,
+                "qk256_decode": false,
+                "claim_allowed": false,
+                "diagnostic_only": true,
+                "performance_claim": false,
+                "full_residency_claim": false
+            }
+        }));
+    }
+
+    let classification = if clean_row_evidence_count == projections.len() {
+        "a770_qk256_projection_level_qkv_replay_blocked_on_projection_operands_and_hook"
+    } else {
+        "a770_qk256_projection_level_qkv_replay_blocked_on_row_evidence"
+    };
+    let manifest_path = args.manifest.as_ref().map(|path| path_json_value(path));
+    let manifest = json!({
+        "schema_version": "1.0.0",
+        "manifest_kind": "a770_projection_level_qkv_replay_manifest",
+        "campaign": "intel-a770",
+        "work_item": work_item,
+        "diagnostic_only": true,
+        "claim_allowed": false,
+        "source_receipts": {
+            "a770_156_focused_qkv_replay": path_json_value(source_path),
+        },
+        "case_filter": case_id,
+        "first_mismatch_index_filter": first_mismatch_index,
+        "target_layer_idx_filter": projection_layer,
+        "target_policy": {
+            "target_source": "A770-156 clean focused Q/K/V row replay packet",
+            "target_surface": "one transformer layer Q/K/V projection-level replay boundary",
+            "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands and replay hook exist",
+            "blocker_rule": "ledger missing full projection operands or missing projection replay hook instead of promoting production QK256 policy",
+            "cpu_fallback_allowed": false,
+            "fallback_used_must_equal": false
+        },
+        "target_count": projections.len(),
+        "projection_replay_target_count": projections.len(),
+        "targets": targets,
+    });
+    let source_runtime = target_results
+        .iter()
+        .find_map(|target| target.get("production_replay"))
+        .or_else(|| source.as_object().map(|_| &source));
+    let receipt = json!({
+        "schema_version": "1.0.0",
+        "campaign": "intel-a770",
+        "work_item": work_item,
+        "proof_family": "a770_opencl_qk256_projection_level_qkv_replay",
+        "proof_stage": "diagnostic_projection_level_qkv_replay_boundary",
+        "requested_backend": "intel-arc-a770",
+        "selected_backend": "intel-arc-a770-opencl",
+        "runtime_api": "opencl",
+        "runtime_device": source_runtime.and_then(|value| string_field(value, "runtime_device")),
+        "platform_index": source_runtime.and_then(|value| usize_field(value, "platform_index")),
+        "device_index": source_runtime.and_then(|value| usize_field(value, "device_index")),
+        "platform_name": source_runtime.and_then(|value| string_field(value, "platform_name")),
+        "vendor": source_runtime.and_then(|value| string_field(value, "vendor")),
+        "driver_version": source_runtime.and_then(|value| string_field(value, "driver_version")),
+        "kernel_name": "qk256_i2s_i8s_scaled_gemv",
+        "projection_replay_kernel_name": Value::Null,
+        "classification": classification,
+        "manifest_path": manifest_path,
+        "manifest": manifest,
+        "summary": {
+            "target_count": projections.len(),
+            "projection_replay_target_count": projections.len(),
+            "projection_replay_executed_count": 0,
+            "projection_replay_blocked_count": projection_blocked_count,
+            "row_evidence_target_count": row_evidence_count,
+            "clean_row_evidence_count": clean_row_evidence_count,
+            "row_selected_device_match_count": row_selected_device_match_count,
+            "row_fallback_false_count": row_fallback_false_count,
+            "all_row_evidence_clean": clean_row_evidence_count == projections.len(),
+            "all_projection_replay_targets_blocked": projection_blocked_count == projections.len(),
+            "blockers": [
+                "projection_level_full_operands_missing",
+                "projection_level_replay_hook_missing"
+            ]
+        },
+        "fallback_used": false,
+        "cpu_fallback_allowed": false,
+        "bitnet_inference": false,
+        "qk256_decode": false,
+        "production_qk256_policy_change": false,
+        "claim_allowed": false,
+        "diagnostic_only": true,
+        "performance_claim": false,
+        "full_residency_claim": false,
+        "next_diagnostic": "capture full projection Q/K/V operands and add the bounded projection-level replay hook before any production QK256 promotion",
+        "must_not_claim": [
+            "CPU/A770 answer parity is proven",
+            "Reference parity is proven",
+            "Strict A770 answer readiness is proven",
+            "Broad A770 answer quality is proven",
+            "Official BitNet QK256 production semantics are proven",
+            "Production QK256 dispatch policy changed",
+            "BitNet inference works on A770",
+            "A770 trusted partial acceleration is claim-grade",
+            "Full A770 residency is proven",
+            "A770 performance speedup is proven"
+        ]
+    });
+
+    Ok((
+        serde_json::to_string_pretty(&receipt["manifest"])? + "\n",
+        serde_json::to_string_pretty(&receipt)? + "\n",
+    ))
 }
 
 #[derive(Debug, Clone)]
