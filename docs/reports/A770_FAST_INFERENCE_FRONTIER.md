@@ -2,10 +2,9 @@
 
 ## Current State
 
-The A770 lane is useful but still diagnostic. A770-155 extends the focused
-QK256 replay packet from eighty-eight runnable Q/K/V targets to eighty-nine:
-the layer-0 through layer-28 Q/K/V trios plus layer-29 `q_proj` and `k_proj`
-for the committed summary-logits first mismatch.
+The A770 lane is useful but still diagnostic. A770-156 completes the focused
+QK256 replay packet for the committed summary-logits first mismatch: ninety
+runnable Q/K/V targets, the layer-0 through layer-29 Q/K/V trios.
 The selected device is Intel Arc A770 OpenCL and the replay receipts keep
 `fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
 
@@ -18,11 +17,11 @@ acceleration, or full BitNet inference.
 
 1. The current proof is too narrow.
 
-   A770-155 covers eighty-nine focused Q/K/V rows for one case and one first
-   mismatch: the layer-0 through layer-28 Q/K/V trios plus layer-29 `q_proj` and
-   `k_proj`. Fast inference needs the same kind of selected-device confidence
-   across the remaining Q/K/V/O projection replay targets, MLP linears, and
-   logits-facing paths that can affect generated tokens.
+   A770-156 covers ninety focused Q/K/V rows for one case and one first
+   mismatch: the layer-0 through layer-29 Q/K/V trios. Fast inference needs the
+   same kind of selected-device confidence at projection level and across the
+   remaining O projection, MLP linears, and logits-facing paths that can affect
+   generated tokens.
 
 2. Production dispatch is not promotable yet.
 
@@ -90,9 +89,8 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-After A770-155, the next honest step is one more focused replay target, not a
-speed PR: capture and replay layer-29 `v_proj`, the remaining
-`dispatch_replay_missing` target selected by the manifest, under the same
-one-case, one-mismatch, selected-device, fallback-free receipt rules. Its job is
-to keep widening the correctness surface before any production QK256 policy,
-residency, answer-quality, or speed promotion.
+After A770-156, the next honest step is projection-level replay, not a speed PR:
+carry the same one-case, one-mismatch, selected-device, fallback-free receipt
+rules from row replay into Q/K/V projection replay, then expand to O projection
+or MLP QK256 linears. Its job is to keep widening the correctness surface before
+any production QK256 policy, residency, answer-quality, or speed promotion.
