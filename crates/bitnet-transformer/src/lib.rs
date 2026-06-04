@@ -1246,6 +1246,62 @@ pub struct DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DenseLinearNoBiasPromptSessionDescriptor {
+    pub tensor_name: String,
+    pub callsite_identity: String,
+    pub model_sha256: String,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub prompt_ids: Vec<u32>,
+    pub prompt_ids_digest: String,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub bias_present: Option<bool>,
+    pub explicit_runtime_gate_requested: bool,
+    pub descriptor_ready_for_apply_linear_callsite: bool,
+    pub normal_inference_runtime_selection_enabled: bool,
+    pub candidate_execution_enabled: bool,
+    pub generated_ids_bound_before_decode: bool,
+    pub decoded_text_bound_before_decode: bool,
+    pub decision: &'static str,
+    pub reason: &'static str,
+    pub remaining_runtime_selection_blocker: &'static str,
+    pub fail_closed_conditions: Vec<&'static str>,
+    pub allocation_reduction_claim: bool,
+    pub timing_improvement_claim: bool,
+    pub speedup_claim: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DenseLinearNoBiasPromptSessionDescriptorInput<'a> {
+    pub tensor_name: &'a str,
+    pub callsite_identity: &'a str,
+    pub model_sha256: &'a str,
+    pub model_architecture: &'static str,
+    pub quant_format: &'static str,
+    pub tokenizer_source: &'static str,
+    pub tokenizer_strict: bool,
+    pub runtime_api: &'static str,
+    pub selected_backend: &'static str,
+    pub fallback_used: bool,
+    pub prompt_ids: &'a [u32],
+    pub prompt_ids_digest: &'a str,
+    pub selected_path: &'static str,
+    pub selected_kernel: &'static str,
+    pub candidate_path: &'static str,
+    pub candidate_kernel: &'static str,
+    pub bias_present: Option<bool>,
+    pub explicit_runtime_gate_requested: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DenseLinearNoBiasCandidateOffOnReceiptPairGate {
     pub tensor_name: String,
     pub callsite_identity: String,
@@ -2657,7 +2713,204 @@ impl DenseLinearNoBiasSelectorPropagationBoundary {
     }
 }
 
+impl DenseLinearNoBiasPromptSessionDescriptor {
+    pub fn from_prompt_session(input: DenseLinearNoBiasPromptSessionDescriptorInput<'_>) -> Self {
+        let mut fail_closed_conditions = Vec::new();
+        if input.tensor_name.is_empty() {
+            fail_closed_conditions.push("tensor_name_missing");
+        }
+        if input.callsite_identity.is_empty() {
+            fail_closed_conditions.push("callsite_identity_missing");
+        }
+        if input.model_sha256.is_empty() {
+            fail_closed_conditions.push("model_sha256_missing");
+        }
+        if !matches!(input.model_architecture, "qwen2" | "qwen3") {
+            fail_closed_conditions.push("model_architecture_not_qwen2_or_qwen3");
+        }
+        if input.quant_format != "Q8_0" {
+            fail_closed_conditions.push("quant_format_not_q8_0");
+        }
+        if input.tokenizer_source != "gguf_metadata" {
+            fail_closed_conditions.push("tokenizer_source_not_gguf_metadata");
+        }
+        if !input.tokenizer_strict {
+            fail_closed_conditions.push("tokenizer_not_strict");
+        }
+        if input.runtime_api != "cpu" {
+            fail_closed_conditions.push("runtime_api_not_cpu");
+        }
+        if input.selected_backend != "cpu-rust" {
+            fail_closed_conditions.push("selected_backend_not_cpu_rust");
+        }
+        if input.fallback_used {
+            fail_closed_conditions.push("fallback_used");
+        }
+        if input.prompt_ids.is_empty() {
+            fail_closed_conditions.push("prompt_ids_missing");
+        }
+        if input.prompt_ids_digest.is_empty() {
+            fail_closed_conditions.push("prompt_ids_digest_missing");
+        }
+        if input.selected_path != "eager_f32_candle" {
+            fail_closed_conditions.push("selected_path_not_eager_f32_candle");
+        }
+        if input.selected_kernel != "dense-f32-candle-linear" {
+            fail_closed_conditions.push("selected_kernel_not_dense_f32_candle_linear");
+        }
+        if !matches!(input.bias_present, Some(false)) {
+            fail_closed_conditions.push("bias_present_not_false");
+        }
+        if !input.explicit_runtime_gate_requested {
+            fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let descriptor_ready_for_apply_linear_callsite = fail_closed_conditions.is_empty();
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if descriptor_ready_for_apply_linear_callsite {
+                (
+                    "prompt_session_descriptor_ready_for_apply_linear_runtime_disabled",
+                    "prompt_session_identity_is_bound_before_decode_without_generated_text_fields",
+                    "post_decode_candidate_off_on_receipts_and_dispatch_branch",
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "prompt_session_descriptor_identity_incomplete_or_not_explicitly_gated",
+                    "prompt_session_descriptor_construction_inputs",
+                )
+            };
+
+        Self {
+            tensor_name: input.tensor_name.to_string(),
+            callsite_identity: input.callsite_identity.to_string(),
+            model_sha256: input.model_sha256.to_string(),
+            model_architecture: input.model_architecture,
+            quant_format: input.quant_format,
+            tokenizer_source: input.tokenizer_source,
+            tokenizer_strict: input.tokenizer_strict,
+            runtime_api: input.runtime_api,
+            selected_backend: input.selected_backend,
+            fallback_used: input.fallback_used,
+            prompt_ids: input.prompt_ids.to_vec(),
+            prompt_ids_digest: input.prompt_ids_digest.to_string(),
+            selected_path: input.selected_path,
+            selected_kernel: input.selected_kernel,
+            candidate_path: input.candidate_path,
+            candidate_kernel: input.candidate_kernel,
+            bias_present: input.bias_present,
+            explicit_runtime_gate_requested: input.explicit_runtime_gate_requested,
+            descriptor_ready_for_apply_linear_callsite,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            generated_ids_bound_before_decode: false,
+            decoded_text_bound_before_decode: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
+    pub fn preserves_normal_inference(&self) -> bool {
+        self.selected_path == "eager_f32_candle"
+            && self.selected_kernel == "dense-f32-candle-linear"
+            && self.runtime_api == "cpu"
+            && self.selected_backend == "cpu-rust"
+            && !self.fallback_used
+            && !self.normal_inference_runtime_selection_enabled
+            && !self.candidate_execution_enabled
+            && !self.generated_ids_bound_before_decode
+            && !self.decoded_text_bound_before_decode
+            && !self.allocation_reduction_claim
+            && !self.timing_improvement_claim
+            && !self.speedup_claim
+    }
+}
+
 impl DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary {
+    pub fn from_prompt_session_descriptor(
+        descriptor: &DenseLinearNoBiasPromptSessionDescriptor,
+    ) -> Self {
+        let mut fail_closed_conditions = descriptor.fail_closed_conditions.clone();
+        let expected_callsite_identity =
+            feed_forward_apply_linear_callsite_identity(&descriptor.tensor_name);
+        if !descriptor.descriptor_ready_for_apply_linear_callsite {
+            fail_closed_conditions.push("prompt_session_descriptor_not_ready");
+        }
+        if descriptor.callsite_identity != expected_callsite_identity {
+            fail_closed_conditions.push("prompt_session_callsite_identity_mismatch");
+        }
+        if !descriptor.preserves_normal_inference() {
+            fail_closed_conditions
+                .push("prompt_session_descriptor_does_not_preserve_normal_inference");
+        }
+
+        fail_closed_conditions.sort_unstable();
+        fail_closed_conditions.dedup();
+
+        let per_callsite_identity_matches_descriptor = descriptor.callsite_identity
+            == expected_callsite_identity
+            && descriptor.descriptor_ready_for_apply_linear_callsite;
+        let per_callsite_receipt_emitter_present = per_callsite_identity_matches_descriptor;
+        let (decision, reason, remaining_runtime_selection_blocker) =
+            if per_callsite_identity_matches_descriptor && fail_closed_conditions.is_empty() {
+                (
+                    "per_callsite_prompt_session_descriptor_ready_runtime_disabled",
+                    "prompt_session_descriptor_identity_reaches_apply_linear_without_generated_text_binding",
+                    "post_decode_candidate_off_on_receipts_and_dispatch_branch",
+                )
+            } else {
+                (
+                    "blocked_fail_closed",
+                    "prompt_session_descriptor_identity_does_not_match_apply_linear_callsite",
+                    "per_callsite_prompt_session_descriptor_identity",
+                )
+            };
+
+        Self {
+            tensor_name: descriptor.tensor_name.clone(),
+            callsite_identity: descriptor.callsite_identity.clone(),
+            model_sha256: descriptor.model_sha256.clone(),
+            model_architecture: descriptor.model_architecture,
+            quant_format: descriptor.quant_format,
+            tokenizer_source: descriptor.tokenizer_source,
+            tokenizer_strict: descriptor.tokenizer_strict,
+            runtime_api: descriptor.runtime_api,
+            selected_backend: descriptor.selected_backend,
+            fallback_used: descriptor.fallback_used,
+            selected_path: descriptor.selected_path,
+            selected_kernel: descriptor.selected_kernel,
+            candidate_path: descriptor.candidate_path,
+            candidate_kernel: descriptor.candidate_kernel,
+            prompt_ids_digest: descriptor.prompt_ids_digest.clone(),
+            generated_ids_digest: String::new(),
+            decoded_text_digest: String::new(),
+            descriptor_ready_for_apply_linear_callsite: descriptor
+                .descriptor_ready_for_apply_linear_callsite,
+            per_callsite_receipt_emitter_present,
+            per_callsite_identity_matches_descriptor,
+            explicit_runtime_gate_requested: descriptor.explicit_runtime_gate_requested,
+            candidate_off_on_receipts_present: false,
+            generated_id_preservation_proven: false,
+            normal_inference_runtime_selection_enabled: false,
+            candidate_execution_enabled: false,
+            decision,
+            reason,
+            remaining_runtime_selection_blocker,
+            fail_closed_conditions,
+            allocation_reduction_claim: false,
+            timing_improvement_claim: false,
+            speedup_claim: false,
+        }
+    }
+
     pub fn from_receipt_bound_selector_descriptor(
         descriptor: &DenseLinearNoBiasReceiptBoundSelectorDescriptor,
         tensor_name: impl Into<String>,
@@ -14557,6 +14810,72 @@ mod tests {
         assert!(pair_gate.preserves_normal_inference());
         assert!(!pair_gate.candidate_execution_enabled);
         assert!(!pair_gate.normal_inference_runtime_selection_enabled);
+    }
+
+    #[test]
+    fn no_bias_prompt_session_descriptor_reaches_callsite_without_generated_text_binding() {
+        let tensor_name = "layers.0.feed_forward.down_proj.weight";
+        let callsite_identity =
+            dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(0, "down_proj");
+        let descriptor = DenseLinearNoBiasPromptSessionDescriptor::from_prompt_session(
+            DenseLinearNoBiasPromptSessionDescriptorInput {
+                tensor_name,
+                callsite_identity: callsite_identity.as_str(),
+                model_sha256: SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+                model_architecture: "qwen3",
+                quant_format: "Q8_0",
+                tokenizer_source: "gguf_metadata",
+                tokenizer_strict: true,
+                runtime_api: "cpu",
+                selected_backend: "cpu-rust",
+                fallback_used: false,
+                prompt_ids: &[151644, 872, 198, 19],
+                prompt_ids_digest: "prompt-digest",
+                selected_path: "eager_f32_candle",
+                selected_kernel: "dense-f32-candle-linear",
+                candidate_path: "qwen3_feed_forward_down_proj_no_bias_candidate",
+                candidate_kernel: "dense-f32-candle-linear-no-bias-candidate",
+                bias_present: Some(false),
+                explicit_runtime_gate_requested: true,
+            },
+        );
+        let emitter =
+            DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_prompt_session_descriptor(
+                &descriptor,
+            );
+
+        assert_eq!(
+            descriptor.decision,
+            "prompt_session_descriptor_ready_for_apply_linear_runtime_disabled"
+        );
+        assert!(descriptor.descriptor_ready_for_apply_linear_callsite);
+        assert!(!descriptor.generated_ids_bound_before_decode);
+        assert!(!descriptor.decoded_text_bound_before_decode);
+        assert!(descriptor.preserves_normal_inference());
+        assert_eq!(
+            emitter.decision,
+            "per_callsite_prompt_session_descriptor_ready_runtime_disabled"
+        );
+        assert_eq!(emitter.tensor_name, tensor_name);
+        assert_eq!(emitter.callsite_identity, callsite_identity);
+        assert!(emitter.per_callsite_receipt_emitter_present);
+        assert!(emitter.per_callsite_identity_matches_descriptor);
+        assert!(emitter.explicit_runtime_gate_requested);
+        assert_eq!(emitter.prompt_ids_digest, "prompt-digest");
+        assert!(emitter.generated_ids_digest.is_empty());
+        assert!(emitter.decoded_text_digest.is_empty());
+        assert!(!emitter.candidate_off_on_receipts_present);
+        assert!(!emitter.generated_id_preservation_proven);
+        assert!(!emitter.candidate_execution_enabled);
+        assert!(emitter.preserves_normal_inference());
+
+        let fail_closed_conditions =
+            feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+                &emitter,
+                "down_proj",
+                tensor_name,
+            );
+        assert!(fail_closed_conditions.is_empty());
     }
 
     #[test]

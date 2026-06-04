@@ -1,0 +1,15 @@
+timestamp = "2026-06-04T21:19:36Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-243"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1529
+branch = "codex/slm-cpu/slm-cpu-243-warm-session-no-bias-descriptor"
+head_sha = "22e7334267a5ccbe16fc37a74685f9661cc7170c"
+summary = "Opened the SLM-CPU-243 production warm-session no-bias prompt/session descriptor PR."
+notes = [
+  "PR #1529 constructs and passes the prompt/session-scoped no-bias descriptor through the SLM-CPU-242 opt-in model forward path for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "Generated IDs and decoded text remain unbound before decode; candidate execution, timing, allocation, speedup, Q4/Q5, accelerator, Qwen3.5, and BitNet QK256 claims remain disabled.",
+]
