@@ -17994,3 +17994,47 @@ must_not_claim = [
   "Full BitNet inference works on Arc or NPU.",
   "BitNet QK256/I2_S behavior changed.",
 ]
+
+[[work_item]]
+id = "LNL258V-OPENVINO-PLAN-001"
+status = "in_progress"
+branch = "codex/lunar-lake/LNL258V-OPENVINO-PLAN-001-review-first-blockers"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-OPENVINO-VALIDATE-ASK-001"]
+acceptance = "Refresh the OpenVINO Lunar Lake implementation plan so the appliance ask-wrapper validator item is marked merged with issue/PR references, and add a review-first blocker section for POWER-006, NPU cold/cache/warm, GPU ask-profile promotion, and Rust GGUF CPU slow-path work. Preserve docs-only scope with no inference, receipt refresh, route-policy mutation, route promotion, speedup, power-advantage, native accelerator, broad quality, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "plans/openvino-lunar-lake/implementation-plan.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "scripts/**",
+  "ci/hardware/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+]
+may_claim = [
+  "The OpenVINO Lunar Lake implementation plan records LNL258V-OPENVINO-VALIDATE-ASK-001 as merged with its issue and PR references.",
+  "The plan now directs remaining POWER-006, NPU, GPU promotion, and Rust GGUF CPU slow-path work through review-first issue contracts before broad implementation or receipt-refresh PRs.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run by this PR.",
+  "Any committed hardware receipt was refreshed by this PR.",
+  "Any route policy changed or route was promoted by this PR.",
+  "OpenVINO GPU or NPU speedup is claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
