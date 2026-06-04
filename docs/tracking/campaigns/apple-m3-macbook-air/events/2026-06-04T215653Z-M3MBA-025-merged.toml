@@ -1,0 +1,35 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-025"
+event = "merged"
+timestamp = "2026-06-04T21:56:53Z"
+actor = "codex"
+pr = 1537
+head_sha = "ec2257274fa1158414a4211cb01e8dd3853215f7"
+merge_sha = "5130a862cdde19fcf1d4f0e76f47b689856c0e84"
+branch = "codex/apple-m3-macbook-air/M3MBA-025-m4-proof-alignment-20260604"
+
+summary = "Merged #1537 with the M3-owned M4 strict-proof handoff alignment checklist."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1537",
+  "docs/reports/apple-silicon-macbook-m3-air-m4-proof-alignment.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "M3MBA-025 maps only the accepted Microsoft 2B I2_S M3 artifact metadata into separate M4 strict-proof requirements.",
+  "The M4 lane must attach fresh M4 receipts before any M4 proof, speed, chat, serve, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon claim.",
+  "The blocked 0.7B and 3B secondary candidates remain non-handoff targets after M3MBA-024.",
+  "No M4 inference was run, no artifact was downloaded, no model binary was committed, and no M4 proof claim was made.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "cargo run --locked -p xtask --no-default-features -- claim-lint --scope apple-m4 --check",
+  "git diff --check",
+]
