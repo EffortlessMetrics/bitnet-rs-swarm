@@ -10,6 +10,7 @@ summary = "Started the bounded M3 Air performance profile slice on the swarm rep
 
 artifacts = [
   ".github/workflows/apple-m3-air-dense-slm.yml",
+  ".github/workflows/pr-plan.yml",
   "crates/bitnet-receipts-core/src/lib.rs",
   "docs/apple-silicon/m3-macbook-air-roadmap.md",
   "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
@@ -22,6 +23,7 @@ notes = [
   "Performance dispatches require a non-default timeout_cap_source before model fetch so caps are sourced from completed healthy runs plus cushion rather than near-completion cancellation.",
   "Timeout caps remain hang guards and are not performance evidence.",
   "The staged no-op job is pinned to the em-ci-tiny/rust-tiny self-hosted capacity labels instead of the generic Linux self-hosted pool.",
+  "PR Plan is pinned to the same em-ci-tiny/rust-tiny self-hosted capacity labels because control-plane workflow changes force the Rust planner fallback.",
   "The receipts-core hunk is a mechanical rustfmt correction exposed by the required cargo fmt --all proof on current main.",
   "No live M3 Air model run, BitNet answer-quality claim, M4 Mac mini proof, Metal model inference, MPSGraph model inference, Neural Engine execution, QK256 support, or broad Apple Silicon performance claim is made.",
 ]

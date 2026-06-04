@@ -1154,6 +1154,7 @@ commands = [
 ]
 allowed_paths = [
   ".github/workflows/apple-m3-air-dense-slm.yml",
+  ".github/workflows/pr-plan.yml",
   "crates/bitnet-receipts-core/src/lib.rs",
   "docs/apple-silicon/**",
   "docs/ci/**",
