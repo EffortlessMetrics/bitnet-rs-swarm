@@ -139,24 +139,32 @@ candidate remains serialized behind fresh disk preflight and cleanup/retention
 evidence.
 
 The next sequence should stay as small PRs, with each PR either merging evidence
-or naming a blocker. The handoff stack is closed, so the next work is no longer
-"run the old list"; it is a post-handoff execution plan:
+or naming a blocker. The first post-handoff queue is closed, so the next work is
+not "run the old list"; it is a successor execution queue for making this exact
+M3 Air a leading local device without borrowing proof from M4 or other lanes:
 
-| Stack position | Track | PR shape | Blocks |
+| Stack position | Work item | PR shape | Blocks |
 |---:|---|---|---|
-| 1 | `M3MBA-019` | Refresh the roadmap and tracker after the handoff stack closes. | Merged setup work from being treated as the next active task. |
-| 2 | M3 device model | Tighten `apple-m3-air-*` capability surfaces, unsupported-backend rejection, and receipt wording without weakening M4 labels. | Hidden fallback, generic Metal/MPSGraph wording, or M4/M3 aliasing. |
-| 3 | M3 accuracy comparison | Add a bounded comparison profile that reuses the accepted dense SLM receipt fields and records prompt IDs, generated IDs, decoded text, tokenizer authority, fallback status, and comparable/non-comparable gaps. | Accuracy claims without exact prompt/model/tokenizer/backend context. |
-| 4 | M3 performance envelope | Record only completed-run actuals with power, thermal, storage, thread count, token budget, and cap sizing; use caps with cushion rather than near-completion termination. | Performance claims from cancelled, timed-out, or missing-context jobs. |
-| 5 | Secondary artifact unblock | Re-check 0.7B and 3B candidates only through exact repo/file/revision/size/SHA/tokenizer/storage preflight before any download or run. | Official/approved artifact authority or storage-safe preflight is still missing. |
-| 6 | M4 proof alignment | Keep accepted M3 artifact evidence linked to separate M4 strict-proof items and require fresh M4 receipts before any M4 claim. | A handoff would imply M3 reference-runner output is M4 proof. |
+| 1 | `M3MBA-026` | Seed the successor queue with concrete device, CI, dense SLM, BitNet, exact-profile ask/benchmark, performance, and CPU/NEON work items. | Runtime changes without a current campaign authority item. |
+| 2 | `M3MBA-027` | Split the M3 Air device/profile/backend-label contract into a single-responsibility shared surface with host-independent backend-selection tests. | Hidden fallback, duplicate labels, generic Metal/MPSGraph wording, historical alias drift, or M4/M3 aliasing. |
+| 3 | `M3MBA-028` | Add compact Linux synthetic CI checks for M3 receipt/profile invariants without live Mac model work. | Expensive generic CI, live downloads in ordinary PRs, or missing proof-family checks. |
+| 4 | `M3MBA-029` | Commit or block bounded M3 Air dense SLM accuracy receipts with prompt IDs, generated IDs, decoded text, tokenizer authority, backend, fallback, and comparison decisions. | Accuracy claims without exact prompt/model/tokenizer/backend context. |
+| 5 | `M3MBA-030` | Commit completed-run M3 Air dense SLM TTFT and decode throughput actuals, including warm_128, power, thermal, storage, thread count, and cap provenance. | Performance claims from cancelled, timed-out, or missing-context jobs. |
+| 6 | `M3MBA-031` | Prepare strict M3 Air BitNet CPU/NEON local-answer receipt gates for the accepted Microsoft 2B I2_S artifact. | Live BitNet claims before synthetic proof-family and receipt-quality checks exist. |
+| 7 | `M3MBA-032` | Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON receipt path. | M3 BitNet claims without generated text, token IDs, tokenizer authority, fallback=false, timing, answer-gate, and cleanup evidence. |
+| 8 | `M3MBA-033` | Use completed dense SLM and BitNet receipts to name the smallest safe CPU/NEON optimization PR. | Optimizing before the bottleneck is measured or mixing dense SLM and BitNet proof families. |
+| 9 | `M3MBA-034` | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces for proven dense SLM and BitNet CPU/NEON contexts. | User-facing M3 claims before receipts prove model/tokenizer/backend/fallback/timing identity. |
+| 10 | `M3MBA-035` | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. | Unmeasured optimization, output drift, or broad Apple Silicon performance claims. |
 
-The follow-on implementation items should be created from these tracks as
-single-purpose work items. M3 accuracy and performance work should prefer dense
-SLM comparison receipts first because the lane already has model/tokenizer and
-backend discipline there. BitNet artifact work should stay blocked until the
-artifact authority surface changes or a separate approved third-party path is
-recorded.
+The follow-on implementation items are single-purpose work items. M3 accuracy
+and performance work should prefer dense SLM comparison receipts first because
+the lane already has model/tokenizer and backend discipline there. M3 BitNet
+work starts from the accepted Microsoft 2B artifact and must produce its own
+M3 CPU/NEON receipts before any local-answer claim. User-facing M3 ask and
+benchmark surfaces follow only after exact-profile dense SLM and BitNet receipts
+exist or name blockers. The blocked 0.7B and 3B secondary candidates remain
+blocked until upstream artifact authority changes or a separate approved
+third-party/conversion path is recorded.
 
 The just-closed stack is retained below as history:
 
@@ -185,6 +193,31 @@ encoded by `M3MBA-013`: route irrelevant PRs away, preflight before expensive
 work, upload phase evidence, and set caps from healthy completed runs with
 cushion. Ending a selected M3 job just before receipt emission is treated as
 wasted CI, not cost control.
+
+## M3 Excellence Queue
+
+`M3MBA-026` starts the successor queue after the first post-handoff execution
+items landed. The queue is M3-first: generalized Apple Silicon and ARM
+improvements are welcome only when they fall out of M3 proof work and preserve
+other lanes' claim boundaries.
+
+| Order | Work item | Evidence target | Claim boundary |
+|---:|---|---|---|
+| 1 | `M3MBA-026` | Roadmap, campaign, and generated tracker agree on the next M3 implementation queue. | No runtime behavior changed. |
+| 2 | `M3MBA-027` | Device/config/probe/backend-selection/CLI code shares one M3 Air identity source. | No M3 Metal, MPSGraph, Neural Engine, or M4 proof claim. |
+| 3 | `M3MBA-028` | Linux synthetic checks cover M3 profile, fallback, proof-family, and cap invariants. | Linux CI does not prove live M3 model timing. |
+| 4 | `M3MBA-029` | Dense SLM accuracy receipt or blocker records exact prompt, token, tokenizer, backend, and comparison context. | Dense evidence remains dense; no BitNet or broad quality claim. |
+| 5 | `M3MBA-030` | Dense SLM performance receipt records completed TTFT and tok/s actuals, including warm_128 and phase artifacts. | Exact M3 Air timing only; no M4 or broad Apple Silicon performance claim. |
+| 6 | `M3MBA-031` | Synthetic M3 BitNet receipt gates require accepted artifact, tokenizer authority, generated text/token IDs, fallback=false, and disabled unsupported surfaces. | No live BitNet proof claim yet. |
+| 7 | `M3MBA-032` | Accepted Microsoft 2B I2_S M3 CPU/NEON receipt passes, fails, or names a blocker with answer-gate evidence. | No M4 proof, QK256, Metal, MPSGraph, Neural Engine, chat, serve, or secondary-candidate claim. |
+| 8 | `M3MBA-033` | Completed receipts name the smallest measured CPU/NEON optimization target and comparator set. | No optimization benefit before a before/after proof PR. |
+| 9 | `M3MBA-034` | Exact-profile M3 `mac ask` and `mac benchmark` are enabled or blocked for the proven receipt contexts. | No chat, serve, unsupported artifact, or broad support claim. |
+| 10 | `M3MBA-035` | First measured CPU/NEON optimization lands for the bottleneck named by M3MBA-033. | No unmeasured speedup, output drift, or proof-family inheritance. |
+
+The queue keeps CI compact by default. Synthetic Linux checks prove schema,
+routing, fallback, and claim-boundary behavior. Live M3 model runs and large
+artifacts stay local or selected-hardware evidence with phase uploads and caps
+sized from completed healthy runs plus cushion.
 
 ## 2026-05-13 Tactical Plan
 
@@ -937,27 +970,35 @@ execution queue.
 
 ## Post-Handoff Near-Term Order
 
-1. Merge `M3MBA-019` so the roadmap, campaign prose, and generated tracker agree
-   with the post-handoff state.
-2. Create the next device-model hardening item only around concrete M3 Air
-   receipt, help, or rejection behavior that keeps CPU/NEON, Metal, and MPSGraph
-   labels distinct.
-3. Create the next accuracy comparison item around bounded dense SLM receipts
-   with exact prompt IDs, generated IDs, tokenizer authority, backend identity,
-   fallback state, and comparable/non-comparable decisions.
-4. Land `M3MBA-023` as the bounded M3 performance profile with retained phase
-   evidence and completed-run timeout cap provenance. Record live timing
-   separately when the selected hardware run completes.
-5. Create any later M3 performance item only from completed-run actuals with
-   thermal, power, storage, thread, token-budget, and cap-sizing evidence.
-6. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
+1. Merge `M3MBA-026` so the campaign has a current successor queue before
+   runtime behavior changes.
+2. Land `M3MBA-027` as the single-responsibility M3 Air device-model cleanup.
+3. Land `M3MBA-028` as compact Linux synthetic proof that M3 invariants are
+   checked without live Mac model work in ordinary CI.
+4. Land `M3MBA-029` with the bounded dense SLM accuracy receipt or an explicit
+   blocker.
+5. Land `M3MBA-030` with completed dense SLM performance actuals; exclude
+   cancelled and timed-out runs from healthy-runtime percentiles.
+6. Land `M3MBA-031` before any new BitNet claim so strict M3 BitNet receipt
+   quality is enforced synthetically.
+7. Land `M3MBA-032` with the accepted Microsoft 2B I2_S M3 CPU/NEON local-answer
+   receipt or a blocker report.
+8. Land `M3MBA-033` only after completed dense SLM and BitNet receipts identify
+   a measured CPU/NEON bottleneck and the smallest safe optimization target.
+9. Land `M3MBA-034` after exact-profile dense SLM and BitNet receipts exist or
+   name blockers, so `mac ask` and `mac benchmark` either support M3 explicitly
+   or fail closed with evidence.
+10. Land `M3MBA-035` as the first measured M3 CPU/NEON implementation follow-up
+   to M3MBA-033, preserving greedy outputs, answer gates, and proof-family
+   boundaries.
+11. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
    path, or explicitly approved third-party artifact path is named.
-7. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
+12. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
    diagnostic artifact and safe local storage state exist.
-8. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` closed the first
-   handoff report; any follow-on M4 proof item must run fresh M4 receipts before
-   claiming proof.
-9. Preserve the `M3MBA-013` selected-long-job rule for any future live M3 lane:
+13. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` and
+   `M3MBA-025` closed the first handoff/alignment reports; any follow-on M4
+   proof item must run fresh M4 receipts before claiming proof.
+14. Preserve the `M3MBA-013` selected-long-job rule for any future live M3 lane:
    route irrelevant work before it starts, preflight before expensive phases,
    upload partial phase artifacts, and size caps from completed runs plus
    cushion instead of ending selected jobs near completion.

@@ -1,0 +1,21 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-026"
+event = "in_progress"
+timestamp = "2026-06-04T22:07:00Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-026-successor-roadmap"
+
+summary = "Started the M3 excellence successor roadmap after M3MBA-025 closed the first post-handoff queue."
+
+artifacts = [
+  "docs/apple-silicon/m3-macbook-air-roadmap.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "M3MBA-026 is a roadmap and campaign-authority item only; it does not change runtime behavior, run models, download artifacts, or claim new M3 performance.",
+  "The successor queue starts with M3 Air device-model SRP cleanup and compact Linux synthetic CI before new dense SLM or BitNet receipts.",
+  "Future accuracy, performance, BitNet, and CPU/NEON items remain scoped to the exact M3 Air host/profile contract and must preserve M4, Metal, MPSGraph, Neural Engine, QK256, and broad Apple Silicon claim boundaries.",
+]
