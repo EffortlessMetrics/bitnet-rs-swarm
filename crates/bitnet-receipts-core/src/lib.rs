@@ -8642,11 +8642,9 @@ fn validate_lunar_lake_openvino_operator_ask_route_backend(
         "dense_slm_openvino_npu_candidate" => Err(anyhow!(
             "{path} NPU OpenVINO operator ask must select openvino-npu, got `{selected_backend}`"
         )),
-        route if route.contains("cpu") || selected_backend.contains("cpu") => {
-            Err(anyhow!(
-                "{path} CPU operator ask wrappers are not valid for OpenVINO appliance ask validation"
-            ))
-        }
+        route if route.contains("cpu") || selected_backend.contains("cpu") => Err(anyhow!(
+            "{path} CPU operator ask wrappers are not valid for OpenVINO appliance ask validation"
+        )),
         _ => Err(anyhow!(
             "{path} artifact_kind=lunar_lake_operator_ask is only valid for Lunar Lake OpenVINO GPU/NPU route wrappers"
         )),

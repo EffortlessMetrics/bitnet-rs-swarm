@@ -354,6 +354,14 @@ completion posture: preflight before expensive work, selected runs allowed to
 finish, phase evidence retained, and timeout caps based on successful completed
 runs plus cushion.
 
+`M3MBA-023` extends that staged workflow with an explicit `performance` profile
+shape. The profile records the fixed warm-session token budgets, cold-load and
+time-to-first-token timing, decode throughput, storage state, power and thermal
+host context, and timeout-cap provenance before selected timing can be used.
+The cap provenance must name completed healthy run evidence plus cushion;
+timed-out or cancelled attempts remain cap-failure actuals and are excluded
+from healthy runtime samples.
+
 If these rules make a live M3 job too expensive for ordinary PR CI, the correct
 design is to route it to a manual, labeled, scheduled, release, or campaign lane.
 It is not correct to start the job and cap it just short of receipt emission.
@@ -671,6 +679,34 @@ it does not claim BitNet answer quality, M4 Mac mini performance, full Metal
 inference, MPSGraph inference, Neural Engine execution, QK256 support, broad
 quality, or broad Apple Silicon performance.
 
+## Bounded Performance Profile
+
+`M3MBA-023` exposes `mac validate --profile-set performance` in the staged M3
+Air workflow. The selected run must remain release-mode M3 Air CPU/NEON evidence
+for the exact machine, model, tokenizer, backend label, token budgets, and
+phase artifacts it records.
+
+The profile must record:
+
+```text
+work_item = M3MBA-023
+device = apple-m3-air-cpu-neon
+profiles_required = warm_16, warm_32, warm_64, warm_128
+release_mode_required = true
+cold_load_separated = true
+time_to_first_token_required = true
+decode_throughput_required = true
+storage, power, and thermal host context retained as phase artifacts
+timeout cap source = completed healthy runs plus cushion
+timeouts and cancellations excluded from healthy runtime samples
+```
+
+Timeout caps are hang guards, not speed evidence. A performance receipt may
+support only a bounded M3 Air dense SLM timing statement for the selected run; it
+does not prove BitNet answer quality, M4 Mac mini performance, full Metal
+inference, MPSGraph model inference, Neural Engine execution, QK256 support, or
+broad Apple Silicon performance.
+
 ## Artifact Ledger
 
 Large model downloads should have a small committed ledger entry in the relevant
@@ -909,16 +945,19 @@ execution queue.
 3. Create the next accuracy comparison item around bounded dense SLM receipts
    with exact prompt IDs, generated IDs, tokenizer authority, backend identity,
    fallback state, and comparable/non-comparable decisions.
-4. Create the next M3 performance item only from completed-run actuals with
+4. Land `M3MBA-023` as the bounded M3 performance profile with retained phase
+   evidence and completed-run timeout cap provenance. Record live timing
+   separately when the selected hardware run completes.
+5. Create any later M3 performance item only from completed-run actuals with
    thermal, power, storage, thread, token-budget, and cap-sizing evidence.
-5. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
+6. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
    path, or explicitly approved third-party artifact path is named.
-6. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
+7. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
    diagnostic artifact and safe local storage state exist.
-7. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` closed the first
+8. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` closed the first
    handoff report; any follow-on M4 proof item must run fresh M4 receipts before
    claiming proof.
-8. Preserve the `M3MBA-013` selected-long-job rule for any future live M3 lane:
+9. Preserve the `M3MBA-013` selected-long-job rule for any future live M3 lane:
    route irrelevant work before it starts, preflight before expensive phases,
    upload partial phase artifacts, and size caps from completed runs plus
    cushion instead of ending selected jobs near completion.

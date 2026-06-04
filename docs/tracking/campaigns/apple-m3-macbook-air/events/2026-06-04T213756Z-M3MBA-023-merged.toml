@@ -1,0 +1,36 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-023"
+event = "merged"
+timestamp = "2026-06-04T21:37:56Z"
+actor = "codex"
+pr = 1526
+head_sha = "2f99883602aaeaaed8aa46dd673679023982423a"
+merge_sha = "d91dbe8f627a1d778b306e7bbf29e522760942f2"
+branch = "codex/apple-m3-macbook-air/M3MBA-023-bounded-performance-profile-port"
+
+summary = "Merged #1526 with the bounded M3 Air performance profile and advanced the lane toward secondary BitNet artifact preflight."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1526",
+  ".github/workflows/apple-m3-air-dense-slm.yml",
+  ".github/workflows/pr-plan.yml",
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "docs/apple-silicon/m3-macbook-air-roadmap.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "M3MBA-023 exposes profile_set=performance for selected staged M3 Air dense SLM hardware runs.",
+  "The workflow records the fixed warm_16/warm_32/warm_64/warm_128 performance contract, token budget, release mode, host storage, power and thermal context, and retained phase artifacts.",
+  "Performance dispatches require non-default timeout-cap provenance before model fetch so caps come from completed healthy runs plus cushion, not near-completion cancellation.",
+  "PR Plan is pinned to em-ci-tiny/rust-tiny capacity for this control-plane workflow shape.",
+  "No live M3 Air model run, performance speedup, BitNet answer-quality claim, M4 Mac mini proof, Metal model inference, MPSGraph model inference, Neural Engine execution, QK256 support, or broad Apple Silicon performance claim is made.",
+]
+
+validation = [
+  "Local proof before #1526 included cargo fmt, bitnet-cli apple_m3 tests, lint-workflows, campaign check, campaign doctor, campaign generate --check, and git diff --check.",
+  "Hosted #1526 checks passed on the refreshed head before auto-merge, including the required merge gate; earlier expensive CI on the first head also passed build/test, MSRV, clippy, docs, fuzz-build, workflow lint, PR Plan, public API, and guards.",
+  "The branch was updated from main only after the first CI cycle had completed its expensive checks because branch protection required an up-to-date head before merge.",
+]
