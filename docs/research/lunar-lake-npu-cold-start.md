@@ -22,6 +22,7 @@ Route-policy watch issue: https://github.com/EffortlessMetrics/bitnet-rs-swarm/i
 Research date: 2026-05-30
 Watch refresh: 2026-06-02
 Cache-truth child refresh: 2026-06-03
+Post-#1371 question matrix refresh: 2026-06-04
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -85,6 +86,25 @@ Committed receipts show:
 
 That evidence is promising for a resident NPU profile, but it is not a broad
 NPU route promotion, power-advantage, native BitNet, or low-power claim.
+
+## Post-#1371 NPU Question Matrix
+
+This matrix routes the remaining NPU cold/cache/resident questions to the
+current evidence, missing receipt shape, owner issue, forbidden claims, and
+next smallest PR. It is a review aid only; it does not refresh hardware
+receipts, run inference, change route policy, promote NPU, or claim speedup,
+power advantage, native NPU execution, or BitNet QK256/I2_S behavior.
+
+| Question | Current evidence | Missing receipt shape | Owner issue | Forbidden claims | Next smallest PR |
+| --- | --- | --- | --- | --- | --- |
+| Is NPU viable for cold one-off asks? | Cold pipeline/load samples remain 29.373s to 35.470s with a 32.513s mean, and the 2026-06-01 explicit-NPU first process still records 10.839s pipeline construction. | Fresh phase receipt with #1191 host timers, explicit construct/load/compile/cache owner fields, answer gate, fallback false, and same-profile CPU comparison. | #1119 | No cold/default, `ask_short`, `ask_normal`, or `low_power` NPU promotion from hot generation timing. | Only collect a new phase/cache diagnostic if it answers a concrete #1119 question or exposes a new timing gap. |
+| Can the repo claim direct runtime cache-hit truth? | Cache experiments show large first-process to second-process reductions, including 11.164s to 0.945s and 10.839s to 0.893s, but direct runtime cache-hit metric remains not exposed. | Machine-readable cache-hit source field that separates `runtime_metric`, `runtime_log`, `file_reuse`, `timing_derived`, and `not_exposed` for the same model/export/runtime/device/config tuple. | #1371 | No direct cache-hit truth claim from timing/file reuse alone. | Add schema/checker hardening only if #1371 finds a direct source, stricter unavailable field, or provenance gap. |
+| Does timing-derived or file-derived cache reuse justify route policy? | Stable cache blobs and construct-time ratios are useful diagnostics, but current specs keep timing-derived cache classification diagnostic only. | Accepted proxy policy or direct cache-hit receipt that binds cache identity to OpenVINO version, model hashes, device, cache dir, and compile configuration. | #1119 / #1371 | No cached-cold route promotion or route-policy change from proxy cache evidence alone. | Keep the evidence in research notes unless a precise proxy-policy proposal or validator gap is identified. |
+| Is `warm_resident` still the only NPU promotion-shaped profile? | The 30/30 resident receipt and 10/10 diagnostic preserve fallback false, route stability, answer/token stability, direct generated-token IDs, and warm timing context. | Future resident receipts must retain pipeline, cold-first-ask, warm-loop distribution, drift, token, memory, telemetry, and claim-boundary fields. | #1120 / #1163 / #1119 | No inherited cold, default ask, `ask_short`, `ask_normal`, or `low_power` claim from resident timing. | No PR unless a future resident receipt violates the warm-resident acceptance fields. |
+| Can `AUTO` selected-device evidence drive route policy? | Debug-log validator/parser/capture support exists for block-scoped OpenVINO GenAI `AUTO` evidence, but generated phase receipts still do not expose promotion-grade selected-device truth. | Paired application receipt and raw/debug source that proves selected device by phase with fallback-disabled context and exact model block scope. | #1149 | No `AUTO` route-policy proof or NPU promotion from block-scoped debug-log support alone. | Parser/source integration only if a route review needs machine-readable selected-device proof after other gates exist. |
+| Is generated-token visibility enough to change the NPU route boundary? | Current cache and resident evidence can record direct generated-token IDs, and #1244 remains the live watch for future direct/proxy/unavailable ambiguity. | Future receipts must preserve direct generated-token IDs or explicit unavailable status through the shared fail-closed helper. | #1244 | No promotion, cache-hit truth, `low_power`, or route-policy change from token visibility alone. | Open a checker or schema PR only if a future receipt bypasses the shared helper or makes token-source status ambiguous. |
+| Can NPU satisfy `low_power` today? | POWER-006 remains blocked on real battery-mode route samples, energy proxy, and benchmark-qualified power advantage. Resident latency is not power evidence. | Battery-mode CPU/GPU/NPU `low_power` samples with strict before/after power telemetry, fallback false, answer gates, energy proxy, and thermal availability or explicit unavailability. | #1064 | No low-power route, NPU power advantage, battery claim, or promotion from AC-only or latency-only evidence. | Wait for the physical battery/discharging runbook sequence; do not create another AC-only implementation PR. |
+| Does dense OpenVINO NPU evidence prove native or BitNet NPU behavior? | Current NPU evidence is dense Qwen OpenVINO GenAI behavior only. The specs keep dense SLM evidence separate from packed BitNet QK256/I2_S proof. | Separate static-shape or native NPU proof contract with CPU reference, model/kernel identity, fallback false, answer gates, and timing for that exact BitNet path. | Future BitNet/NPU issue only | No native NPU, full BitNet accelerator inference, packed QK256/I2_S, or dense-SLM-as-BitNet claim. | No PR in this dense SLM NPU lane; keep BitNet/NPU proof as a separate future workstream. |
 
 ## Current Route Status
 
