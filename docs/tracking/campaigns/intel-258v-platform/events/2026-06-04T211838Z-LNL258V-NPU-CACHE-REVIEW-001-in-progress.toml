@@ -1,0 +1,13 @@
+timestamp = "2026-06-04T21:18:38Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-NPU-CACHE-REVIEW-001"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-REVIEW-001-question-matrix"
+summary = "Started a docs-only NPU cold/cache/resident question matrix refresh."
+notes = [
+  "Add a Post-#1371 NPU question matrix to the Lunar Lake NPU cold-start research note that maps cold one-off, direct cache-hit truth, timing/file-derived cache reuse, warm_resident, AUTO selected-device, generated-token visibility, low_power, and native/BitNet NPU questions to current evidence, missing receipt shape, owner issues, forbidden claims, and the next smallest PR.",
+  "Keep the work review-only: no Lunar Lake inference, model load, hardware receipt refresh, route-policy mutation, route promotion, speedup claim, power-advantage claim, native accelerator claim, low_power claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
