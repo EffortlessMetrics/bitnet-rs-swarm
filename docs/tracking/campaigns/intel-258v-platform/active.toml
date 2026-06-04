@@ -17997,8 +17997,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-OPENVINO-PLAN-001"
-status = "pr_open"
+status = "merged"
 pr = 1521
+head_sha = "ea5f59b91ee503aa2c1e45cafa56ecb610b4aa16"
+merge_sha = "18e82b6cbf57f84034cb486955e564bf262dc165"
+merged_at = "2026-06-04T20:27:30Z"
 branch = "codex/lunar-lake/LNL258V-OPENVINO-PLAN-001-review-first-blockers"
 stackable = false
 review_mode = "codex_premerge"
