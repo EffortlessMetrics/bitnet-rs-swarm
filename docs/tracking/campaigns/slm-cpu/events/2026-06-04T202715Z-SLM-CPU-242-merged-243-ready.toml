@@ -1,0 +1,17 @@
+timestamp = "2026-06-04T20:27:15Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-242"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1134
+branch = "codex/slm-cpu/slm-cpu-242-prompt-session-callsite-descriptor"
+head_sha = "b3e2b8720401ba4f62438719aae9e16ce42c5704"
+merge_sha = "3b7828e0a742c482786d57ecf0a3a19e26a0578f"
+summary = "Closed SLM-CPU-242 after the prompt/session no-bias descriptor plumbing PR merged and queued SLM-CPU-243."
+notes = [
+  "PR #1134 adds opt-in TransformerModel, TransformerBlock, and FeedForward propagation for a prompt-bound no-bias descriptor to the exact FeedForward::apply_linear feed_forward.down_proj callsite.",
+  "The SLM-CPU-242 artifact records production warm-session descriptor construction and post-decode generated/text receipt emission as remaining fail-closed blockers.",
+  "SLM-CPU-243 is ready to construct or precisely block the production warm-session descriptor before any no-bias dispatch branch or candidate-on receipt.",
+]
