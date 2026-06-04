@@ -1,0 +1,24 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-024"
+event = "in_progress"
+timestamp = "2026-06-04T21:43:47Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-024-artifact-unblock-preflight-20260604"
+
+summary = "Started the secondary BitNet artifact unblock preflight clean-port on the swarm repository after M3MBA-023 merged."
+
+artifacts = [
+  "ci/model-artifacts/apple-m3-secondary-unblock-preflight.toml",
+  "docs/reports/apple-silicon-macbook-m3-air-secondary-artifact-unblock.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "The official 0.7B and 3B 1bitLLM repositories were probed through Hugging Face APIs and HEAD-only model-file metadata.",
+  "No model contents were downloaded, no model binary is committed, and no secondary artifact is accepted.",
+  "The current M3 Air cache volume is above the hard free-space floor but below the preferred floor.",
+  "The 3B official safetensors shards would currently drop the cache volume below the hard floor.",
+  "This item remains a preflight/reporting slice and must not claim BitNet answer quality, Apple backend support, M4 proof, QK256 support, or broad Apple Silicon performance.",
+]
