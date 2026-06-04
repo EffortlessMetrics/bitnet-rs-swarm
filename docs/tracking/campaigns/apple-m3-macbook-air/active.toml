@@ -1135,8 +1135,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-023"
-status = "in_progress"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-023-bounded-performance-profile-port"
+pr = 1526
+head_sha = "2f99883602aaeaaed8aa46dd673679023982423a"
+merge_sha = "d91dbe8f627a1d778b306e7bbf29e522760942f2"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
