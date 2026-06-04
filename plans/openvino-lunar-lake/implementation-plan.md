@@ -236,7 +236,9 @@ Acceptance additions:
 
 ### Work item: LNL258V-OPENVINO-VALIDATE-ASK-001
 
-Status: in progress
+Status: merged
+Linked issue: [#1445](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1445)
+Linked PRs: [#1447](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1447), [#1450](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1450)
 Blocked by: `LNL258V-OPENVINO-VALIDATE-001`, issue #1445
 
 Add standalone validation for appliance-wrapped successful OpenVINO operator
@@ -259,6 +261,9 @@ Acceptance additions:
   tokens, token-count drift, and claim leakage fail closed.
 - Blocked `low_power` stays on the blocked-ask/regression path and is not
   treated as successful generated-token evidence.
+- This item is closed. Future wrapper-shape gaps should reopen #1244 or create
+  a new validator issue; they should not widen route policy or refresh
+  hardware receipts in the same PR.
 
 ### Work item: LNL258V-OPENVINO-STATUS-001
 
@@ -529,6 +534,41 @@ qualification.
   profiles that pass quality, select NPU without fallback, include cache and
   resident proof, expose cold-start caveats, and include power/thermal or
   accepted power-proxy evidence.
+
+### Current Review-First Blockers
+
+The active Lunar Lake lane should handle the remaining practical blockers as
+research and review contracts before opening implementation or receipt-refresh
+PRs:
+
+- `LNL258V-POWER-006` stays blocked by issue
+  [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064)
+  until a real battery-mode run produces strict before/after telemetry,
+  fallback-free CPU/GPU/NPU `low_power` route samples, a valid energy proxy,
+  thermal availability or explicit unavailability, and benchmark-qualified
+  power-advantage evidence. AC-only telemetry, runbook receipts, ask telemetry
+  context, or schema support remain blocker evidence only.
+- NPU work stays under the cold/cache/warm contracts in
+  [#1119](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1119)
+  and [#1371](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1371).
+  Hot-path latency alone must not broaden NPU promotion; cache behavior,
+  resident stability, selected-device identity, fallback status, and cold-start
+  caveats must remain visible.
+- GPU promotion for `ask_short` and `ask_normal` is protected by the current
+  review notes and guards, including
+  [#1121](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1121)
+  and [#1373](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1373).
+  Future work should first review corpus-v2 quality, direct token visibility,
+  route identity, profile timing, fallback, and benchmark qualification before
+  changing the ledger.
+- Rust GGUF CPU slow-path work stays diagnostic until the resident phase,
+  matched CPU comparison, topology, or overhead issues identify a specific
+  optimization target:
+  [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232),
+  [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365),
+  [#1370](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370),
+  and [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374).
+  Do not optimize from the aggregate "CPU is slow" observation alone.
 
 ## Phase F: Rust-Native Product Surface
 

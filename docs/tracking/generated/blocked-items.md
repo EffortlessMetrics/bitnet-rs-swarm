@@ -536,6 +536,8 @@
 | intel-258v-platform | LNL258V-POWER-001 | LNL258V-ROUTE-019, LNL258V-NPU-RESIDENT-002, LNL258V-BENCH-004 | merged |
 | intel-258v-platform | LNL258V-OP-006 | LNL258V-ROUTE-015 | merged |
 | intel-258v-platform | LNL258V-ASK-008 | LNL258V-BITNET-INTAKE-004, LNL258V-ASK-007 | merged |
+| intel-258v-platform | LNL258V-OPENVINO-PLAN-001 | LNL258V-OPENVINO-VALIDATE-ASK-001 | merged |
+| intel-258v-platform | LNL258V-CPU-SLOWPATH-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
 | intel-a770 | A770-005 | A770-004 | merged |
@@ -689,7 +691,8 @@
 | intel-a770 | A770-152 | A770-151 | merged |
 | intel-a770 | A770-153 | A770-152 | merged |
 | intel-a770 | A770-154 | A770-153 | merged |
-| intel-a770 | A770-155 | A770-154 | ready |
+| intel-a770 | A770-155 | A770-154 | merged |
+| intel-a770 | A770-156 | A770-155 | ready |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
@@ -1105,7 +1108,8 @@
 | slm-cpu | SLM-CPU-239 | SLM-CPU-238 | merged |
 | slm-cpu | SLM-CPU-240 | SLM-CPU-239 | merged |
 | slm-cpu | SLM-CPU-241 | SLM-CPU-240 | merged |
-| slm-cpu | SLM-CPU-242 | SLM-CPU-241 | ready |
+| slm-cpu | SLM-CPU-242 | SLM-CPU-241 | merged |
+| slm-cpu | SLM-CPU-243 | SLM-CPU-242 | ready |
 | slm-cpu | SLM-CPU-165 | SLM-CPU-164 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |

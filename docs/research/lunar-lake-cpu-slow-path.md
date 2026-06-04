@@ -51,6 +51,7 @@ Post-reviewability-contract refresh: 2026-06-02
 Post-physical-package refresh: 2026-06-02
 Post-overhead-scope issue refresh: 2026-06-03
 Post-runtime-comparison current-source refresh: 2026-06-03
+Post-#1086 question matrix refresh: 2026-06-04
 
 Repository: `EffortlessMetrics/bitnet-rs-swarm`
 
@@ -146,6 +147,22 @@ or route-policy PR. The separate
 issue now owns the matched Rust GGUF CPU versus OpenVINO CPU comparison package
 and keeps benchmark qualification fail-closed while model format or timing
 scope differ.
+
+## Post-#1086 Slow-Path Question Matrix
+
+This matrix is a routing aid for future CPU work. It adds no new inference,
+does not refresh hardware receipts, and does not change route policy.
+
+| Question | Current evidence | Missing receipt shape | Owner issue | Forbidden claims | Next smallest PR |
+| --- | --- | --- | --- | --- | --- |
+| Is one-off CPU slow because of cold model load? | The cold phase receipt records 27986.539 ms total response with 14250.931 ms model load; the #1334 resident package records `model_loaded_once=true` and `tokenizer_loaded_once=true`. | No new receipt is needed to say cold load is material; resident benchmark qualification still depends on the strict phase blockers. | [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232) | No CPU optimization, route-policy, speedup, or benchmark-qualified resident claim. | None unless #1232 changes the accepted resident phase contract. |
+| Is tokenizer or prompt-template setup the main cause? | Cold tokenize is visible at 482.325 ms, while #1334 resident tokenize means are about 0.004 ms and prompt-render/quality/detokenize fields are exposed. | Matched prompt-render, tokenization, detokenization, and timing-scope alignment across Rust GGUF CPU and OpenVINO CPU. | [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232), [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365) | No claim that tokenizer/template work explains the route, and no OpenVINO CPU replacement claim. | A no-new-inference alignment checker or companion receipt that makes prompt/render/token scope mismatches machine-readable. |
+| Is prefill or first-token work the dominant resident short-ask cost? | #1334 resident summaries show `ask_short` mean prefill 3588.079 ms and mean time to first token 3734.455 ms after reload is removed. | Kernel, layer, attention/MLP, dequantization, KV-cache, RoPE, logits, and sampling attribution for the exact Rust GGUF route. | [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232) | No blind runtime optimization, CPU speedup, or profile promotion claim. | An issue-shaped phase-attribution PR only after #1232 names the accepted target and success metric. |
+| Is decode the main cost for longer outputs? | #1334 `ask_normal` mean decode is 3573.740 ms for 24 tokens; `decode_heavy` records 111754.248 ms decode for 512 tokens. | Per-layer/per-kernel decode attribution, sampling/logits split, and buffer-reuse evidence for the resident loop. | [#1232](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1232) | No decode optimization or sustained-throughput speedup claim from aggregate route timing alone. | A narrow decode-attribution plan or checker if #1232 accepts the receipt fields. |
+| Are receipt writing or telemetry probes distorting resident phase timing? | The #1334 package is `diagnostic_package_reviewable=true` but profile `receipt_write_ms` and `telemetry_ms` remain `not_exposed`; #1291/#1292 forbid backfilling profile fields from aggregate observations. | Scope-specific aggregate/session fields such as summary-builder receipt write time and telemetry collection time, plus their qualification effect. | [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374) | No backfill of per-profile blockers and no benchmark qualification by implication. | A no-new-inference schema/docs/guard PR that names aggregate/session overhead fields and keeps current summaries fail-closed. |
+| Is OpenVINO CPU faster because the runtime or model format differs? | The runtime-comparison receipt is context-only: Rust GGUF CPU uses Q8_0 GGUF, OpenVINO CPU uses INT4_SYM IR, and timing scopes/prompt metrics differ. | Matched profile, model-format, prompt/render, timing-scope, route identity, fallback, and corpus alignment gates. | [#1365](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1365) | No OpenVINO CPU promotion, drop-in replacement, or benchmark-qualified speedup claim while scopes differ. | A no-new-inference schema/checker or companion receipt that makes the alignment gates explicit. |
+| Is CPU thread placement or topology the missing explanation? | The #1208 matrix has no receipt gaps and shows no useful thread-count win; it does not expose P-core/E-core placement, affinity, utilization, frequency, or thermal data. | `lunar-lake-cpu-topology-affinity.json` with route/profile, affinity, P/E mapping, utilization, frequency/throttle, thermal, and fallback context or explicit unavailable reasons. | [#1370](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1370) | No thread default change, topology tuning, route-policy change, speedup, or low-power claim. | A schema/checker PR, or one bounded physical topology receipt only if the host can expose the required fields. |
+| Can CPU slow-path work support `low_power` or battery claims? | Current CPU context is not a battery-mode low-power proof, and POWER-006 remains blocked. | Battery-mode route samples, power scheme, battery state, energy proxy, thermal availability or explicit unavailability, answer gates, fallback status, and benchmark-qualified power advantage. | [#1064](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1064) | No power advantage, low-power promotion, NPU promotion, or energy claim from CPU timing. | No CPU slow-path PR should make a low-power claim until #1064 has real battery-mode evidence. |
 
 ## Current CPU Route Context
 
