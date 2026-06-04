@@ -1,0 +1,33 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-026"
+event = "merged"
+timestamp = "2026-06-04T22:19:26Z"
+actor = "codex"
+pr = 1540
+head_sha = "a2acc0e34f64c86f42ee6a9fd09a7156881b7919"
+merge_sha = "46260204933e38421ac2f1274f22885cdeb576c4"
+branch = "codex/apple-m3-macbook-air/M3MBA-026-successor-roadmap"
+
+summary = "Merged #1540 with the M3 excellence successor execution queue."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1540",
+  "docs/apple-silicon/m3-macbook-air-roadmap.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "M3MBA-026 seeds concrete follow-on items for device-model SRP cleanup, compact Linux synthetic CI, dense SLM accuracy/performance receipts, M3 BitNet CPU/NEON proof prep and receipting, exact-profile M3 ask/benchmark readiness, and measured CPU/NEON follow-up.",
+  "The merged item is roadmap and campaign authority only; it did not change runtime behavior, run models, download artifacts, or claim new M3 performance.",
+  "M3MBA-027 is the next ready implementation item and owns the shared M3 Air device/profile/backend-label SRP cleanup.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
