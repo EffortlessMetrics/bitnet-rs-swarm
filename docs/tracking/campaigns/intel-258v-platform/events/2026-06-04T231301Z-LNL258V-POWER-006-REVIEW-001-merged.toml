@@ -1,0 +1,16 @@
+timestamp = "2026-06-04T23:13:01Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006-REVIEW-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1547
+head_sha = "13b94bd87da7135d3e59887222e344161629a2dc"
+merge_sha = "34cdf065e42bff6fdb51b95a5bdcc81f20951364"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
+summary = "Closed out PR #1547 for the docs-only POWER-006 low_power question matrix refresh."
+notes = [
+  "PR #1547 merged as 34cdf065e42bff6fdb51b95a5bdcc81f20951364 and added the Post-#1064 POWER-006 low_power question matrix to docs/research/lunar-lake-power-telemetry.md.",
+  "POWER-006 remains blocked on the physical battery/discharging window; the merged review made no Lunar Lake inference, hardware receipt refresh, route-policy mutation, low_power promotion, speedup claim, power-advantage claim, measured-temperature claim, native accelerator claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim.",
+]
