@@ -1,0 +1,19 @@
+timestamp = "2026-06-04T20:27:30Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-OPENVINO-PLAN-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1521
+branch = "codex/lunar-lake/LNL258V-OPENVINO-PLAN-001-review-first-blockers"
+head_sha = "ea5f59b91ee503aa2c1e45cafa56ecb610b4aa16"
+merge_sha = "18e82b6cbf57f84034cb486955e564bf262dc165"
+merged_at = "2026-06-04T20:27:30Z"
+actor = "codex"
+summary = "Marked LNL258V-OPENVINO-PLAN-001 merged after PR #1521 landed by squash automerge."
+notes = [
+  "PR #1521 marked LNL258V-OPENVINO-VALIDATE-ASK-001 merged in the OpenVINO Lunar Lake implementation plan with issue and PR references.",
+  "The merged plan refresh records review-first blockers for POWER-006, NPU cold/cache/warm work, GPU ask-profile promotion, and Rust GGUF CPU slow-path work.",
+  "The merged change is docs and tracker state only.",
+  "No new inference, committed hardware receipt refresh, route-policy mutation, route promotion, speedup claim, power-advantage claim, native accelerator claim, broad quality claim, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior change was added.",
+]
