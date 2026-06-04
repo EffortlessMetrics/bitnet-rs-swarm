@@ -1,0 +1,15 @@
+timestamp = "2026-06-04T21:21:53Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-NPU-CACHE-REVIEW-001"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 1530
+head_sha = "6c80d44417601cb9451f77ae09560fb59fcfee63"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-REVIEW-001-question-matrix"
+summary = "Opened PR #1530 for the docs-only NPU question matrix refresh."
+notes = [
+  "PR #1530 adds the Post-#1371 NPU question matrix to docs/research/lunar-lake-npu-cold-start.md and keeps the work review-only.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, route promotion, speedup claim, power-advantage claim, low_power claim, native accelerator claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
