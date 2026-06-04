@@ -8944,6 +8944,7 @@ async fn run_slm_warm_session(
 
     let mut prompt_receipts = Vec::with_capacity(prompt_inputs.len());
     let mut prompt_summaries = Vec::with_capacity(prompt_inputs.len());
+    let mut no_bias_prompt_session_descriptor_receipts = Vec::with_capacity(prompt_inputs.len());
     let mut metal_phase_receipts = Vec::new();
     let mut quality_failed_prompts = Vec::new();
     let mut determinism_records = Vec::with_capacity(prompt_inputs.len());
@@ -9012,6 +9013,7 @@ async fn run_slm_warm_session(
     let mut sampler_reused_prompt_count = 0usize;
     let mut sampler_recreated_prompt_count = 0usize;
     let mut memory_after_first_ask = None;
+    let no_bias_runtime_gate_requested = slm_warm_session_no_bias_runtime_gate_requested_from_env();
     bitnet_transformer::reset_dense_q8_sidecar_instrumentation();
     for (index, prompt_input) in prompt_inputs.iter().enumerate() {
         output.status(format!(
@@ -9107,6 +9109,7 @@ async fn run_slm_warm_session(
         let mut logits_vec_extraction_steps = 0usize;
         let mut logits_scratch_reuse_steps = 0usize;
         let prompt_ids_sha256 = compute_sha256_json_value(&serde_json::json!(tokens.as_slice()));
+        let prompt_ids_for_no_bias_descriptor = tokens.clone();
         let prompt_token_buffers = prompt_token_buffer_contract_json(&buffer_reuse_evidence);
         let prompt_tokenize_contract = prompt_tokenize_contract_json(PromptTokenizeContractInput {
             model_sha256: model_sha256.as_str(),
@@ -9128,6 +9131,35 @@ async fn run_slm_warm_session(
             runtime_allocation_behavior_changed: prompt_token_cache_hit,
             prompt_token_buffers: &prompt_token_buffers,
         });
+        let prompt_no_bias_descriptor =
+            slm_warm_session_no_bias_prompt_session_descriptor_for_prompt(
+                &model_path,
+                model_sha256.as_str(),
+                &model_architecture,
+                tokenizer_source_str,
+                tokenizer_strict,
+                backend_identity.runtime_api.as_str(),
+                backend_identity.selected_backend.as_str(),
+                backend_identity.fallback_used,
+                no_bias_runtime_gate_requested,
+                &prompt_ids_for_no_bias_descriptor,
+                prompt_ids_sha256.as_str(),
+            );
+        let prompt_no_bias_descriptor_receipt =
+            slm_warm_session_no_bias_prompt_session_descriptor_receipt(
+                &model_path,
+                model_sha256.as_str(),
+                &model_architecture,
+                tokenizer_source_str,
+                tokenizer_strict,
+                backend_identity.runtime_api.as_str(),
+                backend_identity.selected_backend.as_str(),
+                backend_identity.fallback_used,
+                prompt_no_bias_descriptor.as_ref(),
+                no_bias_runtime_gate_requested,
+                &prompt_ids_for_no_bias_descriptor,
+                prompt_ids_sha256.as_str(),
+            );
 
         let prefill_start = std::time::Instant::now();
         let mut prefill_token_count = 0usize;
@@ -9141,7 +9173,15 @@ async fn run_slm_warm_session(
                         .push(AllocationAuditSnapshot::delta_since(prefill_embed_alloc_start));
                 }
                 let prefill_forward_alloc_start = AllocationAuditSnapshot::current();
-                let _ = model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any)?;
+                let _ = if let Some(descriptor) = prompt_no_bias_descriptor.as_ref() {
+                    model.forward_with_no_bias_callsite_descriptor(
+                        &x,
+                        &mut session_kv_cache as &mut dyn std::any::Any,
+                        descriptor,
+                    )?
+                } else {
+                    model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any)?
+                };
                 if allocation_audit_enabled {
                     prefill_forward_step_allocs
                         .push(AllocationAuditSnapshot::delta_since(prefill_forward_alloc_start));
@@ -9185,7 +9225,15 @@ async fn run_slm_warm_session(
                     "activation_scope": "first_prompt_first_decode_forward_only",
                 }))?;
             }
-            let forward_result = model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any);
+            let forward_result = if let Some(descriptor) = prompt_no_bias_descriptor.as_ref() {
+                model.forward_with_no_bias_callsite_descriptor(
+                    &x,
+                    &mut session_kv_cache as &mut dyn std::any::Any,
+                    descriptor,
+                )
+            } else {
+                model.forward(&x, &mut session_kv_cache as &mut dyn std::any::Any)
+            };
             if qwen_trace_this_step {
                 unsafe {
                     std::env::remove_var("BITNET_QWEN_TRACE_ACTIVE");
@@ -9589,6 +9637,10 @@ async fn run_slm_warm_session(
                 receipt_construction: prompt_receipt_construct_alloc,
             });
         if let Some(object) = prompt_receipt.as_object_mut() {
+            object.insert(
+                "dense_no_bias_prompt_session_descriptor".to_string(),
+                prompt_no_bias_descriptor_receipt.clone(),
+            );
             if let Some(phase_receipt) = &metal_phase_contribution {
                 object.insert(
                     "metal_phase_contributions".to_string(),
@@ -9638,6 +9690,7 @@ async fn run_slm_warm_session(
             },
             "session_reuse": prompt_receipt["session_reuse"].clone(),
             "prompt_tokenize_contract": prompt_receipt["prompt_tokenize_contract"].clone(),
+            "dense_no_bias_prompt_session_descriptor": prompt_no_bias_descriptor_receipt.clone(),
             "metal_phase_contributions": prompt_receipt
                 .get("metal_phase_contributions")
                 .cloned()
@@ -9648,6 +9701,7 @@ async fn run_slm_warm_session(
         if output.write_prompt_receipts {
             prompt_receipts.push(prompt_receipt_path.display().to_string());
         }
+        no_bias_prompt_session_descriptor_receipts.push(prompt_no_bias_descriptor_receipt);
         if index == 0 && memory_after_first_ask.is_none() {
             memory_after_first_ask = Some(slm_cpu_warm_session_memory_context_json());
         }
@@ -9676,7 +9730,7 @@ async fn run_slm_warm_session(
             backend_identity.runtime_api.as_str(),
             backend_identity.selected_backend.as_str(),
             backend_identity.fallback_used,
-            slm_warm_session_no_bias_runtime_gate_requested_from_env(),
+            no_bias_runtime_gate_requested,
             &prompt_summaries,
         );
     let dense_no_bias_apply_linear_gate =
@@ -9884,6 +9938,7 @@ async fn run_slm_warm_session(
         "dense_q8_hook_selection": dense_q8_hook_selection,
         "dense_q8_hook": dense_q8_hook_receipt,
         "dense_q8_sidecar_instrumentation": dense_q8_sidecar_instrumentation,
+        "dense_no_bias_prompt_session_descriptors": no_bias_prompt_session_descriptor_receipts,
         "dense_no_bias_apply_linear_gate": dense_no_bias_apply_linear_gate,
         "qwen_trace": output.qwen_trace.receipt(),
         "cpu": {
@@ -11438,6 +11493,357 @@ fn slm_warm_session_no_bias_apply_linear_gate_for_session(
         allocation_reduction_claim: false,
         timing_improvement_claim: false,
         speedup_claim: false,
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_no_bias_prompt_session_target_identity(
+    model_architecture: &str,
+) -> Option<(&'static str, &'static str)> {
+    match model_architecture {
+        "qwen3" => Some((
+            "qwen3_feed_forward_down_proj_no_bias_candidate",
+            "layers.0.feed_forward.down_proj.weight",
+        )),
+        "qwen2" => Some((
+            "qwen25_feed_forward_down_proj_no_bias_candidate",
+            "layers.0.feed_forward.down_proj.weight",
+        )),
+        _ => None,
+    }
+}
+
+#[cfg(feature = "full-cli")]
+#[allow(clippy::too_many_arguments)]
+fn slm_warm_session_no_bias_prompt_session_descriptor_fail_closed_conditions(
+    model_path: &std::path::Path,
+    model_sha256: &str,
+    model_architecture: &str,
+    tokenizer_source: &str,
+    tokenizer_strict: bool,
+    runtime_api: &str,
+    selected_backend: &str,
+    fallback_used: bool,
+    runtime_gate_requested_enabled: bool,
+    prompt_ids: &[u32],
+    prompt_ids_digest: &str,
+) -> Vec<&'static str> {
+    let mut fail_closed_conditions = Vec::new();
+    if !runtime_gate_requested_enabled {
+        fail_closed_conditions.push("explicit_runtime_gate_not_requested");
+    }
+    if model_sha256.is_empty() {
+        fail_closed_conditions.push("model_sha256_missing");
+    }
+    if dense_slm_quant_format(model_path) != "Q8_0" {
+        fail_closed_conditions.push("quant_format_not_q8_0");
+    }
+    if slm_warm_session_no_bias_prompt_session_target_identity(model_architecture).is_none() {
+        fail_closed_conditions.push("model_architecture_not_qwen2_or_qwen3");
+    }
+    if tokenizer_source != "gguf_metadata" {
+        fail_closed_conditions.push("tokenizer_source_not_gguf_metadata");
+    }
+    if !tokenizer_strict {
+        fail_closed_conditions.push("tokenizer_not_strict");
+    }
+    if runtime_api != "cpu" {
+        fail_closed_conditions.push("runtime_api_not_cpu");
+    }
+    if selected_backend != "cpu-rust" {
+        fail_closed_conditions.push("selected_backend_not_cpu_rust");
+    }
+    if fallback_used {
+        fail_closed_conditions.push("fallback_used");
+    }
+    if prompt_ids.is_empty() {
+        fail_closed_conditions.push("prompt_ids_missing");
+    }
+    if prompt_ids_digest.is_empty() {
+        fail_closed_conditions.push("prompt_ids_digest_missing");
+    }
+
+    fail_closed_conditions.sort_unstable();
+    fail_closed_conditions.dedup();
+    fail_closed_conditions
+}
+
+#[cfg(feature = "full-cli")]
+#[allow(clippy::too_many_arguments)]
+fn slm_warm_session_no_bias_prompt_session_descriptor_for_prompt(
+    model_path: &std::path::Path,
+    model_sha256: &str,
+    model_architecture: &str,
+    tokenizer_source: &str,
+    tokenizer_strict: bool,
+    runtime_api: &str,
+    selected_backend: &str,
+    fallback_used: bool,
+    runtime_gate_requested_enabled: bool,
+    prompt_ids: &[u32],
+    prompt_ids_digest: &str,
+) -> Option<bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary> {
+    if !slm_warm_session_no_bias_prompt_session_descriptor_fail_closed_conditions(
+        model_path,
+        model_sha256,
+        model_architecture,
+        tokenizer_source,
+        tokenizer_strict,
+        runtime_api,
+        selected_backend,
+        fallback_used,
+        runtime_gate_requested_enabled,
+        prompt_ids,
+        prompt_ids_digest,
+    )
+    .is_empty()
+    {
+        return None;
+    }
+
+    let (candidate_path, tensor_name) =
+        slm_warm_session_no_bias_prompt_session_target_identity(model_architecture)?;
+    let callsite_identity =
+        bitnet_transformer::dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(
+            0,
+            "down_proj",
+        );
+    let descriptor =
+        bitnet_transformer::DenseLinearNoBiasPromptSessionDescriptor::from_prompt_session(
+            bitnet_transformer::DenseLinearNoBiasPromptSessionDescriptorInput {
+                tensor_name,
+                callsite_identity: callsite_identity.as_str(),
+                model_sha256,
+                model_architecture: match model_architecture {
+                    "qwen3" => "qwen3",
+                    "qwen2" => "qwen2",
+                    _ => return None,
+                },
+                quant_format: "Q8_0",
+                tokenizer_source: "gguf_metadata",
+                tokenizer_strict,
+                runtime_api: "cpu",
+                selected_backend: "cpu-rust",
+                fallback_used: false,
+                prompt_ids,
+                prompt_ids_digest,
+                selected_path: "eager_f32_candle",
+                selected_kernel: "dense-f32-candle-linear",
+                candidate_path,
+                candidate_kernel: "dense-f32-candle-linear-no-bias-candidate",
+                bias_present: Some(false),
+                explicit_runtime_gate_requested: runtime_gate_requested_enabled,
+            },
+        );
+    if !descriptor.descriptor_ready_for_apply_linear_callsite {
+        return None;
+    }
+    let per_callsite =
+        bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_prompt_session_descriptor(&descriptor);
+    per_callsite.per_callsite_identity_matches_descriptor.then_some(per_callsite)
+}
+
+#[cfg(feature = "full-cli")]
+#[allow(clippy::too_many_arguments)]
+fn slm_warm_session_no_bias_prompt_session_descriptor_receipt(
+    model_path: &std::path::Path,
+    model_sha256: &str,
+    model_architecture: &str,
+    tokenizer_source: &str,
+    tokenizer_strict: bool,
+    runtime_api: &str,
+    selected_backend: &str,
+    fallback_used: bool,
+    descriptor: Option<
+        &bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    >,
+    runtime_gate_requested_enabled: bool,
+    prompt_ids: &[u32],
+    prompt_ids_digest: &str,
+) -> serde_json::Value {
+    let quant_format = dense_slm_quant_format(model_path);
+    let target_identity =
+        slm_warm_session_no_bias_prompt_session_target_identity(model_architecture);
+    let target_callsite_identity = target_identity.map(|_| {
+        bitnet_transformer::dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(
+            0,
+            "down_proj",
+        )
+    });
+    let fail_closed_conditions = descriptor
+        .map(|descriptor| descriptor.fail_closed_conditions.clone())
+        .unwrap_or_else(|| {
+            slm_warm_session_no_bias_prompt_session_descriptor_fail_closed_conditions(
+                model_path,
+                model_sha256,
+                model_architecture,
+                tokenizer_source,
+                tokenizer_strict,
+                runtime_api,
+                selected_backend,
+                fallback_used,
+                runtime_gate_requested_enabled,
+                prompt_ids,
+                prompt_ids_digest,
+            )
+        });
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "dense_no_bias_prompt_session_descriptor",
+        "tracking_item": "SLM-CPU-243",
+        "consumes_tracking_item": "SLM-CPU-242",
+        "record_type": "bitnet_transformer::DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary",
+        "descriptor_constructed": descriptor.is_some(),
+        "descriptor_passed_to_model_forward": descriptor.is_some(),
+        "descriptor_identity_reaches_apply_linear_callsite": descriptor
+            .map(|descriptor| descriptor.per_callsite_identity_matches_descriptor)
+            .unwrap_or(false),
+        "decision": descriptor
+            .map(|descriptor| descriptor.decision)
+            .unwrap_or(if runtime_gate_requested_enabled {
+                "blocked_fail_closed"
+            } else {
+                "default_runtime_preserved_without_explicit_gate"
+            }),
+        "reason": descriptor
+            .map(|descriptor| descriptor.reason)
+            .unwrap_or(if runtime_gate_requested_enabled {
+                "prompt_session_descriptor_inputs_missing_or_failed_closed"
+            } else {
+                "explicit_runtime_gate_absent_so_warm_session_uses_existing_forward_path"
+            }),
+        "remaining_runtime_selection_blocker": descriptor
+            .map(|descriptor| descriptor.remaining_runtime_selection_blocker)
+            .unwrap_or(if runtime_gate_requested_enabled {
+                "prompt_session_descriptor_construction_inputs"
+            } else {
+                "explicit_no_bias_runtime_gate"
+            }),
+        "tensor_name": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.tensor_name.clone()))
+            .or_else(|| {
+                target_identity
+                    .map(|(_, tensor_name)| serde_json::Value::String(tensor_name.to_string()))
+            })
+            .unwrap_or(serde_json::Value::Null),
+        "callsite_identity": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.callsite_identity.clone()))
+            .or_else(|| {
+                target_callsite_identity
+                    .as_ref()
+                    .map(|callsite_identity| serde_json::Value::String(callsite_identity.clone()))
+            })
+            .unwrap_or(serde_json::Value::Null),
+        "model_sha256": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.model_sha256.clone()))
+            .unwrap_or_else(|| {
+                if model_sha256.is_empty() {
+                    serde_json::Value::Null
+                } else {
+                    serde_json::Value::String(model_sha256.to_string())
+                }
+            }),
+        "model_architecture": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.model_architecture.to_string()))
+            .unwrap_or_else(|| {
+                if model_architecture.is_empty() {
+                    serde_json::Value::Null
+                } else {
+                    serde_json::Value::String(model_architecture.to_string())
+                }
+            }),
+        "quant_format": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.quant_format.to_string()))
+            .unwrap_or_else(|| serde_json::Value::String(quant_format.to_string())),
+        "tokenizer_source": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.tokenizer_source.to_string()))
+            .unwrap_or_else(|| {
+                if tokenizer_source.is_empty() {
+                    serde_json::Value::Null
+                } else {
+                    serde_json::Value::String(tokenizer_source.to_string())
+                }
+            }),
+        "tokenizer_strict": descriptor
+            .map(|descriptor| serde_json::json!(descriptor.tokenizer_strict))
+            .unwrap_or_else(|| serde_json::json!(tokenizer_strict)),
+        "runtime_api": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.runtime_api.to_string()))
+            .unwrap_or_else(|| {
+                if runtime_api.is_empty() {
+                    serde_json::Value::Null
+                } else {
+                    serde_json::Value::String(runtime_api.to_string())
+                }
+            }),
+        "selected_backend": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.selected_backend.to_string()))
+            .unwrap_or_else(|| {
+                if selected_backend.is_empty() {
+                    serde_json::Value::Null
+                } else {
+                    serde_json::Value::String(selected_backend.to_string())
+                }
+            }),
+        "fallback_used": descriptor.map(|descriptor| descriptor.fallback_used).unwrap_or(fallback_used),
+        "prompt_ids": prompt_ids,
+        "prompt_ids_digest": prompt_ids_digest,
+        "selected_path": descriptor
+            .map(|descriptor| descriptor.selected_path)
+            .unwrap_or("eager_f32_candle"),
+        "selected_kernel": descriptor
+            .map(|descriptor| descriptor.selected_kernel)
+            .unwrap_or("dense-f32-candle-linear"),
+        "candidate_path": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.candidate_path.to_string()))
+            .or_else(|| {
+                target_identity
+                    .map(|(candidate_path, _)| serde_json::Value::String(candidate_path.to_string()))
+            })
+            .unwrap_or(serde_json::Value::Null),
+        "candidate_kernel": descriptor
+            .map(|descriptor| serde_json::Value::String(descriptor.candidate_kernel.to_string()))
+            .or_else(|| {
+                target_identity
+                    .map(|_| serde_json::Value::String("dense-f32-candle-linear-no-bias-candidate".to_string()))
+            })
+            .unwrap_or(serde_json::Value::Null),
+        "bias_present": descriptor
+            .map(|_| serde_json::json!(false))
+            .or_else(|| target_identity.map(|_| serde_json::json!(false)))
+            .unwrap_or(serde_json::Value::Null),
+        "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+        "runtime_gate_requested_enabled": runtime_gate_requested_enabled,
+        "generated_ids_bound_before_decode": false,
+        "decoded_text_bound_before_decode": false,
+        "generated_ids_digest": serde_json::Value::Null,
+        "decoded_text_digest": serde_json::Value::Null,
+        "candidate_off_on_receipts_present": false,
+        "candidate_execution_enabled": descriptor
+            .map(|descriptor| descriptor.candidate_execution_enabled)
+            .unwrap_or(false),
+        "normal_inference_runtime_selection_enabled": descriptor
+            .map(|descriptor| descriptor.normal_inference_runtime_selection_enabled)
+            .unwrap_or(false),
+        "default_runtime_changed_when_gate_absent": false,
+        "fail_closed_conditions": fail_closed_conditions,
+        "claim_boundary": {
+            "candidate_execution_disabled": true,
+            "generated_ids_not_bound_before_decode": true,
+            "decoded_text_not_bound_before_decode": true,
+            "default_runtime_changed": false,
+            "no_allocation_reduction_claim": true,
+            "no_timing_improvement_claim": true,
+            "no_speedup_claim": true,
+            "no_q4_q5_runtime_support": true,
+            "no_server_or_accelerator_claim": true,
+            "no_qwen35_claim": true,
+            "no_bitnet_qk256_claim": true,
+        },
+        "allocation_reduction_claim": false,
+        "timing_improvement_claim": false,
+        "speedup_claim": false,
     })
 }
 
@@ -17231,6 +17637,178 @@ mod tests {
         assert_eq!(receipt["decoded_text_digest"], gate.decoded_text_digest);
         assert_eq!(receipt["before_after_receipts_present"], false);
         assert_eq!(receipt["candidate_execution_enabled"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_prompt_session_descriptor_binds_prompt_only_identity() {
+        let prompt_ids = vec![151644, 872, 198, 19];
+        let Some(descriptor) = slm_warm_session_no_bias_prompt_session_descriptor_for_prompt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            false,
+            true,
+            &prompt_ids,
+            "prompt-digest",
+        ) else {
+            assert!(false, "strict qwen3 q8 cpu prompt should produce a descriptor");
+            return;
+        };
+
+        assert_eq!(descriptor.model_sha256, "qwen3-sha");
+        assert_eq!(descriptor.model_architecture, "qwen3");
+        assert_eq!(descriptor.quant_format, "Q8_0");
+        assert_eq!(descriptor.tokenizer_source, "gguf_metadata");
+        assert!(descriptor.tokenizer_strict);
+        assert_eq!(descriptor.runtime_api, "cpu");
+        assert_eq!(descriptor.selected_backend, "cpu-rust");
+        assert!(!descriptor.fallback_used);
+        assert_eq!(descriptor.prompt_ids_digest, "prompt-digest");
+        assert!(descriptor.generated_ids_digest.is_empty());
+        assert!(descriptor.decoded_text_digest.is_empty());
+        assert_eq!(descriptor.tensor_name, "layers.0.feed_forward.down_proj.weight");
+        assert_eq!(
+            descriptor.callsite_identity,
+            "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight"
+        );
+        assert_eq!(descriptor.selected_path, "eager_f32_candle");
+        assert_eq!(descriptor.selected_kernel, "dense-f32-candle-linear");
+        assert_eq!(descriptor.candidate_path, "qwen3_feed_forward_down_proj_no_bias_candidate");
+        assert_eq!(descriptor.candidate_kernel, "dense-f32-candle-linear-no-bias-candidate");
+        assert!(descriptor.per_callsite_identity_matches_descriptor);
+        assert!(descriptor.explicit_runtime_gate_requested);
+        assert!(!descriptor.candidate_execution_enabled);
+        assert!(!descriptor.normal_inference_runtime_selection_enabled);
+        assert!(descriptor.fail_closed_conditions.is_empty());
+
+        let receipt = slm_warm_session_no_bias_prompt_session_descriptor_receipt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            false,
+            Some(&descriptor),
+            true,
+            &prompt_ids,
+            "prompt-digest",
+        );
+        assert_eq!(receipt["tracking_item"], "SLM-CPU-243");
+        assert_eq!(receipt["consumes_tracking_item"], "SLM-CPU-242");
+        assert_eq!(receipt["descriptor_constructed"], true);
+        assert_eq!(receipt["descriptor_passed_to_model_forward"], true);
+        assert_eq!(receipt["descriptor_identity_reaches_apply_linear_callsite"], true);
+        assert_eq!(
+            receipt["decision"],
+            "per_callsite_prompt_session_descriptor_ready_runtime_disabled"
+        );
+        assert_eq!(receipt["prompt_ids"], serde_json::json!(prompt_ids));
+        assert_eq!(receipt["prompt_ids_digest"], "prompt-digest");
+        assert_eq!(receipt["generated_ids_bound_before_decode"], false);
+        assert_eq!(receipt["decoded_text_bound_before_decode"], false);
+        assert!(receipt["generated_ids_digest"].is_null());
+        assert!(receipt["decoded_text_digest"].is_null());
+        assert_eq!(receipt["candidate_off_on_receipts_present"], false);
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+        assert_eq!(receipt["default_runtime_changed_when_gate_absent"], false);
+        assert_eq!(receipt["speedup_claim"], false);
+        assert_eq!(receipt["claim_boundary"]["no_bitnet_qk256_claim"], true);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_prompt_session_descriptor_preserves_default_without_gate() {
+        let prompt_ids = vec![151644, 872, 198, 19];
+        let descriptor = slm_warm_session_no_bias_prompt_session_descriptor_for_prompt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            false,
+            false,
+            &prompt_ids,
+            "prompt-digest",
+        );
+        assert!(descriptor.is_none());
+
+        let receipt = slm_warm_session_no_bias_prompt_session_descriptor_receipt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            false,
+            None,
+            false,
+            &prompt_ids,
+            "prompt-digest",
+        );
+        assert_eq!(receipt["decision"], "default_runtime_preserved_without_explicit_gate");
+        assert_eq!(receipt["descriptor_constructed"], false);
+        assert_eq!(receipt["descriptor_passed_to_model_forward"], false);
+        assert_eq!(receipt["descriptor_identity_reaches_apply_linear_callsite"], false);
+        assert_eq!(receipt["model_sha256"], "qwen3-sha");
+        assert_eq!(receipt["model_architecture"], "qwen3");
+        assert_eq!(receipt["quant_format"], "Q8_0");
+        assert_eq!(receipt["runtime_api"], "cpu");
+        assert_eq!(receipt["selected_backend"], "cpu-rust");
+        assert_eq!(receipt["fallback_used"], false);
+        assert_eq!(receipt["fail_closed_conditions"][0], "explicit_runtime_gate_not_requested");
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+        assert_eq!(receipt["default_runtime_changed_when_gate_absent"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_prompt_session_descriptor_records_fail_closed_inputs() {
+        let prompt_ids = vec![151644, 872, 198, 19];
+        let descriptor = slm_warm_session_no_bias_prompt_session_descriptor_for_prompt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            true,
+            true,
+            &prompt_ids,
+            "prompt-digest",
+        );
+        assert!(descriptor.is_none());
+
+        let receipt = slm_warm_session_no_bias_prompt_session_descriptor_receipt(
+            std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            "qwen3-sha",
+            "qwen3",
+            "gguf_metadata",
+            true,
+            "cpu",
+            "cpu-rust",
+            true,
+            None,
+            true,
+            &prompt_ids,
+            "prompt-digest",
+        );
+        assert_eq!(receipt["decision"], "blocked_fail_closed");
+        assert_eq!(receipt["runtime_api"], "cpu");
+        assert_eq!(receipt["selected_backend"], "cpu-rust");
+        assert_eq!(receipt["fallback_used"], true);
+        assert_eq!(receipt["candidate_execution_enabled"], false);
+        assert_eq!(receipt["fail_closed_conditions"], serde_json::json!(["fallback_used"]));
     }
 
     #[test]
