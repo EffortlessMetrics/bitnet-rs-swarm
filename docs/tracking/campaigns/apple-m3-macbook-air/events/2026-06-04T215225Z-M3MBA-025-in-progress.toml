@@ -1,0 +1,21 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-025"
+event = "in_progress"
+timestamp = "2026-06-04T21:52:25Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-025-m4-proof-alignment-20260604"
+
+summary = "Started the M3-owned M4 strict-proof alignment checklist after M3MBA-024 merged."
+
+artifacts = [
+  "docs/reports/apple-silicon-macbook-m3-air-m4-proof-alignment.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "The checklist maps only the accepted Microsoft 2B I2_S M3 artifact metadata into separate M4 strict-proof requirements.",
+  "The blocked 0.7B and 3B secondary candidates remain non-handoff targets after M3MBA-024.",
+  "The M4 lane must attach fresh M4 receipts before any M4 proof, speed, chat, serve, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon claim.",
+]
