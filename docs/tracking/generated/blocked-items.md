@@ -536,6 +536,7 @@
 | intel-258v-platform | LNL258V-POWER-001 | LNL258V-ROUTE-019, LNL258V-NPU-RESIDENT-002, LNL258V-BENCH-004 | merged |
 | intel-258v-platform | LNL258V-OP-006 | LNL258V-ROUTE-015 | merged |
 | intel-258v-platform | LNL258V-ASK-008 | LNL258V-BITNET-INTAKE-004, LNL258V-ASK-007 | merged |
+| intel-258v-platform | LNL258V-OPENVINO-PLAN-001 | LNL258V-OPENVINO-VALIDATE-ASK-001 | pr_open |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
 | intel-a770 | A770-005 | A770-004 | merged |
