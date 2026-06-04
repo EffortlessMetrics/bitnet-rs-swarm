@@ -18045,9 +18045,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-GPU-PROMOTION-REVIEW-001"
-status = "pr_open"
+status = "merged"
 pr = 1542
-head_sha = "4bef2272a132e31f8774f8c7c020f78084267b5c"
+head_sha = "9a73593178917e7db07efc14cf28b0814ed58210"
+merge_sha = "7490e3ee0e1fe150c7ab53fd46dd521c19c1627a"
+merged_at = "2026-06-04T22:53:21Z"
 branch = "codex/lunar-lake/LNL258V-GPU-PROMOTION-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"
