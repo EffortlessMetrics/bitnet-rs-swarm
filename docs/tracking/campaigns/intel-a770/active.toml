@@ -7742,7 +7742,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-140"
-status = "ready"
+status = "in_progress"
 branch = "codex/intel-a770/A770-140-layer24-k-proj-replay-target"
 stackable = false
 review_mode = "codex_premerge"
