@@ -116,7 +116,9 @@ jobs:
   native-compile:
     name: "native-check (${{ matrix.label }})"
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 20
+    # Native workspace feature checks can be cold-cache compiles on self-hosted
+    # runners. Let them return a compiler result instead of timing out mid-rustc.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
