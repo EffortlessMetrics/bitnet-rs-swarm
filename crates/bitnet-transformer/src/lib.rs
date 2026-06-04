@@ -241,6 +241,17 @@ pub struct DenseQ8SidecarInstrumentationSnapshot {
     pub output_tensor_construction_ns: u64,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DenseLinearNoBiasCandidateInstrumentationSnapshot {
+    pub selector_dispatch_calls: u64,
+    pub selector_selected_calls: u64,
+    pub selector_declined_calls: u64,
+    pub selector_error_calls: u64,
+    pub selector_dispatch_ns: u64,
+    pub candidate_forward_calls: u64,
+    pub candidate_forward_ns: u64,
+}
+
 struct DenseQ8SidecarInstrumentationCounters {
     selector_dispatch_calls: AtomicU64,
     selector_selected_calls: AtomicU64,
@@ -259,6 +270,16 @@ struct DenseQ8SidecarInstrumentationCounters {
     packed_matvec_output_values: AtomicU64,
     output_tensor_construction_calls: AtomicU64,
     output_tensor_construction_ns: AtomicU64,
+}
+
+struct DenseLinearNoBiasCandidateInstrumentationCounters {
+    selector_dispatch_calls: AtomicU64,
+    selector_selected_calls: AtomicU64,
+    selector_declined_calls: AtomicU64,
+    selector_error_calls: AtomicU64,
+    selector_dispatch_ns: AtomicU64,
+    candidate_forward_calls: AtomicU64,
+    candidate_forward_ns: AtomicU64,
 }
 
 impl DenseQ8SidecarInstrumentationCounters {
@@ -331,8 +352,47 @@ impl DenseQ8SidecarInstrumentationCounters {
     }
 }
 
+impl DenseLinearNoBiasCandidateInstrumentationCounters {
+    const fn new() -> Self {
+        Self {
+            selector_dispatch_calls: AtomicU64::new(0),
+            selector_selected_calls: AtomicU64::new(0),
+            selector_declined_calls: AtomicU64::new(0),
+            selector_error_calls: AtomicU64::new(0),
+            selector_dispatch_ns: AtomicU64::new(0),
+            candidate_forward_calls: AtomicU64::new(0),
+            candidate_forward_ns: AtomicU64::new(0),
+        }
+    }
+
+    fn reset(&self) {
+        self.selector_dispatch_calls.store(0, Ordering::Relaxed);
+        self.selector_selected_calls.store(0, Ordering::Relaxed);
+        self.selector_declined_calls.store(0, Ordering::Relaxed);
+        self.selector_error_calls.store(0, Ordering::Relaxed);
+        self.selector_dispatch_ns.store(0, Ordering::Relaxed);
+        self.candidate_forward_calls.store(0, Ordering::Relaxed);
+        self.candidate_forward_ns.store(0, Ordering::Relaxed);
+    }
+
+    fn snapshot(&self) -> DenseLinearNoBiasCandidateInstrumentationSnapshot {
+        DenseLinearNoBiasCandidateInstrumentationSnapshot {
+            selector_dispatch_calls: self.selector_dispatch_calls.load(Ordering::Relaxed),
+            selector_selected_calls: self.selector_selected_calls.load(Ordering::Relaxed),
+            selector_declined_calls: self.selector_declined_calls.load(Ordering::Relaxed),
+            selector_error_calls: self.selector_error_calls.load(Ordering::Relaxed),
+            selector_dispatch_ns: self.selector_dispatch_ns.load(Ordering::Relaxed),
+            candidate_forward_calls: self.candidate_forward_calls.load(Ordering::Relaxed),
+            candidate_forward_ns: self.candidate_forward_ns.load(Ordering::Relaxed),
+        }
+    }
+}
+
 static DENSE_Q8_SIDECAR_INSTRUMENTATION: DenseQ8SidecarInstrumentationCounters =
     DenseQ8SidecarInstrumentationCounters::new();
+static DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION:
+    DenseLinearNoBiasCandidateInstrumentationCounters =
+    DenseLinearNoBiasCandidateInstrumentationCounters::new();
 
 fn elapsed_ns_u64(start: Instant) -> u64 {
     start.elapsed().as_nanos().min(u128::from(u64::MAX)) as u64
@@ -348,6 +408,15 @@ pub fn reset_dense_q8_sidecar_instrumentation() {
 
 pub fn dense_q8_sidecar_instrumentation_snapshot() -> DenseQ8SidecarInstrumentationSnapshot {
     DENSE_Q8_SIDECAR_INSTRUMENTATION.snapshot()
+}
+
+pub fn reset_dense_linear_no_bias_candidate_instrumentation() {
+    DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.reset();
+}
+
+pub fn dense_linear_no_bias_candidate_instrumentation_snapshot()
+-> DenseLinearNoBiasCandidateInstrumentationSnapshot {
+    DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.snapshot()
 }
 
 /// Evidence-scoped packed Q8_0 payload for a dense-linear runtime hook.
@@ -528,10 +597,16 @@ impl DenseLinearNoBiasSelectorAudit {
 
 pub const SLM_CPU_195_QWEN3_Q8_MODEL_SHA256: &str =
     "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031";
+pub const SLM_CPU_QWEN25_Q8_MODEL_SHA256: &str =
+    "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
 pub const SLM_CPU_195_QWEN3_DOWN_PROJ_LAYER_COUNT: usize = 28;
 pub const SLM_CPU_195_NO_BIAS_CANDIDATE_PATH: &str =
     "qwen3_feed_forward_down_proj_no_bias_candidate";
+pub const SLM_CPU_QWEN25_NO_BIAS_CANDIDATE_PATH: &str =
+    "qwen25_feed_forward_down_proj_no_bias_candidate";
 pub const SLM_CPU_195_NO_BIAS_CANDIDATE_KERNEL: &str = "dense-f32-no-bias-matmul-candidate";
+pub const SLM_CPU_APPLY_LINEAR_NO_BIAS_CANDIDATE_KERNEL: &str =
+    "dense-f32-candle-linear-no-bias-candidate";
 
 /// Runtime-disabled no-bias dense-linear candidate for the SLM-CPU-195 slice.
 ///
@@ -657,12 +732,11 @@ impl DenseLinearNoBiasFastPathCandidate {
     }
 }
 
-/// Candidate no-bias matmul used by tests and future receipt-gated runtime work.
+/// Candidate no-bias matmul used by tests and receipt-gated runtime work.
 ///
-/// This function is intentionally not wired into transformer execution. It is
-/// a narrow implementation surface for roles whose manifest proves
-/// `bias_present=false`; callers must keep runtime selection disabled until
-/// before/after receipts prove behavior preservation.
+/// This is a narrow implementation surface for roles whose prompt/session
+/// descriptor and receipts prove `bias_present=false`. It preserves the
+/// default eager F32 path unless an explicit receipt gate routes execution here.
 pub fn dense_linear_no_bias_candidate_forward(
     input: &Tensor,
     linear: &Linear,
@@ -670,7 +744,39 @@ pub fn dense_linear_no_bias_candidate_forward(
     if linear.bias().is_some() {
         candle_core::bail!("no-bias dense-linear candidate requires bias_present=false");
     }
-    input.matmul(&linear.weight().t()?)
+    let weight_dims = linear.weight().dims();
+    if weight_dims.len() != 2 {
+        candle_core::bail!(
+            "no-bias dense-linear candidate requires 2D weight, got {:?}",
+            weight_dims
+        );
+    }
+    let output_dim = weight_dims[0];
+    let input_dim = weight_dims[1];
+    let input_dims = input.dims();
+    if input_dims.last().copied() != Some(input_dim) {
+        candle_core::bail!(
+            "no-bias dense-linear candidate input last dim {:?} does not match weight input dim {}",
+            input_dims.last(),
+            input_dim
+        );
+    }
+    if input_dims.len() == 2 {
+        return input.matmul(&linear.weight().t()?);
+    }
+
+    let row_count = input_dims[..input_dims.len() - 1]
+        .iter()
+        .try_fold(1usize, |acc, dim| acc.checked_mul(*dim))
+        .ok_or_else(|| {
+            candle_core::Error::Msg("no-bias dense-linear candidate shape overflow".into())
+        })?;
+    let projected = input.reshape(&[row_count, input_dim])?.matmul(&linear.weight().t()?)?;
+    let mut output_shape = input_dims.to_vec();
+    if let Some(last) = output_shape.last_mut() {
+        *last = output_dim;
+    }
+    projected.reshape(output_shape.as_slice())
 }
 
 const FEED_FORWARD_APPLY_LINEAR_CALLSITE: &str = "bitnet_transformer::FeedForward::apply_linear";
@@ -753,6 +859,114 @@ fn feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
     fail_closed_conditions.sort_unstable();
     fail_closed_conditions.dedup();
     fail_closed_conditions
+}
+
+fn feed_forward_no_bias_candidate_dispatch_fail_closed_conditions(
+    descriptor: &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    linear: &Linear,
+    proj_name: &str,
+    tensor_name: &str,
+) -> Vec<&'static str> {
+    let mut fail_closed_conditions =
+        feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
+            descriptor,
+            proj_name,
+            tensor_name,
+        );
+    match descriptor.model_architecture {
+        "qwen3" => {
+            if descriptor.model_sha256 != SLM_CPU_195_QWEN3_Q8_MODEL_SHA256 {
+                fail_closed_conditions.push("model_sha_not_qwen3_0_6b_q8_0");
+            }
+            if descriptor.candidate_path != SLM_CPU_195_NO_BIAS_CANDIDATE_PATH {
+                fail_closed_conditions.push("candidate_path_not_qwen3_down_proj_no_bias");
+            }
+        }
+        "qwen2" => {
+            if descriptor.model_sha256 != SLM_CPU_QWEN25_Q8_MODEL_SHA256 {
+                fail_closed_conditions.push("model_sha_not_qwen25_0_5b_q8_0");
+            }
+            if descriptor.candidate_path != SLM_CPU_QWEN25_NO_BIAS_CANDIDATE_PATH {
+                fail_closed_conditions.push("candidate_path_not_qwen25_down_proj_no_bias");
+            }
+        }
+        _ => fail_closed_conditions.push("model_architecture_not_qwen2_or_qwen3"),
+    }
+    if descriptor.quant_format != "Q8_0" {
+        fail_closed_conditions.push("quant_format_not_q8_0");
+    }
+    if descriptor.tokenizer_source != "gguf_metadata" {
+        fail_closed_conditions.push("tokenizer_source_not_gguf_metadata");
+    }
+    if !descriptor.tokenizer_strict {
+        fail_closed_conditions.push("tokenizer_not_strict");
+    }
+    if descriptor.candidate_kernel != SLM_CPU_APPLY_LINEAR_NO_BIAS_CANDIDATE_KERNEL {
+        fail_closed_conditions.push("candidate_kernel_not_apply_linear_no_bias");
+    }
+    if linear.bias().is_some() {
+        fail_closed_conditions.push("bias_present_true");
+    }
+
+    fail_closed_conditions.sort_unstable();
+    fail_closed_conditions.dedup();
+    fail_closed_conditions
+}
+
+fn maybe_forward_feed_forward_no_bias_candidate_linear(
+    input: &Tensor,
+    linear: &Linear,
+    proj_name: &str,
+    tensor_name: &str,
+    prompt_bound_no_bias_descriptor: Option<
+        &DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary,
+    >,
+) -> Result<Option<Tensor>> {
+    let Some(descriptor) = prompt_bound_no_bias_descriptor else {
+        return Ok(None);
+    };
+    let selector_start = Instant::now();
+    add_counter(&DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.selector_dispatch_calls, 1);
+    let fail_closed_conditions = feed_forward_no_bias_candidate_dispatch_fail_closed_conditions(
+        descriptor,
+        linear,
+        proj_name,
+        tensor_name,
+    );
+    if !fail_closed_conditions.is_empty() {
+        add_counter(&DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.selector_error_calls, 1);
+        add_counter(
+            &DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.selector_dispatch_ns,
+            elapsed_ns_u64(selector_start),
+        );
+        return Err(BitNetError::Validation(format!(
+            "prompt-bound no-bias descriptor for {tensor_name} failed closed before candidate dispatch: {}",
+            fail_closed_conditions.join(",")
+        )));
+    }
+
+    add_counter(&DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.selector_selected_calls, 1);
+    add_counter(
+        &DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.selector_dispatch_ns,
+        elapsed_ns_u64(selector_start),
+    );
+    tracing::trace!(
+        tensor_name = %tensor_name,
+        callsite_identity = %descriptor.callsite_identity,
+        selected_path = descriptor.selected_path,
+        candidate_path = descriptor.candidate_path,
+        "prompt-bound no-bias descriptor selected dense_linear_no_bias_candidate_forward"
+    );
+
+    let candidate_start = Instant::now();
+    let output =
+        dense_linear_no_bias_candidate_forward(input, linear).map_err(BitNetError::from)?;
+    add_counter(&DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.candidate_forward_calls, 1);
+    add_counter(
+        &DENSE_LINEAR_NO_BIAS_CANDIDATE_INSTRUMENTATION.candidate_forward_ns,
+        elapsed_ns_u64(candidate_start),
+    );
+    Ok(Some(output))
 }
 
 /// Disabled-by-default preflight for future no-bias runtime selection.
@@ -8119,26 +8333,14 @@ impl FeedForward {
             proj_name
         );
         let dense_tensor_name = feed_forward_dense_tensor_name(self.layer_idx, proj_name);
-        if let Some(descriptor) = prompt_bound_no_bias_descriptor {
-            let fail_closed_conditions =
-                feed_forward_no_bias_apply_linear_descriptor_fail_closed_conditions(
-                    descriptor,
-                    proj_name,
-                    &dense_tensor_name,
-                );
-            if !fail_closed_conditions.is_empty() {
-                return Err(BitNetError::Validation(format!(
-                    "prompt-bound no-bias descriptor for {dense_tensor_name} failed closed before candidate dispatch: {}",
-                    fail_closed_conditions.join(",")
-                )));
-            }
-            tracing::trace!(
-                tensor_name = %dense_tensor_name,
-                callsite_identity = %descriptor.callsite_identity,
-                selected_path = descriptor.selected_path,
-                candidate_path = descriptor.candidate_path,
-                "prompt-bound no-bias descriptor reached FeedForward::apply_linear; candidate execution remains disabled"
-            );
+        if let Some(output) = maybe_forward_feed_forward_no_bias_candidate_linear(
+            input,
+            linear,
+            proj_name,
+            &dense_tensor_name,
+            prompt_bound_no_bias_descriptor,
+        )? {
+            return Ok(output);
         }
         let hook_boundary =
             dense_linear_runtime_hook_boundary(&dense_tensor_name, dense_linear_hooks);
@@ -13046,6 +13248,132 @@ mod tests {
         assert_eq!(k_values, vec![5.0003, 6.0007, -7.1259, 8.2509]);
         assert_eq!(score, -64.33586);
 
+        Ok(())
+    }
+
+    fn slm_cpu_244_test_prompt_descriptor(
+        model_architecture: &'static str,
+        model_sha256: &'static str,
+        candidate_path: &'static str,
+    ) -> DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary {
+        let callsite_identity =
+            dense_linear_no_bias_feed_forward_apply_linear_callsite_identity(0, "down_proj");
+        let descriptor = DenseLinearNoBiasPromptSessionDescriptor::from_prompt_session(
+            DenseLinearNoBiasPromptSessionDescriptorInput {
+                tensor_name: "layers.0.feed_forward.down_proj.weight",
+                callsite_identity: callsite_identity.as_str(),
+                model_sha256,
+                model_architecture,
+                quant_format: "Q8_0",
+                tokenizer_source: "gguf_metadata",
+                tokenizer_strict: true,
+                runtime_api: "cpu",
+                selected_backend: "cpu-rust",
+                fallback_used: false,
+                prompt_ids: &[1, 2, 3],
+                prompt_ids_digest: "sha256:prompt",
+                selected_path: "eager_f32_candle",
+                selected_kernel: "dense-f32-candle-linear",
+                candidate_path,
+                candidate_kernel: SLM_CPU_APPLY_LINEAR_NO_BIAS_CANDIDATE_KERNEL,
+                bias_present: Some(false),
+                explicit_runtime_gate_requested: true,
+            },
+        );
+        DenseLinearNoBiasPerCallsiteCandidateReceiptEmitterBoundary::from_prompt_session_descriptor(
+            &descriptor,
+        )
+    }
+
+    #[test]
+    fn no_bias_apply_linear_dispatch_executes_candidate_when_descriptor_matches() -> Result<()> {
+        reset_dense_linear_no_bias_candidate_instrumentation();
+        let device = Device::Cpu;
+        let weight = Tensor::from_slice(&[0.5f32, 1.0, 1.5, 2.0], (2, 2), &device)?;
+        let linear = Linear::new(weight, None);
+        let input = Tensor::from_slice(&[2.0f32, 3.0], (1, 1, 2), &device)?;
+        let descriptor = slm_cpu_244_test_prompt_descriptor(
+            "qwen3",
+            SLM_CPU_195_QWEN3_Q8_MODEL_SHA256,
+            SLM_CPU_195_NO_BIAS_CANDIDATE_PATH,
+        );
+
+        let Some(output) = maybe_forward_feed_forward_no_bias_candidate_linear(
+            &input,
+            &linear,
+            "down_proj",
+            "layers.0.feed_forward.down_proj.weight",
+            Some(&descriptor),
+        )?
+        else {
+            return Err(BitNetError::Validation(
+                "expected no-bias candidate dispatch to execute".to_string(),
+            ));
+        };
+
+        assert_eq!(output.dims(), &[1, 1, 2]);
+        assert_eq!(
+            output.flatten_all()?.to_vec1::<f32>()?,
+            linear.forward(&input)?.flatten_all()?.to_vec1::<f32>()?
+        );
+        let snapshot = dense_linear_no_bias_candidate_instrumentation_snapshot();
+        assert!(snapshot.selector_dispatch_calls >= 1);
+        assert!(snapshot.selector_selected_calls >= 1);
+        assert!(snapshot.candidate_forward_calls >= 1);
+        Ok(())
+    }
+
+    #[test]
+    fn no_bias_apply_linear_dispatch_preserves_default_without_descriptor() -> Result<()> {
+        reset_dense_linear_no_bias_candidate_instrumentation();
+        let device = Device::Cpu;
+        let weight = Tensor::from_slice(&[0.5f32, 1.0, 1.5, 2.0], (2, 2), &device)?;
+        let linear = Linear::new(weight, None);
+        let input = Tensor::from_slice(&[2.0f32, 3.0], (1, 1, 2), &device)?;
+
+        let output = maybe_forward_feed_forward_no_bias_candidate_linear(
+            &input,
+            &linear,
+            "down_proj",
+            "layers.0.feed_forward.down_proj.weight",
+            None,
+        )?;
+
+        assert!(output.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn no_bias_apply_linear_dispatch_fails_closed_when_bias_is_present() -> Result<()> {
+        reset_dense_linear_no_bias_candidate_instrumentation();
+        let device = Device::Cpu;
+        let weight = Tensor::from_slice(&[0.5f32, 1.0, 1.5, 2.0], (2, 2), &device)?;
+        let bias = Tensor::zeros(2, DType::F32, &device)?;
+        let linear = Linear::new(weight, Some(bias));
+        let input = Tensor::from_slice(&[2.0f32, 3.0], (1, 1, 2), &device)?;
+        let descriptor = slm_cpu_244_test_prompt_descriptor(
+            "qwen2",
+            SLM_CPU_QWEN25_Q8_MODEL_SHA256,
+            SLM_CPU_QWEN25_NO_BIAS_CANDIDATE_PATH,
+        );
+
+        let error = maybe_forward_feed_forward_no_bias_candidate_linear(
+            &input,
+            &linear,
+            "down_proj",
+            "layers.0.feed_forward.down_proj.weight",
+            Some(&descriptor),
+        )
+        .expect_err("bias-present linear must fail closed");
+
+        let message = error.to_string();
+        assert!(
+            message.contains("bias_present_true"),
+            "expected bias_present_true blocker, got {message}"
+        );
+        let snapshot = dense_linear_no_bias_candidate_instrumentation_snapshot();
+        assert!(snapshot.selector_dispatch_calls >= 1);
+        assert!(snapshot.selector_error_calls >= 1);
         Ok(())
     }
 
