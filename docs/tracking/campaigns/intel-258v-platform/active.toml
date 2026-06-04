@@ -18045,7 +18045,8 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-NPU-CACHE-REVIEW-001"
-status = "in_progress"
+status = "pr_open"
+pr = 1530
 branch = "codex/lunar-lake/LNL258V-NPU-CACHE-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"
