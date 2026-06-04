@@ -1,0 +1,17 @@
+timestamp = "2026-06-04T22:39:42Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-243"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1529
+branch = "codex/slm-cpu/slm-cpu-243-warm-session-no-bias-descriptor"
+head_sha = "021fad5375e57ffed44dd8624fb3aab6651ced34"
+merge_sha = "22572c5359604996655c2763537c6af0b0657a3a"
+summary = "Closed SLM-CPU-243 after the warm-session no-bias prompt/session descriptor PR merged and queued SLM-CPU-244."
+notes = [
+  "PR #1529 constructs the production warm-session prompt/session no-bias descriptor after tokenization and passes it through the SLM-CPU-242 opt-in model path for Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj.",
+  "Candidate execution remains disabled; generated IDs and decoded text remain unbound until a fresh candidate-on receipt executes through the exact callsite.",
+  "SLM-CPU-244 is ready to add or precisely block the fail-closed no-bias dispatch branch and capture candidate-off/candidate-on receipts only if dense_linear_no_bias_candidate_forward actually executes with unchanged outputs.",
+]
