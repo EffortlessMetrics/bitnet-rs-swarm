@@ -1,0 +1,18 @@
+timestamp = "2026-06-04T21:51:36Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-NPU-CACHE-REVIEW-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1530
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-REVIEW-001-question-matrix"
+head_sha = "ad987b72d2bec9a9d22749169672680238555c51"
+merge_sha = "e2e2a69c64e37e5a805c330991b9b2ee240bd35a"
+merged_at = "2026-06-04T21:43:56Z"
+actor = "codex"
+summary = "PR #1530 merged the docs-only NPU question matrix refresh."
+notes = [
+  "PR #1530 added the Post-#1371 NPU question matrix to docs/research/lunar-lake-npu-cold-start.md.",
+  "The matrix keeps NPU cold/cache/resident work review-first by mapping blocker questions to current evidence, missing receipt shape, owner issues, forbidden claims, and next smallest PRs.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, route promotion, speedup claim, power-advantage claim, low_power claim, native accelerator claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim was made.",
+]
