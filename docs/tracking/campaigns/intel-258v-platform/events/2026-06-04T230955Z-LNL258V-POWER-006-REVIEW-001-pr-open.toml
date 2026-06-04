@@ -1,0 +1,15 @@
+timestamp = "2026-06-04T23:09:55Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006-REVIEW-001"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 1547
+head_sha = "26cd40247c45ba17b65683e05d659b2e3c19c8c1"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
+summary = "Opened PR #1547 for the docs-only POWER-006 low_power question matrix refresh."
+notes = [
+  "PR #1547 adds the Post-#1064 POWER-006 low_power question matrix to docs/research/lunar-lake-power-telemetry.md and keeps the work review-only.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, low_power promotion, speedup claim, power-advantage claim, measured-temperature claim, native accelerator claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

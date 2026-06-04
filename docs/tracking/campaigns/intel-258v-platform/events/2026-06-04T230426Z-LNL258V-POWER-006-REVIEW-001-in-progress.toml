@@ -1,0 +1,13 @@
+timestamp = "2026-06-04T23:04:26Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-POWER-006-REVIEW-001"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
+summary = "Started a docs-only POWER-006 low_power question matrix refresh."
+notes = [
+  "Add a Post-#1064 POWER-006 low_power question matrix to docs/research/lunar-lake-power-telemetry.md that maps strict battery preflight, before/after telemetry, CPU/GPU/NPU low_power route samples, energy proxy validity, thermal availability, OpenVINO power-property limits, route-policy promotion, and native/BitNet boundaries to current evidence, missing receipt shapes, owner issues, forbidden claims, and next smallest PRs.",
+  "Keep the work review-only: no Lunar Lake inference, model load, hardware receipt refresh, route-policy mutation, low_power promotion, speedup claim, power-advantage claim, measured-temperature claim, native accelerator claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
