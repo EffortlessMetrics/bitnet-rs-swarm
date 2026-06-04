@@ -1,0 +1,13 @@
+timestamp = "2026-06-04T20:46:27Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-SLOWPATH-REVIEW-001"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-CPU-SLOWPATH-REVIEW-001-question-matrix"
+summary = "Started a docs-only CPU slow-path question matrix refresh."
+notes = [
+  "Add a Post-#1086 question matrix to the Lunar Lake CPU slow-path research note that maps each suspected cause to current evidence, missing receipt shape, owner issue, forbidden claims, and the next smallest PR.",
+  "Keep the work review-only: no Lunar Lake inference, model load, hardware receipt refresh, route-policy mutation, route promotion, speedup claim, power-advantage claim, native accelerator claim, OpenVINO CPU replacement claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
