@@ -1182,8 +1182,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-024"
-status = "in_progress"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-024-artifact-unblock-preflight-20260604"
+pr = 1534
+head_sha = "978bc94535b6d33775786fadacfdeb31ed20c292"
+merge_sha = "d791c5b53e1b2612f72636d961fe8e79b0bded28"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
