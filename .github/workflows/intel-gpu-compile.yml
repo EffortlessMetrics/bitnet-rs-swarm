@@ -30,10 +30,13 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  # These lanes do real cold-cache workspace compilation on self-hosted
+  # review runners. A 15 minute cap killed active work in PR #1545 before
+  # cargo could emit a result, so keep the cap high enough for completion.
   compile-check-cpu:
     name: Compile Check (CPU)
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
@@ -56,7 +59,7 @@ jobs:
   compile-check-oneapi:
     name: Compile Check (OneAPI)
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
@@ -166,7 +169,7 @@ jobs:
   cpu-fallback-tests:
     name: CPU Fallback Tests
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
