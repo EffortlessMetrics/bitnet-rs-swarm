@@ -1,0 +1,16 @@
+timestamp = "2026-06-04T23:54:56Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-244"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1550
+branch = "codex/slm-cpu/slm-cpu-244-no-bias-dispatch-candidate-receipts"
+head_sha = "b91dec7e223c32dc6d4fea58f35d3f983f05f1db"
+summary = "Opened the SLM-CPU-244 no-bias apply-linear fail-closed dispatch and candidate receipt PR."
+notes = [
+  "PR #1550 executes dense_linear_no_bias_candidate_forward only under the explicit no-bias runtime gate, with the prompt/session descriptor present and the exact Qwen3/Qwen2.5 Q8_0 feed_forward.down_proj tensor/callsite identity.",
+  "Candidate-off/candidate-on receipts preserve prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, backend identity, and fallback=false for Qwen3 and Qwen2.5.",
+  "Default eager_f32_candle remains preserved when the gate is absent; timing, allocation, speedup, Q4/Q5, accelerator, Qwen3.5, and BitNet QK256 claims remain out of scope.",
+]

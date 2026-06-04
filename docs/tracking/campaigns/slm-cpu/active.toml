@@ -14117,8 +14117,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-244"
-status = "ready"
+status = "pr_open"
+pr = 1550
 branch = "codex/slm-cpu/slm-cpu-244-no-bias-dispatch-candidate-receipts"
+head_sha = "b91dec7e223c32dc6d4fea58f35d3f983f05f1db"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
