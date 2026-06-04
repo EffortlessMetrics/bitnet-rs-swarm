@@ -1,8 +1,9 @@
+use bitnet_common::apple_m3_air;
 use bitnet_device_probe::{
-    APPLE_M3_AIR_MACHINE_ID, APPLE_M3_AIR_METAL_BACKEND, APPLE_M3_AIR_MPSGRAPH_BACKEND,
-    APPLE_VISIBILITY_PREFLIGHT_KIND, AppleBackendReceipt, AppleBackendVisibilityPreflight,
-    AppleM3AirHostProfileContract, AppleM3AirUnsupportedClaim, AppleReceiptError,
-    AppleResolvedDevice,
+    APPLE_M3_AIR_CPU_NEON_BACKEND, APPLE_M3_AIR_MACHINE_ID, APPLE_M3_AIR_METAL_BACKEND,
+    APPLE_M3_AIR_MPSGRAPH_BACKEND, APPLE_VISIBILITY_PREFLIGHT_KIND, AppleBackendReceipt,
+    AppleBackendVisibilityPreflight, AppleM3AirHostProfileContract, AppleM3AirUnsupportedClaim,
+    AppleReceiptError, AppleResolvedDevice,
 };
 use std::error::Error;
 use std::io;
@@ -12,7 +13,7 @@ fn m4_device() -> AppleResolvedDevice {
 }
 
 fn m3_air_device() -> AppleResolvedDevice {
-    AppleResolvedDevice::new("Apple M3").with_gpu_cores(10).with_unified_memory(true)
+    AppleResolvedDevice::new(apple_m3_air::SOC_FAMILY).with_gpu_cores(10).with_unified_memory(true)
 }
 
 #[test]
@@ -24,8 +25,8 @@ fn apple_m3_air_host_profile_contract_records_device_and_claim_boundaries()
 
     let value = serde_json::to_value(&contract)?;
     ensure(value["machine_id"] == APPLE_M3_AIR_MACHINE_ID, "wrong machine id")?;
-    ensure(value["soc_family"] == "Apple M3", "wrong SoC family")?;
-    ensure(value["thermal_policy"] == "fanless_mobile", "wrong thermal policy")?;
+    ensure(value["soc_family"] == apple_m3_air::SOC_FAMILY, "wrong SoC family")?;
+    ensure(value["thermal_policy"] == apple_m3_air::THERMAL_POLICY, "wrong thermal policy")?;
     ensure(value["core_split_required"] == true, "core split is not required")?;
     ensure(value["memory_tier_required"] == true, "memory tier is not required")?;
     ensure(value["storage"]["cache_root_required"] == true, "cache root is not required")?;
@@ -43,7 +44,7 @@ fn apple_m3_air_host_profile_contract_records_device_and_claim_boundaries()
         .ok_or_else(|| io::Error::other("proof_lane_labels is not an array"))?;
     ensure(
         labels.iter().any(|label| {
-            label["backend_label"] == "apple-m3-air-cpu-neon"
+            label["backend_label"] == APPLE_M3_AIR_CPU_NEON_BACKEND
                 && label["runtime_api"] == "cpu-neon"
                 && label["execution_available"] == true
         }),

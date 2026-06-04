@@ -4,10 +4,12 @@
 //! facts needed for later Apple proof-lane receipts. It does not compile or
 //! dispatch a Metal pipeline.
 
+use bitnet_common::apple_m3_air;
+
 /// Apple M4 native Metal backend label.
 pub const APPLE_M4_METAL_BACKEND: &str = "apple-m4-metal";
 /// Apple M3 MacBook Air native Metal backend label.
-pub const APPLE_M3_AIR_METAL_BACKEND: &str = "apple-m3-air-metal";
+pub const APPLE_M3_AIR_METAL_BACKEND: &str = apple_m3_air::METAL_BACKEND;
 /// Runtime API recorded by Apple Metal probe receipts.
 pub const APPLE_M4_METAL_RUNTIME_API: &str = "metal";
 /// Proof stage for a visible supported Apple Metal runtime probe.
@@ -273,14 +275,14 @@ fn is_apple_m4_family_chip(chip: &str) -> bool {
 }
 
 fn is_apple_m3_air_hardware(chip: &str, hardware: &str) -> bool {
-    if chip != "Apple M3" {
+    if chip != apple_m3_air::SOC_FAMILY {
         return false;
     }
 
     let model_name_is_air = parse_colon_value(hardware, "Model Name")
-        .is_some_and(|model_name| model_name == "MacBook Air");
+        .is_some_and(|model_name| model_name == apple_m3_air::MODEL_NAME);
     let model_identifier_is_air = parse_colon_value(hardware, "Model Identifier")
-        .is_some_and(|identifier| matches!(identifier.as_str(), "Mac15,12" | "Mac15,13"));
+        .is_some_and(|identifier| apple_m3_air::is_model_identifier(&identifier));
 
     model_name_is_air || model_identifier_is_air
 }

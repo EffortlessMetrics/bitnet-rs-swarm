@@ -1,6 +1,7 @@
 //! Mac-oriented operator wrappers for the supported Apple M4 SLM path.
 
 use anyhow::{Context, Result, anyhow};
+use bitnet_common::apple_m3_air;
 use bitnet_repl_core::{ReplInput, parse_repl_input};
 use clap::{ArgAction, Args, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
@@ -23,10 +24,10 @@ use crate::commands::AnswerCorpusCommand;
 use crate::model_cache::{self, VerifiedCachedModel};
 
 const APPLE_M4_CPU_NEON: &str = "apple-m4-cpu-neon";
-const APPLE_M3_AIR_CPU_NEON: &str = "apple-m3-air-cpu-neon";
+const APPLE_M3_AIR_CPU_NEON: &str = apple_m3_air::CPU_NEON_BACKEND;
 const APPLE_M4_METAL: &str = "apple-m4-metal";
-const APPLE_M3_AIR_METAL: &str = "apple-m3-air-metal";
-const APPLE_M3_AIR_MPSGRAPH: &str = "apple-m3-air-mpsgraph";
+const APPLE_M3_AIR_METAL: &str = apple_m3_air::METAL_BACKEND;
+const APPLE_M3_AIR_MPSGRAPH: &str = apple_m3_air::MPSGRAPH_BACKEND;
 const MAC_ASK_DEFAULT_RECEIPT: &str = "target/apple-m4-productization/mac-ask.json";
 const MAC_CHAT_DEFAULT_RECEIPT: &str = "target/apple-m4-continuity/mac-chat.json";
 const MAC_CHAT_SMOKE_DEFAULT_RECEIPT: &str = "target/apple-m4-inference-excellence/chat-smoke.json";

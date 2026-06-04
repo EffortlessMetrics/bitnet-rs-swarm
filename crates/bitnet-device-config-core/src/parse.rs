@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bitnet_common::apple_m3_air;
 use std::str::FromStr;
 
 use crate::DeviceConfig;
@@ -21,9 +22,11 @@ impl FromStr for DeviceConfig {
             "apple-m4-metal" => Ok(DeviceConfig::AppleM4Metal),
             "apple-m4-mpsgraph" => Ok(DeviceConfig::AppleM4MpsGraph),
             "apple-m4-cpu-neon" => Ok(DeviceConfig::AppleM4CpuNeon),
-            "apple-m3-air-metal" => Ok(DeviceConfig::AppleM3AirMetal),
-            "apple-m3-air-mpsgraph" => Ok(DeviceConfig::AppleM3AirMpsGraph),
-            "apple-m3-air-cpu-neon" => Ok(DeviceConfig::AppleM3AirCpuNeon),
+            label if label == apple_m3_air::METAL_BACKEND => Ok(DeviceConfig::AppleM3AirMetal),
+            label if label == apple_m3_air::MPSGRAPH_BACKEND => {
+                Ok(DeviceConfig::AppleM3AirMpsGraph)
+            }
+            label if label == apple_m3_air::CPU_NEON_BACKEND => Ok(DeviceConfig::AppleM3AirCpuNeon),
             s if s.starts_with("gpu:") => Ok(DeviceConfig::Gpu(s[4..].parse::<usize>()?)),
             s if s.starts_with("cuda:") => Ok(DeviceConfig::Gpu(s[5..].parse::<usize>()?)),
             s if s.starts_with("vulkan:") => Ok(DeviceConfig::Gpu(s[7..].parse::<usize>()?)),

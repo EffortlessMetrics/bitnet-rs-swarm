@@ -4,6 +4,7 @@
 //! "requested X, detected Y, selected Z" — and logs / returns that string
 //! so it can be embedded in inference receipts.
 
+use crate::apple_m3_air;
 use crate::kernel_registry::{KernelBackend, KernelCapabilities};
 use std::fmt;
 
@@ -102,9 +103,13 @@ impl BackendRequest {
             "apple-m4-metal" => Some(BackendRequest::AppleM4Metal),
             "apple-m4-mpsgraph" => Some(BackendRequest::AppleM4MpsGraph),
             "apple-m4-cpu-neon" => Some(BackendRequest::AppleM4CpuNeon),
-            "apple-m3-air-metal" => Some(BackendRequest::AppleM3AirMetal),
-            "apple-m3-air-mpsgraph" => Some(BackendRequest::AppleM3AirMpsGraph),
-            "apple-m3-air-cpu-neon" => Some(BackendRequest::AppleM3AirCpuNeon),
+            label if label == apple_m3_air::METAL_BACKEND => Some(BackendRequest::AppleM3AirMetal),
+            label if label == apple_m3_air::MPSGRAPH_BACKEND => {
+                Some(BackendRequest::AppleM3AirMpsGraph)
+            }
+            label if label == apple_m3_air::CPU_NEON_BACKEND => {
+                Some(BackendRequest::AppleM3AirCpuNeon)
+            }
             _ => None,
         }
     }
@@ -129,9 +134,9 @@ impl fmt::Display for BackendRequest {
             BackendRequest::AppleM4Metal => write!(f, "apple-m4-metal"),
             BackendRequest::AppleM4MpsGraph => write!(f, "apple-m4-mpsgraph"),
             BackendRequest::AppleM4CpuNeon => write!(f, "apple-m4-cpu-neon"),
-            BackendRequest::AppleM3AirMetal => write!(f, "apple-m3-air-metal"),
-            BackendRequest::AppleM3AirMpsGraph => write!(f, "apple-m3-air-mpsgraph"),
-            BackendRequest::AppleM3AirCpuNeon => write!(f, "apple-m3-air-cpu-neon"),
+            BackendRequest::AppleM3AirMetal => write!(f, "{}", apple_m3_air::METAL_BACKEND),
+            BackendRequest::AppleM3AirMpsGraph => write!(f, "{}", apple_m3_air::MPSGRAPH_BACKEND),
+            BackendRequest::AppleM3AirCpuNeon => write!(f, "{}", apple_m3_air::CPU_NEON_BACKEND),
         }
     }
 }
@@ -175,7 +180,7 @@ impl BackendSelectionResult {
                 "apple-m4-cpu-neon".to_string()
             }
             (BackendRequest::AppleM3AirCpuNeon, KernelBackend::CpuRust) => {
-                "apple-m3-air-cpu-neon".to_string()
+                apple_m3_air::CPU_NEON_BACKEND.to_string()
             }
             (BackendRequest::NvidiaRtx5070TiCuda, KernelBackend::Cuda) => {
                 "nvidia-rtx-5070-ti-cuda".to_string()
@@ -194,8 +199,11 @@ impl BackendSelectionResult {
             "hip" => "hip",
             "oneapi" => "oneapi",
             "opencl" | "intel-a770-opencl" => "opencl",
-            "apple-m4-metal" | "apple-m3-air-metal" | "metal" => "metal",
-            "apple-m4-mpsgraph" | "apple-m3-air-mpsgraph" | "mpsgraph" => "mpsgraph",
+            "apple-m4-metal" | "metal" => "metal",
+            "apple-m4-mpsgraph" | "mpsgraph" => "mpsgraph",
+            label if label == apple_m3_air::METAL_BACKEND => apple_m3_air::METAL_RUNTIME_API,
+            label if label == apple_m3_air::MPSGRAPH_BACKEND => apple_m3_air::MPSGRAPH_RUNTIME_API,
+            label if label == apple_m3_air::CPU_NEON_BACKEND => apple_m3_air::CPU_NEON_RUNTIME_API,
             _ => "cpu",
         }
     }
@@ -255,6 +263,18 @@ impl BackendSelectionResult {
 pub fn select_backend(
     request: BackendRequest,
     caps: &KernelCapabilities,
+) -> Result<BackendSelectionResult, BackendSelectionError> {
+    select_backend_with_apple_cpu_neon_host(request, caps, apple_cpu_neon_host_matches())
+}
+
+fn apple_cpu_neon_host_matches() -> bool {
+    cfg!(all(target_os = "macos", target_arch = "aarch64"))
+}
+
+fn select_backend_with_apple_cpu_neon_host(
+    request: BackendRequest,
+    caps: &KernelCapabilities,
+    apple_cpu_neon_host_matches: bool,
 ) -> Result<BackendSelectionResult, BackendSelectionError> {
     let detected = caps.compiled_backends();
 
@@ -394,7 +414,7 @@ pub fn select_backend(
         BackendRequest::AppleM4CpuNeon | BackendRequest::AppleM3AirCpuNeon => {
             if caps.cpu_rust
                 && matches!(caps.simd_level, crate::kernel_registry::SimdLevel::Neon)
-                && cfg!(all(target_os = "macos", target_arch = "aarch64"))
+                && apple_cpu_neon_host_matches
             {
                 (KernelBackend::CpuRust, format!("{request} lane requested"))
             } else {
@@ -445,6 +465,7 @@ impl std::error::Error for BackendSelectionError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::apple_m3_air;
     use crate::kernel_registry::{KernelCapabilities, SimdLevel};
 
     fn cpu_only_caps() -> KernelCapabilities {
@@ -461,6 +482,10 @@ mod tests {
             cpp_ffi: false,
             simd_level: SimdLevel::Avx2,
         }
+    }
+
+    fn neon_caps() -> KernelCapabilities {
+        KernelCapabilities { simd_level: SimdLevel::Neon, ..cpu_only_caps() }
     }
 
     fn cuda_caps() -> KernelCapabilities {
@@ -582,19 +607,19 @@ mod tests {
             Some(BackendRequest::AppleM4CpuNeon)
         );
         assert_eq!(
-            BackendRequest::from_label("apple-m3-air-metal"),
+            BackendRequest::from_label(apple_m3_air::METAL_BACKEND),
             Some(BackendRequest::AppleM3AirMetal)
         );
         assert_eq!(
-            BackendRequest::from_label("apple-m3-air-mpsgraph"),
+            BackendRequest::from_label(apple_m3_air::MPSGRAPH_BACKEND),
             Some(BackendRequest::AppleM3AirMpsGraph)
         );
         assert_eq!(
-            BackendRequest::from_label("apple-m3-air-cpu-neon"),
+            BackendRequest::from_label(apple_m3_air::CPU_NEON_BACKEND),
             Some(BackendRequest::AppleM3AirCpuNeon)
         );
         assert_ne!(
-            BackendRequest::from_label("apple-m3-air-cpu-neon"),
+            BackendRequest::from_label(apple_m3_air::CPU_NEON_BACKEND),
             Some(BackendRequest::AppleM4CpuNeon)
         );
     }
@@ -713,9 +738,9 @@ mod tests {
 
     #[test]
     fn apple_m3_air_cpu_neon_request_is_distinct_from_m4_cpu_neon() {
-        assert_eq!(BackendRequest::AppleM3AirMetal.to_string(), "apple-m3-air-metal");
-        assert_eq!(BackendRequest::AppleM3AirMpsGraph.to_string(), "apple-m3-air-mpsgraph");
-        assert_eq!(BackendRequest::AppleM3AirCpuNeon.to_string(), "apple-m3-air-cpu-neon");
+        assert_eq!(BackendRequest::AppleM3AirMetal.to_string(), apple_m3_air::METAL_BACKEND);
+        assert_eq!(BackendRequest::AppleM3AirMpsGraph.to_string(), apple_m3_air::MPSGRAPH_BACKEND);
+        assert_eq!(BackendRequest::AppleM3AirCpuNeon.to_string(), apple_m3_air::CPU_NEON_BACKEND);
         assert_ne!(
             BackendRequest::AppleM3AirCpuNeon.to_string(),
             BackendRequest::AppleM4CpuNeon.to_string()
@@ -731,13 +756,75 @@ mod tests {
 
         let err = select_backend(BackendRequest::AppleM3AirCpuNeon, &cpu_only_caps()).unwrap_err();
         assert!(matches!(err, BackendSelectionError::RequestedUnavailable { .. }));
-        assert!(err.to_string().contains("apple-m3-air-cpu-neon"));
+        assert!(err.to_string().contains(apple_m3_air::CPU_NEON_BACKEND));
 
         for request in [BackendRequest::AppleM3AirMetal, BackendRequest::AppleM3AirMpsGraph] {
             let err = select_backend(request, &cpu_only_caps()).unwrap_err();
             assert!(matches!(err, BackendSelectionError::RequestedUnavailable { .. }));
             assert!(err.to_string().contains(&request.to_string()));
         }
+    }
+
+    #[test]
+    fn backend_selection_apple_m3_air_cpu_neon_selects_cpu_when_host_and_neon_match()
+    -> Result<(), BackendSelectionError> {
+        let result = select_backend_with_apple_cpu_neon_host(
+            BackendRequest::AppleM3AirCpuNeon,
+            &neon_caps(),
+            true,
+        )?;
+
+        assert_eq!(result.selected, KernelBackend::CpuRust);
+        assert_eq!(result.requested_backend(), apple_m3_air::CPU_NEON_BACKEND);
+        assert_eq!(result.selected_backend(), apple_m3_air::CPU_NEON_BACKEND);
+        assert_eq!(result.runtime_api(), apple_m3_air::CPU_NEON_RUNTIME_API);
+        assert!(!result.fallback_used());
+        assert!(result.identity_summary().contains("fallback_used=false"));
+        Ok(())
+    }
+
+    #[test]
+    fn backend_selection_apple_m3_air_cpu_neon_rejects_non_matching_host_or_simd() {
+        let host_err = select_backend_with_apple_cpu_neon_host(
+            BackendRequest::AppleM3AirCpuNeon,
+            &neon_caps(),
+            false,
+        )
+        .unwrap_err();
+        assert!(matches!(host_err, BackendSelectionError::RequestedUnavailable { .. }));
+        assert!(host_err.to_string().contains(apple_m3_air::CPU_NEON_BACKEND));
+
+        let simd_err = select_backend_with_apple_cpu_neon_host(
+            BackendRequest::AppleM3AirCpuNeon,
+            &cpu_only_caps(),
+            true,
+        )
+        .unwrap_err();
+        assert!(matches!(simd_err, BackendSelectionError::RequestedUnavailable { .. }));
+        assert!(simd_err.to_string().contains(apple_m3_air::CPU_NEON_BACKEND));
+    }
+
+    #[test]
+    fn backend_selection_apple_m3_air_rejects_historical_alias_drift() {
+        for alias in apple_m3_air::REJECTED_BACKEND_ALIASES {
+            assert_eq!(BackendRequest::from_label(alias), None, "{alias} must not be accepted");
+        }
+    }
+
+    #[test]
+    fn backend_selection_apple_m4_cpu_neon_identity_is_unchanged_with_host_seam()
+    -> Result<(), BackendSelectionError> {
+        let result = select_backend_with_apple_cpu_neon_host(
+            BackendRequest::AppleM4CpuNeon,
+            &neon_caps(),
+            true,
+        )?;
+
+        assert_eq!(result.selected, KernelBackend::CpuRust);
+        assert_eq!(result.requested_backend(), "apple-m4-cpu-neon");
+        assert_eq!(result.selected_backend(), "apple-m4-cpu-neon");
+        assert!(!result.fallback_used());
+        Ok(())
     }
 
     #[test]
