@@ -84,7 +84,7 @@ artifacts to separate strict proof items.
 | M3MBA-023 | merged | #1526 adds a bounded M3 Air performance profile that uses completed-run timeout provenance and phase artifact retention. |
 | M3MBA-024 | merged | #1534 records secondary BitNet artifact authority/storage preflight before any new large download. |
 | M3MBA-025 | merged | #1537 aligns accepted M3 artifact metadata with the separate M4 strict-proof checklist without manufacturing M4 proof. |
-| M3MBA-026 | in_progress | Seed the next M3 excellence queue after M3MBA-025 so runtime and proof work resumes from concrete PR-sized items. |
+| M3MBA-026 | merged | #1540 seeds the next M3 excellence queue after M3MBA-025 so runtime and proof work resumes from concrete PR-sized items. |
 | M3MBA-027 | ready | Split the M3 Air host/profile/backend-label contract into a single-responsibility shared device-model surface. |
 | M3MBA-028 | ready | Add compact Linux synthetic CI guards for M3 receipt/profile invariants without live Mac model work. |
 | M3MBA-029 | ready | Record or block bounded M3 Air dense SLM accuracy receipts with exact model/tokenizer/backend context. |
@@ -95,13 +95,13 @@ artifacts to separate strict proof items.
 | M3MBA-034 | ready | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces after receipts exist. |
 | M3MBA-035 | ready | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. |
 
-Current focus: `M3MBA-026` is in progress. `M3MBA-025` closed the first
-post-handoff queue, so this PR seeds the next queue before runtime behavior
-changes. The next implementation work starts with M3 device-model SRP cleanup
-and compact Linux synthetic guards, then records dense SLM accuracy and
-performance receipts, prepares and runs strict M3 BitNet CPU/NEON proof, and
-then enables or blocks exact-profile M3 ask/benchmark surfaces before turning
-completed receipts into a measured CPU/NEON optimization target.
+Current focus: `M3MBA-027` is ready. `M3MBA-026` merged in #1540 and seeded the
+next queue before runtime behavior changes. The next implementation work starts
+with M3 device-model SRP cleanup and compact Linux synthetic guards, then
+records dense SLM accuracy and performance receipts, prepares and runs strict
+M3 BitNet CPU/NEON proof, and then enables or blocks exact-profile M3
+ask/benchmark surfaces before turning completed receipts into a measured
+CPU/NEON optimization target.
 The Microsoft 2B I2_S artifact is accepted only for the recorded M3 Air
 BitNet.cpp reference-runner context until the new M3 BitNet receipt items pass.
 `M3MBA-006` and `M3MBA-007` remain blocked because the official 1bitLLM

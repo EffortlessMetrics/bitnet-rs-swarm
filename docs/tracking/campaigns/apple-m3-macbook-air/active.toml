@@ -1268,7 +1268,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-026"
-status = "in_progress"
+status = "merged"
+pr = 1540
+head_sha = "a2acc0e34f64c86f42ee6a9fd09a7156881b7919"
+merge_sha = "46260204933e38421ac2f1274f22885cdeb576c4"
 branch = "codex/apple-m3-macbook-air/M3MBA-026-successor-roadmap"
 stackable = true
 review_mode = "codex_premerge"
