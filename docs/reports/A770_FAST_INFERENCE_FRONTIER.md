@@ -5,8 +5,10 @@
 The A770 lane is useful but still diagnostic. A770-156 completes the focused
 QK256 replay packet for the committed summary-logits first mismatch: ninety
 runnable Q/K/V targets, the layer-0 through layer-29 Q/K/V trios.
-The selected device is Intel Arc A770 OpenCL and the replay receipts keep
-`fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
+A770-157 starts the next boundary by ledgering the layer-0 Q/K/V projection
+surface from the clean A770-156 row packet. The selected device is Intel Arc
+A770 OpenCL and the receipts keep `fallback_used = false`,
+`runtime_api = opencl`, and `claim_allowed = false`.
 
 That is a good correctness frontier, not an inference-performance frontier. It
 does not prove CPU/A770 answer parity, production QK256 dispatch promotion,
@@ -18,10 +20,12 @@ acceleration, or full BitNet inference.
 1. The current proof is too narrow.
 
    A770-156 covers ninety focused Q/K/V rows for one case and one first
-   mismatch: the layer-0 through layer-29 Q/K/V trios. Fast inference needs the
-   same kind of selected-device confidence at projection level and across the
-   remaining O projection, MLP linears, and logits-facing paths that can affect
-   generated tokens.
+   mismatch: the layer-0 through layer-29 Q/K/V trios. A770-157 shows that the
+   row evidence is clean enough to start projection replay, but the
+   projection-level path is still blocked on full projection operands and a
+   bounded projection replay hook. Fast inference needs selected-device
+   confidence at projection level and across the remaining O projection, MLP
+   linears, and logits-facing paths that can affect generated tokens.
 
 2. Production dispatch is not promotable yet.
 
@@ -60,8 +64,9 @@ acceleration, or full BitNet inference.
 
 2. Promote from rows to projections.
 
-   After the manifest packet is clean, run projection-level replay for Q/K/V/O
-   and MLP linears under the same selected-device, fallback-free receipt rules.
+   After the manifest packet is clean, capture full projection operands and add
+   a bounded projection-level replay hook for Q/K/V/O and MLP linears under the
+   same selected-device, fallback-free receipt rules.
 
 3. Reconnect to logits.
 
@@ -89,8 +94,10 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-After A770-156, the next honest step is projection-level replay, not a speed PR:
-carry the same one-case, one-mismatch, selected-device, fallback-free receipt
-rules from row replay into Q/K/V projection replay, then expand to O projection
-or MLP QK256 linears. Its job is to keep widening the correctness surface before
-any production QK256 policy, residency, answer-quality, or speed promotion.
+After A770-157, the next honest step is still not a speed PR. It is to capture
+full projection Q/K/V operands and add the smallest bounded projection replay
+hook, then run selected-device A770 OpenCL projection replay with
+`fallback_used=false`. Only after that boundary is clean should the lane expand
+to O projection or MLP QK256 linears. Its job is to keep widening the
+correctness surface before any production QK256 policy, residency,
+answer-quality, or speed promotion.
