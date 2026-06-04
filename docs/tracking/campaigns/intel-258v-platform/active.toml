@@ -18045,8 +18045,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-NPU-CACHE-REVIEW-001"
-status = "pr_open"
+status = "merged"
 pr = 1530
+head_sha = "ad987b72d2bec9a9d22749169672680238555c51"
+merge_sha = "e2e2a69c64e37e5a805c330991b9b2ee240bd35a"
+merged_at = "2026-06-04T21:43:56Z"
 branch = "codex/lunar-lake/LNL258V-NPU-CACHE-REVIEW-001-question-matrix"
 stackable = false
 review_mode = "codex_premerge"

@@ -30,7 +30,7 @@
 | apple-m3-macbook-air | M3MBA-022 | M3MBA-021 | merged |
 | apple-m3-macbook-air | M3MBA-023 | M3MBA-022 | merged |
 | apple-m3-macbook-air | M3MBA-024 | M3MBA-021 | merged |
-| apple-m3-macbook-air | M3MBA-025 | M3MBA-021, M3MBA-024 | proposed |
+| apple-m3-macbook-air | M3MBA-025 | M3MBA-021, M3MBA-024 | merged |
 | apple-m4 | M4-002 | M4-001 | merged |
 | apple-m4 | M4-003 | M4-002 | merged |
 | apple-m4 | M4-004 | M4-003 | merged |
@@ -537,7 +537,7 @@
 | intel-258v-platform | LNL258V-OP-006 | LNL258V-ROUTE-015 | merged |
 | intel-258v-platform | LNL258V-ASK-008 | LNL258V-BITNET-INTAKE-004, LNL258V-ASK-007 | merged |
 | intel-258v-platform | LNL258V-OPENVINO-PLAN-001 | LNL258V-OPENVINO-VALIDATE-ASK-001 | merged |
-| intel-258v-platform | LNL258V-NPU-CACHE-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | pr_open |
+| intel-258v-platform | LNL258V-NPU-CACHE-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
 | intel-258v-platform | LNL258V-CPU-SLOWPATH-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
@@ -693,7 +693,8 @@
 | intel-a770 | A770-153 | A770-152 | merged |
 | intel-a770 | A770-154 | A770-153 | merged |
 | intel-a770 | A770-155 | A770-154 | merged |
-| intel-a770 | A770-156 | A770-155 | in_progress |
+| intel-a770 | A770-156 | A770-155 | merged |
+| intel-a770 | A770-157 | A770-156 | ready |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |
