@@ -1,0 +1,37 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-023"
+event = "in_progress"
+timestamp = "2026-06-04T20:26:58Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-023-bounded-performance-profile-port"
+
+summary = "Started the bounded M3 Air performance profile slice on the swarm repository after M3MBA-022 merged."
+
+artifacts = [
+  ".github/workflows/apple-m3-air-dense-slm.yml",
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "docs/apple-silicon/m3-macbook-air-roadmap.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/CAMPAIGN.md",
+]
+
+notes = [
+  "The staged M3 Air workflow exposes profile_set=performance for selected hardware runs only.",
+  "The workflow records the fixed warm_16/warm_32/warm_64/warm_128 performance contract, token budget, host storage, power and thermal context, and retained phase artifacts.",
+  "Performance dispatches require a non-default timeout_cap_source before model fetch so caps are sourced from completed healthy runs plus cushion rather than near-completion cancellation.",
+  "Timeout caps remain hang guards and are not performance evidence.",
+  "The staged no-op job is pinned to the em-ci-tiny/rust-tiny self-hosted capacity labels instead of the generic Linux self-hosted pool.",
+  "The receipts-core hunk is a mechanical rustfmt correction exposed by the required cargo fmt --all proof on current main.",
+  "No live M3 Air model run, BitNet answer-quality claim, M4 Mac mini proof, Metal model inference, MPSGraph model inference, Neural Engine execution, QK256 support, or broad Apple Silicon performance claim is made.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- lint-workflows",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
