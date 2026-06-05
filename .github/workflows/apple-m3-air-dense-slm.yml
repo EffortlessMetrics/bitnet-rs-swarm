@@ -257,6 +257,11 @@ jobs:
           retention-days: ${{ inputs.retention_days }}
 
       - name: Run M3 Air dense SLM receipt
+        env:
+          BITNET_M3_TIMEOUT_CAP_SOURCE: ${{ inputs.timeout_cap_source }}
+          BITNET_M3_TIMEOUT_CAP_COMPLETED_MINUTES: ${{ inputs.timeout_cap_completed_minutes }}
+          BITNET_M3_TIMEOUT_CAP_CUSHION_MINUTES: ${{ inputs.timeout_cap_cushion_minutes }}
+          BITNET_M3_TIMEOUT_CAP_CONFIGURED_MINUTES: "180"
         run: |
           set -euo pipefail
           EXTRA_FLAGS=""

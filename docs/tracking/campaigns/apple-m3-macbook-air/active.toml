@@ -1365,8 +1365,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-028"
-status = "ready"
+status = "pr_open"
 branch = "codex/apple-m3-macbook-air/M3MBA-028-compact-linux-synthetic-ci"
+pr = 1564
+head_sha = "f45be697792303764796f6b71bba355e097d7a47"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

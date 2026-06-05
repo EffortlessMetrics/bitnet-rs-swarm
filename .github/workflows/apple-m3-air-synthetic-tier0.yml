@@ -1,0 +1,99 @@
+name: Apple M3 Air Synthetic Tier 0
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/apple-m3-air-synthetic-tier0.yml'
+      - 'crates/bitnet-cli/**'
+      - 'crates/bitnet-common/**'
+      - 'crates/bitnet-receipts-core/**'
+      - 'docs/apple-silicon/**'
+      - 'docs/ci/**'
+      - 'docs/tracking/campaigns/apple-m3-macbook-air/**'
+      - 'docs/tracking/generated/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apple-m3-air-synthetic-tier0.yml'
+      - 'crates/bitnet-cli/**'
+      - 'crates/bitnet-common/**'
+      - 'crates/bitnet-receipts-core/**'
+      - 'docs/apple-silicon/**'
+      - 'docs/ci/**'
+      - 'docs/tracking/campaigns/apple-m3-macbook-air/**'
+      - 'docs/tracking/generated/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # This compact synthetic lane is bounded by timeout-minutes. Let started
+  # proof jobs finish so PR Gate receives a real result instead of replacing
+  # useful near-complete work with cancellation.
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_BACKTRACE: "1"
+  BITNET_SKIP_SLOW_TESTS: "1"
+
+jobs:
+  tier0:
+    name: Synthetic Receipt And Profile Guards
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-small
+        - trusted-pr
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6 # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2
+        with:
+          shared-key: apple-m3-air-synthetic-tier0
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Run M3 strict CPU receipt guards
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3
+
+      - name: Run M3 Mac receipt profile guards
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3
+
+      - name: Summarize Tier 0 boundary
+        run: |
+          {
+            echo "## Apple M3 Air Synthetic Tier 0"
+            echo
+            echo "Validated synthetic Apple M3 Air receipt/profile invariants for exact CPU/NEON identity, fallback rejection, proof-family boundaries, claim-boundary leakage, and timeout-cap provenance."
+            echo
+            echo "This workflow does not use live Mac hardware, fetch models, run mac validate against a model, publish performance evidence, or claim BitNet/QK256 Apple Silicon proof."
+          } >> "$GITHUB_STEP_SUMMARY"
