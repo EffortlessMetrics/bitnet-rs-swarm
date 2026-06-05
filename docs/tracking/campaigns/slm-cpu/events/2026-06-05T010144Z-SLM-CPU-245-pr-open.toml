@@ -1,0 +1,16 @@
+timestamp = "2026-06-05T01:01:44Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-245"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1555
+branch = "codex/slm-cpu/slm-cpu-245-no-bias-timing-allocation-envelope"
+head_sha = "5eece13b2ff1f9ec03b7a1bc915f2cff4f7c3e76"
+summary = "Opened the SLM-CPU-245 no-bias apply-linear timing/allocation envelope PR."
+notes = [
+  "PR #1555 records Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on timing and allocation receipts with allocation audit enabled for the exact feed_forward.down_proj no-bias callsite.",
+  "Candidate-on executes dense_linear_no_bias_candidate_forward while preserving prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, backend identity, and fallback=false for both models.",
+  "The aggregate envelope records cold load, warm-session timing, prefill, first token, steady decode, allocation bytes/count, resident memory, thread count, and thermal/power availability without claiming a timing improvement, allocation reduction, speedup, sustained throughput, default-runtime promotion, role expansion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 support.",
+]

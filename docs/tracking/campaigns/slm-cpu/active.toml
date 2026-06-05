@@ -14178,7 +14178,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-245"
-status = "ready"
+status = "pr_open"
+pr = 1555
+head_sha = "5eece13b2ff1f9ec03b7a1bc915f2cff4f7c3e76"
 branch = "codex/slm-cpu/slm-cpu-245-no-bias-timing-allocation-envelope"
 stackable = false
 review_mode = "codex_premerge"
@@ -14188,7 +14190,7 @@ blocked_by = ["SLM-CPU-244"]
 acceptance = "Consume the SLM-CPU-244 Qwen3/Qwen2.5 Q8_0 no-bias candidate-off/on parity receipts and add or precisely block the no-bias apply-linear timing/allocation envelope for the exact feed_forward.down_proj candidate path. A valid implementation must keep the explicit gate opt-in, preserve the default eager_f32_candle path when the gate is absent, preserve same prompt IDs, generated IDs, decoded text, model SHA, tokenizer source and strictness, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, selected/candidate path and kernel identity, and record cold load, warm session, prefill, first token, steady decode, allocation bytes/count, resident memory, thread count, and thermal/power availability where the host exposes them. A valid blocker must name the exact missing timer, allocation counter, resident-memory source, thermal/power source, before/after receipt pair, command surface, or runtime ownership boundary. This item must not claim speedup, allocation reduction, sustained throughput, broad role expansion, default-runtime promotion, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes without matching before/after receipts."
 commands = [
   "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-244-no-bias-dispatch-candidate-receipts.json",
-  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-05-29/qwen3-qwen25-slm-cpu-245-no-bias-timing-allocation-envelope.json",
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-245-no-bias-timing-allocation-envelope.json",
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_no_bias -- --nocapture",
   "cargo run -p xtask --no-default-features -- campaign generate",
   "cargo run -p xtask --no-default-features -- campaign doctor",
