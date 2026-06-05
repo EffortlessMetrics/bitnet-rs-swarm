@@ -35,7 +35,10 @@ Status documents must preserve BitNet-specific distinctions:
 Current maintained status surfaces:
 
 ```text
+docs/status/SUPPORT_MATRIX.md
+docs/status/BITNET_CAPABILITY_MATRIX.md
 docs/status/CUDA_CAPABILITY_MATRIX.md
+docs/status/APPLE_CAPABILITY_MATRIX.md
 docs/status/OPENVINO_CAPABILITY_MATRIX.md
 ```
 
