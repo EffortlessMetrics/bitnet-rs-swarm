@@ -107,8 +107,11 @@ const BITNET_M4_EXPECTED_TOKENIZER_SHA256: &str =
 const BITNET_M4_PROMPT_TEMPLATE: &str = "bitnetcpp-answer";
 const BITNET_M4_MODEL_ID: &str = "microsoft-bitnet-b1.58-2B-4T-i2s";
 const BITNET_M4_DEFAULT_TOKENIZER_PATH: &str = "models/microsoft-bitnet-b1.58-2B-4T/tokenizer.json";
-const BITNET_M4_EVAL_CORPUS_NAMES: &[&str] =
-    &["apple-m4-bitnet-eval-seeded-corpus", "apple-m4-bitnet-eval-seeded-corpus-250"];
+const BITNET_M4_EVAL_CORPUS_NAMES: &[&str] = &[
+    "apple-m4-bitnet-eval-seeded-corpus",
+    "apple-m4-bitnet-eval-seeded-corpus-250",
+    "apple-m4-bitnet-eval-repaired-subset",
+];
 const LOW_DISK_HEADROOM_BYTES: u64 = 1_073_741_824;
 const OPERATOR_PROFILE_TOKENS: &[usize] = &[16, 32, 64];
 const PERFORMANCE_PROFILE_TOKENS: &[usize] = &[16, 32, 64, 128];
@@ -31502,6 +31505,24 @@ mod tests {
         receipt["corpus"]["name"] = serde_json::json!("apple-m4-bitnet-eval-seeded-corpus-250");
 
         let summary = validate_mac_receipt_value(Path::new("bitnet-eval-250.json"), &receipt)?;
+
+        assert_eq!(summary.artifact_kind, "bitnet_apple_m4_local_answer_corpus");
+        assert_eq!(summary.requested_backend, APPLE_M4_CPU_NEON);
+        assert_eq!(summary.selected_backend, APPLE_M4_CPU_NEON);
+        assert_eq!(summary.prompt_count, Some(2));
+        assert_eq!(summary.generated_tokens, Some(3));
+        Ok(())
+    }
+
+    #[test]
+    fn mac_receipts_check_accepts_bitnet_eval_repaired_subset_answer_corpus()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut receipt = test_bitnet_eval_answer_corpus_receipt();
+        receipt["corpus"]["id"] = serde_json::json!("apple-m4-bitnet-eval-repaired-subset");
+        receipt["corpus"]["name"] = serde_json::json!("apple-m4-bitnet-eval-repaired-subset");
+
+        let summary =
+            validate_mac_receipt_value(Path::new("bitnet-eval-repaired-subset.json"), &receipt)?;
 
         assert_eq!(summary.artifact_kind, "bitnet_apple_m4_local_answer_corpus");
         assert_eq!(summary.requested_backend, APPLE_M4_CPU_NEON);
