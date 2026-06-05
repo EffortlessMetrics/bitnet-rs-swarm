@@ -1,0 +1,18 @@
+timestamp = "2026-06-05T16:48:24Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-NPU-CACHE-TRUTH-GUARD-001"
+event = "merged"
+previous_status = "ready"
+new_status = "merged"
+pr = 1605
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-TRUTH-GUARD-001-cache-source-validator"
+head_sha = "168d79f47983ecfc4cb876348282659af5f5f5f4"
+merge_sha = "98f91d072e459e92993c98b1e1933178643c9a71"
+merged_at = "2026-06-05T16:48:24Z"
+actor = "codex"
+summary = "Closed LNL258V-NPU-CACHE-TRUTH-GUARD-001 after PR #1605 merged the no-inference NPU cache-source provenance validator."
+notes = [
+  "PR #1605 added dedicated lunar_lake_openvino_npu_cache_truth validation requiring route/backend/runtime/device, model export, cache tuple provenance, first/second process timing separation, direct runtime cache-hit status, answer-gate summary, generated-token visibility, fallback status, and claim-boundary fields.",
+  "The merged validator keeps direct_runtime_cache_hit_status.available=false reviewable as unavailable diagnostic evidence and fails closed when timing-derived or file-reuse evidence claims direct runtime cache-hit truth.",
+  "No physical NPU cache run, Lunar Lake inference, committed hardware receipt refresh, route-policy mutation, NPU cold/default/ask_short/ask_normal/warm_resident/low_power promotion, AUTO route-policy proof, benchmark qualification, speedup or power claim, native NPU proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
