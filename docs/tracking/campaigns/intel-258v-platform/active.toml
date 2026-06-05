@@ -18360,7 +18360,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-CPU-PHASE-ATTRIBUTION-001"
-status = "ready"
+status = "pr_open"
+pr = 1599
+head_sha = "339c19d59ffea40133424086dadfc02c16bf9351"
 branch = "codex/lunar-lake/LNL258V-CPU-PHASE-ATTRIBUTION-001-attribution-buckets"
 stackable = false
 review_mode = "codex_premerge"
