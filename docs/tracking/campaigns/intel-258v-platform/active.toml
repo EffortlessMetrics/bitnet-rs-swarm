@@ -18411,3 +18411,56 @@ must_not_claim = [
   "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
   "BitNet QK256/I2_S behavior changed.",
 ]
+
+[[work_item]]
+id = "LNL258V-NPU-CACHE-TRUTH-GUARD-001"
+status = "ready"
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-TRUTH-GUARD-001-cache-source-validator"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-NPU-CACHE-REVIEW-001"]
+acceptance = "Add no-new-inference schema/checker or docs-contract coverage for #1572 so Lunar Lake OpenVINO NPU cache-truth evidence is machine-readable and fails closed on cache-source provenance. Preserve the cache-source taxonomy runtime_metric, runtime_log, file_reuse, timing_derived, and not_exposed; require route/backend/runtime/device/model-export/cache tuple provenance, first/second process timing separation, direct runtime cache-hit status, answer-gate summary, generated-token visibility, fallback status, and claim-boundary fields for any dedicated lunar_lake_openvino_npu_cache_truth artifact; keep direct_runtime_cache_hit_status.available=false reviewable as unavailable diagnostic evidence; and fail validation when timing_derived or file_reuse evidence claims direct runtime cache-hit truth. Use existing committed NPU cache receipts or synthetic mutated fixtures only, and preserve no physical cache run, new inference, hardware receipt refresh, route-policy mutation, NPU cold/default/ask_short/ask_normal/low_power promotion, AUTO route-policy proof, warm-resident expansion, benchmark qualification, speedup or power claim, native NPU proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "cargo test --locked -p bitnet-receipts-core lunar_lake_openvino_npu_cache -- --nocapture",
+  "cargo test --locked -p bitnet-receipts-core lunar_lake_openvino_validator_rejects -- --nocapture",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-receipts-core/src/**",
+  "crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "docs/specs/BITNET-SPEC-OPENVINO-NPU-COLD-WARM-CACHE.md",
+  "docs/research/lunar-lake-npu-cold-start.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "ci/hardware/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "scripts/**",
+]
+may_claim = [
+  "The selected #1572 work makes Lunar Lake OpenVINO NPU cache-source provenance machine-readable and fail-closed.",
+  "Timing-derived or file/cache-derived NPU cache evidence remains diagnostic unless a direct runtime metric or runtime log proves cache-hit truth for the same tuple.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run by this PR.",
+  "Any physical NPU cache run was executed by this PR.",
+  "Any committed hardware receipt was refreshed by this PR.",
+  "Any route policy changed or route was promoted by this PR.",
+  "OpenVINO NPU is promoted for cold/default, ask_short, ask_normal, warm_resident, or low_power by this PR.",
+  "AUTO route-policy proof is established by this PR.",
+  "A warm-resident route boundary is expanded by this PR.",
+  "NPU cache evidence is benchmark-qualified by this PR.",
+  "An NPU speedup is claimed by this PR.",
+  "A power advantage is proven by this PR.",
+  "A low_power route is proven or promoted by this PR.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
