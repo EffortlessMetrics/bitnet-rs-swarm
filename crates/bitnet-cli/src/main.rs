@@ -549,8 +549,10 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         strict_cpu: bool,
 
-        /// Output answer-shaped receipt to file; strict CPU/CUDA ask defaults to
+        /// Output answer-shaped receipt to file; defaults to
+        /// target/bitnet/receipts/ask/ask-latest.json, or
         /// target/bitnet/receipts/cuda-answer-readiness/strict-*-ask-latest.json
+        /// for strict CPU/CUDA ask
         #[arg(long, value_name = "PATH")]
         receipt_out: Option<std::path::PathBuf>,
     },
@@ -2521,7 +2523,7 @@ fn strict_bitnet_cuda_ask_preflight(
         )?;
     let receipt_path = receipt_out
         .map(std::path::Path::to_path_buf)
-        .or_else(|| strict_ask_default_receipt_path(true, false))
+        .or_else(|| ask_default_receipt_path(true, false))
         .ok_or_else(|| anyhow::anyhow!("strict CUDA ask could not resolve a receipt path"))?;
 
     Ok(StrictBitnetCudaAskPreflight {
@@ -2589,7 +2591,7 @@ fn handle_cuda_doctor_command(
             "status": "not_checked",
             "note": "pass --model and optional --tokenizer to preflight model/tokenizer authority",
             "qk256_route_ready": "not_checked",
-            "default_receipt_path": strict_ask_default_receipt_path(true, false)
+            "default_receipt_path": ask_default_receipt_path(true, false)
                 .ok_or_else(|| {
                     anyhow::anyhow!("cuda doctor could not resolve a default strict CUDA receipt path")
                 })?
@@ -14399,11 +14401,11 @@ async fn run_ask_generation(
         .await?;
         println!("{}", outcome.answer);
         println!();
-        print_strict_ask_proof_summary(&outcome.receipt, &outcome.receipt_path);
+        print_ask_proof_summary(&outcome.receipt, &outcome.receipt_path);
         return Ok(());
     }
     let effective_receipt_out =
-        receipt_out.clone().or_else(|| strict_ask_default_receipt_path(strict_cuda, strict_cpu));
+        receipt_out.clone().or_else(|| ask_default_receipt_path(strict_cuda, strict_cpu));
     if strict_cuda {
         strict_bitnet_cuda_ask_preflight(
             &model,
@@ -14549,6 +14551,7 @@ async fn run_ask_generation(
         "quality": quality,
         "receipt": {
             "requested": !receipt_out_was_defaulted,
+            "defaulted": receipt_out_was_defaulted,
             "defaulted_for_strict_ask": receipt_out_was_defaulted && (strict_cuda || strict_cpu),
             "path": receipt_path.display().to_string(),
         },
@@ -14562,16 +14565,11 @@ async fn run_ask_generation(
     if strict_cpu {
         validate_strict_cpu_answer_quality(&answer_receipt)?;
     }
-    if strict_cuda || strict_cpu {
-        print_strict_ask_proof_summary(&answer_receipt, &receipt_path);
-    }
+    print_ask_proof_summary(&answer_receipt, &receipt_path);
     Ok(())
 }
 
-fn strict_ask_default_receipt_path(
-    strict_cuda: bool,
-    strict_cpu: bool,
-) -> Option<std::path::PathBuf> {
+fn ask_default_receipt_path(strict_cuda: bool, strict_cpu: bool) -> Option<std::path::PathBuf> {
     match (strict_cuda, strict_cpu) {
         (true, false) => Some(
             std::path::PathBuf::from("target")
@@ -14586,6 +14584,13 @@ fn strict_ask_default_receipt_path(
                 .join("receipts")
                 .join("cuda-answer-readiness")
                 .join("strict-cpu-ask-latest.json"),
+        ),
+        (false, false) => Some(
+            std::path::PathBuf::from("target")
+                .join("bitnet")
+                .join("receipts")
+                .join("ask")
+                .join("ask-latest.json"),
         ),
         _ => None,
     }
@@ -14615,20 +14620,13 @@ fn resolve_dense_qwen_cuda_ask_model(
 }
 
 #[cfg(feature = "full-cli")]
-fn print_strict_ask_proof_summary(
-    answer_receipt: &serde_json::Value,
-    receipt_path: &std::path::Path,
-) {
+fn print_ask_proof_summary(answer_receipt: &serde_json::Value, receipt_path: &std::path::Path) {
     let explanation = commands::receipts::explain_receipt(receipt_path, answer_receipt);
     commands::receipts::print_compact_proof_summary(&explanation);
 }
 
 #[cfg(not(feature = "full-cli"))]
-fn print_strict_ask_proof_summary(
-    _answer_receipt: &serde_json::Value,
-    _receipt_path: &std::path::Path,
-) {
-}
+fn print_ask_proof_summary(_answer_receipt: &serde_json::Value, _receipt_path: &std::path::Path) {}
 
 fn validate_strict_cuda_ask_receipt(run_receipt: &serde_json::Value) -> Result<()> {
     const RTX_5070_TI_CUDA: &str = "nvidia-rtx-5070-ti-cuda";
@@ -18282,17 +18280,22 @@ mod tests {
     }
 
     #[test]
-    fn strict_ask_default_receipt_path_is_only_for_strict_modes() {
-        assert!(
-            strict_ask_default_receipt_path(false, false).is_none(),
-            "non-strict ask should not force a receipt"
+    fn ask_default_receipt_path_selects_user_and_strict_profiles() {
+        let default = ask_default_receipt_path(false, false).unwrap();
+        assert_eq!(
+            default,
+            std::path::PathBuf::from("target")
+                .join("bitnet")
+                .join("receipts")
+                .join("ask")
+                .join("ask-latest.json")
         );
         assert!(
-            strict_ask_default_receipt_path(true, true).is_none(),
+            ask_default_receipt_path(true, true).is_none(),
             "mutually exclusive strict modes are rejected before receipt resolution"
         );
 
-        let cuda = strict_ask_default_receipt_path(true, false).unwrap();
+        let cuda = ask_default_receipt_path(true, false).unwrap();
         assert_eq!(
             cuda,
             std::path::PathBuf::from("target")
@@ -18302,7 +18305,7 @@ mod tests {
                 .join("strict-cuda-ask-latest.json")
         );
 
-        let cpu = strict_ask_default_receipt_path(false, true).unwrap();
+        let cpu = ask_default_receipt_path(false, true).unwrap();
         assert_eq!(
             cpu,
             std::path::PathBuf::from("target")

@@ -1,0 +1,16 @@
+timestamp = "2026-06-05T14:52:53Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-PHASE-ATTRIBUTION-001"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1599
+branch = "codex/lunar-lake/LNL258V-CPU-PHASE-ATTRIBUTION-001-attribution-buckets"
+head_sha = "339c19d59ffea40133424086dadfc02c16bf9351"
+actor = "codex"
+summary = "Opened PR #1599 for the no-inference resident CPU phase-attribution bucket guard."
+notes = [
+  "PR #1599 adds machine-readable resident Rust GGUF CPU phase-attribution buckets for reload, prompt/template/tokenization, prefill, first-token boundary, decode, logits/sampling, detokenization, host overhead, topology, and unavailable telemetry.",
+  "The bucket guard is derived from existing resident-session evidence and synthetic mutated receipts only; benchmark_qualified remains false until a later matched benchmark contract is accepted.",
+  "No Lunar Lake inference, hardware receipt refresh, CPU optimization, thread default, affinity, topology, kernel, buffer, sampling, route-policy mutation, OpenVINO CPU promotion, speedup or power claim, low_power evidence, native accelerator proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

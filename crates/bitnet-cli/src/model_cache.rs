@@ -101,8 +101,8 @@ pub enum ModelAction {
 
     /// Show user-facing model support for a device from the coverage matrix.
     Status {
-        /// Device label to summarize, for example cuda or nvidia-rtx-5070-ti-cuda.
-        #[arg(long, value_name = "DEVICE")]
+        /// Device label to summarize. Defaults to the current canonical CUDA status lane.
+        #[arg(long, value_name = "DEVICE", default_value = "nvidia-rtx-5070-ti-cuda")]
         device: String,
 
         /// Override the coverage matrix path. Defaults to ci/model-artifacts/model-coverage-matrix.toml when run from this repo.
@@ -1312,19 +1312,10 @@ fn verify_model_command(
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else if result.passed {
         println!("verified {} at {}", model.id, path.display());
-        if let Some(contract) = &result.model_contract {
-            println!("contract: {} ({}, {})", contract.id, contract.kernel_family, contract.status);
-            println!("claim boundary: {}", contract.claim_boundary);
-        }
-        if let Some(capability) = &result.model_capability {
-            println!(
-                "capability: {} ({}, {})",
-                capability.id, capability.model_family, capability.model_class
-            );
-            println!("claim boundary: {}", capability.claim_boundary);
-        }
+        print_verify_product_summary(&result);
     } else {
         println!("verification failed for {} at {}", model.id, path.display());
+        print_verify_product_summary(&result);
         eprintln!("{}", verify_failure_guidance(&cache_root, model, &path, &result));
     }
     if result.passed { Ok(()) } else { anyhow::bail!("model `{}` failed verification", model.id) }
@@ -1690,12 +1681,29 @@ fn model_status_includes_entry(selected_backend: &str, entry: &ModelCoverageEntr
         return true;
     }
 
+    let visible_diagnostic = model_status_category(entry) == "diagnostic";
+    if visible_diagnostic
+        && matches!(entry.model_class.as_str(), "bitnet" | "dense_slm" | "small_llm")
+    {
+        return true;
+    }
+
     let actionable_candidate = entry.status.contains("candidate")
         || entry.status.contains("blocked")
         || entry.id.ends_with("_candidate");
     !entry.claims.product_cli_ready
         && actionable_candidate
-        && matches!(entry.model_class.as_str(), "dense_slm" | "small_llm")
+        && matches!(entry.model_class.as_str(), "bitnet" | "dense_slm" | "small_llm")
+}
+
+fn model_status_category(entry: &ModelCoverageEntry) -> &'static str {
+    if entry.claims.product_cli_ready {
+        return "supported";
+    }
+    if entry.status.contains("diagnostic") || entry.status.contains("unsupported") {
+        return "diagnostic";
+    }
+    "candidate"
 }
 
 fn model_status_row(
@@ -1704,8 +1712,7 @@ fn model_status_row(
     entry: &ModelCoverageEntry,
 ) -> ModelStatusRow {
     let route = entry.accelerator_routes.first().cloned();
-    let category =
-        if entry.claims.product_cli_ready { "supported" } else { "candidate" }.to_string();
+    let category = model_status_category(entry).to_string();
     let benchmark = benchmark_status(entry);
     let warm_session = warm_session_status(entry);
     let ask = ask_status(entry);
@@ -1807,7 +1814,7 @@ fn server_status(entry: &ModelCoverageEntry) -> ServerStatus {
 }
 
 fn print_model_status_text(dashboard: &ModelStatusDashboard) {
-    println!("CUDA model status for {}", dashboard.device);
+    println!("BitNet model status for {}", dashboard.device);
     println!("requested backend: {}", dashboard.requested_backend);
     if let Some(selected_backend) = &dashboard.selected_backend {
         println!("selected backend: {selected_backend}");
@@ -1821,6 +1828,8 @@ fn print_model_status_text(dashboard: &ModelStatusDashboard) {
     print_model_status_group(dashboard, "Supported", "supported");
     println!();
     print_model_status_group(dashboard, "Candidates", "candidate");
+    println!();
+    print_model_status_group(dashboard, "Diagnostics", "diagnostic");
 }
 
 fn print_model_status_group(dashboard: &ModelStatusDashboard, title: &str, category: &str) {
@@ -1849,7 +1858,7 @@ fn print_model_status_group(dashboard: &ModelStatusDashboard, title: &str, categ
             if row.full_residency_claim { "claimed" } else { "not claimed" }
         );
         println!("    claim boundary: {}", row.claim_boundary);
-        if row.category == "candidate" {
+        if row.category != "supported" {
             println!("    next proof: {}", row.next_proof);
         }
         println!();
@@ -3306,8 +3315,60 @@ fn print_fetch_result(status: &str, verify: &VerifyResult, json: bool) -> Result
         if !verify.model.apple_m4_cpu_neon_supported {
             println!("note: {}", verify.model.support_note);
         }
+        print_verify_product_summary(verify);
     }
     Ok(())
+}
+
+fn print_verify_product_summary(verify: &VerifyResult) {
+    let provenance = &verify.artifact_provenance;
+    let actual_bytes =
+        verify.actual_bytes.map(|bytes| bytes.to_string()).unwrap_or_else(|| "missing".to_string());
+    let actual_sha = verify.actual_sha256.as_deref().unwrap_or("missing");
+
+    println!("cache root: {}", provenance.local_cache.cache_root.display());
+    println!("cache path: {}", provenance.local_cache.cache_path.display());
+    println!(
+        "model identity: {} @ {} / {}",
+        provenance.source.repo, provenance.source.revision, provenance.artifact.filename
+    );
+    println!("expected: bytes={}, sha256={}", verify.expected_bytes, verify.expected_sha256);
+    println!("actual: bytes={actual_bytes}, sha256={actual_sha}");
+    println!("artifact verification: {}", if verify.passed { "passed" } else { "failed" });
+    println!(
+        "structurally valid: not assessed by model verify; byte identity is {}",
+        if verify.passed { "verified" } else { "not verified" }
+    );
+    println!(
+        "answer ready: not proven by model verify; use `bitnet model status` and receipts for answer claims"
+    );
+    println!(
+        "tokenizer authority: {} ({})",
+        provenance.tokenizer.pre_tokenizer, provenance.tokenizer.sha256_status
+    );
+    if let Some(path) = &provenance.tokenizer.external_path {
+        println!("tokenizer path: {path}");
+    }
+    if let Some(sha) = &provenance.tokenizer.sha256 {
+        println!("tokenizer sha256: {sha}");
+    }
+    println!(
+        "prompt authority: {} ({})",
+        provenance.prompt_template.identity, provenance.prompt_template.source
+    );
+    if let Some(contract) = &verify.model_contract {
+        println!("contract: {} ({}, {})", contract.id, contract.kernel_family, contract.status);
+        println!("required receipts: {}", contract.required_receipts.join(", "));
+    }
+    if let Some(capability) = &verify.model_capability {
+        println!(
+            "capability: {} ({}, {})",
+            capability.id, capability.model_family, capability.model_class
+        );
+        println!("required receipts: {}", capability.required_receipts.join(", "));
+    }
+    println!("next step: {}", provenance.repair.command);
+    println!("claim boundary: {}", provenance.claim_boundary);
 }
 
 fn model_command(action: &str, model: &SupportedModel, cache_root: Option<&Path>) -> String {
@@ -4112,6 +4173,31 @@ mod tests {
         assert!(!smollm2.full_residency_claim);
         assert!(smollm2.next_proof.contains("same-prompt SmolLM2"));
         assert!(smollm2.claim_boundary.contains("no CPU answer readiness"));
+        Ok(())
+    }
+
+    #[test]
+    fn model_status_dashboard_lists_diagnostic_rows_without_claims() -> Result<()> {
+        let matrix_path = workspace_model_coverage_matrix_path();
+        let matrix = read_model_coverage_matrix(&matrix_path)?;
+        let dashboard = model_status_dashboard("nvidia-rtx-5070-ti-cuda", &matrix_path, &matrix);
+
+        let diagnostic = model_status_row_for(&dashboard, "bitnet_onebit_large_diagnostic")?;
+        assert_eq!(diagnostic.category, "diagnostic");
+        assert_eq!(diagnostic.selected_backend, "nvidia-rtx-5070-ti-cuda");
+        assert_eq!(diagnostic.selected_route, None);
+        assert_eq!(diagnostic.fallback_used, None);
+        assert!(!diagnostic.product_cli_ready);
+        assert!(!diagnostic.cpu_answer_ready);
+        assert!(!diagnostic.accelerator_answer_ready);
+        assert!(!diagnostic.speedup_claim);
+        assert!(!diagnostic.server_ready);
+        assert_eq!(diagnostic.server_ready_scope, None);
+        assert!(!diagnostic.full_residency_claim);
+        assert!(!diagnostic.bitnet_packed_i2s_qk256_proof);
+        assert!(!diagnostic.dense_regular_llm_cuda_proof);
+        assert!(diagnostic.next_proof.contains("Family-specific artifact"));
+        assert!(diagnostic.claim_boundary.contains("diagnostic"));
         Ok(())
     }
 
