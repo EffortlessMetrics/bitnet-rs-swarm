@@ -1,0 +1,42 @@
+timestamp = "2026-06-05T02:59:57Z"
+campaign = "intel-a770"
+item = "A770-159"
+event = "in_progress"
+previous_status = "none"
+new_status = "ready"
+branch = "codex/intel-a770/A770-159-full-projection-operands-capture"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Seeded A770-159 for the full projection Q/K/V operand capture step."
+notes = [
+  "A770-158 merged the bounded projection-level replay hook boundary in PR #1553.",
+  "A770-159 must use the committed A770-158 hook receipt as its source packet.",
+  "The next narrow target is exactly case a770_summary_seed770024_keywords_014, first-mismatch index 9, and the layer-0 Q/K/V target surface.",
+  "Any selected-device replay must keep selected_backend Intel Arc A770 OpenCL, runtime_api opencl, and fallback_used=false.",
+  "Answer parity, broad answer quality, residency, speed, trusted partial acceleration, production QK256 policy, and full BitNet inference claims remain closed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-159 may record full projection Q/K/V operands for the A770-158 target surface.",
+  "A770-159 may record a selected-device Intel Arc A770 OpenCL projection-level replay result with fallback_used=false if the required operands and hook exist.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
