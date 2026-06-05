@@ -1,0 +1,12 @@
+timestamp = "2026-06-05T15:59:45Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-005"
+event = "pr_open"
+pr = 1603
+head_sha = "043d14c889298ab2b861eed770fb72e27adb9543"
+actor = "codex"
+notes = [
+  "Opened the repaired BitNet subset rerun PR in bitnet-rs-swarm.",
+  "PR documents subset non-improvement against the matched 2026-05-18 repaired baseline subset and keeps the next move repair-first.",
+  "Claim boundary remains BitNet repaired-subset evidence only: no dense evidence reuse, no full repaired-250 rerun, no 500-case expansion, no BitNet chat enablement, and no BitNet serve enablement.",
+]

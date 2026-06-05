@@ -1,0 +1,425 @@
+{
+  "analysis_status": "non_improvement_documented",
+  "analysis_timestamp": "2026-06-05T15:34:28.478430+00:00",
+  "artifact_kind": "apple_m4_bitnet_repaired_subset_rerun_analysis",
+  "campaign": "apple-m4-post-excellence-hardening",
+  "case_change_summary": {
+    "quality": {
+      "improved": 8,
+      "regressed": 14,
+      "unchanged_fail": 25,
+      "unchanged_pass": 128
+    },
+    "scoring": {
+      "improved": 6,
+      "regressed": 14,
+      "unchanged_fail": 22,
+      "unchanged_pass": 133
+    }
+  },
+  "changed_case_ids": {
+    "quality_improved": [
+      "bitnet_numeric_seed912587_ratio_010",
+      "bitnet_required_forbidden_seed912587_005",
+      "bitnet_required_forbidden_seed912587_008",
+      "bitnet_sort_seed912587_words_015",
+      "bitnet_rewrite_seed912587_trim_015",
+      "bitnet_summary_seed912587_015",
+      "bitnet_summary_seed912587_024",
+      "bitnet_required_forbidden_seed912587_019"
+    ],
+    "quality_regressed": [
+      "bitnet_sort_seed912587_003",
+      "bitnet_sort_seed912587_009",
+      "bitnet_summary_seed912587_001",
+      "bitnet_required_forbidden_seed912587_006",
+      "bitnet_numeric_seed912587_div_011",
+      "bitnet_numeric_seed912587_percent_015",
+      "bitnet_numeric_seed912587_delta_027",
+      "bitnet_numeric_seed912587_division_int_033",
+      "bitnet_json_seed912587_019",
+      "bitnet_label_seed912587_020",
+      "bitnet_rewrite_seed912587_sentence_019",
+      "bitnet_required_forbidden_seed912587_013",
+      "bitnet_required_forbidden_seed912587_022",
+      "bitnet_required_forbidden_seed912587_027"
+    ],
+    "scoring_improved": [
+      "bitnet_numeric_seed912587_ratio_010",
+      "bitnet_required_forbidden_seed912587_005",
+      "bitnet_required_forbidden_seed912587_008",
+      "bitnet_summary_seed912587_015",
+      "bitnet_summary_seed912587_024",
+      "bitnet_required_forbidden_seed912587_019"
+    ],
+    "scoring_regressed": [
+      "bitnet_sort_seed912587_003",
+      "bitnet_sort_seed912587_009",
+      "bitnet_summary_seed912587_001",
+      "bitnet_required_forbidden_seed912587_006",
+      "bitnet_numeric_seed912587_div_011",
+      "bitnet_numeric_seed912587_percent_015",
+      "bitnet_numeric_seed912587_delta_027",
+      "bitnet_numeric_seed912587_division_int_033",
+      "bitnet_json_seed912587_019",
+      "bitnet_label_seed912587_020",
+      "bitnet_rewrite_seed912587_sentence_019",
+      "bitnet_required_forbidden_seed912587_013",
+      "bitnet_required_forbidden_seed912587_022",
+      "bitnet_required_forbidden_seed912587_027"
+    ]
+  },
+  "claim_boundary": {
+    "bitnet_chat_enabled": false,
+    "bitnet_serve_enabled": false,
+    "broad_apple_silicon_claimed": false,
+    "broad_quality_claimed": false,
+    "dense_slm_evidence_used": false,
+    "full_metal_claimed": false,
+    "macbook_evidence_used": false,
+    "model_binaries_committed": false,
+    "mpsgraph_claimed": false,
+    "neural_engine_claimed": false,
+    "qk256_apple_claimed": false,
+    "speedup_claimed": false
+  },
+  "comparison": {
+    "baseline_path": "ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/baseline-2026-05-18T1806Z-answer-corpus.json",
+    "baseline_source": "2026-05-18T1806Z repaired 250-case BitNet run filtered to the H005 subset ids",
+    "case_count": 175,
+    "matched_context": true,
+    "observed_path": "ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/answer-corpus.json",
+    "regression_advisory": true,
+    "selected_families": [
+      "closed_label_classification",
+      "constrained_summary",
+      "format_constrained_json",
+      "numeric_tolerance",
+      "ordering_sorting",
+      "required_forbidden_tokens",
+      "rewrite_normalized"
+    ],
+    "source_corpus": "ci/quality/apple-m4-bitnet-eval-repaired-subset.yaml",
+    "subset_of": "apple-m4-bitnet-eval-seeded-corpus-250",
+    "warning_count": 26
+  },
+  "decision": {
+    "enable_bitnet_chat": false,
+    "enable_bitnet_serve": false,
+    "expand_to_500_now": false,
+    "next_step": "keep BitNet in repair mode; do not benchmark BitNet as a user-performance route until the repaired subset improves under the same recorded identity",
+    "rerun_full_250_now": false,
+    "subset_improved": false
+  },
+  "identity": {
+    "fallback_used": false,
+    "fallback_used_match": true,
+    "model_sha256": "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162",
+    "model_sha256_match": true,
+    "prompt_template": "bitnetcpp-answer",
+    "prompt_template_match": true,
+    "requested_backend": "apple-m4-cpu-neon",
+    "requested_backend_match": true,
+    "runtime_api": "cpu",
+    "runtime_api_match": true,
+    "selected_backend": "apple-m4-cpu-neon",
+    "selected_backend_match": true,
+    "stop_criteria_sha256": "e1342df3623e7e44cd79854888c249063c066138b7fa463d8b371e8bb3b4ef7e",
+    "stop_criteria_sha256_match": true,
+    "template_sha256": "fe14a87657ed0ebbafae92dc67131eb87dcfac6a9bd0c08d96e20cd88defd6c7",
+    "template_sha256_match": true,
+    "timeouts": 0,
+    "tokenizer_sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+    "tokenizer_sha256_match": true
+  },
+  "proof_commands": [
+    "cargo build --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet",
+    "target/release/bitnet answer-corpus --device apple-m4-cpu-neon --model models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf --tokenizer models/microsoft-bitnet-b1.58-2B-4T/tokenizer.json --corpus ci/quality/apple-m4-bitnet-eval-repaired-subset.yaml --json-out ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/answer-corpus.json --per-prompt-timeout-seconds 300",
+    "target/release/bitnet mac receipts-check ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/answer-corpus.json --json",
+    "target/release/bitnet mac regression ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/answer-corpus.json --baseline ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/baseline-2026-05-18T1806Z-answer-corpus.json --json"
+  ],
+  "schema_version": "1.0.0",
+  "summary": {
+    "generated_tokens": 1751,
+    "not_run": 0,
+    "quality": {
+      "baseline_failed": 33,
+      "baseline_passed": 142,
+      "delta_failed": 6,
+      "delta_passed": -6,
+      "observed_failed": 39,
+      "observed_passed": 136,
+      "total": 175
+    },
+    "receipts_check": {
+      "generated_tokens": 1751,
+      "passed": true,
+      "prompt_count": 175
+    },
+    "scoring": {
+      "baseline_failed": 28,
+      "baseline_passed": 147,
+      "delta_failed": 8,
+      "delta_passed": -8,
+      "observed_failed": 36,
+      "observed_passed": 139,
+      "total": 175
+    },
+    "timeouts": 0
+  },
+  "task_family_deltas": {
+    "closed_label_classification": {
+      "case_changes": {
+        "quality": {
+          "improved": 0,
+          "regressed": 1,
+          "unchanged_fail": 2,
+          "unchanged_pass": 17
+        },
+        "scoring": {
+          "improved": 0,
+          "regressed": 1,
+          "unchanged_fail": 2,
+          "unchanged_pass": 17
+        }
+      },
+      "quality": {
+        "baseline_failed": 2,
+        "baseline_passed": 18,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "observed_failed": 3,
+        "observed_passed": 17
+      },
+      "scoring": {
+        "baseline_failed": 2,
+        "baseline_passed": 18,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "kinds": [
+          "normalized_match"
+        ],
+        "observed_failed": 3,
+        "observed_passed": 17
+      },
+      "total": 20
+    },
+    "constrained_summary": {
+      "case_changes": {
+        "quality": {
+          "improved": 2,
+          "regressed": 1,
+          "unchanged_fail": 2,
+          "unchanged_pass": 25
+        },
+        "scoring": {
+          "improved": 2,
+          "regressed": 1,
+          "unchanged_fail": 2,
+          "unchanged_pass": 25
+        }
+      },
+      "quality": {
+        "baseline_failed": 4,
+        "baseline_passed": 26,
+        "delta_failed": -1,
+        "delta_passed": 1,
+        "observed_failed": 3,
+        "observed_passed": 27
+      },
+      "scoring": {
+        "baseline_failed": 4,
+        "baseline_passed": 26,
+        "delta_failed": -1,
+        "delta_passed": 1,
+        "kinds": [
+          "required_keywords"
+        ],
+        "observed_failed": 3,
+        "observed_passed": 27
+      },
+      "total": 30
+    },
+    "format_constrained_json": {
+      "case_changes": {
+        "quality": {
+          "improved": 0,
+          "regressed": 1,
+          "unchanged_fail": 0,
+          "unchanged_pass": 19
+        },
+        "scoring": {
+          "improved": 0,
+          "regressed": 1,
+          "unchanged_fail": 0,
+          "unchanged_pass": 19
+        }
+      },
+      "quality": {
+        "baseline_failed": 0,
+        "baseline_passed": 20,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "observed_failed": 1,
+        "observed_passed": 19
+      },
+      "scoring": {
+        "baseline_failed": 0,
+        "baseline_passed": 20,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "kinds": [
+          "json_schema"
+        ],
+        "observed_failed": 1,
+        "observed_passed": 19
+      },
+      "total": 20
+    },
+    "numeric_tolerance": {
+      "case_changes": {
+        "quality": {
+          "improved": 1,
+          "regressed": 4,
+          "unchanged_fail": 10,
+          "unchanged_pass": 20
+        },
+        "scoring": {
+          "improved": 1,
+          "regressed": 4,
+          "unchanged_fail": 10,
+          "unchanged_pass": 20
+        }
+      },
+      "quality": {
+        "baseline_failed": 11,
+        "baseline_passed": 24,
+        "delta_failed": 3,
+        "delta_passed": -3,
+        "observed_failed": 14,
+        "observed_passed": 21
+      },
+      "scoring": {
+        "baseline_failed": 11,
+        "baseline_passed": 24,
+        "delta_failed": 3,
+        "delta_passed": -3,
+        "kinds": [
+          "numeric_tolerance"
+        ],
+        "observed_failed": 14,
+        "observed_passed": 21
+      },
+      "total": 35
+    },
+    "ordering_sorting": {
+      "case_changes": {
+        "quality": {
+          "improved": 1,
+          "regressed": 2,
+          "unchanged_fail": 2,
+          "unchanged_pass": 15
+        },
+        "scoring": {
+          "improved": 0,
+          "regressed": 2,
+          "unchanged_fail": 2,
+          "unchanged_pass": 16
+        }
+      },
+      "quality": {
+        "baseline_failed": 3,
+        "baseline_passed": 17,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "observed_failed": 4,
+        "observed_passed": 16
+      },
+      "scoring": {
+        "baseline_failed": 2,
+        "baseline_passed": 18,
+        "delta_failed": 2,
+        "delta_passed": -2,
+        "kinds": [
+          "normalized_match"
+        ],
+        "observed_failed": 4,
+        "observed_passed": 16
+      },
+      "total": 20
+    },
+    "required_forbidden_tokens": {
+      "case_changes": {
+        "quality": {
+          "improved": 3,
+          "regressed": 4,
+          "unchanged_fail": 5,
+          "unchanged_pass": 18
+        },
+        "scoring": {
+          "improved": 3,
+          "regressed": 4,
+          "unchanged_fail": 5,
+          "unchanged_pass": 18
+        }
+      },
+      "quality": {
+        "baseline_failed": 8,
+        "baseline_passed": 22,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "observed_failed": 9,
+        "observed_passed": 21
+      },
+      "scoring": {
+        "baseline_failed": 8,
+        "baseline_passed": 22,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "kinds": [
+          "required_forbidden_tokens"
+        ],
+        "observed_failed": 9,
+        "observed_passed": 21
+      },
+      "total": 30
+    },
+    "rewrite_normalized": {
+      "case_changes": {
+        "quality": {
+          "improved": 1,
+          "regressed": 1,
+          "unchanged_fail": 4,
+          "unchanged_pass": 14
+        },
+        "scoring": {
+          "improved": 0,
+          "regressed": 1,
+          "unchanged_fail": 1,
+          "unchanged_pass": 18
+        }
+      },
+      "quality": {
+        "baseline_failed": 5,
+        "baseline_passed": 15,
+        "delta_failed": 0,
+        "delta_passed": 0,
+        "observed_failed": 5,
+        "observed_passed": 15
+      },
+      "scoring": {
+        "baseline_failed": 1,
+        "baseline_passed": 19,
+        "delta_failed": 1,
+        "delta_passed": -1,
+        "kinds": [
+          "normalized_match"
+        ],
+        "observed_failed": 2,
+        "observed_passed": 18
+      },
+      "total": 20
+    }
+  },
+  "work_item": "M4-HARDEN-005"
+}
