@@ -158,18 +158,19 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-004"
-status = "proposed"
+status = "in_progress"
 branch = "codex/apple-m4/M4-HARDEN-004-bitnet-repaired-250-analysis"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M4-HARDEN-003"]
+pr = 1587
 acceptance = "Classify the repaired 250-case BitNet regressions by task family, isolate scorer/template/runtime/model causes, compare against baseline, recommend a repair path, do not expand to 500, and do not enable chat or serve."
 commands = [
   "cargo fmt --all -- --check",
   "cargo test --locked -p bitnet-cli bitnet_eval -- --nocapture",
-  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet -- mac regression ci/hardware/apple-m4-mac-mini/2026-05-20T0133Z/bitnet-eval-250-repaired/summary.json --baseline ci/hardware/apple-m4-mac-mini/2026-05-17T1903Z/bitnet-eval-250/summary.json --json",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet -- mac regression ci/hardware/apple-m4-mac-mini/2026-05-20T0133Z/bitnet-eval-250-repaired/answer-corpus.json --baseline ci/hardware/apple-m4-mac-mini/2026-05-18T1806Z/bitnet-eval-250-repaired/answer-corpus.json --json",
   "cargo run --locked -p xtask --no-default-features -- campaign check apple-m4-post-excellence-hardening",
   "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
   "git diff --check",

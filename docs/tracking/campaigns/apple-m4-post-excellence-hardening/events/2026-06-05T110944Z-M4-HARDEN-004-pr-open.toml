@@ -1,0 +1,11 @@
+timestamp = "2026-06-05T11:09:44Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-004"
+event = "pr_open"
+pr = 1587
+actor = "codex"
+notes = [
+  "Opened the repaired 250-case BitNet regression analysis PR in bitnet-rs-swarm.",
+  "PR classifies the latest repaired run against the 2026-05-18 repaired baseline and recommends the M4-HARDEN-005 repaired subset rerun scope.",
+  "Claim boundary remains analysis only: no corpus expansion, no BitNet chat enablement, and no BitNet serve enablement.",
+]
