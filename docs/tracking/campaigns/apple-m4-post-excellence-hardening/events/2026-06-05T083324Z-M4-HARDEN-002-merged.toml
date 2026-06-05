@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T08:33:24Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-002"
+event = "merged"
+pr = 1091
+head_sha = "16a79b384ffb35a797a4532aa2788342bafdc6e6"
+merge_sha = "793a7a2fae6f686254332f08bc309c7201d74241"
+actor = "codex"
+notes = [
+  "PR #1091 merged the dense local-server timeout and streaming cancellation hardening item.",
+  "The merged scope remains dense SLM server behavior only; BitNet chat and serve remain disabled without ready-gate receipts.",
+  "M4-HARDEN-003 is the next response-conformance hardening item.",
+]
