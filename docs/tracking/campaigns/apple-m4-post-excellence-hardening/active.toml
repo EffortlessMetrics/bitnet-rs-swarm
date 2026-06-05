@@ -66,7 +66,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-002"
-status = "pr_open"
+status = "merged"
 branch = "codex/apple-m4/M4-HARDEN-002-dense-server-timeout-cancel"
 stackable = false
 review_mode = "codex_premerge"
@@ -74,7 +74,8 @@ merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M4-HARDEN-001"]
 pr = 1091
-head_sha = "f0473f36ed4bbadf81121bfa28f470a530b073c7"
+head_sha = "16a79b384ffb35a797a4532aa2788342bafdc6e6"
+merge_sha = "793a7a2fae6f686254332f08bc309c7201d74241"
 acceptance = "Enforce dense local-server request timeout, prove streaming cancellation, emit partial-generation receipts, record stop reason, prove later requests still work, keep health/ready cheap, preserve fallback_used=false, and do not enable BitNet serve."
 commands = [
   "cargo fmt --all -- --check",
@@ -111,7 +112,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-003"
-status = "proposed"
+status = "ready"
 branch = "codex/apple-m4/M4-HARDEN-003-dense-server-response-conformance"
 stackable = false
 review_mode = "codex_premerge"

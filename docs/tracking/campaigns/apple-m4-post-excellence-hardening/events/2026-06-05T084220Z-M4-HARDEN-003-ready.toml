@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T08:42:20Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-003"
+event = "closeout"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/apple-m4/M4-HARDEN-003-dense-server-response-conformance"
+actor = "codex"
+notes = [
+  "M4-HARDEN-002 has merged and the dense local-server response conformance item is now ready.",
+  "The next scope is response shape, streaming event shape, receipt export path, bad-model failure, unsupported BitNet serve failure, and receipt model/backend/fallback visibility.",
+  "Dense server evidence remains separate from BitNet chat or BitNet serve enablement.",
+]
