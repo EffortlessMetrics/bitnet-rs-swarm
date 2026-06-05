@@ -18309,9 +18309,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-CPU-MATCHED-CHECK-001"
-status = "pr_open"
+status = "merged"
 pr = 1593
-head_sha = "8e7108a4c76983a31bb1fdb76363a1a904b46504"
+head_sha = "ae04e163c12c19a171dbe0cf2b19e1791246f80b"
+merge_sha = "b8d8b9c9da7c9e5223b4e7b796ee0242d7acf67d"
+merged_at = "2026-06-05T14:08:26Z"
 branch = "codex/lunar-lake/LNL258V-CPU-MATCHED-CHECK-001-checker-guard"
 stackable = false
 review_mode = "codex_premerge"
