@@ -112,7 +112,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-003"
-status = "pr_open"
+status = "merged"
 branch = "codex/apple-m4/M4-HARDEN-003-dense-server-response-conformance"
 stackable = false
 review_mode = "codex_premerge"
@@ -120,7 +120,8 @@ merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M4-HARDEN-002"]
 pr = 1580
-head_sha = "adc88688950ef41455033b460fde2b6316fde0b8"
+head_sha = "7b70b12bd7d8680be4e326fcbdcf173e56a583c6"
+merge_sha = "8c0ffff61385e551fcd243be5cfa83be99a3737c"
 acceptance = "Lock dense local-server non-streaming response shape, streaming event shape, and receipt export path; ensure bad model IDs fail cleanly, unsupported BitNet serve fails cleanly, and model/backend/fallback fields are visible in receipts."
 commands = [
   "cargo fmt --all -- --check",

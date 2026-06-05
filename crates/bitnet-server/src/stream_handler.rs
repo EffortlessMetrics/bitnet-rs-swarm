@@ -159,6 +159,13 @@ fn escape_json(s: &str) -> String {
 mod tests {
     use super::*;
 
+    fn json_value_or_error(result: serde_json::Result<serde_json::Value>) -> serde_json::Value {
+        match result {
+            Ok(value) => value,
+            Err(error) => serde_json::json!({ "json_error": error.to_string() }),
+        }
+    }
+
     #[test]
     fn test_token_event() {
         let e = SseEvent::token("hello");
@@ -237,7 +244,7 @@ mod tests {
     #[test]
     fn m4_harden_streaming_response_event_shape_locks_chat_chunk() {
         let chunk = format_chat_chunk("Hello", "qwen2.5-0.5b-instruct-q8_0", 7);
-        let json: serde_json::Value = serde_json::from_str(&chunk).expect("chunk json");
+        let json = json_value_or_error(serde_json::from_str(&chunk));
 
         assert_eq!(json["id"], "chatcmpl-7");
         assert_eq!(json["object"], "chat.completion.chunk");
@@ -250,7 +257,7 @@ mod tests {
     #[test]
     fn m4_harden_streaming_response_event_shape_locks_done_chunk() {
         let done = format_chat_done("qwen2.5-0.5b-instruct-q8_0", 7);
-        let json: serde_json::Value = serde_json::from_str(&done).expect("done chunk json");
+        let json = json_value_or_error(serde_json::from_str(&done));
 
         assert_eq!(json["id"], "chatcmpl-7");
         assert_eq!(json["object"], "chat.completion.chunk");
