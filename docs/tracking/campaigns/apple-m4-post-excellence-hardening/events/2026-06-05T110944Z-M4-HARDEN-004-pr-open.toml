@@ -3,6 +3,7 @@ campaign = "apple-m4-post-excellence-hardening"
 item = "M4-HARDEN-004"
 event = "pr_open"
 pr = 1587
+head_sha = "78e091d0810af079e88704b1e86cc55c986f1cb7"
 actor = "codex"
 notes = [
   "Opened the repaired 250-case BitNet regression analysis PR in bitnet-rs-swarm.",
