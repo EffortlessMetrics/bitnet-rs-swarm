@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T14:30:31Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-PHASE-ATTRIBUTION-001"
+event = "closeout"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/lunar-lake/LNL258V-CPU-PHASE-ATTRIBUTION-001-attribution-buckets"
+actor = "codex"
+notes = [
+  "Plan-selection PR #1597 merged and now names #1578 as the next no-inference CPU slow-path guard candidate after #1568 completed in PR #1593 and closeout PR #1596.",
+  "The ready implementation item is schema/checker or docs-contract coverage only for resident attribution buckets: reload, prompt/template/tokenization, prefill, first-token boundary, decode, logits/sampling, detokenization, host overhead, topology, and unavailable telemetry.",
+  "The next implementation PR must use existing committed receipts or synthetic mutated receipts only, keep benchmark_qualified=false until a later matched benchmark contract is accepted, and make no inference, hardware receipt refresh, CPU optimization, route-policy mutation, OpenVINO CPU promotion or replacement, speedup or power claim, low_power evidence, native accelerator claim, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim.",
+]
