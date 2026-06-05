@@ -1,0 +1,16 @@
+timestamp = "2026-06-05T01:42:48Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-246"
+event = "pr_open"
+actor = "codex"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1560
+branch = "codex/slm-cpu/slm-cpu-246-no-bias-role-expansion-policy"
+head_sha = "ac829434560767e6caf2a6ee30418413b104626f"
+summary = "Opened the SLM-CPU-246 no-bias role expansion policy PR."
+notes = [
+  "PR #1560 records the SLM-CPU-246 role expansion policy receipt after consuming the SLM-CPU-245 Qwen3/Qwen2.5 Q8_0 timing/allocation envelope.",
+  "The policy keeps feed_forward.down_proj as the only proven executable no-bias role and names feed_forward.up_proj as the next receipt target without enabling new candidate execution.",
+  "Qwen2.5 attention q/k/v remain fail-closed because the dense-bias manifest records bias_present=true for those roles; no speedup, allocation reduction, sustained throughput, default-runtime promotion, Q4/Q5, accelerator/server, Qwen3.5, or BitNet QK256 support is claimed.",
+]
