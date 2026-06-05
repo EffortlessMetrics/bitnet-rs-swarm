@@ -478,7 +478,6 @@ jobs:
       CARGO_INCREMENTAL: "0"
       RUST_BACKTRACE: "1"
       BITNET_SKIP_SLOW_TESTS: "1"
-      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -497,9 +496,13 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run M3 strict CPU receipt guards
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3
 
       - name: Run M3 Mac receipt profile guards
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3
 
   rust-small-result:

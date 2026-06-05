@@ -61,8 +61,6 @@ jobs:
         - rust-medium
         - trusted-pr
     timeout-minutes: 30
-    env:
-      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
@@ -81,9 +79,13 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run M3 strict CPU receipt guards
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3
 
       - name: Run M3 Mac receipt profile guards
+        env:
+          TMPDIR: ${{ runner.temp }}
         run: cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3
 
       - name: Summarize Tier 0 boundary

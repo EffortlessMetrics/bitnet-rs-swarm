@@ -47,8 +47,6 @@ jobs:
         - rust-medium
         - trusted-pr
     timeout-minutes: 30
-    env:
-      TMPDIR: ${{ runner.temp }}
 
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
@@ -76,6 +74,7 @@ jobs:
           # Compile with rocm and cpu features to validate kernel matrix
           cargo check --locked --no-default-features --features rocm,cpu
         env:
+          TMPDIR: ${{ runner.temp }}
           # Stub out GPU runtime detection at compile time
           BITNET_GPU_FAKE: none
 
