@@ -1,0 +1,10 @@
+timestamp = "2026-06-05T11:03:54Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-004"
+event = "in_progress"
+actor = "codex"
+notes = [
+  "Started the repaired 250-case BitNet regression analysis item after M4-HARDEN-003 merged.",
+  "The strict comparator for the latest repaired run is the 2026-05-18 repaired 250-case answer-corpus receipt because the original 2026-05-17 corpus has a different scoring-kind contract.",
+  "Scope is analysis and repair recommendation only: no corpus expansion, no BitNet chat enablement, and no BitNet serve enablement.",
+]

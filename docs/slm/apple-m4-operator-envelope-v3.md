@@ -72,6 +72,14 @@ The current class map is:
 | BitNet `bitnet mac serve --model-family bitnet` | `disabled` unless a ready `bitnet_apple_m4_serve_gate` receipt is supplied | The route is gate-required after chat and service evidence; dense serve receipts do not prove BitNet serve | No BitNet serve timing expectation is published by this envelope | Uses the same accepted BitNet artifact/tokenizer only after the gate passes | `M4-BITNET-EX-007` defines the gate; missing or blocked gate receipts must keep the route disabled |
 | Full `apple-m4-metal`, QK256-on-Apple, Neural Engine, MPSGraph, MacBook, and broad Apple Silicon routes | `unsupported` | No supported inference profile in this envelope | No timing expectation | No memory or disk expectation | No accepted full-route receipt in this envelope |
 
+`M4-HARDEN-004` classifies the latest repaired 250-case BitNet regression in
+`ci/hardware/apple-m4-mac-mini/2026-05-20T0133Z/bitnet-eval-250-repaired/regression-analysis-vs-2026-05-18T1806Z.json`
+and `docs/slm/apple-m4-bitnet-repaired-250-regression-analysis.md`. The strict
+comparator is the 2026-05-18 repaired run; the 2026-05-17 original run is
+context-only because its scoring-kind contract differs. The recommended next
+step is a repaired subset rerun before any full 250-case rerun. This does not
+expand the corpus or enable BitNet chat or serve.
+
 `M4-WORKLOAD-001` translates this route-state map into an operator workload
 manifest. `bitnet mac workload --suite m4-operator` records summarize, extract,
 classify, JSON, rewrite, and table-QA workflow cases, mechanical checks, route
