@@ -283,6 +283,56 @@ mod tests {
     }
 
     #[test]
+    fn m4_harden_receipt_shape_locks_timeout_and_cancel_fields() {
+        let mut timeout = LocalGenerationControl::new(LocalGenerationControlPolicy {
+            request_timeout: Duration::from_millis(5),
+            streaming: false,
+            cancel_after_tokens: None,
+        });
+        assert!(timeout.observe_decode_start(Duration::from_millis(7)).is_some());
+
+        let timeout_json =
+            serde_json::to_value(timeout.receipt("timeout-request", false)).expect("timeout json");
+        assert_eq!(timeout_json["request_id"], "timeout-request");
+        assert_eq!(timeout_json["requested_backend"], "apple-m4-cpu-neon");
+        assert_eq!(timeout_json["selected_backend"], "apple-m4-cpu-neon");
+        assert_eq!(timeout_json["fallback_used"], false);
+        assert_eq!(timeout_json["generated_tokens"], 0);
+        assert_eq!(timeout_json["stop_reason"], "timeout");
+        assert_eq!(timeout_json["partial_generation"], true);
+        assert_eq!(timeout_json["timeout"]["configured_ms"], 5);
+        assert_eq!(timeout_json["timeout"]["enforced"], true);
+        assert_eq!(timeout_json["timeout"]["reached"], true);
+        assert_eq!(timeout_json["timeout"]["stage"], "decode");
+        assert_eq!(timeout_json["cancellation"]["cancellable"], false);
+        assert_eq!(timeout_json["cancellation"]["requested"], false);
+        assert_eq!(timeout_json["cancellation"]["observed"], false);
+        assert_eq!(timeout_json["claim_boundary"]["dense_slm_only"], true);
+        assert_eq!(timeout_json["claim_boundary"]["bitnet_serve_enabled"], false);
+
+        let mut cancel = LocalGenerationControl::new(LocalGenerationControlPolicy {
+            request_timeout: Duration::from_secs(30),
+            streaming: true,
+            cancel_after_tokens: Some(1),
+        });
+        assert!(cancel.observe_token(Duration::from_millis(2)).is_some());
+
+        let cancel_json =
+            serde_json::to_value(cancel.receipt("cancel-request", false)).expect("cancel json");
+        assert_eq!(cancel_json["request_id"], "cancel-request");
+        assert_eq!(cancel_json["stop_reason"], "cancelled");
+        assert_eq!(cancel_json["partial_generation"], true);
+        assert_eq!(cancel_json["generated_tokens"], 1);
+        assert_eq!(cancel_json["timeout"]["reached"], false);
+        assert_eq!(cancel_json["cancellation"]["cancellable"], true);
+        assert_eq!(cancel_json["cancellation"]["requested"], true);
+        assert_eq!(cancel_json["cancellation"]["observed"], true);
+        assert_eq!(cancel_json["cancellation"]["stage"], "decode");
+        assert_eq!(cancel_json["fallback_used"], false);
+        assert_eq!(cancel_json["claim_boundary"]["bitnet_serve_enabled"], false);
+    }
+
+    #[test]
     fn m4_harden_timeout_later_request_still_completes_and_health_ready_are_cheap() {
         let mut timed_out = LocalGenerationControl::new(LocalGenerationControlPolicy {
             request_timeout: Duration::from_millis(1),
