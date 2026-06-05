@@ -1382,6 +1382,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
     let mut projection_full_operands_available_count = 0usize;
     let mut projection_replay_hook_available_count = 0usize;
     let mut projection_fallback_false_count = 0usize;
+    let mut projection_operand_capture_source_count = 0usize;
+    let mut projection_focused_operand_source_count = 0usize;
+    let mut projection_full_operand_source_count = 0usize;
     let mut summary_blockers = Vec::<&'static str>::new();
 
     for projection in projections {
@@ -1392,6 +1395,22 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
                 && str_field(target, "projection") == Some(projection)
         });
         let row_evidence = projection_row_evidence(row);
+        let operand_capture_evidence = projection_operand_capture_evidence(
+            row,
+            case_id,
+            first_mismatch_index,
+            projection_layer,
+            projection,
+        );
+        if operand_capture_evidence.source_projection_found {
+            projection_operand_capture_source_count += 1;
+        }
+        if operand_capture_evidence.focused_operands_available {
+            projection_focused_operand_source_count += 1;
+        }
+        if operand_capture_evidence.full_projection_operands_available {
+            projection_full_operand_source_count += 1;
+        }
         let clean_row_evidence = row_evidence.clean_for_projection_boundary();
         if row_evidence.available {
             row_evidence_count += 1;
@@ -1411,7 +1430,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         );
         projection_replay_hook_available_count += 1;
         let replay_outcome = if clean_row_evidence {
-            projection_replay_outcome(row)
+            projection_replay_outcome(row, &operand_capture_evidence)
         } else {
             ProjectionReplayOutcome::Blocked {
                 reason: "projection_level_row_evidence_not_clean",
@@ -1543,6 +1562,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
                 "production_output_matches_selected_device_bits": row_evidence.production_output_matches_selected_device_bits,
                 "clean_for_projection_boundary": clean_row_evidence
             },
+            "projection_operand_capture": operand_capture_evidence.to_json(),
             "projection_replay": projection_replay,
             "classification": if target_blockers.is_empty() {
                 "a770_qk256_projection_level_replay_executed_selected_device"
@@ -1577,14 +1597,16 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
     } else {
         "a770_qk256_projection_level_qkv_replay_blocked"
     };
-    let source_receipts = if source_receipt_kind == "a770_157_projection_level_qkv_boundary" {
-        json!({
+    let source_receipts = match source_receipt_kind {
+        "a770_158_projection_replay_hook_boundary" => json!({
+            "a770_158_projection_replay_hook_boundary": path_json_value(source_path),
+        }),
+        "a770_157_projection_level_qkv_boundary" => json!({
             "a770_157_projection_level_qkv_boundary": path_json_value(source_path),
-        })
-    } else {
-        json!({
+        }),
+        _ => json!({
             "a770_156_focused_qkv_replay": path_json_value(source_path),
-        })
+        }),
     };
     let manifest_path = args.manifest.as_ref().map(|path| path_json_value(path));
     let manifest = json!({
@@ -1599,10 +1621,14 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "first_mismatch_index_filter": first_mismatch_index,
         "target_layer_idx_filter": projection_layer,
         "target_policy": {
-            "target_source": if source_receipt_kind == "a770_157_projection_level_qkv_boundary" {
-                "A770-157 projection-level Q/K/V boundary receipt"
-            } else {
-                "A770-156 clean focused Q/K/V row replay packet"
+            "target_source": match source_receipt_kind {
+                "a770_158_projection_replay_hook_boundary" => {
+                    "A770-158 projection replay hook boundary receipt"
+                }
+                "a770_157_projection_level_qkv_boundary" => {
+                    "A770-157 projection-level Q/K/V boundary receipt"
+                }
+                _ => "A770-156 clean focused Q/K/V row replay packet",
             },
             "target_surface": "one transformer layer Q/K/V projection-level replay boundary",
             "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands are available through the bounded replay hook",
@@ -1647,6 +1673,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
             "projection_replay_hook_available_count": projection_replay_hook_available_count,
             "projection_level_full_operands_available_count": projection_full_operands_available_count,
             "projection_replay_fallback_false_count": projection_fallback_false_count,
+            "projection_operand_capture_source_count": projection_operand_capture_source_count,
+            "projection_focused_operand_source_count": projection_focused_operand_source_count,
+            "projection_full_operand_source_count": projection_full_operand_source_count,
             "row_evidence_target_count": row_evidence_count,
             "clean_row_evidence_count": clean_row_evidence_count,
             "row_selected_device_match_count": row_selected_device_match_count,
@@ -1726,6 +1755,119 @@ struct ProjectionReplayOperands {
 }
 
 #[derive(Debug, Clone)]
+struct ProjectionOperandCaptureEvidence {
+    source_path: Option<String>,
+    source_json_parseable: Option<bool>,
+    source_projection_found: bool,
+    source_context_available: bool,
+    dispatch_replay_available: bool,
+    focused_operands_available: bool,
+    full_projection_operands_available: bool,
+    current_operand_scope: String,
+    required_operand_scope: &'static str,
+    target_layer_idx: Option<i64>,
+    projection: Option<String>,
+    input_rows_materialized_count: Option<u64>,
+    output_rows_allocated_count: Option<u64>,
+    input_rows: Option<usize>,
+    output_rows: Option<usize>,
+    cols: Option<usize>,
+    row_stride_bytes: Option<usize>,
+    activation_i8_len: Option<usize>,
+    packed_qk256_len: Option<usize>,
+    packed_qk256_scope: Option<String>,
+    required_packed_qk256_len: Option<usize>,
+    required_packed_qk256_len_available: Option<bool>,
+    missing_full_operand_fields: Vec<&'static str>,
+    blockers: Vec<&'static str>,
+    error: Option<String>,
+}
+
+impl ProjectionOperandCaptureEvidence {
+    fn blocked(
+        source_path: Option<String>,
+        source_json_parseable: Option<bool>,
+        blocker: &'static str,
+        missing_full_operand_fields: Vec<&'static str>,
+        error: Option<String>,
+    ) -> Self {
+        Self {
+            source_path,
+            source_json_parseable,
+            source_projection_found: false,
+            source_context_available: false,
+            dispatch_replay_available: false,
+            focused_operands_available: false,
+            full_projection_operands_available: false,
+            current_operand_scope: "projection_operand_source_unavailable".to_owned(),
+            required_operand_scope: "full_projection_output_rows",
+            target_layer_idx: None,
+            projection: None,
+            input_rows_materialized_count: None,
+            output_rows_allocated_count: None,
+            input_rows: None,
+            output_rows: None,
+            cols: None,
+            row_stride_bytes: None,
+            activation_i8_len: None,
+            packed_qk256_len: None,
+            packed_qk256_scope: None,
+            required_packed_qk256_len: None,
+            required_packed_qk256_len_available: None,
+            missing_full_operand_fields,
+            blockers: vec!["projection_level_full_operands_missing", blocker],
+            error,
+        }
+    }
+
+    fn missing_full_operand_fields(&self) -> Vec<&'static str> {
+        if self.missing_full_operand_fields.is_empty() {
+            vec!["projection_operands"]
+        } else {
+            self.missing_full_operand_fields.clone()
+        }
+    }
+
+    fn blockers(&self) -> Vec<&'static str> {
+        if self.blockers.is_empty() {
+            vec!["projection_level_full_operands_missing"]
+        } else {
+            self.blockers.clone()
+        }
+    }
+
+    fn to_json(&self) -> Value {
+        json!({
+            "source_path": self.source_path,
+            "source_json_parseable": self.source_json_parseable,
+            "source_projection_found": self.source_projection_found,
+            "source_context_available": self.source_context_available,
+            "dispatch_replay_available": self.dispatch_replay_available,
+            "focused_operands_available": self.focused_operands_available,
+            "full_projection_operands_available": self.full_projection_operands_available,
+            "current_operand_scope": self.current_operand_scope,
+            "required_operand_scope": self.required_operand_scope,
+            "target_layer_idx": self.target_layer_idx,
+            "projection": self.projection,
+            "input_rows_materialized_count": self.input_rows_materialized_count,
+            "output_rows_allocated_count": self.output_rows_allocated_count,
+            "input_rows": self.input_rows,
+            "output_rows": self.output_rows,
+            "cols": self.cols,
+            "row_stride_bytes": self.row_stride_bytes,
+            "activation_i8_len": self.activation_i8_len,
+            "packed_qk256_len": self.packed_qk256_len,
+            "packed_qk256_scope": self.packed_qk256_scope,
+            "required_packed_qk256_len": self.required_packed_qk256_len,
+            "required_packed_qk256_len_available": self.required_packed_qk256_len_available,
+            "missing_full_operand_fields": self.missing_full_operand_fields,
+            "blockers": self.blockers,
+            "error": self.error
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
 enum ProjectionReplayOutcome {
     Executed {
         operands: ProjectionReplayOperands,
@@ -1747,7 +1889,11 @@ fn projection_source_targets<'a>(
     source: &'a Value,
 ) -> Result<(Vec<&'a Value>, &'static str), Box<dyn Error>> {
     if let Some(targets) = source.pointer("/manifest/targets").and_then(Value::as_array) {
-        return Ok((targets.iter().collect(), "a770_157_projection_level_qkv_boundary"));
+        let kind = match str_field(source, "work_item") {
+            Some("A770-158") => "a770_158_projection_replay_hook_boundary",
+            _ => "a770_157_projection_level_qkv_boundary",
+        };
+        return Ok((targets.iter().collect(), kind));
     }
     if let Some(targets) = source.get("target_results").and_then(Value::as_array) {
         return Ok((targets.iter().collect(), "a770_156_focused_qkv_replay"));
@@ -1803,7 +1949,239 @@ fn projection_row_evidence(row: Option<&Value>) -> ProjectionRowEvidence {
     }
 }
 
-fn projection_replay_outcome(row: Option<&Value>) -> ProjectionReplayOutcome {
+fn projection_dispatch_replay_source(target: &Value) -> Option<String> {
+    target
+        .get("row_evidence")
+        .and_then(|row_evidence| string_field(row_evidence, "dispatch_replay_source"))
+        .or_else(|| string_field(target, "dispatch_replay_source"))
+}
+
+fn projection_operand_capture_evidence(
+    row: Option<&Value>,
+    case_id: &str,
+    first_mismatch_index: usize,
+    projection_layer: i64,
+    projection: &str,
+) -> ProjectionOperandCaptureEvidence {
+    let source_path = row.and_then(projection_dispatch_replay_source);
+    let Some(source_path) = source_path else {
+        return ProjectionOperandCaptureEvidence::blocked(
+            None,
+            None,
+            "projection_level_dispatch_replay_source_missing",
+            vec!["projection_operands"],
+            None,
+        );
+    };
+    let source_json = match fs::read_to_string(&source_path) {
+        Ok(source_json) => source_json,
+        Err(err) => {
+            return ProjectionOperandCaptureEvidence::blocked(
+                Some(source_path),
+                Some(false),
+                "projection_level_dispatch_replay_source_unreadable",
+                vec!["projection_operands"],
+                Some(err.to_string()),
+            );
+        }
+    };
+    let source: Value = match serde_json::from_str(&source_json) {
+        Ok(source) => source,
+        Err(err) => {
+            return ProjectionOperandCaptureEvidence::blocked(
+                Some(source_path),
+                Some(false),
+                "projection_level_dispatch_replay_source_parse_failed",
+                vec!["projection_operands"],
+                Some(err.to_string()),
+            );
+        }
+    };
+    let Some(source_target) = projection_capture_source_target(
+        &source,
+        case_id,
+        first_mismatch_index,
+        projection_layer,
+        projection,
+    ) else {
+        return ProjectionOperandCaptureEvidence::blocked(
+            Some(source_path),
+            Some(true),
+            "projection_level_qkv_projection_source_missing",
+            vec!["projection_operands"],
+            None,
+        );
+    };
+
+    let dispatch_replay = source_target.get("dispatch_replay").filter(|value| value.is_object());
+    let focused_operands =
+        dispatch_replay.and_then(|value| value.get("focused_operands")).filter(|value| {
+            value.is_object()
+                && any_array_at(Some(value), &[&["activations_i8"]])
+                && any_array_at(Some(value), &[&["packed_qk256"]])
+        });
+    let full_operand_root = projection_operand_root(source_target)
+        .or_else(|| dispatch_replay.and_then(projection_operand_root));
+    let activation_i8_len = full_operand_root
+        .and_then(|root| {
+            array_len_at(
+                Some(root),
+                &[&["activations_i8"], &["activation_i8"], &["input_activations_i8"]],
+            )
+        })
+        .or_else(|| {
+            focused_operands.and_then(|root| array_len_at(Some(root), &[&["activations_i8"]]))
+        });
+    let packed_qk256_len = full_operand_root
+        .and_then(|root| {
+            array_len_at(
+                Some(root),
+                &[&["packed_qk256"], &["weights_packed_qk256"], &["packed_qk256_weights"]],
+            )
+        })
+        .or_else(|| {
+            focused_operands.and_then(|root| array_len_at(Some(root), &[&["packed_qk256"]]))
+        });
+    let cols = full_operand_root
+        .and_then(|root| usize_field(root, "cols"))
+        .or_else(|| focused_operands.and_then(|root| usize_field(root, "cols")))
+        .or_else(|| dispatch_replay.and_then(|root| usize_field(root, "cols")));
+    let row_stride_bytes = full_operand_root
+        .and_then(|root| usize_field(root, "row_stride_bytes"))
+        .or_else(|| focused_operands.and_then(|root| usize_field(root, "row_stride_bytes")))
+        .or_else(|| dispatch_replay.and_then(|root| usize_field(root, "row_stride_bytes")));
+    let input_rows = full_operand_root
+        .and_then(|root| usize_field(root, "input_rows"))
+        .or_else(|| dispatch_replay.and_then(|root| usize_field(root, "input_rows")));
+    let output_rows = full_operand_root
+        .and_then(|root| usize_field(root, "rows").or_else(|| usize_field(root, "output_rows")))
+        .or_else(|| dispatch_replay.and_then(|root| usize_field(root, "output_rows")));
+    let required_packed_qk256_len =
+        output_rows.zip(row_stride_bytes).and_then(|(rows, stride)| rows.checked_mul(stride));
+    let required_packed_qk256_len_available = required_packed_qk256_len
+        .zip(packed_qk256_len)
+        .map(|(required, available)| available >= required);
+    let full_projection_operands_available = full_operand_root.is_some_and(|root| {
+        projection_missing_full_operand_fields_from_root(root).is_empty()
+            && required_packed_qk256_len_available != Some(false)
+    });
+    let packed_qk256_scope =
+        focused_operands.and_then(|root| string_field(root, "packed_qk256_scope")).or_else(|| {
+            dispatch_replay
+                .and_then(|root| string_at(Some(root), &["focused_operands", "packed_qk256_scope"]))
+        });
+    let current_operand_scope = if full_projection_operands_available {
+        "full_projection_output_rows".to_owned()
+    } else {
+        packed_qk256_scope
+            .clone()
+            .unwrap_or_else(|| "projection_source_without_full_operands".to_owned())
+    };
+    let missing_full_operand_fields = if full_projection_operands_available {
+        Vec::new()
+    } else if let Some(root) = full_operand_root {
+        let mut missing = projection_missing_full_operand_fields_from_root(root);
+        if required_packed_qk256_len_available == Some(false)
+            && !missing.contains(&"projection_operands.packed_qk256_full_projection_rows")
+        {
+            missing.push("projection_operands.packed_qk256_full_projection_rows");
+        }
+        if missing.is_empty() {
+            missing.push("projection_operands.full_projection_output_rows");
+        }
+        missing
+    } else if required_packed_qk256_len_available == Some(false) {
+        vec!["projection_operands.packed_qk256_full_projection_rows"]
+    } else if focused_operands.is_some() {
+        vec!["projection_operands.full_projection_output_rows"]
+    } else {
+        vec!["projection_operands"]
+    };
+    let blockers = if full_projection_operands_available {
+        Vec::new()
+    } else if dispatch_replay.is_none() {
+        vec!["projection_level_full_operands_missing", "projection_level_dispatch_replay_missing"]
+    } else if focused_operands.is_none() {
+        vec![
+            "projection_level_full_operands_missing",
+            "projection_level_focused_operand_source_missing",
+        ]
+    } else if required_packed_qk256_len_available == Some(false) {
+        vec![
+            "projection_level_full_operands_missing",
+            "projection_level_full_projection_weight_rows_missing",
+        ]
+    } else {
+        vec!["projection_level_full_operands_missing"]
+    };
+
+    ProjectionOperandCaptureEvidence {
+        source_path: Some(source_path),
+        source_json_parseable: Some(true),
+        source_projection_found: true,
+        source_context_available: source_target
+            .get("source_context_available")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
+        dispatch_replay_available: dispatch_replay.is_some(),
+        focused_operands_available: focused_operands.is_some(),
+        full_projection_operands_available,
+        current_operand_scope,
+        required_operand_scope: "full_projection_output_rows",
+        target_layer_idx: i64_field(source_target, "target_layer_idx")
+            .or_else(|| i64_field(source_target, "layer_idx")),
+        projection: string_field(source_target, "projection"),
+        input_rows_materialized_count: source_target
+            .pointer("/cpu_hot_path_delta/input_rows_materialized_count")
+            .and_then(Value::as_u64),
+        output_rows_allocated_count: source_target
+            .pointer("/cpu_hot_path_delta/output_rows_allocated_count")
+            .and_then(Value::as_u64),
+        input_rows,
+        output_rows,
+        cols,
+        row_stride_bytes,
+        activation_i8_len,
+        packed_qk256_len,
+        packed_qk256_scope,
+        required_packed_qk256_len,
+        required_packed_qk256_len_available,
+        missing_full_operand_fields,
+        blockers,
+        error: None,
+    }
+}
+
+fn projection_capture_source_target<'a>(
+    source: &'a Value,
+    case_id: &str,
+    first_mismatch_index: usize,
+    projection_layer: i64,
+    projection: &str,
+) -> Option<&'a Value> {
+    let case = source
+        .get("cases")
+        .and_then(Value::as_array)?
+        .iter()
+        .find(|case| str_field(case, "id") == Some(case_id))?;
+    let logits_dump = case.get("logits_dump").and_then(Value::as_array)?;
+    let step = logits_dump.get(first_mismatch_index).or_else(|| {
+        logits_dump.iter().find(|step| usize_field(step, "step") == Some(first_mismatch_index))
+    })?;
+    let sources = step
+        .pointer("/logit_source_context/hidden_state_source/model_forward_source/qkv_projection_sources/sources")
+        .and_then(Value::as_array)?;
+    sources.iter().find(|source| {
+        str_field(source, "projection") == Some(projection)
+            && i64_field(source, "target_layer_idx").or_else(|| i64_field(source, "layer_idx"))
+                == Some(projection_layer)
+    })
+}
+
+fn projection_replay_outcome(
+    row: Option<&Value>,
+    capture_evidence: &ProjectionOperandCaptureEvidence,
+) -> ProjectionReplayOutcome {
     let Some(target) = row else {
         return ProjectionReplayOutcome::Blocked {
             reason: "projection_level_row_evidence_not_clean",
@@ -1815,11 +2193,24 @@ fn projection_replay_outcome(row: Option<&Value>) -> ProjectionReplayOutcome {
     let operands = match projection_replay_operands(target) {
         Ok(Some(operands)) => operands,
         Ok(None) => {
+            let has_embedded_operands = projection_operand_root(target).is_some();
             return ProjectionReplayOutcome::Blocked {
                 reason: "projection_level_full_operands_missing",
-                blockers: vec!["projection_level_full_operands_missing"],
-                missing_full_operand_fields: projection_missing_full_operand_fields(target),
-                current_operand_scope: projection_current_operand_scope(target),
+                blockers: if has_embedded_operands {
+                    vec!["projection_level_full_operands_missing"]
+                } else {
+                    capture_evidence.blockers()
+                },
+                missing_full_operand_fields: if has_embedded_operands {
+                    projection_missing_full_operand_fields(target)
+                } else {
+                    capture_evidence.missing_full_operand_fields()
+                },
+                current_operand_scope: if has_embedded_operands {
+                    projection_current_operand_scope(target)
+                } else {
+                    capture_evidence.current_operand_scope.clone()
+                },
             };
         }
         Err(err) => {
@@ -3018,6 +3409,16 @@ fn any_array_at(root: Option<&Value>, paths: &[&[&str]]) -> bool {
             value = value.and_then(|value| value.get(*key));
         }
         value.and_then(Value::as_array).is_some_and(|array| !array.is_empty())
+    })
+}
+
+fn array_len_at(root: Option<&Value>, paths: &[&[&str]]) -> Option<usize> {
+    paths.iter().find_map(|path| {
+        let mut value = root;
+        for key in *path {
+            value = value.and_then(|value| value.get(*key));
+        }
+        value.and_then(Value::as_array).map(Vec::len)
     })
 }
 
