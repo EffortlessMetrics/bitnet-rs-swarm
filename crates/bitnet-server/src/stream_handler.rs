@@ -235,6 +235,35 @@ mod tests {
     }
 
     #[test]
+    fn m4_harden_streaming_response_event_shape_locks_chat_chunk() {
+        let chunk = format_chat_chunk("Hello", "qwen2.5-0.5b-instruct-q8_0", 7);
+        let json: serde_json::Value = serde_json::from_str(&chunk).expect("chunk json");
+
+        assert_eq!(json["id"], "chatcmpl-7");
+        assert_eq!(json["object"], "chat.completion.chunk");
+        assert_eq!(json["model"], "qwen2.5-0.5b-instruct-q8_0");
+        assert_eq!(json["choices"][0]["index"], 0);
+        assert_eq!(json["choices"][0]["delta"]["content"], "Hello");
+        assert!(json["choices"][0]["finish_reason"].is_null());
+    }
+
+    #[test]
+    fn m4_harden_streaming_response_event_shape_locks_done_chunk() {
+        let done = format_chat_done("qwen2.5-0.5b-instruct-q8_0", 7);
+        let json: serde_json::Value = serde_json::from_str(&done).expect("done chunk json");
+
+        assert_eq!(json["id"], "chatcmpl-7");
+        assert_eq!(json["object"], "chat.completion.chunk");
+        assert_eq!(json["model"], "qwen2.5-0.5b-instruct-q8_0");
+        assert_eq!(json["choices"][0]["index"], 0);
+        assert_eq!(
+            json["choices"][0]["delta"].as_object().map(|delta| delta.is_empty()),
+            Some(true)
+        );
+        assert_eq!(json["choices"][0]["finish_reason"], "stop");
+    }
+
+    #[test]
     fn test_sse_with_id() {
         let mut e = SseEvent::token("data");
         e.id = Some("42".into());

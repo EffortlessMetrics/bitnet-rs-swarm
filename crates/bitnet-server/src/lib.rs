@@ -82,6 +82,12 @@ use monitoring::{
 const DENSE_QWEN25_Q8_MODEL_ID: &str = "qwen2.5-0.5b-instruct-q8_0";
 const DENSE_QWEN25_Q8_MODEL_SHA256: &str =
     "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+const DENSE_QWEN25_Q4_K_M_MODEL_ID: &str = "qwen2.5-0.5b-instruct-q4_k_m";
+const DENSE_QWEN25_Q4_K_M_MODEL_SHA256: &str =
+    "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db";
+const DENSE_QWEN25_15B_Q4_K_M_MODEL_ID: &str = "qwen2.5-1.5b-instruct-q4_k_m";
+const DENSE_QWEN25_15B_Q4_K_M_MODEL_SHA256: &str =
+    "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e";
 const DENSE_QWEN3_Q8_MODEL_ID: &str = "qwen3-0.6b-instruct-q8_0";
 const DENSE_QWEN3_Q8_MODEL_SHA256: &str =
     "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031";
@@ -90,7 +96,9 @@ const BITNET_QK256_MODEL_SHA256: &str =
     "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162";
 const BITNET_QK256_ROUTE: &str = "bitnet_qk256_cuda";
 const DENSE_QWEN_ROUTE: &str = "dense_regular_llm_cuda";
+const APPLE_M4_DENSE_SLM_ROUTE: &str = "apple_m4_cpu_neon_dense_slm";
 const SHARED_ENGINE_ROUTE: &str = "shared_validated_local_inference_engine";
+const APPLE_M4_MAC_MINI_MACHINE_ID: &str = "apple-m4-mac-mini";
 const MAX_SERVER_RECEIPTS: usize = 128;
 
 #[derive(Deserialize)]
@@ -212,6 +220,9 @@ pub struct ServerSharedEngineReceipt {
     pub request_id: String,
     pub runtime_path: String,
     pub runtime_api: String,
+    pub machine_id: String,
+    pub model_family: String,
+    pub proof_family: String,
     pub model_identity: ServerSharedEngineModelIdentity,
     pub endpoint_profile: ServerSharedEngineEndpointProfile,
     pub generation_policy: ServerSharedEngineGenerationPolicy,
@@ -248,6 +259,10 @@ pub struct ServerSharedEngineReceipt {
     pub full_cuda_residency_claimed: bool,
     pub dense_regular_llm_cuda_inference_claimed: bool,
     pub bitnet_packed_i2s_qk256_proof: bool,
+    pub metal_proof: bool,
+    pub mpsgraph_proof: bool,
+    pub neural_engine_proof: bool,
+    pub broad_apple_silicon_claim: bool,
 }
 
 impl ChatCompletionResponseMetadata {
@@ -946,6 +961,37 @@ async fn chat_completions_handler(
             .into_response();
     };
 
+    if let Err(error) = validate_chat_completion_model_request(
+        &request,
+        &active_model.metadata,
+        &state.config.server.default_device,
+    ) {
+        let details = serde_json::json!({
+            "requested_model": request.model,
+            "message_count": request.messages.len(),
+            "stream": request.stream.unwrap_or(false),
+            "active_model_id": active_model.metadata.model_id.clone(),
+            "active_model_sha256": active_model.metadata.model_sha256.clone(),
+            "requested_backend": &error.requested_backend,
+            "selected_backend": &error.selected_backend,
+            "selected_route": &error.selected_route,
+            "fallback_used": error.fallback_used,
+            "bitnet_serve_enabled": false,
+            "readiness": readiness,
+        });
+
+        return (
+            error.status,
+            create_error_response(
+                &error.message,
+                &error.error_code,
+                Some(request_id),
+                Some(details),
+            ),
+        )
+            .into_response();
+    }
+
     let (rendered_prompt, prompt_template) = match render_chat_completion_prompt(&request) {
         Ok(prompt) => prompt,
         Err(error) => {
@@ -1080,6 +1126,63 @@ async fn chat_completions_handler(
     };
 
     (StatusCode::OK, Json(response)).into_response()
+}
+
+struct ChatModelRequestError {
+    status: StatusCode,
+    error_code: &'static str,
+    message: &'static str,
+    requested_backend: String,
+    selected_backend: String,
+    selected_route: String,
+    fallback_used: bool,
+}
+
+fn validate_chat_completion_model_request(
+    request: &ChatCompletionRequest,
+    active_model: &model_manager::ModelMetadata,
+    configured_device: &DeviceConfig,
+) -> std::result::Result<(), ChatModelRequestError> {
+    let requested_backend = configured_device.backend_label();
+    let selected_backend = selected_backend_label(configured_device, active_model);
+    let selected_route = server_receipt_route(configured_device, request, active_model);
+    let fallback_used =
+        server_receipt_fallback_used(configured_device, &requested_backend, &selected_backend);
+
+    if is_bitnet_model_request(&request.model) && !bitnet_server_supported(configured_device) {
+        return Err(ChatModelRequestError {
+            status: StatusCode::NOT_IMPLEMENTED,
+            error_code: "BITNET_SERVE_UNSUPPORTED",
+            message: "BitNet chat or serve is disabled for this server profile until matching ready-gate receipts are supplied",
+            requested_backend,
+            selected_backend,
+            selected_route: "unsupported_bitnet_serve".to_string(),
+            fallback_used,
+        });
+    }
+
+    if request.model == active_model.model_id || selected_route != SHARED_ENGINE_ROUTE {
+        return Ok(());
+    }
+
+    Err(ChatModelRequestError {
+        status: StatusCode::NOT_FOUND,
+        error_code: "MODEL_ID_NOT_AVAILABLE",
+        message: "requested model is not the active verified server model for this endpoint profile",
+        requested_backend,
+        selected_backend,
+        selected_route,
+        fallback_used,
+    })
+}
+
+fn is_bitnet_model_request(model_id: &str) -> bool {
+    model_id.eq_ignore_ascii_case(BITNET_QK256_MODEL_ID)
+        || model_id.to_ascii_lowercase().contains("bitnet")
+}
+
+fn bitnet_server_supported(configured_device: &DeviceConfig) -> bool {
+    matches!(configured_device, DeviceConfig::NvidiaRtx5070TiCuda)
 }
 
 fn render_chat_completion_prompt(
@@ -1240,8 +1343,8 @@ fn build_server_shared_engine_receipt(
     let selected_backend = selected_backend_label(configured_device, active_model);
     let route = server_receipt_route(configured_device, request, active_model);
     let coverage = server_receipt_model_coverage(&route, request, active_model);
-    let fallback_used = matches!(configured_device, DeviceConfig::NvidiaRtx5070TiCuda)
-        && selected_backend != requested_backend;
+    let fallback_used =
+        server_receipt_fallback_used(configured_device, &requested_backend, &selected_backend);
     let generated_text_non_empty = !generated_text.trim().is_empty();
     let dense_cuda_smoke_claimed = generated_text_non_empty
         && selected_backend == "nvidia-rtx-5070-ti-cuda"
@@ -1273,6 +1376,9 @@ fn build_server_shared_engine_receipt(
         request_id: request_id.to_string(),
         runtime_path: "shared_local_inference_engine".to_string(),
         runtime_api: runtime_api_label(configured_device, active_model),
+        machine_id: server_receipt_machine_id(configured_device),
+        model_family: server_receipt_model_family(&route),
+        proof_family: route.clone(),
         model_identity: ServerSharedEngineModelIdentity {
             model_id: request.model.clone(),
             requested_model: request.model.clone(),
@@ -1327,6 +1433,10 @@ fn build_server_shared_engine_receipt(
         full_cuda_residency_claimed: false,
         dense_regular_llm_cuda_inference_claimed: dense_cuda_smoke_claimed,
         bitnet_packed_i2s_qk256_proof: bitnet_qk256_proof_claimed,
+        metal_proof: false,
+        mpsgraph_proof: false,
+        neural_engine_proof: false,
+        broad_apple_silicon_claim: false,
     }
 }
 
@@ -1434,7 +1544,9 @@ fn server_receipt_route(
     request: &ChatCompletionRequest,
     active_model: &model_manager::ModelMetadata,
 ) -> String {
-    if matches!(configured_device, DeviceConfig::NvidiaRtx5070TiCuda)
+    if apple_m4_dense_server_model_for_request(configured_device, request, active_model).is_some() {
+        APPLE_M4_DENSE_SLM_ROUTE.to_string()
+    } else if matches!(configured_device, DeviceConfig::NvidiaRtx5070TiCuda)
         && dense_qwen_server_coverage_for_request(request, active_model).is_some()
     {
         DENSE_QWEN_ROUTE.to_string()
@@ -1465,6 +1577,54 @@ fn server_receipt_model_coverage(
         });
     }
     None
+}
+
+struct AppleM4DenseServerModel {
+    id: &'static str,
+    sha256: &'static str,
+}
+
+const APPLE_M4_DENSE_SERVER_MODELS: &[AppleM4DenseServerModel] = &[
+    AppleM4DenseServerModel { id: DENSE_QWEN25_Q8_MODEL_ID, sha256: DENSE_QWEN25_Q8_MODEL_SHA256 },
+    AppleM4DenseServerModel {
+        id: DENSE_QWEN25_Q4_K_M_MODEL_ID,
+        sha256: DENSE_QWEN25_Q4_K_M_MODEL_SHA256,
+    },
+    AppleM4DenseServerModel {
+        id: DENSE_QWEN25_15B_Q4_K_M_MODEL_ID,
+        sha256: DENSE_QWEN25_15B_Q4_K_M_MODEL_SHA256,
+    },
+];
+
+fn apple_m4_dense_server_model_for_request(
+    configured_device: &DeviceConfig,
+    request: &ChatCompletionRequest,
+    active_model: &model_manager::ModelMetadata,
+) -> Option<&'static AppleM4DenseServerModel> {
+    if !matches!(configured_device, DeviceConfig::AppleM4CpuNeon)
+        || !active_model_device_is_cpu(active_model)
+    {
+        return None;
+    }
+    let active_sha256 = active_model.model_sha256.as_deref()?;
+    APPLE_M4_DENSE_SERVER_MODELS
+        .iter()
+        .find(|model| request.model == model.id && active_sha256.eq_ignore_ascii_case(model.sha256))
+}
+
+fn apple_m4_dense_server_model_for_active(
+    configured_device: &DeviceConfig,
+    active_model: &model_manager::ModelMetadata,
+) -> Option<&'static AppleM4DenseServerModel> {
+    if !matches!(configured_device, DeviceConfig::AppleM4CpuNeon)
+        || !active_model_device_is_cpu(active_model)
+    {
+        return None;
+    }
+    let active_sha256 = active_model.model_sha256.as_deref()?;
+    APPLE_M4_DENSE_SERVER_MODELS
+        .iter()
+        .find(|model| active_sha256.eq_ignore_ascii_case(model.sha256))
 }
 
 fn server_model_coverage_for_active_model(
@@ -1517,6 +1677,18 @@ fn server_model_coverage_for_active_model(
     None
 }
 
+fn server_active_model_route_for_config(
+    configured_device: &DeviceConfig,
+    active_model: &model_manager::ModelMetadata,
+) -> Option<&'static str> {
+    if apple_m4_dense_server_model_for_active(configured_device, active_model).is_some() {
+        return Some(APPLE_M4_DENSE_SLM_ROUTE);
+    }
+
+    server_model_coverage_for_active_model(configured_device, active_model)
+        .map(|coverage| coverage.route)
+}
+
 fn dense_qwen_server_coverage_for_request(
     request: &ChatCompletionRequest,
     active_model: &model_manager::ModelMetadata,
@@ -1565,16 +1737,57 @@ fn active_model_device_is_cuda(active_model: &model_manager::ModelMetadata) -> b
     active_model.device.to_ascii_lowercase().contains("cuda")
 }
 
+fn active_model_device_is_cpu(active_model: &model_manager::ModelMetadata) -> bool {
+    active_model.device.eq_ignore_ascii_case("cpu")
+        || active_model.device.to_ascii_lowercase().contains("cpu")
+}
+
 fn runtime_api_label(
     configured_device: &DeviceConfig,
     active_model: &model_manager::ModelMetadata,
 ) -> String {
+    if matches!(configured_device, DeviceConfig::AppleM4CpuNeon) {
+        return "cpu".to_string();
+    }
+
     if preserves_configured_backend_label(configured_device)
         && active_model_device_is_cuda(active_model)
     {
         "cuda".to_string()
     } else {
         active_model.device.clone()
+    }
+}
+
+fn server_receipt_fallback_used(
+    configured_device: &DeviceConfig,
+    requested_backend: &str,
+    selected_backend: &str,
+) -> bool {
+    matches!(configured_device, DeviceConfig::NvidiaRtx5070TiCuda)
+        && selected_backend != requested_backend
+}
+
+fn server_receipt_machine_id(configured_device: &DeviceConfig) -> String {
+    match configured_device {
+        DeviceConfig::AppleM4Metal
+        | DeviceConfig::AppleM4MpsGraph
+        | DeviceConfig::AppleM4CpuNeon => APPLE_M4_MAC_MINI_MACHINE_ID.to_string(),
+        DeviceConfig::AppleM3AirMetal
+        | DeviceConfig::AppleM3AirMpsGraph
+        | DeviceConfig::AppleM3AirCpuNeon => "apple-silicon-macbook".to_string(),
+        DeviceConfig::NvidiaRtx5070TiCuda | DeviceConfig::NvidiaRtx5070TiWgpu => {
+            "windows-9950x3d-rtx5070ti".to_string()
+        }
+        _ => "unspecified".to_string(),
+    }
+}
+
+fn server_receipt_model_family(route: &str) -> String {
+    match route {
+        APPLE_M4_DENSE_SLM_ROUTE | DENSE_QWEN_ROUTE => "dense_slm".to_string(),
+        BITNET_QK256_ROUTE => "bitnet".to_string(),
+        _ => "shared_local_inference".to_string(),
     }
 }
 
@@ -1845,13 +2058,14 @@ fn build_server_readiness_response(
     let real_server_inference_ready = active_model_supports_shared_inference(active_model.as_ref());
     let active_model_summary = active_model.as_ref().map(|metadata| {
         let coverage = server_model_coverage_for_active_model(configured_device, metadata);
+        let selected_route = server_active_model_route_for_config(configured_device, metadata);
         ServerReadinessActiveModel {
             model_id: metadata.model_id.clone(),
             model_path: metadata.model_path.clone(),
             model_sha256: metadata.model_sha256.clone(),
             model_coverage_row: coverage.as_ref().map(|coverage| coverage.row.to_string()),
             model_coverage_tier: coverage.as_ref().map(|coverage| coverage.tier.to_string()),
-            selected_route: coverage.as_ref().map(|coverage| coverage.route.to_string()),
+            selected_route: selected_route.map(str::to_string),
             device: metadata.device.clone(),
             quantization_type: metadata.quantization_type.clone(),
             size_mb: metadata.size_mb,
@@ -2087,6 +2301,7 @@ mod tests {
         ChatCompletionUsage, DeviceConfig, ServerConfig, ServerReceiptStore,
         build_server_readiness_response, build_server_shared_engine_receipt,
         generation_config_from_chat_request, parse_device, render_chat_completion_prompt,
+        validate_chat_completion_model_request,
     };
     use axum::{
         body::Body,
@@ -2183,6 +2398,210 @@ mod tests {
             31,
             None,
         )
+    }
+
+    fn apple_m4_qwen25_server_receipt(request_id: &str) -> super::ServerSharedEngineReceipt {
+        let request = ChatCompletionRequest {
+            model: "qwen2.5-0.5b-instruct-q8_0".to_string(),
+            messages: vec![ChatCompletionMessage {
+                role: "user".to_string(),
+                content: "What is working capital?".to_string(),
+            }],
+            max_tokens: Some(16),
+            temperature: Some(0.0),
+            top_p: Some(1.0),
+            stream: Some(false),
+        };
+        let usage =
+            ChatCompletionUsage { prompt_tokens: 12, completion_tokens: 4, total_tokens: 16 };
+        let metadata = ModelMetadata {
+            model_id: "model-1".to_string(),
+            model_path: "models/qwen2.5-0.5b-q8_0.gguf".to_string(),
+            model_sha256: Some(
+                "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e".to_string(),
+            ),
+            device: "Cpu".to_string(),
+            quantization_type: "Q8_0".to_string(),
+            loaded_at: SystemTime::UNIX_EPOCH,
+            size_mb: 512,
+            parameters: 500_000_000,
+            context_length: 32_768,
+            inference_count: 0,
+            avg_tokens_per_second: 0.0,
+        };
+
+        build_server_shared_engine_receipt(
+            request_id,
+            &request,
+            &metadata,
+            &DeviceConfig::AppleM4CpuNeon,
+            "chatml",
+            &usage,
+            "Working capital is current assets minus current liabilities.",
+            25,
+            None,
+        )
+    }
+
+    #[test]
+    fn m4_harden_response_shape_locks_non_streaming_chat_completion() {
+        let receipt = apple_m4_qwen25_server_receipt("m4-response-1");
+        let metadata = ChatCompletionResponseMetadata::from_receipt(&receipt);
+        let usage =
+            ChatCompletionUsage { prompt_tokens: 12, completion_tokens: 4, total_tokens: 16 };
+        let response = super::ChatCompletionResponse {
+            id: "chatcmpl-m4-response-1".to_string(),
+            object: "chat.completion".to_string(),
+            created: 1_783_235_200,
+            model: "qwen2.5-0.5b-instruct-q8_0".to_string(),
+            choices: vec![super::ChatCompletionChoice {
+                index: 0,
+                message: ChatCompletionMessage {
+                    role: "assistant".to_string(),
+                    content: "Working capital is current assets minus current liabilities."
+                        .to_string(),
+                },
+                finish_reason: "stop".to_string(),
+            }],
+            usage,
+            metadata,
+            receipt,
+        };
+
+        let json = serde_json::to_value(&response).expect("chat response json");
+
+        assert_eq!(json["id"], "chatcmpl-m4-response-1");
+        assert_eq!(json["object"], "chat.completion");
+        assert_eq!(json["created"], 1_783_235_200);
+        assert_eq!(json["model"], "qwen2.5-0.5b-instruct-q8_0");
+        assert_eq!(json["choices"][0]["index"], 0);
+        assert_eq!(json["choices"][0]["message"]["role"], "assistant");
+        assert_eq!(json["choices"][0]["finish_reason"], "stop");
+        assert_eq!(json["usage"]["prompt_tokens"], 12);
+        assert_eq!(json["usage"]["completion_tokens"], 4);
+        assert_eq!(json["usage"]["total_tokens"], 16);
+        assert_eq!(json["metadata"]["receipt_path"], "/receipts/m4-response-1");
+        assert_eq!(json["metadata"]["latest_receipt_path"], "/receipts/latest");
+        assert_eq!(json["metadata"]["readiness_path"], "/readiness");
+        assert_eq!(json["metadata"]["selected_backend"], "apple-m4-cpu-neon");
+        assert_eq!(json["metadata"]["selected_route"], "apple_m4_cpu_neon_dense_slm");
+        assert_eq!(json["metadata"]["fallback_used"], false);
+        assert_eq!(json["receipt"]["request_id"], "m4-response-1");
+    }
+
+    #[test]
+    fn m4_harden_receipt_exports_model_backend_and_fallback_for_apple_m4_dense() {
+        let receipt = apple_m4_qwen25_server_receipt("m4-receipt-1");
+        let json = serde_json::to_value(&receipt).expect("receipt json");
+
+        assert_eq!(json["receipt_kind"], "server_shared_engine_chat_completion");
+        assert_eq!(json["request_id"], "m4-receipt-1");
+        assert_eq!(json["runtime_path"], "shared_local_inference_engine");
+        assert_eq!(json["runtime_api"], "cpu");
+        assert_eq!(json["machine_id"], "apple-m4-mac-mini");
+        assert_eq!(json["model_family"], "dense_slm");
+        assert_eq!(json["proof_family"], "apple_m4_cpu_neon_dense_slm");
+        assert_eq!(json["requested_model"], "qwen2.5-0.5b-instruct-q8_0");
+        assert_eq!(json["model_identity"]["requested_model"], "qwen2.5-0.5b-instruct-q8_0");
+        assert_eq!(json["model_identity"]["active_model_id"], "model-1");
+        assert_eq!(json["requested_backend"], "apple-m4-cpu-neon");
+        assert_eq!(json["selected_backend"], "apple-m4-cpu-neon");
+        assert_eq!(json["selected_route"], "apple_m4_cpu_neon_dense_slm");
+        assert_eq!(json["fallback_used"], false);
+        assert_eq!(json["server_ready_claimed"], false);
+        assert_eq!(json["bitnet_packed_i2s_qk256_proof"], false);
+        assert_eq!(json["metal_proof"], false);
+        assert_eq!(json["mpsgraph_proof"], false);
+        assert_eq!(json["neural_engine_proof"], false);
+        assert_eq!(json["broad_apple_silicon_claim"], false);
+    }
+
+    #[test]
+    fn m4_harden_model_validation_rejects_bad_model_id_cleanly() {
+        let request = ChatCompletionRequest {
+            model: "not-a-loaded-model".to_string(),
+            messages: vec![ChatCompletionMessage {
+                role: "user".to_string(),
+                content: "Say OK.".to_string(),
+            }],
+            max_tokens: Some(2),
+            temperature: Some(0.0),
+            top_p: Some(1.0),
+            stream: Some(false),
+        };
+        let active_model = ModelMetadata {
+            model_id: "model-1".to_string(),
+            model_path: "models/qwen2.5-0.5b-q8_0.gguf".to_string(),
+            model_sha256: Some(
+                "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e".to_string(),
+            ),
+            device: "Cpu".to_string(),
+            quantization_type: "Q8_0".to_string(),
+            loaded_at: SystemTime::UNIX_EPOCH,
+            size_mb: 512,
+            parameters: 500_000_000,
+            context_length: 32_768,
+            inference_count: 0,
+            avg_tokens_per_second: 0.0,
+        };
+
+        let error = validate_chat_completion_model_request(
+            &request,
+            &active_model,
+            &DeviceConfig::AppleM4CpuNeon,
+        )
+        .expect_err("bad model id should fail");
+
+        assert_eq!(error.status, StatusCode::NOT_FOUND);
+        assert_eq!(error.error_code, "MODEL_ID_NOT_AVAILABLE");
+        assert_eq!(error.requested_backend, "apple-m4-cpu-neon");
+        assert_eq!(error.selected_backend, "apple-m4-cpu-neon");
+        assert_eq!(error.selected_route, "shared_validated_local_inference_engine");
+        assert!(!error.fallback_used);
+    }
+
+    #[test]
+    fn m4_harden_bitnet_serve_fails_cleanly_on_apple_m4() {
+        let request = ChatCompletionRequest {
+            model: "microsoft-bitnet-b1.58-2B-4T-i2s".to_string(),
+            messages: vec![ChatCompletionMessage {
+                role: "user".to_string(),
+                content: "Say OK.".to_string(),
+            }],
+            max_tokens: Some(2),
+            temperature: Some(0.0),
+            top_p: Some(1.0),
+            stream: Some(false),
+        };
+        let active_model = ModelMetadata {
+            model_id: "model-1".to_string(),
+            model_path: "models/qwen2.5-0.5b-q8_0.gguf".to_string(),
+            model_sha256: Some(
+                "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e".to_string(),
+            ),
+            device: "Cpu".to_string(),
+            quantization_type: "Q8_0".to_string(),
+            loaded_at: SystemTime::UNIX_EPOCH,
+            size_mb: 512,
+            parameters: 500_000_000,
+            context_length: 32_768,
+            inference_count: 0,
+            avg_tokens_per_second: 0.0,
+        };
+
+        let error = validate_chat_completion_model_request(
+            &request,
+            &active_model,
+            &DeviceConfig::AppleM4CpuNeon,
+        )
+        .expect_err("BitNet serve should fail closed on Apple M4");
+
+        assert_eq!(error.status, StatusCode::NOT_IMPLEMENTED);
+        assert_eq!(error.error_code, "BITNET_SERVE_UNSUPPORTED");
+        assert_eq!(error.requested_backend, "apple-m4-cpu-neon");
+        assert_eq!(error.selected_backend, "apple-m4-cpu-neon");
+        assert_eq!(error.selected_route, "unsupported_bitnet_serve");
+        assert!(!error.fallback_used);
     }
 
     #[tokio::test]

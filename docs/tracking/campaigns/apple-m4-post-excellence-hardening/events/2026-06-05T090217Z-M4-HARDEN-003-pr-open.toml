@@ -1,0 +1,12 @@
+timestamp = "2026-06-05T09:02:17Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-003"
+event = "pr_open"
+pr = 1580
+head_sha = "adc88688950ef41455033b460fde2b6316fde0b8"
+actor = "codex"
+notes = [
+  "Opened the dense local-server response conformance PR in bitnet-rs-swarm.",
+  "PR locks response, streaming event, receipt export, bad-model, and unsupported BitNet serve failure shapes for the scoped dense server path.",
+  "Claim boundary remains dense Apple M4 server conformance only; BitNet chat and BitNet serve remain disabled without separate ready-gate receipts.",
+]
