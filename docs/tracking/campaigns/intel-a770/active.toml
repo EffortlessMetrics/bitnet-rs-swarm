@@ -8809,7 +8809,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-159"
-status = "ready"
+status = "merged"
+pr = 1569
+head_sha = "1fc4b91ef2cab1fa3592be6b17eb818ae8dcf799"
+merge_sha = "f84a709a4cd72a7d2996256776b5c086e6d8bf48"
 branch = "codex/intel-a770/A770-159-full-projection-operands-capture"
 stackable = false
 review_mode = "codex_premerge"
@@ -8842,6 +8845,61 @@ forbidden_paths = [
 may_claim = [
   "A770-159 may record full projection Q/K/V operands for the A770-158 target surface.",
   "A770-159 may record a selected-device Intel Arc A770 OpenCL projection-level replay result with fallback_used=false if the required operands and hook exist.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-160"
+status = "ready"
+branch = "codex/intel-a770/A770-160-full-projection-packed-row-capture"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-159"]
+acceptance = "Use the committed A770-159 full projection operand source boundary receipt to capture the smallest full projection packed QK256 row source for the same case a770_summary_seed770024_keywords_014, first-mismatch index 9, and layer-0 Q/K/V target surface, then execute bounded projection replay fallback-free if the required full projection packed rows and A770-158 replay hook are available. Any selected-device replay must keep selected_backend Intel Arc A770 OpenCL, runtime_api opencl, and fallback_used=false. If capture remains blocked, ledger the exact full projection packed-row capture hook or source blocker with no promotion claim. The work must not run broad answer corpora, model downloads, hardware matrices, full-workspace CI, Mac/Windows lanes, production QK256 dispatch policy changes, answer scoring or sampling changes, CPU/A770 answer parity promotion, strict answer readiness, broad quality, residency, speed, trusted partial acceleration, or full BitNet inference claims."
+commands = [
+  "git diff --check",
+  "parse touched TOML/JSON/Markdown receipts and reports",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation",
+  "opt-in selected-device A770 OpenCL full projection packed QK256 row capture for exactly case a770_summary_seed770024_keywords_014, first-mismatch index 9, and the layer-0 Q/K/V target surface, using the committed A770-159 operand source boundary receipt and fallback_used=false for any replay",
+  "parse the new receipt locally and assert the projection-level replay executed fallback-free on Intel Arc A770 OpenCL or ledgered the exact missing full projection packed-row capture source or hook blocker with no promotion claim",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+]
+allowed_paths = [
+  "crates/bitnet-kernels/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-160 may record full projection packed QK256 row operands for the A770-159 layer-0 Q/K/V target surface.",
+  "A770-160 may record a selected-device Intel Arc A770 OpenCL projection-level replay result with fallback_used=false if the required operands and hook exist.",
 ]
 must_not_claim = [
   "CPU/A770 answer parity is proven.",

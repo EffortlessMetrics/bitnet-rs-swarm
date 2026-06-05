@@ -1,0 +1,45 @@
+timestamp = "2026-06-05T05:39:15Z"
+campaign = "intel-a770"
+item = "A770-159"
+event = "merged"
+previous_status = "ready"
+new_status = "merged"
+pr = 1569
+branch = "codex/intel-a770/A770-159-full-projection-operands-capture"
+head_sha = "1fc4b91ef2cab1fa3592be6b17eb818ae8dcf799"
+merge_sha = "f84a709a4cd72a7d2996256776b5c086e6d8bf48"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #1569 for the A770-159 full projection operand source boundary."
+notes = [
+  "A770-159 followed the committed A770-158 projection replay hook receipt for case a770_summary_seed770024_keywords_014, first-mismatch index 9, and the layer-0 Q/K/V target surface.",
+  "The receipt records projection_operand_capture_source_count=3, projection_focused_operand_source_count=3, and projection_full_operand_source_count=0.",
+  "The receipt keeps selected_backend Intel Arc A770 OpenCL, runtime_api opencl, fallback_used=false, claim_allowed=false, and diagnostic_only=true.",
+  "Projection-level replay remains unexecuted because only single-output-row packed QK256 operands were available; the remaining blocker is full projection packed-row capture.",
+  "A770-160 remains required to capture a full projection packed QK256 row source or ledger the exact capture hook or source blocker.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-159 records that the A770-158 layer-0 Q/K/V target surface resolves to focused single-output-row operand sources.",
+  "A770-159 records that projection-level replay remains blocked on missing full projection packed QK256 rows with no promotion claim.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
