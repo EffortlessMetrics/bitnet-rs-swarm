@@ -40,6 +40,7 @@ docs/status/BITNET_CAPABILITY_MATRIX.md
 docs/status/CUDA_CAPABILITY_MATRIX.md
 docs/status/APPLE_CAPABILITY_MATRIX.md
 docs/status/OPENVINO_CAPABILITY_MATRIX.md
+docs/status/KNOWN_LIMITATIONS.md
 ```
 
 Planned status surfaces include:
