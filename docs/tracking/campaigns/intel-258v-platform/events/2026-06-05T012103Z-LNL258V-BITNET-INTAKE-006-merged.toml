@@ -1,0 +1,19 @@
+timestamp = "2026-06-05T01:21:03Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-BITNET-INTAKE-006"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1556
+branch = "codex/lunar-lake/LNL258V-BITNET-INTAKE-006-slm-cpu-243-freshness"
+head_sha = "9e3fe79c03df5f218fab742e9adb203c5280076e"
+merge_sha = "c4a710378ecc06e42f2fee6726ffb4c1bd165be0"
+actor = "codex"
+summary = "Merged PR #1556 for the no-inference Lunar Lake BitNet intake freshness refresh."
+
+notes = [
+  "PR #1556 refreshed the Lunar Lake BitNet semantic-intake ledger after current swarm main merged #1529, #1541, and #1549.",
+  "#1529 is recorded as a dense-SLM reviewed non-trigger, #1541 as diagnostic-only A770 work, and #1549 as tracker-only A770 work.",
+  "The refreshed semantic intake reports total_change_count=11, merged_to_main_count=5, stale_after_merged_count=0, diagnostic_only_no_rerun_count=3, and rerun_required=false.",
+  "PR Gate failed twice before repository validation on a runner rustup download error: curl (23) while writing rustup-init; GitHub still merged after required checks allowed it.",
+]
