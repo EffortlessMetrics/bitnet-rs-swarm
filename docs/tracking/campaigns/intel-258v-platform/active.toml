@@ -10922,7 +10922,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-BITNET-INTAKE-006"
-status = "ready"
+status = "in_progress"
 branch = "codex/lunar-lake/LNL258V-BITNET-INTAKE-006-slm-cpu-243-freshness"
 stackable = false
 review_mode = "codex_premerge"

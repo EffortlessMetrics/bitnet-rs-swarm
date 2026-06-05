@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_operator_comparison",
   "proof_stage": "operator_routes_compared",
-  "created_utc": "2026-06-03T10:30:00Z",
+  "created_utc": "2026-06-05T01:04:30Z",
   "machine_id": "intel-258v",
   "artifact_root": "ci/hardware/intel-258v/2026-05-08",
   "operator_receipt": "ci/hardware/intel-258v/2026-05-08/lunar-lake-operator-readiness.json",
@@ -924,10 +924,10 @@
         "rerun_required=false",
         "pending_shared_change_count=0",
         "closed_shared_change_count=6",
-        "merged_to_main_count=2",
+        "merged_to_main_count=5",
         "stale_after_merged_count=0",
-        "diagnostic_only_no_rerun_count=2",
-        "source_lanes=a770",
+        "diagnostic_only_no_rerun_count=3",
+        "source_lanes=a770,slm-cpu",
         "claim_boundary_preserved=true"
       ]
     },
