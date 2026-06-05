@@ -381,15 +381,10 @@ impl AppleBackendVisibilityPreflight {
                     selected_backend: selected_backend.to_owned(),
                 });
             }
-            match self.requested_backend.as_str() {
-                label
-                    if apple_m3_air::label(label)
-                        .is_some_and(|expected| self.runtime_api != expected.runtime_api) =>
-                {
-                    let requested_backend =
-                        apple_m3_air::label(label).expect("label checked above").backend_label;
+            match apple_m3_air::label(&self.requested_backend) {
+                Some(expected) if self.runtime_api != expected.runtime_api => {
                     return Err(AppleReceiptError::RuntimeApiMismatch {
-                        requested_backend,
+                        requested_backend: expected.backend_label,
                         runtime_api: self.runtime_api.clone(),
                     });
                 }

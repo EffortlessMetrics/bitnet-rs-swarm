@@ -880,10 +880,14 @@ mod tests {
             BackendRequest::AppleM4CpuNeon,
             &neon_caps(),
             m4_like_host,
-        )
-        .expect("M4 CPU/NEON remains accepted on the generic Apple-Silicon host predicate");
-        assert_eq!(m4_result.selected_backend(), "apple-m4-cpu-neon");
-        assert!(!m4_result.fallback_used());
+        );
+        assert!(
+            matches!(
+                m4_result.as_ref().map(|result| (result.selected_backend(), result.fallback_used())),
+                Ok((selected_backend, false)) if selected_backend == "apple-m4-cpu-neon"
+            ),
+            "M4 CPU/NEON remains accepted on the generic Apple-Silicon host predicate: {m4_result:?}",
+        );
     }
 
     #[test]
