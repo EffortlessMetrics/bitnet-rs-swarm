@@ -18,7 +18,7 @@
 | apple-m4-local-answer | Apple M4 local answer usability | M4-BITNET-WARM-002 | Do not reopen the completed apple-m4 or apple-m4-operational campaigns. |
 | apple-m4-local-server | Apple M4 local server | M4-SERVE-005 | This is an M4 Mac mini dense SLM service campaign. |
 | apple-m4-operational | Apple M4 operational readiness | M4-OP-006 | Do not reopen the completed apple-m4 proof campaign. |
-| apple-m4-post-excellence-hardening | Apple M4 post excellence hardening | M4-HARDEN-005 | Use ci/hardware/apple-m4-mac-mini/2026-05-22/m4-inference-excellence-completion-audit.json as the completed baseline evidence. |
+| apple-m4-post-excellence-hardening | Apple M4 post excellence hardening | M4-HARDEN-006 | Use ci/hardware/apple-m4-mac-mini/2026-05-22/m4-inference-excellence-completion-audit.json as the completed baseline evidence. |
 | apple-m4-productization | Apple M4 local answer productization | M4-PROD-005 | Do not reopen the completed apple-m4, apple-m4-operational, or apple-m4-slm-answer campaigns. |
 | apple-m4-slm-answer | Apple M4 SLM local answer usability | SLM-M4-007 | Do not reopen the completed apple-m4 or apple-m4-operational campaigns. |
 | apple-m4-slm-eval-and-proof | Apple M4 dense SLM eval and proof | M4-SLM-EVAL-006 | This is an M4 Mac mini dense SLM campaign. |
