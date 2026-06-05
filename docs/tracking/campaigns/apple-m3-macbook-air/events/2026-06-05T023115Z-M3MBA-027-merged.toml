@@ -1,0 +1,45 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-027"
+event = "merged"
+timestamp = "2026-06-05T02:31:15Z"
+actor = "codex"
+pr = 1545
+head_sha = "81c7a62577c5574cef7180ff97465dc01c3b33ec"
+merge_sha = "26c0cadcf4f05dcdcce7a4ea6e1ac3ae6ba5ca9d"
+branch = "codex/apple-m3-macbook-air/M3MBA-027-device-model-srp"
+
+summary = "Merged #1545 with the centralized M3 Air device identity and strict backend-label contract."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1545",
+  "crates/bitnet-common/src/apple_m3_air.rs",
+  "crates/bitnet-common/src/backend_selection.rs",
+  "crates/bitnet-cli-config-core/src/lib.rs",
+  "crates/bitnet-device-config-core/src/profile.rs",
+  "crates/bitnet-device-probe/src/apple_receipts.rs",
+  "crates/bitnet-cli/src/mac.rs",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "M3 Air profile, backend labels, runtime API labels, storage policy, unsupported claims, rejected alias drift, and Air model identifiers now share a single bitnet-common device identity surface.",
+  "Host-independent tests cover the positive M3 Air CPU/NEON path, M4 predicate preservation, and strict rejection for unsupported or cross-lane M3 Air requests.",
+  "CI repair commits on the same PR preserved selected long jobs by increasing completion headroom and routing rustup/native compiler temp files away from full /tmp volumes.",
+  "The merged item did not run live model inference, enable M3 Metal or MPSGraph model inference, claim Neural Engine execution, claim QK256 Apple support, or promote broad Apple Silicon or M4 performance proof.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-common --no-default-features backend_selection",
+  "cargo test --locked -p bitnet-cli-config-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-device-config-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-device-probe --no-default-features apple",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- check-no-panic-family --report-dir target/bitnet/reports",
+  "cargo run --locked -p xtask --no-default-features -- lint-workflows",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
