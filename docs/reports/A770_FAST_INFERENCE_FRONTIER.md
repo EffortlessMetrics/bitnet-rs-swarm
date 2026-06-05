@@ -7,9 +7,10 @@ QK256 replay packet for the committed summary-logits first mismatch: ninety
 runnable Q/K/V targets, the layer-0 through layer-29 Q/K/V trios.
 A770-157 starts the next boundary by ledgering the layer-0 Q/K/V projection
 surface from the clean A770-156 row packet. A770-158 adds the bounded
-projection-level replay hook, and A770-159 confirms the committed source
-packets still contain only single-output-row focused packed bytes, not full
-projection Q/K/V operands. The selected device is Intel Arc A770 OpenCL and the receipts keep
+projection-level replay hook, A770-159 confirms the committed source packets
+still contain only single-output-row focused packed bytes, and A770-160 narrows
+the remaining blocker to a missing full projection packed-row capture source.
+The selected device is Intel Arc A770 OpenCL and the receipts keep
 `fallback_used = false`, `runtime_api = opencl`, and `claim_allowed = false`.
 
 That is a good correctness frontier, not an inference-performance frontier. It
@@ -24,9 +25,10 @@ acceleration, or full BitNet inference.
    A770-156 covers ninety focused Q/K/V rows for one case and one first
    mismatch: the layer-0 through layer-29 Q/K/V trios. A770-157 shows that the
    row evidence is clean enough to start projection replay, A770-158 adds the
-   bounded replay hook, and A770-159 narrows the committed operand source
-   blocker to missing full projection packed rows. The projection-level path is
-   still blocked on full projection operands. Fast inference needs selected-device
+   bounded replay hook, A770-159 narrows the committed operand source blocker
+   to missing full projection packed rows, and A770-160 names the exact missing
+   full projection packed-row capture source. The projection-level path is still
+   blocked on full projection operands. Fast inference needs selected-device
    confidence at projection level and across the remaining O projection, MLP
    linears, and logits-facing paths that can affect generated tokens.
 
@@ -97,10 +99,10 @@ acceleration, or full BitNet inference.
 
 ## Next Work Item
 
-After A770-159, the next honest step is still not a speed PR. It is to add a
-full projection packed-row capture source for the same layer-0 Q/K/V surface,
-then run selected-device A770 OpenCL projection replay through the bounded hook
-with `fallback_used=false`. Only after that boundary is clean should the lane
-expand to O projection or MLP QK256 linears. Its job is to keep widening the
-correctness surface before any production QK256 policy, residency,
-answer-quality, or speed promotion.
+After A770-160, the next honest step is still not a speed PR. It is to add the
+missing full projection packed-row capture hook or source packet for the same
+layer-0 Q/K/V surface, then run selected-device A770 OpenCL projection replay
+through the bounded hook with `fallback_used=false`. Only after that boundary is
+clean should the lane expand to O projection or MLP QK256 linears. Its job is
+to keep widening the correctness surface before any production QK256 policy,
+residency, answer-quality, or speed promotion.

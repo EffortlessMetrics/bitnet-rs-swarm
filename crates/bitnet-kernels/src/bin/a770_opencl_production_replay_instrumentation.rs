@@ -1401,6 +1401,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
             first_mismatch_index,
             projection_layer,
             projection,
+            source_receipt_kind,
         );
         if operand_capture_evidence.source_projection_found {
             projection_operand_capture_source_count += 1;
@@ -1590,6 +1591,10 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "a770_qk256_projection_level_qkv_replay_blocked_on_row_evidence"
     } else if projection_executed_count == projections.len() {
         "a770_qk256_projection_level_qkv_replay_executed_selected_device"
+    } else if summary_blockers
+        .contains(&"projection_level_full_projection_packed_row_capture_source_missing")
+    {
+        "a770_qk256_projection_level_qkv_replay_blocked_on_full_projection_packed_row_capture_source"
     } else if summary_blockers.contains(&"projection_level_full_operands_missing")
         && !summary_blockers.contains(&"projection_level_replay_hook_missing")
     {
@@ -1598,6 +1603,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "a770_qk256_projection_level_qkv_replay_blocked"
     };
     let source_receipts = match source_receipt_kind {
+        "a770_159_full_projection_operand_source_boundary" => json!({
+            "a770_159_full_projection_operand_source_boundary": path_json_value(source_path),
+        }),
         "a770_158_projection_replay_hook_boundary" => json!({
             "a770_158_projection_replay_hook_boundary": path_json_value(source_path),
         }),
@@ -1622,6 +1630,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "target_layer_idx_filter": projection_layer,
         "target_policy": {
             "target_source": match source_receipt_kind {
+                "a770_159_full_projection_operand_source_boundary" => {
+                    "A770-159 full projection operand source boundary receipt"
+                }
                 "a770_158_projection_replay_hook_boundary" => {
                     "A770-158 projection replay hook boundary receipt"
                 }
@@ -1632,7 +1643,14 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
             },
             "target_surface": "one transformer layer Q/K/V projection-level replay boundary",
             "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands are available through the bounded replay hook",
-            "blocker_rule": "ledger missing full projection operands instead of promoting production QK256 policy",
+            "blocker_rule": match source_receipt_kind {
+                "a770_159_full_projection_operand_source_boundary" => {
+                    "ledger missing full projection packed-row capture source instead of promoting production QK256 policy"
+                }
+                _ => {
+                    "ledger missing full projection operands instead of promoting production QK256 policy"
+                }
+            },
             "cpu_fallback_allowed": false,
             "fallback_used_must_equal": false
         },
@@ -1693,7 +1711,14 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "diagnostic_only": true,
         "performance_claim": false,
         "full_residency_claim": false,
-        "next_diagnostic": "capture full projection Q/K/V operands before executing the bounded projection-level replay hook or any production QK256 promotion",
+        "next_diagnostic": match source_receipt_kind {
+            "a770_159_full_projection_operand_source_boundary" => {
+                "add a full projection packed-row capture hook or source before executing the bounded projection-level replay hook or any production QK256 promotion"
+            }
+            _ => {
+                "capture full projection Q/K/V operands before executing the bounded projection-level replay hook or any production QK256 promotion"
+            }
+        },
         "must_not_claim": [
             "CPU/A770 answer parity is proven",
             "Reference parity is proven",
@@ -1890,6 +1915,7 @@ fn projection_source_targets<'a>(
 ) -> Result<(Vec<&'a Value>, &'static str), Box<dyn Error>> {
     if let Some(targets) = source.pointer("/manifest/targets").and_then(Value::as_array) {
         let kind = match str_field(source, "work_item") {
+            Some("A770-159") => "a770_159_full_projection_operand_source_boundary",
             Some("A770-158") => "a770_158_projection_replay_hook_boundary",
             _ => "a770_157_projection_level_qkv_boundary",
         };
@@ -1962,6 +1988,7 @@ fn projection_operand_capture_evidence(
     first_mismatch_index: usize,
     projection_layer: i64,
     projection: &str,
+    source_receipt_kind: &'static str,
 ) -> ProjectionOperandCaptureEvidence {
     let source_path = row.and_then(projection_dispatch_replay_source);
     let Some(source_path) = source_path else {
@@ -2097,7 +2124,7 @@ fn projection_operand_capture_evidence(
     } else {
         vec!["projection_operands"]
     };
-    let blockers = if full_projection_operands_available {
+    let mut blockers = if full_projection_operands_available {
         Vec::new()
     } else if dispatch_replay.is_none() {
         vec!["projection_level_full_operands_missing", "projection_level_dispatch_replay_missing"]
@@ -2114,6 +2141,12 @@ fn projection_operand_capture_evidence(
     } else {
         vec!["projection_level_full_operands_missing"]
     };
+    if source_receipt_kind == "a770_159_full_projection_operand_source_boundary"
+        && !full_projection_operands_available
+        && !blockers.contains(&"projection_level_full_projection_packed_row_capture_source_missing")
+    {
+        blockers.push("projection_level_full_projection_packed_row_capture_source_missing");
+    }
 
     ProjectionOperandCaptureEvidence {
         source_path: Some(source_path),
