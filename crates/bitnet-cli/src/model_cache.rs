@@ -1312,19 +1312,10 @@ fn verify_model_command(
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else if result.passed {
         println!("verified {} at {}", model.id, path.display());
-        if let Some(contract) = &result.model_contract {
-            println!("contract: {} ({}, {})", contract.id, contract.kernel_family, contract.status);
-            println!("claim boundary: {}", contract.claim_boundary);
-        }
-        if let Some(capability) = &result.model_capability {
-            println!(
-                "capability: {} ({}, {})",
-                capability.id, capability.model_family, capability.model_class
-            );
-            println!("claim boundary: {}", capability.claim_boundary);
-        }
+        print_verify_product_summary(&result);
     } else {
         println!("verification failed for {} at {}", model.id, path.display());
+        print_verify_product_summary(&result);
         eprintln!("{}", verify_failure_guidance(&cache_root, model, &path, &result));
     }
     if result.passed { Ok(()) } else { anyhow::bail!("model `{}` failed verification", model.id) }
@@ -3324,8 +3315,60 @@ fn print_fetch_result(status: &str, verify: &VerifyResult, json: bool) -> Result
         if !verify.model.apple_m4_cpu_neon_supported {
             println!("note: {}", verify.model.support_note);
         }
+        print_verify_product_summary(verify);
     }
     Ok(())
+}
+
+fn print_verify_product_summary(verify: &VerifyResult) {
+    let provenance = &verify.artifact_provenance;
+    let actual_bytes =
+        verify.actual_bytes.map(|bytes| bytes.to_string()).unwrap_or_else(|| "missing".to_string());
+    let actual_sha = verify.actual_sha256.as_deref().unwrap_or("missing");
+
+    println!("cache root: {}", provenance.local_cache.cache_root.display());
+    println!("cache path: {}", provenance.local_cache.cache_path.display());
+    println!(
+        "model identity: {} @ {} / {}",
+        provenance.source.repo, provenance.source.revision, provenance.artifact.filename
+    );
+    println!("expected: bytes={}, sha256={}", verify.expected_bytes, verify.expected_sha256);
+    println!("actual: bytes={actual_bytes}, sha256={actual_sha}");
+    println!("artifact verification: {}", if verify.passed { "passed" } else { "failed" });
+    println!(
+        "structurally valid: not assessed by model verify; byte identity is {}",
+        if verify.passed { "verified" } else { "not verified" }
+    );
+    println!(
+        "answer ready: not proven by model verify; use `bitnet model status` and receipts for answer claims"
+    );
+    println!(
+        "tokenizer authority: {} ({})",
+        provenance.tokenizer.pre_tokenizer, provenance.tokenizer.sha256_status
+    );
+    if let Some(path) = &provenance.tokenizer.external_path {
+        println!("tokenizer path: {path}");
+    }
+    if let Some(sha) = &provenance.tokenizer.sha256 {
+        println!("tokenizer sha256: {sha}");
+    }
+    println!(
+        "prompt authority: {} ({})",
+        provenance.prompt_template.identity, provenance.prompt_template.source
+    );
+    if let Some(contract) = &verify.model_contract {
+        println!("contract: {} ({}, {})", contract.id, contract.kernel_family, contract.status);
+        println!("required receipts: {}", contract.required_receipts.join(", "));
+    }
+    if let Some(capability) = &verify.model_capability {
+        println!(
+            "capability: {} ({}, {})",
+            capability.id, capability.model_family, capability.model_class
+        );
+        println!("required receipts: {}", capability.required_receipts.join(", "));
+    }
+    println!("next step: {}", provenance.repair.command);
+    println!("claim boundary: {}", provenance.claim_boundary);
 }
 
 fn model_command(action: &str, model: &SupportedModel, cache_root: Option<&Path>) -> String {
