@@ -150,7 +150,7 @@ M3 Air a leading local device without borrowing proof from M4 or other lanes:
 | 3 | `M3MBA-028` | Add compact Linux synthetic CI checks for M3 receipt/profile invariants without live Mac model work. | Expensive generic CI, live downloads in ordinary PRs, or missing proof-family checks. |
 | 4 | `M3MBA-029` | Commit or block bounded M3 Air dense SLM accuracy receipts with prompt IDs, generated IDs, decoded text, tokenizer authority, backend, fallback, and comparison decisions. | Accuracy claims without exact prompt/model/tokenizer/backend context. |
 | 5 | `M3MBA-030` | Commit completed-run M3 Air dense SLM TTFT and decode throughput actuals, including warm_128, power, thermal, storage, thread count, and cap provenance. | Performance claims from cancelled, timed-out, or missing-context jobs. |
-| 6 | `M3MBA-031` | Prepare strict M3 Air BitNet CPU/NEON local-answer receipt gates for the accepted Microsoft 2B I2_S artifact. | Live BitNet claims before synthetic proof-family and receipt-quality checks exist. |
+| 6 | `M3MBA-031` | Prepare strict M3 Air BitNet CPU/NEON local-answer receipt gates for the accepted Microsoft 2B I2_S artifact, using the M3-only `bitnet_apple_m3_air_local_answer_corpus` kind. | Live BitNet claims before synthetic proof-family and receipt-quality checks exist. |
 | 7 | `M3MBA-032` | Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON receipt path. | M3 BitNet claims without generated text, token IDs, tokenizer authority, fallback=false, timing, answer-gate, and cleanup evidence. |
 | 8 | `M3MBA-033` | Use completed dense SLM and BitNet receipts to name the smallest safe CPU/NEON optimization PR. | Optimizing before the bottleneck is measured or mixing dense SLM and BitNet proof families. |
 | 9 | `M3MBA-034` | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces for proven dense SLM and BitNet CPU/NEON contexts. | User-facing M3 claims before receipts prove model/tokenizer/backend/fallback/timing identity. |
@@ -208,7 +208,7 @@ other lanes' claim boundaries.
 | 3 | `M3MBA-028` | Linux synthetic checks cover M3 profile, fallback, proof-family, and cap invariants. | Linux CI does not prove live M3 model timing. |
 | 4 | `M3MBA-029` | Dense SLM accuracy receipt or blocker records exact prompt, token, tokenizer, backend, and comparison context. | Dense evidence remains dense; no BitNet or broad quality claim. |
 | 5 | `M3MBA-030` | Dense SLM performance receipt records completed TTFT and tok/s actuals, including warm_128 and phase artifacts. | Exact M3 Air timing only; no M4 or broad Apple Silicon performance claim. |
-| 6 | `M3MBA-031` | Synthetic M3 BitNet receipt gates require accepted artifact, tokenizer authority, generated text/token IDs, fallback=false, and disabled unsupported surfaces. | No live BitNet proof claim yet. |
+| 6 | `M3MBA-031` | Synthetic M3 BitNet receipt gates require `bitnet_apple_m3_air_local_answer_corpus`, accepted artifact identity, tokenizer authority, generated text/token IDs, fallback=false, and disabled unsupported surfaces. | No live BitNet proof claim yet. |
 | 7 | `M3MBA-032` | Accepted Microsoft 2B I2_S M3 CPU/NEON receipt passes, fails, or names a blocker with answer-gate evidence. | No M4 proof, QK256, Metal, MPSGraph, Neural Engine, chat, serve, or secondary-candidate claim. |
 | 8 | `M3MBA-033` | Completed receipts name the smallest measured CPU/NEON optimization target and comparator set. | No optimization benefit before a before/after proof PR. |
 | 9 | `M3MBA-034` | Exact-profile M3 `mac ask` and `mac benchmark` are enabled or blocked for the proven receipt contexts. | No chat, serve, unsupported artifact, or broad support claim. |
@@ -979,8 +979,9 @@ execution queue.
    blocker.
 5. Land `M3MBA-030` with completed dense SLM performance actuals; exclude
    cancelled and timed-out runs from healthy-runtime percentiles.
-6. Land `M3MBA-031` before any new BitNet claim so strict M3 BitNet receipt
-   quality is enforced synthetically.
+6. Land `M3MBA-031` before any new BitNet claim so the M3-only
+   `bitnet_apple_m3_air_local_answer_corpus` receipt quality is enforced
+   synthetically.
 7. Land `M3MBA-032` with the accepted Microsoft 2B I2_S M3 CPU/NEON local-answer
    receipt or a blocker report.
 8. Land `M3MBA-033` only after completed dense SLM and BitNet receipts identify

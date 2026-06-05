@@ -743,6 +743,7 @@ fn answer_corpus_artifact_kind_allowed(kind: Option<&str>) -> bool {
                 | "bitnet_cuda_answer_corpus"
                 | "bitnet_cuda_answer_diagnostic_corpus"
                 | "bitnet_apple_m4_local_answer_corpus"
+                | "bitnet_apple_m3_air_local_answer_corpus"
         )
     )
 }

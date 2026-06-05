@@ -1,7 +1,8 @@
-//! Answer corpus runner for CPU-first and Apple M4 local-answer baselines.
+//! Answer corpus runner for CPU-first and Apple CPU/NEON local-answer baselines.
 
 use crate::{model_cache, planner_receipts};
 use anyhow::{Context, Result};
+use bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND;
 use clap::{Args, ValueEnum};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
@@ -18,6 +19,7 @@ use std::{
 };
 
 const RTX_5070_TI_CUDA: &str = "nvidia-rtx-5070-ti-cuda";
+const APPLE_M3_AIR_CPU_NEON: &str = "apple-m3-air-cpu-neon";
 const INTEL_A770_OPENCL: &str = "intel-a770-opencl";
 const INTEL_ARC_A770_OPENCL: &str = "intel-arc-a770-opencl";
 const A770_BITNET_MODEL_CONTRACT: &str = "docs/model-contracts/bitnet-b1.58-2b-4t-i2s.yaml";
@@ -201,10 +203,15 @@ impl AnswerCorpusCommand {
             normalize_answer_corpus_device(self.device.as_deref().unwrap_or(default_device));
         if !matches!(
             device.as_str(),
-            "cpu" | "apple-m4-cpu-neon" | "cuda" | RTX_5070_TI_CUDA | INTEL_A770_OPENCL
+            "cpu"
+                | "apple-m4-cpu-neon"
+                | APPLE_M3_AIR_CPU_NEON
+                | "cuda"
+                | RTX_5070_TI_CUDA
+                | INTEL_A770_OPENCL
         ) {
             anyhow::bail!(
-                "answer-corpus only accepts --device cpu, --device apple-m4-cpu-neon, --device cuda, --device {RTX_5070_TI_CUDA}, or --device {INTEL_A770_OPENCL}; got {device}"
+                "answer-corpus only accepts --device cpu, --device apple-m4-cpu-neon, --device {APPLE_M3_AIR_CPU_NEON}, --device cuda, --device {RTX_5070_TI_CUDA}, or --device {INTEL_A770_OPENCL}; got {device}"
             );
         }
         if self.cpu_kernel.is_some() && device != "cpu" {
@@ -464,7 +471,7 @@ impl AnswerCorpusCommand {
                 "slm_answer_path": slm_answer_path,
                 "bounded_slm_answer_smoke_passed": bounded_slm_answer_smoke_passed,
                 "dense_slm_clean_provenance": dense_slm_clean_provenance,
-                "local_answer_path": device.as_str() == "apple-m4-cpu-neon",
+                "local_answer_path": matches!(device.as_str(), "apple-m4-cpu-neon" | APPLE_M3_AIR_CPU_NEON),
                 "answer_ready_artifact_available": answer_ready_artifact_available,
                 "backend_quality_gate_passed": backend_quality_gate_passed,
                 "diagnostic_only_until_answer_ready_artifact": a770_opencl_answer_corpus
@@ -478,11 +485,15 @@ impl AnswerCorpusCommand {
                 "strict_cuda_answer_claimed": false,
                 "strict_a770_answer_claimed": false,
                 "full_metal_inference_claimed": false,
+                "mpsgraph_inference_claimed": false,
                 "full_a770_residency_claimed": false,
                 "trusted_partial_acceleration_claimed": false,
                 "a770_speedup_claimed": false,
                 "qk256_apple_claimed": false,
                 "neural_engine_claimed": false,
+                "chat_enabled": false,
+                "serve_enabled": false,
+                "broad_apple_silicon_claimed": false,
                 "broad_performance_claimed": false,
             },
             "cases": rows,
@@ -1135,6 +1146,7 @@ fn normalize_answer_corpus_device(device: &str) -> String {
 fn answer_corpus_artifact_kind(device: &str, corpus_artifact_kind: &str) -> &'static str {
     match (device, corpus_artifact_kind) {
         ("apple-m4-cpu-neon", _) => "bitnet_apple_m4_local_answer_corpus",
+        (APPLE_M3_AIR_CPU_NEON, _) => BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND,
         ("cuda" | RTX_5070_TI_CUDA, _) => "bitnet_cuda_answer_diagnostic_corpus",
         (INTEL_A770_OPENCL, _) => "bitnet_a770_opencl_answer_diagnostic_corpus",
         (_, "slm_answer_corpus") => "slm_cpu_answer_corpus",
@@ -1210,6 +1222,8 @@ fn answer_corpus_backend_lane(
         "bitnet_a770_opencl"
     } else if device == "apple-m4-cpu-neon" {
         "apple_m4_cpu_neon"
+    } else if device == APPLE_M3_AIR_CPU_NEON {
+        "apple_m3_air_cpu_neon"
     } else {
         "bitnet_cpu"
     }
@@ -2799,6 +2813,7 @@ fn answer_receipt_failed_rules(run_receipt: &Value, expected_backend: &str) -> V
     let selected_backend_valid = match expected_backend {
         "cpu" => matches!(selected_backend, "cpu" | "cpu-rust"),
         "apple-m4-cpu-neon" => selected_backend == "apple-m4-cpu-neon",
+        APPLE_M3_AIR_CPU_NEON => selected_backend == APPLE_M3_AIR_CPU_NEON,
         "cuda" => selected_backend.contains("cuda"),
         RTX_5070_TI_CUDA => selected_backend == RTX_5070_TI_CUDA,
         INTEL_A770_OPENCL => selected_backend == INTEL_A770_OPENCL,
@@ -4464,6 +4479,10 @@ cases:
             answer_corpus_artifact_kind("cpu", "bitnet_answer_corpus"),
             "bitnet_cpu_answer_corpus"
         );
+        assert_eq!(
+            answer_corpus_artifact_kind(APPLE_M3_AIR_CPU_NEON, "bitnet_answer_corpus"),
+            BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+        );
     }
 
     #[test]
@@ -4493,6 +4512,15 @@ cases:
             ]
         );
         assert!(answer_corpus_child_proof_args("cpu").is_empty());
+    }
+
+    #[test]
+    fn apple_m3_bitnet_answer_corpus_route_is_strict_cpu_neon() {
+        assert_eq!(answer_corpus_runtime_api(APPLE_M3_AIR_CPU_NEON), "cpu");
+        assert_eq!(
+            answer_corpus_backend_lane(APPLE_M3_AIR_CPU_NEON, false, "bitnet"),
+            "apple_m3_air_cpu_neon"
+        );
     }
 
     #[test]
@@ -4678,6 +4706,32 @@ cases:
         );
 
         assert!(answer_receipt_failed_rules(&receipt, "apple-m4-cpu-neon").is_empty());
+    }
+
+    #[test]
+    fn apple_m3_bitnet_answer_receipt_accepts_strict_cpu_neon_truth() {
+        let receipt = strict_answer_receipt_fixture(
+            APPLE_M3_AIR_CPU_NEON,
+            APPLE_M3_AIR_CPU_NEON,
+            "cpu",
+            "i2_s-scalar-reference",
+        );
+
+        assert!(answer_receipt_failed_rules(&receipt, APPLE_M3_AIR_CPU_NEON).is_empty());
+    }
+
+    #[test]
+    fn apple_m3_bitnet_answer_receipt_rejects_m4_selected_backend_alias() {
+        let receipt = strict_answer_receipt_fixture(
+            APPLE_M3_AIR_CPU_NEON,
+            "apple-m4-cpu-neon",
+            "cpu",
+            "i2_s-scalar-reference",
+        );
+
+        let failed = answer_receipt_failed_rules(&receipt, APPLE_M3_AIR_CPU_NEON);
+
+        assert!(failed.contains(&format!("selected_backend_{APPLE_M3_AIR_CPU_NEON}")));
     }
 
     #[test]

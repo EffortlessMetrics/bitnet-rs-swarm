@@ -11306,8 +11306,8 @@ async fn run_mac_serve(
         let gate = ensure_bitnet_serve_gate_ready(bitnet_serve_gate_receipt.as_deref(), &model_id)?;
         let tokenizer =
             tokenizer.unwrap_or_else(|| PathBuf::from(BITNET_M4_DEFAULT_TOKENIZER_PATH));
-        let tokenizer_sha256 = verify_bitnet_m4_tokenizer(&tokenizer)?;
         let model = model_cache::verified_apple_m4_bitnet_model(&model_id, cache_dir, model_path)?;
+        let tokenizer_sha256 = verify_bitnet_m4_tokenizer(&tokenizer)?;
         let cache_status = verified_cache_status_json(&model);
         let generator = MacServeGenerator::load_bitnet(&model, &tokenizer)?;
         (model, cache_status, generator, Some((gate, tokenizer_sha256)))
@@ -14119,8 +14119,8 @@ async fn run_bitnet_chat_session(request: BitnetChatRun<'_>) -> Result<()> {
         anyhow::bail!("BitNet Mac chat only supports {BITNET_M4_MODEL_ID}; got `{model_id}`");
     }
     let tokenizer = tokenizer.unwrap_or_else(|| PathBuf::from(BITNET_M4_DEFAULT_TOKENIZER_PATH));
-    let tokenizer_sha256 = verify_bitnet_m4_tokenizer(&tokenizer)?;
     let model = model_cache::verified_apple_m4_bitnet_model(model_id, cache_dir, model_path)?;
+    let tokenizer_sha256 = verify_bitnet_m4_tokenizer(&tokenizer)?;
     if progress && !quiet {
         eprintln!(
             "BitNet mac chat: ready gate={} sha256={}... prompts={} streaming={} turn_receipts={}",
@@ -21611,7 +21611,22 @@ fn validate_mac_receipt_value(
     } else if artifact_kind == "apple_m4_slm_chat_smoke" {
         validate_dense_slm_chat_smoke_receipt(path, receipt, requested_backend.as_str())?
     } else if artifact_kind == "bitnet_apple_m4_local_answer_corpus" {
-        validate_bitnet_eval_answer_corpus_receipt(path, receipt)?
+        validate_bitnet_eval_answer_corpus_receipt(
+            path,
+            receipt,
+            "bitnet_apple_m4_local_answer_corpus",
+            APPLE_M4_CPU_NEON,
+        )?
+    } else if artifact_kind
+        == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+    {
+        validate_apple_m3_bitnet_local_answer_boundary(path, receipt)?;
+        validate_bitnet_eval_answer_corpus_receipt(
+            path,
+            receipt,
+            bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND,
+            APPLE_M3_AIR_CPU_NEON,
+        )?
     } else if artifact_kind == "apple_m4_golden_token_canaries" {
         validate_apple_m4_golden_token_canaries_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_bitnet_eval_larger_corpus_decision" {
@@ -26320,14 +26335,11 @@ fn validate_dense_slm_reference_vs_rust_receipt(
 fn validate_bitnet_eval_answer_corpus_receipt(
     path: &Path,
     receipt: &serde_json::Value,
+    expected_artifact_kind: &str,
+    expected_backend: &str,
 ) -> Result<(Option<usize>, Option<usize>)> {
     require_exact_string_at(path, receipt, &["schema_version"], "1.0.0")?;
-    require_exact_string_at(
-        path,
-        receipt,
-        &["artifact_kind"],
-        "bitnet_apple_m4_local_answer_corpus",
-    )?;
+    require_exact_string_at(path, receipt, &["artifact_kind"], expected_artifact_kind)?;
     require_exact_string_at(path, receipt, &["model_family"], "bitnet")?;
     require_exact_string_at(path, receipt, &["prompt_template"], BITNET_M4_PROMPT_TEMPLATE)?;
 
@@ -26514,14 +26526,14 @@ fn validate_bitnet_eval_answer_corpus_receipt(
                 path.display()
             );
         }
-        if case["backend"]["requested_backend"].as_str() != Some(APPLE_M4_CPU_NEON)
-            || case["backend"]["selected_backend"].as_str() != Some(APPLE_M4_CPU_NEON)
+        if case["backend"]["requested_backend"].as_str() != Some(expected_backend)
+            || case["backend"]["selected_backend"].as_str() != Some(expected_backend)
             || case["backend"]["runtime_api"].as_str() != Some("cpu")
             || case["backend"]["fallback_used"].as_bool() != Some(false)
         {
             anyhow::bail!(
-                "{} BitNet eval receipt case {index} ({case_label}) backend/fallback fields are not strict apple-m4-cpu-neon",
-                path.display()
+                "{} BitNet eval receipt case {index} ({case_label}) backend/fallback fields are not strict {expected_backend}",
+                path.display(),
             );
         }
         if case["model"]["sha256"].as_str() != Some(BITNET_M4_EXPECTED_MODEL_SHA256)
@@ -26587,6 +26599,54 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     }
 
     Ok((Some(quality_total as usize), Some(generated_tokens as usize)))
+}
+
+fn validate_apple_m3_bitnet_local_answer_boundary(
+    path: &Path,
+    receipt: &serde_json::Value,
+) -> Result<()> {
+    require_exact_string_at(path, receipt, &["requested_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["selected_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["runtime_api"], "cpu")?;
+    require_bool_at(path, receipt, &["fallback_used"], false)?;
+    require_exact_string_at(path, receipt, &["backend_lane"], "apple_m3_air_cpu_neon")?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["model", "repo"],
+        "microsoft/bitnet-b1.58-2B-4T-gguf",
+    )?;
+    require_exact_string_at(path, receipt, &["model", "file"], "ggml-model-i2_s.gguf")?;
+    require_exact_string_at(path, receipt, &["model", "sha256"], BITNET_M4_EXPECTED_MODEL_SHA256)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["tokenizer", "authority", "source"],
+        "external_tokenizer_json",
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["tokenizer", "authority", "sha256"],
+        BITNET_M4_EXPECTED_TOKENIZER_SHA256,
+    )?;
+    require_exact_string_at(path, receipt, &["tokenizer", "authority", "ggml_pre"], "llama-bpe")?;
+    require_bool_at(path, receipt, &["tokenizer", "strict"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "local_answer_path"], true)?;
+    for claim in [
+        "chat_enabled",
+        "serve_enabled",
+        "full_metal_inference_claimed",
+        "mpsgraph_inference_claimed",
+        "neural_engine_claimed",
+        "qk256_apple_claimed",
+        "broad_apple_silicon_claimed",
+        "broad_performance_claimed",
+    ] {
+        require_bool_at(path, receipt, &["claim_boundary", claim], false)?;
+    }
+
+    Ok(())
 }
 
 fn validate_bitnet_larger_corpus_decision_receipt(
@@ -31166,6 +31226,45 @@ mod tests {
     }
 
     #[test]
+    fn apple_m3_bitnet_receipts_check_accepts_local_answer_corpus()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+
+        let summary =
+            validate_mac_receipt_value(Path::new("m3-bitnet-local-answer.json"), &receipt)?;
+
+        assert_eq!(
+            summary.artifact_kind,
+            bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+        );
+        assert_eq!(summary.requested_backend, APPLE_M3_AIR_CPU_NEON);
+        assert_eq!(summary.selected_backend, APPLE_M3_AIR_CPU_NEON);
+        assert_eq!(summary.prompt_count, Some(2));
+        assert_eq!(summary.generated_tokens, Some(3));
+        Ok(())
+    }
+
+    #[test]
+    fn apple_m3_bitnet_receipts_check_rejects_m4_selected_backend_alias() {
+        let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+        receipt["selected_backend"] = serde_json::json!(APPLE_M4_CPU_NEON);
+
+        let err = mac_receipt_validation_error("m3-bitnet-local-answer.json", &receipt);
+
+        assert!(err.contains("selected_backend must match requested_backend"), "got: {err}");
+    }
+
+    #[test]
+    fn apple_m3_bitnet_receipts_check_rejects_chat_claim() {
+        let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+        receipt["claim_boundary"]["chat_enabled"] = serde_json::json!(true);
+
+        let err = mac_receipt_validation_error("m3-bitnet-local-answer.json", &receipt);
+
+        assert!(err.contains("claim_boundary.chat_enabled must be false"), "got: {err}");
+    }
+
+    #[test]
     fn mac_receipts_check_accepts_bitnet_eval_250_answer_corpus()
     -> Result<(), Box<dyn std::error::Error>> {
         let mut receipt = test_bitnet_eval_answer_corpus_receipt();
@@ -32431,6 +32530,40 @@ mod tests {
                 }
             ]
         })
+    }
+
+    fn test_apple_m3_bitnet_local_answer_corpus_receipt() -> serde_json::Value {
+        let mut receipt = test_bitnet_eval_answer_corpus_receipt();
+        receipt["artifact_kind"] = serde_json::json!(
+            bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+        );
+        receipt["requested_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
+        receipt["selected_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
+        receipt["runtime_api"] = serde_json::json!("cpu");
+        receipt["fallback_used"] = serde_json::json!(false);
+        receipt["backend_lane"] = serde_json::json!("apple_m3_air_cpu_neon");
+        receipt["model"]["repo"] = serde_json::json!("microsoft/bitnet-b1.58-2B-4T-gguf");
+        receipt["model"]["file"] = serde_json::json!("ggml-model-i2_s.gguf");
+        receipt["claim_boundary"] = serde_json::json!({
+            "local_answer_path": true,
+            "chat_enabled": false,
+            "serve_enabled": false,
+            "full_metal_inference_claimed": false,
+            "mpsgraph_inference_claimed": false,
+            "neural_engine_claimed": false,
+            "qk256_apple_claimed": false,
+            "broad_apple_silicon_claimed": false,
+            "broad_performance_claimed": false,
+        });
+        if let Some(cases) = receipt["cases"].as_array_mut() {
+            for case in cases {
+                case["backend"]["requested_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
+                case["backend"]["selected_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
+                case["backend"]["runtime_api"] = serde_json::json!("cpu");
+                case["backend"]["fallback_used"] = serde_json::json!(false);
+            }
+        }
+        receipt
     }
 
     fn test_bitnet_larger_corpus_decision_receipt() -> serde_json::Value {
