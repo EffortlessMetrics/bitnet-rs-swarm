@@ -1,0 +1,14 @@
+timestamp = "2026-06-05T16:01:19Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-NPU-CACHE-TRUTH-GUARD-001"
+event = "closeout"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/lunar-lake/LNL258V-NPU-CACHE-TRUTH-GUARD-001-cache-source-validator"
+actor = "codex"
+summary = "Made the #1572 no-inference NPU cache-source provenance guard ready after plan-selection PR #1602."
+notes = [
+  "The ready item scopes #1572 to schema/checker or docs-contract coverage for cache-source provenance and direct runtime cache-hit truth.",
+  "The implementation must use existing committed NPU cache receipts or synthetic mutated fixtures only.",
+  "No physical cache run, new inference, hardware receipt refresh, route-policy mutation, NPU promotion, AUTO proof, warm-resident expansion, low_power, speedup or power claim, native NPU proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
