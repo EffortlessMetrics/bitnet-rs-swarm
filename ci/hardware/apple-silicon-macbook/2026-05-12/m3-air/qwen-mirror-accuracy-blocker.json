@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "apple_m3_air_dense_slm_accuracy_receipt_blocker",
+  "tracking_item": "M3MBA-029",
+  "generated_at_utc": "2026-06-05T04:47:42Z",
+  "decision": "blocked_cpu_neon_runtime_api_rejected_by_slm_warm_session_scope",
+  "summary": "The prescribed M3 Air dense SLM accuracy validation command selected apple-m3-air-cpu-neon with fallback_used=false, then failed before receipt emission because the current slm-warm-session gate accepts only runtime_api=cpu and rejected the selected runtime_api=cpu-neon.",
+  "command": {
+    "argv": [
+      "cargo",
+      "run",
+      "--release",
+      "--locked",
+      "-p",
+      "bitnet-cli",
+      "--no-default-features",
+      "--features",
+      "cpu,full-cli",
+      "--",
+      "mac",
+      "validate",
+      "--profile-set",
+      "accuracy",
+      "--device",
+      "apple-m3-air-cpu-neon",
+      "--corpus",
+      "ci/quality/apple-m4-slm-quality-corpus.yaml",
+      "--cache-dir",
+      "~/Library/Caches/bitnet-rs/models",
+      "--json-out",
+      "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json",
+      "--quiet"
+    ],
+    "exit_code": 1,
+    "release_build_completed": true,
+    "receipt_written": false,
+    "failure_stage": "backend_runtime_scope_gate_before_accuracy_receipt",
+    "error": "Command failed: slm-warm-session is CPU scoped; selected runtime_api=cpu-neon"
+  },
+  "backend_observed": {
+    "requested_backend": "apple-m3-air-cpu-neon",
+    "selected_backend": "apple-m3-air-cpu-neon",
+    "runtime_api": "cpu-neon",
+    "fallback_used": false,
+    "startup_log": "backend selected, backend_selection: requested_backend=apple-m3-air-cpu-neon selected_backend=apple-m3-air-cpu-neon runtime_api=cpu-neon fallback_used=false"
+  },
+  "warm_session_gate": {
+    "source_file": "crates/bitnet-cli/src/main.rs",
+    "guard": "slm-warm-session is CPU scoped; selected runtime_api={}",
+    "accepted_runtime_api": "cpu",
+    "rejected_runtime_api": "cpu-neon",
+    "code_change_in_scope": false
+  },
+  "host_context": {
+    "machine_id": "apple-m3-macbook-air-local",
+    "hardware_model": "MacBook Air Mac15,13",
+    "chip": "Apple M3",
+    "cpu_arch": "arm64",
+    "physical_cores": 8,
+    "performance_cores": 4,
+    "efficiency_cores": 4,
+    "memory_bytes": 17179869184,
+    "macos_version": "macOS 26.3.1 (25D2128)",
+    "power_source": "ac",
+    "battery_percent": 100,
+    "thermal_state": "pmset -g therm reported no thermal, performance, or CPU power warning level",
+    "storage_available_bytes_after_attempt": 10411802624,
+    "model_binaries_committed": false
+  },
+  "model_context": {
+    "model_id": "qwen2.5-0.5b-instruct-q8_0",
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "cache_path": "~/Library/Caches/bitnet-rs/models/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf",
+    "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "size_bytes": 675710816,
+    "architecture": "qwen2",
+    "quant_format": "Q8_0",
+    "tokenizer_source": "gguf_metadata",
+    "tokenizer_authority": "present",
+    "tokenizer_strict": true,
+    "bos_token_id": 151643,
+    "eos_token_id": 151645
+  },
+  "corpus_context": {
+    "path": "ci/quality/apple-m4-slm-quality-corpus.yaml",
+    "name": "apple-m4-slm-quality-determinism-v2",
+    "sha256": "7ae59c3871c3e5fde804a92bfde3ed031521c5ce335790ec0baffdbd26684513",
+    "case_count": 7,
+    "repeat_runs": 2,
+    "max_new_tokens": 16,
+    "mechanical_scoring_only": true
+  },
+  "prior_m3_dense_receipts": {
+    "smoke_receipt": {
+      "path": "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-smoke.json",
+      "requested_backend": "apple-m3-air-cpu-neon",
+      "selected_backend": "apple-m3-air-cpu-neon",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e"
+    },
+    "operator_receipt": {
+      "path": "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-operator.json",
+      "requested_backend": "apple-m3-air-cpu-neon",
+      "selected_backend": "apple-m3-air-cpu-neon",
+      "runtime_api": "cpu",
+      "fallback_used": false,
+      "profile_set": "operator"
+    }
+  },
+  "missing_accuracy_evidence": [
+    "prompt IDs for the accuracy profile were not emitted",
+    "generated token IDs were not emitted",
+    "decoded text was not emitted",
+    "accuracy_comparison_profile was not emitted",
+    "mac receipts-check could not run because qwen-mirror-accuracy.json was not written"
+  ],
+  "receipt_check_result": {
+    "command": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json --json",
+    "exit_code": 1,
+    "error": "receipt path does not exist: ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json",
+    "blocking": true
+  },
+  "safe_next_slice": {
+    "scope": "Teach the M3 Air mac validate/slm-warm-session accuracy path to treat the selected apple-m3-air-cpu-neon CPU/NEON runtime as CPU-scoped for dense SLM warm-session execution while preserving exact requested/selected backend identity and fallback_used=false.",
+    "must_preserve": [
+      "apple-m3-air-cpu-neon remains distinct from apple-m4-cpu-neon",
+      "unsupported M3 Metal, MPSGraph, Neural Engine, and QK256 paths stay rejected",
+      "fallback_used=true continues to invalidate backend-specific proof",
+      "dense SLM accuracy remains separate from BitNet behavior and M4 Mac mini evidence"
+    ]
+  },
+  "claim_boundary": {
+    "accuracy_receipt_passed": false,
+    "accuracy_receipt_written": false,
+    "generated_token_ids_recorded": false,
+    "decoded_text_recorded": false,
+    "comparison_grade_claim_made": false,
+    "dense_slm_accuracy_claim": false,
+    "bitnet_behavior_claim": false,
+    "m4_mac_mini_replacement_claim": false,
+    "broad_answer_quality_claim": false,
+    "metal_inference_claim": false,
+    "mpsgraph_inference_claim": false,
+    "neural_engine_claim": false,
+    "qk256_claim": false,
+    "broad_apple_silicon_claim": false
+  },
+  "blocker_recorded": true
+}

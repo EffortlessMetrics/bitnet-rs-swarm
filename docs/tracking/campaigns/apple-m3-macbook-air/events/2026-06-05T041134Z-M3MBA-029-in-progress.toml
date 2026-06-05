@@ -1,0 +1,27 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-029"
+event = "in_progress"
+timestamp = "2026-06-05T04:11:34Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-029-dense-slm-accuracy-receipt"
+
+summary = "Started the bounded M3 Air dense SLM accuracy receipt item."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json",
+  "ci/quality/apple-m4-slm-quality-corpus.yaml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "Scope is to run the prescribed M3 Air dense SLM accuracy profile or record a named blocker on the exact M3 Air CPU/NEON context.",
+  "The run must preserve model and tokenizer authority, prompt IDs, generated token IDs, decoded text, requested/selected backend identity, fallback status, power/thermal/storage context, and comparable/non-comparable decisions.",
+  "No dense SLM result may be used as BitNet behavior, M4 Mac mini evidence, broad answer quality, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon proof.",
+]
+
+validation = [
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac validate --profile-set accuracy --device apple-m3-air-cpu-neon --corpus ci/quality/apple-m4-slm-quality-corpus.yaml --cache-dir ~/Library/Caches/bitnet-rs/models --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json --quiet",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json --json",
+  "jq -e '.backend.requested_backend == \"apple-m3-air-cpu-neon\" and .backend.selected_backend == \"apple-m3-air-cpu-neon\" and .backend.fallback_used == false and .accuracy_comparison_profile.comparison_grade_claim_made == false' ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json",
+]

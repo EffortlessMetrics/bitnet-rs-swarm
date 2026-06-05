@@ -1,0 +1,29 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-029"
+event = "blocked"
+timestamp = "2026-06-05T04:47:42Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-029-dense-slm-accuracy-receipt"
+
+summary = "Recorded the M3 Air dense SLM accuracy blocker after the prescribed command failed before receipt emission."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy-blocker.json",
+  "docs/reports/apple-silicon-macbook-m3-air-qwen-accuracy-blocker.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "The command selected requested_backend=apple-m3-air-cpu-neon and selected_backend=apple-m3-air-cpu-neon with fallback_used=false.",
+  "The command failed before writing qwen-mirror-accuracy.json because slm-warm-session is currently CPU scoped and rejected selected runtime_api=cpu-neon.",
+  "The existing M3 smoke and operator receipts for the same backend record runtime_api=cpu, so the blocker is a runtime API compatibility boundary rather than a missing cache, storage, or fallback problem.",
+  "No prompt IDs, generated token IDs, decoded text, accuracy_comparison_profile, or receipts-check output were emitted for the accuracy profile.",
+  "The follow-up mac receipts-check command failed because qwen-mirror-accuracy.json does not exist.",
+  "No dense SLM accuracy, BitNet behavior, M4 Mac mini replacement, broad answer quality, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon claim is made.",
+]
+
+validation = [
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac validate --profile-set accuracy --device apple-m3-air-cpu-neon --corpus ci/quality/apple-m4-slm-quality-corpus.yaml --cache-dir ~/Library/Caches/bitnet-rs/models --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json --quiet # failed with runtime_api=cpu-neon warm-session scope blocker",
+  "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/qwen-mirror-accuracy.json --json # failed because the receipt path does not exist",
+]
