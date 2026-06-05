@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_kind": "lunar_lake_bitnet_semantic_source_changes",
-  "created_utc": "2026-06-02T08:45:00Z",
+  "created_utc": "2026-06-05T01:04:30Z",
   "machine_id": "intel-258v",
   "changes": [
     {
@@ -139,6 +139,75 @@
         "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs"
       ],
       "claim_boundary": "diagnostic-only A770 host summary-policy reporting and replay instrumentation; no Lunar Lake BitNet CPU reference rerun, route promotion, dense-SLM-as-BitNet proof, production QK256 dispatch-policy change, or BitNet QK256/I2_S behavior-change claim"
+    },
+    {
+      "source_lane": "slm-cpu",
+      "source_pr": 1529,
+      "title": "SLM-CPU-243 warm-session no-bias descriptor",
+      "status": "merged_to_main",
+      "base_ref": "main",
+      "head_sha": "021fad5375e57ffed44dd8624fb3aab6651ced34",
+      "merge_sha": "22572c5359604996655c2763537c6af0b0657a3a",
+      "merged_at_utc": "2026-06-04T22:32:49Z",
+      "semantic_scope": [
+        "dense_slm_no_bias_prompt_descriptor",
+        "model_trait_opt_in_forward_path",
+        "transformer_no_bias_descriptor_runtime_disabled"
+      ],
+      "requires_lunar_lake_rerun_when_merged_to_main": false,
+      "classification": "merged_dense_slm_reviewed_non_trigger_no_lunar_lake_bitnet_rerun",
+      "touched_shared_surfaces": [
+        "crates/bitnet-cli/src/main.rs",
+        "crates/bitnet-models/src/bitnet.rs",
+        "crates/bitnet-transformer/src/lib.rs"
+      ],
+      "claim_boundary": "SLM-CPU-243 constructs an explicit-gate dense SLM no-bias prompt descriptor while preserving eager_f32_candle by default; candidate execution, generated ID/text binding before decode, speedup, allocation reduction, route promotion, dense-SLM-as-BitNet proof, and BitNet QK256/I2_S behavior-change claims remain false, so no Lunar Lake BitNet CPU reference rerun is required"
+    },
+    {
+      "source_lane": "a770",
+      "source_pr": 1541,
+      "title": "A770-157: record projection replay boundary",
+      "status": "merged_to_main",
+      "base_ref": "main",
+      "head_sha": "0425bd509a3ac7d3bbebcd59d98f67d8f7bcf97e",
+      "merge_sha": "2b6808f588a9ffa64521f894759686888d8bb7ca",
+      "merged_at_utc": "2026-06-04T23:39:06Z",
+      "semantic_scope": [
+        "diagnostic_only",
+        "a770_qkv_projection_level_replay_boundary",
+        "a770_instrumentation"
+      ],
+      "requires_lunar_lake_rerun_when_merged_to_main": false,
+      "classification": "merged_diagnostic_only_no_lunar_lake_rerun",
+      "touched_shared_surfaces": [
+        "crates/bitnet-kernels/src/bin/a770_opencl_production_replay_instrumentation.rs",
+        "ci/hardware/amd-5700x-intel-a770/2026-06-04/a770-qkv-projection-level-replay-boundary/a770-opencl-qkv-projection-level-replay.json",
+        "docs/reports/A770_157_QKV_PROJECTION_LEVEL_REPLAY_BOUNDARY.md"
+      ],
+      "claim_boundary": "diagnostic-only A770 projection-level Q/K/V replay boundary; projection replay remains blocked on missing full projection operands and replay hook, claim_allowed=false, no Lunar Lake BitNet CPU reference rerun, route promotion, production QK256 policy change, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim"
+    },
+    {
+      "source_lane": "a770",
+      "source_pr": 1549,
+      "title": "A770-157: tracker closeout",
+      "status": "merged_to_main",
+      "base_ref": "main",
+      "head_sha": "049d26f62eaf84cdc1e0905c6acf8d843d220e22",
+      "merge_sha": "c235a4395c15f35ecb8dcaac5c0f285aa446faf6",
+      "merged_at_utc": "2026-06-04T23:56:12Z",
+      "semantic_scope": [
+        "tracker_only",
+        "a770_157_closeout",
+        "a770_158_ready"
+      ],
+      "requires_lunar_lake_rerun_when_merged_to_main": false,
+      "classification": "merged_tracker_only_no_lunar_lake_rerun",
+      "touched_shared_surfaces": [
+        "docs/tracking/campaigns/intel-a770/active.toml",
+        "docs/tracking/campaigns/intel-a770/events/2026-06-04T234422Z-A770-157-merged.toml",
+        "docs/tracking/campaigns/intel-a770/events/2026-06-04T234452Z-A770-158-ready.toml"
+      ],
+      "claim_boundary": "tracker-only A770-157 closeout and A770-158 queue update; no runtime, model, Lunar Lake BitNet CPU reference rerun, route promotion, production QK256 policy change, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim"
     }
   ]
 }
