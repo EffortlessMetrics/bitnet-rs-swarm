@@ -1,0 +1,18 @@
+timestamp = "2026-06-05T14:08:26Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-MATCHED-CHECK-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1593
+branch = "codex/lunar-lake/LNL258V-CPU-MATCHED-CHECK-001-checker-guard"
+head_sha = "ae04e163c12c19a171dbe0cf2b19e1791246f80b"
+merge_sha = "b8d8b9c9da7c9e5223b4e7b796ee0242d7acf67d"
+merged_at = "2026-06-05T14:08:26Z"
+actor = "codex"
+summary = "Closed LNL258V-CPU-MATCHED-CHECK-001 after PR #1593 merged the no-inference CPU matched-comparison qualification checker."
+notes = [
+  "PR #1593 tightened the CPU runtime-comparison qualification validator so benchmark_qualified=true requires direct generated-token evidence, no retokenized OpenVINO generated-token IDs, matched profile evidence, fallback_used=false, passing answer gates, empty benchmark/profile blockers, and closed claim boundaries.",
+  "The merged test coverage uses synthetic mutated receipts only and preserves context-only benchmark_qualified=false receipts.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, OpenVINO CPU promotion, CPU optimization, benchmark qualification, speedup or power claim, low_power evidence, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
