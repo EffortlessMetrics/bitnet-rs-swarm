@@ -1,0 +1,1490 @@
+{
+  "artifact_kind": "dense_no_bias_role_expansion_policy",
+  "claim_boundary": {
+    "allocation_reduction_claim": false,
+    "bitnet_qk256_change": false,
+    "broad_decode_latency_claim": false,
+    "broad_no_bias_runtime_claim": false,
+    "candidate_execution_expanded_to_new_roles": false,
+    "default_runtime_promotion_claim": false,
+    "model_load_latency_improvement_claim": false,
+    "no_bias_role_expansion_claim": false,
+    "per_role_performance_claim_beyond_feed_forward_down_proj": false,
+    "prefill_latency_improvement_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "qwen35_or_hybrid_claim": false,
+    "role_parity_claim_beyond_feed_forward_down_proj": false,
+    "server_gpu_npu_openvino_uhd620_claim": false,
+    "speedup_claim": false,
+    "sustained_throughput_claim": false,
+    "timing_improvement_claim": false,
+    "warm_session_end_to_end_speedup_claim": false
+  },
+  "consumes_tracking_items": [
+    "SLM-CPU-245",
+    "SLM-CPU-189",
+    "SLM-CPU-190",
+    "SLM-CPU-191",
+    "SLM-CPU-194"
+  ],
+  "current_proof_boundary": {
+    "bias_present": false,
+    "candidate_execution_expanded_to_new_roles": false,
+    "default_runtime_preserved_without_gate": true,
+    "explicit_gate_required": true,
+    "gate_absent_default_path": "eager_f32_candle",
+    "gate_present_candidate_path": "dense_linear_no_bias_candidate_forward",
+    "only_proven_executable_callsite": "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+    "only_proven_executable_no_bias_role": "feed_forward.down_proj",
+    "only_proven_executable_tensor_name": "layers.0.feed_forward.down_proj.weight",
+    "role_expansion_execution_claim": false,
+    "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME"
+  },
+  "decision": "receipt_bound_role_expansion_policy_defined_without_new_candidate_execution",
+  "expansion_policy": {
+    "candidate_function": "bitnet_transformer::dense_linear_no_bias_candidate_forward",
+    "default_path_when_gate_absent": "eager_f32_candle",
+    "fail_closed_conditions": [
+      "explicit_gate_absent",
+      "descriptor_missing",
+      "descriptor_callsite_mismatch",
+      "tensor_name_mismatch",
+      "role_not_in_current_receipt_scope",
+      "model_not_qwen3_or_qwen25_q8_0",
+      "model_sha_mismatch",
+      "architecture_or_quant_mismatch",
+      "tokenizer_source_or_strictness_mismatch",
+      "runtime_api_not_cpu",
+      "selected_backend_not_cpu_rust",
+      "fallback_not_false",
+      "bias_present_not_false",
+      "selected_or_candidate_path_kernel_missing",
+      "candidate_off_on_receipts_missing",
+      "generated_ids_or_decoded_text_missing_after_decode",
+      "timing_allocation_envelope_missing_before_performance_claim"
+    ],
+    "new_role_candidate_execution_enabled": false,
+    "new_role_dispatch_branch_enabled": false,
+    "next_receipt_target": "feed_forward.up_proj",
+    "per_role_receipt_ladder": [
+      {
+        "name": "role_identity_and_bias_manifest",
+        "required_evidence": [
+          "model_id",
+          "model_sha256",
+          "architecture",
+          "quant=Q8_0",
+          "scope",
+          "linear",
+          "layer",
+          "tensor_name",
+          "role_id",
+          "bias_present=false",
+          "manifest_sha256"
+        ],
+        "step": 1
+      },
+      {
+        "name": "prompt_session_descriptor_to_exact_callsite",
+        "required_evidence": [
+          "prompt IDs",
+          "prompt digest",
+          "tokenizer source=gguf_metadata",
+          "tokenizer strict=true",
+          "runtime_api=cpu",
+          "selected_backend=cpu-rust",
+          "fallback=false",
+          "FeedForward::apply_linear callsite identity",
+          "selected path/kernel",
+          "candidate path/kernel"
+        ],
+        "step": 2
+      },
+      {
+        "name": "fail_closed_dispatch_branch_stays_disabled_without_gate",
+        "required_evidence": [
+          "explicit gate absent",
+          "selected_path=eager_f32_candle",
+          "selected_kernel=dense-f32-candle-linear",
+          "candidate forward calls=0",
+          "default runtime unchanged"
+        ],
+        "step": 3
+      },
+      {
+        "name": "candidate_off_receipt_pair",
+        "required_evidence": [
+          "same prompt IDs versus candidate-on",
+          "model SHA",
+          "tokenizer authority",
+          "backend/kernel identity",
+          "fallback=false",
+          "exact tensor/callsite identity"
+        ],
+        "step": 4
+      },
+      {
+        "name": "candidate_on_execution_receipt",
+        "required_evidence": [
+          "explicit gate enabled",
+          "descriptor present",
+          "exact tensor/callsite match",
+          "dense_linear_no_bias_candidate_forward call count > 0",
+          "selected/candidate path and kernel visible"
+        ],
+        "step": 5
+      },
+      {
+        "name": "decode_parity_receipt",
+        "required_evidence": [
+          "same generated IDs",
+          "same decoded text",
+          "same prompt IDs",
+          "same model SHA",
+          "same tokenizer source and strictness",
+          "same runtime_api=cpu",
+          "same selected_backend=cpu-rust",
+          "fallback=false"
+        ],
+        "step": 6
+      },
+      {
+        "name": "timing_allocation_envelope",
+        "required_evidence": [
+          "cold load",
+          "warm session",
+          "prefill",
+          "first token",
+          "steady decode",
+          "allocation bytes/count",
+          "resident memory",
+          "thread count",
+          "thermal availability",
+          "power availability"
+        ],
+        "step": 7
+      },
+      {
+        "name": "claim_boundary_review",
+        "required_evidence": [
+          "no speedup claim unless before/after delta supports it",
+          "no allocation reduction claim unless before/after delta supports it",
+          "no role considered proven until steps 1-7 pass for that role"
+        ],
+        "step": 8
+      }
+    ],
+    "qwen25_attention_qkv_policy": "blocked_fail_closed_until_per_model_exact_policy; Qwen2.5 q/k/v are bias_present=true and are not no-bias roles",
+    "role_order": [
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 1,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "next_receipt_target_not_executable",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": null,
+        "qwen25_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Both Qwen3 and Qwen2.5 role records are bias_present=false.",
+        "role": "feed_forward.up_proj"
+      },
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 2,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "queued_after_up_proj_receipts_not_executable",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": null,
+        "qwen25_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Both Qwen3 and Qwen2.5 role records are bias_present=false.",
+        "role": "feed_forward.gate_proj"
+      },
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 3,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "queued_after_feed_forward_receipts_not_executable",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": null,
+        "qwen25_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Both Qwen3 and Qwen2.5 role records are bias_present=false, but attention output callsite identity must be proven separately.",
+        "role": "attention.o_proj"
+      },
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 4,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "qwen3_possible_qwen25_blocked_until_per_model_policy",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": "bias_present=true in Qwen2.5 manifest",
+        "qwen25_manifest": {
+          "bias_present_values": [
+            true
+          ],
+          "eligible_no_bias_candidate_by_manifest": false,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Qwen3 records are bias_present=false; Qwen2.5 records are bias_present=true.",
+        "role": "attention.q_proj"
+      },
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 5,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "qwen3_possible_qwen25_blocked_until_per_model_policy",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": "bias_present=true in Qwen2.5 manifest",
+        "qwen25_manifest": {
+          "bias_present_values": [
+            true
+          ],
+          "eligible_no_bias_candidate_by_manifest": false,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Qwen3 records are bias_present=false; Qwen2.5 records are bias_present=true.",
+        "role": "attention.k_proj"
+      },
+      {
+        "candidate_execution_enabled_in_slm_cpu_246": false,
+        "order": 6,
+        "per_role_receipts_required_before_execution": true,
+        "policy_state": "qwen3_possible_qwen25_blocked_until_per_model_policy",
+        "proven_executable_in_slm_cpu_246": false,
+        "qwen25_blocked_reason": "bias_present=true in Qwen2.5 manifest",
+        "qwen25_manifest": {
+          "bias_present_values": [
+            true
+          ],
+          "eligible_no_bias_candidate_by_manifest": false,
+          "layer_range": [
+            0,
+            23
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "record_count": 24
+        },
+        "qwen3_manifest": {
+          "bias_present_values": [
+            false
+          ],
+          "eligible_no_bias_candidate_by_manifest": true,
+          "layer_range": [
+            0,
+            27
+          ],
+          "layers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "record_count": 28
+        },
+        "rationale": "Qwen3 records are bias_present=false; Qwen2.5 records are bias_present=true.",
+        "role": "attention.v_proj"
+      }
+    ],
+    "selected_kernel_when_gate_absent": "dense-f32-candle-linear"
+  },
+  "generated_at_utc": "2026-06-05T01:38:23Z",
+  "machine_id": "intel-i5-8250u",
+  "must_not_claim": [
+    "new no-bias roles execute or are proven in SLM-CPU-246",
+    "default runtime changes when the explicit gate is absent",
+    "broad no-bias runtime is enabled",
+    "timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven beyond existing receipts",
+    "Q4/Q5 runtime support exists",
+    "server, GPU, NPU, OpenVINO, or UHD 620 execution is involved",
+    "Qwen3.5 or hybrid architecture support is in scope",
+    "BitNet QK256/I2_S kernels are modified"
+  ],
+  "role_bias_manifest_summary": {
+    "qwen2.5-0.5b-instruct-q8_0": {
+      "attention.k_proj": {
+        "bias_present_values": [
+          true
+        ],
+        "eligible_no_bias_candidate_by_manifest": false,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "attention.o_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "attention.q_proj": {
+        "bias_present_values": [
+          true
+        ],
+        "eligible_no_bias_candidate_by_manifest": false,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "attention.v_proj": {
+        "bias_present_values": [
+          true
+        ],
+        "eligible_no_bias_candidate_by_manifest": false,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "feed_forward.down_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "feed_forward.gate_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "feed_forward.up_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          23
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "record_count": 24
+      },
+      "output_head.lm_head": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          null,
+          null
+        ],
+        "layers": [
+          null
+        ],
+        "record_count": 1
+      }
+    },
+    "qwen3-0.6b-q8_0": {
+      "attention.k_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "attention.o_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "attention.q_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "attention.v_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "feed_forward.down_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "feed_forward.gate_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "feed_forward.up_proj": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          0,
+          27
+        ],
+        "layers": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "record_count": 28
+      },
+      "output_head.lm_head": {
+        "bias_present_values": [
+          false
+        ],
+        "eligible_no_bias_candidate_by_manifest": true,
+        "layer_range": [
+          null,
+          null
+        ],
+        "layers": [
+          null
+        ],
+        "record_count": 1
+      }
+    }
+  },
+  "schema_version": "1.0.0",
+  "selector_policy_summary": {
+    "blanket_no_bias_selector_allowed": false,
+    "blanket_no_bias_selector_blocker": "Qwen2.5 attention q_proj, k_proj, and v_proj have bias_present=true.",
+    "blocked_biased_role_records": 72,
+    "dry_run_only": true,
+    "eligible_biasless_role_records": 294,
+    "first_implementation_gate_runtime_selection_enabled": false,
+    "first_implementation_gate_scope": "Kaby i5-8250U Qwen3/Qwen2.5 Q8_0 no-bias dense-linear first implementation gate after SLM-CPU-193",
+    "runtime_selection_enabled_in_dry_run": false
+  },
+  "slm_cpu_245_evidence": {
+    "decision": "timing_allocation_envelope_recorded_without_improvement_claim",
+    "models": {
+      "qwen25": {
+        "allocation_audit_enabled": true,
+        "architecture": "qwen2",
+        "candidate_off_classification": "default_runtime_preserved_without_explicit_gate",
+        "candidate_off_forward_calls": 0,
+        "candidate_on_classification": "candidate_path_executed",
+        "candidate_on_forward_calls": 150,
+        "decoded_text": [
+          "4",
+          "4",
+          "OK",
+          "OK"
+        ],
+        "display_name": "Qwen2.5-0.5B Q8_0",
+        "dominant_allocation_hotspot_off": {
+          "alloc_bytes": 1524430870,
+          "alloc_count": 2965131,
+          "component": "prompt_prefill"
+        },
+        "dominant_allocation_hotspot_on": {
+          "alloc_bytes": 1524761588,
+          "alloc_count": 2969533,
+          "component": "prompt_prefill"
+        },
+        "fallback_used": false,
+        "generated_ids": [
+          [
+            19,
+            151645
+          ],
+          [
+            19,
+            151645
+          ],
+          [
+            3925,
+            151645
+          ],
+          [
+            3925,
+            151645
+          ]
+        ],
+        "model_id": "qwen2.5-0.5b-instruct-q8_0",
+        "model_sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "quant": "Q8_0",
+        "runtime_api": "cpu",
+        "same_decoded_text": true,
+        "same_generated_ids": true,
+        "same_prompt_ids": true,
+        "selected_backend": "cpu-rust",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true
+      },
+      "qwen3": {
+        "allocation_audit_enabled": true,
+        "architecture": "qwen3",
+        "candidate_off_classification": "default_runtime_preserved_without_explicit_gate",
+        "candidate_off_forward_calls": 0,
+        "candidate_on_classification": "candidate_path_executed",
+        "candidate_on_forward_calls": 132,
+        "decoded_text": [
+          "2",
+          "2",
+          "OK.",
+          "OK."
+        ],
+        "display_name": "Qwen3-0.6B Q8_0",
+        "dominant_allocation_hotspot_off": {
+          "alloc_bytes": 2927675206,
+          "alloc_count": 3202819,
+          "component": "prompt_prefill"
+        },
+        "dominant_allocation_hotspot_on": {
+          "alloc_bytes": 2928014000,
+          "alloc_count": 3207577,
+          "component": "prompt_prefill"
+        },
+        "fallback_used": false,
+        "generated_ids": [
+          [
+            17,
+            151645
+          ],
+          [
+            17,
+            151645
+          ],
+          [
+            3925,
+            13,
+            151645
+          ],
+          [
+            3925,
+            13,
+            151645
+          ]
+        ],
+        "model_id": "qwen3-0.6b-q8_0",
+        "model_sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "quant": "Q8_0",
+        "runtime_api": "cpu",
+        "same_decoded_text": true,
+        "same_generated_ids": true,
+        "same_prompt_ids": true,
+        "selected_backend": "cpu-rust",
+        "tokenizer_source": "gguf_metadata",
+        "tokenizer_strict": true
+      }
+    },
+    "validation": {
+      "allocation_bytes_count_recorded": true,
+      "candidate_path_visible_and_executed_with_gate": true,
+      "default_runtime_preserved_without_gate": true,
+      "no_allocation_reduction_claim": true,
+      "no_default_runtime_promotion_claim": true,
+      "no_role_expansion_claim": true,
+      "no_speedup_claim": true,
+      "power_availability_recorded": true,
+      "resident_memory_recorded": true,
+      "same_backend_identity": true,
+      "same_decoded_text": true,
+      "same_generated_ids": true,
+      "same_model_sha": true,
+      "same_prompt_ids": true,
+      "same_tokenizer_authority": true,
+      "thermal_availability_recorded": true,
+      "thread_count_recorded": true
+    }
+  },
+  "source_artifacts": [
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-245-no-bias-timing-allocation-envelope.json",
+      "sha256": "f57c36ef1042c4f5778bceaad4bf5ff373c83b026dd186a7e6f33e5f14695ed9"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-189-dense-bias-role-records-manifest.json",
+      "sha256": "77709b76cdc1c1d51a8af86a2ee9caf752f6da13742daca3dee0dff505a168fd"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-190-no-bias-selector-policy-gate.json",
+      "sha256": "86e138033664b5636908ef0af741910f09c193814b2df02842a8efbdb84d9a71"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-191-no-bias-selector-dry-run-receipts.json",
+      "sha256": "c2425e227eddaf0fa5b110d66e4c05e9caef97d31e652f6689be5c52da5d25a2"
+    },
+    {
+      "path": "ci/slm-cpu/intel-i5-8250u/2026-05-28/qwen3-qwen25-slm-cpu-194-no-bias-fastpath-implementation-gate.json",
+      "sha256": "58f0b8b65f9ecfd996fccb32343d5c9a909ba99984b6b53155e076cca959cea4"
+    }
+  ],
+  "tracking_item": "SLM-CPU-246",
+  "validation": {
+    "down_proj_remains_only_proven_executable_role": true,
+    "no_allocation_reduction_claim": true,
+    "no_candidate_execution_expansion_in_this_slice": true,
+    "no_default_runtime_change": true,
+    "no_speedup_claim": true,
+    "no_sustained_throughput_claim": true,
+    "per_role_receipt_ladder_defined_before_new_execution": true,
+    "qwen25_attention_qkv_blocked_by_bias_present_true": true,
+    "slm_cpu_245_candidate_path_visible_and_executed_with_gate": true,
+    "slm_cpu_245_default_runtime_preserved_without_gate": true,
+    "slm_cpu_245_envelope_consumed": true,
+    "slm_cpu_245_same_backend_identity": true,
+    "slm_cpu_245_same_decoded_text": true,
+    "slm_cpu_245_same_generated_ids": true,
+    "slm_cpu_245_same_model_sha": true,
+    "slm_cpu_245_same_prompt_ids": true,
+    "slm_cpu_245_same_tokenizer_authority": true,
+    "source_artifacts_json_validated": true
+  }
+}
