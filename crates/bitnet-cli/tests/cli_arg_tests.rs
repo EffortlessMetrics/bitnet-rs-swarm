@@ -9567,7 +9567,8 @@ fn ask_subcommand_help() {
         .success()
         .stdout(predicate::str::contains("--question"))
         .stdout(predicate::str::contains("--strict-cuda"))
-        .stdout(predicate::str::contains("--receipt-out"));
+        .stdout(predicate::str::contains("--receipt-out"))
+        .stdout(predicate::str::contains("target/bitnet/receipts/ask/ask-latest.json"));
 }
 
 /// `ask --strict-cuda` must not silently run on auto/CPU.
