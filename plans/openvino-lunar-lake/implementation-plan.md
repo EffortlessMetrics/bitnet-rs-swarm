@@ -572,20 +572,29 @@ PRs:
 
 ### Next No-Inference Guard Candidate
 
-The next CPU slow-path implementation should select
-[#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568)
-before any OpenVINO CPU comparison, optimization, or route-policy PR. That
-issue narrows #1365 to a checker-only guard for the remaining non-format
-alignment gates: direct generated-token status, retokenized-token rejection,
-matched-profile completeness, fallback and answer-gate status, populated
-benchmark blockers under `benchmark_qualified=true`, benchmark-field
-consistency, and claim-boundary leakage.
+The previous CPU slow-path guard candidate,
+[#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568),
+is complete through implementation PR #1593 and tracker closeout PR #1596. It
+now protects the Rust GGUF CPU versus OpenVINO CPU matched-comparison boundary
+from benchmark qualification when non-format alignment gates are missing or
+contradicted.
 
-The first PR under that issue should use existing committed receipts or
-synthetic mutated receipts only. It must not run inference, refresh hardware
-receipts, qualify the comparison as a benchmark, promote OpenVINO CPU, mutate
-route policy, claim speedup or power advantage, touch `low_power`, or treat
-dense SLM evidence as BitNet QK256/I2_S proof.
+The next CPU slow-path implementation should select
+[#1578](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1578)
+before any CPU optimization, OpenVINO CPU replacement, route-policy, topology
+tuning, or broader benchmark PR. That issue narrows #1232 to a
+no-new-inference resident phase-attribution contract: make reload,
+prompt/template/tokenization, prefill, first-token boundary, decode,
+logits/sampling, detokenization, host overhead, topology, and unavailable
+telemetry buckets machine-readable and fail-closed.
+
+The first PR under #1578 should be schema/checker or docs-contract work using
+existing committed receipts or synthetic mutated receipts only. It must keep
+`benchmark_qualified=false` unless a later matched benchmark contract is
+accepted, and it must not run inference, refresh hardware receipts, optimize
+CPU code, promote OpenVINO CPU, mutate route policy, claim speedup or power
+advantage, touch `low_power`, or treat dense SLM evidence as BitNet QK256/I2_S
+proof.
 
 ## Phase F: Rust-Native Product Surface
 
