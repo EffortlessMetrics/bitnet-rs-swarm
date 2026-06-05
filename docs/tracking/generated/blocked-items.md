@@ -551,7 +551,7 @@
 | intel-258v-platform | LNL258V-GPU-PROMOTION-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
 | intel-258v-platform | LNL258V-NPU-CACHE-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
 | intel-258v-platform | LNL258V-CPU-SLOWPATH-REVIEW-001 | LNL258V-OPENVINO-PLAN-001 | merged |
-| intel-258v-platform | LNL258V-CPU-MATCHED-CHECK-001 | LNL258V-CPU-SLOWPATH-REVIEW-001 | pr_open |
+| intel-258v-platform | LNL258V-CPU-MATCHED-CHECK-001 | LNL258V-CPU-SLOWPATH-REVIEW-001 | merged |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
 | intel-a770 | A770-005 | A770-004 | merged |
