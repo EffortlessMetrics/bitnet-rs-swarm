@@ -29,6 +29,57 @@ fn bitnet() -> Command {
     Command::cargo_bin("bitnet").expect("bitnet binary must be buildable")
 }
 
+#[test]
+fn model_status_defaults_to_front_door_device_without_hardware_probe() {
+    bitnet()
+        .args(["model", "status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("BitNet model status for nvidia-rtx-5070-ti-cuda"))
+        .stdout(predicate::str::contains(
+            "Read-only model coverage view; it does not probe hardware",
+        ))
+        .stdout(predicate::str::contains("Supported:"))
+        .stdout(predicate::str::contains("Candidates:"))
+        .stdout(predicate::str::contains("Diagnostics:"))
+        .stdout(predicate::str::contains("speedup: not qualified"))
+        .stdout(predicate::str::contains("next proof:"));
+}
+
+#[test]
+fn model_status_json_defaults_to_front_door_device() -> Result<(), Box<dyn std::error::Error>> {
+    let output = bitnet()
+        .args(["model", "status", "--format", "json"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let json: serde_json::Value = serde_json::from_slice(&output)?;
+
+    assert_eq!(json["device"], "nvidia-rtx-5070-ti-cuda");
+    assert_eq!(json["requested_backend"], "nvidia-rtx-5070-ti-cuda");
+    assert_eq!(json["selected_backend"], "nvidia-rtx-5070-ti-cuda");
+    assert_eq!(
+        json["note"],
+        "Read-only model coverage view; it does not probe hardware or create new proof."
+    );
+    assert!(json["models"].as_array().is_some_and(|models| models.iter().any(|model| {
+        model["model_coverage_row"] == "bitnet_official_2b_i2s_qk256"
+            && model["speedup_claim"] == false
+            && model["server_ready"] == false
+            && model["next_proof"].is_string()
+    })));
+    assert!(json["models"].as_array().is_some_and(|models| models.iter().any(|model| {
+        model["category"] == "diagnostic"
+            && model["speedup_claim"] == false
+            && model["server_ready"] == false
+            && model["full_residency_claim"] == false
+            && model["next_proof"].is_string()
+    })));
+    Ok(())
+}
+
 fn workspace_path(path: &str) -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..").join(path)
 }
