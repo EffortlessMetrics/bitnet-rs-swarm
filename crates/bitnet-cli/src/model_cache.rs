@@ -101,8 +101,8 @@ pub enum ModelAction {
 
     /// Show user-facing model support for a device from the coverage matrix.
     Status {
-        /// Device label to summarize, for example cuda or nvidia-rtx-5070-ti-cuda.
-        #[arg(long, value_name = "DEVICE")]
+        /// Device label to summarize. Defaults to the current canonical CUDA status lane.
+        #[arg(long, value_name = "DEVICE", default_value = "nvidia-rtx-5070-ti-cuda")]
         device: String,
 
         /// Override the coverage matrix path. Defaults to ci/model-artifacts/model-coverage-matrix.toml when run from this repo.
@@ -1690,12 +1690,29 @@ fn model_status_includes_entry(selected_backend: &str, entry: &ModelCoverageEntr
         return true;
     }
 
+    let visible_diagnostic = model_status_category(entry) == "diagnostic";
+    if visible_diagnostic
+        && matches!(entry.model_class.as_str(), "bitnet" | "dense_slm" | "small_llm")
+    {
+        return true;
+    }
+
     let actionable_candidate = entry.status.contains("candidate")
         || entry.status.contains("blocked")
         || entry.id.ends_with("_candidate");
     !entry.claims.product_cli_ready
         && actionable_candidate
-        && matches!(entry.model_class.as_str(), "dense_slm" | "small_llm")
+        && matches!(entry.model_class.as_str(), "bitnet" | "dense_slm" | "small_llm")
+}
+
+fn model_status_category(entry: &ModelCoverageEntry) -> &'static str {
+    if entry.claims.product_cli_ready {
+        return "supported";
+    }
+    if entry.status.contains("diagnostic") || entry.status.contains("unsupported") {
+        return "diagnostic";
+    }
+    "candidate"
 }
 
 fn model_status_row(
@@ -1704,8 +1721,7 @@ fn model_status_row(
     entry: &ModelCoverageEntry,
 ) -> ModelStatusRow {
     let route = entry.accelerator_routes.first().cloned();
-    let category =
-        if entry.claims.product_cli_ready { "supported" } else { "candidate" }.to_string();
+    let category = model_status_category(entry).to_string();
     let benchmark = benchmark_status(entry);
     let warm_session = warm_session_status(entry);
     let ask = ask_status(entry);
@@ -1807,7 +1823,7 @@ fn server_status(entry: &ModelCoverageEntry) -> ServerStatus {
 }
 
 fn print_model_status_text(dashboard: &ModelStatusDashboard) {
-    println!("CUDA model status for {}", dashboard.device);
+    println!("BitNet model status for {}", dashboard.device);
     println!("requested backend: {}", dashboard.requested_backend);
     if let Some(selected_backend) = &dashboard.selected_backend {
         println!("selected backend: {selected_backend}");
@@ -1821,6 +1837,8 @@ fn print_model_status_text(dashboard: &ModelStatusDashboard) {
     print_model_status_group(dashboard, "Supported", "supported");
     println!();
     print_model_status_group(dashboard, "Candidates", "candidate");
+    println!();
+    print_model_status_group(dashboard, "Diagnostics", "diagnostic");
 }
 
 fn print_model_status_group(dashboard: &ModelStatusDashboard, title: &str, category: &str) {
@@ -1849,7 +1867,7 @@ fn print_model_status_group(dashboard: &ModelStatusDashboard, title: &str, categ
             if row.full_residency_claim { "claimed" } else { "not claimed" }
         );
         println!("    claim boundary: {}", row.claim_boundary);
-        if row.category == "candidate" {
+        if row.category != "supported" {
             println!("    next proof: {}", row.next_proof);
         }
         println!();
@@ -4112,6 +4130,31 @@ mod tests {
         assert!(!smollm2.full_residency_claim);
         assert!(smollm2.next_proof.contains("same-prompt SmolLM2"));
         assert!(smollm2.claim_boundary.contains("no CPU answer readiness"));
+        Ok(())
+    }
+
+    #[test]
+    fn model_status_dashboard_lists_diagnostic_rows_without_claims() -> Result<()> {
+        let matrix_path = workspace_model_coverage_matrix_path();
+        let matrix = read_model_coverage_matrix(&matrix_path)?;
+        let dashboard = model_status_dashboard("nvidia-rtx-5070-ti-cuda", &matrix_path, &matrix);
+
+        let diagnostic = model_status_row_for(&dashboard, "bitnet_onebit_large_diagnostic")?;
+        assert_eq!(diagnostic.category, "diagnostic");
+        assert_eq!(diagnostic.selected_backend, "nvidia-rtx-5070-ti-cuda");
+        assert_eq!(diagnostic.selected_route, None);
+        assert_eq!(diagnostic.fallback_used, None);
+        assert!(!diagnostic.product_cli_ready);
+        assert!(!diagnostic.cpu_answer_ready);
+        assert!(!diagnostic.accelerator_answer_ready);
+        assert!(!diagnostic.speedup_claim);
+        assert!(!diagnostic.server_ready);
+        assert_eq!(diagnostic.server_ready_scope, None);
+        assert!(!diagnostic.full_residency_claim);
+        assert!(!diagnostic.bitnet_packed_i2s_qk256_proof);
+        assert!(!diagnostic.dense_regular_llm_cuda_proof);
+        assert!(diagnostic.next_proof.contains("Family-specific artifact"));
+        assert!(diagnostic.claim_boundary.contains("diagnostic"));
         Ok(())
     }
 
