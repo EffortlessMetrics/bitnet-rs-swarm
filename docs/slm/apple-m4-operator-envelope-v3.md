@@ -80,6 +80,16 @@ context-only because its scoring-kind contract differs. The recommended next
 step is a repaired subset rerun before any full 250-case rerun. This does not
 expand the corpus or enable BitNet chat or serve.
 
+`M4-HARDEN-005` reruns that repaired subset in
+`ci/hardware/apple-m4-mac-mini/2026-06-05T112555Z/bitnet-eval-repaired-subset/`.
+The subset did not improve against the matched 2026-05-18 repaired subset
+baseline: quality moved from 142/175 to 136/175 and scoring moved from 147/175
+to 139/175, with zero timeouts and `fallback_used=false`. BitNet therefore
+remains repair-first; do not rerun the full repaired 250, expand to 500,
+benchmark BitNet as a user-performance route, or enable BitNet chat or serve
+until a repaired subset improves under the same recorded identity. See
+`docs/slm/apple-m4-bitnet-repaired-subset-rerun.md`.
+
 `M4-WORKLOAD-001` translates this route-state map into an operator workload
 manifest. `bitnet mac workload --suite m4-operator` records summarize, extract,
 classify, JSON, rewrite, and table-QA workflow cases, mechanical checks, route

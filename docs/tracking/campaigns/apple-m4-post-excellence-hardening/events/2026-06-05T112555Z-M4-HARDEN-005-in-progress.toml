@@ -1,0 +1,10 @@
+timestamp = "2026-06-05T11:25:55Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-005"
+event = "in_progress"
+actor = "codex"
+notes = [
+  "Started the repaired subset rerun after M4-HARDEN-004 merged and closed out.",
+  "Subset scope follows the H004 recommendation: primary regressed families plus constrained_summary as a positive control, preserving fixture ids and scoring rules from the 250-case corpus.",
+  "Claim boundary remains BitNet repaired-subset evidence only: no dense evidence reuse, no corpus expansion to 500, no BitNet chat enablement, and no BitNet serve enablement.",
+]
