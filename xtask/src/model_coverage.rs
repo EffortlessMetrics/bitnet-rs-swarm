@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::{
     collections::{HashMap, HashSet},
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 #[derive(Debug, Deserialize)]
@@ -76,7 +76,13 @@ pub fn run(matrix_path: PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn load_matrix(matrix_path: &PathBuf) -> Result<CoverageMatrix> {
+pub fn validate_file(matrix_path: &Path) -> Result<usize> {
+    let matrix = load_matrix(matrix_path)?;
+    validate_matrix(&matrix)?;
+    Ok(matrix.entry.len())
+}
+
+fn load_matrix(matrix_path: &Path) -> Result<CoverageMatrix> {
     let raw = fs::read_to_string(matrix_path)
         .with_context(|| format!("reading {}", matrix_path.display()))?;
     toml::from_str(&raw).with_context(|| format!("parsing {}", matrix_path.display()))

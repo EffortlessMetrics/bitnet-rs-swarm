@@ -66,6 +66,7 @@ mod policy;
 mod promotion_packet;
 mod prompt_suite;
 mod quality_gates;
+mod release_ready;
 mod repo_boundary;
 mod tokenizers;
 mod trace_diff;
@@ -1138,6 +1139,10 @@ enum Cmd {
     #[command(name = "claim-lint")]
     ClaimLint(claim_lint::ClaimLintArgs),
 
+    /// Evaluate the release-readiness guard for a bounded preview profile.
+    #[command(name = "release-ready")]
+    ReleaseReady(release_ready::ReleaseReadyArgs),
+
     /// Run Apple M4 operational validation and receipt checks.
     #[command(name = "apple-m4")]
     AppleM4 {
@@ -2117,6 +2122,7 @@ fn real_main() -> Result<()> {
         Cmd::Campaign { command } => campaign::run(command),
         Cmd::CheckModelCoverage { matrix } => model_coverage::run(matrix),
         Cmd::ClaimLint(args) => claim_lint::run(args),
+        Cmd::ReleaseReady(args) => release_ready::run(args),
         Cmd::AppleM4 { command } => apple_m4::run(command),
         Cmd::CiLaneWhitelist { command } => match command {
             CiLaneWhitelistCmd::Check {
