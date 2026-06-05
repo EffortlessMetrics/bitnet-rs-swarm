@@ -1,0 +1,146 @@
+{
+  "artifact_kind": "slm_cpu_kaby_optimized_opt_in_profile_surface",
+  "schema_version": "1.0.0",
+  "tracking_item": "SLM-CPU-247",
+  "consumes_tracking_items": [
+    "SLM-CPU-245",
+    "SLM-CPU-246"
+  ],
+  "decision": "kaby_qwen3_q8_profile_surface_defined_without_default_runtime_change",
+  "profile": {
+    "id": "kaby-qwen3-q8",
+    "command_surface": "cargo run -p bitnet-cli --release --features cpu,full-cli -- slm-warm-session --profile kaby-qwen3-q8 --model models/slm/Qwen3-0.6B-Q8_0.gguf --json-out receipts/slm-cpu/kaby-qwen3-q8.json",
+    "primary_model": {
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "architecture": "qwen3",
+      "quant": "Q8_0",
+      "role": "primary_qwen3_q8_0"
+    },
+    "second_model_proof": {
+      "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+      "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+      "architecture": "qwen2",
+      "quant": "Q8_0",
+      "role": "second_model_qwen25_q8_0"
+    },
+    "supported_model_boundary": "Qwen3 or Qwen2.5 Q8_0 GGUF only",
+    "runtime_api": "cpu",
+    "selected_backend": "cpu-rust",
+    "fallback_required": false,
+    "strict_loader": true,
+    "strict_tokenizer": true,
+    "warm_session_first": true,
+    "receipt_output_required": true,
+    "prompt_template": "qwen",
+    "qwen_no_think": true,
+    "decode_mode": "greedy_deterministic",
+    "max_new_tokens": 4,
+    "recommended_threads": 4,
+    "quality_gate": {
+      "fail_on_quality": true,
+      "require_determinism": true,
+      "profile_builtin_prompts_when_no_user_prompt_or_corpus": true,
+      "prompt_count": 4,
+      "built_in_prompt_cases": [
+        {
+          "case_id": "kaby_math_1_plus_1",
+          "prompt": "What is 1+1? Answer with only the number.",
+          "repeat_count": 2,
+          "gate": {
+            "kind": "starts_with_any",
+            "starts_with_any": [
+              "2"
+            ]
+          }
+        },
+        {
+          "case_id": "kaby_say_ok",
+          "prompt": "Say exactly: OK",
+          "repeat_count": 2,
+          "gate": {
+            "kind": "starts_with_any",
+            "starts_with_any": [
+              "OK"
+            ]
+          }
+        }
+      ]
+    },
+    "allocation_audit_default": true
+  },
+  "no_bias_boundary": {
+    "only_proven_executable_no_bias_role": "feed_forward.down_proj",
+    "next_receipt_target": "feed_forward.up_proj",
+    "candidate_execution_enabled_by_profile": false,
+    "default_path_when_gate_absent": "eager_f32_candle",
+    "candidate_runtime_requires_explicit_gate": true,
+    "role_expansion_requires_fresh_per_role_receipts": true,
+    "role_policy_source": "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-246-no-bias-role-expansion-policy.json"
+  },
+  "receipt_fields_required_at_runtime": [
+    "profile.profile_id",
+    "model.sha256",
+    "model.architecture",
+    "model.format",
+    "model.loader_mode",
+    "tokenizer.source",
+    "tokenizer.strict",
+    "runtime_api",
+    "selected_backend",
+    "fallback_used=false",
+    "cpu.threads",
+    "prompt_generation_identity",
+    "prompts[].prompt_tokenize_contract.prompt_ids_sha256",
+    "prompts[].generated_token_ids",
+    "prompts[].text",
+    "dense_no_bias_apply_linear_gate",
+    "dense_no_bias_apply_linear_candidate_instrumentation",
+    "timing",
+    "speed",
+    "memory",
+    "storage",
+    "allocation_audit"
+  ],
+  "implementation_surfaces": {
+    "cli_arg": "crates/bitnet-cli/src/main.rs::Commands::SlmWarmSession.profile",
+    "profile_contract": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_receipt",
+    "profile_prompt_inputs": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_prompt_inputs",
+    "profile_model_gate": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_model_role"
+  },
+  "validation": {
+    "focused_tests": "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_no_bias -- --nocapture",
+    "focused_tests_status": "passed",
+    "profile_guard_tests": [
+      "slm_warm_session_no_bias_kaby_profile_rejects_unknown_profile_before_loading_model",
+      "slm_warm_session_no_bias_kaby_profile_rejects_non_cpu_before_loading_model",
+      "slm_warm_session_no_bias_kaby_profile_supplies_prompts_before_loading_model",
+      "slm_warm_session_no_bias_kaby_profile_contract_records_profile_boundaries"
+    ],
+    "fresh_hardware_receipts_captured_in_slm_cpu_247": false
+  },
+  "unsupported_until_receipts": [
+    "Q4/Q5 runtime",
+    "server",
+    "GPU/NPU/OpenVINO/UHD 620",
+    "Qwen3.5",
+    "BitNet QK256 changes",
+    "broad chat quality",
+    "sustained throughput",
+    "default runtime promotion",
+    "new no-bias role execution"
+  ],
+  "claim_boundary": {
+    "default_runtime_changed": false,
+    "candidate_execution_enabled": false,
+    "speedup_claim": false,
+    "allocation_reduction_claim": false,
+    "timing_improvement_claim": false,
+    "broad_performance_claim": false,
+    "broad_quality_claim": false,
+    "q4_q5_runtime_support_claim": false,
+    "server_gpu_npu_openvino_uhd620_claim": false,
+    "qwen35_or_hybrid_claim": false,
+    "bitnet_qk256_change": false
+  }
+}

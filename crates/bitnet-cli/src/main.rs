@@ -813,6 +813,10 @@ enum Commands {
         #[arg(short, long)]
         model: std::path::PathBuf,
 
+        /// Opt-in warm-session profile; supported: kaby-qwen3-q8
+        #[arg(long, value_name = "PROFILE")]
+        profile: Option<String>,
+
         /// Model format: auto (detect from path) or gguf
         #[arg(long, value_name = "FORMAT", default_value = "auto")]
         model_format: String,
@@ -1708,6 +1712,7 @@ async fn async_main() -> Result<()> {
         #[cfg(feature = "full-cli")]
         Some(Commands::SlmWarmSession {
             model,
+            profile,
             model_format,
             tokenizer,
             corpus,
@@ -1746,6 +1751,7 @@ async fn async_main() -> Result<()> {
             run_slm_warm_session(
                 &requested_backend_label,
                 model,
+                profile,
                 model_format,
                 tokenizer,
                 corpus,
@@ -6414,7 +6420,7 @@ async fn run_cpu_phase_warm_session(
     let template_type: bitnet_inference::TemplateType =
         prompt_template.parse().with_context(|| {
             format!(
-                "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen2.5",
+                "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen, qwen2.5",
                 prompt_template
             )
         })?;
@@ -8638,30 +8644,31 @@ impl SlmWarmSessionOutput {
 async fn run_slm_warm_session(
     requested_backend_label: &str,
     model_path: std::path::PathBuf,
+    profile: Option<String>,
     model_format: String,
     tokenizer_path: Option<std::path::PathBuf>,
     corpus_path: Option<std::path::PathBuf>,
     corpus_repeat_runs: usize,
-    prompts: Vec<String>,
-    max_new_tokens: usize,
-    temperature: f32,
-    top_k: usize,
+    mut prompts: Vec<String>,
+    mut max_new_tokens: usize,
+    mut temperature: f32,
+    mut top_k: usize,
     top_p: f32,
     repetition_penalty: f32,
     seed: Option<u64>,
-    strict_tokenizer: bool,
-    strict_loader: bool,
-    greedy: bool,
-    deterministic: bool,
-    threads: usize,
-    prompt_template: String,
-    no_think: bool,
+    mut strict_tokenizer: bool,
+    mut strict_loader: bool,
+    mut greedy: bool,
+    mut deterministic: bool,
+    mut threads: usize,
+    mut prompt_template: String,
+    mut no_think: bool,
     system_prompt: Option<String>,
     stop: Vec<String>,
     stop_id: Vec<u32>,
-    fail_on_quality: bool,
-    require_determinism: bool,
-    allocation_audit: bool,
+    mut fail_on_quality: bool,
+    mut require_determinism: bool,
+    mut allocation_audit: bool,
     output: SlmWarmSessionOutput,
     min_generated_tokens: usize,
     min_distinct_generated_tokens: usize,
@@ -8684,6 +8691,46 @@ async fn run_slm_warm_session(
     }
     .apply();
 
+    let profile_id = slm_warm_session_profile_id(profile.as_deref())?;
+    let profile_model_role = if let Some(profile_id) = profile_id {
+        slm_warm_session_profile_validate_backend(profile_id, requested_backend_label)?;
+        Some(slm_warm_session_profile_model_role(profile_id, &model_path)?)
+    } else {
+        None
+    };
+    let profile_supplied_prompts = if let Some(profile_id) = profile_id {
+        strict_loader = true;
+        strict_tokenizer = true;
+        greedy = true;
+        deterministic = true;
+        no_think = true;
+        fail_on_quality = true;
+        require_determinism = true;
+        allocation_audit = true;
+        temperature = 0.0;
+        top_k = 0;
+        if threads == 0 {
+            threads = slm_warm_session_profile_recommended_threads(profile_id);
+        }
+        if max_new_tokens == 32 {
+            max_new_tokens = slm_warm_session_profile_max_new_tokens(profile_id);
+        }
+        if prompt_template == "qwen2.5" {
+            prompt_template = slm_warm_session_profile_prompt_template(profile_id).to_string();
+        }
+        corpus_path.is_none() && prompts.is_empty()
+    } else {
+        false
+    };
+    let profile_prompt_inputs = if profile_supplied_prompts {
+        let profile_id = profile_id.expect("profile id must exist when profile supplies prompts");
+        slm_warm_session_profile_prompt_inputs(profile_id)
+    } else {
+        Vec::new()
+    };
+    if profile_supplied_prompts {
+        prompts = profile_prompt_inputs.iter().map(|input| input.prompt.clone()).collect();
+    }
     let corpus = corpus_path.as_deref().map(SlmWarmSessionCorpus::load).transpose()?;
     if corpus.is_some() && !prompts.is_empty() {
         anyhow::bail!(
@@ -8693,13 +8740,17 @@ async fn run_slm_warm_session(
     if corpus.is_none() && prompts.len() < 2 {
         anyhow::bail!("slm-warm-session requires at least two --prompt values or --corpus");
     }
-    let prompt_inputs = warm_session_prompt_inputs(
-        &prompts,
-        corpus.as_ref(),
-        corpus_repeat_runs,
-        min_generated_tokens,
-        min_distinct_generated_tokens,
-    )?;
+    let prompt_inputs = if profile_supplied_prompts {
+        profile_prompt_inputs
+    } else {
+        warm_session_prompt_inputs(
+            &prompts,
+            corpus.as_ref(),
+            corpus_repeat_runs,
+            min_generated_tokens,
+            min_distinct_generated_tokens,
+        )?
+    };
     let max_new_tokens =
         corpus.as_ref().and_then(|corpus| corpus.defaults.max_new_tokens).unwrap_or(max_new_tokens);
     let temperature =
@@ -8785,7 +8836,7 @@ async fn run_slm_warm_session(
     let template_type: bitnet_inference::TemplateType =
         prompt_template.parse().with_context(|| {
             format!(
-                "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen2.5",
+                "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen, qwen2.5",
                 prompt_template
             )
         })?;
@@ -9795,6 +9846,26 @@ async fn run_slm_warm_session(
         &power_context,
         &thermal_context,
     );
+    let profile_receipt = slm_warm_session_profile_receipt(
+        profile_id,
+        profile_model_role,
+        model_file.as_str(),
+        &model_architecture,
+        dense_slm_quant_format(&model_path),
+        profile_supplied_prompts,
+        prompt_inputs.len(),
+        thread_count,
+        strict_loader,
+        tokenizer_strict,
+        prompt_template.as_str(),
+        no_think,
+        greedy,
+        deterministic,
+        max_new_tokens,
+        fail_on_quality,
+        require_determinism,
+        allocation_audit_enabled,
+    );
     let aggregate = serde_json::json!({
         "schema_version": "1.0.0",
         "artifact_kind": slm_warm_session_artifact_kind(backend_identity.requested_backend.as_str()),
@@ -9858,6 +9929,7 @@ async fn run_slm_warm_session(
             "prompt_buffer_pre_sizing_source": "already_rendered_tokenized_warm_session_prompt_metadata",
             "prompt_buffer_pre_sizing": prompt_buffer_pre_sizing,
         },
+        "profile": profile_receipt,
         "corpus": slm_warm_session_corpus_receipt(corpus_path.as_deref(), corpus.as_ref(), corpus_repeat_runs),
         "generation": {
             "mode": if greedy { "greedy" } else { "sampling" },
@@ -10280,6 +10352,251 @@ struct WarmSessionPromptInput {
     gate: Option<SlmWarmSessionGate>,
     min_generated_tokens: usize,
     min_distinct_generated_tokens: usize,
+}
+
+#[cfg(feature = "full-cli")]
+const SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE: &str = "kaby-qwen3-q8";
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_id(profile: Option<&str>) -> Result<Option<&'static str>> {
+    let Some(profile) = profile.map(str::trim).filter(|profile| !profile.is_empty()) else {
+        return Ok(None);
+    };
+    match profile {
+        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => Ok(Some(SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE)),
+        other => anyhow::bail!(
+            "unsupported slm-warm-session --profile {other}; supported profiles: {SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE}"
+        ),
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_validate_backend(
+    profile_id: &str,
+    requested_backend_label: &str,
+) -> Result<()> {
+    if profile_id == SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE && requested_backend_label != "cpu" {
+        anyhow::bail!(
+            "slm-warm-session --profile {profile_id} requires --device cpu; got {requested_backend_label}"
+        );
+    }
+    Ok(())
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_model_role(
+    profile_id: &str,
+    model_path: &std::path::Path,
+) -> Result<&'static str> {
+    if profile_id != SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE {
+        anyhow::bail!("unsupported slm-warm-session --profile {profile_id}");
+    }
+    let model_architecture = infer_model_architecture(model_path);
+    let quant_format = dense_slm_quant_format(model_path);
+    if quant_format != "Q8_0" {
+        anyhow::bail!(
+            "slm-warm-session --profile {profile_id} supports Qwen3/Qwen2.5 Q8_0 GGUF only; inferred quant_format={quant_format}"
+        );
+    }
+    match model_architecture.as_str() {
+        "qwen3" => Ok("primary_qwen3_q8_0"),
+        "qwen2" => Ok("second_model_qwen25_q8_0"),
+        other => anyhow::bail!(
+            "slm-warm-session --profile {profile_id} supports Qwen3/Qwen2.5 Q8_0 GGUF only; inferred architecture={other}"
+        ),
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_recommended_threads(profile_id: &str) -> usize {
+    match profile_id {
+        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => 4,
+        _ => 0,
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_max_new_tokens(profile_id: &str) -> usize {
+    match profile_id {
+        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => 4,
+        _ => 32,
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_prompt_template(profile_id: &str) -> &'static str {
+    match profile_id {
+        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => "qwen",
+        _ => "qwen2.5",
+    }
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_profile_prompt_inputs(profile_id: &str) -> Vec<WarmSessionPromptInput> {
+    match profile_id {
+        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => {
+            let math_gate = SlmWarmSessionGate {
+                kind: "starts_with_any".to_string(),
+                expected: None,
+                contains_any: None,
+                starts_with_any: Some(vec!["2".to_string()]),
+                min_words: None,
+            };
+            let ok_gate = SlmWarmSessionGate {
+                kind: "starts_with_any".to_string(),
+                expected: None,
+                contains_any: None,
+                starts_with_any: Some(vec!["OK".to_string()]),
+                min_words: None,
+            };
+            vec![
+                WarmSessionPromptInput {
+                    case_id: "kaby_math_1_plus_1".to_string(),
+                    prompt: "What is 1+1? Answer with only the number.".to_string(),
+                    repeat_index: 0,
+                    gate: Some(math_gate.clone()),
+                    min_generated_tokens: 1,
+                    min_distinct_generated_tokens: 1,
+                },
+                WarmSessionPromptInput {
+                    case_id: "kaby_math_1_plus_1".to_string(),
+                    prompt: "What is 1+1? Answer with only the number.".to_string(),
+                    repeat_index: 1,
+                    gate: Some(math_gate),
+                    min_generated_tokens: 1,
+                    min_distinct_generated_tokens: 1,
+                },
+                WarmSessionPromptInput {
+                    case_id: "kaby_say_ok".to_string(),
+                    prompt: "Say exactly: OK".to_string(),
+                    repeat_index: 0,
+                    gate: Some(ok_gate.clone()),
+                    min_generated_tokens: 1,
+                    min_distinct_generated_tokens: 1,
+                },
+                WarmSessionPromptInput {
+                    case_id: "kaby_say_ok".to_string(),
+                    prompt: "Say exactly: OK".to_string(),
+                    repeat_index: 1,
+                    gate: Some(ok_gate),
+                    min_generated_tokens: 1,
+                    min_distinct_generated_tokens: 1,
+                },
+            ]
+        }
+        _ => Vec::new(),
+    }
+}
+
+#[cfg(feature = "full-cli")]
+#[allow(clippy::too_many_arguments)]
+fn slm_warm_session_profile_receipt(
+    profile_id: Option<&str>,
+    profile_model_role: Option<&str>,
+    model_file: &str,
+    model_architecture: &str,
+    quant_format: &str,
+    profile_supplied_prompts: bool,
+    prompt_count: usize,
+    threads: usize,
+    strict_loader: bool,
+    strict_tokenizer: bool,
+    prompt_template: &str,
+    no_think: bool,
+    greedy: bool,
+    deterministic: bool,
+    max_new_tokens: usize,
+    fail_on_quality: bool,
+    require_determinism: bool,
+    allocation_audit: bool,
+) -> serde_json::Value {
+    let Some(profile_id) = profile_id else {
+        return serde_json::Value::Null;
+    };
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "slm_cpu_kaby_opt_in_profile",
+        "tracking_item": "SLM-CPU-247",
+        "profile_id": profile_id,
+        "enabled": true,
+        "profile_supplied_prompts": profile_supplied_prompts,
+        "prompt_source": if profile_supplied_prompts {
+            "profile_builtin_bounded_prompts"
+        } else {
+            "user_prompt_or_corpus"
+        },
+        "prompt_count": prompt_count,
+        "model": {
+            "role": profile_model_role,
+            "file": model_file,
+            "architecture": model_architecture,
+            "quant_format": quant_format,
+            "primary_model": {
+                "file": "Qwen3-0.6B-Q8_0.gguf",
+                "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+            },
+            "second_model_proof": {
+                "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+                "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+            },
+        },
+        "applied_contract": {
+            "runtime_api": "cpu",
+            "selected_backend": "cpu-rust",
+            "fallback_required": false,
+            "strict_loader": strict_loader,
+            "strict_tokenizer": strict_tokenizer,
+            "prompt_template": prompt_template,
+            "qwen_no_think": no_think,
+            "greedy": greedy,
+            "deterministic": deterministic,
+            "max_new_tokens": max_new_tokens,
+            "threads": threads,
+            "recommended_threads": 4,
+            "fail_on_quality": fail_on_quality,
+            "require_determinism": require_determinism,
+            "allocation_audit": allocation_audit,
+            "warm_session_first": true,
+            "receipt_output_required": true,
+        },
+        "no_bias_policy": {
+            "only_proven_executable_role": "feed_forward.down_proj",
+            "next_receipt_target": "feed_forward.up_proj",
+            "candidate_execution_opt_in_only": true,
+            "candidate_execution_enabled_by_profile": false,
+            "default_path_when_gate_absent": "eager_f32_candle",
+        },
+        "unsupported_until_receipts": [
+            "Q4/Q5 runtime",
+            "server",
+            "GPU/NPU/OpenVINO/UHD 620",
+            "Qwen3.5",
+            "BitNet QK256 changes",
+            "broad chat quality",
+            "sustained throughput",
+            "default runtime promotion",
+        ],
+        "evidence": {
+            "thread_recommendation_source": "SLM-CPU-205 dashboard envelope and SLM-CPU-245 timing/allocation receipt pair",
+            "role_policy_source": "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-246-no-bias-role-expansion-policy.json",
+            "candidate_on_timing_receipts": [
+                "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-slm-cpu-245-no-bias-candidate-on-timing-allocation.json",
+                "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen25-slm-cpu-245-no-bias-candidate-on-timing-allocation.json",
+            ],
+        },
+        "claim_boundary": {
+            "default_runtime_changed": false,
+            "candidate_execution_enabled": false,
+            "speedup_claim": false,
+            "allocation_reduction_claim": false,
+            "broad_performance_claim": false,
+            "broad_quality_claim": false,
+            "q4_q5_runtime_support": false,
+            "server_or_accelerator_claim": false,
+            "qwen35_claim": false,
+            "bitnet_qk256_claim": false,
+        },
+    })
 }
 
 #[derive(Debug, Default)]
@@ -17585,6 +17902,81 @@ mod tests {
         assert_eq!(receipt["speedup_claim"], false);
         assert_eq!(receipt["claim_boundary"]["candidate_execution_disabled"], true);
         assert_eq!(receipt["claim_boundary"]["no_bitnet_qk256_claim"], true);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_kaby_profile_contract_records_profile_boundaries() {
+        let profile_id = slm_warm_session_profile_id(Some(SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE))
+            .expect("profile id")
+            .expect("profile present");
+        let prompts = slm_warm_session_profile_prompt_inputs(profile_id);
+        assert_eq!(prompts.len(), 4);
+        assert_eq!(prompts[0].case_id, "kaby_math_1_plus_1");
+        assert_eq!(prompts[0].repeat_index, 0);
+        assert_eq!(prompts[1].repeat_index, 1);
+        assert_eq!(prompts[2].case_id, "kaby_say_ok");
+        assert_eq!(
+            slm_warm_session_profile_model_role(
+                profile_id,
+                std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
+            )
+            .expect("qwen3 profile model"),
+            "primary_qwen3_q8_0"
+        );
+        assert_eq!(
+            slm_warm_session_profile_model_role(
+                profile_id,
+                std::path::Path::new("models/slm/qwen2.5-0.5b-instruct-q8_0.gguf"),
+            )
+            .expect("qwen2.5 profile model"),
+            "second_model_qwen25_q8_0"
+        );
+
+        let receipt = slm_warm_session_profile_receipt(
+            Some(profile_id),
+            Some("primary_qwen3_q8_0"),
+            "Qwen3-0.6B-Q8_0.gguf",
+            "qwen3",
+            "Q8_0",
+            true,
+            prompts.len(),
+            4,
+            true,
+            true,
+            "qwen",
+            true,
+            true,
+            true,
+            4,
+            true,
+            true,
+            true,
+        );
+
+        assert_eq!(receipt["tracking_item"], "SLM-CPU-247");
+        assert_eq!(receipt["profile_id"], SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE);
+        assert_eq!(receipt["profile_supplied_prompts"], true);
+        assert_eq!(receipt["model"]["role"], "primary_qwen3_q8_0");
+        assert_eq!(receipt["model"]["primary_model"]["file"], "Qwen3-0.6B-Q8_0.gguf");
+        assert_eq!(
+            receipt["model"]["second_model_proof"]["file"],
+            "qwen2.5-0.5b-instruct-q8_0.gguf"
+        );
+        assert_eq!(receipt["applied_contract"]["runtime_api"], "cpu");
+        assert_eq!(receipt["applied_contract"]["selected_backend"], "cpu-rust");
+        assert_eq!(receipt["applied_contract"]["fallback_required"], false);
+        assert_eq!(receipt["applied_contract"]["recommended_threads"], 4);
+        assert_eq!(
+            receipt["no_bias_policy"]["only_proven_executable_role"],
+            "feed_forward.down_proj"
+        );
+        assert_eq!(receipt["no_bias_policy"]["candidate_execution_enabled_by_profile"], false);
+        assert_eq!(receipt["no_bias_policy"]["default_path_when_gate_absent"], "eager_f32_candle");
+        assert_eq!(receipt["claim_boundary"]["default_runtime_changed"], false);
+        assert_eq!(receipt["claim_boundary"]["candidate_execution_enabled"], false);
+        assert_eq!(receipt["claim_boundary"]["speedup_claim"], false);
+        assert_eq!(receipt["claim_boundary"]["bitnet_qk256_claim"], false);
     }
 
     #[test]

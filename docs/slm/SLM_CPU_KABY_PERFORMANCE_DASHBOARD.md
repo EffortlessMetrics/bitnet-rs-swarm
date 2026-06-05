@@ -4969,6 +4969,41 @@ the default `eager_f32_candle` path, claim speedup, claim allocation reduction,
 claim sustained throughput, broaden Q4/Q5 support, touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-247 Kaby Optimized Opt-In Profile Surface
+
+SLM-CPU-247 consumes the SLM-CPU-246 role expansion policy and defines the
+operator-facing `slm-warm-session --profile kaby-qwen3-q8` surface without
+changing the default runtime or enabling any new no-bias execution.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-247-kaby-optimized-opt-in-profile.json
+decision = kaby_qwen3_q8_profile_surface_defined_without_default_runtime_change
+profile_id = kaby-qwen3-q8
+primary_model = Qwen3-0.6B-Q8_0.gguf
+second_model_proof = qwen2.5-0.5b-instruct-q8_0.gguf
+runtime_api = cpu
+selected_backend = cpu-rust
+fallback_required = false
+recommended_threads = 4
+default_path_when_gate_absent = eager_f32_candle
+candidate_execution_enabled_by_profile = false
+fresh_hardware_receipts_captured_in_slm_cpu_247 = false
+speedup_claim = false
+```
+
+When the profile is explicitly selected and no corpus or manual prompts are
+provided, it supplies four bounded warm-session prompts, applies strict
+GGUF/tokenizer CPU settings, selects the `qwen` template with no-think greedy
+deterministic decoding, uses four threads when the caller did not request a
+thread count, enables quality/determinism checks, and records the profile
+contract in the aggregate receipt. User-provided prompts or a corpus still
+remain the prompt source.
+
+This slice does not capture fresh Kaby hardware receipts, execute a new
+candidate path, promote the no-bias runtime, claim speedup, claim allocation
+reduction, claim sustained throughput, broaden Q4/Q5 support, touch server,
+GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage
