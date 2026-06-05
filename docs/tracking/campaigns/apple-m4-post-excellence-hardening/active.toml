@@ -204,7 +204,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-005"
-status = "in_progress"
+status = "pr_open"
 branch = "codex/apple-m4/M4-HARDEN-005-bitnet-repaired-subset-rerun"
 stackable = false
 review_mode = "codex_premerge"
