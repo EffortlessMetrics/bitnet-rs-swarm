@@ -4931,6 +4931,44 @@ executed candidate, change default runtime selection, claim allocation
 reduction, claim timing improvement or speedup, broaden Q4/Q5 support, touch
 server, GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-246 No-Bias Role Expansion Policy
+
+SLM-CPU-246 consumes the SLM-CPU-245 timing/allocation envelope and defines the
+next receipt-bound role expansion order without enabling additional no-bias
+execution.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-246-no-bias-role-expansion-policy.json
+decision = receipt_bound_role_expansion_policy_defined_without_new_candidate_execution
+only_proven_executable_no_bias_role = feed_forward.down_proj
+next_receipt_target = feed_forward.up_proj
+candidate_execution_expanded_to_new_roles = false
+new_role_dispatch_branch_enabled = false
+default_path_when_gate_absent = eager_f32_candle
+```
+
+The expansion order is:
+
+```text
+1. feed_forward.up_proj
+2. feed_forward.gate_proj
+3. attention.o_proj
+4. attention.q_proj / attention.k_proj / attention.v_proj only where
+   per-model bias policy and tensor/callsite identity are exact
+```
+
+The role manifest keeps Qwen2.5 attention q/k/v fail-closed because those
+records have `bias_present=true`. Qwen3 attention q/k/v remain policy targets
+only after a per-model, per-callsite receipt ladder proves exact role identity,
+prompt/session descriptor binding, candidate-off/candidate-on execution,
+generated-ID and decoded-text parity, and a timing/allocation envelope for that
+role.
+
+SLM-CPU-246 does not execute any new role, broaden the no-bias runtime, change
+the default `eager_f32_candle` path, claim speedup, claim allocation reduction,
+claim sustained throughput, broaden Q4/Q5 support, touch server, GPU, NPU,
+OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

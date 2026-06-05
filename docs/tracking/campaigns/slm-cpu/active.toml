@@ -14236,8 +14236,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-246"
-status = "ready"
+status = "pr_open"
+pr = 1560
 branch = "codex/slm-cpu/slm-cpu-246-no-bias-role-expansion-policy"
+head_sha = "ac829434560767e6caf2a6ee30418413b104626f"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
