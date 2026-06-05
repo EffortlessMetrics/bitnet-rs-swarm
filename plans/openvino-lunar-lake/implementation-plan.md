@@ -570,6 +570,23 @@ PRs:
   and [#1374](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1374).
   Do not optimize from the aggregate "CPU is slow" observation alone.
 
+### Next No-Inference Guard Candidate
+
+The next CPU slow-path implementation should select
+[#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568)
+before any OpenVINO CPU comparison, optimization, or route-policy PR. That
+issue narrows #1365 to a checker-only guard for the remaining non-format
+alignment gates: direct generated-token status, retokenized-token rejection,
+matched-profile completeness, fallback and answer-gate status, populated
+benchmark blockers under `benchmark_qualified=true`, benchmark-field
+consistency, and claim-boundary leakage.
+
+The first PR under that issue should use existing committed receipts or
+synthetic mutated receipts only. It must not run inference, refresh hardware
+receipts, qualify the comparison as a benchmark, promote OpenVINO CPU, mutate
+route policy, claim speedup or power advantage, touch `low_power`, or treat
+dense SLM evidence as BitNet QK256/I2_S proof.
+
 ## Phase F: Rust-Native Product Surface
 
 Wrap existing Python OpenVINO proof harnesses before replacing them:
