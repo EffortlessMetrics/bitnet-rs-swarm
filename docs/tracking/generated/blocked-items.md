@@ -174,7 +174,7 @@
 | apple-m4-operational | M4-OP-006 | M4-OP-004, M4-OP-005 | merged |
 | apple-m4-post-excellence-hardening | M4-HARDEN-002 | M4-HARDEN-001 | merged |
 | apple-m4-post-excellence-hardening | M4-HARDEN-003 | M4-HARDEN-002 | merged |
-| apple-m4-post-excellence-hardening | M4-HARDEN-004 | M4-HARDEN-003 | proposed |
+| apple-m4-post-excellence-hardening | M4-HARDEN-004 | M4-HARDEN-003 | in_progress |
 | apple-m4-post-excellence-hardening | M4-HARDEN-005 | M4-HARDEN-004 | proposed |
 | apple-m4-post-excellence-hardening | M4-HARDEN-006 | M4-HARDEN-005 | proposed |
 | apple-m4-productization | M4-PROD-002 | M4-PROD-001 | merged |

@@ -1,0 +1,338 @@
+{
+  "artifact_kind": "apple_m4_bitnet_repaired_250_regression_analysis",
+  "schema_version": "1.0.0",
+  "campaign": "apple-m4-post-excellence-hardening",
+  "work_item": "M4-HARDEN-004",
+  "analysis_timestamp": "2026-06-05T11:03:54Z",
+  "analysis_status": "repair_path_recommended",
+  "comparison": {
+    "current": {
+      "run": "2026-05-20T0133Z",
+      "path": "ci/hardware/apple-m4-mac-mini/2026-05-20T0133Z/bitnet-eval-250-repaired/answer-corpus.json",
+      "quality_passed": 199,
+      "quality_failed": 51,
+      "scoring_passed": 202,
+      "scoring_failed": 48,
+      "total": 250
+    },
+    "baseline": {
+      "run": "2026-05-18T1806Z",
+      "path": "ci/hardware/apple-m4-mac-mini/2026-05-18T1806Z/bitnet-eval-250-repaired/answer-corpus.json",
+      "quality_passed": 205,
+      "quality_failed": 45,
+      "scoring_passed": 210,
+      "scoring_failed": 40,
+      "total": 250
+    },
+    "delta": {
+      "quality_passed": -6,
+      "quality_failed": 6,
+      "scoring_passed": -8,
+      "scoring_failed": 8,
+      "changed_cases": 26,
+      "regression_warning_count": 26
+    },
+    "original_250_context": {
+      "run": "2026-05-17T1903Z",
+      "path": "ci/hardware/apple-m4-mac-mini/2026-05-17T1903Z/bitnet-eval-250/answer-corpus.json",
+      "quality_passed": 196,
+      "quality_failed": 54,
+      "scoring_passed": 196,
+      "scoring_failed": 54,
+      "strict_comparison_status": "context_only",
+      "reason": "The repaired corpus uses the corpus_version 2.1.0 scoring contract and includes contains_expected scoring; strict mac regression against the 2026-05-17 original run fails with scoring_summary.kinds mismatch."
+    }
+  },
+  "matched_identity": {
+    "corpus_id": "apple-m4-bitnet-eval-seeded-corpus-250",
+    "corpus_version": "2.1.0",
+    "model_sha256": "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162",
+    "model_repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
+    "model_revision": "a1f2f1c765812aa8af3f6eda4a313707064bba15",
+    "model_quant_format": "I2_S",
+    "tokenizer_sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+    "tokenizer_source": "externally_supplied_llama_bpe",
+    "prompt_template": "bitnetcpp-answer",
+    "prompt_identity_sha256": "8ccb3ad8cf3e3af19b5da2cf69b50a21b78cf01cd3b287de76a1497d2fbfeb3c",
+    "template_sha256": "fe14a87657ed0ebbafae92dc67131eb87dcfac6a9bd0c08d96e20cd88defd6c7",
+    "generation_params_sha256": "00b261527dacd7ea460d8dcba87057f37a91c328d7b64eedd4c73641e805c8d5",
+    "requested_backend": "apple-m4-cpu-neon",
+    "selected_backend": "apple-m4-cpu-neon",
+    "runtime_api": "cpu",
+    "fallback_used": false,
+    "temperature": 0.0,
+    "greedy": true,
+    "per_prompt_timeout_seconds": 300,
+    "timeouts": 0
+  },
+  "task_family_deltas": [
+    {
+      "family": "arithmetic_exact",
+      "total": 15,
+      "quality_passed_baseline": 14,
+      "quality_passed_current": 14,
+      "quality_passed_delta": 0,
+      "scoring_passed_baseline": 14,
+      "scoring_passed_current": 14,
+      "scoring_passed_delta": 0,
+      "changed_cases": 0,
+      "classification": "unchanged",
+      "repair_priority": "monitor"
+    },
+    {
+      "family": "closed_label_classification",
+      "total": 20,
+      "quality_passed_baseline": 18,
+      "quality_passed_current": 17,
+      "quality_passed_delta": -1,
+      "scoring_passed_baseline": 18,
+      "scoring_passed_current": 17,
+      "scoring_passed_delta": -1,
+      "changed_cases": 1,
+      "classification": "regressed",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "constrained_summary",
+      "total": 30,
+      "quality_passed_baseline": 26,
+      "quality_passed_current": 27,
+      "quality_passed_delta": 1,
+      "scoring_passed_baseline": 26,
+      "scoring_passed_current": 27,
+      "scoring_passed_delta": 1,
+      "changed_cases": 3,
+      "classification": "net_improved_with_case_churn",
+      "repair_priority": "positive_control"
+    },
+    {
+      "family": "fixed_table_qa",
+      "total": 35,
+      "quality_passed_baseline": 30,
+      "quality_passed_current": 30,
+      "quality_passed_delta": 0,
+      "scoring_passed_baseline": 30,
+      "scoring_passed_current": 30,
+      "scoring_passed_delta": 0,
+      "changed_cases": 2,
+      "classification": "unchanged_with_case_churn",
+      "repair_priority": "monitor"
+    },
+    {
+      "family": "format_constrained_json",
+      "total": 20,
+      "quality_passed_baseline": 20,
+      "quality_passed_current": 19,
+      "quality_passed_delta": -1,
+      "scoring_passed_baseline": 20,
+      "scoring_passed_current": 19,
+      "scoring_passed_delta": -1,
+      "changed_cases": 1,
+      "classification": "regressed",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "numeric_tolerance",
+      "total": 35,
+      "quality_passed_baseline": 24,
+      "quality_passed_current": 21,
+      "quality_passed_delta": -3,
+      "scoring_passed_baseline": 24,
+      "scoring_passed_current": 21,
+      "scoring_passed_delta": -3,
+      "changed_cases": 5,
+      "classification": "largest_regression",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "ordering_sorting",
+      "total": 20,
+      "quality_passed_baseline": 17,
+      "quality_passed_current": 16,
+      "quality_passed_delta": -1,
+      "scoring_passed_baseline": 18,
+      "scoring_passed_current": 16,
+      "scoring_passed_delta": -2,
+      "changed_cases": 3,
+      "classification": "regressed",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "required_forbidden_tokens",
+      "total": 30,
+      "quality_passed_baseline": 22,
+      "quality_passed_current": 21,
+      "quality_passed_delta": -1,
+      "scoring_passed_baseline": 22,
+      "scoring_passed_current": 21,
+      "scoring_passed_delta": -1,
+      "changed_cases": 7,
+      "classification": "regressed_with_high_case_churn",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "rewrite_normalized",
+      "total": 20,
+      "quality_passed_baseline": 15,
+      "quality_passed_current": 15,
+      "quality_passed_delta": 0,
+      "scoring_passed_baseline": 19,
+      "scoring_passed_current": 18,
+      "scoring_passed_delta": -1,
+      "changed_cases": 2,
+      "classification": "scoring_regressed_without_quality_net_change",
+      "repair_priority": "primary"
+    },
+    {
+      "family": "synthetic_extraction",
+      "total": 25,
+      "quality_passed_baseline": 19,
+      "quality_passed_current": 19,
+      "quality_passed_delta": 0,
+      "scoring_passed_baseline": 19,
+      "scoring_passed_current": 19,
+      "scoring_passed_delta": 0,
+      "changed_cases": 2,
+      "classification": "unchanged_with_case_churn",
+      "repair_priority": "monitor"
+    }
+  ],
+  "cause_isolation": {
+    "scorer": {
+      "classification": "not_primary_for_repaired_vs_repaired_regression",
+      "evidence": [
+        "The strict repaired comparator uses the same corpus id, corpus_version 2.1.0, scoring schema, and scoring kinds.",
+        "The current run and repaired baseline both use deterministic fixture scoring and report zero not_run and zero timeout cases.",
+        "Most new failures are answer_content failures rather than new scorer categories."
+      ],
+      "caveat": "The 2026-05-17 original 250-case run is context-only for this item because strict regression fails on scoring_summary.kinds mismatch."
+    },
+    "template": {
+      "classification": "not_indicated",
+      "evidence": [
+        "Both repaired receipts use prompt_template bitnetcpp-answer.",
+        "Both repaired receipts record the same prompt identity sha256 and template sha256."
+      ]
+    },
+    "runtime": {
+      "classification": "not_indicated_by_receipts",
+      "evidence": [
+        "Both repaired receipts use selected_backend apple-m4-cpu-neon and runtime_api cpu.",
+        "Both repaired receipts record fallback_used=false.",
+        "Both repaired receipts record zero timeout cases."
+      ],
+      "caveat": "Runtime nondeterminism cannot be fully excluded without the repaired subset rerun, but the receipts do not point to fallback, timeout, or route drift."
+    },
+    "model_output": {
+      "classification": "probable_primary_cause",
+      "evidence": [
+        "Model, tokenizer, prompt template, backend, runtime API, generation mode, and scoring contract match across the repaired receipts.",
+        "The net regression is concentrated in answer_content failures, especially numeric_tolerance, ordering_sorting, required_forbidden_tokens, closed_label_classification, format_constrained_json, and rewrite_normalized scoring.",
+        "Families with no aggregate regression still show case churn, so the repaired subset should prove whether the output distribution stabilizes under the same identity."
+      ]
+    }
+  },
+  "changed_case_summary": {
+    "quality_regressions": [
+      "bitnet_label_seed912587_020",
+      "bitnet_json_seed912587_019",
+      "bitnet_numeric_seed912587_delta_027",
+      "bitnet_numeric_seed912587_div_011",
+      "bitnet_numeric_seed912587_division_int_033",
+      "bitnet_numeric_seed912587_percent_015",
+      "bitnet_required_forbidden_seed912587_006",
+      "bitnet_required_forbidden_seed912587_013",
+      "bitnet_required_forbidden_seed912587_022",
+      "bitnet_required_forbidden_seed912587_027",
+      "bitnet_rewrite_seed912587_sentence_019",
+      "bitnet_sort_seed912587_003",
+      "bitnet_sort_seed912587_009",
+      "bitnet_summary_seed912587_001",
+      "bitnet_table_seed912587_route_035",
+      "bitnet_extract_seed912587_path_024"
+    ],
+    "quality_improvements": [
+      "bitnet_extract_seed912587_path_023",
+      "bitnet_numeric_seed912587_ratio_010",
+      "bitnet_required_forbidden_seed912587_005",
+      "bitnet_required_forbidden_seed912587_008",
+      "bitnet_required_forbidden_seed912587_019",
+      "bitnet_rewrite_seed912587_trim_015",
+      "bitnet_sort_seed912587_words_015",
+      "bitnet_summary_seed912587_015",
+      "bitnet_summary_seed912587_024",
+      "bitnet_table_seed912587_tool_020"
+    ],
+    "scoring_regressions": [
+      "bitnet_label_seed912587_020",
+      "bitnet_json_seed912587_019",
+      "bitnet_numeric_seed912587_delta_027",
+      "bitnet_numeric_seed912587_div_011",
+      "bitnet_numeric_seed912587_division_int_033",
+      "bitnet_numeric_seed912587_percent_015",
+      "bitnet_required_forbidden_seed912587_006",
+      "bitnet_required_forbidden_seed912587_013",
+      "bitnet_required_forbidden_seed912587_022",
+      "bitnet_required_forbidden_seed912587_027",
+      "bitnet_rewrite_seed912587_sentence_019",
+      "bitnet_sort_seed912587_003",
+      "bitnet_sort_seed912587_009",
+      "bitnet_summary_seed912587_001",
+      "bitnet_table_seed912587_route_035",
+      "bitnet_extract_seed912587_path_024"
+    ],
+    "scoring_improvements": [
+      "bitnet_extract_seed912587_path_023",
+      "bitnet_numeric_seed912587_ratio_010",
+      "bitnet_required_forbidden_seed912587_005",
+      "bitnet_required_forbidden_seed912587_008",
+      "bitnet_required_forbidden_seed912587_019",
+      "bitnet_summary_seed912587_015",
+      "bitnet_summary_seed912587_024",
+      "bitnet_table_seed912587_tool_020"
+    ]
+  },
+  "recommended_repair_path": {
+    "next_work_item": "M4-HARDEN-005",
+    "rerun_scope": {
+      "primary_families": [
+        "numeric_tolerance",
+        "ordering_sorting",
+        "required_forbidden_tokens",
+        "closed_label_classification",
+        "format_constrained_json",
+        "rewrite_normalized"
+      ],
+      "positive_control_families": [
+        "constrained_summary"
+      ],
+      "monitor_only_families": [
+        "fixed_table_qa",
+        "synthetic_extraction",
+        "arithmetic_exact"
+      ]
+    },
+    "steps": [
+      "Rerun only the primary regressed families plus constrained_summary as a positive control.",
+      "Preserve the same model sha256, tokenizer sha256, prompt identity, backend, runtime API, cache state, generation parameters, and corpus fixture ids.",
+      "Compare subset output against the 2026-05-18 repaired baseline before any full 250-case rerun.",
+      "If the subset improves, rerun the full repaired 250-case corpus once under the same identity.",
+      "If the subset does not improve, keep BitNet quality in repair mode and do not expand the corpus or chase BitNet performance."
+    ]
+  },
+  "claim_boundary": {
+    "dense_slm_evidence": false,
+    "bitnet_chat_enabled": false,
+    "bitnet_serve_enabled": false,
+    "expanded_to_500": false,
+    "broad_bitnet_quality_claim": false,
+    "broad_speedup_claim": false,
+    "full_apple_m4_metal_claim": false,
+    "qk256_on_apple_claim": false,
+    "neural_engine_claim": false,
+    "mpsgraph_claim": false,
+    "macbook_claim": false,
+    "broad_apple_silicon_claim": false
+  },
+  "proof_command": "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet -- mac regression ci/hardware/apple-m4-mac-mini/2026-05-20T0133Z/bitnet-eval-250-repaired/answer-corpus.json --baseline ci/hardware/apple-m4-mac-mini/2026-05-18T1806Z/bitnet-eval-250-repaired/answer-corpus.json --json"
+}
