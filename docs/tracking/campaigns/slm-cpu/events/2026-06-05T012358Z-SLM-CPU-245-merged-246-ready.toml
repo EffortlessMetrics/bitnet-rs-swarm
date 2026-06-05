@@ -1,0 +1,17 @@
+timestamp = "2026-06-05T01:23:58Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-245"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1555
+branch = "codex/slm-cpu/slm-cpu-245-no-bias-timing-allocation-envelope"
+head_sha = "54a6a17cb56c86adc424d0e347843b4bcbe8959d"
+merge_sha = "b1ea684eb29174cc7f62ca5c5fe94528a9595e14"
+summary = "Closed SLM-CPU-245 after the no-bias timing/allocation envelope PR merged and queued SLM-CPU-246."
+notes = [
+  "PR #1555 records Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on timing/allocation envelope receipts for the exact feed_forward.down_proj no-bias candidate path.",
+  "The aggregate envelope records cold load, warm-session timing, prefill, first token, steady decode, allocation bytes/count, resident memory, thread count, and thermal/power availability while preserving prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, backend identity, and fallback=false.",
+  "SLM-CPU-246 is ready to define the receipt-bound role expansion policy after feed_forward.down_proj without enabling broader no-bias execution or claiming speedup/allocation reduction.",
+]

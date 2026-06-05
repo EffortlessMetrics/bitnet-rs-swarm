@@ -438,6 +438,7 @@
 | intel-258v-platform | LNL258V-POWER-010 | LNL258V-GOAL-AUDIT-014, LNL258V-POWER-009 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-015 | LNL258V-POWER-010 | merged |
 | intel-258v-platform | LNL258V-BITNET-INTAKE-005 | LNL258V-BITNET-INTAKE-004, LNL258V-GOAL-AUDIT-017 | merged |
+| intel-258v-platform | LNL258V-BITNET-INTAKE-006 | LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-018 | LNL258V-BITNET-INTAKE-005 | merged |
 | intel-258v-platform | SWARM-LNL258V-MIGRATE-001 | LNL258V-GOAL-AUDIT-018 | merged |
 | intel-258v-platform | LNL258V-GOAL-AUDIT-019 | SWARM-LNL258V-MIGRATE-001 | merged |
@@ -1125,7 +1126,9 @@
 | slm-cpu | SLM-CPU-242 | SLM-CPU-241 | merged |
 | slm-cpu | SLM-CPU-243 | SLM-CPU-242 | merged |
 | slm-cpu | SLM-CPU-244 | SLM-CPU-243 | merged |
-| slm-cpu | SLM-CPU-245 | SLM-CPU-244 | ready |
+| slm-cpu | SLM-CPU-245 | SLM-CPU-244 | merged |
+| slm-cpu | SLM-CPU-246 | SLM-CPU-245 | merged |
+| slm-cpu | SLM-CPU-247 | SLM-CPU-246 | ready |
 | slm-cpu | SLM-CPU-165 | SLM-CPU-164 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
