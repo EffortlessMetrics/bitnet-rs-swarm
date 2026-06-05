@@ -211,6 +211,8 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M4-HARDEN-004"]
+pr = 1603
+head_sha = "043d14c889298ab2b861eed770fb72e27adb9543"
 acceptance = "Rerun only the failing or repaired BitNet task families, prove improvement or document non-improvement, preserve model/tokenizer/prompt/backend identity, and keep dense and BitNet evidence separate."
 commands = [
   "cargo build --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli --bin bitnet",
