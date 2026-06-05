@@ -1745,6 +1745,88 @@ fn model_verify_corrupt_cache_explains_prune_and_fetch() -> Result<(), Box<dyn s
 }
 
 #[test]
+fn model_verify_text_summarizes_bitnet_artifact_readiness_boundary()
+-> Result<(), Box<dyn std::error::Error>> {
+    let dir = tempfile::tempdir()?;
+    let cache = dir.path().join("models");
+    let cache_str = cache.to_string_lossy().into_owned();
+
+    bitnet()
+        .args([
+            "model",
+            "verify",
+            "microsoft-bitnet-b1.58-2B-4T-i2s",
+            "--cache-dir",
+            cache_str.as_str(),
+        ])
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains(
+            "model identity: microsoft/bitnet-b1.58-2B-4T-gguf @ a1f2f1c765812aa8af3f6eda4a313707064bba15 / ggml-model-i2_s.gguf",
+        ))
+        .stdout(predicate::str::contains("expected: bytes=1187801280"))
+        .stdout(predicate::str::contains("actual: bytes=missing, sha256=missing"))
+        .stdout(predicate::str::contains("artifact verification: failed"))
+        .stdout(predicate::str::contains(
+            "structurally valid: not assessed by model verify; byte identity is not verified",
+        ))
+        .stdout(predicate::str::contains(
+            "answer ready: not proven by model verify; use `bitnet model status` and receipts for answer claims",
+        ))
+        .stdout(predicate::str::contains(
+            "tokenizer authority: llama-bpe-external (external_tokenizer_json_sha256_recorded)",
+        ))
+        .stdout(predicate::str::contains(
+            "tokenizer path: models/microsoft-bitnet-b1.58-2B-4T/tokenizer.json",
+        ))
+        .stdout(predicate::str::contains(
+            "tokenizer sha256: e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+        ))
+        .stdout(predicate::str::contains("prompt authority: bitnetcpp-answer"))
+        .stdout(predicate::str::contains("contract: microsoft_bitnet_b158_2b_4t_i2s"))
+        .stdout(predicate::str::contains("required receipts:"))
+        .stdout(predicate::str::contains("next step: bitnet model fetch microsoft-bitnet"))
+        .stdout(predicate::str::contains("claim boundary: Artifact provenance only"))
+        .stderr(predicate::str::contains("failed verification"));
+    Ok(())
+}
+
+#[test]
+fn model_verify_text_summarizes_dense_artifact_readiness_boundary()
+-> Result<(), Box<dyn std::error::Error>> {
+    let dir = tempfile::tempdir()?;
+    let cache = dir.path().join("models");
+    let cache_str = cache.to_string_lossy().into_owned();
+
+    bitnet()
+        .args([
+            "model",
+            "verify",
+            "qwen2.5-0.5b-instruct-q8_0",
+            "--cache-dir",
+            cache_str.as_str(),
+        ])
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains(
+            "model identity: Qwen/Qwen2.5-0.5B-Instruct-GGUF @ 9217f5db79a29953eb74d5343926648285ec7e67 / qwen2.5-0.5b-instruct-q8_0.gguf",
+        ))
+        .stdout(predicate::str::contains(
+            "tokenizer authority: qwen2 (embedded_gguf_metadata_bound_to_model_sha256)",
+        ))
+        .stdout(predicate::str::contains("prompt authority: qwen2.5"))
+        .stdout(predicate::str::contains(
+            "capability: qwen_dense_slm_q8_0 (qwen, dense_slm_gguf)",
+        ))
+        .stdout(predicate::str::contains(
+            "next step: bitnet model fetch qwen2.5-0.5b-instruct-q8_0",
+        ))
+        .stdout(predicate::str::contains("Dense Qwen SLM artifact"))
+        .stderr(predicate::str::contains("failed verification"));
+    Ok(())
+}
+
+#[test]
 fn model_verify_json_includes_dense_m4_artifact_provenance()
 -> Result<(), Box<dyn std::error::Error>> {
     let dir = tempfile::tempdir()?;
