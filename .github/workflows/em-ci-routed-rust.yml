@@ -83,11 +83,29 @@ jobs:
             printf '%s\n' "$changed_files"
 
             no_rust_inputs="true"
+            m3_synthetic_tier0_inputs="true"
             while IFS= read -r path; do
               [ -n "$path" ] || continue
               case "$path" in
                 crates/*|crossval/*|tests/*|tools/bitnet-task/*|xtask/*|fuzz/*|Cargo.toml|Cargo.lock|rust-toolchain.toml|Makefile)
                   no_rust_inputs="false"
+                  ;;
+              esac
+              case "$path" in
+                .github/workflows/apple-m3-air-synthetic-tier0.yml|\
+                .github/workflows/apple-m3-air-dense-slm.yml|\
+                .github/workflows/em-ci-routed-rust.yml|\
+                .github/workflows/rocm-smoke.yml|\
+                crates/bitnet-cli/src/mac.rs|\
+                crates/bitnet-common/src/apple_m3_air.rs|\
+                crates/bitnet-receipts-core/src/lib.rs|\
+                docs/apple-silicon/*|\
+                docs/ci/*|\
+                docs/tracking/campaigns/apple-m3-macbook-air/*|\
+                docs/tracking/generated/*)
+                  ;;
+                *)
+                  m3_synthetic_tier0_inputs="false"
                   ;;
               esac
             done <<EOF
@@ -96,6 +114,11 @@ jobs:
 
             if [ -n "$changed_files" ] && [ "$no_rust_inputs" = "true" ]; then
               emit "no_rust_inputs" "no_rust_inputs_fast_path" "false" "false"
+              exit 0
+            fi
+
+            if [ -n "$changed_files" ] && [ "$m3_synthetic_tier0_inputs" = "true" ]; then
+              emit "m3_synthetic_tier0" "m3_synthetic_tier0_compact_proof" "false" "false"
               exit 0
             fi
           fi
@@ -433,12 +456,59 @@ jobs:
         run: |
           df -h / /mnt/docker /mnt/actions /mnt/ci-scratch /mnt/ci-cache /mnt/ci-artifacts 2>/dev/null || true
 
+  m3-synthetic-tier0:
+    name: Apple M3 Air Synthetic Tier 0
+    needs: route-rust-small
+    if: >-
+      needs.route-rust-small.outputs.target == 'm3_synthetic_tier0'
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      RUST_BACKTRACE: "1"
+      BITNET_SKIP_SLOW_TESTS: "1"
+      TMPDIR: ${{ runner.temp }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
+        with:
+          shared-key: apple-m3-air-synthetic-tier0
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Run M3 strict CPU receipt guards
+        run: cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3
+
+      - name: Run M3 Mac receipt profile guards
+        run: cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3
+
   rust-small-result:
     name: BitNet Rust Small Result
     needs:
       - route-rust-small
       - rust-small-cx53
       - rust-small-cx43
+      - m3-synthetic-tier0
     if: >-
       !cancelled()
       && (github.event_name == 'workflow_dispatch'
@@ -456,12 +526,14 @@ jobs:
           ROUTER_RESULT: ${{ needs.route-rust-small.result }}
           CX53_RESULT: ${{ needs.rust-small-cx53.result }}
           CX43_RESULT: ${{ needs.rust-small-cx43.result }}
+          M3_SYNTHETIC_RESULT: ${{ needs.m3-synthetic-tier0.result }}
         run: |
           set -eu
           echo "router_target=${TARGET:-<empty>}"
           echo "router_result=${ROUTER_RESULT:-<empty>}"
           echo "cx53_result=${CX53_RESULT:-<empty>}"
           echo "cx43_result=${CX43_RESULT:-<empty>}"
+          echo "m3_synthetic_result=${M3_SYNTHETIC_RESULT:-<empty>}"
 
           if [ "${ROUTER_RESULT}" != "success" ]; then
             echo "router job did not succeed; failing normalized result" >&2
@@ -488,6 +560,12 @@ jobs:
               ;;
             no_rust_inputs)
               echo "No Rust inputs changed; routed rust-small fast path succeeds without self-hosted runner."
+              ;;
+            m3_synthetic_tier0)
+              if [ "${M3_SYNTHETIC_RESULT}" != "success" ]; then
+                echo "selected target m3_synthetic_tier0 but M3 synthetic result was ${M3_SYNTHETIC_RESULT}" >&2
+                exit 1
+              fi
               ;;
             *)
               echo "router produced unknown target: ${TARGET}" >&2
