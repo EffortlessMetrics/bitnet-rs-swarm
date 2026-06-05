@@ -19,6 +19,8 @@ const ROWS: usize = 2;
 const COLS: usize = 256;
 const ROW_STRIDE_BYTES: usize = 64;
 const SAMPLE_LIMIT: usize = 2;
+const PROJECTION_REPLAY_SAMPLE_LIMIT: usize = 4;
+const PROJECTION_REPLAY_KERNEL_NAME: &str = "qk256_i2s_i8s_scaled_gemv_production_replay";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse()?;
@@ -1342,10 +1344,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         .ok_or_else(|| io_error("projection-level replay requested without --projection-source"))?;
     let source_json = fs::read_to_string(source_path)?;
     let source: Value = serde_json::from_str(&source_json)?;
-    let target_results = source
-        .get("target_results")
-        .and_then(Value::as_array)
-        .ok_or_else(|| io_error("projection source missing target_results array"))?;
+    let (target_results, source_receipt_kind) = projection_source_targets(&source)?;
     let case_id = args
         .case_id
         .as_deref()
@@ -1369,63 +1368,157 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
                 .filter_map(|target| i64_field(target, "target_layer_idx"))
                 .min()
         })
+        .or_else(|| source.pointer("/manifest/target_layer_idx_filter").and_then(Value::as_i64))
         .ok_or_else(|| io_error("projection source missing target_layer_idx"))?;
-    let work_item = args.work_item.as_deref().unwrap_or("A770-157");
+    let work_item = args.work_item.as_deref().unwrap_or("A770-158");
     let projections = ["q_proj", "k_proj", "v_proj"];
     let mut targets = Vec::with_capacity(projections.len());
     let mut row_evidence_count = 0usize;
     let mut clean_row_evidence_count = 0usize;
     let mut row_selected_device_match_count = 0usize;
     let mut row_fallback_false_count = 0usize;
+    let mut projection_executed_count = 0usize;
     let mut projection_blocked_count = 0usize;
+    let mut projection_full_operands_available_count = 0usize;
+    let mut projection_replay_hook_available_count = 0usize;
+    let mut projection_fallback_false_count = 0usize;
+    let mut summary_blockers = Vec::<&'static str>::new();
 
     for projection in projections {
-        let row = target_results.iter().find(|target| {
+        let row = target_results.iter().copied().find(|target| {
             str_field(target, "case_id") == Some(case_id)
                 && usize_field(target, "first_mismatch_index") == Some(first_mismatch_index)
                 && i64_field(target, "target_layer_idx") == Some(projection_layer)
                 && str_field(target, "projection") == Some(projection)
         });
-        let row_evidence_available = row.is_some();
-        let row_executed = row
-            .and_then(|target| target.pointer("/production_replay/executed"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-        let row_fallback_false = row
-            .and_then(|target| target.pointer("/production_replay/fallback_used"))
-            .and_then(Value::as_bool)
-            == Some(false);
-        let row_matches_selected_device = row
-            .and_then(|target| {
-                target.pointer("/production_replay/production_output_matches_selected_device_bits")
-            })
-            .and_then(Value::as_bool)
-            == Some(true);
-        let clean_row_evidence = row_evidence_available
-            && row_executed
-            && row_fallback_false
-            && row_matches_selected_device;
-        if row_evidence_available {
+        let row_evidence = projection_row_evidence(row);
+        let clean_row_evidence = row_evidence.clean_for_projection_boundary();
+        if row_evidence.available {
             row_evidence_count += 1;
         }
-        if row_fallback_false {
+        if row_evidence.fallback_used == Some(false) {
             row_fallback_false_count += 1;
         }
-        if row_matches_selected_device {
+        if row_evidence.production_output_matches_selected_device_bits {
             row_selected_device_match_count += 1;
         }
         if clean_row_evidence {
             clean_row_evidence_count += 1;
         }
-        projection_blocked_count += 1;
 
         let target_id = format!(
             "{case_id}:step{first_mismatch_index}:{projection_layer}:{projection}:projection"
         );
-        let blockers = if clean_row_evidence {
-            vec!["projection_level_full_operands_missing", "projection_level_replay_hook_missing"]
+        projection_replay_hook_available_count += 1;
+        let replay_outcome = if clean_row_evidence {
+            projection_replay_outcome(row)
         } else {
-            vec!["projection_level_row_evidence_not_clean"]
+            ProjectionReplayOutcome::Blocked {
+                reason: "projection_level_row_evidence_not_clean",
+                blockers: vec!["projection_level_row_evidence_not_clean"],
+                missing_full_operand_fields: Vec::new(),
+                current_operand_scope: "row_evidence_not_clean".to_owned(),
+            }
+        };
+        let (projection_replay, target_blockers) = match replay_outcome {
+            ProjectionReplayOutcome::Executed { operands, replay } => {
+                projection_executed_count += 1;
+                projection_full_operands_available_count += 1;
+                projection_fallback_false_count += 1;
+                let output_store_all_matches_replay_output =
+                    replay.samples.iter().all(|sample| sample.output_store_matches_replay_output);
+                let output_store_all_matches_final_scaled_value = replay
+                    .samples
+                    .iter()
+                    .all(|sample| sample.output_store_matches_final_scaled_value);
+                (
+                    json!({
+                        "executed": true,
+                        "selected_backend": "intel-arc-a770-opencl",
+                        "runtime_api": "opencl",
+                        "runtime_device": replay.runtime_device,
+                        "platform_index": replay.platform_index,
+                        "device_index": replay.device_index,
+                        "platform_name": replay.platform_name,
+                        "vendor": replay.vendor,
+                        "driver_version": replay.driver_version,
+                        "fallback_used": false,
+                        "kernel_name": PROJECTION_REPLAY_KERNEL_NAME,
+                        "projection_level_replay_hook_available": true,
+                        "projection_level_full_operands_available": true,
+                        "input_row_index": operands.input_row_index,
+                        "rows": operands.rows,
+                        "cols": operands.cols,
+                        "row_stride_bytes": operands.row_stride_bytes,
+                        "activation_sum": operands.activation_sum,
+                        "activation_scale_bits": operands.activation_scale_bits,
+                        "weight_scale_bits": operands.weight_scale_bits,
+                        "sample_limit": projection_replay_sample_limit(operands.rows),
+                        "sample_count": replay.samples.len(),
+                        "activation_i8_len": operands.activations_i8.len(),
+                        "packed_qk256_len": operands.packed_qk256.len(),
+                        "host_to_device_bytes": replay.host_to_device_bytes,
+                        "device_to_host_bytes": replay.device_to_host_bytes,
+                        "kernel_invocations": replay.kernel_invocations,
+                        "output_store_all_matches_replay_output": output_store_all_matches_replay_output,
+                        "output_store_all_matches_final_scaled_value": output_store_all_matches_final_scaled_value,
+                        "samples": replay
+                            .samples
+                            .iter()
+                            .map(focused_replay_sample_json)
+                            .collect::<Vec<Value>>()
+                    }),
+                    Vec::new(),
+                )
+            }
+            ProjectionReplayOutcome::Failed { error, blockers } => {
+                projection_blocked_count += 1;
+                projection_full_operands_available_count += 1;
+                projection_fallback_false_count += 1;
+                push_unique_blockers(&mut summary_blockers, &blockers);
+                (
+                    json!({
+                        "executed": false,
+                        "selected_backend": "intel-arc-a770-opencl",
+                        "runtime_api": "opencl",
+                        "fallback_used": false,
+                        "kernel_name": PROJECTION_REPLAY_KERNEL_NAME,
+                        "projection_level_replay_hook_available": true,
+                        "projection_level_full_operands_available": true,
+                        "reason": "projection_level_replay_failed",
+                        "blockers": blockers,
+                        "error": error
+                    }),
+                    blockers,
+                )
+            }
+            ProjectionReplayOutcome::Blocked {
+                reason,
+                blockers,
+                missing_full_operand_fields,
+                current_operand_scope,
+            } => {
+                projection_blocked_count += 1;
+                projection_fallback_false_count += 1;
+                push_unique_blockers(&mut summary_blockers, &blockers);
+                (
+                    json!({
+                        "executed": false,
+                        "selected_backend": "intel-arc-a770-opencl",
+                        "runtime_api": "opencl",
+                        "fallback_used": false,
+                        "kernel_name": PROJECTION_REPLAY_KERNEL_NAME,
+                        "reason": reason,
+                        "blockers": blockers,
+                        "current_operand_scope": current_operand_scope,
+                        "required_operand_scope": "full_projection_output_rows",
+                        "missing_full_operand_fields": missing_full_operand_fields,
+                        "projection_level_replay_hook_available": true,
+                        "projection_level_full_operands_available": false
+                    }),
+                    blockers,
+                )
+            }
         };
         targets.push(json!({
             "target_id": target_id,
@@ -1436,46 +1529,26 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
             "tensor_name": row.and_then(|target| string_field(target, "tensor_name")),
             "qk256_key": row.and_then(|target| string_field(target, "qk256_key")),
             "row_evidence": {
-                "available": row_evidence_available,
-                "source_target_id": row.and_then(|target| string_field(target, "target_id")),
-                "dispatch_replay_source": row.and_then(|target| string_field(target, "dispatch_replay_source")),
-                "executed": row_executed,
-                "selected_backend": row
-                    .and_then(|target| target.pointer("/production_replay/selected_backend"))
-                    .and_then(Value::as_str),
-                "runtime_api": row
-                    .and_then(|target| target.pointer("/production_replay/runtime_api"))
-                    .and_then(Value::as_str),
-                "runtime_device": row
-                    .and_then(|target| target.pointer("/production_replay/runtime_device"))
-                    .and_then(Value::as_str),
-                "fallback_used": row
-                    .and_then(|target| target.pointer("/production_replay/fallback_used"))
-                    .and_then(Value::as_bool),
-                "source_output_index": row
-                    .and_then(|target| target.pointer("/production_replay/source_output_index"))
-                    .and_then(Value::as_u64),
-                "focused_device_output_bits": row
-                    .and_then(|target| target.pointer("/production_replay/focused_device_output_bits"))
-                    .and_then(Value::as_u64),
-                "production_output_bits": row
-                    .and_then(|target| target.pointer("/production_replay/production_output_bits"))
-                    .and_then(Value::as_u64),
-                "production_output_matches_selected_device_bits": row_matches_selected_device,
+                "available": row_evidence.available,
+                "source_target_id": row_evidence.source_target_id,
+                "dispatch_replay_source": row_evidence.dispatch_replay_source,
+                "executed": row_evidence.executed,
+                "selected_backend": row_evidence.selected_backend,
+                "runtime_api": row_evidence.runtime_api,
+                "runtime_device": row_evidence.runtime_device,
+                "fallback_used": row_evidence.fallback_used,
+                "source_output_index": row_evidence.source_output_index,
+                "focused_device_output_bits": row_evidence.focused_device_output_bits,
+                "production_output_bits": row_evidence.production_output_bits,
+                "production_output_matches_selected_device_bits": row_evidence.production_output_matches_selected_device_bits,
                 "clean_for_projection_boundary": clean_row_evidence
             },
-            "projection_replay": {
-                "executed": false,
-                "selected_backend": "intel-arc-a770-opencl",
-                "runtime_api": "opencl",
-                "fallback_used": false,
-                "reason": blockers[0],
-                "blockers": blockers,
-                "current_operand_scope": "single_focused_output_row",
-                "required_operand_scope": "full_projection_output_rows",
-                "projection_level_replay_hook_available": false
+            "projection_replay": projection_replay,
+            "classification": if target_blockers.is_empty() {
+                "a770_qk256_projection_level_replay_executed_selected_device"
+            } else {
+                "a770_qk256_projection_level_replay_blocked"
             },
-            "classification": "a770_qk256_projection_level_replay_blocked",
             "claim_boundary": {
                 "production_qk256_policy_change": false,
                 "answer_scoring_change": false,
@@ -1493,10 +1566,25 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         }));
     }
 
-    let classification = if clean_row_evidence_count == projections.len() {
-        "a770_qk256_projection_level_qkv_replay_blocked_on_projection_operands_and_hook"
-    } else {
+    let classification = if clean_row_evidence_count != projections.len() {
         "a770_qk256_projection_level_qkv_replay_blocked_on_row_evidence"
+    } else if projection_executed_count == projections.len() {
+        "a770_qk256_projection_level_qkv_replay_executed_selected_device"
+    } else if summary_blockers.contains(&"projection_level_full_operands_missing")
+        && !summary_blockers.contains(&"projection_level_replay_hook_missing")
+    {
+        "a770_qk256_projection_level_qkv_replay_blocked_on_projection_operands"
+    } else {
+        "a770_qk256_projection_level_qkv_replay_blocked"
+    };
+    let source_receipts = if source_receipt_kind == "a770_157_projection_level_qkv_boundary" {
+        json!({
+            "a770_157_projection_level_qkv_boundary": path_json_value(source_path),
+        })
+    } else {
+        json!({
+            "a770_156_focused_qkv_replay": path_json_value(source_path),
+        })
     };
     let manifest_path = args.manifest.as_ref().map(|path| path_json_value(path));
     let manifest = json!({
@@ -1506,17 +1594,19 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "work_item": work_item,
         "diagnostic_only": true,
         "claim_allowed": false,
-        "source_receipts": {
-            "a770_156_focused_qkv_replay": path_json_value(source_path),
-        },
+        "source_receipts": source_receipts,
         "case_filter": case_id,
         "first_mismatch_index_filter": first_mismatch_index,
         "target_layer_idx_filter": projection_layer,
         "target_policy": {
-            "target_source": "A770-156 clean focused Q/K/V row replay packet",
+            "target_source": if source_receipt_kind == "a770_157_projection_level_qkv_boundary" {
+                "A770-157 projection-level Q/K/V boundary receipt"
+            } else {
+                "A770-156 clean focused Q/K/V row replay packet"
+            },
             "target_surface": "one transformer layer Q/K/V projection-level replay boundary",
-            "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands and replay hook exist",
-            "blocker_rule": "ledger missing full projection operands or missing projection replay hook instead of promoting production QK256 policy",
+            "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands are available through the bounded replay hook",
+            "blocker_rule": "ledger missing full projection operands instead of promoting production QK256 policy",
             "cpu_fallback_allowed": false,
             "fallback_used_must_equal": false
         },
@@ -1526,7 +1616,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
     });
     let source_runtime = target_results
         .iter()
-        .find_map(|target| target.get("production_replay"))
+        .find_map(|target| target.get("production_replay").or_else(|| target.get("row_evidence")))
         .or_else(|| source.as_object().map(|_| &source));
     let receipt = json!({
         "schema_version": "1.0.0",
@@ -1544,25 +1634,26 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "vendor": source_runtime.and_then(|value| string_field(value, "vendor")),
         "driver_version": source_runtime.and_then(|value| string_field(value, "driver_version")),
         "kernel_name": "qk256_i2s_i8s_scaled_gemv",
-        "projection_replay_kernel_name": Value::Null,
+        "projection_replay_kernel_name": PROJECTION_REPLAY_KERNEL_NAME,
+        "projection_replay_kernel_executed": projection_executed_count > 0,
         "classification": classification,
         "manifest_path": manifest_path,
         "manifest": manifest,
         "summary": {
             "target_count": projections.len(),
             "projection_replay_target_count": projections.len(),
-            "projection_replay_executed_count": 0,
+            "projection_replay_executed_count": projection_executed_count,
             "projection_replay_blocked_count": projection_blocked_count,
+            "projection_replay_hook_available_count": projection_replay_hook_available_count,
+            "projection_level_full_operands_available_count": projection_full_operands_available_count,
+            "projection_replay_fallback_false_count": projection_fallback_false_count,
             "row_evidence_target_count": row_evidence_count,
             "clean_row_evidence_count": clean_row_evidence_count,
             "row_selected_device_match_count": row_selected_device_match_count,
             "row_fallback_false_count": row_fallback_false_count,
             "all_row_evidence_clean": clean_row_evidence_count == projections.len(),
             "all_projection_replay_targets_blocked": projection_blocked_count == projections.len(),
-            "blockers": [
-                "projection_level_full_operands_missing",
-                "projection_level_replay_hook_missing"
-            ]
+            "blockers": summary_blockers
         },
         "fallback_used": false,
         "cpu_fallback_allowed": false,
@@ -1573,7 +1664,7 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "diagnostic_only": true,
         "performance_claim": false,
         "full_residency_claim": false,
-        "next_diagnostic": "capture full projection Q/K/V operands and add the bounded projection-level replay hook before any production QK256 promotion",
+        "next_diagnostic": "capture full projection Q/K/V operands before executing the bounded projection-level replay hook or any production QK256 promotion",
         "must_not_claim": [
             "CPU/A770 answer parity is proven",
             "Reference parity is proven",
@@ -1592,6 +1683,312 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         serde_json::to_string_pretty(&receipt["manifest"])? + "\n",
         serde_json::to_string_pretty(&receipt)? + "\n",
     ))
+}
+
+#[derive(Debug, Clone, Default)]
+struct ProjectionRowEvidence {
+    available: bool,
+    source_target_id: Option<String>,
+    dispatch_replay_source: Option<String>,
+    executed: bool,
+    selected_backend: Option<String>,
+    runtime_api: Option<String>,
+    runtime_device: Option<String>,
+    fallback_used: Option<bool>,
+    source_output_index: Option<u64>,
+    focused_device_output_bits: Option<u64>,
+    production_output_bits: Option<u64>,
+    production_output_matches_selected_device_bits: bool,
+}
+
+impl ProjectionRowEvidence {
+    fn clean_for_projection_boundary(&self) -> bool {
+        self.available
+            && self.executed
+            && self.fallback_used == Some(false)
+            && self.production_output_matches_selected_device_bits
+    }
+}
+
+#[derive(Debug, Clone)]
+struct ProjectionReplayOperands {
+    input_row_index: usize,
+    rows: usize,
+    cols: usize,
+    row_stride_bytes: usize,
+    activation_sum: i32,
+    activation_scale: f32,
+    activation_scale_bits: u32,
+    weight_scale: f32,
+    weight_scale_bits: u32,
+    activations_i8: Vec<i8>,
+    packed_qk256: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+enum ProjectionReplayOutcome {
+    Executed {
+        operands: ProjectionReplayOperands,
+        replay: A770OpenClQk256ProductionReplayResult,
+    },
+    Blocked {
+        reason: &'static str,
+        blockers: Vec<&'static str>,
+        missing_full_operand_fields: Vec<&'static str>,
+        current_operand_scope: String,
+    },
+    Failed {
+        error: String,
+        blockers: Vec<&'static str>,
+    },
+}
+
+fn projection_source_targets<'a>(
+    source: &'a Value,
+) -> Result<(Vec<&'a Value>, &'static str), Box<dyn Error>> {
+    if let Some(targets) = source.pointer("/manifest/targets").and_then(Value::as_array) {
+        return Ok((targets.iter().collect(), "a770_157_projection_level_qkv_boundary"));
+    }
+    if let Some(targets) = source.get("target_results").and_then(Value::as_array) {
+        return Ok((targets.iter().collect(), "a770_156_focused_qkv_replay"));
+    }
+    Err(io_error("projection source missing manifest.targets or target_results array"))
+}
+
+fn projection_row_evidence(row: Option<&Value>) -> ProjectionRowEvidence {
+    let Some(target) = row else {
+        return ProjectionRowEvidence::default();
+    };
+    if let Some(row_evidence) = target.get("row_evidence") {
+        return ProjectionRowEvidence {
+            available: true,
+            source_target_id: string_field(row_evidence, "source_target_id")
+                .or_else(|| string_field(target, "target_id")),
+            dispatch_replay_source: string_field(row_evidence, "dispatch_replay_source"),
+            executed: row_evidence.get("executed").and_then(Value::as_bool).unwrap_or(false),
+            selected_backend: string_field(row_evidence, "selected_backend"),
+            runtime_api: string_field(row_evidence, "runtime_api"),
+            runtime_device: string_field(row_evidence, "runtime_device"),
+            fallback_used: row_evidence.get("fallback_used").and_then(Value::as_bool),
+            source_output_index: u64_field(row_evidence, "source_output_index"),
+            focused_device_output_bits: u64_field(row_evidence, "focused_device_output_bits"),
+            production_output_bits: u64_field(row_evidence, "production_output_bits"),
+            production_output_matches_selected_device_bits: row_evidence
+                .get("production_output_matches_selected_device_bits")
+                .and_then(Value::as_bool)
+                == Some(true),
+        };
+    }
+    let replay = target.get("production_replay");
+    ProjectionRowEvidence {
+        available: replay.is_some(),
+        source_target_id: string_field(target, "target_id"),
+        dispatch_replay_source: string_field(target, "dispatch_replay_source"),
+        executed: replay
+            .and_then(|value| value.get("executed"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
+        selected_backend: replay.and_then(|value| string_field(value, "selected_backend")),
+        runtime_api: replay.and_then(|value| string_field(value, "runtime_api")),
+        runtime_device: replay.and_then(|value| string_field(value, "runtime_device")),
+        fallback_used: replay.and_then(|value| value.get("fallback_used")).and_then(Value::as_bool),
+        source_output_index: replay.and_then(|value| u64_field(value, "source_output_index")),
+        focused_device_output_bits: replay
+            .and_then(|value| u64_field(value, "focused_device_output_bits")),
+        production_output_bits: replay.and_then(|value| u64_field(value, "production_output_bits")),
+        production_output_matches_selected_device_bits: replay
+            .and_then(|value| value.get("production_output_matches_selected_device_bits"))
+            .and_then(Value::as_bool)
+            == Some(true),
+    }
+}
+
+fn projection_replay_outcome(row: Option<&Value>) -> ProjectionReplayOutcome {
+    let Some(target) = row else {
+        return ProjectionReplayOutcome::Blocked {
+            reason: "projection_level_row_evidence_not_clean",
+            blockers: vec!["projection_level_row_evidence_not_clean"],
+            missing_full_operand_fields: Vec::new(),
+            current_operand_scope: "row_evidence_missing".to_owned(),
+        };
+    };
+    let operands = match projection_replay_operands(target) {
+        Ok(Some(operands)) => operands,
+        Ok(None) => {
+            return ProjectionReplayOutcome::Blocked {
+                reason: "projection_level_full_operands_missing",
+                blockers: vec!["projection_level_full_operands_missing"],
+                missing_full_operand_fields: projection_missing_full_operand_fields(target),
+                current_operand_scope: projection_current_operand_scope(target),
+            };
+        }
+        Err(err) => {
+            return ProjectionReplayOutcome::Failed {
+                error: err.to_string(),
+                blockers: vec!["projection_level_replay_operand_error"],
+            };
+        }
+    };
+    run_projection_replay_operands(operands)
+}
+
+fn run_projection_replay_operands(operands: ProjectionReplayOperands) -> ProjectionReplayOutcome {
+    match run_a770_qk256_i8s_scaled_gemv_production_replay(A770OpenClQk256ProductionReplay {
+        activations_i8: &operands.activations_i8,
+        packed_qk256: &operands.packed_qk256,
+        rows: operands.rows,
+        cols: operands.cols,
+        row_stride_bytes: operands.row_stride_bytes,
+        activation_sum: operands.activation_sum,
+        activation_scale: operands.activation_scale,
+        weight_scale: operands.weight_scale,
+        sample_limit: projection_replay_sample_limit(operands.rows),
+    }) {
+        Ok(replay) => ProjectionReplayOutcome::Executed { operands, replay },
+        Err(err) => ProjectionReplayOutcome::Failed {
+            error: err.to_string(),
+            blockers: vec!["projection_level_replay_failed"],
+        },
+    }
+}
+
+fn projection_replay_operands(
+    target: &Value,
+) -> Result<Option<ProjectionReplayOperands>, Box<dyn Error>> {
+    let Some(operands_root) = projection_operand_root(target) else {
+        return Ok(None);
+    };
+    if !projection_missing_full_operand_fields_from_root(operands_root).is_empty() {
+        return Ok(None);
+    }
+
+    let activations_i8 = i8_array_at(
+        Some(operands_root),
+        &[&["activations_i8"], &["activation_i8"], &["input_activations_i8"]],
+    )?
+    .ok_or_else(|| io_error("projection replay operands missing activations_i8"))?;
+    let packed_qk256 = u8_array_at(
+        Some(operands_root),
+        &[&["packed_qk256"], &["weights_packed_qk256"], &["packed_qk256_weights"]],
+    )?
+    .ok_or_else(|| io_error("projection replay operands missing packed_qk256"))?;
+    let rows = usize_field(operands_root, "rows")
+        .or_else(|| usize_field(operands_root, "output_rows"))
+        .ok_or_else(|| io_error("projection replay operands missing rows"))?;
+    let cols = usize_field(operands_root, "cols")
+        .ok_or_else(|| io_error("projection replay operands missing cols"))?;
+    let row_stride_bytes = usize_field(operands_root, "row_stride_bytes")
+        .ok_or_else(|| io_error("projection replay operands missing row_stride_bytes"))?;
+    if rows == 0 {
+        return Err(io_error("projection replay operands rows must be non-zero"));
+    }
+    if activations_i8.len() < cols {
+        return Err(io_error(format!(
+            "projection replay activation length {} < cols {cols}",
+            activations_i8.len()
+        )));
+    }
+    let expected_packed_len = rows * row_stride_bytes;
+    if packed_qk256.len() < expected_packed_len {
+        return Err(io_error(format!(
+            "projection replay packed QK256 length {} < rows * row_stride_bytes {expected_packed_len}",
+            packed_qk256.len()
+        )));
+    }
+
+    let activation_sum = i64_field(operands_root, "activation_sum")
+        .ok_or_else(|| io_error("projection replay operands missing activation_sum"))?;
+    let activation_sum = i32::try_from(activation_sum)
+        .map_err(|_| io_error("projection replay operands activation_sum outside i32 range"))?;
+    let activation_scale_bits = u32_field(operands_root, "activation_scale_bits")
+        .ok_or_else(|| io_error("projection replay operands missing activation_scale_bits"))?;
+    let weight_scale_bits = u32_field(operands_root, "weight_scale_bits")
+        .ok_or_else(|| io_error("projection replay operands missing weight_scale_bits"))?;
+
+    Ok(Some(ProjectionReplayOperands {
+        input_row_index: usize_field(operands_root, "input_row_index").unwrap_or(0),
+        rows,
+        cols,
+        row_stride_bytes,
+        activation_sum,
+        activation_scale: f32::from_bits(activation_scale_bits),
+        activation_scale_bits,
+        weight_scale: f32::from_bits(weight_scale_bits),
+        weight_scale_bits,
+        activations_i8,
+        packed_qk256,
+    }))
+}
+
+fn projection_operand_root(target: &Value) -> Option<&Value> {
+    target
+        .pointer("/projection_replay/full_projection_operands")
+        .or_else(|| target.pointer("/projection_replay/operands"))
+        .or_else(|| target.get("full_projection_operands"))
+        .or_else(|| target.get("projection_operands"))
+        .or_else(|| target.get("operands"))
+}
+
+fn projection_current_operand_scope(target: &Value) -> String {
+    target
+        .pointer("/projection_replay/current_operand_scope")
+        .and_then(Value::as_str)
+        .unwrap_or("single_focused_output_row")
+        .to_owned()
+}
+
+fn projection_missing_full_operand_fields(target: &Value) -> Vec<&'static str> {
+    projection_operand_root(target).map_or_else(
+        || vec!["projection_operands"],
+        projection_missing_full_operand_fields_from_root,
+    )
+}
+
+fn projection_missing_full_operand_fields_from_root(root: &Value) -> Vec<&'static str> {
+    let mut missing = Vec::new();
+    if !any_array_at(
+        Some(root),
+        &[&["activations_i8"], &["activation_i8"], &["input_activations_i8"]],
+    ) {
+        missing.push("activations_i8");
+    }
+    if !any_array_at(
+        Some(root),
+        &[&["packed_qk256"], &["weights_packed_qk256"], &["packed_qk256_weights"]],
+    ) {
+        missing.push("packed_qk256");
+    }
+    if usize_field(root, "rows").or_else(|| usize_field(root, "output_rows")).is_none() {
+        missing.push("rows");
+    }
+    if usize_field(root, "cols").is_none() {
+        missing.push("cols");
+    }
+    if usize_field(root, "row_stride_bytes").is_none() {
+        missing.push("row_stride_bytes");
+    }
+    if i64_field(root, "activation_sum").is_none() {
+        missing.push("activation_sum");
+    }
+    if u32_field(root, "activation_scale_bits").is_none() {
+        missing.push("activation_scale_bits");
+    }
+    if u32_field(root, "weight_scale_bits").is_none() {
+        missing.push("weight_scale_bits");
+    }
+    missing
+}
+
+fn projection_replay_sample_limit(rows: usize) -> usize {
+    rows.min(PROJECTION_REPLAY_SAMPLE_LIMIT).max(1)
+}
+
+fn push_unique_blockers(target: &mut Vec<&'static str>, blockers: &[&'static str]) {
+    for blocker in blockers {
+        if !target.contains(blocker) {
+            target.push(*blocker);
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -1,0 +1,42 @@
+timestamp = "2026-06-05T00:14:28Z"
+campaign = "intel-a770"
+item = "A770-158"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-158-projection-operands-replay-hook"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-158 for the bounded projection-level replay hook boundary."
+notes = [
+  "A770-158 uses the committed A770-157 projection-level Q/K/V boundary receipt as its source packet.",
+  "The work is scoped to one case, one first-mismatch index, and the layer-0 Q/K/V target surface.",
+  "The selected-device replay hook must keep selected_backend Intel Arc A770 OpenCL, runtime_api opencl, and fallback_used=false for any execution.",
+  "If full projection operands are still missing, the receipt must ledger that blocker without reintroducing the missing replay hook blocker.",
+  "Answer parity, broad answer quality, residency, speed, trusted partial acceleration, production QK256 policy, and full BitNet inference claims remain closed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-158 may record that the bounded projection-level replay hook exists for the A770-157 target surface.",
+  "A770-158 may record a selected-device Intel Arc A770 OpenCL projection-level replay result with fallback_used=false if the required operands exist.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
