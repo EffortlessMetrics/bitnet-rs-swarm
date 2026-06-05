@@ -18414,7 +18414,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-NPU-CACHE-TRUTH-GUARD-001"
-status = "ready"
+status = "merged"
+pr = 1605
+head_sha = "168d79f47983ecfc4cb876348282659af5f5f5f4"
+merge_sha = "98f91d072e459e92993c98b1e1933178643c9a71"
+merged_at = "2026-06-05T16:48:24Z"
 branch = "codex/lunar-lake/LNL258V-NPU-CACHE-TRUTH-GUARD-001-cache-source-validator"
 stackable = false
 review_mode = "codex_premerge"
