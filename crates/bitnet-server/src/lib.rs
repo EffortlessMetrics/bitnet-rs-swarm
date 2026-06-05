@@ -20,6 +20,7 @@ pub mod gpu_streaming;
 pub mod health;
 pub mod health_monitor;
 pub mod hf_model_service;
+pub mod local_generation_control;
 pub mod middleware_chain;
 pub mod middleware_config;
 pub mod model_manager;

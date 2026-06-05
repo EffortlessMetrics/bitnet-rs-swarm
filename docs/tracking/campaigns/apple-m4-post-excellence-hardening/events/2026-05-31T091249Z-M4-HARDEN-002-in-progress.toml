@@ -1,0 +1,11 @@
+timestamp = "2026-05-31T09:12:49Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-002"
+event = "in_progress"
+previous_status = "proposed"
+branch = "codex/apple-m4/M4-HARDEN-002-dense-server-timeout-cancel"
+actor = "codex"
+notes = [
+  "Started dense local-server timeout and streaming cancellation hardening after M4-HARDEN-001 closeout merged.",
+  "Scope remains dense SLM server behavior only; BitNet serve stays disabled without ready-gate receipts.",
+]
