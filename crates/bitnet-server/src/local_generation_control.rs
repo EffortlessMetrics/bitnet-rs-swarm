@@ -227,6 +227,13 @@ pub fn health_ready_probe_receipt(
 mod tests {
     use super::*;
 
+    fn json_value_or_error(result: serde_json::Result<serde_json::Value>) -> serde_json::Value {
+        match result {
+            Ok(value) => value,
+            Err(error) => serde_json::json!({ "json_error": error.to_string() }),
+        }
+    }
+
     #[test]
     fn m4_harden_timeout_enforces_partial_receipt_and_preserves_fallback_false() {
         let mut control = LocalGenerationControl::new(LocalGenerationControlPolicy {
@@ -292,7 +299,7 @@ mod tests {
         assert!(timeout.observe_decode_start(Duration::from_millis(7)).is_some());
 
         let timeout_json =
-            serde_json::to_value(timeout.receipt("timeout-request", false)).expect("timeout json");
+            json_value_or_error(serde_json::to_value(timeout.receipt("timeout-request", false)));
         assert_eq!(timeout_json["request_id"], "timeout-request");
         assert_eq!(timeout_json["requested_backend"], "apple-m4-cpu-neon");
         assert_eq!(timeout_json["selected_backend"], "apple-m4-cpu-neon");
@@ -318,7 +325,7 @@ mod tests {
         assert!(cancel.observe_token(Duration::from_millis(2)).is_some());
 
         let cancel_json =
-            serde_json::to_value(cancel.receipt("cancel-request", false)).expect("cancel json");
+            json_value_or_error(serde_json::to_value(cancel.receipt("cancel-request", false)));
         assert_eq!(cancel_json["request_id"], "cancel-request");
         assert_eq!(cancel_json["stop_reason"], "cancelled");
         assert_eq!(cancel_json["partial_generation"], true);

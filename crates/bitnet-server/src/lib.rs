@@ -2314,6 +2314,13 @@ mod tests {
 
     use crate::model_manager::{ModelMemoryStats, ModelMetadata};
 
+    fn json_value_or_error(result: serde_json::Result<Value>) -> Value {
+        match result {
+            Ok(value) => value,
+            Err(error) => serde_json::json!({ "json_error": error.to_string() }),
+        }
+    }
+
     fn qwen25_server_receipt(request_id: &str) -> super::ServerSharedEngineReceipt {
         let request = ChatCompletionRequest {
             model: "qwen2.5-0.5b-instruct-q8_0".to_string(),
@@ -2468,7 +2475,7 @@ mod tests {
             receipt,
         };
 
-        let json = serde_json::to_value(&response).expect("chat response json");
+        let json = json_value_or_error(serde_json::to_value(&response));
 
         assert_eq!(json["id"], "chatcmpl-m4-response-1");
         assert_eq!(json["object"], "chat.completion");
@@ -2492,7 +2499,7 @@ mod tests {
     #[test]
     fn m4_harden_receipt_exports_model_backend_and_fallback_for_apple_m4_dense() {
         let receipt = apple_m4_qwen25_server_receipt("m4-receipt-1");
-        let json = serde_json::to_value(&receipt).expect("receipt json");
+        let json = json_value_or_error(serde_json::to_value(&receipt));
 
         assert_eq!(json["receipt_kind"], "server_shared_engine_chat_completion");
         assert_eq!(json["request_id"], "m4-receipt-1");
