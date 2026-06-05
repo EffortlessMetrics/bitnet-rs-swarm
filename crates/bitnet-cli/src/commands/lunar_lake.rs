@@ -10656,23 +10656,156 @@ fn validate_cpu_slm_runtime_comparison_qualification(
         );
     }
 
-    if !receipt.model_format_comparison.model_formats_match
-        && receipt.benchmark_qualification.qualified
-    {
+    if !receipt.benchmark_qualification.qualified {
+        return Ok(());
+    }
+
+    if !receipt.model_format_comparison.model_formats_match {
         bail!(
             "CPU runtime comparison must keep benchmark_qualified=false when model formats differ"
         );
     }
 
-    if !receipt.timing_scope_alignment.timing_scopes_match
-        && receipt.benchmark_qualification.qualified
-    {
+    if !receipt.timing_scope_alignment.timing_scopes_match {
         bail!(
             "CPU runtime comparison must keep benchmark_qualified=false when timing scopes differ"
         );
     }
 
+    if !receipt.benchmark_qualification.blockers.is_empty() {
+        bail!(
+            "CPU runtime comparison must keep benchmark_qualified=false while benchmark blockers remain: {}",
+            receipt.benchmark_qualification.blockers.join("; ")
+        );
+    }
+
+    if !receipt.timing_scope_alignment.blockers.is_empty() {
+        bail!(
+            "CPU runtime comparison must keep benchmark_qualified=false while timing-scope blockers remain: {}",
+            receipt.timing_scope_alignment.blockers.join("; ")
+        );
+    }
+
+    if receipt.generated_token_visibility.rust_gguf_cpu_direct_generated_token_ids != Some(true) {
+        bail!(
+            "CPU runtime comparison benchmark qualification requires direct Rust GGUF CPU generated-token IDs"
+        );
+    }
+
+    if receipt.generated_token_visibility.openvino_cpu_direct_generated_token_ids != Some(true) {
+        bail!(
+            "CPU runtime comparison benchmark qualification requires direct OpenVINO CPU generated-token IDs"
+        );
+    }
+
+    if receipt.generated_token_visibility.openvino_cpu_retokenized_ids_used == Some(true) {
+        bail!(
+            "CPU runtime comparison benchmark qualification rejects retokenized OpenVINO CPU generated-token IDs"
+        );
+    }
+
+    if receipt.rust_gguf_cpu.fallback_used != Some(false)
+        || receipt.openvino_cpu.fallback_used != Some(false)
+    {
+        bail!(
+            "CPU runtime comparison benchmark qualification requires both route summaries to record fallback_used=false"
+        );
+    }
+
+    if receipt.rust_gguf_cpu.answer_gate_passed != Some(true)
+        || receipt.openvino_cpu.answer_gate_passed != Some(true)
+    {
+        bail!(
+            "CPU runtime comparison benchmark qualification requires both route summaries to pass answer gates"
+        );
+    }
+
+    if receipt.profiles.is_empty() {
+        bail!("CPU runtime comparison benchmark qualification requires matched profile evidence");
+    }
+
+    for profile in &receipt.profiles {
+        if profile.rust_cpu.cases_total.unwrap_or(0) == 0
+            || profile.openvino_cpu.cases_total.unwrap_or(0) == 0
+        {
+            bail!(
+                "CPU runtime comparison benchmark qualification requires matched profile evidence for {}",
+                profile.profile_id
+            );
+        }
+
+        if profile.rust_cpu.fallback_used != Some(false)
+            || profile.openvino_cpu.fallback_used != Some(false)
+        {
+            bail!(
+                "CPU runtime comparison benchmark qualification requires profile {} to record fallback_used=false for both routes",
+                profile.profile_id
+            );
+        }
+
+        if profile.rust_cpu.answer_gate_passed != Some(true)
+            || profile.openvino_cpu.answer_gate_passed != Some(true)
+            || profile.rust_cpu.cases_failed.unwrap_or(0) > 0
+            || profile.openvino_cpu.cases_failed.unwrap_or(0) > 0
+        {
+            bail!(
+                "CPU runtime comparison benchmark qualification requires profile {} to pass answer gates for both routes",
+                profile.profile_id
+            );
+        }
+
+        if !profile.blockers.is_empty() {
+            bail!(
+                "CPU runtime comparison must keep benchmark_qualified=false while profile {} blockers remain: {}",
+                profile.profile_id,
+                profile.blockers.join("; ")
+            );
+        }
+    }
+
+    let claim_leaks = cpu_slm_runtime_comparison_claim_boundary_leaks(&receipt.claim_boundary);
+    if !claim_leaks.is_empty() {
+        bail!(
+            "CPU runtime comparison benchmark qualification rejects claim-boundary leakage: {}",
+            claim_leaks.join(", ")
+        );
+    }
+
     Ok(())
+}
+
+fn cpu_slm_runtime_comparison_claim_boundary_leaks(
+    claim_boundary: &CpuSlmPerfClaimBoundary,
+) -> Vec<&'static str> {
+    let mut leaks = Vec::new();
+    if claim_boundary.new_inference_executed {
+        leaks.push("new_inference_executed");
+    }
+    if claim_boundary.route_promotion_changed {
+        leaks.push("route_promotion_changed");
+    }
+    if claim_boundary.broad_quality_claim {
+        leaks.push("broad_quality_claim");
+    }
+    if claim_boundary.speedup_claim {
+        leaks.push("speedup_claim");
+    }
+    if claim_boundary.power_advantage_claim {
+        leaks.push("power_advantage_claim");
+    }
+    if claim_boundary.acceleration_claim {
+        leaks.push("acceleration_claim");
+    }
+    if claim_boundary.arc_npu_execution_claim {
+        leaks.push("arc_npu_execution_claim");
+    }
+    if claim_boundary.bitnet_qk256_i2s_claim {
+        leaks.push("bitnet_qk256_i2s_claim");
+    }
+    if claim_boundary.hidden_fallback_allowed {
+        leaks.push("hidden_fallback_allowed");
+    }
+    leaks
 }
 
 fn openvino_cpu_device(json: &Value) -> Option<&Value> {
@@ -24907,6 +25040,90 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("fields disagree"), "got: {err}");
+
+        let mut benchmark_claim = receipt.clone();
+        benchmark_claim.model_format_comparison.model_formats_match = true;
+        benchmark_claim.timing_scope_alignment.timing_scopes_match = true;
+        benchmark_claim.timing_scope_alignment.benchmark_qualified = true;
+        benchmark_claim.timing_scope_alignment.blockers.clear();
+        benchmark_claim.benchmark_qualification.qualified = true;
+        benchmark_claim.benchmark_qualification.status = "benchmark_qualified".to_string();
+        benchmark_claim.benchmark_qualification.blockers.clear();
+        benchmark_claim.generated_token_visibility.openvino_cpu_direct_generated_token_ids =
+            Some(true);
+        benchmark_claim.generated_token_visibility.openvino_cpu_retokenized_ids_used = Some(false);
+        benchmark_claim.rust_gguf_cpu.fallback_used = Some(false);
+        benchmark_claim.openvino_cpu.fallback_used = Some(false);
+        benchmark_claim.rust_gguf_cpu.answer_gate_passed = Some(true);
+        benchmark_claim.openvino_cpu.answer_gate_passed = Some(true);
+        for profile in &mut benchmark_claim.profiles {
+            profile.status = "benchmark_qualified".to_string();
+            profile.blockers.clear();
+            profile.rust_cpu.cases_total = Some(2);
+            profile.rust_cpu.cases_passed = Some(2);
+            profile.rust_cpu.cases_failed = Some(0);
+            profile.rust_cpu.fallback_used = Some(false);
+            profile.rust_cpu.answer_gate_passed = Some(true);
+            profile.openvino_cpu.cases_total = Some(2);
+            profile.openvino_cpu.cases_passed = Some(2);
+            profile.openvino_cpu.cases_failed = Some(0);
+            profile.openvino_cpu.fallback_used = Some(false);
+            profile.openvino_cpu.answer_gate_passed = Some(true);
+        }
+        validate_cpu_slm_runtime_comparison_qualification(&benchmark_claim)?;
+
+        let mut missing_direct_token_claim = benchmark_claim.clone();
+        missing_direct_token_claim
+            .generated_token_visibility
+            .openvino_cpu_direct_generated_token_ids = Some(false);
+        let err = validate_cpu_slm_runtime_comparison_qualification(&missing_direct_token_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("direct OpenVINO CPU generated-token IDs"), "got: {err}");
+
+        let mut retokenized_claim = benchmark_claim.clone();
+        retokenized_claim.generated_token_visibility.openvino_cpu_retokenized_ids_used = Some(true);
+        let err = validate_cpu_slm_runtime_comparison_qualification(&retokenized_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("retokenized OpenVINO CPU"), "got: {err}");
+
+        let mut missing_profile_claim = benchmark_claim.clone();
+        missing_profile_claim.profiles[0].rust_cpu.cases_total = None;
+        let err = validate_cpu_slm_runtime_comparison_qualification(&missing_profile_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("matched profile evidence"), "got: {err}");
+
+        let mut fallback_claim = benchmark_claim.clone();
+        fallback_claim.profiles[0].openvino_cpu.fallback_used = Some(true);
+        let err = validate_cpu_slm_runtime_comparison_qualification(&fallback_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("fallback_used=false"), "got: {err}");
+
+        let mut failed_answer_claim = benchmark_claim.clone();
+        failed_answer_claim.profiles[0].openvino_cpu.answer_gate_passed = Some(false);
+        let err = validate_cpu_slm_runtime_comparison_qualification(&failed_answer_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("answer gates"), "got: {err}");
+
+        let mut blocker_claim = benchmark_claim.clone();
+        blocker_claim
+            .benchmark_qualification
+            .blockers
+            .push("benchmark blocker remains".to_string());
+        let err = validate_cpu_slm_runtime_comparison_qualification(&blocker_claim)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("benchmark blockers remain"), "got: {err}");
+
+        let mut leak_claim = benchmark_claim.clone();
+        leak_claim.claim_boundary.speedup_claim = true;
+        let err =
+            validate_cpu_slm_runtime_comparison_qualification(&leak_claim).unwrap_err().to_string();
+        assert!(err.contains("claim-boundary leakage"), "got: {err}");
 
         let profile = receipt
             .profiles

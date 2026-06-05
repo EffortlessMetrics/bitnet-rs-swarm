@@ -1,0 +1,16 @@
+timestamp = "2026-06-05T13:21:38Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-MATCHED-CHECK-001"
+event = "pr_open"
+previous_status = "ready"
+new_status = "pr_open"
+pr = 1593
+branch = "codex/lunar-lake/LNL258V-CPU-MATCHED-CHECK-001-checker-guard"
+head_sha = "8e7108a4c76983a31bb1fdb76363a1a904b46504"
+actor = "codex"
+summary = "Opened PR #1593 for the no-inference CPU matched-comparison qualification checker."
+notes = [
+  "PR #1593 tightens the CPU runtime-comparison qualification validator so benchmark_qualified=true requires direct generated-token evidence, no retokenized OpenVINO generated-token IDs, matched profile evidence, fallback_used=false, passing answer gates, empty benchmark/profile blockers, and closed claim boundaries.",
+  "The test coverage uses synthetic mutated receipts only and preserves context-only benchmark_qualified=false receipts.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, OpenVINO CPU promotion, CPU optimization, benchmark qualification, speedup or power claim, low_power evidence, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]
