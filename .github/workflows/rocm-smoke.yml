@@ -37,14 +37,26 @@ jobs:
   # Always-on compile check (no ROCm runtime required)
   rocm-compile:
     name: ROCm Compile Check
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: em-ci-small
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - rust-medium
+        - trusted-pr
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
 
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
           components: rustfmt, clippy
