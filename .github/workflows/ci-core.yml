@@ -105,7 +105,7 @@ jobs:
       changed_files: ${{ steps.classify.outputs.changed_files }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v4
         with:
           fetch-depth: 0
 
@@ -253,7 +253,7 @@ jobs:
 
       - name: Checkout code
         if: needs.classify-changes.outputs.hardware_receipt_only == 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           fetch-depth: 0
 
@@ -324,7 +324,7 @@ jobs:
 
       - name: Checkout code
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - name: Install Rust toolchain
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
@@ -631,7 +631,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
@@ -676,7 +676,7 @@ jobs:
 
       - name: Checkout code
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - name: Install Rust toolchain
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
@@ -750,7 +750,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
@@ -800,7 +800,7 @@ jobs:
 
       - name: Checkout code
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - name: Install Rust toolchain
         if: needs.classify-changes.outputs.no_rust_inputs != 'true'

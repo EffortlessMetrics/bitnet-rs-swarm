@@ -51,7 +51,7 @@ jobs:
       tracker_only: ${{ steps.classify.outputs.tracker_only }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v4
         with:
           fetch-depth: 0
 
@@ -116,7 +116,7 @@ jobs:
 
       - name: Checkout code
         if: needs.classify-docs.outputs.tracker_only != 'true'
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v4
 
       - name: Bootstrap native build tools
         if: needs.classify-docs.outputs.tracker_only != 'true'
