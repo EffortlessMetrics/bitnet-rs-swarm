@@ -81,6 +81,18 @@ const CPU_SLM_RESIDENT_REQUIRED_WARM_ASKS_AFTER_FIRST: u64 = 30;
 const CPU_SLM_PHASE_NOT_EXPOSED: &str = "not_exposed";
 const CPU_SLM_RESIDENT_PROFILE_CONTRACT_NOT_EXPOSED_FIELDS: &[&str] =
     &["receipt_write_ms", "telemetry_ms"];
+const CPU_SLM_RESIDENT_PHASE_ATTRIBUTION_BUCKETS: &[&str] = &[
+    "reload",
+    "prompt_template_tokenization",
+    "prefill",
+    "first_token_boundary",
+    "decode",
+    "logits_sampling",
+    "detokenization",
+    "host_overhead",
+    "topology",
+    "unavailable_telemetry",
+];
 const CPU_SLM_RESIDENT_DIAGNOSTIC_REQUIRED_MEASURED_FIELDS: &[&str] = &[
     "resident_session.first_resident_prompt",
     "resident_session.memory_samples.before_load_bytes",
@@ -2305,6 +2317,8 @@ pub struct LunarLakeCpuSlmResidentSession {
     pub profiles: Vec<CpuSlmResidentProfileSummary>,
     #[serde(default = "default_cpu_slm_resident_measurement_qualification")]
     pub measurement_qualification: CpuSlmResidentMeasurementQualification,
+    #[serde(default = "default_cpu_slm_resident_phase_attribution_buckets")]
+    pub phase_attribution_buckets: CpuSlmResidentPhaseAttributionBuckets,
     pub resident_ready: bool,
     pub findings: Vec<String>,
     pub recommended_next_items: Vec<String>,
@@ -2500,6 +2514,30 @@ pub struct CpuSlmResidentMeasurementQualification {
     pub diagnostic_blockers: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmResidentPhaseAttributionBuckets {
+    pub required_buckets: Vec<String>,
+    pub required_buckets_present: bool,
+    pub fail_closed: bool,
+    pub resident_phase_qualified: bool,
+    pub benchmark_qualified: bool,
+    pub diagnostic_package_reviewable: bool,
+    pub status: String,
+    pub buckets: Vec<CpuSlmResidentPhaseAttributionBucket>,
+    pub blockers: Vec<String>,
+    pub documentation: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CpuSlmResidentPhaseAttributionBucket {
+    pub id: String,
+    pub status: String,
+    pub exposure: String,
+    pub source_fields: Vec<String>,
+    pub contract_not_exposed: bool,
+    pub blockers: Vec<String>,
+}
+
 fn default_cpu_slm_resident_measurement_qualification() -> CpuSlmResidentMeasurementQualification {
     CpuSlmResidentMeasurementQualification {
         resident_phase_qualified: false,
@@ -2521,6 +2559,25 @@ fn default_cpu_slm_resident_measurement_qualification() -> CpuSlmResidentMeasure
         diagnostic_blockers: vec![
             "legacy resident receipt has no diagnostic reviewability block".to_string(),
         ],
+    }
+}
+
+fn default_cpu_slm_resident_phase_attribution_buckets() -> CpuSlmResidentPhaseAttributionBuckets {
+    CpuSlmResidentPhaseAttributionBuckets {
+        required_buckets: CPU_SLM_RESIDENT_PHASE_ATTRIBUTION_BUCKETS
+            .iter()
+            .map(|bucket| (*bucket).to_string())
+            .collect(),
+        required_buckets_present: false,
+        fail_closed: false,
+        resident_phase_qualified: false,
+        benchmark_qualified: false,
+        diagnostic_package_reviewable: false,
+        status: "legacy_receipt_without_phase_attribution_buckets".to_string(),
+        buckets: Vec::new(),
+        blockers: vec!["legacy resident receipt has no phase attribution bucket block".to_string()],
+        documentation: "docs/research/lunar-lake-cpu-slow-path.md#cpu-phase-attribution-receipt"
+            .to_string(),
     }
 }
 
@@ -8609,6 +8666,44 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
         }
     }
 
+    let model = CpuSlmAttributionModel {
+        model_family: string_at_any(&repeated_json, &["model.family", "corpus.model.family"]),
+        model_architecture: string_at_any(
+            &repeated_json,
+            &["model.architecture", "corpus.model.architecture"],
+        ),
+        quantization: string_at_any(
+            &repeated_json,
+            &["model.quant_format", "corpus.model.quant_format"],
+        ),
+        tokenizer_source: string_at_any(&repeated_json, &["model.tokenizer"]),
+        prompt_template: string_at_any(
+            &repeated_json,
+            &["generation.prompt_template", "corpus.defaults.prompt_template"],
+        ),
+    };
+    let backend = CpuSlmAttributionBackend {
+        route_id: DEFAULT_ASK_ROUTE.to_string(),
+        selected_backend: string_at_any(
+            &repeated_json,
+            &["selected_backend", "backend.selected_backend"],
+        )
+        .unwrap_or_else(|| "unknown".to_string()),
+        runtime_api: string_at_any(&repeated_json, &["runtime_api", "backend.runtime_api"])
+            .unwrap_or_else(|| "unknown".to_string()),
+        selected_kernel_or_runtime: Some("resident_cpu_rust_gguf".to_string()),
+        fallback_used: fallback_used(&repeated_json),
+        answer_gate_passed: bool_at_any(&repeated_json, &["quality_summary.passed"]),
+    };
+    let execution_context = cpu_slm_resident_execution_context(&repeated_json);
+    let phase_attribution_buckets = cpu_slm_resident_phase_attribution_buckets(
+        &model,
+        &execution_context,
+        &resident_session,
+        &profiles,
+        &measurement_qualification,
+    );
+
     let recommended_next_items = vec![
         "LNL258V-CPU-SLM-PERF-003: compare Rust GGUF CPU against OpenVINO CPU for the same Qwen profiles".to_string(),
         "LNL258V-GPU-QUAL-001: classify OpenVINO GPU corpus-v2 quality failures before promotion".to_string(),
@@ -8619,7 +8714,7 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
         && profiles.iter().all(|profile| profile.blockers.is_empty());
 
     Ok(LunarLakeCpuSlmResidentSession {
-        schema_version: "1.2.0".to_string(),
+        schema_version: "1.3.0".to_string(),
         artifact_kind: "lunar_lake_cpu_slm_resident_session".to_string(),
         proof_stage: "resident_cpu_no_reload_timing_no_new_inference".to_string(),
         created_utc,
@@ -8629,40 +8724,14 @@ pub fn build_cpu_slm_resident_session_with_created_utc(
             phase_attribution_receipt: path_string(&phase_attribution_path),
             repeated_warm_session_receipt: path_string(&repeated_warm_session_path),
         },
-        model: CpuSlmAttributionModel {
-            model_family: string_at_any(&repeated_json, &["model.family", "corpus.model.family"]),
-            model_architecture: string_at_any(
-                &repeated_json,
-                &["model.architecture", "corpus.model.architecture"],
-            ),
-            quantization: string_at_any(
-                &repeated_json,
-                &["model.quant_format", "corpus.model.quant_format"],
-            ),
-            tokenizer_source: string_at_any(&repeated_json, &["model.tokenizer"]),
-            prompt_template: string_at_any(
-                &repeated_json,
-                &["generation.prompt_template", "corpus.defaults.prompt_template"],
-            ),
-        },
-        backend: CpuSlmAttributionBackend {
-            route_id: DEFAULT_ASK_ROUTE.to_string(),
-            selected_backend: string_at_any(
-                &repeated_json,
-                &["selected_backend", "backend.selected_backend"],
-            )
-            .unwrap_or_else(|| "unknown".to_string()),
-            runtime_api: string_at_any(&repeated_json, &["runtime_api", "backend.runtime_api"])
-                .unwrap_or_else(|| "unknown".to_string()),
-            selected_kernel_or_runtime: Some("resident_cpu_rust_gguf".to_string()),
-            fallback_used: fallback_used(&repeated_json),
-            answer_gate_passed: bool_at_any(&repeated_json, &["quality_summary.passed"]),
-        },
-        execution_context: cpu_slm_resident_execution_context(&repeated_json),
+        model,
+        backend,
+        execution_context,
         resident_session,
         cold_reference,
         profiles,
         measurement_qualification,
+        phase_attribution_buckets,
         resident_ready,
         findings,
         recommended_next_items,
@@ -9341,6 +9410,387 @@ fn cpu_slm_resident_measurement_qualification(
     }
 }
 
+fn cpu_slm_resident_phase_attribution_buckets(
+    model: &CpuSlmAttributionModel,
+    execution_context: &CpuSlmResidentExecutionContext,
+    resident_session: &CpuSlmResidentSessionEvidence,
+    profiles: &[CpuSlmResidentProfileSummary],
+    measurement_qualification: &CpuSlmResidentMeasurementQualification,
+) -> CpuSlmResidentPhaseAttributionBuckets {
+    let mut buckets = Vec::new();
+
+    let mut reload_blockers = Vec::new();
+    if resident_session.reuse_scope.as_deref() != Some("resident_session") {
+        reload_blockers.push("resident_session.reuse_scope must be resident_session".to_string());
+    }
+    if resident_session.model_loaded_once != Some(true) {
+        reload_blockers.push("resident_session.model_loaded_once must be true".to_string());
+    }
+    if resident_session.tokenizer_loaded_once != Some(true) {
+        reload_blockers.push("resident_session.tokenizer_loaded_once must be true".to_string());
+    }
+    if resident_session
+        .first_resident_prompt
+        .as_ref()
+        .is_some_and(|prompt| prompt.model_reload_observed || prompt.tokenizer_reload_observed)
+    {
+        reload_blockers
+            .push("first resident prompt observed model or tokenizer reload".to_string());
+    }
+    for profile in profiles {
+        if profile.model_reload_observed || profile.tokenizer_reload_observed {
+            reload_blockers
+                .push(format!("profile {} observed model or tokenizer reload", profile.profile_id));
+        }
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "reload",
+        "measured",
+        false,
+        &[
+            "resident_session.reuse_scope",
+            "resident_session.model_loaded_once",
+            "resident_session.tokenizer_loaded_once",
+            "profiles[].model_reload_observed",
+            "profiles[].tokenizer_reload_observed",
+        ],
+        reload_blockers,
+    ));
+
+    let mut prompt_blockers = Vec::new();
+    if model.prompt_template.as_deref().map(str::is_empty).unwrap_or(true) {
+        prompt_blockers.push("model prompt_template is missing".to_string());
+    }
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        "prompt_template_tokenization",
+        "prompt_render_ms",
+        |profile| &profile.phase_timings_ms.prompt_render_ms,
+        &mut prompt_blockers,
+    );
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        "prompt_template_tokenization",
+        "tokenize_ms",
+        |profile| &profile.phase_timings_ms.tokenize_ms,
+        &mut prompt_blockers,
+    );
+    for profile in profiles {
+        if !cpu_slm_resident_phase_metric_is_measured(&profile.prompt_token_count) {
+            prompt_blockers
+                .push(format!("profile {} prompt_token_count is not measured", profile.profile_id));
+        }
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "prompt_template_tokenization",
+        "measured",
+        false,
+        &[
+            "model.prompt_template",
+            "profiles[].phase_timings_ms.prompt_render_ms",
+            "profiles[].phase_timings_ms.tokenize_ms",
+            "profiles[].prompt_token_count",
+        ],
+        prompt_blockers,
+    ));
+
+    buckets.push(cpu_slm_resident_profile_metric_bucket(
+        "prefill",
+        "profiles[].phase_timings_ms.prefill_ms",
+        profiles,
+        |profile| &profile.phase_timings_ms.prefill_ms,
+    ));
+
+    let mut first_token_blockers = Vec::new();
+    if resident_session
+        .first_resident_prompt
+        .as_ref()
+        .and_then(|prompt| prompt.time_to_first_token_ms)
+        .is_none()
+    {
+        first_token_blockers.push(
+            "resident_session.first_resident_prompt.time_to_first_token_ms is missing".to_string(),
+        );
+    }
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        "first_token_boundary",
+        "first_token_ms",
+        |profile| &profile.phase_timings_ms.first_token_ms,
+        &mut first_token_blockers,
+    );
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "first_token_boundary",
+        "measured",
+        false,
+        &[
+            "resident_session.first_resident_prompt.time_to_first_token_ms",
+            "profiles[].phase_timings_ms.first_token_ms",
+        ],
+        first_token_blockers,
+    ));
+
+    let mut decode_blockers = Vec::new();
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        "decode",
+        "decode_ms",
+        |profile| &profile.phase_timings_ms.decode_ms,
+        &mut decode_blockers,
+    );
+    for profile in profiles {
+        if profile.generated_tokens.sample_count == 0 {
+            decode_blockers.push(format!(
+                "profile {} generated token count summary is missing",
+                profile.profile_id
+            ));
+        }
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "decode",
+        "measured",
+        false,
+        &["profiles[].phase_timings_ms.decode_ms", "profiles[].generated_tokens"],
+        decode_blockers,
+    ));
+
+    let mut logits_blockers = Vec::new();
+    for profile in profiles {
+        if profile.generated_token_ids_available != Some(true) {
+            logits_blockers.push(format!(
+                "profile {} direct generated token IDs are missing",
+                profile.profile_id
+            ));
+        }
+        if !cpu_slm_resident_direct_generated_token_ids_source(&profile.generated_token_ids_source)
+        {
+            logits_blockers.push(format!(
+                "profile {} generated token ID source is not direct",
+                profile.profile_id
+            ));
+        }
+        if profile.deterministic_generated_ids != Some(true) {
+            logits_blockers.push(format!(
+                "profile {} generated token IDs are not deterministic",
+                profile.profile_id
+            ));
+        }
+        if profile.deterministic_text != Some(true) {
+            logits_blockers
+                .push(format!("profile {} decoded text is not deterministic", profile.profile_id));
+        }
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "logits_sampling",
+        "measured",
+        false,
+        &[
+            "profiles[].generated_token_ids_available",
+            "profiles[].generated_token_ids_source",
+            "profiles[].deterministic_generated_ids",
+            "profiles[].deterministic_text",
+        ],
+        logits_blockers,
+    ));
+
+    buckets.push(cpu_slm_resident_profile_metric_bucket(
+        "detokenization",
+        "profiles[].phase_timings_ms.detokenize_ms",
+        profiles,
+        |profile| &profile.phase_timings_ms.detokenize_ms,
+    ));
+
+    let mut host_blockers = Vec::new();
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        "host_overhead",
+        "quality_gate_ms",
+        |profile| &profile.phase_timings_ms.quality_gate_ms,
+        &mut host_blockers,
+    );
+    for profile in profiles {
+        if !cpu_slm_resident_phase_metric_is_measured(&profile.phase_timings_ms.receipt_write_ms) {
+            host_blockers
+                .push(format!("profile {} receipt_write_ms is not exposed", profile.profile_id));
+        }
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "host_overhead",
+        "mixed",
+        true,
+        &[
+            "profiles[].phase_timings_ms.quality_gate_ms",
+            "profiles[].phase_timings_ms.receipt_write_ms",
+        ],
+        host_blockers,
+    ));
+
+    let mut topology_blockers = Vec::new();
+    if execution_context.effective_thread_count.is_none() {
+        topology_blockers.push("execution_context.effective_thread_count is missing".to_string());
+    }
+    if execution_context.windows_power_scheme_status.trim().is_empty() {
+        topology_blockers
+            .push("execution_context.windows_power_scheme_status is missing".to_string());
+    }
+    if execution_context.cpu_utilization_status.trim().is_empty() {
+        topology_blockers.push("execution_context.cpu_utilization_status is missing".to_string());
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "topology",
+        "measured_or_declared",
+        false,
+        &[
+            "execution_context.requested_thread_count",
+            "execution_context.effective_thread_count",
+            "execution_context.thread_env",
+            "execution_context.process_affinity_mask",
+            "execution_context.windows_power_scheme_status",
+            "execution_context.cpu_utilization_status",
+        ],
+        topology_blockers,
+    ));
+
+    let mut telemetry_blockers = Vec::new();
+    if execution_context.thermal_availability.trim().is_empty() {
+        telemetry_blockers.push("execution_context.thermal_availability is missing".to_string());
+    }
+    if execution_context.temperature_status.trim().is_empty() {
+        telemetry_blockers.push("execution_context.temperature_status is missing".to_string());
+    }
+    if execution_context.frequency_or_throttle_status.trim().is_empty() {
+        telemetry_blockers
+            .push("execution_context.frequency_or_throttle_status is missing".to_string());
+    }
+    buckets.push(cpu_slm_resident_phase_bucket(
+        "unavailable_telemetry",
+        "unavailable_declared",
+        true,
+        &[
+            "execution_context.thermal_availability",
+            "execution_context.temperature_status",
+            "execution_context.cpu_utilization_status",
+            "execution_context.frequency_or_throttle_status",
+        ],
+        telemetry_blockers,
+    ));
+
+    let required_buckets = CPU_SLM_RESIDENT_PHASE_ATTRIBUTION_BUCKETS
+        .iter()
+        .map(|bucket| (*bucket).to_string())
+        .collect::<Vec<_>>();
+    let required_buckets_present =
+        required_buckets.iter().all(|required| buckets.iter().any(|bucket| bucket.id == *required));
+    let mut blockers = buckets
+        .iter()
+        .flat_map(|bucket| {
+            bucket.blockers.iter().map(|blocker| format!("{}: {blocker}", bucket.id))
+        })
+        .collect::<Vec<_>>();
+    blockers.sort();
+    blockers.dedup();
+
+    let resident_phase_qualified = required_buckets_present
+        && blockers.is_empty()
+        && measurement_qualification.resident_phase_qualified;
+    let diagnostic_package_reviewable = measurement_qualification.diagnostic_package_reviewable
+        && required_buckets_present
+        && buckets.iter().all(|bucket| bucket.blockers.is_empty() || bucket.contract_not_exposed);
+    let status = if !required_buckets_present {
+        "blocked_missing_required_phase_attribution_buckets"
+    } else if resident_phase_qualified {
+        "resident_phase_qualified_context_only_not_benchmark_qualified"
+    } else if diagnostic_package_reviewable {
+        "diagnostic_reviewable_with_contract_or_unavailable_buckets"
+    } else {
+        "blocked_for_phase_attribution_bucket_qualification"
+    };
+
+    CpuSlmResidentPhaseAttributionBuckets {
+        required_buckets,
+        required_buckets_present,
+        fail_closed: true,
+        resident_phase_qualified,
+        benchmark_qualified: false,
+        diagnostic_package_reviewable,
+        status: status.to_string(),
+        buckets,
+        blockers,
+        documentation: "docs/research/lunar-lake-cpu-slow-path.md#cpu-phase-attribution-receipt"
+            .to_string(),
+    }
+}
+
+fn cpu_slm_resident_profile_metric_bucket(
+    id: &str,
+    source_field: &str,
+    profiles: &[CpuSlmResidentProfileSummary],
+    metric: impl Fn(&CpuSlmResidentProfileSummary) -> &CpuSlmResidentPhaseMetric,
+) -> CpuSlmResidentPhaseAttributionBucket {
+    let mut blockers = Vec::new();
+    cpu_slm_resident_push_missing_profile_phase_metric(
+        profiles,
+        id,
+        source_field.trim_start_matches("profiles[].phase_timings_ms."),
+        metric,
+        &mut blockers,
+    );
+    cpu_slm_resident_phase_bucket(id, "measured", false, &[source_field], blockers)
+}
+
+fn cpu_slm_resident_push_missing_profile_phase_metric(
+    profiles: &[CpuSlmResidentProfileSummary],
+    bucket_id: &str,
+    metric_id: &str,
+    metric: impl Fn(&CpuSlmResidentProfileSummary) -> &CpuSlmResidentPhaseMetric,
+    blockers: &mut Vec<String>,
+) {
+    if profiles.is_empty() {
+        blockers.push(format!("{bucket_id} has no resident profiles"));
+        return;
+    }
+    for profile in profiles {
+        if !cpu_slm_resident_phase_metric_is_measured(metric(profile)) {
+            blockers.push(format!("profile {} {} is not measured", profile.profile_id, metric_id));
+        }
+    }
+}
+
+fn cpu_slm_resident_phase_metric_is_measured(metric: &CpuSlmResidentPhaseMetric) -> bool {
+    metric.exposure == "measured" && metric.summary.sample_count > 0
+}
+
+fn cpu_slm_resident_phase_bucket(
+    id: &str,
+    exposure: &str,
+    contract_not_exposed: bool,
+    source_fields: &[&str],
+    mut blockers: Vec<String>,
+) -> CpuSlmResidentPhaseAttributionBucket {
+    blockers.sort();
+    blockers.dedup();
+    let status = if blockers.is_empty() {
+        match exposure {
+            "unavailable_declared" => "unavailable_declared",
+            "measured_or_declared" => "measured_or_declared",
+            _ => "measured",
+        }
+    } else if contract_not_exposed {
+        "contract_or_unavailable_context_only"
+    } else {
+        "blocked"
+    };
+
+    CpuSlmResidentPhaseAttributionBucket {
+        id: id.to_string(),
+        status: status.to_string(),
+        exposure: exposure.to_string(),
+        source_fields: source_fields.iter().map(|field| (*field).to_string()).collect(),
+        contract_not_exposed,
+        blockers,
+    }
+}
+
 fn cpu_slm_resident_profile_contract_not_exposed_field(field: &str) -> bool {
     CPU_SLM_RESIDENT_PROFILE_CONTRACT_NOT_EXPOSED_FIELDS.contains(&field)
 }
@@ -9440,6 +9890,10 @@ fn cpu_slm_resident_profile_generated_token_ids_source(sources: &BTreeSet<String
         return "resident_prompt_receipt".to_string();
     }
     sources.iter().next().cloned().unwrap_or_else(cpu_slm_generated_token_ids_source_not_exposed)
+}
+
+fn cpu_slm_resident_direct_generated_token_ids_source(source: &str) -> bool {
+    matches!(source, "resident_prompt_receipt" | "slm_warm_session_generated_ids")
 }
 
 fn push_number(json: &Value, path: &str, out: &mut Vec<f64>) {
@@ -24268,7 +24722,7 @@ mod tests {
         assert!(receipt.resident_ready, "{:?}", receipt.gaps);
         assert_eq!(receipt.artifact_kind, "lunar_lake_cpu_slm_resident_session");
         assert_eq!(receipt.backend.selected_backend, "cpu-rust");
-        assert_eq!(receipt.schema_version, "1.2.0");
+        assert_eq!(receipt.schema_version, "1.3.0");
         assert_eq!(receipt.execution_context.requested_thread_count, None);
         assert_eq!(receipt.execution_context.effective_thread_count, Some(4));
         assert_eq!(receipt.execution_context.thread_count, Some(4));
@@ -24405,6 +24859,49 @@ mod tests {
         assert!(receipt.measurement_qualification.benchmark_blockers.contains(
             &"resident receipt is not a matched CPU runtime benchmark comparison".to_string()
         ));
+        assert!(receipt.phase_attribution_buckets.required_buckets_present);
+        assert!(receipt.phase_attribution_buckets.fail_closed);
+        assert!(!receipt.phase_attribution_buckets.resident_phase_qualified);
+        assert!(!receipt.phase_attribution_buckets.benchmark_qualified);
+        assert!(!receipt.phase_attribution_buckets.diagnostic_package_reviewable);
+        assert_eq!(
+            receipt.phase_attribution_buckets.status,
+            "blocked_for_phase_attribution_bucket_qualification"
+        );
+        assert!(
+            receipt
+                .phase_attribution_buckets
+                .required_buckets
+                .contains(&"logits_sampling".to_string())
+        );
+        let logits = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "logits_sampling")
+            .context("missing logits/sampling bucket")?;
+        assert_eq!(logits.status, "measured");
+        let detokenization = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "detokenization")
+            .context("missing detokenization bucket")?;
+        assert_eq!(detokenization.status, "blocked");
+        assert!(detokenization.blockers.iter().any(|blocker| {
+            blocker.contains("profile ask_short detokenize_ms is not measured")
+        }));
+        let host = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "host_overhead")
+            .context("missing host overhead bucket")?;
+        assert_eq!(host.status, "contract_or_unavailable_context_only");
+        assert!(host.contract_not_exposed);
+        assert!(
+            host.blockers.iter().any(|blocker| blocker.contains("receipt_write_ms is not exposed"))
+        );
         assert!(!receipt.claim_boundary.new_inference_executed);
         assert!(!receipt.claim_boundary.speedup_claim);
         assert!(!receipt.claim_boundary.route_promotion_changed);
@@ -24467,6 +24964,31 @@ mod tests {
                 "runtime_api": "cpu",
                 "fallback_used": false,
                 "speedup_claim": false,
+                "execution_context": {
+                    "requested_thread_count": null,
+                    "effective_thread_count": 4,
+                    "thread_count": 4,
+                    "thread_env": {
+                        "RAYON_NUM_THREADS": null,
+                        "BITNET_CPU_THREADS": null,
+                        "BITNET_NUM_THREADS": null,
+                        "OMP_NUM_THREADS": null,
+                        "OPENBLAS_NUM_THREADS": null,
+                        "MKL_NUM_THREADS": null,
+                        "NUMEXPR_NUM_THREADS": null
+                    },
+                    "process_affinity_mask": "0xff",
+                    "affinity_classification": null,
+                    "affinity_classification_status": "not_exposed",
+                    "windows_power_scheme": "Balanced",
+                    "windows_power_scheme_status": "measured",
+                    "ac_battery_state": "AC",
+                    "ac_battery_state_status": "measured",
+                    "thermal_availability": "not_exposed",
+                    "temperature_status": "not_exposed",
+                    "cpu_utilization_status": "not_exposed",
+                    "frequency_or_throttle_status": "not_exposed"
+                },
                 "quality_summary": {"passed": true},
                 "determinism": {
                     "passed": true,
@@ -24578,6 +25100,43 @@ mod tests {
         assert!(receipt.measurement_qualification.benchmark_blockers.contains(
             &"resident receipt is not a matched CPU runtime benchmark comparison".to_string()
         ));
+        assert!(receipt.phase_attribution_buckets.required_buckets_present);
+        assert!(receipt.phase_attribution_buckets.fail_closed);
+        assert!(!receipt.phase_attribution_buckets.resident_phase_qualified);
+        assert!(!receipt.phase_attribution_buckets.benchmark_qualified);
+        assert!(receipt.phase_attribution_buckets.diagnostic_package_reviewable);
+        assert_eq!(
+            receipt.phase_attribution_buckets.status,
+            "diagnostic_reviewable_with_contract_or_unavailable_buckets"
+        );
+        let host = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "host_overhead")
+            .context("missing host overhead bucket")?;
+        assert_eq!(host.status, "contract_or_unavailable_context_only");
+        assert!(host.contract_not_exposed);
+        assert!(
+            host.blockers.iter().any(|blocker| blocker.contains("receipt_write_ms is not exposed"))
+        );
+        let topology = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "topology")
+            .context("missing topology bucket")?;
+        assert_eq!(topology.status, "measured_or_declared");
+        assert!(topology.blockers.is_empty());
+        let unavailable = receipt
+            .phase_attribution_buckets
+            .buckets
+            .iter()
+            .find(|bucket| bucket.id == "unavailable_telemetry")
+            .context("missing unavailable telemetry bucket")?;
+        assert_eq!(unavailable.status, "unavailable_declared");
+        assert!(unavailable.contract_not_exposed);
+        assert!(unavailable.blockers.is_empty());
         Ok(())
     }
 
