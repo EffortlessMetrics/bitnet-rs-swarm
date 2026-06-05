@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T10:38:59Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-003"
+event = "merged"
+pr = 1580
+head_sha = "7b70b12bd7d8680be4e326fcbdcf173e56a583c6"
+merge_sha = "8c0ffff61385e551fcd243be5cfa83be99a3737c"
+actor = "codex"
+notes = [
+  "PR #1580 merged the dense local-server response conformance hardening item.",
+  "The merged scope locks dense server response, streaming event, receipt export, bad-model, and unsupported BitNet serve failure shapes.",
+  "Claim boundary remains dense Apple M4 server conformance only; BitNet chat and BitNet serve remain disabled without separate ready-gate receipts.",
+]
