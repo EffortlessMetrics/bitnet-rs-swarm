@@ -1,0 +1,16 @@
+campaign = "intel-258v-platform"
+timestamp = "2026-06-05T01:13:35Z"
+event = "pr_open"
+item = "LNL258V-BITNET-INTAKE-006"
+pr = 1556
+head_sha = "f6269d1f89ff0c358a24df68720838396e212c55"
+branch = "codex/lunar-lake/LNL258V-BITNET-INTAKE-006-slm-cpu-243-freshness"
+actor = "codex"
+summary = "Opened PR #1556 for the no-inference Lunar Lake BitNet intake freshness refresh."
+
+notes = [
+  "The PR records current swarm main classifications for #1529, #1541, and #1549 in the Lunar Lake BitNet semantic-intake ledger.",
+  "#1529 is recorded as a dense-SLM reviewed non-trigger, #1541 as diagnostic-only A770 work, and #1549 as tracker-only A770 work.",
+  "The refreshed semantic intake reports total_change_count=11, merged_to_main_count=5, stale_after_merged_count=0, diagnostic_only_no_rerun_count=3, and rerun_required=false.",
+  "The PR preserves no new inference, no route promotion, no POWER-006 evidence, no dense-SLM-as-BitNet proof, and no BitNet QK256/I2_S behavior-change claim.",
+]
