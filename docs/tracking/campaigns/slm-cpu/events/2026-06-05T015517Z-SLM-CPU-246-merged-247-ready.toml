@@ -1,0 +1,17 @@
+timestamp = "2026-06-05T01:55:17Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-246"
+event = "merged"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1560
+branch = "codex/slm-cpu/slm-cpu-246-no-bias-role-expansion-policy"
+head_sha = "86389897865a6ada5767bf9dd299526cb817e983"
+merge_sha = "fc276af5d81ad492b2d76c574f324173d467e203"
+summary = "Closed SLM-CPU-246 after the no-bias role expansion policy PR merged and queued SLM-CPU-247."
+notes = [
+  "PR #1560 records the SLM-CPU-246 role expansion policy receipt after consuming the SLM-CPU-245 Qwen3/Qwen2.5 Q8_0 timing/allocation envelope.",
+  "The policy keeps feed_forward.down_proj as the only proven executable no-bias role and names feed_forward.up_proj, feed_forward.gate_proj, attention.o_proj, then exact-policy q/k/v as the receipt-bound expansion order.",
+  "SLM-CPU-247 is ready to define or precisely block the opt-in Kaby profile slice while preserving default eager_f32_candle, no speedup/allocation claim, and no new no-bias role execution without fresh per-role receipts.",
+]
