@@ -8532,6 +8532,10 @@ pub fn validate_lunar_lake_openvino_receipt_json(receipt: &Value) -> Result<()> 
         validate_lunar_lake_openvino_auto_debug_log_evidence(receipt)?;
     }
 
+    if artifact_kind == LUNAR_LAKE_OPENVINO_NPU_CACHE_TRUTH_ARTIFACT_KIND {
+        validate_lunar_lake_openvino_npu_cache_truth(receipt)?;
+    }
+
     validate_lunar_lake_openvino_value(receipt, "$")?;
     Ok(())
 }
@@ -8553,6 +8557,7 @@ fn is_lunar_lake_openvino_artifact_kind(artifact_kind: &str) -> bool {
             | "lunar_lake_openvino_corpus_v2_diagnosis"
             | "lunar_lake_openvino_npu_cold_start_diagnosis"
             | "lunar_lake_openvino_npu_cache_experiment"
+            | LUNAR_LAKE_OPENVINO_NPU_CACHE_TRUTH_ARTIFACT_KIND
             | "lunar_lake_openvino_npu_resident_session"
             | LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND
             | "lunar_lake_openvino_operator_ask"
@@ -8566,6 +8571,9 @@ const LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND: &str = "lunar_lake_operator_ask";
 
 const LUNAR_LAKE_OPENVINO_AUTO_GENAI_DEBUG_LOG_EVIDENCE_ARTIFACT_KIND: &str =
     "lunar_lake_openvino_auto_genai_debug_log_evidence";
+
+const LUNAR_LAKE_OPENVINO_NPU_CACHE_TRUTH_ARTIFACT_KIND: &str =
+    "lunar_lake_openvino_npu_cache_truth";
 
 fn validate_lunar_lake_openvino_operator_ask_wrapper(receipt: &Value) -> Result<()> {
     require_string_eq(receipt, "artifact_kind", LUNAR_LAKE_OPERATOR_ASK_ARTIFACT_KIND)?;
@@ -8728,6 +8736,229 @@ fn validate_lunar_lake_openvino_auto_debug_log_evidence(receipt: &Value) -> Resu
     {
         return Err(anyhow!(
             "claim_boundary.must_not_claim must preserve route-policy, low_power, and BitNet claim boundaries"
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_npu_cache_truth(receipt: &Value) -> Result<()> {
+    require_string_eq(receipt, "artifact_kind", LUNAR_LAKE_OPENVINO_NPU_CACHE_TRUTH_ARTIFACT_KIND)?;
+    require_string_eq(receipt, "machine_id", "intel-258v")?;
+    require_string_eq(receipt, "route_id", "dense_slm_openvino_npu_candidate")?;
+    require_string_eq(receipt, "requested_backend", "openvino-npu")?;
+    require_string_eq(receipt, "selected_backend", "openvino-npu")?;
+    require_string_eq(receipt, "runtime_api", "openvino_genai")?;
+    require_string_eq(receipt, "runtime_device", "NPU")?;
+    require_string_non_empty(receipt, "resolved_device")?;
+    if !required_string(receipt, "resolved_device")?.starts_with("NPU") {
+        return Err(anyhow!("field `resolved_device` must identify an NPU runtime device"));
+    }
+    require_string_non_empty(receipt, "selected_kernel_or_runtime")?;
+    require_bool_eq(receipt, "fallback_used", false)?;
+
+    let runtime = object_field(receipt, "runtime")?;
+    require_string_non_empty(runtime, "openvino_version")?;
+    require_string_non_empty(runtime, "openvino_genai_version")?;
+    require_string_non_empty(runtime, "driver_version")?;
+
+    let model_export = object_field(receipt, "model_export")?;
+    require_string_non_empty(model_export, "model_id")?;
+    require_string_non_empty(model_export, "export_format")?;
+    require_sha256_or_not_applicable(model_export, "model_xml_sha256")?;
+    require_sha256_or_not_applicable(model_export, "model_bin_sha256")?;
+    require_sha256_or_not_applicable(model_export, "tokenizer_sha256")?;
+
+    let cache = object_field(receipt, "cache")?;
+    require_string_non_empty(cache, "cache_dir")?;
+    require_string_non_empty(cache, "cache_key")?;
+    validate_lunar_lake_openvino_cache_policy(cache, "cache_policy")?;
+    validate_lunar_lake_openvino_cache_policy(cache, "cache_config_status")?;
+    required_bool(cache, "cache_writable")?;
+    let runtime_metric_available = required_bool(cache, "cache_hit_runtime_metric_available")?;
+    let cache_evidence_source =
+        required_lunar_lake_cache_evidence_source(cache, "cache_evidence_source")?;
+    if cache_evidence_source == "runtime_metric" && !runtime_metric_available {
+        return Err(anyhow!(
+            "cache.cache_hit_runtime_metric_available must be true when cache_evidence_source=runtime_metric"
+        ));
+    }
+    if matches!(cache_evidence_source, "timing_derived" | "file_reuse" | "not_exposed")
+        && runtime_metric_available
+    {
+        return Err(anyhow!(
+            "cache.cache_hit_runtime_metric_available must be false for diagnostic cache_evidence_source={cache_evidence_source}"
+        ));
+    }
+    validate_lunar_lake_openvino_direct_runtime_cache_hit_status(
+        object_field(cache, "direct_runtime_cache_hit_status")?,
+        cache_evidence_source,
+        "$.cache.direct_runtime_cache_hit_status",
+    )?;
+
+    validate_lunar_lake_openvino_npu_cache_truth_process_runs(receipt)?;
+
+    let answer_gate = object_field(receipt, "answer_gate")?;
+    require_bool_eq(answer_gate, "passed", true)?;
+    require_string_non_empty(answer_gate, "summary")?;
+
+    validate_lunar_lake_openvino_generated_token_visibility(object_field(
+        receipt,
+        "generated_token_visibility",
+    )?)?;
+
+    let claim_boundary = object_field(receipt, "claim_boundary")?;
+    require_bool_eq(claim_boundary, "route_policy_changed", false)?;
+    require_bool_eq(claim_boundary, "route_promotion_changed", false)?;
+    require_bool_eq(claim_boundary, "auto_route_policy_claim", false)?;
+    require_bool_eq(claim_boundary, "warm_resident_promotion_claim", false)?;
+    require_bool_eq(claim_boundary, "low_power_promotion_claim", false)?;
+    require_bool_eq(claim_boundary, "speedup_claim", false)?;
+    require_bool_eq(claim_boundary, "power_advantage_claim", false)?;
+    require_bool_eq(claim_boundary, "acceleration_claim", false)?;
+    require_bool_eq(claim_boundary, "native_npu_inference_claim", false)?;
+    require_bool_eq(claim_boundary, "bitnet_qk256_i2s_behavior_changed", false)?;
+    let direct_truth_claimed =
+        required_bool(claim_boundary, "direct_runtime_cache_hit_truth_claimed")?;
+    if direct_truth_claimed && !lunar_lake_cache_source_is_runtime_direct(cache_evidence_source) {
+        return Err(anyhow!(
+            "claim_boundary.direct_runtime_cache_hit_truth_claimed requires runtime_metric or runtime_log cache evidence"
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_cache_policy(object: &Value, field: &str) -> Result<()> {
+    let value = required_string(object, field)?;
+    if !matches!(value, "enabled" | "disabled" | "unavailable") {
+        return Err(anyhow!("field `{field}` must be enabled, disabled, or unavailable"));
+    }
+    Ok(())
+}
+
+fn required_lunar_lake_cache_evidence_source<'a>(
+    object: &'a Value,
+    field: &str,
+) -> Result<&'a str> {
+    let value = required_string(object, field)?;
+    if !matches!(
+        value,
+        "runtime_metric" | "runtime_log" | "file_reuse" | "timing_derived" | "not_exposed"
+    ) {
+        return Err(anyhow!(
+            "field `{field}` must be runtime_metric, runtime_log, file_reuse, timing_derived, or not_exposed"
+        ));
+    }
+    Ok(value)
+}
+
+fn validate_lunar_lake_openvino_direct_runtime_cache_hit_status(
+    status: &Value,
+    cache_evidence_source: &str,
+    path: &str,
+) -> Result<()> {
+    let available = required_bool(status, "available")?;
+    let status_value = required_string(status, "status")?;
+    let source = required_string(status, "source")?;
+    if status_value.trim().is_empty() || source.trim().is_empty() {
+        return Err(anyhow!("{path} must record non-empty status and source"));
+    }
+
+    let direct_truth_status = lunar_lake_cache_status_is_direct_truth(status_value);
+    let runtime_direct_source = lunar_lake_cache_source_is_runtime_direct(source)
+        || lunar_lake_cache_source_is_runtime_direct(cache_evidence_source);
+    if matches!(cache_evidence_source, "timing_derived" | "file_reuse")
+        && (available || direct_truth_status || lunar_lake_cache_source_is_runtime_direct(source))
+    {
+        return Err(anyhow!(
+            "{path} must not turn {cache_evidence_source} evidence into direct runtime cache-hit truth"
+        ));
+    }
+    if available && !runtime_direct_source {
+        return Err(anyhow!(
+            "{path}.available=true requires runtime_metric or runtime_log cache-hit evidence"
+        ));
+    }
+    if available && !direct_truth_status {
+        return Err(anyhow!("{path}.status must record hit or miss when available=true"));
+    }
+    if !available && direct_truth_status {
+        return Err(anyhow!(
+            "{path}.status must not record direct cache-hit truth when available=false"
+        ));
+    }
+    if cache_evidence_source == "not_exposed" && (available || direct_truth_status) {
+        return Err(anyhow!("{path} must keep not_exposed cache-hit status diagnostic"));
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_npu_cache_truth_process_runs(receipt: &Value) -> Result<()> {
+    let runs = array_field(receipt, "process_runs")?;
+    if runs.len() != 2 {
+        return Err(anyhow!(
+            "process_runs must contain exactly first_process and second_process entries"
+        ));
+    }
+
+    let mut saw_first = false;
+    let mut saw_second = false;
+    for run in runs {
+        let role = required_string(run, "run_role")?;
+        match role {
+            "first_process" if !saw_first => saw_first = true,
+            "second_process" if !saw_second => saw_second = true,
+            "first_process" | "second_process" => {
+                return Err(anyhow!("process_runs must not duplicate `{role}`"));
+            }
+            _ => {
+                return Err(anyhow!(
+                    "process_runs.run_role must be first_process or second_process"
+                ));
+            }
+        }
+        validate_lunar_lake_openvino_npu_cache_truth_process_run(run)?;
+    }
+
+    if !saw_first || !saw_second {
+        return Err(anyhow!("process_runs must include both first_process and second_process"));
+    }
+
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_npu_cache_truth_process_run(run: &Value) -> Result<()> {
+    require_string_eq(run, "selected_backend", "openvino-npu")?;
+    require_string_eq(run, "runtime_api", "openvino_genai")?;
+    require_string_eq(run, "runtime_device", "NPU")?;
+    require_bool_eq(run, "fallback_used", false)?;
+    require_bool_eq(run, "answer_gate_passed", true)?;
+    require_non_negative_number(run, "pipeline_construct_wall_ms")?;
+    require_optional_non_negative_number(run, "openvino_load_time_ms")?;
+    Ok(())
+}
+
+fn validate_lunar_lake_openvino_generated_token_visibility(visibility: &Value) -> Result<()> {
+    let direct_available = required_bool(visibility, "direct_generated_token_ids_available")?;
+    let pipeline_available =
+        required_bool(visibility, "generated_token_ids_available_from_pipeline")?;
+    if direct_available != pipeline_available {
+        return Err(anyhow!(
+            "generated_token_visibility direct and pipeline availability fields must agree"
+        ));
+    }
+
+    let source = required_string(visibility, "generated_token_ids_source")?;
+    if source.trim().is_empty() {
+        return Err(anyhow!(
+            "generated_token_visibility.generated_token_ids_source must not be empty"
+        ));
+    }
+    if direct_available && source.contains("retokenized") {
+        return Err(anyhow!(
+            "generated_token_visibility.generated_token_ids_source must not claim retokenized IDs when direct OpenVINO token IDs are available"
         ));
     }
 
@@ -9292,6 +9523,21 @@ fn lunar_lake_cache_status_is_direct_hit(value: &str) -> bool {
     matches!(normalized.as_str(), "hit" | "cachehit" | "runtimehit" | "directhit")
 }
 
+fn lunar_lake_cache_status_is_direct_truth(value: &str) -> bool {
+    let normalized = value.replace(['-', '_', ' '], "").to_ascii_lowercase();
+    matches!(
+        normalized.as_str(),
+        "hit"
+            | "cachehit"
+            | "runtimehit"
+            | "directhit"
+            | "miss"
+            | "cachemiss"
+            | "runtimemiss"
+            | "directmiss"
+    )
+}
+
 fn openvino_object_has_cache_evidence(object: &Value) -> bool {
     object.get("npu_cache").is_some()
         || object.get("cache").is_some()
@@ -9697,10 +9943,12 @@ fn require_rtx_5070_ti_name(object: &Value, field: &str) -> Result<()> {
     Ok(())
 }
 
+fn required_bool(object: &Value, field: &str) -> Result<bool> {
+    object_field(object, field)?.as_bool().ok_or_else(|| anyhow!("field `{field}` must be a bool"))
+}
+
 fn require_bool_eq(object: &Value, field: &str, expected: bool) -> Result<()> {
-    let actual = object_field(object, field)?
-        .as_bool()
-        .ok_or_else(|| anyhow!("field `{field}` must be a bool"))?;
+    let actual = required_bool(object, field)?;
     if actual != expected {
         return Err(anyhow!("field `{field}` must be `{expected}`, got `{actual}`"));
     }
@@ -10706,6 +10954,89 @@ mod tests {
         })
     }
 
+    fn minimal_lunar_lake_openvino_npu_cache_truth_receipt() -> Value {
+        json!({
+            "schema_version": "1.0.0",
+            "artifact_kind": LUNAR_LAKE_OPENVINO_NPU_CACHE_TRUTH_ARTIFACT_KIND,
+            "machine_id": "intel-258v",
+            "route_id": "dense_slm_openvino_npu_candidate",
+            "requested_backend": "openvino-npu",
+            "selected_backend": "openvino-npu",
+            "runtime_api": "openvino_genai",
+            "runtime_device": "NPU",
+            "resolved_device": "NPU",
+            "selected_kernel_or_runtime": "openvino-genai-llmpipeline-npu",
+            "fallback_used": false,
+            "runtime": {
+                "openvino_version": "2026.2.0-21903-52ddc073857-releases/2026/2",
+                "openvino_genai_version": "2026.2.0.0-3121-adf73e80e66",
+                "driver_version": "unavailable"
+            },
+            "model_export": {
+                "model_id": "qwen2.5-0.5b-instruct-dense-slm-openvino-ir",
+                "export_format": "openvino_ir",
+                "model_xml_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "model_bin_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "tokenizer_sha256": "not_applicable"
+            },
+            "cache": {
+                "cache_dir": "target/openvino-cache/lnl258v-npu-cache-001",
+                "cache_key": "qwen25-dense-slm-openvino-npu-openvino-2026.2.0",
+                "cache_policy": "enabled",
+                "cache_config_status": "enabled",
+                "cache_writable": true,
+                "cache_hit_runtime_metric_available": false,
+                "cache_evidence_source": "timing_derived",
+                "direct_runtime_cache_hit_status": {
+                    "available": false,
+                    "status": "not_exposed",
+                    "source": "not_exposed"
+                }
+            },
+            "process_runs": [{
+                "run_role": "first_process",
+                "selected_backend": "openvino-npu",
+                "runtime_api": "openvino_genai",
+                "runtime_device": "NPU",
+                "fallback_used": false,
+                "answer_gate_passed": true,
+                "pipeline_construct_wall_ms": 1200.0,
+                "openvino_load_time_ms": null
+            }, {
+                "run_role": "second_process",
+                "selected_backend": "openvino-npu",
+                "runtime_api": "openvino_genai",
+                "runtime_device": "NPU",
+                "fallback_used": false,
+                "answer_gate_passed": true,
+                "pipeline_construct_wall_ms": 400.0,
+                "openvino_load_time_ms": null
+            }],
+            "answer_gate": {
+                "passed": true,
+                "summary": "Synthetic fixture preserves the answer gate without running inference."
+            },
+            "generated_token_visibility": {
+                "direct_generated_token_ids_available": true,
+                "generated_token_ids_available_from_pipeline": true,
+                "generated_token_ids_source": "openvino_genai_encoded_results_tokens"
+            },
+            "claim_boundary": {
+                "route_policy_changed": false,
+                "route_promotion_changed": false,
+                "auto_route_policy_claim": false,
+                "warm_resident_promotion_claim": false,
+                "low_power_promotion_claim": false,
+                "speedup_claim": false,
+                "power_advantage_claim": false,
+                "acceleration_claim": false,
+                "native_npu_inference_claim": false,
+                "bitnet_qk256_i2s_behavior_changed": false,
+                "direct_runtime_cache_hit_truth_claimed": false
+            }
+        })
+    }
+
     #[test]
     fn lunar_lake_openvino_validator_accepts_candidate_gpu_receipt() {
         let result =
@@ -10882,6 +11213,49 @@ mod tests {
         });
         let result = validate_lunar_lake_openvino_receipt_json(&receipt);
         assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_npu_cache_truth_accepts_unavailable_direct_runtime_status() {
+        let result = validate_lunar_lake_openvino_receipt_json(
+            &minimal_lunar_lake_openvino_npu_cache_truth_receipt(),
+        );
+        assert!(result.is_ok(), "got: {result:?}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_npu_cache_truth_requires_model_export_tuple() {
+        let mut receipt = minimal_lunar_lake_openvino_npu_cache_truth_receipt();
+        let removed = receipt
+            .get_mut("model_export")
+            .and_then(Value::as_object_mut)
+            .and_then(|model_export| model_export.remove("model_xml_sha256"));
+        assert!(removed.is_some(), "fixture must contain model_xml_sha256");
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("model_xml_sha256"), "got: {err}");
+    }
+
+    #[test]
+    fn lunar_lake_openvino_npu_cache_truth_rejects_diagnostic_source_claiming_direct_truth() {
+        for cache_evidence_source in ["timing_derived", "file_reuse"] {
+            let mut receipt = minimal_lunar_lake_openvino_npu_cache_truth_receipt();
+            receipt["cache"]["cache_evidence_source"] = json!(cache_evidence_source);
+            receipt["cache"]["direct_runtime_cache_hit_status"] = json!({
+                "available": true,
+                "status": "hit",
+                "source": cache_evidence_source
+            });
+            let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+            assert!(err.contains("direct runtime cache-hit truth"), "got: {err}");
+        }
+    }
+
+    #[test]
+    fn lunar_lake_openvino_npu_cache_truth_rejects_direct_claim_without_runtime_source() {
+        let mut receipt = minimal_lunar_lake_openvino_npu_cache_truth_receipt();
+        receipt["claim_boundary"]["direct_runtime_cache_hit_truth_claimed"] = json!(true);
+        let err = validate_lunar_lake_openvino_receipt_json(&receipt).unwrap_err().to_string();
+        assert!(err.contains("direct_runtime_cache_hit_truth_claimed"), "got: {err}");
     }
 
     #[test]
