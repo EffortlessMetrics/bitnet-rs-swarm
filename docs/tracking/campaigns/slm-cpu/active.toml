@@ -14178,10 +14178,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "SLM-CPU-245"
-status = "pr_open"
+status = "merged"
 pr = 1555
-head_sha = "5eece13b2ff1f9ec03b7a1bc915f2cff4f7c3e76"
 branch = "codex/slm-cpu/slm-cpu-245-no-bias-timing-allocation-envelope"
+head_sha = "54a6a17cb56c86adc424d0e347843b4bcbe8959d"
+merge_sha = "b1ea684eb29174cc7f62ca5c5fe94528a9595e14"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -14227,6 +14228,60 @@ must_not_claim = [
   "A default runtime path changes when the explicit gate is absent.",
   "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven without matching before/after receipts.",
   "No-bias roles beyond feed_forward.down_proj are enabled or proven.",
+  "Q4_K_M or Q4_K_S runtime support exists.",
+  "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
+  "Qwen3.5 or hybrid architecture support is in scope.",
+  "BitNet QK256/I2_S kernels are modified.",
+]
+
+[[work_item]]
+id = "SLM-CPU-246"
+status = "ready"
+branch = "codex/slm-cpu/slm-cpu-246-no-bias-role-expansion-policy"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["SLM-CPU-245"]
+acceptance = "Consume the SLM-CPU-245 Qwen3/Qwen2.5 Q8_0 no-bias timing/allocation envelope and define or precisely block the next receipt-bound no-bias role expansion policy beyond the proven feed_forward.down_proj path. A valid implementation must preserve explicit gate opt-in, preserve default eager_f32_candle when the gate is absent, keep feed_forward.down_proj as the only proven executable no-bias role, name the required per-role receipt ladder before any new role executes, and order expansion as feed_forward.up_proj, feed_forward.gate_proj, attention.o_proj, then q/k/v only where bias policy and tensor/callsite identity are exact. It must require same prompt IDs, generated IDs, decoded text, model SHA, tokenizer source and strictness, runtime_api=cpu, selected_backend=cpu-rust, fallback=false, selected/candidate path and kernel identity, and allocation/timing envelope evidence before any role can claim parity or performance. A valid blocker must name the exact missing role identity, bias policy, selector gate, receipt emitter, candidate-off/on receipt, timing/allocation envelope, or runtime ownership boundary. This item must not enable a broad no-bias runtime, expand candidate execution to additional roles, claim speedup, allocation reduction, sustained throughput, default-runtime promotion, Q4/Q5 support, server/accelerator execution, Qwen3.5 support, or BitNet QK256 changes without matching per-role receipts."
+commands = [
+  "python -m json.tool ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-245-no-bias-timing-allocation-envelope.json",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_no_bias -- --nocapture",
+  "cargo run -p xtask --no-default-features -- campaign generate",
+  "cargo run -p xtask --no-default-features -- campaign doctor",
+  "git diff --check",
+]
+allowed_paths = [
+  "ci/slm-cpu/**",
+  "crates/bitnet-cli/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-models/**",
+  "crates/bitnet-transformer/**",
+  "docs/slm/**",
+  "docs/tracking/campaigns/slm-cpu/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "models/**",
+  "target/**",
+  "crates/bitnet-quantization/**",
+  "crates/bitnet-kernels/src/gpu/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-npu/**",
+]
+evidence = [
+  "SLM-CPU-245 records Qwen3/Qwen2.5 Q8_0 candidate-off/candidate-on timing/allocation envelope evidence for the exact feed_forward.down_proj no-bias candidate path.",
+  "SLM-CPU-245 preserves prompt IDs, generated IDs, decoded text, model SHA, tokenizer authority, selected backend/kernel identity, default eager_f32_candle without the gate, candidate execution only with the explicit gate, and fallback=false while making no speedup or allocation-reduction claim.",
+]
+may_claim = [
+  "SLM-CPU-246 may define the receipt-bound role expansion order and per-role proof requirements after feed_forward.down_proj.",
+  "SLM-CPU-246 may identify a precise blocker for missing role identity, bias policy, selector gate, receipt emitter, parity receipts, or timing/allocation envelope evidence.",
+]
+must_not_claim = [
+  "No-bias apply-linear candidate execution is enabled by default.",
+  "A default runtime path changes when the explicit gate is absent.",
+  "No-bias roles beyond feed_forward.down_proj execute or are proven without fresh per-role candidate-off/candidate-on receipts.",
+  "Timing improvement, allocation reduction, speedup, sustained throughput, broad decode latency, prefill latency, model-load latency, or warm-session end-to-end speedup is proven without matching per-role before/after receipts.",
   "Q4_K_M or Q4_K_S runtime support exists.",
   "Server, GPU, NPU, OpenVINO, or UHD 620 execution is involved.",
   "Qwen3.5 or hybrid architecture support is in scope.",
