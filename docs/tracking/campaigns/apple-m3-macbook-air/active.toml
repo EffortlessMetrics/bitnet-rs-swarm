@@ -1414,7 +1414,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-029"
-status = "ready"
+status = "blocked"
 branch = "codex/apple-m3-macbook-air/M3MBA-029-dense-slm-accuracy-receipt"
 stackable = false
 review_mode = "codex_premerge"
