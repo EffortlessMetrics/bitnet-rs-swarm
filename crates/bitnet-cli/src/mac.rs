@@ -28,6 +28,11 @@ const APPLE_M3_AIR_CPU_NEON: &str = apple_m3_air::CPU_NEON_BACKEND;
 const APPLE_M4_METAL: &str = "apple-m4-metal";
 const APPLE_M3_AIR_METAL: &str = apple_m3_air::METAL_BACKEND;
 const APPLE_M3_AIR_MPSGRAPH: &str = apple_m3_air::MPSGRAPH_BACKEND;
+const M3_TIMEOUT_CAP_BASIS: &str = "completed_healthy_runs_plus_cushion";
+const M3_TIMEOUT_CAP_SOURCE_ENV: &str = "BITNET_M3_TIMEOUT_CAP_SOURCE";
+const M3_TIMEOUT_CAP_COMPLETED_MINUTES_ENV: &str = "BITNET_M3_TIMEOUT_CAP_COMPLETED_MINUTES";
+const M3_TIMEOUT_CAP_CUSHION_MINUTES_ENV: &str = "BITNET_M3_TIMEOUT_CAP_CUSHION_MINUTES";
+const M3_TIMEOUT_CAP_CONFIGURED_MINUTES_ENV: &str = "BITNET_M3_TIMEOUT_CAP_CONFIGURED_MINUTES";
 const MAC_ASK_DEFAULT_RECEIPT: &str = "target/apple-m4-productization/mac-ask.json";
 const MAC_CHAT_DEFAULT_RECEIPT: &str = "target/apple-m4-continuity/mac-chat.json";
 const MAC_CHAT_SMOKE_DEFAULT_RECEIPT: &str = "target/apple-m4-inference-excellence/chat-smoke.json";
@@ -16632,6 +16637,98 @@ struct WarmProfileSetSpec {
     quiet: bool,
 }
 
+fn m3_timeout_cap_env_value(name: &str, label: &str) -> Result<String> {
+    let value = std::env::var(name)
+        .with_context(|| format!("{name} is required for Apple M3 Air performance profiles"))?;
+    let trimmed = value.trim();
+    if trimmed.is_empty() || trimmed == "none-recorded-yet" {
+        anyhow::bail!(
+            "Apple M3 Air performance profiles require {label} from completed healthy run evidence before model timing"
+        );
+    }
+    Ok(trimmed.to_string())
+}
+
+fn m3_timeout_cap_env_minutes(name: &str, label: &str) -> Result<u64> {
+    let value = m3_timeout_cap_env_value(name, label)?;
+    let minutes = value
+        .parse::<u64>()
+        .with_context(|| format!("{name} must be a positive integer minute count"))?;
+    if minutes == 0 {
+        anyhow::bail!("{name} must be greater than zero");
+    }
+    Ok(minutes)
+}
+
+fn m3_timeout_cap_provenance_json(
+    source: &str,
+    completed_minutes: u64,
+    cushion_minutes: u64,
+    configured_timeout_minutes: u64,
+) -> serde_json::Value {
+    serde_json::json!({
+        "basis": M3_TIMEOUT_CAP_BASIS,
+        "source": source,
+        "completed_minutes": completed_minutes,
+        "cushion_minutes": cushion_minutes,
+        "configured_timeout_minutes": configured_timeout_minutes,
+        "healthy_sample_policy": {
+            "completed_runs_only": true,
+            "timeouts_excluded": true,
+            "cancellations_excluded": true
+        },
+        "timeouts_or_cancellations_are_healthy_samples": false,
+        "timeout_caps_are_performance_evidence": false
+    })
+}
+
+fn m3_performance_profile_json(timeout_cap_provenance: &serde_json::Value) -> serde_json::Value {
+    serde_json::json!({
+        "timeout_cap_source": M3_TIMEOUT_CAP_BASIS,
+        "timeout_cap_evidence": timeout_cap_provenance["source"].clone(),
+        "completed_minutes": timeout_cap_provenance["completed_minutes"].clone(),
+        "cushion_minutes": timeout_cap_provenance["cushion_minutes"].clone(),
+        "configured_timeout_minutes": timeout_cap_provenance["configured_timeout_minutes"].clone(),
+        "healthy_sample_policy": timeout_cap_provenance["healthy_sample_policy"].clone(),
+        "timeouts_and_cancellations_excluded_from_healthy_samples": true,
+        "timeout_caps_are_performance_evidence": false,
+        "performance_claim": false
+    })
+}
+
+fn m3_timeout_cap_provenance_for_profile_set(
+    requested_backend: &str,
+    profile_set: &str,
+) -> Result<Option<serde_json::Value>> {
+    if requested_backend != APPLE_M3_AIR_CPU_NEON || profile_set != "performance" {
+        return Ok(None);
+    }
+
+    let source = m3_timeout_cap_env_value(M3_TIMEOUT_CAP_SOURCE_ENV, "timeout cap source")?;
+    let completed_minutes = m3_timeout_cap_env_minutes(
+        M3_TIMEOUT_CAP_COMPLETED_MINUTES_ENV,
+        "completed healthy runtime minutes",
+    )?;
+    let cushion_minutes =
+        m3_timeout_cap_env_minutes(M3_TIMEOUT_CAP_CUSHION_MINUTES_ENV, "timeout cap cushion")?;
+    let configured_timeout_minutes = m3_timeout_cap_env_minutes(
+        M3_TIMEOUT_CAP_CONFIGURED_MINUTES_ENV,
+        "configured timeout cap",
+    )?;
+    if configured_timeout_minutes < completed_minutes.saturating_add(cushion_minutes) {
+        anyhow::bail!(
+            "Apple M3 Air performance timeout cap must be at least completed healthy minutes plus cushion"
+        );
+    }
+
+    Ok(Some(m3_timeout_cap_provenance_json(
+        &source,
+        completed_minutes,
+        cushion_minutes,
+        configured_timeout_minutes,
+    )))
+}
+
 async fn run_warm_profile_set(
     model: VerifiedCachedModel,
     requested_backend: &'static str,
@@ -16639,6 +16736,8 @@ async fn run_warm_profile_set(
     threads: usize,
     spec: WarmProfileSetSpec,
 ) -> Result<()> {
+    let timeout_cap_provenance =
+        m3_timeout_cap_provenance_for_profile_set(requested_backend, spec.name)?;
     let receipt_dir =
         json_out.parent().map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from(".")).join(
             format!(
@@ -16699,7 +16798,7 @@ async fn run_warm_profile_set(
     let build_profile = if cfg!(debug_assertions) { "debug" } else { "release" };
     let release_mode = !cfg!(debug_assertions);
 
-    let aggregate = serde_json::json!({
+    let mut aggregate = serde_json::json!({
         "schema_version": "1.0.0",
         "artifact_kind": mac_profile_set_artifact_kind(requested_backend, spec.artifact_kind),
         "timestamp": chrono::Utc::now().to_rfc3339(),
@@ -16779,6 +16878,16 @@ async fn run_warm_profile_set(
         ),
         "speedup_claim": false,
     });
+    if let Some(timeout_cap_provenance) = timeout_cap_provenance {
+        let Some(object) = aggregate.as_object_mut() else {
+            anyhow::bail!("Mac profile aggregate receipt is not a JSON object");
+        };
+        object.insert("timeout_cap_provenance".to_string(), timeout_cap_provenance.clone());
+        object.insert(
+            "performance_profile".to_string(),
+            m3_performance_profile_json(&timeout_cap_provenance),
+        );
+    }
     std::fs::write(&json_out, serde_json::to_vec_pretty(&aggregate)?)
         .with_context(|| format!("failed to write {}", json_out.display()))?;
     validate_mac_receipt_value(&json_out, &aggregate)?;
@@ -28374,6 +28483,9 @@ fn validate_profile_set_receipt(
         if receipt["performance_baseline"]["warm_128_included"].as_bool() != Some(true) {
             anyhow::bail!("{} performance summary must include warm_128", path.display());
         }
+        if artifact_kind == "apple_m3_air_slm_performance_profiles" {
+            validate_m3_performance_timeout_cap_provenance(path, receipt)?;
+        }
     }
     let allocation_audit_enabled =
         receipt["allocation_audit"]["enabled"].as_bool().unwrap_or(false);
@@ -28517,6 +28629,87 @@ fn validate_profile_set_receipt(
         generated_total += generated as usize;
     }
     Ok((Some(profiles.len()), Some(generated_total)))
+}
+
+fn validate_m3_performance_timeout_cap_provenance(
+    path: &Path,
+    receipt: &serde_json::Value,
+) -> Result<()> {
+    require_exact_string_at(
+        path,
+        receipt,
+        &["timeout_cap_provenance", "basis"],
+        M3_TIMEOUT_CAP_BASIS,
+    )?;
+    let source = require_non_empty_string_at(path, receipt, &["timeout_cap_provenance", "source"])?;
+    if source == "none-recorded-yet" {
+        anyhow::bail!(
+            "{} M3 timeout_cap_provenance.source must name completed healthy run evidence",
+            path.display()
+        );
+    }
+    let completed_minutes =
+        require_u64_at(path, receipt, &["timeout_cap_provenance", "completed_minutes"], true)?;
+    let cushion_minutes =
+        require_u64_at(path, receipt, &["timeout_cap_provenance", "cushion_minutes"], true)?;
+    let configured_timeout_minutes = require_u64_at(
+        path,
+        receipt,
+        &["timeout_cap_provenance", "configured_timeout_minutes"],
+        true,
+    )?;
+    if configured_timeout_minutes < completed_minutes.saturating_add(cushion_minutes) {
+        anyhow::bail!(
+            "{} M3 timeout cap must be at least completed healthy minutes plus cushion",
+            path.display()
+        );
+    }
+    for field in ["completed_runs_only", "timeouts_excluded", "cancellations_excluded"] {
+        require_bool_at(
+            path,
+            receipt,
+            &["timeout_cap_provenance", "healthy_sample_policy", field],
+            true,
+        )?;
+        require_bool_at(
+            path,
+            receipt,
+            &["performance_profile", "healthy_sample_policy", field],
+            true,
+        )?;
+    }
+    require_bool_at(
+        path,
+        receipt,
+        &["timeout_cap_provenance", "timeouts_or_cancellations_are_healthy_samples"],
+        false,
+    )?;
+    require_bool_at(
+        path,
+        receipt,
+        &["timeout_cap_provenance", "timeout_caps_are_performance_evidence"],
+        false,
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["performance_profile", "timeout_cap_source"],
+        M3_TIMEOUT_CAP_BASIS,
+    )?;
+    require_bool_at(
+        path,
+        receipt,
+        &["performance_profile", "timeouts_and_cancellations_excluded_from_healthy_samples"],
+        true,
+    )?;
+    require_bool_at(
+        path,
+        receipt,
+        &["performance_profile", "timeout_caps_are_performance_evidence"],
+        false,
+    )?;
+    require_bool_at(path, receipt, &["performance_profile", "performance_claim"], false)?;
+    Ok(())
 }
 
 fn warm_session_allocation_scope(requested_backend: &str) -> &'static str {
@@ -30782,8 +30975,15 @@ mod tests {
         Ok(())
     }
 
+    fn mac_receipt_validation_error(path: &str, receipt: &serde_json::Value) -> String {
+        match validate_mac_receipt_value(Path::new(path), receipt) {
+            Ok(summary) => format!("Mac receipt unexpectedly passed: {summary:?}"),
+            Err(err) => err.to_string(),
+        }
+    }
+
     #[test]
-    fn mac_receipts_check_accepts_m3_warm_session_prompt_backend()
+    fn mac_receipts_check_accepts_apple_m3_warm_session_prompt_backend()
     -> Result<(), Box<dyn std::error::Error>> {
         let receipt = test_m3_warm_session_receipt();
 
@@ -30798,7 +30998,27 @@ mod tests {
     }
 
     #[test]
-    fn mac_receipt_annotation_preserves_m3_claim_boundary_backend()
+    fn mac_receipts_check_rejects_apple_m3_warm_session_prompt_backend_mismatch() {
+        let mut receipt = test_m3_warm_session_receipt();
+        receipt["prompts"][0]["backend"]["selected_backend"] = serde_json::json!("cpu");
+
+        let err = mac_receipt_validation_error("m3-warm-session.json", &receipt);
+
+        assert!(err.contains("selected backend must match aggregate"), "got: {err}");
+    }
+
+    #[test]
+    fn mac_receipts_check_rejects_apple_m3_warm_session_prompt_fallback() {
+        let mut receipt = test_m3_warm_session_receipt();
+        receipt["prompts"][0]["backend"]["fallback_used"] = serde_json::json!(true);
+
+        let err = mac_receipt_validation_error("m3-warm-session.json", &receipt);
+
+        assert!(err.contains("fallback_used=true"), "got: {err}");
+    }
+
+    #[test]
+    fn mac_receipt_annotation_preserves_apple_m3_claim_boundary_backend()
     -> Result<(), Box<dyn std::error::Error>> {
         let temp = tempfile::tempdir()?;
         let receipt_path = temp.path().join("m3-warm-session.json");
@@ -30816,7 +31036,7 @@ mod tests {
     }
 
     #[test]
-    fn mac_receipts_check_accepts_m3_operator_profile_summary()
+    fn mac_receipts_check_accepts_apple_m3_operator_profile_summary()
     -> Result<(), Box<dyn std::error::Error>> {
         let receipt = test_m3_operator_profile_summary();
 
@@ -30828,6 +31048,53 @@ mod tests {
         assert_eq!(summary.prompt_count, Some(3));
         assert_eq!(summary.generated_tokens, Some(112));
         Ok(())
+    }
+
+    #[test]
+    fn mac_receipts_check_accepts_apple_m3_performance_profile_summary()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let receipt = test_m3_performance_profile_summary();
+
+        let summary = validate_mac_receipt_value(Path::new("m3-performance.json"), &receipt)?;
+
+        assert_eq!(summary.artifact_kind, "apple_m3_air_slm_performance_profiles");
+        assert_eq!(summary.requested_backend, APPLE_M3_AIR_CPU_NEON);
+        assert_eq!(summary.selected_backend, APPLE_M3_AIR_CPU_NEON);
+        assert_eq!(summary.prompt_count, Some(4));
+        assert_eq!(summary.generated_tokens, Some(240));
+        Ok(())
+    }
+
+    #[test]
+    fn mac_receipts_check_rejects_apple_m3_performance_timeout_caps_as_evidence() {
+        let mut receipt = test_m3_performance_profile_summary();
+        receipt["performance_profile"]["timeout_caps_are_performance_evidence"] =
+            serde_json::json!(true);
+
+        let err = mac_receipt_validation_error("m3-performance.json", &receipt);
+
+        assert!(err.contains("timeout_caps_are_performance_evidence"), "got: {err}");
+    }
+
+    #[test]
+    fn mac_receipts_check_rejects_apple_m3_performance_timeout_cancellation_samples() {
+        let mut receipt = test_m3_performance_profile_summary();
+        receipt["timeout_cap_provenance"]["healthy_sample_policy"]["cancellations_excluded"] =
+            serde_json::json!(false);
+
+        let err = mac_receipt_validation_error("m3-performance.json", &receipt);
+
+        assert!(err.contains("cancellations_excluded"), "got: {err}");
+    }
+
+    #[test]
+    fn mac_receipts_check_rejects_apple_m3_performance_short_timeout_cap() {
+        let mut receipt = test_m3_performance_profile_summary();
+        receipt["timeout_cap_provenance"]["configured_timeout_minutes"] = serde_json::json!(179);
+
+        let err = mac_receipt_validation_error("m3-performance.json", &receipt);
+
+        assert!(err.contains("completed healthy minutes plus cushion"), "got: {err}");
     }
 
     #[test]
@@ -30843,6 +31110,17 @@ mod tests {
         assert_eq!(summary.prompt_count, Some(2));
         assert_eq!(summary.generated_tokens, Some(4));
         Ok(())
+    }
+
+    #[test]
+    fn mac_receipts_check_rejects_apple_m3_accuracy_claim_boundary_leak() {
+        let mut receipt = test_m3_accuracy_comparison_profile_receipt();
+        receipt["accuracy_comparison_profile"]["claim_boundary"]["qk256_apple_claimed"] =
+            serde_json::json!(true);
+
+        let err = mac_receipt_validation_error("m3-accuracy.json", &receipt);
+
+        assert!(err.contains("QK256 on Apple Silicon"), "got: {err}");
     }
 
     #[tokio::test]
@@ -32463,6 +32741,57 @@ mod tests {
         })
     }
 
+    fn test_m3_performance_profile_summary() -> serde_json::Value {
+        let timeout_cap_provenance =
+            m3_timeout_cap_provenance_json("ci/actuals/m3-air/healthy-runs.json", 150, 30, 180);
+        serde_json::json!({
+            "artifact_kind": "apple_m3_air_slm_performance_profiles",
+            "requested_backend": APPLE_M3_AIR_CPU_NEON,
+            "selected_backend": APPLE_M3_AIR_CPU_NEON,
+            "runtime_api": "cpu",
+            "fallback_used": false,
+            "profile_set": "performance",
+            "profiles": [
+                test_performance_profile("warm_16", 16, 16),
+                test_performance_profile("warm_32", 32, 32),
+                test_performance_profile("warm_64", 64, 64),
+                test_performance_profile("warm_128", 128, 128)
+            ],
+            "build": {
+                "profile": "release",
+                "release_mode": true
+            },
+            "operator_thresholds": {
+                "scope": "supported Apple M3 Air SLM warm-answer timing only",
+                "profiles_loaded_independently": true,
+                "profile_set_model_loads": 4,
+                "cold_load_separated": true,
+                "model_tokenizer_reuse_visible": true,
+                "model_tokenizer_reuse_visible_per_profile": true,
+                "thresholds_are_claim_bounds_not_speed_guarantees": true
+            },
+            "performance_baseline": {
+                "release_mode_observed": true,
+                "warm_128_included": true
+            },
+            "timeout_cap_provenance": timeout_cap_provenance.clone(),
+            "performance_profile": m3_performance_profile_json(&timeout_cap_provenance),
+            "allocation_audit": {
+                "enabled": true,
+                "method": "process_global_allocator_counter_delta",
+                "scope": "selected Apple M3 Air CPU/NEON SLM warm-session profile set",
+                "optimization_deferred": true,
+                "ranked_hotspots": [
+                    {
+                        "component": "decode_total",
+                        "alloc_count": 4,
+                        "alloc_bytes": 8
+                    }
+                ]
+            }
+        })
+    }
+
     fn test_operator_profile(
         profile_id: &str,
         requested_tokens: u64,
@@ -32508,6 +32837,22 @@ mod tests {
                 "decode_generated_tok_s": 1.0
             }
         })
+    }
+
+    fn test_performance_profile(
+        profile_id: &str,
+        requested_tokens: u64,
+        generated_tokens: u64,
+    ) -> serde_json::Value {
+        let mut profile = test_operator_profile(profile_id, requested_tokens, generated_tokens);
+        profile["timing"]["total_session_ms"] = serde_json::json!(4.0);
+        profile["timing"]["tokenize_ms"] = serde_json::json!(1.0);
+        profile["timing"]["prefill_ms"] = serde_json::json!(1.0);
+        profile["timing"]["first_token_ms"] = serde_json::json!(1.0);
+        profile["memory"] = serde_json::json!({
+            "peak_memory_mb": 512.0
+        });
+        profile
     }
 
     #[test]
