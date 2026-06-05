@@ -1,0 +1,17 @@
+timestamp = "2026-06-05T00:11:30Z"
+campaign = "slm-cpu"
+item = "SLM-CPU-244"
+event = "pr_open"
+actor = "codex"
+previous_status = "pr_open"
+new_status = "pr_open"
+pr = 1550
+branch = "codex/slm-cpu/slm-cpu-244-no-bias-dispatch-candidate-receipts"
+head_sha = "a2fef8a15e7e7c02a8d623ee50433c2336bfb23e"
+base_sha = "c235a4395c15f35ecb8dcaac5c0f285aa446faf6"
+summary = "Rebased the SLM-CPU-244 candidate-receipt PR onto current main after A770-157 tracker closeout."
+notes = [
+  "The refresh keeps the SLM-CPU-244 fail-closed no-bias candidate dispatch and Qwen3/Qwen2.5 candidate-off/on receipt evidence unchanged.",
+  "Required BitNet Rust Small Result had passed on the pre-refresh head, but branch protection strict mode required a current-base rerun.",
+  "No default runtime, timing, allocation, speedup, Q4/Q5, accelerator, Qwen3.5, or BitNet QK256 claim changed.",
+]

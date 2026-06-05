@@ -9015,6 +9015,7 @@ async fn run_slm_warm_session(
     let mut memory_after_first_ask = None;
     let no_bias_runtime_gate_requested = slm_warm_session_no_bias_runtime_gate_requested_from_env();
     bitnet_transformer::reset_dense_q8_sidecar_instrumentation();
+    bitnet_transformer::reset_dense_linear_no_bias_candidate_instrumentation();
     for (index, prompt_input) in prompt_inputs.iter().enumerate() {
         output.status(format!(
             "warm-session: prompt {}/{} started",
@@ -9722,6 +9723,11 @@ async fn run_slm_warm_session(
             bitnet_transformer::dense_q8_sidecar_instrumentation_snapshot(),
             &dense_q8_hook_selection,
         );
+    let dense_no_bias_candidate_instrumentation =
+        slm_warm_session_no_bias_candidate_instrumentation_receipt(
+            bitnet_transformer::dense_linear_no_bias_candidate_instrumentation_snapshot(),
+            no_bias_runtime_gate_requested,
+        );
     let dense_no_bias_apply_linear_gate_record =
         slm_warm_session_no_bias_apply_linear_gate_for_session(
             &model_path,
@@ -9940,6 +9946,7 @@ async fn run_slm_warm_session(
         "dense_q8_sidecar_instrumentation": dense_q8_sidecar_instrumentation,
         "dense_no_bias_prompt_session_descriptors": no_bias_prompt_session_descriptor_receipts,
         "dense_no_bias_apply_linear_gate": dense_no_bias_apply_linear_gate,
+        "dense_no_bias_apply_linear_candidate_instrumentation": dense_no_bias_candidate_instrumentation,
         "qwen_trace": output.qwen_trace.receipt(),
         "cpu": {
             "model": cpu_model.as_str(),
@@ -12351,6 +12358,67 @@ fn slm_warm_session_dense_q8_sidecar_instrumentation_receipt(
             "no_qwen35_claim": true,
             "no_bitnet_qk256_claim": true,
         },
+    })
+}
+
+#[cfg(feature = "full-cli")]
+fn slm_warm_session_no_bias_candidate_instrumentation_receipt(
+    snapshot: bitnet_transformer::DenseLinearNoBiasCandidateInstrumentationSnapshot,
+    runtime_gate_requested_enabled: bool,
+) -> serde_json::Value {
+    let candidate_execution_attempted =
+        snapshot.selector_selected_calls > 0 && snapshot.candidate_forward_calls > 0;
+    let classification = if candidate_execution_attempted {
+        "candidate_path_executed"
+    } else if snapshot.selector_error_calls > 0 {
+        "candidate_dispatch_failed_closed"
+    } else if runtime_gate_requested_enabled {
+        "candidate_gate_requested_but_candidate_path_not_observed"
+    } else {
+        "default_runtime_preserved_without_explicit_gate"
+    };
+
+    serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "dense_no_bias_apply_linear_candidate_instrumentation",
+        "tracking_item": "SLM-CPU-244",
+        "consumes_tracking_item": "SLM-CPU-243",
+        "instrumentation_available": true,
+        "snapshot_after_prompt_loop": true,
+        "classification": classification,
+        "runtime_gate_name": "BITNET_DENSE_LINEAR_NO_BIAS_RUNTIME",
+        "runtime_gate_requested_enabled": runtime_gate_requested_enabled,
+        "candidate_execution_attempted": candidate_execution_attempted,
+        "candidate_path_visible": candidate_execution_attempted,
+        "candidate_execution_enabled_by_default": false,
+        "selected_path_when_gate_absent": "eager_f32_candle",
+        "candidate_path_when_selected": "dense_linear_no_bias_candidate_forward",
+        "candidate_kernel_when_selected": "dense-f32-candle-linear-no-bias-candidate",
+        "exact_callsite_required": "bitnet_transformer::FeedForward::apply_linear:layers.0.feed_forward.down_proj.weight",
+        "fallback_used": false,
+        "counters": {
+            "selector_dispatch_calls": snapshot.selector_dispatch_calls,
+            "selector_selected_calls": snapshot.selector_selected_calls,
+            "selector_declined_calls": snapshot.selector_declined_calls,
+            "selector_error_calls": snapshot.selector_error_calls,
+            "selector_dispatch_ns": snapshot.selector_dispatch_ns,
+            "candidate_forward_calls": snapshot.candidate_forward_calls,
+            "candidate_forward_ns": snapshot.candidate_forward_ns,
+        },
+        "claim_boundary": {
+            "default_runtime_changed_without_gate": false,
+            "timing_improvement_claim": false,
+            "allocation_reduction_claim": false,
+            "speedup_claim": false,
+            "sustained_throughput_claim": false,
+            "q4_or_q5_support_claim": false,
+            "server_or_accelerator_claim": false,
+            "qwen35_or_hybrid_claim": false,
+            "bitnet_qk256_change": false,
+        },
+        "timing_improvement_claim": false,
+        "allocation_reduction_claim": false,
+        "speedup_claim": false,
     })
 }
 
@@ -17844,6 +17912,46 @@ mod tests {
         assert_eq!(receipt["candidate_execution_enabled"], false);
         assert_eq!(receipt["selected_path"], "eager_f32_candle");
         assert_eq!(receipt["speedup_claim"], false);
+    }
+
+    #[test]
+    #[cfg(feature = "full-cli")]
+    fn slm_warm_session_no_bias_candidate_instrumentation_records_candidate_execution() {
+        let default_snapshot =
+            bitnet_transformer::DenseLinearNoBiasCandidateInstrumentationSnapshot::default();
+        let default_receipt =
+            slm_warm_session_no_bias_candidate_instrumentation_receipt(default_snapshot, false);
+        assert_eq!(
+            default_receipt["classification"],
+            "default_runtime_preserved_without_explicit_gate"
+        );
+        assert_eq!(default_receipt["candidate_execution_attempted"], false);
+        assert_eq!(default_receipt["candidate_path_visible"], false);
+        assert_eq!(default_receipt["candidate_execution_enabled_by_default"], false);
+
+        let selected_snapshot =
+            bitnet_transformer::DenseLinearNoBiasCandidateInstrumentationSnapshot {
+                selector_dispatch_calls: 3,
+                selector_selected_calls: 3,
+                selector_declined_calls: 0,
+                selector_error_calls: 0,
+                selector_dispatch_ns: 100,
+                candidate_forward_calls: 3,
+                candidate_forward_ns: 200,
+            };
+        let selected_receipt =
+            slm_warm_session_no_bias_candidate_instrumentation_receipt(selected_snapshot, true);
+        assert_eq!(selected_receipt["classification"], "candidate_path_executed");
+        assert_eq!(selected_receipt["runtime_gate_requested_enabled"], true);
+        assert_eq!(selected_receipt["candidate_execution_attempted"], true);
+        assert_eq!(selected_receipt["candidate_path_visible"], true);
+        assert_eq!(selected_receipt["counters"]["selector_selected_calls"], 3);
+        assert_eq!(selected_receipt["counters"]["candidate_forward_calls"], 3);
+        assert_eq!(
+            selected_receipt["claim_boundary"]["default_runtime_changed_without_gate"],
+            false
+        );
+        assert_eq!(selected_receipt["speedup_claim"], false);
     }
 
     #[test]
