@@ -10337,6 +10337,15 @@ impl InferenceReceipt {
             .ok_or_else(|| anyhow!("strict CPU proof missing selected_kernel"))?;
         let cpu_features_lc: Vec<String> =
             provenance.cpu_features.iter().map(|feature| feature.to_ascii_lowercase()).collect();
+        if matches!(
+            provenance.selected_backend.as_str(),
+            "apple-m4-cpu-neon" | "apple-m3-air-cpu-neon"
+        ) && !cpu_features_lc.iter().any(|feature| feature == "neon")
+        {
+            return Err(anyhow!(
+                "strict CPU proof Apple CPU/NEON backend requires neon CPU feature"
+            ));
+        }
         if selected_kernel.to_ascii_lowercase().contains("avx2")
             && !(cpu_features_lc.iter().any(|feature| feature == "avx2")
                 && cpu_features_lc.iter().any(|feature| feature == "fma"))
@@ -11704,6 +11713,25 @@ mod tests {
         })
     }
 
+    fn use_apple_m3_air_strict_cpu_label(receipt: &mut InferenceReceipt) {
+        if let Some(provenance) = receipt.strict_provenance.as_mut() {
+            provenance.requested_backend = "apple-m3-air-cpu-neon".to_string();
+            provenance.selected_backend = "apple-m3-air-cpu-neon".to_string();
+            provenance.selected_kernel = Some("i2_s-scalar-reference".to_string());
+            provenance.requested_kernel = Some("i2_s-scalar-reference".to_string());
+            provenance.quant_format = Some("I2_S".to_string());
+            provenance.cpu_features = vec!["neon".to_string()];
+        }
+        receipt.kernels = vec!["i2_s-scalar-reference".to_string()];
+    }
+
+    fn strict_cpu_proof_error(receipt: &InferenceReceipt) -> String {
+        match receipt.validate_strict_cpu_proof() {
+            Ok(()) => String::from("strict CPU proof unexpectedly passed"),
+            Err(err) => err.to_string(),
+        }
+    }
+
     #[test]
     fn test_validate_strict_cpu_proof_accepts_authoritative_lane() {
         let receipt = strict_cpu_proof_receipt();
@@ -11727,41 +11755,76 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_strict_cpu_proof_accepts_m3_air_cpu_neon_label() {
+    fn apple_m3_strict_cpu_proof_accepts_m3_air_cpu_neon_label() {
         let mut receipt = strict_cpu_proof_receipt();
         assert!(receipt.strict_provenance.is_some());
-        if let Some(provenance) = receipt.strict_provenance.as_mut() {
-            provenance.requested_backend = "apple-m3-air-cpu-neon".to_string();
-            provenance.selected_backend = "apple-m3-air-cpu-neon".to_string();
-            provenance.selected_kernel = Some("i2_s-scalar-reference".to_string());
-            provenance.requested_kernel = Some("i2_s-scalar-reference".to_string());
-            provenance.quant_format = Some("I2_S".to_string());
-            provenance.cpu_features = vec!["neon".to_string()];
-        }
-        receipt.kernels = vec!["i2_s-scalar-reference".to_string()];
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
 
         assert!(receipt.validate_strict_cpu_proof().is_ok());
     }
 
     #[test]
-    fn test_validate_strict_cpu_proof_rejects_apple_cpu_label_mismatch() {
+    fn apple_m3_strict_cpu_proof_rejects_apple_cpu_label_mismatch() {
         let mut receipt = strict_cpu_proof_receipt();
         assert!(receipt.strict_provenance.is_some());
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
         if let Some(provenance) = receipt.strict_provenance.as_mut() {
-            provenance.requested_backend = "apple-m3-air-cpu-neon".to_string();
             provenance.selected_backend = "apple-m4-cpu-neon".to_string();
-            provenance.selected_kernel = Some("i2_s-scalar-reference".to_string());
-            provenance.requested_kernel = Some("i2_s-scalar-reference".to_string());
-            provenance.quant_format = Some("I2_S".to_string());
-            provenance.cpu_features = vec!["neon".to_string()];
         }
-        receipt.kernels = vec!["i2_s-scalar-reference".to_string()];
 
-        let err = match receipt.validate_strict_cpu_proof() {
-            Ok(()) => String::from("strict CPU proof unexpectedly passed"),
-            Err(err) => err.to_string(),
-        };
+        let err = strict_cpu_proof_error(&receipt);
         assert!(err.contains("backend mismatch"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn apple_m3_strict_cpu_proof_rejects_generic_cpu_selected_backend() {
+        let mut receipt = strict_cpu_proof_receipt();
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
+        if let Some(provenance) = receipt.strict_provenance.as_mut() {
+            provenance.selected_backend = "cpu".to_string();
+        }
+
+        let err = strict_cpu_proof_error(&receipt);
+        assert!(err.contains("backend mismatch"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn apple_m3_strict_cpu_proof_rejects_unsupported_accelerator_label() {
+        let mut receipt = strict_cpu_proof_receipt();
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
+        if let Some(provenance) = receipt.strict_provenance.as_mut() {
+            provenance.requested_backend = "apple-m3-air-metal".to_string();
+            provenance.selected_backend = "apple-m3-air-metal".to_string();
+        }
+
+        let err = strict_cpu_proof_error(&receipt);
+        assert!(err.contains("CPU proof label"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn apple_m3_strict_cpu_proof_requires_neon_feature() {
+        let mut receipt = strict_cpu_proof_receipt();
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
+        if let Some(provenance) = receipt.strict_provenance.as_mut() {
+            provenance.cpu_features = vec!["asimd".to_string()];
+        }
+
+        let err = strict_cpu_proof_error(&receipt);
+        assert!(err.contains("requires neon CPU feature"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn apple_m3_strict_cpu_proof_rejects_hidden_fallback() {
+        let mut receipt = strict_cpu_proof_receipt();
+        use_apple_m3_air_strict_cpu_label(&mut receipt);
+        if let Some(provenance) = receipt.strict_provenance.as_mut() {
+            provenance.fallback_used = true;
+            provenance.fallback_reason =
+                Some("requested M3 Air CPU/NEON but selected cpu".to_string());
+        }
+
+        let err = strict_cpu_proof_error(&receipt);
+        assert!(err.contains("used fallback"), "unexpected error: {err}");
     }
 
     #[test]

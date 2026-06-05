@@ -1365,7 +1365,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-028"
-status = "ready"
+status = "in_progress"
 branch = "codex/apple-m3-macbook-air/M3MBA-028-compact-linux-synthetic-ci"
 stackable = false
 review_mode = "codex_premerge"
