@@ -290,24 +290,66 @@ fn current_timestamp_utc() -> String {
 }
 
 fn print_support_bundle_text(bundle: &SupportBundle) {
-    println!("BitNet support bundle");
-    println!("  device: {}", bundle.device);
-    println!("  receipt: {}", bundle.summary.receipt_path);
-    if let Some(row) = &bundle.summary.model_coverage_row {
-        println!("  model_coverage_row: {row}");
+    for line in support_bundle_text_lines(bundle) {
+        println!("{line}");
     }
-    if let Some(route) = &bundle.summary.selected_route {
-        println!("  selected_route: {route}");
-    }
-    if let Some(backend) = &bundle.summary.selected_backend {
-        println!("  selected_backend: {backend}");
-    }
-    if let Some(fallback) = bundle.summary.fallback_used {
-        println!("  fallback_used: {fallback}");
-    }
-    println!("  quality_gate: {}", bundle.summary.quality_gate);
     print_support_timing(&bundle.summary.timing);
     println!("  binary: {} {}", bundle.binary.name, bundle.binary.crate_version);
+}
+
+fn support_bundle_text_lines(bundle: &SupportBundle) -> Vec<String> {
+    let mut lines = vec![
+        "BitNet support bundle".to_string(),
+        format!("  device: {}", bundle.device),
+        format!("  receipt: {}", bundle.summary.receipt_path),
+    ];
+
+    push_support_string(
+        &mut lines,
+        "model_coverage_row",
+        bundle.summary.model_coverage_row.as_deref(),
+    );
+    push_support_string(&mut lines, "current_tier", bundle.summary.current_tier.as_deref());
+    push_support_bool(&mut lines, "product_cli_ready", bundle.summary.product_cli_ready);
+    push_support_string(&mut lines, "selected_route", bundle.summary.selected_route.as_deref());
+    push_support_string(&mut lines, "selected_backend", bundle.summary.selected_backend.as_deref());
+    push_support_bool(&mut lines, "fallback_used", bundle.summary.fallback_used);
+    lines.push(format!("  quality_gate: {}", bundle.summary.quality_gate));
+    push_support_bool(&mut lines, "server_ready", bundle.summary.server_ready);
+    push_support_string(
+        &mut lines,
+        "server_ready_scope",
+        bundle.summary.server_ready_scope.as_deref(),
+    );
+    push_support_bool(&mut lines, "speedup_claim", bundle.summary.speedup_claim);
+    push_support_bool(&mut lines, "full_residency_claim", bundle.summary.full_residency_claim);
+    push_support_bool(
+        &mut lines,
+        "bitnet_packed_i2s_qk256_proof",
+        bundle.summary.bitnet_packed_i2s_qk256_proof,
+    );
+    push_support_bool(
+        &mut lines,
+        "dense_regular_llm_cuda_proof",
+        bundle.summary.dense_regular_llm_cuda_proof,
+    );
+    push_support_string(&mut lines, "next_proof", bundle.summary.next_proof.as_deref());
+    push_support_string(&mut lines, "claim_boundary", bundle.summary.claim_boundary.as_deref());
+
+    lines
+}
+
+fn push_support_string(lines: &mut Vec<String>, label: &str, value: Option<&str>) {
+    lines.push(format!("  {label}: {}", value.unwrap_or("not_available")));
+}
+
+fn push_support_bool(lines: &mut Vec<String>, label: &str, value: Option<bool>) {
+    let value = match value {
+        Some(true) => "true",
+        Some(false) => "false",
+        None => "not_available",
+    };
+    lines.push(format!("  {label}: {value}"));
 }
 
 fn print_support_timing(timing: &TimingExplanation) {
@@ -390,18 +432,22 @@ mod tests {
             .join("model-coverage-matrix.toml")
     }
 
-    fn support_bundle_value_for_receipt(receipt_name: &str, receipt: Value) -> Result<Value> {
+    fn support_bundle_for_receipt(receipt_name: &str, receipt: Value) -> Result<SupportBundle> {
         let dir = tempfile::tempdir()?;
         let receipt_path = dir.path().join(receipt_name);
         fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt)?)?;
 
-        let bundle = support_bundle(
+        support_bundle(
             Some(&receipt_path),
             false,
             "nvidia-rtx-5070-ti-cuda",
             Some(model_matrix_path()),
             "2026-05-20T00:00:00Z".to_string(),
-        )?;
+        )
+    }
+
+    fn support_bundle_value_for_receipt(receipt_name: &str, receipt: Value) -> Result<Value> {
+        let bundle = support_bundle_for_receipt(receipt_name, receipt)?;
         serde_json::to_value(&bundle).context("support bundle must serialize to JSON")
     }
 
@@ -859,6 +905,66 @@ mod tests {
                 && model["dense_regular_llm_cuda_proof"] == true
                 && model["bitnet_packed_i2s_qk256_proof"] == false
         }));
+        Ok(())
+    }
+
+    #[test]
+    fn support_bundle_text_summary_exposes_claim_boundaries() -> Result<()> {
+        let bundle = support_bundle_for_receipt(
+            "qwen25-receipt.json",
+            json!({
+                "artifact_kind": "dense_gguf_qwen_warm_session_strict_cuda_proof",
+                "claim": "dense_gguf_qwen_warm_session_strict_cuda_proof_recorded",
+                "model": {
+                    "id": "qwen2.5-0.5b-instruct-q8_0"
+                },
+                "backend": {
+                    "selected_backend": "nvidia-rtx-5070-ti-cuda",
+                    "runtime_api": "cuda",
+                    "fallback_used": false
+                },
+                "execution_plan": {
+                    "selected_route": "dense_regular_llm_cuda",
+                    "model_family": "qwen",
+                    "requested_backend": "nvidia-rtx-5070-ti-cuda",
+                    "speedup_claim": false
+                },
+                "quality_gate": {
+                    "passed": true
+                },
+                "claim_boundary": {
+                    "bitnet_packed_i2s_qk256_proof": false,
+                    "dense_regular_llm_cuda_claimed": true,
+                    "speedup_claim": false,
+                    "full_cuda_residency_claimed": false
+                }
+            }),
+        )?;
+
+        let text = support_bundle_text_lines(&bundle).join("\n");
+        for required_fragment in [
+            "model_coverage_row: dense_qwen25_05b_q8_cuda",
+            "current_tier: product_cli_ready",
+            "product_cli_ready: true",
+            "selected_route: dense_regular_llm_cuda",
+            "selected_backend: nvidia-rtx-5070-ti-cuda",
+            "fallback_used: false",
+            "quality_gate: passed",
+            "server_ready: true",
+            "server_ready_scope: exact_profile",
+            "speedup_claim: false",
+            "full_residency_claim: false",
+            "bitnet_packed_i2s_qk256_proof: false",
+            "dense_regular_llm_cuda_proof: true",
+            "next_proof:",
+            "claim_boundary:",
+        ] {
+            assert!(
+                text.contains(required_fragment),
+                "support bundle text missing {required_fragment}"
+            );
+        }
+
         Ok(())
     }
 
