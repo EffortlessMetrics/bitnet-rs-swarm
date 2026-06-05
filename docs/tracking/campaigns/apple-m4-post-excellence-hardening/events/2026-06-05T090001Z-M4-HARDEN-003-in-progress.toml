@@ -1,0 +1,12 @@
+timestamp = "2026-06-05T09:00:01Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-003"
+event = "in_progress"
+previous_status = "ready"
+branch = "codex/apple-m4/M4-HARDEN-003-dense-server-response-conformance"
+actor = "codex"
+notes = [
+  "Started dense local-server response conformance after M4-HARDEN-002 merged and closeout advanced the campaign.",
+  "Scope locks non-streaming response shape, streaming event shape, receipt export path, bad-model failure, unsupported BitNet serve failure, and receipt model/backend/fallback visibility.",
+  "Dense Apple M4 server evidence remains separate from BitNet chat, BitNet serve, Metal, QK256-on-Apple, Neural Engine, MPSGraph, MacBook, and broad Apple Silicon claims.",
+]
