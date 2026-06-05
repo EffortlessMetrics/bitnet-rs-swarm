@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T13:00:31Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-MATCHED-CHECK-001"
+event = "closeout"
+previous_status = "proposed"
+new_status = "ready"
+branch = "codex/lunar-lake/LNL258V-CPU-MATCHED-CHECK-001-checker-guard"
+actor = "codex"
+notes = [
+  "Plan-selection PR #1591 merged and now names #1568 as the next no-inference CPU slow-path guard candidate before OpenVINO CPU comparison, CPU optimization, or route-policy work.",
+  "The ready implementation item is checker/test coverage only for direct generated-token status, retokenized-token rejection, matched-profile completeness, fallback and answer-gate status, populated benchmark blockers under benchmark_qualified=true, benchmark-field consistency, and claim-boundary leakage.",
+  "The next implementation PR must use existing committed receipts or synthetic mutated receipts only, with no inference, hardware receipt refresh, route-policy mutation, OpenVINO CPU promotion, CPU optimization, speedup or power claim, low_power evidence, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim.",
+]
