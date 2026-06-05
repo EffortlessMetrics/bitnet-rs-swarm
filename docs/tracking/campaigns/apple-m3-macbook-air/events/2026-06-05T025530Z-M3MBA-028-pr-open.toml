@@ -1,0 +1,38 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-028"
+event = "pr_open"
+timestamp = "2026-06-05T02:55:30Z"
+actor = "codex"
+pr = 1564
+head_sha = "f45be697792303764796f6b71bba355e097d7a47"
+branch = "codex/apple-m3-macbook-air/M3MBA-028-compact-linux-synthetic-ci"
+
+summary = "Opened #1564 with compact Linux synthetic guards for M3 Air receipt/profile invariants."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1564",
+  ".github/workflows/apple-m3-air-synthetic-tier0.yml",
+  "crates/bitnet-cli/src/mac.rs",
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+  "docs/tracking/campaigns/apple-m3-macbook-air/generated/status.md",
+  "docs/tracking/generated/global-dashboard.md",
+]
+
+notes = [
+  "The PR adds a compact Linux tier-0 workflow that runs only synthetic apple_m3 receipt/profile tests without live M3 hardware, model downloads, or live mac validate.",
+  "The PR strengthens strict CPU proof validation for Apple CPU/NEON labels and adds M3 negative tests for generic CPU fallback, unsupported accelerator labels, hidden fallback, and missing NEON evidence.",
+  "The PR extends Mac receipt validation for M3 warm-session backend identity, fallback rejection, accuracy claim boundaries, and timeout-cap provenance that excludes timed-out and cancelled runs from healthy samples.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- lint-workflows",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
