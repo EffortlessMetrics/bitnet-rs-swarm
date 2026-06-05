@@ -34,6 +34,8 @@ jobs:
     # These lanes can do cold-cache feature compilation on self-hosted review
     # runners. Keep the cap high enough to return a real cargo result.
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     strategy:
       fail-fast: false
       matrix:
@@ -120,6 +122,8 @@ jobs:
     # This job runs multiple Rust build/test probes. A 15 minute cap cancelled
     # active rustc work in PR #1545, so allow it to finish.
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
@@ -154,6 +158,8 @@ jobs:
     name: Documentation Check
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 

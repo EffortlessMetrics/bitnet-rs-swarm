@@ -56,6 +56,8 @@ jobs:
     name: Parser, Schema, And Report Checks
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout code
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4

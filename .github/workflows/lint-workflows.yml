@@ -25,6 +25,8 @@ jobs:
   check-yaml:
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 25
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 

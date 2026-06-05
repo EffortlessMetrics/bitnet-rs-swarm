@@ -119,6 +119,8 @@ jobs:
     # Native workspace feature checks can be cold-cache compiles on self-hosted
     # runners. Let them return a compiler result instead of timing out mid-rustc.
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     strategy:
       fail-fast: false
       matrix:
@@ -167,6 +169,8 @@ jobs:
     name: CPU Tests
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     needs: [native-compile]
     if: >-
       github.ref == 'refs/heads/main' ||
