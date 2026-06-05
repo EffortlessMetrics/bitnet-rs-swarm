@@ -1,0 +1,44 @@
+timestamp = "2026-06-04T23:44:22Z"
+campaign = "intel-a770"
+item = "A770-157"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 1541
+branch = "codex/intel-a770/A770-157-qkv-projection-level-replay"
+head_sha = "0425bd509a3ac7d3bbebcd59d98f67d8f7bcf97e"
+merge_sha = "2b6808f588a9ffa64521f894759686888d8bb7ca"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #1541 for the A770-157 projection-level Q/K/V replay boundary."
+notes = [
+  "A770-157 recorded a projection-level layer-0 Q/K/V boundary receipt from the committed A770-156 clean focused packet.",
+  "The receipt records three projection-level targets and blocks all three on missing full projection operands and missing projection-level replay hook.",
+  "The row evidence for q_proj, k_proj, and v_proj is selected-device Intel Arc A770 OpenCL, runtime_api opencl, fallback_used=false, and production output bits matched focused selected-device output bits.",
+  "The receipt keeps claim_allowed=false, diagnostic_only=true, projection_replay_executed_count=0, projection_replay_blocked_count=3, and all_projection_replay_targets_blocked=true.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-157 records the projection-level Q/K/V replay boundary for one case, one first-mismatch index, and the layer-0 Q/K/V target surface.",
+  "A770-157 records that full projection operands and a bounded projection-level replay hook are still required before projection-level replay can execute.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]

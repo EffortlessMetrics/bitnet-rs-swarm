@@ -1,0 +1,13 @@
+timestamp = "2026-06-04T22:15:21Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GPU-PROMOTION-REVIEW-001"
+event = "in_progress"
+previous_status = "planned"
+new_status = "in_progress"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-GPU-PROMOTION-REVIEW-001-question-matrix"
+summary = "Started a docs-only GPU promotion question matrix refresh."
+notes = [
+  "Add a Post-#1373 GPU promotion question matrix to the Lunar Lake OpenVINO GPU promotion review that maps ask_short/ask_normal guard evidence, corpus-v2 quality, direct-token visibility, route/device identity, timing/benchmark qualification, prefill/decode phase boundaries, low_power, and native/BitNet GPU questions to current evidence, missing receipt shape, owner issues, forbidden claims, and the next smallest PR.",
+  "Keep the work review-only: no Lunar Lake inference, model load, hardware receipt refresh, route-policy mutation, new route promotion, speedup claim, power-advantage claim, native OpenCL claim, low_power claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

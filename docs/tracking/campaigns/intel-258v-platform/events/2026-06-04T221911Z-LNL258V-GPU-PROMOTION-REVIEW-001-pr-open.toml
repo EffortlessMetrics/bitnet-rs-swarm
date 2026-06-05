@@ -1,0 +1,15 @@
+timestamp = "2026-06-04T22:19:11Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GPU-PROMOTION-REVIEW-001"
+event = "pr_open"
+previous_status = "in_progress"
+new_status = "pr_open"
+pr = 1542
+head_sha = "4bef2272a132e31f8774f8c7c020f78084267b5c"
+actor = "codex"
+branch = "codex/lunar-lake/LNL258V-GPU-PROMOTION-REVIEW-001-question-matrix"
+summary = "Opened PR #1542 for the docs-only GPU promotion question matrix refresh."
+notes = [
+  "PR #1542 adds the Post-#1373 GPU promotion question matrix to docs/reviews/lunar-lake-openvino-gpu-promotion-review.md and keeps the work review-only.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, new route promotion, speedup claim, power-advantage claim, low_power claim, native OpenCL claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

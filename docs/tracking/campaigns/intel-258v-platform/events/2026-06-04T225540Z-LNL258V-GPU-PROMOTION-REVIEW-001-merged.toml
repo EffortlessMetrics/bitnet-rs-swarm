@@ -1,0 +1,18 @@
+timestamp = "2026-06-04T22:55:40Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-GPU-PROMOTION-REVIEW-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1542
+branch = "codex/lunar-lake/LNL258V-GPU-PROMOTION-REVIEW-001-question-matrix"
+head_sha = "9a73593178917e7db07efc14cf28b0814ed58210"
+merge_sha = "7490e3ee0e1fe150c7ab53fd46dd521c19c1627a"
+merged_at = "2026-06-04T22:53:21Z"
+actor = "codex"
+summary = "PR #1542 merged the docs-only GPU promotion question matrix refresh."
+notes = [
+  "PR #1542 added the Post-#1373 GPU promotion question matrix to docs/reviews/lunar-lake-openvino-gpu-promotion-review.md.",
+  "The matrix keeps GPU ask-profile promotion issue/review-first and receipt-invalidatable by mapping guard questions to current evidence, missing receipt shape, owner issues, forbidden claims, and next smallest PRs.",
+  "No Lunar Lake inference, hardware receipt refresh, route-policy mutation, new route promotion, speedup claim, power-advantage claim, low_power claim, native OpenCL claim, dense-SLM-as-BitNet claim, or BitNet QK256/I2_S behavior-change claim was made.",
+]

@@ -18044,6 +18044,106 @@ must_not_claim = [
 ]
 
 [[work_item]]
+id = "LNL258V-POWER-006-REVIEW-001"
+status = "merged"
+pr = 1547
+head_sha = "13b94bd87da7135d3e59887222e344161629a2dc"
+merge_sha = "34cdf065e42bff6fdb51b95a5bdcc81f20951364"
+merged_at = "2026-06-04T23:12:09Z"
+branch = "codex/lunar-lake/LNL258V-POWER-006-REVIEW-001-question-matrix"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-OPENVINO-PLAN-001"]
+acceptance = "Add a Post-#1064 POWER-006 low_power question matrix to docs/research/lunar-lake-power-telemetry.md that maps strict battery preflight, before/after telemetry, CPU/GPU/NPU low_power route samples, energy proxy validity, thermal availability, OpenVINO power-property limits, route-policy promotion, and native/BitNet boundaries to current evidence, missing receipt shapes, owner issues, forbidden claims, and next smallest PRs. Preserve docs-only scope with no inference, receipt refresh, route-policy mutation, low_power promotion, speedup, power-advantage, measured-temperature, native accelerator, dense-SLM-as-BitNet, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "target/debug/xtask.exe campaign check intel-258v-platform",
+  "target/debug/xtask.exe campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/research/lunar-lake-power-telemetry.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "scripts/**",
+  "ci/hardware/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+]
+may_claim = [
+  "The Lunar Lake power telemetry research note now maps remaining POWER-006 low_power evidence questions to current evidence, missing receipt shapes, owner issues, forbidden claims, and next smallest PRs.",
+  "POWER-006 remains blocked on the physical battery/discharging window until strict before/after telemetry, fallback-free CPU/GPU/NPU low_power route samples, a valid energy proxy, and benchmark-qualified power advantage exist.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run by this PR.",
+  "Any committed hardware receipt was refreshed by this PR.",
+  "Any route policy changed or route was promoted by this PR.",
+  "A low_power route is proven or promoted by this PR.",
+  "OpenVINO GPU or NPU speedup is claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "Battery-mode route samples were collected by this PR.",
+  "Measured-temperature evidence is proven by this PR.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
+id = "LNL258V-GPU-PROMOTION-REVIEW-001"
+status = "merged"
+pr = 1542
+head_sha = "9a73593178917e7db07efc14cf28b0814ed58210"
+merge_sha = "7490e3ee0e1fe150c7ab53fd46dd521c19c1627a"
+merged_at = "2026-06-04T22:53:21Z"
+branch = "codex/lunar-lake/LNL258V-GPU-PROMOTION-REVIEW-001-question-matrix"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-OPENVINO-PLAN-001"]
+acceptance = "Add a Post-#1373 GPU promotion question matrix to docs/reviews/lunar-lake-openvino-gpu-promotion-review.md that maps ask_short/ask_normal guard evidence, corpus-v2 quality, direct-token visibility, route/device identity, timing/benchmark qualification, prefill/decode phase boundaries, low_power, and native/BitNet GPU questions to current evidence, missing receipt shape, owner issues, forbidden claims, and the next smallest PR. Preserve docs-only scope with no inference, receipt refresh, route-policy mutation, new route promotion, speedup, power-advantage, native OpenCL, low_power, dense-SLM-as-BitNet, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reviews/lunar-lake-openvino-gpu-promotion-review.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "scripts/**",
+  "ci/hardware/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+]
+may_claim = [
+  "The Lunar Lake OpenVINO GPU promotion review now maps remaining GPU promotion guard questions to current evidence, missing receipt shapes, owner issues, forbidden claims, and next smallest PRs.",
+  "The GPU ask-profile promotion lane remains issue/review-first and receipt-invalidatable unless accepted evidence contracts define a specific implementation or route-policy target.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run by this PR.",
+  "Any committed hardware receipt was refreshed by this PR.",
+  "Any route policy changed or route was promoted by this PR.",
+  "OpenVINO GPU or NPU speedup is claimed.",
+  "OpenVINO GPU or NPU power advantage is proven.",
+  "A low_power route is proven or promoted.",
+  "OpenVINO GPU evidence proves native OpenCL execution.",
+  "OpenVINO NPU evidence proves native NPU inference outside OpenVINO GenAI.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]
+
+[[work_item]]
 id = "LNL258V-NPU-CACHE-REVIEW-001"
 status = "merged"
 pr = 1530
