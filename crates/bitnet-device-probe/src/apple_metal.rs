@@ -275,16 +275,9 @@ fn is_apple_m4_family_chip(chip: &str) -> bool {
 }
 
 fn is_apple_m3_air_hardware(chip: &str, hardware: &str) -> bool {
-    if chip != apple_m3_air::SOC_FAMILY {
-        return false;
-    }
-
-    let model_name_is_air = parse_colon_value(hardware, "Model Name")
-        .is_some_and(|model_name| model_name == apple_m3_air::MODEL_NAME);
-    let model_identifier_is_air = parse_colon_value(hardware, "Model Identifier")
-        .is_some_and(|identifier| apple_m3_air::is_model_identifier(&identifier));
-
-    model_name_is_air || model_identifier_is_air
+    let model_name = parse_colon_value(hardware, "Model Name");
+    let model_identifier = parse_colon_value(hardware, "Model Identifier");
+    apple_m3_air::matches_host_identity(chip, model_name.as_deref(), model_identifier.as_deref())
 }
 
 #[cfg(test)]

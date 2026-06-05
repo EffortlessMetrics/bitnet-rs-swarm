@@ -135,6 +135,10 @@ impl AppleM3AirHostProfileContract {
 pub struct AppleResolvedDevice {
     pub chip: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_identifier: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gpu_cores: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unified_memory: Option<bool>,
@@ -147,10 +151,24 @@ impl AppleResolvedDevice {
     pub fn new(chip: impl Into<String>) -> Self {
         Self {
             chip: chip.into(),
+            model_name: None,
+            model_identifier: None,
             gpu_cores: None,
             unified_memory: None,
             memory_bandwidth_gbps: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_model_name(mut self, model_name: impl Into<String>) -> Self {
+        self.model_name = Some(model_name.into());
+        self
+    }
+
+    #[must_use]
+    pub fn with_model_identifier(mut self, model_identifier: impl Into<String>) -> Self {
+        self.model_identifier = Some(model_identifier.into());
+        self
     }
 
     #[must_use]
@@ -169,6 +187,15 @@ impl AppleResolvedDevice {
     pub const fn with_memory_bandwidth_gbps(mut self, memory_bandwidth_gbps: u32) -> Self {
         self.memory_bandwidth_gbps = Some(memory_bandwidth_gbps);
         self
+    }
+
+    #[must_use]
+    pub fn matches_m3_air_identity(&self) -> bool {
+        apple_m3_air::matches_host_identity(
+            &self.chip,
+            self.model_name.as_deref(),
+            self.model_identifier.as_deref(),
+        )
     }
 }
 
@@ -338,6 +365,14 @@ impl AppleBackendVisibilityPreflight {
             });
         }
         if self.machine_id == APPLE_M3_AIR_MACHINE_ID {
+            if !self.resolved_device.matches_m3_air_identity() {
+                return Err(AppleReceiptError::ResolvedDeviceMismatch {
+                    machine_id: APPLE_M3_AIR_MACHINE_ID,
+                    chip: self.resolved_device.chip.clone(),
+                    model_name: self.resolved_device.model_name.clone(),
+                    model_identifier: self.resolved_device.model_identifier.clone(),
+                });
+            }
             if let Some(selected_backend) = self.selected_backend.as_deref()
                 && selected_backend != self.requested_backend
             {
@@ -484,11 +519,28 @@ pub enum AppleReceiptError {
     UnexpectedFallbackReason,
     AmbiguousWorkId,
     ClaimBoundaryViolation(&'static str),
-    UnsupportedAppleMachine { machine_id: String },
+    UnsupportedAppleMachine {
+        machine_id: String,
+    },
     InvalidProfileField(&'static str),
-    UnsupportedAppleBackend { machine_id: &'static str, requested_backend: String },
-    UnsupportedAppleSelectedBackend { machine_id: &'static str, selected_backend: String },
-    RuntimeApiMismatch { requested_backend: &'static str, runtime_api: String },
+    UnsupportedAppleBackend {
+        machine_id: &'static str,
+        requested_backend: String,
+    },
+    UnsupportedAppleSelectedBackend {
+        machine_id: &'static str,
+        selected_backend: String,
+    },
+    RuntimeApiMismatch {
+        requested_backend: &'static str,
+        runtime_api: String,
+    },
+    ResolvedDeviceMismatch {
+        machine_id: &'static str,
+        chip: String,
+        model_name: Option<String>,
+        model_identifier: Option<String>,
+    },
 }
 
 impl fmt::Display for AppleReceiptError {
@@ -528,6 +580,14 @@ impl fmt::Display for AppleReceiptError {
                 f,
                 "Apple visibility preflight requested backend {requested_backend} does not match runtime API {runtime_api}"
             ),
+            Self::ResolvedDeviceMismatch { machine_id, chip, model_name, model_identifier } => {
+                write!(
+                    f,
+                    "Apple visibility preflight for {machine_id} must resolve to an M3 MacBook Air, got chip={chip} model_name={} model_identifier={}",
+                    model_name.as_deref().unwrap_or("unknown"),
+                    model_identifier.as_deref().unwrap_or("unknown")
+                )
+            }
         }
     }
 }

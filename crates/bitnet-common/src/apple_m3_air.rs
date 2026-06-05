@@ -168,6 +168,17 @@ pub fn is_model_identifier(identifier: &str) -> bool {
 }
 
 #[must_use]
+pub fn matches_host_identity(
+    chip: &str,
+    model_name: Option<&str>,
+    model_identifier: Option<&str>,
+) -> bool {
+    chip == SOC_FAMILY
+        && (model_name.is_some_and(|name| name == MODEL_NAME)
+            || model_identifier.is_some_and(is_model_identifier))
+}
+
+#[must_use]
 pub fn rejects(claim: UnsupportedClaim) -> bool {
     UNSUPPORTED_CLAIMS.contains(&claim)
 }
