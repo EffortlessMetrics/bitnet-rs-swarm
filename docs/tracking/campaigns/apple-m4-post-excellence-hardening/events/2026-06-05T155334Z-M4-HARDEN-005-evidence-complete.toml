@@ -1,0 +1,10 @@
+timestamp = "2026-06-05T15:53:34Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-005"
+event = "in_progress"
+actor = "codex"
+notes = [
+  "Completed the 175-case repaired subset rerun on Apple M4 CPU/NEON with fallback_used=false, zero timeouts, and a receipts-checkable aggregate receipt.",
+  "The matched subset comparison did not improve: quality moved from 142/175 to 136/175 and scoring moved from 147/175 to 139/175 versus the 2026-05-18 repaired baseline subset.",
+  "Decision remains repair-first: no full repaired-250 rerun, no expansion to 500, no BitNet performance route benchmark, no BitNet chat enablement, and no BitNet serve enablement.",
+]
