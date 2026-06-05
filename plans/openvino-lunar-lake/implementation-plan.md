@@ -572,29 +572,39 @@ PRs:
 
 ### Next No-Inference Guard Candidate
 
-The previous CPU slow-path guard candidate,
-[#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568),
-is complete through implementation PR #1593 and tracker closeout PR #1596. It
-now protects the Rust GGUF CPU versus OpenVINO CPU matched-comparison boundary
-from benchmark qualification when non-format alignment gates are missing or
-contradicted.
-
-The next CPU slow-path implementation should select
+The previous CPU slow-path guard candidates are complete. Issue
+[#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568)
+landed through implementation PR #1593 and tracker closeout PR #1596, protecting
+the Rust GGUF CPU versus OpenVINO CPU matched-comparison boundary from benchmark
+qualification when non-format alignment gates are missing or contradicted.
+Issue
 [#1578](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1578)
-before any CPU optimization, OpenVINO CPU replacement, route-policy, topology
-tuning, or broader benchmark PR. That issue narrows #1232 to a
-no-new-inference resident phase-attribution contract: make reload,
-prompt/template/tokenization, prefill, first-token boundary, decode,
-logits/sampling, detokenization, host overhead, topology, and unavailable
-telemetry buckets machine-readable and fail-closed.
+landed through implementation PR #1599 and tracker closeout PR #1601, adding
+machine-readable resident Rust GGUF CPU phase-attribution buckets while keeping
+the resident evidence diagnostic and `benchmark_qualified=false`.
 
-The first PR under #1578 should be schema/checker or docs-contract work using
-existing committed receipts or synthetic mutated receipts only. It must keep
-`benchmark_qualified=false` unless a later matched benchmark contract is
-accepted, and it must not run inference, refresh hardware receipts, optimize
-CPU code, promote OpenVINO CPU, mutate route policy, claim speedup or power
-advantage, touch `low_power`, or treat dense SLM evidence as BitNet QK256/I2_S
-proof.
+The next no-inference guard should select
+[#1572](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1572)
+before any NPU cache rerun, route-policy mutation, `AUTO` route-policy use,
+warm-resident expansion, `low_power` work, or broader NPU benchmark PR. That
+issue narrows #1371 to a no-new-inference NPU cache-source provenance contract:
+timing-derived or file/cache-derived evidence must not be relabeled as direct
+OpenVINO GenAI runtime cache-hit truth, and unavailable runtime cache metrics
+must stay diagnostic.
+
+The first PR under #1572 should be schema/checker or docs-contract work using
+existing committed NPU cache receipts or synthetic mutated fixtures only. It
+should preserve the cache-source taxonomy `runtime_metric`, `runtime_log`,
+`file_reuse`, `timing_derived`, and `not_exposed`; require route, backend,
+runtime, device, model-export, and cache-tuple provenance for any dedicated
+`lunar_lake_openvino_npu_cache_truth` artifact; fail closed when
+`timing_derived` or `file_reuse` evidence claims direct runtime cache-hit truth;
+and keep `direct_runtime_cache_hit_status.available=false` receipts reviewable
+as unavailable diagnostic evidence. It must not run inference, refresh hardware
+receipts, promote NPU for cold/default, `ask_short`, `ask_normal`, or
+`low_power`, mutate route policy, broaden `AUTO`, claim speedup or power
+advantage, claim native NPU execution, or treat dense SLM evidence as BitNet
+QK256/I2_S proof.
 
 ## Phase F: Rust-Native Product Surface
 
