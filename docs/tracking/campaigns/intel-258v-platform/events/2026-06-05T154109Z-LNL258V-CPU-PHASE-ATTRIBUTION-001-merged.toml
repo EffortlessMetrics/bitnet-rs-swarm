@@ -1,0 +1,18 @@
+timestamp = "2026-06-05T15:41:09Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-CPU-PHASE-ATTRIBUTION-001"
+event = "merged"
+previous_status = "pr_open"
+new_status = "merged"
+pr = 1599
+branch = "codex/lunar-lake/LNL258V-CPU-PHASE-ATTRIBUTION-001-attribution-buckets"
+head_sha = "fc61ca4bba1e34aae451706e5d1fef37d664ade3"
+merge_sha = "8750ca4d377ed26740cdbd6fb77a8c698c4a1f67"
+merged_at = "2026-06-05T15:41:09Z"
+actor = "codex"
+summary = "Closed LNL258V-CPU-PHASE-ATTRIBUTION-001 after PR #1599 merged the no-inference resident CPU phase-attribution bucket guard."
+notes = [
+  "PR #1599 added machine-readable resident Rust GGUF CPU phase-attribution buckets for reload, prompt/template/tokenization, prefill, first-token boundary, decode, logits/sampling, detokenization, host overhead, topology, and unavailable telemetry.",
+  "The merged bucket guard derives from existing resident-session evidence and synthetic mutated receipts only; benchmark_qualified remains false until a later matched benchmark contract is accepted.",
+  "No Lunar Lake inference, hardware receipt refresh, CPU optimization, thread default, affinity, topology, kernel, buffer, sampling, route-policy mutation, OpenVINO CPU promotion, speedup or power claim, low_power evidence, native accelerator proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim is in scope.",
+]

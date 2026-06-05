@@ -18360,9 +18360,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "LNL258V-CPU-PHASE-ATTRIBUTION-001"
-status = "pr_open"
+status = "merged"
 pr = 1599
-head_sha = "339c19d59ffea40133424086dadfc02c16bf9351"
+head_sha = "fc61ca4bba1e34aae451706e5d1fef37d664ade3"
+merge_sha = "8750ca4d377ed26740cdbd6fb77a8c698c4a1f67"
+merged_at = "2026-06-05T15:41:09Z"
 branch = "codex/lunar-lake/LNL258V-CPU-PHASE-ATTRIBUTION-001-attribution-buckets"
 stackable = false
 review_mode = "codex_premerge"
