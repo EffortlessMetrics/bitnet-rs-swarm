@@ -16849,6 +16849,8 @@ fn apple_backend_failure_note(requested_backend_label: &str) -> Option<&'static 
 #[derive(Debug, Clone, Default)]
 struct AppleCliMachineProbe {
     chip: Option<String>,
+    model_name: Option<String>,
+    model_identifier: Option<String>,
     cpu_cores: Option<usize>,
     gpu_cores: Option<usize>,
     unified_memory: Option<bool>,
@@ -16887,6 +16889,8 @@ fn probe_apple_cli_machine() -> AppleCliMachineProbe {
 
     AppleCliMachineProbe {
         chip,
+        model_name: parse_receipt_colon_value(&hardware, "Model Name"),
+        model_identifier: parse_receipt_colon_value(&hardware, "Model Identifier"),
         cpu_cores: parse_receipt_colon_value(&hardware, "Total Number of Cores")
             .and_then(|value| parse_receipt_first_usize(&value)),
         gpu_cores: parse_receipt_colon_value(&metal, "Total Number of Cores")
@@ -16967,6 +16971,12 @@ fn apple_machine_receipt_json_from_probe(
     );
     if let Some(cpu_cores) = probe.cpu_cores {
         resolved_device.insert("cpu_cores".to_string(), serde_json::json!(cpu_cores));
+    }
+    if let Some(model_name) = &probe.model_name {
+        resolved_device.insert("model_name".to_string(), serde_json::json!(model_name));
+    }
+    if let Some(model_identifier) = &probe.model_identifier {
+        resolved_device.insert("model_identifier".to_string(), serde_json::json!(model_identifier));
     }
     if let Some(gpu_cores) = probe.gpu_cores {
         resolved_device.insert("gpu_cores".to_string(), serde_json::json!(gpu_cores));
@@ -20086,6 +20096,8 @@ mod tests {
     fn apple_m4_receipt_includes_resolved_machine_fields() {
         let probe = AppleCliMachineProbe {
             chip: Some("Apple M4".to_string()),
+            model_name: Some("Mac mini".to_string()),
+            model_identifier: Some("Mac16,10".to_string()),
             cpu_cores: Some(10),
             gpu_cores: Some(10),
             unified_memory: Some(true),
@@ -20099,6 +20111,8 @@ mod tests {
 
         assert_eq!(receipt["machine_id"], "apple-m4-mac-mini");
         assert_eq!(receipt["resolved_device"]["chip"], "Apple M4");
+        assert_eq!(receipt["resolved_device"]["model_name"], "Mac mini");
+        assert_eq!(receipt["resolved_device"]["model_identifier"], "Mac16,10");
         assert_eq!(receipt["resolved_device"]["cpu_cores"], 10);
         assert_eq!(receipt["resolved_device"]["gpu_cores"], 10);
         assert_eq!(receipt["resolved_device"]["unified_memory"], true);
@@ -20111,6 +20125,8 @@ mod tests {
     fn apple_m3_air_receipt_uses_macbook_machine_id() {
         let probe = AppleCliMachineProbe {
             chip: Some("Apple M3".to_string()),
+            model_name: Some("MacBook Air".to_string()),
+            model_identifier: Some("Mac15,13".to_string()),
             cpu_cores: Some(8),
             gpu_cores: Some(10),
             unified_memory: Some(true),
@@ -20124,6 +20140,8 @@ mod tests {
 
         assert_eq!(receipt["machine_id"], "apple-m3-macbook-air");
         assert_eq!(receipt["resolved_device"]["chip"], "Apple M3");
+        assert_eq!(receipt["resolved_device"]["model_name"], "MacBook Air");
+        assert_eq!(receipt["resolved_device"]["model_identifier"], "Mac15,13");
         assert_eq!(receipt["resolved_device"]["cpu_cores"], 8);
     }
 

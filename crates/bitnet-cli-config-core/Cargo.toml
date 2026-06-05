@@ -12,6 +12,7 @@ description = "SRP core crate for BitNet CLI configuration contracts and validat
 
 [dependencies]
 anyhow.workspace = true
+bitnet-common = { path = "../bitnet-common", version = "0.2.1-dev" }
 serde = { workspace = true, features = ["derive"] }
 toml.workspace = true
 dirs.workspace = true

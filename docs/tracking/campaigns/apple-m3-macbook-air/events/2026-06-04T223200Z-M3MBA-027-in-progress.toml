@@ -1,0 +1,38 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-027"
+event = "in_progress"
+timestamp = "2026-06-04T22:32:00Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-027-device-model-srp"
+
+summary = "Started the M3 Air device-model SRP cleanup on the swarm repository."
+
+artifacts = [
+  "crates/bitnet-common/src/apple_m3_air.rs",
+  "crates/bitnet-common/src/backend_selection.rs",
+  "crates/bitnet-cli-config-core/src/lib.rs",
+  "crates/bitnet-device-config-core/src/profile.rs",
+  "crates/bitnet-device-probe/src/apple_receipts.rs",
+  "crates/bitnet-cli/src/mac.rs",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "The work item centralizes the exact M3 Air profile, backend labels, runtime API labels, storage policy, unsupported claims, and Air hardware identifiers behind a shared device identity surface.",
+  "The implementation is scoped to identity and selection contracts; it does not run models, enable M3 Metal or MPSGraph model inference, or promote broad Apple Silicon behavior.",
+  "Host-independent backend-selection coverage is expected for the positive M3 Air CPU/NEON path while preserving strict M3 Metal and MPSGraph rejection.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-common --no-default-features backend_selection",
+  "cargo test --locked -p bitnet-cli-config-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-device-config-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-device-probe --no-default-features apple",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]

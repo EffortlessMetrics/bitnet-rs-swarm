@@ -1,6 +1,7 @@
 //! Core configuration contracts and validation for BitNet CLI.
 
 use anyhow::{Context, Result};
+use bitnet_common::apple_m3_air;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tracing::debug;
@@ -33,23 +34,31 @@ pub const SUPPORTED_DEVICE_LABELS: &[&str] = &[
     "apple-m4-metal",
     "apple-m4-mpsgraph",
     "apple-m4-cpu-neon",
-    "apple-m3-air-metal",
-    "apple-m3-air-mpsgraph",
-    "apple-m3-air-cpu-neon",
+    apple_m3_air::METAL_BACKEND,
+    apple_m3_air::MPSGRAPH_BACKEND,
+    apple_m3_air::CPU_NEON_BACKEND,
     "auto",
 ];
 
 /// Stable help text for supported package-level device/backend labels.
-pub const SUPPORTED_DEVICE_LABELS_TEXT: &str = "cpu, cuda, gpu, vulkan, opencl, ocl, hip, rocm, oneapi, npu, npu:<index>, intel-npu, intel-npu:<index>, openvino-npu, intel-npu-openvino, nvidia-rtx-5070-ti-cuda, nvidia-rtx-5070-ti-wgpu, intel-a770-opencl, metal, mpsgraph, apple-m4-metal, apple-m4-mpsgraph, apple-m4-cpu-neon, apple-m3-air-metal, apple-m3-air-mpsgraph, apple-m3-air-cpu-neon, auto";
+pub const SUPPORTED_DEVICE_LABELS_TEXT: &str = concat!(
+    "cpu, cuda, gpu, vulkan, opencl, ocl, hip, rocm, oneapi, npu, npu:<index>, intel-npu, intel-npu:<index>, openvino-npu, intel-npu-openvino, nvidia-rtx-5070-ti-cuda, nvidia-rtx-5070-ti-wgpu, intel-a770-opencl, metal, mpsgraph, apple-m4-metal, apple-m4-mpsgraph, apple-m4-cpu-neon, ",
+    bitnet_common::apple_m3_air_backend_labels_csv!(),
+    ", auto"
+);
 
 /// Stable help text for Apple M4 proof-lane labels.
 pub const APPLE_M4_DEVICE_LABELS_TEXT: &str = "apple-m4-metal = native Metal proof lane, apple-m4-mpsgraph = MPSGraph graph/reference lane, apple-m4-cpu-neon = Apple CPU/NEON fallback/parity lane";
 
 /// Stable help text for Apple M3 MacBook Air proof-lane labels.
-pub const APPLE_M3_AIR_DEVICE_LABELS_TEXT: &str = "apple-m3-air-metal = strict request identity for future M3 MacBook Air Metal receipts, apple-m3-air-mpsgraph = strict request identity for future M3 MacBook Air MPSGraph/reference receipts, apple-m3-air-cpu-neon = M3 MacBook Air Apple CPU/NEON lane";
+pub const APPLE_M3_AIR_DEVICE_LABELS_TEXT: &str = apple_m3_air::DEVICE_LABELS_TEXT;
 
 /// Top-level `--device` help for package-level backend labels.
-pub const DEVICE_HELP: &str = "Device/backend label (cpu, cuda/gpu, hip/rocm, oneapi, npu/openvino-npu, nvidia-rtx-5070-ti-cuda/wgpu, intel-a770-opencl, metal/mpsgraph, apple-m4-metal, apple-m4-mpsgraph, apple-m4-cpu-neon, apple-m3-air-metal, apple-m3-air-mpsgraph, apple-m3-air-cpu-neon, auto). Apple M4 and M3 Air labels are distinct proof lanes";
+pub const DEVICE_HELP: &str = concat!(
+    "Device/backend label (cpu, cuda/gpu, hip/rocm, oneapi, npu/openvino-npu, nvidia-rtx-5070-ti-cuda/wgpu, intel-a770-opencl, metal/mpsgraph, apple-m4-metal, apple-m4-mpsgraph, apple-m4-cpu-neon, ",
+    bitnet_common::apple_m3_air_backend_labels_csv!(),
+    ", auto). Apple M4 and M3 Air labels are distinct proof lanes"
+);
 
 /// Help for legacy full-cli commands that do not emit Apple proof receipts.
 pub const LEGACY_RUNTIME_DEVICE_HELP: &str = "Device for this legacy command (cpu, cuda/gpu aliases, auto). Use `bitnet run` for receipt-backed Apple proof labels";
@@ -253,11 +262,9 @@ pub fn is_supported_device_label(label: &str) -> bool {
             | "apple-m4-metal"
             | "apple-m4-mpsgraph"
             | "apple-m4-cpu-neon"
-            | "apple-m3-air-metal"
-            | "apple-m3-air-mpsgraph"
-            | "apple-m3-air-cpu-neon"
             | "auto"
-    ) || label.strip_prefix("npu:").is_some_and(|index| index.parse::<usize>().is_ok())
+    ) || apple_m3_air::is_backend_label(label)
+        || label.strip_prefix("npu:").is_some_and(|index| index.parse::<usize>().is_ok())
         || label.strip_prefix("intel-npu:").is_some_and(|index| index.parse::<usize>().is_ok())
 }
 
@@ -319,6 +326,7 @@ mod tests {
         SUPPORTED_DEVICE_LABELS_TEXT, invalid_device_message, is_supported_device_label,
         unsupported_legacy_command_device_message,
     };
+    use bitnet_common::apple_m3_air;
     use std::path::PathBuf;
 
     #[test]
@@ -621,9 +629,21 @@ memory_optimization = true
 
     #[test]
     fn validates_apple_m3_air_label_without_aliasing() {
-        for device in ["apple-m3-air-metal", "apple-m3-air-mpsgraph", "apple-m3-air-cpu-neon"] {
+        for device in apple_m3_air::BACKEND_LABELS {
             let config = CliConfig { default_device: device.to_string(), ..CliConfig::default() };
             assert!(config.validate().is_ok(), "{device} should validate");
+        }
+    }
+
+    #[test]
+    fn rejects_apple_m3_air_alias_drift() {
+        for device in apple_m3_air::REJECTED_BACKEND_ALIASES {
+            let config =
+                CliConfig { default_device: (*device).to_string(), ..CliConfig::default() };
+            let err = config.validate().expect_err("M3 alias drift must be rejected").to_string();
+            assert!(!is_supported_device_label(device), "{device} should not be supported");
+            assert!(err.contains("Invalid device"), "got: {err}");
+            assert!(err.contains(APPLE_M3_AIR_DEVICE_LABELS_TEXT), "got: {err}");
         }
     }
 

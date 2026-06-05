@@ -1,8 +1,9 @@
+use bitnet_common::apple_m3_air;
 use bitnet_device_probe::{
-    APPLE_M3_AIR_MACHINE_ID, APPLE_M3_AIR_METAL_BACKEND, APPLE_M3_AIR_MPSGRAPH_BACKEND,
-    APPLE_VISIBILITY_PREFLIGHT_KIND, AppleBackendReceipt, AppleBackendVisibilityPreflight,
-    AppleM3AirHostProfileContract, AppleM3AirUnsupportedClaim, AppleReceiptError,
-    AppleResolvedDevice,
+    APPLE_M3_AIR_CPU_NEON_BACKEND, APPLE_M3_AIR_MACHINE_ID, APPLE_M3_AIR_METAL_BACKEND,
+    APPLE_M3_AIR_MPSGRAPH_BACKEND, APPLE_VISIBILITY_PREFLIGHT_KIND, AppleBackendReceipt,
+    AppleBackendVisibilityPreflight, AppleM3AirHostProfileContract, AppleM3AirUnsupportedClaim,
+    AppleReceiptError, AppleResolvedDevice,
 };
 use std::error::Error;
 use std::io;
@@ -12,7 +13,19 @@ fn m4_device() -> AppleResolvedDevice {
 }
 
 fn m3_air_device() -> AppleResolvedDevice {
-    AppleResolvedDevice::new("Apple M3").with_gpu_cores(10).with_unified_memory(true)
+    AppleResolvedDevice::new(apple_m3_air::SOC_FAMILY)
+        .with_model_name(apple_m3_air::MODEL_NAME)
+        .with_model_identifier("Mac15,13")
+        .with_gpu_cores(10)
+        .with_unified_memory(true)
+}
+
+fn m3_non_air_device() -> AppleResolvedDevice {
+    AppleResolvedDevice::new(apple_m3_air::SOC_FAMILY)
+        .with_model_name("MacBook Pro")
+        .with_model_identifier("Mac15,3")
+        .with_gpu_cores(10)
+        .with_unified_memory(true)
 }
 
 #[test]
@@ -24,8 +37,8 @@ fn apple_m3_air_host_profile_contract_records_device_and_claim_boundaries()
 
     let value = serde_json::to_value(&contract)?;
     ensure(value["machine_id"] == APPLE_M3_AIR_MACHINE_ID, "wrong machine id")?;
-    ensure(value["soc_family"] == "Apple M3", "wrong SoC family")?;
-    ensure(value["thermal_policy"] == "fanless_mobile", "wrong thermal policy")?;
+    ensure(value["soc_family"] == apple_m3_air::SOC_FAMILY, "wrong SoC family")?;
+    ensure(value["thermal_policy"] == apple_m3_air::THERMAL_POLICY, "wrong thermal policy")?;
     ensure(value["core_split_required"] == true, "core split is not required")?;
     ensure(value["memory_tier_required"] == true, "memory tier is not required")?;
     ensure(value["storage"]["cache_root_required"] == true, "cache root is not required")?;
@@ -43,7 +56,7 @@ fn apple_m3_air_host_profile_contract_records_device_and_claim_boundaries()
         .ok_or_else(|| io::Error::other("proof_lane_labels is not an array"))?;
     ensure(
         labels.iter().any(|label| {
-            label["backend_label"] == "apple-m3-air-cpu-neon"
+            label["backend_label"] == APPLE_M3_AIR_CPU_NEON_BACKEND
                 && label["runtime_api"] == "cpu-neon"
                 && label["execution_available"] == true
         }),
@@ -239,6 +252,8 @@ fn m3_air_metal_visibility_preflight_preserves_bounded_claims() -> Result<(), Bo
     ensure(value["requested_backend"] == APPLE_M3_AIR_METAL_BACKEND, "wrong requested backend")?;
     ensure(value["selected_backend"] == APPLE_M3_AIR_METAL_BACKEND, "wrong selected backend")?;
     ensure(value["runtime_api"] == "metal", "wrong runtime API")?;
+    ensure(value["resolved_device"]["model_name"] == apple_m3_air::MODEL_NAME, "wrong model name")?;
+    ensure(value["resolved_device"]["model_identifier"] == "Mac15,13", "wrong model id")?;
     ensure(value["metal_visible"] == true, "Metal visibility not recorded")?;
     ensure(value["fallback_used"] == false, "unexpected fallback")?;
     ensure(value["claim_boundary"]["model_loaded"] == false, "model load was claimed")?;
@@ -276,6 +291,25 @@ fn m3_air_mpsgraph_visibility_preflight_is_graph_visibility_not_model_inference(
         value["claim_boundary"]["neural_engine_claimed"] == false,
         "Neural Engine execution was claimed",
     )?;
+    Ok(())
+}
+
+#[test]
+fn m3_air_visibility_preflight_rejects_cross_lane_resolved_devices() -> Result<(), Box<dyn Error>> {
+    for resolved_device in [m4_device(), m3_non_air_device()] {
+        let receipt = AppleBackendVisibilityPreflight::m3_air_metal(
+            Some(APPLE_M3_AIR_METAL_BACKEND),
+            resolved_device,
+            true,
+            false,
+            "target/apple-m3-air/preflight/cross-lane-device.json",
+        );
+
+        ensure(
+            matches!(receipt.validate(), Err(AppleReceiptError::ResolvedDeviceMismatch { .. })),
+            "M3 Air preflight accepted a non-Air resolved device",
+        )?;
+    }
     Ok(())
 }
 

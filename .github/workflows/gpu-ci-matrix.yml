@@ -116,7 +116,11 @@ jobs:
   native-compile:
     name: "native-check (${{ matrix.label }})"
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 20
+    # Native workspace feature checks can be cold-cache compiles on self-hosted
+    # runners. Let them return a compiler result instead of timing out mid-rustc.
+    timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     strategy:
       fail-fast: false
       matrix:
@@ -142,6 +146,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
 
@@ -163,6 +169,8 @@ jobs:
     name: CPU Tests
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     needs: [native-compile]
     if: >-
       github.ref == 'refs/heads/main' ||
@@ -176,6 +184,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
 

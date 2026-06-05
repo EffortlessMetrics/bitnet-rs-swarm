@@ -15,6 +15,7 @@ pub use profile::{
 #[cfg(test)]
 mod tests {
     use super::DeviceConfig;
+    use bitnet_common::apple_m3_air;
 
     fn parse_device(input: &str) -> Option<DeviceConfig> {
         input.parse::<DeviceConfig>().ok()
@@ -44,9 +45,15 @@ mod tests {
         assert_eq!(parse_device("apple-m4-metal"), Some(DeviceConfig::AppleM4Metal));
         assert_eq!(parse_device("apple-m4-mpsgraph"), Some(DeviceConfig::AppleM4MpsGraph));
         assert_eq!(parse_device("apple-m4-cpu-neon"), Some(DeviceConfig::AppleM4CpuNeon));
-        assert_eq!(parse_device("apple-m3-air-metal"), Some(DeviceConfig::AppleM3AirMetal));
-        assert_eq!(parse_device("apple-m3-air-mpsgraph"), Some(DeviceConfig::AppleM3AirMpsGraph));
-        assert_eq!(parse_device("apple-m3-air-cpu-neon"), Some(DeviceConfig::AppleM3AirCpuNeon));
+        assert_eq!(parse_device(apple_m3_air::METAL_BACKEND), Some(DeviceConfig::AppleM3AirMetal));
+        assert_eq!(
+            parse_device(apple_m3_air::MPSGRAPH_BACKEND),
+            Some(DeviceConfig::AppleM3AirMpsGraph)
+        );
+        assert_eq!(
+            parse_device(apple_m3_air::CPU_NEON_BACKEND),
+            Some(DeviceConfig::AppleM3AirCpuNeon)
+        );
     }
 
     #[test]
@@ -65,7 +72,10 @@ mod tests {
         let mpsgraph = DeviceConfig::MpsGraph;
         let apple_mpsgraph = DeviceConfig::AppleM4MpsGraph;
         let apple_cpu = DeviceConfig::AppleM4CpuNeon;
-        assert_eq!(parse_device("apple-m3-air-cpu-neon"), Some(DeviceConfig::AppleM3AirCpuNeon));
+        assert_eq!(
+            parse_device(apple_m3_air::CPU_NEON_BACKEND),
+            Some(DeviceConfig::AppleM3AirCpuNeon)
+        );
         let apple_m3_air_metal = DeviceConfig::AppleM3AirMetal;
         let apple_m3_air_mpsgraph = DeviceConfig::AppleM3AirMpsGraph;
         let apple_m3_air_cpu = DeviceConfig::AppleM3AirCpuNeon;
@@ -75,13 +85,13 @@ mod tests {
         assert_eq!(mpsgraph.backend_label(), "mpsgraph");
         assert_eq!(apple_mpsgraph.backend_label(), "apple-m4-mpsgraph");
         assert_eq!(apple_cpu.backend_label(), "apple-m4-cpu-neon");
-        assert_eq!(apple_m3_air_metal.backend_label(), "apple-m3-air-metal");
-        assert_eq!(apple_m3_air_mpsgraph.backend_label(), "apple-m3-air-mpsgraph");
-        assert_eq!(apple_m3_air_cpu.backend_label(), "apple-m3-air-cpu-neon");
+        assert_eq!(apple_m3_air_metal.backend_label(), apple_m3_air::METAL_BACKEND);
+        assert_eq!(apple_m3_air_mpsgraph.backend_label(), apple_m3_air::MPSGRAPH_BACKEND);
+        assert_eq!(apple_m3_air_cpu.backend_label(), apple_m3_air::CPU_NEON_BACKEND);
         assert_ne!(apple_m3_air_metal.backend_label(), apple_metal.backend_label());
         assert_ne!(apple_m3_air_mpsgraph.backend_label(), apple_mpsgraph.backend_label());
         assert_ne!(apple_m3_air_cpu.backend_label(), apple_cpu.backend_label());
-        assert_eq!(apple_m3_air_metal.backend_request().to_string(), "apple-m3-air-metal");
+        assert_eq!(apple_m3_air_metal.backend_request().to_string(), apple_m3_air::METAL_BACKEND);
         assert_eq!(apple_m3_air_metal.resolve(), bitnet_common::Device::Cpu);
         assert_eq!(apple_m3_air_mpsgraph.resolve(), bitnet_common::Device::Cpu);
         assert_eq!(apple_m3_air_cpu.resolve(), bitnet_common::Device::Cpu);
@@ -99,22 +109,22 @@ mod tests {
         let Some(contract) = metal else {
             return;
         };
-        assert_eq!(contract.profile_id, "apple-m3-macbook-air");
-        assert_eq!(contract.soc_family, "Apple M3");
+        assert_eq!(contract.profile_id, apple_m3_air::PROFILE_ID);
+        assert_eq!(contract.soc_family, apple_m3_air::SOC_FAMILY);
         assert_eq!(contract.thermal_policy, super::ThermalPolicy::FanlessMobile);
         assert_eq!(contract.storage.cache_root_required, true);
         assert_eq!(contract.storage.large_artifact_sweep_allowed, true);
         assert_eq!(contract.storage.model_binaries_committed, false);
         assert_eq!(
-            contract.label("apple-m3-air-metal").map(|label| label.execution_available),
+            contract.label(apple_m3_air::METAL_BACKEND).map(|label| label.execution_available),
             Some(false)
         );
         assert_eq!(
-            contract.label("apple-m3-air-mpsgraph").map(|label| label.execution_available),
+            contract.label(apple_m3_air::MPSGRAPH_BACKEND).map(|label| label.execution_available),
             Some(false)
         );
         assert_eq!(
-            contract.label("apple-m3-air-cpu-neon").map(|label| label.execution_available),
+            contract.label(apple_m3_air::CPU_NEON_BACKEND).map(|label| label.execution_available),
             Some(true)
         );
         assert!(contract.rejects(super::DeviceProfileUnsupportedClaim::MetalModelInference));
@@ -122,6 +132,13 @@ mod tests {
         assert!(contract.rejects(super::DeviceProfileUnsupportedClaim::NeuralEngineExecution));
         assert!(contract.rejects(super::DeviceProfileUnsupportedClaim::Qk256AppleSilicon));
         assert!(DeviceConfig::AppleM4CpuNeon.device_profile_contract().is_none());
+    }
+
+    #[test]
+    fn apple_m3_air_alias_drift_is_rejected() {
+        for alias in apple_m3_air::REJECTED_BACKEND_ALIASES {
+            assert!(parse_device(alias).is_none(), "{alias} must not parse");
+        }
     }
 
     #[test]

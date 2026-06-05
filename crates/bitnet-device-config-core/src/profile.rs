@@ -1,4 +1,5 @@
 use crate::DeviceConfig;
+use bitnet_common::apple_m3_air;
 
 /// Thermal policy class that affects how performance evidence must be scoped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -7,34 +8,10 @@ pub enum ThermalPolicy {
     FanlessMobile,
 }
 
-/// Stable proof-lane label carried by a device profile contract.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DeviceProfileLabel {
-    pub backend_label: &'static str,
-    pub runtime_api: &'static str,
-    pub execution_available: bool,
-    pub claim_scope: &'static str,
-}
-
-/// Storage and artifact-retention policy for a device profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DeviceProfileStoragePolicy {
-    pub cache_root_required: bool,
-    pub large_artifact_sweep_allowed: bool,
-    pub model_binaries_committed: bool,
-}
-
-/// Claims that are explicitly unsupported by a device profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DeviceProfileUnsupportedClaim {
-    MetalModelInference,
-    MpsGraphModelInference,
-    NeuralEngineExecution,
-    Qk256AppleSilicon,
-    M4MacMiniPerformance,
-    BroadAppleSiliconPerformance,
-    BitNetLocalAnswerQualityFromDenseSlm,
-}
+pub use bitnet_common::apple_m3_air::{
+    ProofLabel as DeviceProfileLabel, StoragePolicy as DeviceProfileStoragePolicy,
+    UnsupportedClaim as DeviceProfileUnsupportedClaim,
+};
 
 /// Structured host/profile contract for proof-lane routing and receipt wording.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,19 +31,15 @@ impl DeviceProfileContract {
     #[must_use]
     pub fn apple_m3_air() -> Self {
         Self {
-            profile_id: "apple-m3-macbook-air",
-            machine_id: "apple-m3-macbook-air",
-            soc_family: "Apple M3",
+            profile_id: apple_m3_air::CONTRACT.profile_id,
+            machine_id: apple_m3_air::CONTRACT.machine_id,
+            soc_family: apple_m3_air::CONTRACT.soc_family,
             thermal_policy: ThermalPolicy::FanlessMobile,
-            core_split_required: true,
-            memory_tier_required: true,
-            storage: DeviceProfileStoragePolicy {
-                cache_root_required: true,
-                large_artifact_sweep_allowed: true,
-                model_binaries_committed: false,
-            },
-            labels: &APPLE_M3_AIR_LABELS,
-            unsupported_claims: &APPLE_M3_AIR_UNSUPPORTED_CLAIMS,
+            core_split_required: apple_m3_air::CONTRACT.core_split_required,
+            memory_tier_required: apple_m3_air::CONTRACT.memory_tier_required,
+            storage: apple_m3_air::CONTRACT.storage,
+            labels: apple_m3_air::CONTRACT.labels,
+            unsupported_claims: apple_m3_air::CONTRACT.unsupported_claims,
         }
     }
 
@@ -93,34 +66,3 @@ impl DeviceConfig {
         }
     }
 }
-
-const APPLE_M3_AIR_LABELS: [DeviceProfileLabel; 3] = [
-    DeviceProfileLabel {
-        backend_label: "apple-m3-air-cpu-neon",
-        runtime_api: "cpu-neon",
-        execution_available: true,
-        claim_scope: "M3 Air Apple CPU/NEON dense SLM and receipt-checked host evidence only",
-    },
-    DeviceProfileLabel {
-        backend_label: "apple-m3-air-metal",
-        runtime_api: "metal",
-        execution_available: false,
-        claim_scope: "M3 Air Metal visibility/request identity only until receipt-backed runtime work lands",
-    },
-    DeviceProfileLabel {
-        backend_label: "apple-m3-air-mpsgraph",
-        runtime_api: "mpsgraph",
-        execution_available: false,
-        claim_scope: "M3 Air MPSGraph visibility/request identity only until receipt-backed runtime work lands",
-    },
-];
-
-const APPLE_M3_AIR_UNSUPPORTED_CLAIMS: [DeviceProfileUnsupportedClaim; 7] = [
-    DeviceProfileUnsupportedClaim::MetalModelInference,
-    DeviceProfileUnsupportedClaim::MpsGraphModelInference,
-    DeviceProfileUnsupportedClaim::NeuralEngineExecution,
-    DeviceProfileUnsupportedClaim::Qk256AppleSilicon,
-    DeviceProfileUnsupportedClaim::M4MacMiniPerformance,
-    DeviceProfileUnsupportedClaim::BroadAppleSiliconPerformance,
-    DeviceProfileUnsupportedClaim::BitNetLocalAnswerQualityFromDenseSlm,
-];

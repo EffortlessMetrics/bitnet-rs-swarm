@@ -31,7 +31,11 @@ jobs:
   feature-matrix:
     name: "Feature ${{ matrix.label }}"
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 20
+    # These lanes can do cold-cache feature compilation on self-hosted review
+    # runners. Keep the cap high enough to return a real cargo result.
+    timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     strategy:
       fail-fast: false
       matrix:
@@ -59,6 +63,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
           components: clippy
@@ -113,12 +119,18 @@ jobs:
   opencl-compile-check:
     name: OpenCL Compilation Check
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 15
+    # This job runs multiple Rust build/test probes. A 15 minute cap cancelled
+    # active rustc work in PR #1545, so allow it to finish.
+    timeout-minutes: 30
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
 
@@ -146,11 +158,15 @@ jobs:
     name: Documentation Check
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 15
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        env:
+          TMPDIR: ${{ runner.temp }}
         with:
           toolchain: "1.95.0"
 

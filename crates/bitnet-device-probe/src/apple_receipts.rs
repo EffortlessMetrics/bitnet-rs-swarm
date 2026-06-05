@@ -3,13 +3,14 @@
 //! These types record Apple proof identity without collapsing Metal, `MPSGraph`,
 //! and CPU/NEON evidence. They do not prove `BitNet` inference on their own.
 
+use bitnet_common::apple_m3_air;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-pub const APPLE_M3_AIR_MACHINE_ID: &str = "apple-m3-macbook-air";
-pub const APPLE_M3_AIR_METAL_BACKEND: &str = "apple-m3-air-metal";
-pub const APPLE_M3_AIR_MPSGRAPH_BACKEND: &str = "apple-m3-air-mpsgraph";
-pub const APPLE_M3_AIR_CPU_NEON_BACKEND: &str = "apple-m3-air-cpu-neon";
+pub const APPLE_M3_AIR_MACHINE_ID: &str = apple_m3_air::MACHINE_ID;
+pub const APPLE_M3_AIR_METAL_BACKEND: &str = apple_m3_air::METAL_BACKEND;
+pub const APPLE_M3_AIR_MPSGRAPH_BACKEND: &str = apple_m3_air::MPSGRAPH_BACKEND;
+pub const APPLE_M3_AIR_CPU_NEON_BACKEND: &str = apple_m3_air::CPU_NEON_BACKEND;
 pub const APPLE_VISIBILITY_PREFLIGHT_KIND: &str = "backend_visibility_preflight";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -20,24 +21,20 @@ pub struct AppleM3AirProofLabel {
     pub claim_scope: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AppleM3AirStoragePolicy {
-    pub cache_root_required: bool,
-    pub large_artifact_sweep_allowed: bool,
-    pub model_binaries_committed: bool,
+impl From<apple_m3_air::ProofLabel> for AppleM3AirProofLabel {
+    fn from(label: apple_m3_air::ProofLabel) -> Self {
+        Self {
+            backend_label: label.backend_label.to_owned(),
+            runtime_api: label.runtime_api.to_owned(),
+            execution_available: label.execution_available,
+            claim_scope: label.claim_scope.to_owned(),
+        }
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AppleM3AirUnsupportedClaim {
-    MetalModelInference,
-    MpsGraphModelInference,
-    NeuralEngineExecution,
-    Qk256AppleSilicon,
-    M4MacMiniPerformance,
-    BroadAppleSiliconPerformance,
-    BitNetLocalAnswerQualityFromDenseSlm,
-}
+pub use bitnet_common::apple_m3_air::{
+    StoragePolicy as AppleM3AirStoragePolicy, UnsupportedClaim as AppleM3AirUnsupportedClaim,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppleM3AirHostProfileContract {
@@ -55,48 +52,19 @@ impl AppleM3AirHostProfileContract {
     #[must_use]
     pub fn current() -> Self {
         Self {
-            machine_id: APPLE_M3_AIR_MACHINE_ID.to_owned(),
-            soc_family: "Apple M3".to_owned(),
-            thermal_policy: "fanless_mobile".to_owned(),
-            core_split_required: true,
-            memory_tier_required: true,
-            storage: AppleM3AirStoragePolicy {
-                cache_root_required: true,
-                large_artifact_sweep_allowed: true,
-                model_binaries_committed: false,
-            },
-            proof_lane_labels: vec![
-                AppleM3AirProofLabel {
-                    backend_label: APPLE_M3_AIR_CPU_NEON_BACKEND.to_owned(),
-                    runtime_api: "cpu-neon".to_owned(),
-                    execution_available: true,
-                    claim_scope: "M3 Air Apple CPU/NEON dense SLM and receipt-checked host evidence only"
-                        .to_owned(),
-                },
-                AppleM3AirProofLabel {
-                    backend_label: APPLE_M3_AIR_METAL_BACKEND.to_owned(),
-                    runtime_api: "metal".to_owned(),
-                    execution_available: false,
-                    claim_scope: "M3 Air Metal visibility/request identity only until receipt-backed runtime work lands"
-                        .to_owned(),
-                },
-                AppleM3AirProofLabel {
-                    backend_label: APPLE_M3_AIR_MPSGRAPH_BACKEND.to_owned(),
-                    runtime_api: "mpsgraph".to_owned(),
-                    execution_available: false,
-                    claim_scope: "M3 Air MPSGraph visibility/request identity only until receipt-backed runtime work lands"
-                        .to_owned(),
-                },
-            ],
-            unsupported_claims: vec![
-                AppleM3AirUnsupportedClaim::MetalModelInference,
-                AppleM3AirUnsupportedClaim::MpsGraphModelInference,
-                AppleM3AirUnsupportedClaim::NeuralEngineExecution,
-                AppleM3AirUnsupportedClaim::Qk256AppleSilicon,
-                AppleM3AirUnsupportedClaim::M4MacMiniPerformance,
-                AppleM3AirUnsupportedClaim::BroadAppleSiliconPerformance,
-                AppleM3AirUnsupportedClaim::BitNetLocalAnswerQualityFromDenseSlm,
-            ],
+            machine_id: apple_m3_air::CONTRACT.machine_id.to_owned(),
+            soc_family: apple_m3_air::CONTRACT.soc_family.to_owned(),
+            thermal_policy: apple_m3_air::CONTRACT.thermal_policy.to_owned(),
+            core_split_required: apple_m3_air::CONTRACT.core_split_required,
+            memory_tier_required: apple_m3_air::CONTRACT.memory_tier_required,
+            storage: apple_m3_air::CONTRACT.storage,
+            proof_lane_labels: apple_m3_air::CONTRACT
+                .labels
+                .iter()
+                .copied()
+                .map(AppleM3AirProofLabel::from)
+                .collect(),
+            unsupported_claims: apple_m3_air::CONTRACT.unsupported_claims.to_vec(),
         }
     }
 
@@ -104,12 +72,12 @@ impl AppleM3AirHostProfileContract {
         require_nonempty("machine_id", &self.machine_id)?;
         require_nonempty("soc_family", &self.soc_family)?;
         require_nonempty("thermal_policy", &self.thermal_policy)?;
-        if self.machine_id != APPLE_M3_AIR_MACHINE_ID {
+        if self.machine_id != apple_m3_air::MACHINE_ID {
             return Err(AppleReceiptError::UnsupportedAppleMachine {
                 machine_id: self.machine_id.clone(),
             });
         }
-        if self.thermal_policy != "fanless_mobile" {
+        if self.thermal_policy != apple_m3_air::THERMAL_POLICY {
             return Err(AppleReceiptError::InvalidProfileField("thermal_policy"));
         }
         if !self.core_split_required {
@@ -124,11 +92,7 @@ impl AppleM3AirHostProfileContract {
         if self.storage.model_binaries_committed {
             return Err(AppleReceiptError::ClaimBoundaryViolation("model_binaries_committed"));
         }
-        for required in [
-            APPLE_M3_AIR_CPU_NEON_BACKEND,
-            APPLE_M3_AIR_METAL_BACKEND,
-            APPLE_M3_AIR_MPSGRAPH_BACKEND,
-        ] {
+        for required in apple_m3_air::BACKEND_LABELS {
             if !self.proof_lane_labels.iter().any(|label| label.backend_label == required) {
                 return Err(AppleReceiptError::InvalidProfileField("proof_lane_labels"));
             }
@@ -138,37 +102,27 @@ impl AppleM3AirHostProfileContract {
             require_nonempty("proof_lane_labels.runtime_api", &label.runtime_api)?;
             require_nonempty("proof_lane_labels.claim_scope", &label.claim_scope)?;
         }
-        for (backend_label, runtime_api, execution_available) in [
-            (APPLE_M3_AIR_CPU_NEON_BACKEND, "cpu-neon", true),
-            (APPLE_M3_AIR_METAL_BACKEND, "metal", false),
-            (APPLE_M3_AIR_MPSGRAPH_BACKEND, "mpsgraph", false),
-        ] {
+        for expected in apple_m3_air::LABELS {
             let label = self
                 .proof_lane_labels
                 .iter()
-                .find(|label| label.backend_label == backend_label)
+                .find(|label| label.backend_label == expected.backend_label)
                 .ok_or(AppleReceiptError::InvalidProfileField("proof_lane_labels"))?;
-            if label.runtime_api != runtime_api {
+            if label.runtime_api != expected.runtime_api {
                 return Err(AppleReceiptError::InvalidProfileField(
                     "proof_lane_labels.runtime_api",
                 ));
             }
-            if label.execution_available != execution_available {
-                if backend_label == APPLE_M3_AIR_CPU_NEON_BACKEND {
-                    return Err(AppleReceiptError::InvalidProfileField("apple-m3-air-cpu-neon"));
+            if label.execution_available != expected.execution_available {
+                if expected.backend_label == apple_m3_air::CPU_NEON_BACKEND {
+                    return Err(AppleReceiptError::InvalidProfileField(
+                        apple_m3_air::CPU_NEON_BACKEND,
+                    ));
                 }
                 return Err(AppleReceiptError::ClaimBoundaryViolation("accelerator_execution"));
             }
         }
-        for claim in [
-            AppleM3AirUnsupportedClaim::MetalModelInference,
-            AppleM3AirUnsupportedClaim::MpsGraphModelInference,
-            AppleM3AirUnsupportedClaim::NeuralEngineExecution,
-            AppleM3AirUnsupportedClaim::Qk256AppleSilicon,
-            AppleM3AirUnsupportedClaim::M4MacMiniPerformance,
-            AppleM3AirUnsupportedClaim::BroadAppleSiliconPerformance,
-            AppleM3AirUnsupportedClaim::BitNetLocalAnswerQualityFromDenseSlm,
-        ] {
+        for claim in apple_m3_air::UNSUPPORTED_CLAIMS {
             if !self.unsupported_claims.contains(&claim) {
                 return Err(AppleReceiptError::InvalidProfileField("unsupported_claims"));
             }
@@ -180,6 +134,10 @@ impl AppleM3AirHostProfileContract {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppleResolvedDevice {
     pub chip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_identifier: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gpu_cores: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -193,10 +151,24 @@ impl AppleResolvedDevice {
     pub fn new(chip: impl Into<String>) -> Self {
         Self {
             chip: chip.into(),
+            model_name: None,
+            model_identifier: None,
             gpu_cores: None,
             unified_memory: None,
             memory_bandwidth_gbps: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_model_name(mut self, model_name: impl Into<String>) -> Self {
+        self.model_name = Some(model_name.into());
+        self
+    }
+
+    #[must_use]
+    pub fn with_model_identifier(mut self, model_identifier: impl Into<String>) -> Self {
+        self.model_identifier = Some(model_identifier.into());
+        self
     }
 
     #[must_use]
@@ -215,6 +187,15 @@ impl AppleResolvedDevice {
     pub const fn with_memory_bandwidth_gbps(mut self, memory_bandwidth_gbps: u32) -> Self {
         self.memory_bandwidth_gbps = Some(memory_bandwidth_gbps);
         self
+    }
+
+    #[must_use]
+    pub fn matches_m3_air_identity(&self) -> bool {
+        apple_m3_air::matches_host_identity(
+            &self.chip,
+            self.model_name.as_deref(),
+            self.model_identifier.as_deref(),
+        )
     }
 }
 
@@ -376,10 +357,7 @@ impl AppleBackendVisibilityPreflight {
         validate_fallback(self.fallback_used, self.fallback_reason.as_deref())?;
 
         if self.machine_id == APPLE_M3_AIR_MACHINE_ID
-            && !matches!(
-                self.requested_backend.as_str(),
-                APPLE_M3_AIR_METAL_BACKEND | APPLE_M3_AIR_MPSGRAPH_BACKEND
-            )
+            && !apple_m3_air::is_visibility_preflight_backend(&self.requested_backend)
         {
             return Err(AppleReceiptError::UnsupportedAppleBackend {
                 machine_id: APPLE_M3_AIR_MACHINE_ID,
@@ -387,6 +365,14 @@ impl AppleBackendVisibilityPreflight {
             });
         }
         if self.machine_id == APPLE_M3_AIR_MACHINE_ID {
+            if !self.resolved_device.matches_m3_air_identity() {
+                return Err(AppleReceiptError::ResolvedDeviceMismatch {
+                    machine_id: APPLE_M3_AIR_MACHINE_ID,
+                    chip: self.resolved_device.chip.clone(),
+                    model_name: self.resolved_device.model_name.clone(),
+                    model_identifier: self.resolved_device.model_identifier.clone(),
+                });
+            }
             if let Some(selected_backend) = self.selected_backend.as_deref()
                 && selected_backend != self.requested_backend
             {
@@ -395,16 +381,10 @@ impl AppleBackendVisibilityPreflight {
                     selected_backend: selected_backend.to_owned(),
                 });
             }
-            match self.requested_backend.as_str() {
-                APPLE_M3_AIR_METAL_BACKEND if self.runtime_api != "metal" => {
+            match apple_m3_air::label(&self.requested_backend) {
+                Some(expected) if self.runtime_api != expected.runtime_api => {
                     return Err(AppleReceiptError::RuntimeApiMismatch {
-                        requested_backend: APPLE_M3_AIR_METAL_BACKEND,
-                        runtime_api: self.runtime_api.clone(),
-                    });
-                }
-                APPLE_M3_AIR_MPSGRAPH_BACKEND if self.runtime_api != "mpsgraph" => {
-                    return Err(AppleReceiptError::RuntimeApiMismatch {
-                        requested_backend: APPLE_M3_AIR_MPSGRAPH_BACKEND,
+                        requested_backend: expected.backend_label,
                         runtime_api: self.runtime_api.clone(),
                     });
                 }
@@ -534,11 +514,28 @@ pub enum AppleReceiptError {
     UnexpectedFallbackReason,
     AmbiguousWorkId,
     ClaimBoundaryViolation(&'static str),
-    UnsupportedAppleMachine { machine_id: String },
+    UnsupportedAppleMachine {
+        machine_id: String,
+    },
     InvalidProfileField(&'static str),
-    UnsupportedAppleBackend { machine_id: &'static str, requested_backend: String },
-    UnsupportedAppleSelectedBackend { machine_id: &'static str, selected_backend: String },
-    RuntimeApiMismatch { requested_backend: &'static str, runtime_api: String },
+    UnsupportedAppleBackend {
+        machine_id: &'static str,
+        requested_backend: String,
+    },
+    UnsupportedAppleSelectedBackend {
+        machine_id: &'static str,
+        selected_backend: String,
+    },
+    RuntimeApiMismatch {
+        requested_backend: &'static str,
+        runtime_api: String,
+    },
+    ResolvedDeviceMismatch {
+        machine_id: &'static str,
+        chip: String,
+        model_name: Option<String>,
+        model_identifier: Option<String>,
+    },
 }
 
 impl fmt::Display for AppleReceiptError {
@@ -578,6 +575,14 @@ impl fmt::Display for AppleReceiptError {
                 f,
                 "Apple visibility preflight requested backend {requested_backend} does not match runtime API {runtime_api}"
             ),
+            Self::ResolvedDeviceMismatch { machine_id, chip, model_name, model_identifier } => {
+                write!(
+                    f,
+                    "Apple visibility preflight for {machine_id} must resolve to an M3 MacBook Air, got chip={chip} model_name={} model_identifier={}",
+                    model_name.as_deref().unwrap_or("unknown"),
+                    model_identifier.as_deref().unwrap_or("unknown")
+                )
+            }
         }
     }
 }

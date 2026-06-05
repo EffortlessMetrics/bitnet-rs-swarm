@@ -1310,7 +1310,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-027"
-status = "ready"
+status = "in_progress"
 branch = "codex/apple-m3-macbook-air/M3MBA-027-device-model-srp"
 stackable = false
 review_mode = "codex_premerge"
