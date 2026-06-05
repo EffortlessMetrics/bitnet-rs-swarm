@@ -1,0 +1,13 @@
+timestamp = "2026-06-05T01:04:30Z"
+campaign = "intel-258v-platform"
+item = "LNL258V-BITNET-INTAKE-006"
+event = "in_progress"
+branch = "codex/lunar-lake/LNL258V-BITNET-INTAKE-006-slm-cpu-243-freshness"
+actor = "codex"
+
+notes = [
+  "Started a no-inference Lunar Lake BitNet semantic-intake refresh after current swarm main merged #1529, #1541, and #1549.",
+  "#1529 is reviewed as a dense-SLM no-bias descriptor non-trigger for Lunar Lake BitNet CPU reference reruns because candidate execution, generated ID/text binding before decode, speedup, allocation, and BitNet QK256/I2_S behavior claims remain false.",
+  "#1541 is reviewed as diagnostic-only A770 projection-level replay boundary work, and #1549 is reviewed as tracker-only A770 closeout work.",
+  "The refresh preserves no new inference, no route-policy change, no route promotion, no POWER-006 evidence, no NPU/GPU promotion, and no dense-SLM-as-BitNet proof.",
+]
