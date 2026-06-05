@@ -31,7 +31,8 @@ mod artifact_kinds;
 mod schema;
 
 pub use artifact_kinds::{
-    CUDA_PLANNER_RECEIPT_VERSION, DENSE_GGUF_ALL_LAYER_EXECUTION_PLAN_ARTIFACT_KIND,
+    BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND, CUDA_PLANNER_RECEIPT_VERSION,
+    DENSE_GGUF_ALL_LAYER_EXECUTION_PLAN_ARTIFACT_KIND,
     DENSE_GGUF_ATTENTION_SCORE_CUDA_PARITY_ARTIFACT_KIND,
     DENSE_GGUF_ATTENTION_SCORE_FIXTURE_ARTIFACT_KIND,
     DENSE_GGUF_ATTENTION_SOFTMAX_CUDA_PARITY_ARTIFACT_KIND,
@@ -11761,6 +11762,18 @@ mod tests {
         use_apple_m3_air_strict_cpu_label(&mut receipt);
 
         assert!(receipt.validate_strict_cpu_proof().is_ok());
+    }
+
+    #[test]
+    fn apple_m3_bitnet_local_answer_artifact_kind_is_macbook_scoped() {
+        assert_eq!(
+            BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND,
+            "bitnet_apple_m3_air_local_answer_corpus"
+        );
+        assert_ne!(
+            BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND,
+            "bitnet_apple_m4_local_answer_corpus"
+        );
     }
 
     #[test]

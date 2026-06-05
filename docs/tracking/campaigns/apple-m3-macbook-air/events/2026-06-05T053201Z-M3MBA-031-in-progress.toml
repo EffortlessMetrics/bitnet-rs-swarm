@@ -1,0 +1,37 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-031"
+event = "in_progress"
+timestamp = "2026-06-05T05:32:01Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-031-bitnet-proof-prep"
+
+summary = "Started strict M3 Air BitNet CPU/NEON local-answer proof-prep gates."
+
+artifacts = [
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "crates/bitnet-cli/src/mac.rs",
+  "crates/bitnet-receipts-core/src/artifact_kinds.rs",
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "docs/reports/apple-silicon-macbook-m3-air-bitnet-proof-prep.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "The M3 Air proof-prep surface uses a distinct bitnet_apple_m3_air_local_answer_corpus artifact kind instead of reusing M4 Mac mini evidence.",
+  "The synthetic gates require the accepted Microsoft 2B I2_S artifact identity, external llama-bpe tokenizer authority, prompt authority, generated text/token IDs, runtime_api=cpu, fallback_used=false, and disabled chat/serve/accelerator claims.",
+  "No live M3 BitNet local-answer receipt is produced by this item; M3MBA-032 remains responsible for a live pass, failure, or blocker report.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli bitnet",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features bitnet",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]

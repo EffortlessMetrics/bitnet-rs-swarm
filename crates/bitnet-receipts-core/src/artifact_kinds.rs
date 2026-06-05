@@ -247,6 +247,12 @@ pub const DENSE_GGUF_QWEN_CHAT_STRICT_CUDA_PROOF_ARTIFACT_KIND: &str =
 /// updates the model coverage matrix.
 pub const SERVER_SHARED_ENGINE_CHAT_COMPLETION_RECEIPT_KIND: &str =
     "server_shared_engine_chat_completion";
+/// Artifact kind for strict Apple M3 MacBook Air BitNet CPU/NEON local-answer receipts.
+///
+/// This is distinct from the Apple M4 Mac mini BitNet answer-corpus kind so
+/// MacBook proof attempts cannot be counted as M4 evidence.
+pub const BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND: &str =
+    "bitnet_apple_m3_air_local_answer_corpus";
 pub(crate) const QWEN25_05B_INSTRUCT_Q8_0_MODEL_ID: &str = "qwen2.5-0.5b-instruct-q8_0";
 pub(crate) const QWEN25_05B_INSTRUCT_Q8_0_MODEL_FILE: &str = "qwen2.5-0.5b-instruct-q8_0.gguf";
 pub(crate) const QWEN25_05B_INSTRUCT_Q8_0_MODEL_SHA256: &str =
