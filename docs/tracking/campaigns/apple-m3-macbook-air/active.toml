@@ -1310,8 +1310,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-027"
-status = "in_progress"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-027-device-model-srp"
+pr = 1545
+head_sha = "81c7a62577c5574cef7180ff97465dc01c3b33ec"
+merge_sha = "26c0cadcf4f05dcdcce7a4ea6e1ac3ae6ba5ca9d"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
