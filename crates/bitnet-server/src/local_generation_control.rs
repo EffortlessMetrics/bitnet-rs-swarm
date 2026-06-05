@@ -236,7 +236,11 @@ mod tests {
         });
 
         assert!(control.observe_prefill(Duration::from_millis(1)).is_none());
-        let stop = control.observe_decode_start(Duration::from_millis(7)).expect("timeout stop");
+        let stop = control.observe_decode_start(Duration::from_millis(7));
+        assert!(stop.is_some(), "timeout stop");
+        let Some(stop) = stop else {
+            return;
+        };
 
         assert_eq!(stop.reason, LocalGenerationStopReason::Timeout);
         assert_eq!(stop.stage, "decode");
@@ -259,7 +263,11 @@ mod tests {
         });
 
         assert!(control.observe_token(Duration::from_millis(1)).is_none());
-        let stop = control.observe_token(Duration::from_millis(2)).expect("cancel stop");
+        let stop = control.observe_token(Duration::from_millis(2));
+        assert!(stop.is_some(), "cancel stop");
+        let Some(stop) = stop else {
+            return;
+        };
 
         assert_eq!(stop.reason, LocalGenerationStopReason::Cancelled);
         assert_eq!(stop.generated_tokens, 2);
