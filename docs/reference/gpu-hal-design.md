@@ -16,19 +16,31 @@ multi-backend GPU plan** (`docs/reference/dual-backend-roadmap.md`,
 origin 2025-11-03). The lower layer is `bitnet-kernels` (origin
 2025-08-01), which is load-bearing and consumed by 9 crates. gpu-hal
 landed on 2026-02-28 with its CPU reference/mock phase complete, but its
-**integration phase** (roadmap Phase 9 — real backends consuming the HAL
-traits) never started. Because the lower layer was already wired and
-load-bearing, each new capability got implemented in `bitnet-kernels`
-directly rather than routed through the upper HAL — so today there is
-duplication, not because one path "won" but because both layers advanced
-independently and only the lower layer had live consumers.
+**integration phase** (real backends consuming the HAL traits) never
+started. Because the lower layer was already wired and load-bearing, each
+new capability got implemented in `bitnet-kernels` directly rather than
+routed through the upper HAL — so today there is duplication, not because
+one path "won" but because both layers advanced independently and only the
+lower layer had live consumers.
 
-The disposition (ADR-0003) is: **retain as-is for its `hal_traits`
-glossary value; do not integrate, do not extend, do not delete.** The
-crate predates the repo's current contract conventions (which landed
-2026-05-05 onward, ~2.5 months later), so the absence of a
-proposal/campaign at landing time is a temporal artifact, not a
-governance failure. Reopening the disposition requires a superseding ADR.
+The disposition (ADR-0003) is: **retain as a prototype corpus; adoption
+by verified extraction or adapter, not wholesale integration and not
+permanent freezing.** The crate predates the repo's current contract
+conventions (which landed 2026-05-05 onward, ~2.5 months later), so the
+absence of a proposal/campaign at landing time is a temporal artifact,
+not a governance failure. The roadmap's phase numbering is internally
+inconsistent and should not be treated as authoritative (see ADR-0003
+§Context). Useful pieces may be extracted one at a time with evidence;
+reopening the overall disposition requires a superseding ADR.
+
+> **Note on the phase numbering:** an earlier version of this doc called
+> gpu-hal the "Phase 8 reference layer awaiting Phase 9." The roadmap is
+> internally inconsistent (it places gpu-hal under Phase 10 while listing
+> Phase 9 as still-planned afterward), and at least one cited PR mapping
+> is wrong (PR #1165, claimed as the "HAL abstraction" landing, is a
+> closed unmerged rustdoc PR). The phase documents are historical intent,
+> not a trustworthy current architecture contract. See ADR-0003 and
+> BITNET-ADR-0010 for the verified current state.
 
 ## How it got here — and what it actually is
 
@@ -51,9 +63,10 @@ The two layers:
   abstraction meant to sit *above* the per-backend kernels: one
   `KernelDispatcher` / `GpuBackend` trait surface across 8 backends, with
   backend-agnostic memory pools, multi-device scheduler, model sharding.
-  Phase 10 of the roadmap. Backend modules are API-shape CPU mocks
-  (`CUDAKernel::launch()` body is `self.launch_count += 1`), which is the
-  stated Phase 10 CPU-mock deliverable — not a numerical compute path.
+  The roadmap places this in its Phase 10 (though the phase numbering is
+  inconsistent — see ADR-0003). Backend modules are API-shape CPU mocks
+  (`CUDAKernel::launch()` body is `self.launch_count += 1`) — not a
+  numerical compute path.
 
 ### Timeline
 
