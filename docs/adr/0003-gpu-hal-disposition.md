@@ -37,9 +37,21 @@ The lower layer kept growing because it was already wired and load-bearing
 — `neon_speculative_decoding`, `dispatch_planner`, the `avx2_*_parity`
 tests all landed in the days after the same 2026-02-28 burst. The upper
 layer landed its reference/mock phase, but its **integration phase**
-(roadmap Phase 9 — real backends consuming the HAL traits) never started.
-No wiring PR, no campaign, no handoff scoped Phase 9. gpu-hal has sat with
+(roadmap "Phase 9" — real backends consuming the HAL traits) never started.
+No wiring PR, no campaign, no handoff scoped it. gpu-hal has sat with
 zero inbound dependents since landing.
+
+**Caveat on the phase numbering.** The roadmap (`dual-backend-roadmap.md`)
+is internally inconsistent: it places GPU-HAL expansion under Phase 10
+while listing Phase 9 as still-planned afterward, and at least one
+PR mapping is factually wrong (PR #1165, cited as the "HAL abstraction"
+landing, is actually a closed, unmerged GPU rustdoc PR). History also
+shows a bulk assembly process — one Copilot-coauthored integration commit
+registered 91 modules across 20 categories with stubs "pending merge from
+feature branches" — rather than a single coherent phase transition.
+**The phase documents are historical intent, not a trustworthy current
+architecture contract.** ADR-0003 records the verified current state
+instead of relying on the phase interpretation.
 
 **Temporal note on the contract gap.** The crate predates the repo's
 current contract conventions. The first campaign `active.toml` landed
@@ -54,34 +66,71 @@ the feature-flag strategy, not the layered HAL architecture. This ADR
 The crate has been re-investigated multiple times
 ([#1639](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1639))
 with contradictory conclusions (delete / intentional-phase-8 / superseded
-/ two-layer-upper). Each pass costs real effort because no durable
+/ prototype-corpus). Each pass costs real effort because no durable
 artifact records the disposition.
 
 ## Decision
 
-**`bitnet-gpu-hal` is retained as-is as a read-only educational/reference
-crate.** Specifically:
+**`bitnet-gpu-hal` is retained as a prototype corpus. Adoption is by
+verified extraction or adapter, not wholesale integration and not permanent
+freezing.** Specifically:
 
 1. **Retained, not deleted.** The crate stays in the workspace `members`
    list and continues to compile and lint in CI exactly as it does today.
-2. **Not actively integrated.** No work is slated to wire the HAL into
-   `bitnet-kernels`, `bitnet-opencl`, `bitnet-inference`, or any consumer.
-   The real GPU dispatch surface continues to be owned by
-   `bitnet-kernels` (`DispatchBackend` enum) and `bitnet-opencl`
-   (`backend_dispatcher`).
-3. **Not a candidate for new feature work** without a superseding ADR.
-   The drift modules (`semantic_search`, `rate_limiter`, `api_gateway`,
-   `instruction_tuning`, `prompt_template`, `docker_ci`, etc.) are
-   explicitly out-of-scope for a GPU HAL and must not be extended.
-4. **Reference value.** The trait glossary in `hal_traits.rs`
+   The corpus contains useful prototype material (HAL trait nucleus, CPU
+   numerical references, planners, schedulers, memory systems, graph
+   tooling, observability) alongside modules that do not belong in a HAL
+   (semantic search, rate limiting, instruction tuning, API gateways,
+   Docker tooling).
+2. **Not wholesale-integrated.** No work is slated to make `bitnet-inference`
+   or `bitnet-kernels` depend on the existing monolith, nor to implement
+   the current `GpuBackend` trait across every backend. The trait needs a
+   v2 (see §"hal_traits v2 issues" below) before real backends could
+   implement it.
+3. **Adoption by extraction.** Useful pieces may be extracted one at a
+   time, each with its own evidence, once a generated module inventory
+   classifies them and a convergence pilot proves the adapter. This is
+   **not** a permanent freeze — a module is not locked in merely because
+   it compiles or has many tests.
+4. **Drift modules frozen.** The modules outside HAL scope
+   (`semantic_search`, `rate_limiter`, `api_gateway`, `instruction_tuning`,
+   `prompt_template`, `docker_ci`, etc.) must not be extended with new
+   feature work regardless of the corpus's overall disposition. They may
+   be rehomed only when independently valuable.
+5. **Reference value.** The trait glossary in `hal_traits.rs`
    (`GpuDevice`, `GpuBuffer`, `GpuKernel`, `GpuQueue`, `GpuProgram`,
-   `GpuEvent`, `GpuContext`, `GpuBackend`, `GpuMemoryAllocator`) is a
-   clean, documented reference for what a GPU HAL surface can look like,
-   and is the primary retained value. New contributors may read it as a
-   glossary; it is not a load-bearing production abstraction.
-5. **Disposition is durable.** Reopening the question requires writing a
-   superseding ADR (e.g., ADR-NNNN proposing backend trait unification or
-   wholesale extraction/deletion), not re-investigating from scratch.
+   `GpuEvent`, `GpuContext`, `GpuBackend`, `GpuMemoryAllocator`) is the
+   primary retained value — a readable design input for a future HAL v2.
+6. **Disposition is durable, but not永久.** Reopening the question
+   requires writing a superseding ADR (e.g., a convergence proposal
+   proposing backend trait unification or wholesale extraction/deletion),
+   not re-investigating from scratch. Extraction of individual modules,
+   however, can proceed via the convergence program without superseding
+   this ADR, as long as each extraction is evidence-bound.
+
+### hal_traits v2 issues (why direct implementation is the wrong Phase 9)
+
+The current trait surface has real deficiencies that make "implement this
+trait for CUDA/OpenCL/Metal" the wrong next step. These are normal for a
+prototype and are why adoption is by extraction + v2, not direct wiring:
+
+- `GpuKernel::launch` launches itself, while `GpuQueue::submit` also
+  submits a kernel — responsibility is duplicated.
+- `GpuQueue::submit` has no work dimensions, argument bindings, or
+  returned event.
+- `GpuProgram::compile` is an associated function even though real
+  compilation depends on a device and context.
+- `GpuBackend::execute` receives neither dispatch dimensions nor typed
+  arguments.
+- `GpuBuffer` is byte-only — no dtype, shape, layout, alignment, device
+  identity, or residency generation.
+- `copy_to` cannot guarantee source and destination belong to compatible
+  contexts or backends.
+- `map()` returns a raw mutable slice rather than an RAII mapping guard.
+- No explicit transfer accounting; no resource-lifetime model for context
+  destruction, in-flight work, or async cleanup.
+- Errors lose backend source chains and mix device-runtime failures with
+  tensor/operator validation failures.
 
 ## Consequences
 
