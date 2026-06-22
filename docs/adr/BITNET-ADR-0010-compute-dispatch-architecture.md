@@ -10,36 +10,71 @@
 
 ## Context
 
-BitNet-rs has **five** compute-dispatch surfaces today. They overlap in
-scope, do not compose, and conflate three concerns that are genuinely
-orthogonal. This ADR inventories them, decomposes them into the three axes,
-records the target architecture the repo intends to converge toward, and
-defines the forcing functions that would trigger execution. It does not
-commit to a refactor timeline.
+BitNet-rs has **six** compute-dispatch surfaces today, spread across five
+architectural layers that reuse the same vocabulary — *backend, dispatch,
+provider, device* — without clearly distinguishing scope. Several surfaces
+duplicate the same control-plane types. This ADR inventories the layers,
+decomposes them, records the target architecture the repo intends to
+converge toward, and defines the forcing functions that would trigger
+execution. It does not commit to a refactor timeline.
 
-### The five surfaces (verified against the source)
+### The six surfaces across five layers (verified against the source)
 
-| # | Surface | Location | Ops | Weight formats | Providers | Wired to inference? |
-|---|---|---|---|---|---|---|
-| A | `KernelProvider` trait | `crates/bitnet-kernels/src/lib.rs:166` | `matmul_i2s`, `quantize` (2 ops) | `I2S`, `TL1`, `TL2` (BitNet only — see `crates/bitnet-common/src/types.rs:7`) | CPU×4 (`Fallback`, `Avx2`, `Avx512`, `Neon`), `Cuda`, `OpenCl` (in-kernels), `Npu`, `Rocm`, `Ffi`, `DebugLayer<P>` | **Yes** — `crates/bitnet-inference/src/layers/quantized_linear.rs` calls `&dyn KernelProvider` at 5 sites |
-| B | `BackendProvider` + `BackendDispatcher` | `crates/bitnet-opencl/src/backend_{registry,dispatcher}.rs` | 8 (`MatMul`, `Quantize`, `Dequantize`, `Softmax`, `LayerNorm`, `Attention`, `RoPE`, `Sampling`) | (OpenCL-internal) | OpenCL (A770) | **No** — siloed inside the OpenCL crate |
-| C | `bitnet-qk256-dispatch` | `crates/bitnet-qk256-dispatch/src/lib.rs` | QK256 linear | QK256 (BitNet variant) | `#[cfg(cuda)]` / `#[cfg(opencl)]` / fallback branches | **Yes** — via cfg routing |
-| D | `GpuBackend` HAL trait family | `crates/bitnet-gpu-hal/src/hal_traits.rs` | full device/buffer/kernel/queue/program/event/context | n/a (HAL plumbing) | CPU mocks only (`launch_count += 1`) | **No** — zero consumers; disposition in [ADR-0003](./0003-gpu-hal-disposition.md) |
-| E | `DenseLinear` (dense SLM path) | `crates/bitnet-inference/src/dense_forward.rs:56` | linear, attention, FFN (FP32) | FP32 only (Q8_0/Q4_K/Q4_0/Q5_0/Q2_K/Q3_K/Q5_K/Q6_K/Q8_K/F16/BF16 routed here as dequantized FP32 via string matching at `crates/bitnet-inference/src/engine.rs:485-495`) | **CPU scalar, f64-accumulated triple loop** | **YES** — the working Qwen/Phi/Gemma path |
+| # | Surface | Layer | Location | Role | Wired to inference? |
+|---|---|---|---|---|---|
+| A | `KernelProvider` trait | Format-specific execution | `crates/bitnet-kernels/src/lib.rs:166` | Executes 2 ops (`matmul_i2s`, `quantize`) for BitNet formats (`I2S`/`TL1`/`TL2`). 7+ impls: CPU×4, CUDA, OpenCL, NPU, ROCm, FFI, `DebugLayer<P>` | **Yes** — `quantized_linear.rs` at 5 sites |
+| B | `BackendProvider` + `BackendDispatcher` | **Selection policy (no execution)** | `crates/bitnet-opencl/src/backend_{registry,dispatcher}.rs` | Reports name/status/capabilities/priority. **Has no execute method** — pure selection policy + decision recorder | **No** — siloed inside OpenCL crate |
+| C | `bitnet-qk256-dispatch` | Format-specific execution | `crates/bitnet-qk256-dispatch/src/lib.rs` | QK256 linear via `#[cfg(cuda)]`/`#[cfg(opencl)]`/fallback branches | **Yes** — via cfg |
+| D | `GpuBackend` HAL trait family | Accelerator-resource prototype | `crates/bitnet-gpu-hal/src/hal_traits.rs` | Device/buffer/kernel/queue/program/event/context. CPU mocks only | **No** — zero consumers; disposition in [ADR-0003](./0003-gpu-hal-disposition.md) |
+| E | `DenseLinear` (dense SLM path) | Format-specific execution | `crates/bitnet-inference/src/dense_forward.rs:56` | FP32 linear/attention/FFN via f64 scalar loop | **YES — Qwen/Phi/Gemma path** |
+| F | `inference::Backend` trait | Full-model executor | `crates/bitnet-inference/src/backends.rs:20` | Runs a complete model forward. **GPU/NPU paths are shape-preserving mocks** (`backends.rs:360` "just create a mock GPU tensor", `backends.rs:193` "shape-preserving tensor fallback") | **Yes** — model-level boundary |
+
+#### Correction to the earlier "5 surfaces" model
+
+A prior version of this analysis counted 5 surfaces and mischaracterized
+Surface B. Three corrections based on direct code verification:
+
+1. **Surface F (`inference::Backend`) was missed entirely.** The
+   full-model executor trait's GPU and NPU paths are **simulated** — they
+   create shape-preserving mock tensors instead of transferring to a real
+   accelerator (`backends.rs:193,360`). This is a real surface that must
+   be included: a new HAL wired underneath a full-model abstraction that
+   still obscures whether real compute occurred would be a hollow victory.
+2. **Surface B (OpenCL `BackendProvider`) is policy, not execution.** Its
+   trait has only `name`/`status`/`capabilities`/`priority_score` —
+   **no `execute`/`matmul`/`compute` method**. The `BackendDispatcher`
+   has `backends_for`/`is_supported`/`record`/`strategy`. Calling it a
+   "parallel dispatch trait" (as the earlier draft did) overstates it; it
+   is a **selection-policy prototype**.
+3. **A dense-Q8 sidecar selector is evolving** (eager-F32 vs packed-Q8
+   paths, candidate availability, payload identity) — narrow, proof-bound,
+   tied to a real model path. This is an example of useful architecture
+   evolving outside the gpu-hal corpus and outside `KernelProvider`.
 
 #### The decisive detail
 
-`QuantizationType` (`crates/bitnet-common/src/types.rs:7`) has exactly three
-variants: `I2S`, `TL1`, `TL2` — **all BitNet formats**. None of the GGUF
-quant formats (`Q8_0`, `Q4_K`, `F16`, `BF16`, etc.) are in the enum. The
-inference engine recognizes 12 GGUF quant format names as **strings** at
-`engine.rs:485-495` and routes them into Surface E (`DenseLinear`), where
-dequantized FP32 weights get multiplied in a scalar f64-accumulated loop
-with no SIMD, no GPU, and no connection to `KernelProvider`.
+`QuantizationType` (`crates/bitnet-common/src/types.rs:7`) is doc-commented
+**"Quantization types supported by BitNet"** and has exactly three
+variants: `I2S`, `TL1`, `TL2` — all BitNet formats by design. The inference
+engine recognizes 12 GGUF quant format names (`q8_0`, `q4_k`, ...) as
+**strings** at `engine.rs:485-495` and routes them into Surface E
+(`DenseLinear`), where dequantized FP32 weights get multiplied in a scalar
+f64-accumulated loop with no SIMD, no GPU, and no connection to
+`KernelProvider`.
 
 **The path producing validated coherent dense SLM (Qwen) answers cannot use
 any of the AVX2/AVX-512/NEON/CUDA/OpenCL work** — it bypasses all of
-Surfaces A–D. This is the central architectural gap.
+Surfaces A–D. This is the central architectural gap, and it is the
+cross-model constraint the target must satisfy.
+
+> **Correction note:** an earlier draft of this ADR recommended "add
+> FP32/Q8_0/Q4_K/F16/BF16 to `QuantizationType`" as a cheap win. That is
+> **wrong** — `QuantizationType` is explicitly BitNet-scoped by its doc
+> comment and design. Conflating it with GGUF/dense formats would corrupt a
+> narrow type. The target introduces separate concepts (`OperatorKind`,
+> `ElementType`, `WeightEncoding`, `TensorLayout`, `ProviderId`,
+> `DeviceId`, `KernelId`, `ExecutionSignature`) so the router has one DRY
+> vocabulary without fusing BitNet-specific and format-generic concerns.
 
 ### Why each surface exists (the history)
 
@@ -82,57 +117,82 @@ function fires.** Specifically:
 
 ## Target architecture
 
-Three orthogonal axes. Today each surface conflates at least two of them.
-The target separates them.
+Five planes, each owning a distinct concern. Today the six surfaces
+conflate them. The target separates them.
 
-| Axis | Question | DRY (shared) or SRP (separate)? |
+| Plane | Owns | DRY or SRP? |
 |---|---|---|
-| **Operator** | What is computed (Linear, Attention, FFN, RMSNorm, RoPE, Sampling, Dequantize) | **DRY** — every transformer has these, BitNet and dense alike |
-| **Weight format** | How weights are laid out (I2S, TL1, TL2, QK256, FP32, Q8_0, Q4_K, F16, BF16, ...) | **SRP** — different math, different layouts; fusing bodies would be fake DRY |
-| **Provider/Device** | Where it runs (CPU-scalar, AVX2, AVX-512, NEON, CUDA, OpenCL, Metal, Vulkan, wgpu, NPU) | **DRY** — orthogonal to what is computed |
+| **Product/control** | RequestedRoute, profile, support policy, strictness | DRY (one route identity) |
+| **Compute contract** | Operator + tensor/weight format + shape + dtype + policy; exact provider capabilities and selection | DRY vocabulary (OperatorKind, ElementType, WeightEncoding, TensorLayout, ProviderId, DeviceId, KernelId, ExecutionSignature) |
+| **Data** | Format-specific executors: I2S/TL1/TL2 \| QK256 \| dense Q8/Q4 \| FP16/BF16/FP32 across CPU \| CUDA \| OpenCL \| Metal \| wgpu \| ROCm \| NPU | **SRP** per format; DRY at provider identity |
+| **Accelerator-resource (optional)** | Context, buffers, queues, programs, kernels, events, copies | DRY when a forcing function fires; deferred otherwise |
+| **Proof** | Provider/kernel identity, fallback, transfers, residency, timing, parity, support tier, claim boundary | DRY (receipt fragments) |
 
 ```
-                     ┌──────────────────────────────────────┐
-                     │  Model composition layer              │
-                     │  (Qwen, BitNet-2B, Llama, Phi ...)    │
-                     │  composes operators, owns topology    │
-                     └─────────────────┬─────────────────────┘
-                                       │ calls operator traits
-                     ┌─────────────────▼─────────────────────┐
-                     │  Operator trait layer  ← DRY axis     │
-                     │  Linear, Attention, FFN, RMSNorm,     │
-                     │  RoPE, Sampling, Dequantize           │
-                     │  one trait per operator, generic over │
-                     │  weight format and provider           │
-                     └─────────────────┬─────────────────────┘
-                                       │ dispatched through
-              ┌────────────────────────┼─────────────────────────┐
-              │                        │                          │
-   ┌──────────▼─────────┐  ┌───────────▼──────────┐  ┌────────────▼───────────┐
-   │ Weight-format impls│  │ Provider/Device      │  │ (future) HAL plumbing  │
-   │ ← SRP axis         │  │ registry             │  │ gpu-hal GpuBuffer/...  │
-   │ i2s, TL1, TL2,     │  │ ← DRY axis           │  │ only when a feature    │
-   │ QK256, FP32, Q8_0, │  │ CPU-scalar, AVX2,    │  │ needs GPU-resident     │
-   │ Q4_K, F16, BF16    │  │ AVX-512, NEON, CUDA, │  │ buffers. Reference     │
-   │ each its own module│  │ OpenCL, NPU, ...     │  │ until then (ADR-0003). │
-   └────────────────────┘  └──────────────────────┘  └────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ Product/control plane                                       │
+│ RequestedRoute, profile, support policy, strictness         │
+└────────────────────────────┬────────────────────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Compute contract plane                                      │
+│ Operator + tensor/weight format + shape + dtype + policy    │
+│ Exact provider capabilities and selection                   │
+└────────────────────────────┬────────────────────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Data plane                                                  │
+│ Format-specific executors                                   │
+│ I2S/TL1/TL2 | QK256 | dense Q8/Q4 | FP16/BF16/FP32          │
+│ CPU | CUDA | OpenCL | Metal | wgpu | ROCm | NPU             │
+└────────────────────────────┬────────────────────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Optional accelerator-resource plane                         │
+│ Context, buffers, queues, programs, kernels, events, copies │
+└────────────────────────────┬────────────────────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Proof plane                                                 │
+│ Provider/kernel identity, fallback, transfers, residency,   │
+│ timing, parity, support tier, and claim boundary             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Principle:** operators are DRY (one Linear trait), weight formats are SRP
-(one module per format), providers are DRY (one registry), HAL plumbing is
-deferred (reference until a forcing function). A Linear forward becomes
-"operator(Linear) × weight(format) × provider(device)" instead of today's
-5-way hardcoding.
+**DRY responsibilities** (one shared definition): operator identity,
+provider identity, device identity, capability signatures, selection
+outcomes, fallback semantics, kernel identity, transfer/residency
+accounting, receipt fragments, support/proof status.
+
+**SRP responsibilities** (remain modular): I2S/TL1/TL2 math, QK256
+packing/scaling, GGUF Q8/Q4 layouts, dense FP16/BF16 paths, CUDA/OpenCL/
+Metal resources and kernels, model composition, tokenization, server.
+
+**Important type correction:** do **not** add FP32/Q8_0/Q4_K/F16/BF16 to
+the current `QuantizationType`. That enum is explicitly BitNet-scoped
+(`"Quantization types supported by BitNet"`, variants I2S/TL1/TL2). The
+target introduces separate vocabulary (`WeightEncoding`, `ElementType`,
+`OperatorKind`, etc.) so the router has one DRY vocabulary without fusing
+BitNet-specific and format-generic concerns. Example:
+
+```text
+operator        = linear
+weight_encoding = bitnet_qk256   | gguf_q8_0 | dense_fp32
+activation_type = f32
+provider        = cuda           | cpu_avx2  | opencl_a770
+kernel          = cuda_qk256_gemv_v2 | dense_q8_sidecar_avx2
+```
 
 ## Per-surface dispositions (current state, while target is deferred)
 
-| Surface | Disposition | Rationale |
-|---|---|---|
-| A `KernelProvider` | **Keep, load-bearing.** Documented here as the operator×provider axis for BitNet weight formats. | Works, wired, narrow but correct for its scope. |
-| B `BackendProvider` | **Keep, siloed.** Its 8-op `Operation` enum informs the target operator layer. Not merged now. | Real dispatch logic; moving it would be risky; informs the target. |
-| C `qk256-dispatch` | **Keep, document as debt.** Each new backend adds a cfg branch; this is the unification trigger. | Works; cfg-accretion is the measurable refactor signal. |
-| D `GpuBackend` (gpu-hal) | **Reference, per ADR-0003.** Candidate for the future HAL-plumbing axis. Not deleted, not integrated. | Predates conventions; trait needs hardening; no forcing function today. |
-| E `DenseLinear` | **Keep, priority target when funded.** The cross-model gap — load-bearing for SLM answers but cannot inherit any SIMD/GPU work. | Currently CPU-scalar-only; provider-ization is the highest-value unification work. |
+| Surface | Layer | Disposition | Rationale |
+|---|---|---|---|
+| A `KernelProvider` | Format exec | **Keep, load-bearing.** The operator×provider axis for BitNet weight formats. | Works, wired, narrow but correct for its scope. |
+| B `BackendProvider` | Selection policy | **Keep, label honestly.** It is a selection-policy prototype, not an executor. Its `Operation` enum informs the target compute-contract plane. Has no execute method. | Real selection logic; over-characterizing it as a "parallel dispatch trait" is incorrect. |
+| C `qk256-dispatch` | Format exec | **Keep, document as debt.** Each new backend adds a cfg branch; this is the unification trigger. | Works; cfg-accretion is the measurable refactor signal. |
+| D `GpuBackend` (gpu-hal) | Accelerator-resource prototype | **Reference corpus, per ADR-0003.** Adoption-by-extraction only; not wholesale-integrated, not frozen forever. Candidate for the accelerator-resource plane when a forcing function fires. | Prototype trait needs v2 hardening before real adoption; no forcing function today. |
+| E `DenseLinear` | Format exec | **Keep, priority target when funded.** The cross-model gap — load-bearing for SLM answers but cannot inherit any SIMD/GPU work. | Currently CPU-scalar-only; provider-ization is the highest-value unification work. |
+| F `inference::Backend` | Full-model executor | **Keep, label the mock paths honestly.** GPU/NPU paths create shape-preserving mock tensors (`backends.rs:360`). A convergence pilot must prove real compute occurred, not just that the trait is wired. | Legitimate full-model boundary; but the mock paths must not be hidden under a new HAL. |
 
 ## Forcing functions (what would trigger execution)
 
@@ -158,21 +218,26 @@ has fired on (2). Until one fires, the dispositions above hold.
 
 ## Recommended cheap wins (not committed; would be separate proposals)
 
-Two slices that move code toward the target axis-separation without a
+Slices that move code toward the target plane-separation without a
 refactor, each independently mergeable in 1–3 PRs:
 
-1. **Add the missing weight formats to `QuantizationType`.** Today the
-   enum is BitNet-only. Add `FP32`, `Q8_0`, `Q4_K`, `F16`, `BF16`, etc.
-   This makes the weight-format axis *explicit* in the type system instead
-   of hidden in string matching at `engine.rs:485-495`. SRP-correct: each
-   format stays its own module, but becomes first-class.
-2. **Extract `HalError` into `bitnet-common`.** The one gpu-hal artifact
-   with clean cross-cutting value. Gives all five surfaces a shared GPU
-   error taxonomy. Zero risk.
-
-A third, slightly larger slice:
-
-3. **Give Surface E (`DenseLinear`) a provider seam.** Add an optional
+1. **Generated gpu-hal module inventory (`xtask`).** Replaces manually
+   maintained counts (156 files, 26 undeclared, 75 stale headers) with
+   generated evidence: declared/undeclared source files, public items,
+   internal module edges, inbound workspace deps, external runtime deps,
+   test files by evidence class, mock/reference headers. This is the
+   highest-value tooling deliverable — it prevents another
+   interpretation-by-grep cycle.
+2. **Define the shared compute-contract vocabulary** (`OperatorKind`,
+   `WeightEncoding`, `ElementType`, `ProviderId`, `DeviceId`, `KernelId`,
+   `ExecutionSignature`) in `bitnet-common` as new types — **without**
+   touching the BitNet-scoped `QuantizationType`. The router can then use
+   one DRY vocabulary across all six surfaces without fusing BitNet and
+   format-generic concerns.
+3. **Extract `HalError` concepts into `bitnet-common`, split by concern.**
+   Runtime/device errors separate from execution/validation errors. Gives
+   all surfaces a shared taxonomy. Zero risk to existing routes.
+4. **Give Surface E (`DenseLinear`) a provider seam.** Add an optional
    `provider` parameter (no-op for now) so a future migration is a trait
    change, not a surgery.
 
