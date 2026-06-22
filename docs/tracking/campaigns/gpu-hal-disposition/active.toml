@@ -1,0 +1,132 @@
+id = "gpu-hal-disposition"
+title = "GPU HAL Disposition"
+status = "active"
+
+objective = """
+Land durable governance artifacts (ADR-0003, BITNET-PROP-0019,
+BITNET-SPEC-GPU-HAL-REFERENCE-LAYER, design doc) that fix the disposition of
+crates/bitnet-gpu-hal/ as a retained read-only reference crate and stop the
+crate from being re-litigated by future agents. Docs-only; no runtime changes.
+"""
+
+end_state = [
+  "ADR-0003 is Accepted and linked from docs/adr/README.md.",
+  "BITNET-SPEC-GPU-HAL-REFERENCE-LAYER is accepted.",
+  "docs/reference/gpu-hal-design.md is the canonical reference for the crate.",
+  "The gpu-hal-disposition campaign reaches complete with all work items merged.",
+  "Issue #1639 is closed with a pointer to ADR-0003.",
+]
+
+hard_constraints = [
+  "Do not change runtime code.",
+  "Do not add or remove the crate from the workspace.",
+  "Do not promote, demote, or create any support-tier claim.",
+  "Do not change CI lane routing or policy ledgers.",
+  "Do not wire any consumer onto bitnet-gpu-hal.",
+  "A future change to the disposition MUST arrive as a superseding ADR.",
+]
+
+[[work_item]]
+id = "GH-DISP-001"
+status = "pr_open"
+branch = "codex/gpu-hal/GH-DISP-001-contract-rails"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+pr = 1648
+head_sha = "cb04b19446169eab79f7d8b1be8d382442feaf55"
+acceptance = "Land ADR-0003, BITNET-PROP-0019, BITNET-SPEC-GPU-HAL-REFERENCE-LAYER, this campaign manifest, and the implementation plan, all cross-linked by stable ID. ADR-0003 status lands as Proposed (promoted to Accepted in GH-DISP-003)."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check gpu-hal-disposition",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/adr/0003-gpu-hal-disposition.md",
+  "docs/proposals/BITNET-PROP-0019-gpu-hal-disposition.md",
+  "docs/specs/BITNET-SPEC-GPU-HAL-REFERENCE-LAYER.md",
+  "docs/tracking/campaigns/gpu-hal-disposition/**",
+  "plans/gpu-hal/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "Cargo.toml",
+  ".github/**",
+  "src/**",
+]
+may_claim = [
+  "The gpu-hal disposition is recorded in ADR-0003 and governed by BITNET-SPEC-GPU-HAL-REFERENCE-LAYER.",
+]
+must_not_claim = [
+  "Any runtime behavior changed.",
+  "Any crate was added, removed, wired, or unwired.",
+  "The HAL is validated, integrated, or promoted.",
+]
+
+[[work_item]]
+id = "GH-DISP-002"
+status = "ready"
+branch = "codex/gpu-hal/GH-DISP-002-design-doc"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+acceptance = "Land docs/reference/gpu-hal-design.md as the canonical human-readable reference: origin (Copilot 2026-02-28 burst, no ADR/owner/handoff), the parity table (real path has every HAL capability), the 26 orphan files, the 75 misleading headers, the drift modules, and the forward guidance. Links to ADR-0003, BITNET-PROP-0019, and the spec."
+commands = [
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/reference/gpu-hal-design.md",
+  "docs/tracking/campaigns/gpu-hal-disposition/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "Cargo.toml",
+  "src/**",
+  ".github/**",
+]
+may_claim = [
+  "A canonical design reference for crates/bitnet-gpu-hal/ exists.",
+]
+must_not_claim = [
+  "Any runtime behavior changed.",
+  "Any claim was promoted beyond the spec's boundary.",
+]
+
+[[work_item]]
+id = "GH-DISP-003"
+status = "ready"
+branch = "codex/gpu-hal/GH-DISP-003-closeout"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["GH-DISP-001", "GH-DISP-002"]
+acceptance = "Promote ADR-0003 to Accepted. Add ADR-0003 to docs/adr/README.md. Mark this campaign complete. Close issue #1639 with a comment pointing to ADR-0003."
+commands = [
+  "cargo run --locked -p xtask --no-default-features -- campaign check gpu-hal-disposition",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "docs/adr/0003-gpu-hal-disposition.md",
+  "docs/adr/README.md",
+  "docs/tracking/campaigns/gpu-hal-disposition/**",
+]
+forbidden_paths = [
+  "crates/**",
+  "Cargo.toml",
+  "src/**",
+  ".github/**",
+]
+may_claim = [
+  "The gpu-hal disposition lane is closed out.",
+  "Issue #1639 is resolved by ADR-0003.",
+]
+must_not_claim = [
+  "Any runtime behavior changed.",
+  "The HAL is validated, integrated, or promoted.",
+]

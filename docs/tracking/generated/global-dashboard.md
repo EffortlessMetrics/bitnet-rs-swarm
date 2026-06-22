@@ -36,6 +36,7 @@
 | crate-collapse | LEAF-001 | TBD | proposed | none | Do not combine crate movement with runtime proof. |
 | falcon-e-family | FE-000 | TBD | ready | FE-001 | Do not commit model binaries. |
 | falcon3-family | F3-000 | TBD | ready | none | Do not commit model binaries. |
+| gpu-hal-disposition | GH-DISP-001 | #1648 | pr_open | GH-DISP-002 | Do not change runtime code. |
 | i2s | I2S-DOCS-000 | #5880 | merged | none | Do not change runtime code in docs-only I2_S tracker slices. |
 | intel-258v-platform | LNL258V-CPU-TOPOLOGY-GUARD-001 | TBD | ready | none | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
 | intel-a770 | A770-160 | TBD | ready | none | OpenCL-first for native A770 proof. |
