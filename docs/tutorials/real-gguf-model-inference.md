@@ -13,7 +13,7 @@ This tutorial demonstrates bitnet-rs's GGUF weight loading capability, enabling 
 
 ## Prerequisites
 
-- bitnet-rs workspace properly installed (MSRV: Rust 1.92.0)
+- bitnet-rs workspace properly installed (MSRV: Rust 1.95.0)
 - Basic understanding of neural network quantization concepts
 - CUDA Toolkit 11.0+ (optional, for GPU acceleration)
 - 2GB+ disk space for model downloads
