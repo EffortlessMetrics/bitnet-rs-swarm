@@ -14,7 +14,7 @@
 | Distribution           | Ubuntu 22.04 LTS         | Ubuntu 24.04 LTS        |
 | Intel Compute Runtime  | 23.22+                   | Latest stable            |
 | OpenCL ICD Loader      | `ocl-icd-libopencl1`    | Same                     |
-| Rust toolchain         | 1.92.0 (MSRV)           | Nightly (for benchmarks) |
+| Rust toolchain         | 1.95.0 (MSRV)           | Nightly (for benchmarks) |
 
 > **Note:** Windows support is experimental. The `bitnet-device-probe` crate
 > dynamically loads `OpenCL.dll`, but kernel testing targets Linux exclusively.
