@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_msrv() {
-        assert_eq!(MSRV, "1.92.0");
+        assert_eq!(MSRV, "1.95.0");
     }
 
     #[test]

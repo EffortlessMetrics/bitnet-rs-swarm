@@ -46,7 +46,7 @@ These keys are automatically extracted from `config.json` during conversion. If 
 
 ### Software Requirements
 
-- **Rust toolchain** (MSRV 1.92.0+)
+- **Rust toolchain** (MSRV 1.95.0+)
 - **Python 3.8+** with packages:
   - `safetensors`
   - `torch`

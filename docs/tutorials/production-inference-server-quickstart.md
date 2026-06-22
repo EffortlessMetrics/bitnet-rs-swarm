@@ -16,7 +16,7 @@ The bitnet-rs production inference server provides enterprise-grade capabilities
 
 Before starting, ensure you have:
 
-1. **Rust Environment**: MSRV 1.92.0 or higher
+1. **Rust Environment**: MSRV 1.95.0 or higher
 2. **bitnet-rs Built**: With appropriate feature flags
 3. **Model Files**: GGUF format BitNet models
 4. **System Resources**: Minimum 8GB RAM, recommended GPU for acceleration

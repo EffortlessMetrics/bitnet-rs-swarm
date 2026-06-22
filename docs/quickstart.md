@@ -10,7 +10,7 @@ and the receipt emitted by your run. For comprehensive development setup, see
 ## Prerequisites (1 minute)
 
 ```bash
-# Check Rust version (1.92.0+ required)
+# Check Rust version (1.95.0+ required)
 rustc --version
 
 # Clone repository
