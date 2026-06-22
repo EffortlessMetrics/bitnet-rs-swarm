@@ -90,7 +90,57 @@ mod tests {
 
     #[test]
     fn test_msrv() {
-        assert_eq!(MSRV, "1.95.0");
+        // The MSRV constant is the public, programmatic declaration of the
+        // minimum supported Rust version. It MUST agree with the two other
+        // repo sources of truth: `rust-toolchain.toml` (the toolchain CI
+        // actually pins and uses) and `Cargo.toml`'s `rust-version` field
+        // (what cargo enforces). This test catches drift between them.
+        //
+        // If this test fails, one of the three has drifted; reconcile them
+        // and update the hardcoded literal below.
+        const EXPECTED_MSRV: &str = "1.95.0";
+
+        // 1. The constant itself must match the expected MSRV.
+        assert_eq!(MSRV, EXPECTED_MSRV, "src/constants.rs MSRV drifted");
+
+        // 2. rust-toolchain.toml must pin the same channel.
+        //    Walk up from CARGO_MANIFEST_DIR (the crate root ".") to find it.
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let toolchain_path = std::path::Path::new(manifest_dir)
+            .join("rust-toolchain.toml");
+        let toolchain_content = std::fs::read_to_string(&toolchain_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", toolchain_path.display()));
+        let toolchain_channel = toolchain_content
+            .lines()
+            .find_map(|line| {
+                let trimmed = line.trim();
+                trimmed.strip_prefix("channel = ")?.trim_matches('"').into()
+            })
+            .unwrap_or_else(|| {
+                panic!("no `channel = ` line found in {}", toolchain_path.display())
+            });
+        assert_eq!(
+            toolchain_channel, EXPECTED_MSRV,
+            "rust-toolchain.toml channel drifted from MSRV constant"
+        );
+
+        // 3. Cargo.toml's rust-version must match.
+        let cargo_path = std::path::Path::new(manifest_dir).join("Cargo.toml");
+        let cargo_content = std::fs::read_to_string(&cargo_path)
+            .unwrap_or_else(|e| panic!("failed to read {}: {e}", cargo_path.display()));
+        let cargo_rust_version = cargo_content
+            .lines()
+            .find_map(|line| {
+                let trimmed = line.trim();
+                trimmed.strip_prefix("rust-version = ")?.trim_matches('"').into()
+            })
+            .unwrap_or_else(|| {
+                panic!("no `rust-version = ` line found in {}", cargo_path.display())
+            });
+        assert_eq!(
+            cargo_rust_version, EXPECTED_MSRV,
+            "Cargo.toml rust-version drifted from MSRV constant"
+        );
     }
 
     #[test]
