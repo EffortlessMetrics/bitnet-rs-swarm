@@ -28,13 +28,15 @@ hard_constraints = [
 
 [[work_item]]
 id = "GH-DISP-001"
-status = "ready"
+status = "pr_open"
 branch = "codex/gpu-hal/GH-DISP-001-contract-rails"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = []
+pr = 1648
+head_sha = "cb04b19446169eab79f7d8b1be8d382442feaf55"
 acceptance = "Land ADR-0003, BITNET-PROP-0019, BITNET-SPEC-GPU-HAL-REFERENCE-LAYER, this campaign manifest, and the implementation plan, all cross-linked by stable ID. ADR-0003 status lands as Proposed (promoted to Accepted in GH-DISP-003)."
 commands = [
   "cargo run --locked -p xtask --no-default-features -- campaign check gpu-hal-disposition",
