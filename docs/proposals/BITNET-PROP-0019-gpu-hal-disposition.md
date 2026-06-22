@@ -54,34 +54,11 @@ two-layer plan where the lower layer is wired and the upper layer's
 integration phase was never started, and the crate now needs to be
 brought inside the contract system that post-dates it.
 
-### Important nuance: the backend mocks do not compute
-
-The HAL's backend modules (`cuda_backend`, `vulkan_compute`, etc.) are
-API-shape CPU mocks — `CUDAKernel::launch()` body is
-`self.launch_count += 1`. They are the Phase 10 "CPU mock/reference"
-deliverable per the roadmap, not numerical compute implementations. They
-cannot serve as a parity oracle for the real GPU kernels in
-`bitnet-kernels/src/cuda/` (which has its own `gpu_quantization_parity.rs`
-predating gpu-hal entirely, since 2025-09-01). This shapes the realistic
-tooling options in §Alternatives.
-
-### Layered architecture today
-
-```
-        ┌─────────────────────────────────────────────┐
-        │ bitnet-gpu-hal  (2026-02-28, Phase 10)      │  ← upper layer,
-        │   unified GpuBackend trait, KernelDispatcher│     reference phase only,
-        │   8 backend mocks (non-computing)           │     integration phase NOT started,
-        │   inference-pipeline CPU references         │     zero inbound dependents
-        └────────────────────┬────────────────────────┘
-                             │ (intended consumer edge — not wired)
-        ┌────────────────────▼────────────────────────┐
-        │ bitnet-kernels  (2025-08-01, load-bearing)  │  ← lower layer,
-        │   src/cpu/ reference + SIMD kernels         │     wired into 9 crates,
-        │   src/cuda/, bitnet-opencl, dispatch_planner│     consumed by inference/cli/server
-        │   avx2_*_parity tests (1e-4 tolerance)      │
-        └─────────────────────────────────────────────┘
-```
+The full layered-architecture diagram, the backend-mock detail, and the
+timeline live in the canonical design reference
+[`docs/reference/gpu-hal-design.md`](../reference/gpu-hal-design.md) and
+[ADR-0003](../adr/0003-gpu-hal-disposition.md); this proposal links to
+them rather than duplicating them.
 
 ## Users and affected surfaces
 
@@ -91,10 +68,11 @@ tooling options in §Alternatives.
   lints it via the no-panic baseline (it contributes ~4,668 unwrap/expect
   sites to the grandfathered inventory).
 - **Future GPU-backend work**, which needs a single recorded decision about
-  whether the upper HAL layer's integration phase (Phase 9) is still
-  wanted, and if so when; or whether the lower layer's own dispatch
-  abstractions (`bitnet-kernels` `DispatchBackend` enum + `bitnet-opencl`
-  `backend_dispatcher`) own that role going forward.
+  whether the upper HAL layer's integration phase is still wanted, and if
+  so when; or whether the lower layer's own dispatch abstractions own that
+  role going forward. See also
+  [BITNET-ADR-0010](../adr/BITNET-ADR-0010-compute-dispatch-architecture.md)
+  for the broader 6-surface dispatch inventory.
 - **Issue #1639** and any future agent that re-encounters the crate, which
   need a durable record to read instead of re-investigating from scratch.
 
@@ -105,8 +83,8 @@ Three forces converge:
 1. The crate has been re-investigated at least three times
    ([#1639](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1639))
    with contradictory conclusions (delete wholesale -> intentional Phase 8
-   reference -> superseded artifact). Each pass costs real effort. A durable
-   decision stops the cycle.
+   reference -> superseded artifact -> prototype corpus). Each pass costs
+   real effort. A durable decision stops the cycle.
 2. The repo is actively investing in its contract system (BITNET-PROP /
    BITNET-SPEC / BITNET-ADR / campaign manifests). Leaving the largest
    crate outside that system is the exact kind of gap the system exists to
