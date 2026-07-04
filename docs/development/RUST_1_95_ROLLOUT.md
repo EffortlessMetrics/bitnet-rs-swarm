@@ -86,13 +86,13 @@ ladder.
 | Root version | `0.2.1-dev` | next minor dev line | 16 |
 | Clippy MSRV | `msrv = "1.95.0"` | `msrv = "1.95.0"` | 3 |
 | Clippy test carveouts | removed in PR 6 | no test carveouts | 6 |
-| Clippy 1.94/1.95 lints | `policy/clippy-lints.toml` now records `msrv = "1.95"`; planned lints are explicitly staged at `allow` in `Cargo.toml` | active or explicitly deferred with debt | 5 |
-| No-panic allowlist | present, empty/advisory, exact counted identity | exact counted identity | 7 |
-| No-panic baseline | absent | generated no-new-debt baseline | 8 |
+| Clippy 1.94/1.95 lints | clean ratchets active in `Cargo.toml` `[workspace.lints.clippy]` (`same_length_and_capacity = "deny"`; `manual_ilog2`, `decimal_bitwise_operands`, `needless_type_cast`, `manual_take` at `warn`); `manual_checked_ops`, `duration_suboptimal_units`, `unnecessary_trailing_comma`, `manual_pop_if` explicitly deferred at `allow`/staged, with debt recorded in `policy/clippy-debt.toml` | active or explicitly deferred with debt | 5 |
+| No-panic allowlist | present, empty, `mode = "no-new-debt"` (enforcing), exact counted identity | exact counted identity | 7 |
+| No-panic baseline | present, generated (~19,700 exact-counted entries), marked generated in `.gitattributes` | generated no-new-debt baseline | 8 |
 | Non-Rust allowlist | present, broad | narrowed with explicit covered-by evidence | 10 |
 | CI lane whitelist / LEM | present | calibrated for Rust 1.95 and risk-pack routing | 15 |
 | Core CI toolchain | workflow toolchain pins use `1.95.0`; coverage image is `rust-1.95` | workflows and the Rust CI image stay on the declared floor | 3 |
-| `ripr` | workflow exists, may skip when binary is absent | real advisory static mutation-exposure signal | 11 |
+| `ripr` | workflow installs `ripr` (`cargo install ripr --locked`) and runs doctor plus JSON/github/SARIF checks; advisory, not branch-protection blocking | real advisory static mutation-exposure signal | 11 |
 | Mutation testing | expensive runtime evidence outside default PR | targeted risk PR, broader nightly, release readiness | 11, 15, 17 |
 
 ## Version Note
@@ -136,6 +136,12 @@ Each PR below is a single objective. Start every PR from clean `origin/main`.
 | 15 | `ci/bitnet-lem-lane-tightening` | `ci: tighten lane whitelist and LEM routing for Rust 1.95` | Reclassify `ripr-advisory` as real static mutation-exposure signal and route GPU/FFI/platform lanes by risk/label/main. |
 | 16 | `release/next-minor-prep-rust-1.95` | `release: prepare next minor release for Rust 1.95` | Reconcile next minor version, update manifests/docs/changelog/release prep. |
 | 17 | `release/next-minor-dry-run` | `release: validate next minor publish readiness` | Publish dry-run and readiness document for the chosen version. |
+
+Ladder status: PRs 1-8 and 11 have landed; PR 9 is partially unverified;
+PRs 10, 12, 13, 14, 16, and 17 are outstanding; PR 15 is partial — risk-pack
+infrastructure is present, but the `ripr-advisory` lane reclassification from
+`oracle-gap` to mutation-exposure wording is outstanding (see
+`policy/ci-lane-whitelist.toml:673-691`).
 
 ## Acceptance Gates
 
@@ -507,15 +513,15 @@ rollout builds on it without replacing it.
 | CI budget | `policy/ci-budget.toml` | present |
 | CI lanes | `policy/ci-lanes.toml` | present |
 | CI risk packs | `policy/ci-risk-packs.toml` | present |
-| Clippy lints ledger | `policy/clippy-lints.toml` | present, 1.94/1.95 staged |
-| Clippy debt | `policy/clippy-debt.toml` | present, placeholder only |
+| Clippy lints ledger | `policy/clippy-lints.toml` | present; clean 1.94/1.95 ratchets activated in `Cargo.toml`, remaining lints deferred with recorded debt |
+| Clippy debt | `policy/clippy-debt.toml` | present, carries active debt entries (e.g. `manual_checked_ops` for `bitnet-kernels`/`bitnet-models`, `manual_pop_if` workspace) |
 | Clippy exceptions | `policy/clippy-exceptions.toml` | present, empty |
 | No-panic allowlist | `policy/no-panic-allowlist.toml` | present, empty, no-new-debt mode |
 | No-panic baseline | `policy/no-panic-baseline.toml` | present, generated |
 | Non-Rust allowlist | `policy/non-rust-allowlist.toml` | present, broad |
 | `ripr` suppressions | `policy/ripr-suppressions.toml` | present |
 | Policy workflow | `.github/workflows/policy.yml` | running policy checks |
-| `ripr` workflow | `.github/workflows/ripr.yml` | exists, records no-op when binary absent |
+| `ripr` workflow | `.github/workflows/ripr.yml` | installs and runs `ripr`, advisory |
 
 ## Focus Notes
 
@@ -540,22 +546,21 @@ narrow helper slice.
 
 ### No-Panic Identity Hardening
 
-Current allowlist identity is `path + family + selector`, with line/column
-advisory only. Before real allowlist entries or a generated baseline can be
-trusted, identity must be exact and counted:
+Exact counted identity shipped in both the allowlist and the generated
+baseline:
 
 ```text
 path + family + selector_kind + selector_callee + snippet + count
 ```
 
-Matching must be consumptive: exact allowlist counts first, baseline counts
-second unless blocking mode ignores the baseline, and anything remaining is new
-debt.
+Line/column remain advisory only. Matching is consumptive: exact allowlist
+counts are consumed first, baseline counts second unless blocking mode ignores
+the baseline, and anything remaining is new debt.
 
 ### `ripr` Advisory Status
 
-`ripr.yml` currently checks whether the `ripr` binary exists and skips when it
-does not. PR 11 replaces that with a real install and run. The job stays
+`ripr.yml` installs and runs `ripr` for real (PR 11 landed): `cargo install
+ripr --locked`, then doctor plus JSON/github/SARIF checks. The job stays
 advisory and does not become branch-protection blocking in this wave.
 
 `ripr` is central to the CI economics plan because it shifts mutation signal
