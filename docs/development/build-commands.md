@@ -168,7 +168,7 @@ cargo run --no-default-features -p xtask -- check-features
 # Verify model configuration and tokenizer compatibility
 cargo run --no-default-features -p xtask -- verify --model models/bitnet/model.gguf
 cargo run --no-default-features -p xtask -- verify --model models/bitnet/model.gguf --tokenizer models/bitnet/tokenizer.json
-cargo run --no-default-features -p xtask -- verify --model models/bitnet/model.gguf --tokenizer models/bitnet/tokenizer.model  # SPM tokenizer
+cargo run --no-default-features -p xtask --features spm -- verify --model models/bitnet/model.gguf --tokenizer models/bitnet/tokenizer.model  # SPM tokenizer (needs the opt-in spm feature)
 cargo run --no-default-features -p xtask -- verify --model models/bitnet/model.gguf --format json
 ```
 
@@ -176,7 +176,7 @@ cargo run --no-default-features -p xtask -- verify --model models/bitnet/model.g
 ```bash
 # Run simple inference for smoke testing (requires --features inference for real inference)
 cargo run --no-default-features -p xtask --features inference -- infer --model models/bitnet/model.gguf --prompt "The capital of France is" --tokenizer models/bitnet/tokenizer.json
-cargo run --no-default-features -p xtask --features inference -- infer --model models/bitnet/model.gguf --prompt "The capital of France is" --tokenizer models/bitnet/tokenizer.model  # SPM tokenizer
+cargo run --no-default-features -p xtask --features inference,spm -- infer --model models/bitnet/model.gguf --prompt "The capital of France is" --tokenizer models/bitnet/tokenizer.model  # SPM tokenizer (needs the opt-in spm feature)
 cargo run --no-default-features -p xtask -- infer --model models/bitnet/model.gguf --prompt "Hello world" --allow-mock --format json
 cargo run --no-default-features -p xtask --features inference -- infer --model models/bitnet/model.gguf --prompt "Test prompt" --max-new-tokens 64 --temperature 0.7 --gpu
 ```
