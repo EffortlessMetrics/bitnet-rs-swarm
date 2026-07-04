@@ -6,7 +6,7 @@ use bitnet_common::BitNetConfig;
 use bitnet_inference::GenerationConfig;
 
 /// Python wrapper for BitNet configuration
-#[pyclass(name = "BitNetConfig")]
+#[pyclass(name = "BitNetConfig", from_py_object)]
 #[derive(Clone)]
 pub struct PyBitNetConfig {
     inner: BitNetConfig,
@@ -25,7 +25,7 @@ impl PyBitNetConfig {
 }
 
 /// Python wrapper for generation configuration
-#[pyclass(name = "GenerationConfig")]
+#[pyclass(name = "GenerationConfig", from_py_object)]
 #[derive(Clone)]
 pub struct PyGenerationConfig {
     inner: GenerationConfig,
