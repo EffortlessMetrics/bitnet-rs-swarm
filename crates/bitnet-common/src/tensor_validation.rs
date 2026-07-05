@@ -622,6 +622,15 @@ mod tests {
     }
 
     #[test]
+    fn matmul_1d_dot_scalar_shape_regression() {
+        // Regression for fuzz CI crash-ec19ea44 (broadcast_shape_fuzz, run
+        // 28635523391): a=[111], b=[111]. A 1-D × 1-D matmul is a dot product
+        // whose scalar result is represented by the empty shape; the fuzz
+        // oracle must not require a non-empty output shape for this case.
+        assert_eq!(validate_matmul_shapes(&[111], &[111]).unwrap(), Vec::<usize>::new());
+    }
+
+    #[test]
     fn matmul_1d_dot_mismatch() {
         assert!(validate_matmul_shapes(&[3], &[4]).is_err());
     }

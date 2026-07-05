@@ -883,6 +883,27 @@ mod tests {
     }
 
     #[test]
+    fn code_to_f32_masked_bytes_never_panic() {
+        // Regression for fuzz CI crash-83f98a07 (quantization_input, run
+        // 28635523391): raw byte 208 tripped the debug_assert. The documented
+        // contract is that callers mask codes to 0..=3 (as unpack_qk256_block
+        // outputs already are); masked values always hit the LUT.
+        for byte in 0..=u8::MAX {
+            let v = code_to_f32(byte & 0x03);
+            assert!(v == -1.0 || v == 0.0 || v == 1.0, "unexpected LUT value {v}");
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic(expected = "code must be 0..=3")]
+    fn code_to_f32_unmasked_byte_panics_in_debug() {
+        // Documents the domain contract: an unmasked out-of-range code is a
+        // caller bug and is rejected by debug_assert in debug/fuzz builds.
+        let _ = code_to_f32(208);
+    }
+
+    #[test]
     fn qk256_scalar_kernel_ids_are_stable() {
         assert_eq!(QK256_SCALAR_GEMV_KERNEL_ID, "qk256-scalar-gemv");
         assert_eq!(QK256_SCALAR_GEMM_KERNEL_ID, "qk256-scalar-gemm");

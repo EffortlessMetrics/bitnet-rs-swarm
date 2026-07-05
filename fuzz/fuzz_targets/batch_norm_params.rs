@@ -89,14 +89,21 @@ fuzz_target!(|input: BatchNormInput| {
     let gamma = &gamma_raw[..channels];
     let beta = &beta_raw[..channels];
 
-    // Skip non-finite inputs.
+    // Skip non-finite inputs, and inputs whose magnitude makes f32 overflow
+    // mathematically unavoidable. The output is gamma*(x-mean)*inv_std + beta
+    // with inv_std <= 1/sqrt(eps) <= 1/sqrt(1e-5) ~= 316.3 (var >= 0, eps >=
+    // 1e-5), so bounding each |input| by 1e16 bounds the result by
+    // 1e16 * 2e16 * 316.3 + 1e16 ~= 6.3e34 < f32::MAX. Beyond that bound,
+    // finite inputs still overflow to inf (CI crash-36c2583a: x ~ 2.8e35 with
+    // gamma ~ 2.8e35), which is an f32 domain limit, not a batch-norm bug.
+    const MAX_MAGNITUDE: f32 = 1e16;
     if data[..total]
         .iter()
         .chain(mean.iter())
         .chain(var_vals.iter())
         .chain(gamma.iter())
         .chain(beta.iter())
-        .any(|x| !x.is_finite())
+        .any(|x| !x.is_finite() || x.abs() > MAX_MAGNITUDE)
     {
         return;
     }

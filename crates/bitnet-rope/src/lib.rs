@@ -146,6 +146,30 @@ mod tests {
     }
 
     #[test]
+    fn subnormal_base_builds_tables_but_angles_overflow_f32() {
+        // Regression for fuzz CI crash-736af2db (rope_table_gen, run
+        // 28635523391): dim=254, seq_len=255, base=8.22931e-40. The base is
+        // finite and positive, so validation accepts it and table generation
+        // succeeds with the documented shape. However inv_freq =
+        // base^(-2i/dim) overflows f32 to +inf for the high-frequency slots,
+        // so some sin/cos entries are NaN — sin²+cos²≈1 is only a valid
+        // oracle when the largest angle (seq_len-1) * max(1, base^(-(dim-2)/dim))
+        // is finite, which is exactly the gate the fuzz harness applies.
+        let base = 8.22931e-40_f32;
+        let tables = build_tables(254, 255, base).expect("finite positive base is accepted");
+        assert_eq!(tables.half_dim, 127);
+        assert_eq!(tables.sin.len(), 255 * 127);
+        assert_eq!(tables.cos.len(), 255 * 127);
+
+        // The harness gate must exclude this input...
+        let max_inv_freq = 1.0 / base.powf(252.0 / 254.0);
+        let max_angle = 254.0 * max_inv_freq.max(1.0);
+        assert!(!max_angle.is_finite(), "gate should exclude subnormal base");
+        // ...because the tables genuinely contain non-finite trig output.
+        assert!(tables.sin.iter().any(|v| v.is_nan()), "expected NaN sin entries");
+    }
+
+    #[test]
     fn rejects_invalid_dimension_and_base() {
         assert!(matches!(
             build_tables(0, 1, DEFAULT_ROPE_BASE),
