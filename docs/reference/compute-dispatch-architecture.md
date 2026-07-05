@@ -290,7 +290,7 @@ unification.
 
 gpu-hal's `GpuBackend` trait family is the candidate for the **future
 accelerator-resource plane** in the target diagram. It is retained as a
-prototype corpus per [ADR-0003](./gpu-hal-design.md) — adoption by verified
+prototype corpus per [ADR-0003](../adr/0003-gpu-hal-disposition.md) — adoption by verified
 extraction or adapter, not wholesale integration and not permanent
 freezing. It is activated only when forcing function (2) fires (a feature
 needing GPU-resident buffers). Until then:
