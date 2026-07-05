@@ -164,7 +164,7 @@ bitnet-models  (GGUF loader, I2_S detection, metadata)  |
                                   bitnet-cli                       bitnet-server
 ```
 
-The workspace contains roughly 200 crates. See [docs/architecture-overview.md](docs/architecture-overview.md).
+The workspace contains 138 member crates. See [docs/architecture-overview.md](docs/architecture-overview.md).
 
 ## Hardware Validation
 
@@ -212,7 +212,8 @@ RUSTFLAGS="-C target-cpu=native -C opt-level=3 -C lto=thin" \
 | `cuda` | CUDA backend surface. |
 | `gpu` | GPU umbrella feature for accelerator backends currently wired through the workspace. |
 | `full-cli` | Full CLI command set. |
-| `ffi` | C++ FFI bridge for cross-validation. |
+| `ffi` | FFI surface stub (handled by the `bitnet-ffi` crate). |
+| `cpp-ffi` | Link tests against the BitNet.cpp library for cross-validation. |
 | `fixtures` | GGUF fixture-based integration tests. |
 
 Nix: `nix develop && nix build .#bitnet-cli && nix flake check` - see [Nix guide](docs/kv-pool/NIX_FLAKE_USAGE.md).
