@@ -18280,8 +18280,9 @@ mod tests {
     }
 
     #[test]
-    fn ask_default_receipt_path_selects_user_and_strict_profiles() {
-        let default = ask_default_receipt_path(false, false).unwrap();
+    fn ask_default_receipt_path_selects_user_and_strict_profiles() -> Result<()> {
+        let default = ask_default_receipt_path(false, false)
+            .ok_or_else(|| anyhow::anyhow!("user profile should resolve a receipt path"))?;
         assert_eq!(
             default,
             std::path::PathBuf::from("target")
@@ -18295,7 +18296,8 @@ mod tests {
             "mutually exclusive strict modes are rejected before receipt resolution"
         );
 
-        let cuda = ask_default_receipt_path(true, false).unwrap();
+        let cuda = ask_default_receipt_path(true, false)
+            .ok_or_else(|| anyhow::anyhow!("strict CUDA profile should resolve a receipt path"))?;
         assert_eq!(
             cuda,
             std::path::PathBuf::from("target")
@@ -18305,7 +18307,8 @@ mod tests {
                 .join("strict-cuda-ask-latest.json")
         );
 
-        let cpu = ask_default_receipt_path(false, true).unwrap();
+        let cpu = ask_default_receipt_path(false, true)
+            .ok_or_else(|| anyhow::anyhow!("strict CPU profile should resolve a receipt path"))?;
         assert_eq!(
             cpu,
             std::path::PathBuf::from("target")
@@ -18314,6 +18317,7 @@ mod tests {
                 .join("cuda-answer-readiness")
                 .join("strict-cpu-ask-latest.json")
         );
+        Ok(())
     }
 
     #[test]
