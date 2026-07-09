@@ -41,7 +41,7 @@ jobs:
       reason: ${{ steps.route.outputs.reason }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
         with:
           fetch-depth: 0
 
@@ -113,7 +113,7 @@ jobs:
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - id: msrv
         name: Read MSRV from rust-toolchain.toml
@@ -223,7 +223,7 @@ jobs:
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
 
       - id: msrv
         name: Read MSRV from rust-toolchain.toml
@@ -281,7 +281,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'abi') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -314,7 +314,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'ffi') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -360,7 +360,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'model-validation') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -426,7 +426,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'tokenizer') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -500,7 +500,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'gguf') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -541,7 +541,7 @@ jobs:
     timeout-minutes: 30
     if: contains(github.event.pull_request.labels.*.name, 'crossval')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
@@ -594,7 +594,7 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'audit') ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
       - uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
