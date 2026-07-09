@@ -81,10 +81,6 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install safetensors torch numpy
-          # jq is required for JSON processing in scripts. This workflow runs on
-          # self-hosted em-ci runners where interactive sudo is unavailable, so
-          # require jq on the runner image instead of installing it here.
-          command -v jq >/dev/null 2>&1 || { echo "::error::jq is required on the runner image but was not found"; exit 1; }
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
