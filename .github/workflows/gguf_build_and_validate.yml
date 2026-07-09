@@ -81,8 +81,6 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install safetensors torch numpy
-          # Add jq for JSON processing in scripts
-          sudo apt-get update && sudo apt-get install -y jq
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
