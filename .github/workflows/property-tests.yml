@@ -174,14 +174,15 @@ jobs:
             cargo run -p xtask --locked -- download-model \
               --model-id "${{ matrix.model.hf_id }}" \
               --output-dir "$MODEL_DIR" \
-              || echo "Model download failed, will use fallback"
+              || { echo "::error::model provisioning failed (runner/network): xtask download-model could not fetch ${{ matrix.model.hf_id }}; greedy-parity lane cannot run"; exit 1; }
           fi
 
-          # Fallback: download minimal test model
+          # Honest provisioning gate: there is no stub fallback. If the GGUF is
+          # still missing, fail here as an infra/provisioning error rather than
+          # letting the test script report a confusing "Model not found" later.
           if [ ! -f "$MODEL_DIR/${{ matrix.model.gguf }}" ]; then
-            mkdir -p "$MODEL_DIR"
-            # Create a minimal test model (you'd replace with actual download)
-            echo "Using fallback test model"
+            echo "::error::model provisioning failed: ${{ matrix.model.gguf }} missing under $MODEL_DIR after download; greedy-parity lane cannot run"
+            exit 1
           fi
 
       - name: Run determinism tests
