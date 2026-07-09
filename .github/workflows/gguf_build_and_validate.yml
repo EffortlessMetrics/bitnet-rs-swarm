@@ -162,6 +162,10 @@ jobs:
           OUT_DIR="${{ github.event.inputs.out_dir || 'models/clean' }}"
           REPORT="$OUT_DIR/validation-report.md"
 
+          # Export or validation can fail before creating the requested output
+          # directory. Keep this always-run diagnostic from masking that cause.
+          mkdir -p "$OUT_DIR"
+
           cat > "$REPORT" <<EOF
           # Clean GGUF Validation Report
 
