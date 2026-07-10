@@ -1,0 +1,21 @@
+timestamp = "2026-07-10T13:36:33Z"
+campaign = "apple-bitnet-artifact-sweep"
+item = "ABAS-002"
+event = "pr_open"
+from = "in_progress"
+to = "pr_open"
+actor = "codex"
+branch = "codex/apple-bitnet-artifact-sweep/ABAS-002-1bitllm-07b"
+pr = 1684
+head_sha = "d96f5d49a13ee6222b377426a1b6c6ff913150cf"
+summary = "Opened the ABAS-002 evidence PR after local source inventory, strict F16 structural conversion, inspector load, strict-loader diagnostic, and cache cleanup."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-07-10/m3-air/1bitllm-07b-structural-conversion.json",
+  "docs/reports/apple-silicon-macbook-m3-air-1bitllm-07b-structural-conversion.md",
+]
+
+notes = [
+  "The official source inventory is exact and local-only; no model binary is included in the PR.",
+  "The outcome is a strict loader block before generation, not a reference-output, Apple-backend, or performance result.",
+]
