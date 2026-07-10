@@ -1,0 +1,21 @@
+timestamp = "2026-07-10T09:42:32Z"
+campaign = "apple-bitnet-artifact-sweep"
+item = "ABAS-001"
+event = "in_progress"
+from = "proposed"
+to = "in_progress"
+actor = "codex"
+branch = "codex/apple-bitnet-artifact-sweep/ABAS-001-microsoft-2b-i2s"
+summary = "Started reconciling the completed M3 Air Microsoft 2B I2_S evidence into the Apple artifact-sweep scorecard."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-identity.json",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-tokenizer-authority.json",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-reference-output.json",
+  "docs/reports/apple-silicon-macbook-m3-air-microsoft-2b-i2s.md",
+]
+
+notes = [
+  "The existing reference evidence records the official source revision, SHA-256, size, tokenizer authority, bad no-authority path, and five passing prompt gates without downloading or rerunning the model.",
+  "The decision is bounded to the recorded M3 Air BitNet.cpp reference-runner context and does not claim repository-runtime Apple support, M4 proof, Metal inference, QK256, or performance.",
+]

@@ -35,11 +35,27 @@ is the Apple Silicon cross-reference and larger-artifact lane.
 - Accepted candidates feed a separate M4 Mac mini strict Apple CPU/NEON proof
   item; they do not become M4 answer claims by themselves.
 
+## ABAS-001 Evidence
+
+The official Microsoft 2B I2_S artifact already has M3 Air reference evidence
+that this campaign reconciles rather than reruns:
+
+- identity, source revision, size, SHA-256, cache, and storage context in
+  `microsoft-2b-i2s-identity.json`;
+- external tokenizer/pre-tokenizer authority plus the bad no-authority path in
+  `microsoft-2b-i2s-tokenizer-authority.json`;
+- five of five reference prompt gates passing in
+  `microsoft-2b-i2s-reference-output.json`.
+
+These receipts accept the artifact only for the recorded M3 Air BitNet.cpp
+reference-runner context. They do not claim repository-runtime Apple support,
+M4 proof, Metal inference, QK256, or performance.
+
 ## Work Items
 
 | Work item | Status | Notes |
 |---|---|---|
-| ABAS-001 | proposed | Validate official Microsoft 2B I2_S on MacBook with external tokenizer authority. |
+| ABAS-001 | in progress | Reconcile the completed official Microsoft 2B I2_S M3 Air evidence into this campaign. |
 | ABAS-002 | proposed | Evaluate 0.7B `1bitLLM/bitnet_b1_58-large` as the smaller Apple BitNet control. |
 | ABAS-003 | proposed | Evaluate 3B only on supported TL1/TL2 diagnostic routes. |
 | ABAS-004 | proposed | Evaluate Falcon-E as a secondary BitNet-like family after primary candidates. |
