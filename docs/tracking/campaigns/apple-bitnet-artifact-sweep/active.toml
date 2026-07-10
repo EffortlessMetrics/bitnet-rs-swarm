@@ -23,7 +23,9 @@ hard_constraints = [
 
 [[work_item]]
 id = "ABAS-001"
-status = "pr_open"
+status = "merged"
+pr = 1682
+merge_sha = "2fc9bcd24514716f88083c016895379922cb4f76"
 branch = "codex/apple-bitnet-artifact-sweep/ABAS-001-microsoft-2b-i2s"
 stackable = false
 review_mode = "codex_premerge"
