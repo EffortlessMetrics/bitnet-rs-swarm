@@ -1,0 +1,99 @@
+{
+  "artifact_kind": "apple_m3_air_1bitllm_07b_structural_conversion",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-07-10T13:25:02Z",
+  "campaign": "apple-bitnet-artifact-sweep",
+  "work_item": "ABAS-002",
+  "machine": {
+    "id": "apple-m3-macbook-air",
+    "cpu": "Apple M3",
+    "os": "macOS 26.5.1 (25F80)",
+    "storage_volume": "/",
+    "available_kib_after_cleanup": 255379700
+  },
+  "source": {
+    "kind": "huggingface",
+    "repo": "1bitLLM/bitnet_b1_58-large",
+    "url": "https://huggingface.co/1bitLLM/bitnet_b1_58-large",
+    "revision": "85d047191dcb224f0e04f20d26110caaf8dc1a47",
+    "revision_verified_live": true,
+    "official_gguf_present": false,
+    "download_command": "curl --fail --location --retry 3 --continue-at - --output <cache>/<file> https://huggingface.co/1bitLLM/bitnet_b1_58-large/resolve/85d047191dcb224f0e04f20d26110caaf8dc1a47/<file>"
+  },
+  "source_artifacts": [
+    {"file": "model.safetensors", "bytes": 2915408840, "sha256": "100062646f1f85771ebe297c5e476642d171c2e0e916b2ed8d19dfbe201b4b52"},
+    {"file": "config.json", "bytes": 749, "sha256": "267458934bbad593586ad2632e17597d274cbd1dd1247d96208dd4dd8afe6a7f"},
+    {"file": "tokenizer.json", "bytes": 1843131, "sha256": "1552daf0b59fe263a27541ac46ed74c6b4b12a3b231dfe960e9a8a157c097dd9"},
+    {"file": "tokenizer.model", "bytes": 499723, "sha256": "9e556afd44213b6bd1be2b850ebbbd98f5481437a8021afaf58ee7fb1818d347"},
+    {"file": "tokenizer_config.json", "bytes": 1388, "sha256": "64b7d793d77b5bd92a7f6fec3d106bcb5e007b8c8b1e02b657f6309e7af3729a"},
+    {"file": "special_tokens_map.json", "bytes": 604, "sha256": "c515d6df512e1d09f6ce4f84fcab6961d46b6bf2e78e6ef1816be59beea308b8"},
+    {"file": "added_tokens.json", "bytes": 41, "sha256": "5eaa5ab81a3db19f2c7504eab1a193b4002ac9c90e302802465c02725698d478"}
+  ],
+  "tokenizer_authority": {
+    "source_files_hashed": true,
+    "bos_token_id": 1,
+    "eos_token_id": 2,
+    "pad_token_id": 32000,
+    "pretokenizer_authority": "not_established",
+    "prompt_template_authority": "not_established",
+    "reason": "The strict loader rejected the derived structural file before a reference runner could establish prompt or pre-tokenizer authority."
+  },
+  "conversion": {
+    "lane": "st2gguf_f16_reference",
+    "tool": "st2gguf 0.2.1-dev",
+    "command": "st2gguf --input model.safetensors --config config.json --tokenizer tokenizer.json --arch bitnet-b1.58 --strict --output bitnet-b1.58-large-f16-structural.gguf",
+    "result": "success",
+    "elapsed_seconds": 2.74,
+    "peak_rss_bytes": 4496314136,
+    "tensors": 290,
+    "layernorm_tensors_enforced_f16": 49,
+    "output": {
+      "file": "bitnet-b1.58-large-f16-structural.gguf",
+      "bytes": 1457710272,
+      "sha256": "9f4d643142039f821ee606bdddc701e1648c0170603dbe78505bfe430e8d112c",
+      "packed_bitnet_claim": false,
+      "i2_s_claim": false,
+      "tl1_claim": false,
+      "tl2_claim": false
+    }
+  },
+  "structural_inspection": {
+    "tool": "bitnet 0.2.1-dev",
+    "command": "bitnet inspect bitnet-b1.58-large-f16-structural.gguf --ln-stats --json",
+    "result": "reader_success_with_warning",
+    "ruleset": "bitnet-b1.58:f16",
+    "layernorm": {"total": 49, "suspicious": 4},
+    "projection": {"total": 168, "suspicious": 0}
+  },
+  "strict_loader_diagnostic": {
+    "command": "bitnet run --model bitnet-b1.58-large-f16-structural.gguf --tokenizer tokenizer.json --prompt 'Answer with a single digit: 2+2=' --max-tokens 1 --temperature 0.0 --greedy --deterministic --strict-loader --strict-tokenizer",
+    "result": "blocked_before_generation",
+    "fallback_used": false,
+    "mock_mode_used": false,
+    "error": "LayerNorm gamma model.layers.8.post_attention_layernorm.weight suspicious: rms=0.31303 (expected near 1.0)",
+    "generated_tokens": 0,
+    "reference_output_run": false
+  },
+  "decision": {
+    "status": "blocked",
+    "reason": "The official source has no GGUF. The permitted local F16 structural conversion is readable but fails strict runtime validation before generation, so it cannot establish tokenizer/prompt authority, coherent reference output, I2_S/TL1 routing, or Apple answer readiness.",
+    "follow_up": "Keep this outcome as a conversion/loader diagnostic. A future item needs an upstream-compatible packed conversion path or a separately approved artifact-authority decision before reference output work."
+  },
+  "cleanup": {
+    "model_binaries_committed": false,
+    "cache_root": "~/Library/Caches/bitnet-rs/models",
+    "local_artifacts_retained": false,
+    "cleanup_status": "removed_after_receipt_capture"
+  },
+  "claim_boundary": {
+    "artifact_inventory_recorded": true,
+    "f16_structural_conversion_recorded": true,
+    "reference_good": false,
+    "answer_ready": false,
+    "rust_apple_backend_claimed": false,
+    "m4_mac_mini_claimed": false,
+    "apple_metal_inference_claimed": false,
+    "qk256_apple_claimed": false,
+    "speedup_claim": false
+  }
+}

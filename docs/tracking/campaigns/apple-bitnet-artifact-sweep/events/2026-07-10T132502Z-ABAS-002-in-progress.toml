@@ -1,0 +1,19 @@
+timestamp = "2026-07-10T13:25:02Z"
+campaign = "apple-bitnet-artifact-sweep"
+item = "ABAS-002"
+event = "in_progress"
+from = "proposed"
+to = "in_progress"
+actor = "codex"
+branch = "codex/apple-bitnet-artifact-sweep/ABAS-002-1bitllm-07b"
+summary = "Started the M3 Air 0.7B 1bitLLM control-candidate probe with live source verification, exact local inventory, and a strict F16 structural conversion."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-07-10/m3-air/1bitllm-07b-structural-conversion.json",
+  "docs/reports/apple-silicon-macbook-m3-air-1bitllm-07b-structural-conversion.md",
+]
+
+notes = [
+  "The official revision still has safetensors/tokenizer/config files but no GGUF, so the probe did not substitute a third-party artifact.",
+  "The local st2gguf F16 structural output is readable by the inspector but fails the strict real-model loader before generation; the item remains claim-blocked rather than treating this as Apple or reference-output evidence.",
+]
