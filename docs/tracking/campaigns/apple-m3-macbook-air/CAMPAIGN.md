@@ -89,14 +89,15 @@ artifacts to separate strict proof items.
 | M3MBA-028 | ready | Add compact Linux synthetic CI guards for M3 receipt/profile invariants without live Mac model work. |
 | M3MBA-029 | ready | Record or block bounded M3 Air dense SLM accuracy receipts with exact model/tokenizer/backend context. |
 | M3MBA-030 | ready | Record completed-run M3 Air dense SLM TTFT and throughput actuals for the bounded performance profile. |
-| M3MBA-031 | in_progress | Prepare the strict M3 Air BitNet CPU/NEON local-answer proof surface with synthetic receipt gates. |
+| M3MBA-031 | merged | #1573 prepared the strict M3 Air BitNet CPU/NEON local-answer proof surface with synthetic receipt gates. |
 | M3MBA-032 | ready | Run or block the accepted Microsoft 2B I2_S artifact on the M3 Air CPU/NEON BitNet receipt path. |
 | M3MBA-033 | ready | Use completed M3 Air SLM and BitNet receipts to name the smallest measured CPU/NEON optimization PR. |
 | M3MBA-034 | ready | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces after receipts exist. |
 | M3MBA-035 | ready | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. |
 
-Current focus: `M3MBA-031` is in progress. The lane is preparing the strict M3
-Air BitNet CPU/NEON local-answer proof surface before any new live BitNet claim.
+Current focus: `M3MBA-032` is ready. The strict M3 Air BitNet CPU/NEON
+local-answer proof surface merged in #1573; the lane can now record an exact
+artifact receipt pass, failure, or named blocker.
 The M4 Apple Silicon work is useful reference implementation context, but M3
 uses its own artifact kind, backend label, claim boundary, and receipt gates.
 records dense SLM accuracy and performance receipts, prepares and runs strict

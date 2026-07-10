@@ -1500,8 +1500,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-031"
-status = "in_progress"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-031-bitnet-proof-prep"
+pr = 1573
+merge_sha = "0301ef304e0d6fd3cb7f2ef14480c702088aff88"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
