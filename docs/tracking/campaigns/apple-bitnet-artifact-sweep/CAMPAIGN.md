@@ -56,7 +56,7 @@ M4 proof, Metal inference, QK256, or performance.
 | Work item | Status | Notes |
 |---|---|---|
 | ABAS-001 | merged | Official Microsoft 2B I2_S M3 Air evidence reconciled in [PR #1682](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1682). |
-| ABAS-002 | in progress | Official safetensors inventory and a local F16 structural conversion are recorded; strict Rust loading blocks before reference output. |
+| ABAS-002 | PR open | [PR #1684](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1684) records the official inventory, local F16 structural conversion, and strict Rust loader block before reference output. |
 | ABAS-003 | proposed | Evaluate 3B only on supported TL1/TL2 diagnostic routes. |
 | ABAS-004 | proposed | Evaluate Falcon-E as a secondary BitNet-like family after primary candidates. |
 | ABAS-005 | proposed | Hand off the best accepted artifact to a separate M4 strict proof item. |

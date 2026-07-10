@@ -3,7 +3,7 @@
 
 | Campaign | Item | Blocked by | State |
 |---|---|---|---|
-| apple-bitnet-artifact-sweep | ABAS-002 | ABAS-001 | in_progress |
+| apple-bitnet-artifact-sweep | ABAS-002 | ABAS-001 | pr_open |
 | apple-bitnet-artifact-sweep | ABAS-003 | ABAS-001 | proposed |
 | apple-bitnet-artifact-sweep | ABAS-004 | ABAS-001, ABAS-002 | proposed |
 | apple-bitnet-artifact-sweep | ABAS-005 | ABAS-001 | proposed |
