@@ -55,7 +55,7 @@ M4 proof, Metal inference, QK256, or performance.
 
 | Work item | Status | Notes |
 |---|---|---|
-| ABAS-001 | in progress | Reconcile the completed official Microsoft 2B I2_S M3 Air evidence into this campaign. |
+| ABAS-001 | merged | Official Microsoft 2B I2_S M3 Air evidence reconciled in [PR #1682](https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1682). |
 | ABAS-002 | proposed | Evaluate 0.7B `1bitLLM/bitnet_b1_58-large` as the smaller Apple BitNet control. |
 | ABAS-003 | proposed | Evaluate 3B only on supported TL1/TL2 diagnostic routes. |
 | ABAS-004 | proposed | Evaluate Falcon-E as a secondary BitNet-like family after primary candidates. |

@@ -1,0 +1,24 @@
+timestamp = "2026-07-10T12:13:54Z"
+campaign = "apple-bitnet-artifact-sweep"
+item = "ABAS-001"
+event = "merged"
+from = "pr_open"
+to = "merged"
+actor = "codex"
+branch = "codex/apple-bitnet-artifact-sweep/ABAS-001-microsoft-2b-i2s"
+pr = 1682
+head_sha = "10ffb0f95aef12d8dd11875b5be3aa083bdf3626"
+merge_sha = "2fc9bcd24514716f88083c016895379922cb4f76"
+summary = "Merged PR #1682, reconciling completed M3 Air Microsoft 2B I2_S evidence into the Apple artifact-sweep scorecard."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1682",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-identity.json",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-tokenizer-authority.json",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-i2s-reference-output.json",
+]
+
+notes = [
+  "The merged scorecard records existing M3 Air reference evidence and did not download, rerun, or commit a model binary.",
+  "The accepted scope remains the recorded M3 Air BitNet.cpp reference-runner context; it excludes repository-runtime Apple support, M4 proof, Metal inference, QK256, and performance claims.",
+]
