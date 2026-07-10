@@ -1,0 +1,33 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-031"
+event = "merged"
+timestamp = "2026-07-10T00:00:00Z"
+actor = "codex"
+pr = 1573
+head_sha = "d2ce7359d751d762b1dbbee288abf913d43b975b"
+merge_sha = "0301ef304e0d6fd3cb7f2ef14480c702088aff88"
+branch = "codex/apple-m3-macbook-air/M3MBA-031-bitnet-proof-prep"
+
+summary = "Reconciled the merged #1573 proof-prep implementation so M3MBA-032 may record the strict local-answer receipt."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1573",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+  "crates/bitnet-cli/src/commands/answer_parity.rs",
+  "crates/bitnet-cli/src/mac.rs",
+  "crates/bitnet-receipts-core/src/artifact_kinds.rs",
+  "crates/bitnet-receipts-core/src/lib.rs",
+  "docs/reports/apple-silicon-macbook-m3-air-bitnet-proof-prep.md",
+]
+
+notes = [
+  "PR #1573 merged on 2026-06-05, but the campaign tracker retained its in_progress state and omitted its merged event.",
+  "The merged proof-prep surface keeps M3 Air receipts distinct from M4 evidence while requiring the accepted Microsoft 2B I2_S artifact, external llama-bpe tokenizer authority, generated text and token IDs, runtime_api=cpu, and fallback_used=false.",
+  "This tracker-only reconciliation does not itself create a live M3 BitNet local-answer receipt or enable chat, serve, Metal, MPSGraph, Neural Engine, QK256, M4 proof, or broad Apple Silicon support.",
+]
+
+validation = [
+  "Verified GitHub PR #1573 is merged with merge commit 0301ef304e0d6fd3cb7f2ef14480c702088aff88.",
+  "Local closeout validation runs the M3 proof-prep test and campaign commands recorded by M3MBA-031.",
+]
