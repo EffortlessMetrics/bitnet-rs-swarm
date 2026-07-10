@@ -5,7 +5,7 @@
 |---|---|---|---|
 | amd-cpu-baselines | AMD CPU baselines | AMD5700X-003 | These lanes are CPU proof lanes, not accelerator lanes. |
 | amd-rocm | AMD ROCm productization | ROCM-DOCS-000 | Do not claim generic AMD GPU support. |
-| apple-bitnet-artifact-sweep | Apple BitNet artifact sweep | ABAS-002 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
+| apple-bitnet-artifact-sweep | Apple BitNet artifact sweep | ABAS-003 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
 | apple-m3-macbook-air | Apple M3 MacBook Air | M3MBA-031 | This is the Apple M3 MacBook Air lane, not the M4 Mac mini product, performance, or strict-proof lane. |
 | apple-m4 | Apple M4 Mac mini validation | M4-018 | Do not touch QK256 before a BitNet-specific Apple item explicitly allows it. |
 | apple-m4-bitnet-eval-and-benchmark | Apple M4 BitNet eval and benchmark | M4-BITNET-EVAL-005 | This is an M4 Mac mini BitNet campaign. |
