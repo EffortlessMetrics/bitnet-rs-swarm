@@ -1,0 +1,22 @@
+timestamp = "2026-07-10T14:17:19Z"
+campaign = "apple-bitnet-artifact-sweep"
+item = "ABAS-002"
+event = "merged"
+from = "pr_open"
+to = "merged"
+actor = "codex"
+branch = "codex/apple-bitnet-artifact-sweep/ABAS-002-1bitllm-07b"
+pr = 1684
+head_sha = "765778588153f2fed3e3c626944b3ddc6111984e"
+merge_sha = "488020d97ad8c06e95b49ec8041aa52804bdbf55"
+summary = "Merged the ABAS-002 M3 Air 0.7B 1bitLLM structural-conversion evidence and its strict loader block."
+
+artifacts = [
+  "ci/hardware/apple-silicon-macbook/2026-07-10/m3-air/1bitllm-07b-structural-conversion.json",
+  "docs/reports/apple-silicon-macbook-m3-air-1bitllm-07b-structural-conversion.md",
+]
+
+notes = [
+  "The source and derived artifacts were cache-local only and removed after receipt capture.",
+  "The merged result is a conversion/loader diagnostic; it does not promote any reference-output, Apple backend, M4, Metal, QK256, or performance claim.",
+]
