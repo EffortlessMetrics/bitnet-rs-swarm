@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_kind": "apple_m3_air_bitnet_local_answer_receipt_blocker",
+  "tracking_item": "M3MBA-032",
+  "generated_at_utc": "2026-07-10T22:53:23Z",
+  "decision": "blocked_required_m3_bitnet_smoke_command_removed",
+  "summary": "The prescribed strict M3 Air Microsoft 2B I2_S receipt command cannot run because the current CLI no longer exposes `bitnet mac bitnet-smoke`. It exits before model loading, tokenizer handling, prompt execution, or receipt emission.",
+  "command": {
+    "argv": [
+      "cargo",
+      "run",
+      "--release",
+      "--locked",
+      "-p",
+      "bitnet-cli",
+      "--no-default-features",
+      "--features",
+      "cpu,full-cli",
+      "--",
+      "mac",
+      "bitnet-smoke",
+      "--device",
+      "apple-m3-air-cpu-neon",
+      "--model-path",
+      "~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf",
+      "--tokenizer-authority",
+      "microsoft/bitnet-b1.58-2B-4T",
+      "--override-kv",
+      "tokenizer.ggml.pre=str:llama-bpe",
+      "--json-out",
+      "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json",
+      "--quiet"
+    ],
+    "exit_code": 2,
+    "release_build_completed": true,
+    "receipt_written": false,
+    "failure_stage": "cli_subcommand_dispatch_before_model_load",
+    "error": "error: unrecognized subcommand 'bitnet-smoke'"
+  },
+  "cli_observed": {
+    "binary": "target/release/bitnet",
+    "available_related_commands": [
+      "bitnet-proof",
+      "bitnet-warm",
+      "bitnet-benchmark",
+      "smoke"
+    ],
+    "substitution_rejected": "The available BitNet `mac smoke` and `mac bitnet-proof` paths are Apple M4 scoped and emit or validate M4 receipt shapes; neither may substitute for the M3-only bitnet_apple_m3_air_local_answer_corpus contract."
+  },
+  "host_context": {
+    "machine_id": "apple-m3-macbook-air-local",
+    "chip": "Apple M3",
+    "cpu_arch": "arm64",
+    "memory_bytes": 17179869184,
+    "macos_version": "macOS 26.5.1 (25F80)",
+    "storage_available_kib_after_attempt": 252345276,
+    "model_binaries_committed": false
+  },
+  "model_context": {
+    "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
+    "revision": "a1f2f1c765812aa8af3f6eda4a313707064bba15",
+    "file": "ggml-model-i2_s.gguf",
+    "format": "GGUF V3",
+    "architecture": "bitnet-b1.58",
+    "quantization": "i2_s",
+    "local_path": "~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf",
+    "sha256": "4221b252fdd5fd25e15847adfeb5ee88886506ba50b8a34548374492884c2162",
+    "tokenizer_authority": {
+      "repo": "microsoft/bitnet-b1.58-2B-4T",
+      "revision": "04c3b9ad9361b824064a1f25ea60a8be9599b127",
+      "file": "tokenizer.json",
+      "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7",
+      "required_override": "tokenizer.ggml.pre=str:llama-bpe"
+    }
+  },
+  "missing_receipt_evidence": [
+    "generated text",
+    "generated token IDs",
+    "strict M3 requested and selected backend fields",
+    "fallback=false evidence",
+    "per-case timing fields",
+    "answer-gate result",
+    "mac receipts-check output"
+  ],
+  "safe_next_slice": {
+    "issue": "https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1689",
+    "scope": "Restore or replace the removed M3-only strict local-answer command so it emits bitnet_apple_m3_air_local_answer_corpus receipts accepted by mac receipts-check.",
+    "must_preserve": [
+      "apple-m3-air-cpu-neon remains distinct from apple-m4-cpu-neon",
+      "real Microsoft 2B I2_S model and external llama-bpe tokenizer authority remain required",
+      "requested_backend and selected_backend remain apple-m3-air-cpu-neon with runtime_api=cpu and fallback_used=false",
+      "chat, serve, Metal, MPSGraph, Neural Engine, QK256, M4 proof, and broad Apple Silicon claims remain disabled"
+    ]
+  },
+  "claim_boundary": {
+    "local_answer_receipt_passed": false,
+    "local_answer_receipt_written": false,
+    "generated_text_recorded": false,
+    "generated_token_ids_recorded": false,
+    "answer_gate_passed": false,
+    "bitnet_local_answer_claimed": false,
+    "m4_mac_mini_claimed": false,
+    "metal_inference_claimed": false,
+    "mpsgraph_inference_claimed": false,
+    "neural_engine_claimed": false,
+    "qk256_apple_claimed": false,
+    "broad_apple_silicon_claimed": false,
+    "broad_performance_claimed": false
+  },
+  "blocker_recorded": true
+}
