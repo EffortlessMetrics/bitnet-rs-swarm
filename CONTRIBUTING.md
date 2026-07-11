@@ -507,6 +507,27 @@ Pre-commit hooks catch issues early in your local workflow:
 
 **Note**: You can temporarily bypass hooks with `git commit --no-verify`, but CI will still enforce these checks.
 
+### Editor / IDE Setup
+
+BitNet-rs builds with **empty default Cargo features** (see [Critical
+Gotchas #1](CLAUDE.md#critical-gotchas)). If your editor's rust-analyzer
+isn't told which features to use, it analyzes the workspace with none enabled
+and floods you with false-positive unresolved-item and dead-code diagnostics
+across most of the 138 workspace crates.
+
+VS Code users get this configured automatically via the committed
+`.vscode/settings.json` (`rust-analyzer.cargo.features = ["cpu"]`,
+`noDefaultFeatures = true`, checks run through `clippy`). Install the
+recommended extensions when prompted, or run:
+
+```bash
+code --install-extension rust-lang.rust-analyzer
+```
+
+For other editors (RustRover, Zed, Neovim + rust-analyzer), set the
+equivalent `cargo.features`/`cargo.noDefaultFeatures` options to match
+`.vscode/settings.json`.
+
 ## CI and Supply Chain Requirements
 
 BitNet-rs enforces strict CI hygiene and supply chain security to prevent supply chain attacks and ensure reproducible builds:

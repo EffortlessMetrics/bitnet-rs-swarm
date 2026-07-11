@@ -7,7 +7,9 @@ Cargo.lock
 .crates.toml
 .crates2.json
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
