@@ -1,0 +1,28 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-032"
+event = "merged"
+timestamp = "2026-07-11T18:35:29Z"
+actor = "codex"
+pr = 1697
+head_sha = "1cffefbd08ab87aec6cecc6455986e2bafd72b50"
+merge_sha = "f4b2e0b1e6dc914b12a9db1e7b253fe89447799f"
+branch = "codex/apple-m3-macbook-air/M3MBA-032-bitnet-local-answer-receipt"
+
+summary = "Merged the strict five-case M3 Air BitNet local-answer scorecard receipt."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1697",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json",
+  "docs/reports/apple-silicon-macbook-m3-air-microsoft-2b-bitnet-local-answer.md",
+]
+
+notes = [
+  "The receipt passed all five answer gates with strict external tokenizer authority, apple-m3-air-cpu-neon, runtime_api=cpu-neon, generated token IDs, timing fields, and fallback_used=false.",
+  "This M3 Air receipt does not claim chat, serve, Metal, MPSGraph, Neural Engine, QK256-on-Apple, broad Apple Silicon behavior, or performance improvement.",
+]
+
+validation = [
+  "target/release/bitnet mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --json",
+  "campaign check and generated-dashboard checks passed before PR #1697.",
+]
