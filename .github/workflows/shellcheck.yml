@@ -13,15 +13,13 @@ concurrency:
 jobs:
   shellcheck:
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
