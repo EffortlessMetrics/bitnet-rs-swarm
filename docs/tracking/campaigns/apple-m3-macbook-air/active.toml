@@ -1764,3 +1764,42 @@ must_not_claim = [
   "The M3 Air BitNet local-answer proof passed before M3MBA-032 is rerun.",
   "M3 Air evidence proves M4 proof, chat, serve, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon support.",
 ]
+
+[[work_item]]
+id = "M3MBA-037"
+status = "ready"
+branch = "codex/apple-m3-macbook-air/M3MBA-037-m3-exact-profile-wrapper-repair"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+acceptance = "Repair the exact-profile Mac ask and benchmark wrappers to accept apple-m3-air-cpu-neon with truthful requested/selected backend, runtime_api=cpu-neon, fallback=false, strict BitNet tokenizer/model identity, per-case output/token IDs and timing receipts, while preserving M4 behavior and all unsupported feature boundaries."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-receipts-core/**",
+  "docs/apple-silicon/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/apple-m3-macbook-air/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "ci/hardware/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-quantization/src/qk256/**",
+  "crates/bitnet-server/**",
+  "models/**",
+]
+may_claim = ["M3 exact-profile ask and benchmark wrapper support is enabled only when live receipts prove the stated boundaries."]
+must_not_claim = ["M3 chat, serve, Metal, MPSGraph, Neural Engine, QK256, M4, or broad Apple Silicon support is enabled."]
