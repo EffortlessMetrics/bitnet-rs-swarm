@@ -26590,7 +26590,13 @@ fn validate_bitnet_eval_answer_corpus_receipt(
 
     require_exact_string_at(path, receipt, &["model", "family"], "bitnet")?;
     require_exact_string_at(path, receipt, &["model", "sha256"], BITNET_M4_EXPECTED_MODEL_SHA256)?;
-    require_exact_string_at(path, receipt, &["model", "quant_format"], "I2_S")?;
+    let quant_format = receipt["model"]["quant_format"].as_str().unwrap_or_default();
+    if !matches!(quant_format, "I2_S" | "I2_S/QK256") {
+        anyhow::bail!(
+            "{} BitNet eval receipt model.quant_format must be I2_S or I2_S/QK256, got {quant_format:?}",
+            path.display()
+        );
+    }
     require_bool_at(path, receipt, &["model", "answer_ready_artifact_available"], true)?;
     require_exact_string_at(path, receipt, &["model", "answer_ready", "state"], "answer_ready")?;
 
@@ -26610,11 +26616,18 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     require_bool_at(path, receipt, &["tokenizer", "strict"], true)?;
 
     let corpus_name = require_non_empty_string_at(path, receipt, &["corpus", "name"])?;
-    if !BITNET_M4_EVAL_CORPUS_NAMES.contains(&corpus_name) {
+    let allowed_corpus_names: &[&str] = if expected_artifact_kind
+        == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+    {
+        &["strict-bitnet-answer-corpus-v1", "apple-m4-bitnet-eval-seeded-corpus"]
+    } else {
+        BITNET_M4_EVAL_CORPUS_NAMES
+    };
+    if !allowed_corpus_names.contains(&corpus_name) {
         anyhow::bail!(
             "{} BitNet eval receipt corpus.name must be one of {:?}, got {corpus_name:?}",
             path.display(),
-            BITNET_M4_EVAL_CORPUS_NAMES
+            allowed_corpus_names
         );
     }
     if let Some(corpus_id) = receipt["corpus"]["id"].as_str()
@@ -31487,6 +31500,16 @@ mod tests {
         assert_eq!(summary.selected_backend, APPLE_M3_AIR_CPU_NEON);
         assert_eq!(summary.prompt_count, Some(2));
         assert_eq!(summary.generated_tokens, Some(3));
+        Ok(())
+    }
+
+    #[test]
+    fn apple_m3_bitnet_receipts_check_accepts_i2s_qk256_format()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+        receipt["model"]["quant_format"] = serde_json::json!("I2_S/QK256");
+
+        validate_mac_receipt_value(Path::new("m3-bitnet-local-answer.json"), &receipt)?;
         Ok(())
     }
 
