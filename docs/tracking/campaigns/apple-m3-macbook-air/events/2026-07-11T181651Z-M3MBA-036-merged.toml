@@ -1,0 +1,30 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-036"
+event = "merged"
+timestamp = "2026-07-11T18:16:51Z"
+actor = "codex"
+pr = 1695
+head_sha = "3870c22bb"
+merge_sha = "8b861ca00"
+branch = "codex/apple-m3-macbook-air/M3MBA-036-unscored-receipt-validation"
+
+summary = "Merged the strict M3 Air BitNet local-answer receipt repair so the renewed M3MBA-032 execution can publish live evidence."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1695",
+  "crates/bitnet-cli/src/commands/answer_corpus.rs",
+  "crates/bitnet-cli/src/mac.rs",
+]
+
+notes = [
+  "The repaired command keeps the M3 fixed answer-gate corpus unscored while preserving the scored M4 evaluation contract.",
+  "Each BitNet case receipt now records the manifest-authoritative Microsoft model identity instead of generic child-loader metadata.",
+  "This closeout records repair readiness only; M3MBA-032 remains responsible for publishing and claiming the live M3 proof receipt.",
+]
+
+validation = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli bitnet",
+  "Full local release answer-corpus execution and strict mac receipts-check passed before PR #1695.",
+]

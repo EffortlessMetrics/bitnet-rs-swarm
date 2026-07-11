@@ -1722,7 +1722,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-036"
-status = "ready"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-036-receipt-command-repair"
 stackable = false
 review_mode = "codex_premerge"
