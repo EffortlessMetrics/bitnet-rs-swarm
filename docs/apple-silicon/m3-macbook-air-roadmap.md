@@ -155,6 +155,7 @@ M3 Air a leading local device without borrowing proof from M4 or other lanes:
 | 8 | `M3MBA-033` | Use completed dense SLM and BitNet receipts to name the smallest safe CPU/NEON optimization PR. | Optimizing before the bottleneck is measured or mixing dense SLM and BitNet proof families. |
 | 9 | `M3MBA-034` | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces for proven dense SLM and BitNet CPU/NEON contexts. | User-facing M3 claims before receipts prove model/tokenizer/backend/fallback/timing identity. |
 | 10 | `M3MBA-035` | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. | Unmeasured optimization, output drift, or broad Apple Silicon performance claims. |
+| 11 | `M3MBA-036` | Restore the M3 strict local-answer command and reconcile its runtime identity with the M3-only receipt contract before retrying M3MBA-032. | Reusing M4 commands or accepting a mismatched M3 receipt runtime identity. |
 
 The follow-on implementation items are single-purpose work items. M3 accuracy
 and performance work should prefer dense SLM comparison receipts first because
