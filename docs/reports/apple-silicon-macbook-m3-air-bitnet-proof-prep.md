@@ -14,7 +14,7 @@ The M3 Air BitNet CPU/NEON local-answer receipt path is scoped to:
 | Artifact kind | `bitnet_apple_m3_air_local_answer_corpus` |
 | Requested backend | `apple-m3-air-cpu-neon` |
 | Selected backend | `apple-m3-air-cpu-neon` |
-| Runtime API | `cpu` |
+| Runtime API | `cpu-neon` |
 | Fallback | `false` |
 | Model repo | `microsoft/bitnet-b1.58-2B-4T-gguf` |
 | Model file | `ggml-model-i2_s.gguf` |

@@ -293,7 +293,9 @@ impl AnswerCorpusCommand {
         let top_level_fallback_used =
             rows.iter().any(|row| row["backend"]["fallback_used"].as_bool().unwrap_or(false));
         let model_id_pinned = model_identity.id.is_some();
-        let top_level_model_family = if model_id_pinned {
+        let corpus_model_identity_is_authoritative =
+            model_id_pinned || corpus.artifact_kind == "bitnet_answer_corpus";
+        let top_level_model_family = if corpus_model_identity_is_authoritative {
             model_identity.family.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "family"])
@@ -301,7 +303,7 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.family.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_model_architecture = if model_id_pinned {
+        let top_level_model_architecture = if corpus_model_identity_is_authoritative {
             model_identity.architecture.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "architecture"])
@@ -309,7 +311,7 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.architecture.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_quantization = if model_id_pinned {
+        let top_level_quantization = if corpus_model_identity_is_authoritative {
             model_identity.quant_format.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "quant_format"])
@@ -317,21 +319,21 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.quant_format.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_model_repo = if model_id_pinned {
+        let top_level_model_repo = if corpus_model_identity_is_authoritative {
             model_identity.repo.clone()
         } else {
             aggregate_case_str(&rows, &["model", "repo"])
                 .map(str::to_string)
                 .unwrap_or_else(|| model_identity.repo.clone())
         };
-        let top_level_model_file = if model_id_pinned {
+        let top_level_model_file = if corpus_model_identity_is_authoritative {
             model_identity.file.clone()
         } else {
             aggregate_case_str(&rows, &["model", "file"])
                 .map(str::to_string)
                 .unwrap_or_else(|| model_identity.file.clone())
         };
-        let top_level_model_sha256 = if model_id_pinned {
+        let top_level_model_sha256 = if corpus_model_identity_is_authoritative {
             model_identity.sha256.clone()
         } else {
             aggregate_case_str(&rows, &["model", "sha256"])
@@ -1159,6 +1161,8 @@ fn answer_corpus_runtime_api(device: &str) -> &'static str {
         "cuda"
     } else if is_a770_opencl_answer_corpus_device(device) {
         "opencl"
+    } else if device == APPLE_M3_AIR_CPU_NEON {
+        "cpu-neon"
     } else {
         "cpu"
     }
@@ -4516,7 +4520,7 @@ cases:
 
     #[test]
     fn apple_m3_bitnet_answer_corpus_route_is_strict_cpu_neon() {
-        assert_eq!(answer_corpus_runtime_api(APPLE_M3_AIR_CPU_NEON), "cpu");
+        assert_eq!(answer_corpus_runtime_api(APPLE_M3_AIR_CPU_NEON), "cpu-neon");
         assert_eq!(
             answer_corpus_backend_lane(APPLE_M3_AIR_CPU_NEON, false, "bitnet"),
             "apple_m3_air_cpu_neon"
@@ -4713,7 +4717,7 @@ cases:
         let receipt = strict_answer_receipt_fixture(
             APPLE_M3_AIR_CPU_NEON,
             APPLE_M3_AIR_CPU_NEON,
-            "cpu",
+            "cpu-neon",
             "i2_s-scalar-reference",
         );
 
@@ -4725,7 +4729,7 @@ cases:
         let receipt = strict_answer_receipt_fixture(
             APPLE_M3_AIR_CPU_NEON,
             "apple-m4-cpu-neon",
-            "cpu",
+            "cpu-neon",
             "i2_s-scalar-reference",
         );
 
