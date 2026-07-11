@@ -38,6 +38,7 @@ rand_chacha = "0.10.0"
 insta = { workspace = true, features = ["json"] }
 serde_json.workspace = true
 half = "2.7.1"
+bitnet-test-support.workspace = true
 bitnet-models = { path = "../bitnet-models", version = "0.2.1-dev", features = ["cpu"] }  # AC2: For testing re-exports
 
 [features]

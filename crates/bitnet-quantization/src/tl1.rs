@@ -734,7 +734,7 @@ mod tests {
     }
 
     #[test]
-    fn test_asymmetric_quantization() {
+    fn test_asymmetric_quantization() -> anyhow::Result<()> {
         let device = Device::Cpu;
         let data = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0]; // All positive values
         let shape = vec![6];
@@ -762,12 +762,17 @@ mod tests {
         );
 
         let original = [0.0f32, 1.0, 2.0, 3.0, 4.0, 5.0];
-        let dequant_data = extract_f32_data(&dequantized).unwrap();
+        let dequant_data = bitnet_test_support::assertions::require_ok(
+            extract_f32_data(&dequantized),
+            "extract_f32_data",
+        )?;
         for (got, want) in dequant_data.iter().zip(original.iter()) {
             assert!(
                 (got - want).abs() <= expected_scale,
                 "round-trip error too large: got {got}, want ~{want}"
             );
         }
+
+        Ok(())
     }
 }
