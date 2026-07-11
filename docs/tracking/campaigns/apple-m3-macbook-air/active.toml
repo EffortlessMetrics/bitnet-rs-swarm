@@ -1719,3 +1719,48 @@ must_not_claim = [
   "M3 Air timing is broad Apple Silicon or M4 Mac mini performance.",
   "QK256, Metal, MPSGraph, Neural Engine, chat, or serve support is enabled.",
 ]
+
+[[work_item]]
+id = "M3MBA-036"
+status = "ready"
+branch = "codex/apple-m3-macbook-air/M3MBA-036-receipt-command-repair"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+acceptance = "Repair the strict M3 Air BitNet local-answer command path so an explicit M3-compatible command emits bitnet_apple_m3_air_local_answer_corpus evidence with CPU-scoped runtime identity, generated text/token IDs, timing, strict tokenizer authority, fallback=false, and receipt-check compatibility."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli bitnet",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-receipts-core/**",
+  "docs/apple-silicon/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/apple-m3-macbook-air/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "ci/hardware/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-quantization/src/qk256/**",
+  "crates/bitnet-server/**",
+  "models/**",
+]
+may_claim = [
+  "The M3 strict local-answer command and receipt contract are ready for a renewed local receipt attempt.",
+]
+must_not_claim = [
+  "The M3 Air BitNet local-answer proof passed before M3MBA-032 is rerun.",
+  "M3 Air evidence proves M4 proof, chat, serve, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon support.",
+]
