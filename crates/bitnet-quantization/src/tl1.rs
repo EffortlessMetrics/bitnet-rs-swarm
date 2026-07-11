@@ -5,8 +5,8 @@
 //! with configurable block sizes for optimal performance on ARM architectures.
 
 use crate::utils::{
-    calculate_grouped_scales, create_tensor_from_f32, extract_f32_data, pack_unsigned_2bit_values,
-    unpack_unsigned_2bit_values,
+    calculate_grouped_asymmetric_scales, calculate_grouped_scales, create_tensor_from_f32,
+    extract_f32_data, pack_unsigned_2bit_values, unpack_unsigned_2bit_values,
 };
 use crate::{QuantizedTensor, QuantizerTrait};
 use bitnet_common::{BitNetTensor, QuantizationError, QuantizationType, Result, Tensor};
@@ -108,8 +108,6 @@ pub struct LookupTable {
     reverse: Vec<f32>,
     /// Scale factor for this table
     scale: f32,
-    /// Zero point for asymmetric quantization
-    zero_point: i32,
 }
 
 impl LookupTable {
@@ -161,7 +159,7 @@ impl LookupTable {
             *fwd = quantized;
         }
 
-        Self { forward, reverse, scale, zero_point }
+        Self { forward, reverse, scale }
     }
 
     /// Quantize a value using the lookup table
@@ -259,9 +257,22 @@ impl TL1Quantizer {
             self.config.use_asymmetric,
         );
 
-        // Calculate grouped scales
-        let scales =
-            calculate_grouped_scales(&data, self.config.block_size, self.config.precision_bits);
+        // Calculate grouped scales (and, for asymmetric mode, per-block zero points).
+        // These must use the same per-block min/max formula as the `LookupTable`
+        // built for each block during quantization below, or decode will use a
+        // different scale than the one codes were actually produced with.
+        let (scales, zero_points) = if self.config.use_asymmetric {
+            let (scales, zero_points) = calculate_grouped_asymmetric_scales(
+                &data,
+                self.config.block_size,
+                self.config.precision_bits,
+            );
+            (scales, Some(zero_points))
+        } else {
+            let scales =
+                calculate_grouped_scales(&data, self.config.block_size, self.config.precision_bits);
+            (scales, None)
+        };
 
         // Quantize data using lookup tables
         let quantized_data = if self.use_neon {
@@ -272,12 +283,6 @@ impl TL1Quantizer {
 
         // Pack quantized values
         let packed_data = self.pack_tl1_values(&quantized_data);
-
-        let zero_points = if self.config.use_asymmetric {
-            Some(vec![lookup_table.zero_point; scales.len()])
-        } else {
-            None
-        };
 
         Ok(QuantizedTensor::new_with_params(
             packed_data,
@@ -744,5 +749,25 @@ mod tests {
 
         assert!(quantized.zero_points.is_some());
         assert_eq!(dequantized.shape(), &shape);
+
+        // The stored per-block scale must match the asymmetric range-based formula
+        // ((max - min) / (2^bits - 1)) that was actually used to produce the codes,
+        // not the symmetric formula (max_abs / max_quant) — using the wrong one here
+        // previously made decoded values ~3x too large for this input.
+        let expected_scale = (5.0 - 0.0) / 3.0;
+        assert!(
+            (quantized.scales[0] - expected_scale).abs() < 1e-4,
+            "asymmetric scale mismatch: got {}, expected {expected_scale}",
+            quantized.scales[0],
+        );
+
+        let original = [0.0f32, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let dequant_data = extract_f32_data(&dequantized).unwrap();
+        for (got, want) in dequant_data.iter().zip(original.iter()) {
+            assert!(
+                (got - want).abs() <= expected_scale,
+                "round-trip error too large: got {got}, want ~{want}"
+            );
+        }
     }
 }

@@ -56,6 +56,43 @@ pub fn calculate_grouped_scales(data: &[f32], block_size: usize, bits: u8) -> Ve
     scales
 }
 
+/// Calculate per-block (scale, zero_point) pairs for asymmetric grouped quantization.
+///
+/// Mirrors the min/max and scale/zero-point formulas `LookupTable::new` (TL1) applies
+/// per block during encoding, so the values returned here always match the codes that
+/// were actually produced — callers must not decode asymmetric codes against
+/// [`calculate_grouped_scales`], which only implements the symmetric formula.
+pub fn calculate_grouped_asymmetric_scales(
+    data: &[f32],
+    block_size: usize,
+    bits: u8,
+) -> (Vec<f32>, Vec<i32>) {
+    let num_blocks = data.len().div_ceil(block_size);
+    let num_levels = 1i32 << bits;
+    let mut scales = Vec::with_capacity(num_blocks);
+    let mut zero_points = Vec::with_capacity(num_blocks);
+
+    for i in 0..num_blocks {
+        let start = i * block_size;
+        let end = (start + block_size).min(data.len());
+        let block = &data[start..end];
+
+        let (min_val, max_val) =
+            block.iter().fold((f32::INFINITY, f32::NEG_INFINITY), |(min, max), &val| {
+                (min.min(val), max.max(val))
+            });
+
+        let scale =
+            if max_val == min_val { 1.0 } else { (max_val - min_val) / (num_levels - 1) as f32 };
+        let zero_point = if scale == 0.0 { 0 } else { (-min_val / scale).round() as i32 };
+
+        scales.push(scale);
+        zero_points.push(zero_point);
+    }
+
+    (scales, zero_points)
+}
+
 /// Pack 4 2-bit values into a single byte
 pub fn pack_2bit_values(values: &[i8]) -> Vec<u8> {
     pack_signed_2bit(values)
