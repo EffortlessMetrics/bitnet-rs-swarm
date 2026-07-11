@@ -259,6 +259,9 @@ impl AnswerCorpusCommand {
             rows.push(row);
         }
         ensure_rows_match_model_identity(&rows, &model_identity)?;
+        if corpus.artifact_kind == "bitnet_answer_corpus" {
+            apply_authoritative_model_identity(&mut rows, &model_identity);
+        }
 
         let total = rows.len();
         let passed = rows.iter().filter(|row| row["quality"]["passed"] == true).count();
@@ -1296,6 +1299,28 @@ fn ensure_rows_match_model_identity(
         );
     }
     Ok(())
+}
+
+fn apply_authoritative_model_identity(rows: &mut [Value], identity: &AnswerCorpusModelIdentity) {
+    for row in rows {
+        let Some(model) = row.get_mut("model").and_then(Value::as_object_mut) else {
+            continue;
+        };
+        model.insert("repo".to_string(), Value::from(identity.repo.clone()));
+        model.insert("file".to_string(), Value::from(identity.file.clone()));
+        if let Some(sha256) = &identity.sha256 {
+            model.insert("sha256".to_string(), Value::from(sha256.clone()));
+        }
+        if let Some(family) = &identity.family {
+            model.insert("family".to_string(), Value::from(family.clone()));
+        }
+        if let Some(architecture) = &identity.architecture {
+            model.insert("architecture".to_string(), Value::from(architecture.clone()));
+        }
+        if let Some(quant_format) = &identity.quant_format {
+            model.insert("quant_format".to_string(), Value::from(quant_format.clone()));
+        }
+    }
 }
 
 fn validate_answer_corpus_inputs(
@@ -3568,6 +3593,39 @@ mod tests {
             forbidden_tokens: None,
             expected_answer_authority: None,
         }
+    }
+
+    #[test]
+    fn authoritative_model_identity_replaces_child_local_metadata() {
+        let mut rows = vec![json!({
+            "model": {
+                "repo": "local",
+                "file": "ggml-model-i2_s.gguf",
+                "sha256": "observed-sha",
+                "family": "unknown",
+                "architecture": "unknown",
+                "quant_format": "I2_S/QK256",
+            }
+        })];
+        let identity = AnswerCorpusModelIdentity {
+            id: None,
+            repo: "microsoft/bitnet-b1.58-2B-4T-gguf".to_string(),
+            revision: None,
+            file: "ggml-model-i2_s.gguf".to_string(),
+            sha256: Some("expected-sha".to_string()),
+            bytes: None,
+            family: Some("bitnet".to_string()),
+            architecture: Some("bitnet-b1.58".to_string()),
+            quant_format: Some("I2_S/QK256".to_string()),
+            tokenizer_authority: None,
+        };
+
+        apply_authoritative_model_identity(&mut rows, &identity);
+
+        assert_eq!(rows[0]["model"]["repo"], "microsoft/bitnet-b1.58-2B-4T-gguf");
+        assert_eq!(rows[0]["model"]["sha256"], "expected-sha");
+        assert_eq!(rows[0]["model"]["family"], "bitnet");
+        assert_eq!(rows[0]["model"]["architecture"], "bitnet-b1.58");
     }
 
     #[test]
