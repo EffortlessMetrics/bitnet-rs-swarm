@@ -28,15 +28,13 @@ jobs:
   check-patch-policy:
     name: Check Patch Policy Compliance
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     timeout-minutes: 15
 
@@ -347,15 +345,13 @@ jobs:
   patch-lifecycle-review:
     name: Weekly Patch Lifecycle Review
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     if: github.event_name == 'schedule'
 

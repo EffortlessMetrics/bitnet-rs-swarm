@@ -24,15 +24,13 @@ jobs:
   link-check:
     name: Check Documentation Links
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     timeout-minutes: 15
 

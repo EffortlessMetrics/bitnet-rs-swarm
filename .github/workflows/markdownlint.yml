@@ -10,15 +10,13 @@ concurrency:
 jobs:
   lint:
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     continue-on-error: true  # Informational while stabilizing docs
     steps:
