@@ -1,0 +1,25 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-034"
+event = "blocked"
+timestamp = "2026-07-11T21:13:15Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-034-exact-profile-ask-benchmark"
+
+summary = "Recorded the M3 exact-profile mac ask and benchmark blocker after both wrappers rejected the distinct M3 CPU/NEON label before receipt emission."
+
+artifacts = [
+  "docs/reports/apple-silicon-macbook-m3-air-exact-profile-ask-benchmark-blocker.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "mac ask with explicit accepted BitNet model and tokenizer inputs rejected apple-m3-air-cpu-neon because the wrapper routes only through apple-m4-cpu-neon.",
+  "mac benchmark --calibrate rejected the same M3 label before model work or receipt output.",
+  "No hidden fallback, generated output, benchmark receipt, chat, serve, Metal, MPSGraph, Neural Engine, QK256-on-Apple, M4, or broad Apple Silicon claim is made.",
+]
+
+validation = [
+  "target/release/bitnet mac ask 'Answer with one digit: 2+2=' --device apple-m3-air-cpu-neon --model-path ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer ~/Library/Caches/bitnet-rs/tokenizers/microsoft-bitnet-2b/04c3b9ad9361b824064a1f25ea60a8be9599b127/tokenizer.json --max-new-tokens 8 --json-out target/m3-bitnet-ask.json --quiet # exit 1: wrapper hardcodes apple-m4-cpu-neon",
+  "target/release/bitnet mac benchmark --device apple-m3-air-cpu-neon --calibrate --json-out target/m3-benchmark-calibrate.json --quiet # exit 1: wrapper hardcodes apple-m4-cpu-neon",
+]

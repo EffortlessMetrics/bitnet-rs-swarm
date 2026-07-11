@@ -37,7 +37,7 @@
 | apple-m3-macbook-air | M3MBA-030 | M3MBA-029 | ready |
 | apple-m3-macbook-air | M3MBA-031 | M3MBA-028 | merged |
 | apple-m3-macbook-air | M3MBA-033 | M3MBA-030, M3MBA-032 | ready |
-| apple-m3-macbook-air | M3MBA-034 | M3MBA-030, M3MBA-032 | ready |
+| apple-m3-macbook-air | M3MBA-034 | M3MBA-030, M3MBA-032 | blocked |
 | apple-m3-macbook-air | M3MBA-035 | M3MBA-033 | ready |
 | apple-m4 | M4-002 | M4-001 | merged |
 | apple-m4 | M4-003 | M4-002 | merged |
