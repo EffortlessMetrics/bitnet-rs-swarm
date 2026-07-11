@@ -1555,9 +1555,9 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M3MBA-031"]
-acceptance = "Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON proof surface, committing strict receipt evidence with generated text, generated token IDs, tokenizer authority, backend identity, fallback=false, timing fields, cleanup/retention state, and answer-gate result or failing prompt IDs."
+acceptance = "Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON proof surface, committing strict receipt evidence with generated text, generated token IDs, tokenizer authority, backend identity, truthful runtime_api=cpu-neon, fallback=false, timing fields, cleanup/retention state, and answer-gate result or failing prompt IDs."
 commands = [
-  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac bitnet-smoke --device apple-m3-air-cpu-neon --model-path ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer-authority microsoft/bitnet-b1.58-2B-4T --override-kv tokenizer.ggml.pre=str:llama-bpe --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --quiet",
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --model ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer ~/Library/Caches/bitnet-rs/tokenizers/microsoft-bitnet-2b/04c3b9ad9361b824064a1f25ea60a8be9599b127/tokenizer.json --fail-on-quality --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json",
   "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --json",
   "rg -n \"answer-gate|fallback_used|apple-m3-air-cpu-neon|generated token\" docs/reports/apple-silicon-macbook-m3-air-microsoft-2b-bitnet-local-answer.md",
   "cargo fmt --all -- --check",
@@ -1729,7 +1729,7 @@ review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = []
-acceptance = "Repair the strict M3 Air BitNet local-answer command path so an explicit M3-compatible command emits bitnet_apple_m3_air_local_answer_corpus evidence with CPU-scoped runtime identity, generated text/token IDs, timing, strict tokenizer authority, fallback=false, and receipt-check compatibility."
+acceptance = "Repair the strict M3 Air BitNet local-answer command path so an explicit M3-compatible command emits bitnet_apple_m3_air_local_answer_corpus evidence with truthful CPU/NEON runtime identity, generated text/token IDs, timing, strict tokenizer authority, fallback=false, and receipt-check compatibility."
 commands = [
   "cargo fmt --all -- --check",
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",

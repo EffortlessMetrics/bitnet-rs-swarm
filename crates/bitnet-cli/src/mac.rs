@@ -21729,8 +21729,18 @@ fn validate_mac_receipt_value(
             path.display()
         );
     }
-    if runtime_api != "cpu" {
-        anyhow::bail!("{} runtime_api must be cpu, got {runtime_api:?}", path.display());
+    let expected_runtime_api = if artifact_kind
+        == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+    {
+        apple_m3_air::CPU_NEON_RUNTIME_API
+    } else {
+        "cpu"
+    };
+    if runtime_api != expected_runtime_api {
+        anyhow::bail!(
+            "{} runtime_api must be {expected_runtime_api}, got {runtime_api:?}",
+            path.display()
+        );
     }
     if fallback_used {
         anyhow::bail!(
@@ -21812,6 +21822,7 @@ fn validate_mac_receipt_value(
             receipt,
             "bitnet_apple_m4_local_answer_corpus",
             APPLE_M4_CPU_NEON,
+            "cpu",
         )?
     } else if artifact_kind
         == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
@@ -21822,6 +21833,7 @@ fn validate_mac_receipt_value(
             receipt,
             bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND,
             APPLE_M3_AIR_CPU_NEON,
+            apple_m3_air::CPU_NEON_RUNTIME_API,
         )?
     } else if artifact_kind == "apple_m4_golden_token_canaries" {
         validate_apple_m4_golden_token_canaries_receipt(path, receipt)?
@@ -26569,6 +26581,7 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     receipt: &serde_json::Value,
     expected_artifact_kind: &str,
     expected_backend: &str,
+    expected_runtime_api: &str,
 ) -> Result<(Option<usize>, Option<usize>)> {
     require_exact_string_at(path, receipt, &["schema_version"], "1.0.0")?;
     require_exact_string_at(path, receipt, &["artifact_kind"], expected_artifact_kind)?;
@@ -26760,11 +26773,11 @@ fn validate_bitnet_eval_answer_corpus_receipt(
         }
         if case["backend"]["requested_backend"].as_str() != Some(expected_backend)
             || case["backend"]["selected_backend"].as_str() != Some(expected_backend)
-            || case["backend"]["runtime_api"].as_str() != Some("cpu")
+            || case["backend"]["runtime_api"].as_str() != Some(expected_runtime_api)
             || case["backend"]["fallback_used"].as_bool() != Some(false)
         {
             anyhow::bail!(
-                "{} BitNet eval receipt case {index} ({case_label}) backend/fallback fields are not strict {expected_backend}",
+                "{} BitNet eval receipt case {index} ({case_label}) backend/fallback fields are not strict {expected_backend}/{expected_runtime_api}",
                 path.display(),
             );
         }
@@ -26839,7 +26852,7 @@ fn validate_apple_m3_bitnet_local_answer_boundary(
 ) -> Result<()> {
     require_exact_string_at(path, receipt, &["requested_backend"], APPLE_M3_AIR_CPU_NEON)?;
     require_exact_string_at(path, receipt, &["selected_backend"], APPLE_M3_AIR_CPU_NEON)?;
-    require_exact_string_at(path, receipt, &["runtime_api"], "cpu")?;
+    require_exact_string_at(path, receipt, &["runtime_api"], apple_m3_air::CPU_NEON_RUNTIME_API)?;
     require_bool_at(path, receipt, &["fallback_used"], false)?;
     require_exact_string_at(path, receipt, &["backend_lane"], "apple_m3_air_cpu_neon")?;
     require_exact_string_at(
@@ -32790,7 +32803,7 @@ mod tests {
         );
         receipt["requested_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
         receipt["selected_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
-        receipt["runtime_api"] = serde_json::json!("cpu");
+        receipt["runtime_api"] = serde_json::json!(apple_m3_air::CPU_NEON_RUNTIME_API);
         receipt["fallback_used"] = serde_json::json!(false);
         receipt["backend_lane"] = serde_json::json!("apple_m3_air_cpu_neon");
         receipt["model"]["repo"] = serde_json::json!("microsoft/bitnet-b1.58-2B-4T-gguf");
@@ -32810,7 +32823,8 @@ mod tests {
             for case in cases {
                 case["backend"]["requested_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
                 case["backend"]["selected_backend"] = serde_json::json!(APPLE_M3_AIR_CPU_NEON);
-                case["backend"]["runtime_api"] = serde_json::json!("cpu");
+                case["backend"]["runtime_api"] =
+                    serde_json::json!(apple_m3_air::CPU_NEON_RUNTIME_API);
                 case["backend"]["fallback_used"] = serde_json::json!(false);
             }
         }

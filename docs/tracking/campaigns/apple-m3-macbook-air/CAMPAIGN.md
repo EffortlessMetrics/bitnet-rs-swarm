@@ -98,8 +98,9 @@ artifacts to separate strict proof items.
 
 Current focus: `M3MBA-036` is ready. The existing top-level M3 answer-corpus
 route emits the required M3-only artifact kind, but its child receipt currently
-reports `runtime_api=cpu-neon` where the strict M3 contract requires `cpu`.
-This focused repair restores one compatible strict command contract before
+reports `runtime_api=cpu-neon` while the stale strict M3 contract requires
+`cpu`. This focused repair aligns the contract with the canonical M3 CPU/NEON
+device identity and makes `answer-corpus` the compatible strict command before
 M3MBA-032 is rerun.
 The M4 Apple Silicon work is useful reference implementation context, but M3
 uses its own artifact kind, backend label, claim boundary, and receipt gates.
