@@ -24,7 +24,7 @@ hard_constraints = [
 
 [[work_item]]
 id = "M3MBA-001"
-status = "merged"
+status = "ready"
 branch = "codex/apple-m3-macbook-air/roadmap-campaign"
 stackable = true
 review_mode = "codex_premerge"
@@ -1548,13 +1548,13 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-032"
-status = "blocked"
+status = "ready"
 branch = "codex/apple-m3-macbook-air/M3MBA-032-bitnet-local-answer-receipt"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
-blocked_by = ["M3MBA-031"]
+blocked_by = []
 acceptance = "Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON proof surface, committing strict receipt evidence with generated text, generated token IDs, tokenizer authority, backend identity, truthful runtime_api=cpu-neon, fallback=false, timing fields, cleanup/retention state, and answer-gate result or failing prompt IDs."
 commands = [
   "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --model ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer ~/Library/Caches/bitnet-rs/tokenizers/microsoft-bitnet-2b/04c3b9ad9361b824064a1f25ea60a8be9599b127/tokenizer.json --fail-on-quality --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json",
