@@ -1631,7 +1631,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-034"
-status = "ready"
+status = "blocked"
 branch = "codex/apple-m3-macbook-air/M3MBA-034-exact-profile-ask-benchmark"
 stackable = false
 review_mode = "codex_premerge"
