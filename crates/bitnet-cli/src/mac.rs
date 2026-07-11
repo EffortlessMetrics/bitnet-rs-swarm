@@ -26583,6 +26583,8 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     expected_backend: &str,
     expected_runtime_api: &str,
 ) -> Result<(Option<usize>, Option<usize>)> {
+    let is_m3_local_answer_gate = expected_artifact_kind
+        == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND;
     require_exact_string_at(path, receipt, &["schema_version"], "1.0.0")?;
     require_exact_string_at(path, receipt, &["artifact_kind"], expected_artifact_kind)?;
     require_exact_string_at(path, receipt, &["model_family"], "bitnet")?;
@@ -26616,9 +26618,7 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     require_bool_at(path, receipt, &["tokenizer", "strict"], true)?;
 
     let corpus_name = require_non_empty_string_at(path, receipt, &["corpus", "name"])?;
-    let allowed_corpus_names: &[&str] = if expected_artifact_kind
-        == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
-    {
+    let allowed_corpus_names: &[&str] = if is_m3_local_answer_gate {
         &["strict-bitnet-answer-corpus-v1", "apple-m4-bitnet-eval-seeded-corpus"]
     } else {
         BITNET_M4_EVAL_CORPUS_NAMES
@@ -26663,13 +26663,22 @@ fn validate_bitnet_eval_answer_corpus_receipt(
         );
     }
 
-    require_bool_at(path, receipt, &["scoring_summary", "enabled"], true)?;
-    let scoring_total = require_u64_at(path, receipt, &["scoring_summary", "total"], true)?;
-    if scoring_total != quality_total {
-        anyhow::bail!(
-            "{} BitNet eval receipt scoring_summary.total must match quality_summary.total",
-            path.display()
-        );
+    if is_m3_local_answer_gate {
+        // The M3 receipt is an answer-gate proof. Its fixed corpus supplies
+        // per-case answer gates, not the M4 evaluation scorer contract.
+        require_bool_at(path, receipt, &["scoring_summary", "enabled"], false)?;
+        for field in ["total", "passed", "failed", "not_run"] {
+            require_u64_exact(path, receipt, &["scoring_summary", field], 0)?;
+        }
+    } else {
+        require_bool_at(path, receipt, &["scoring_summary", "enabled"], true)?;
+        let scoring_total = require_u64_at(path, receipt, &["scoring_summary", "total"], true)?;
+        if scoring_total != quality_total {
+            anyhow::bail!(
+                "{} BitNet eval receipt scoring_summary.total must match quality_summary.total",
+                path.display()
+            );
+        }
     }
 
     let task_family_summary =
@@ -26700,7 +26709,18 @@ fn validate_bitnet_eval_answer_corpus_receipt(
                 path.display()
             );
         }
-        if summary["scoring"]["enabled"].as_bool() != Some(true) {
+        let scoring_enabled = summary["scoring"]["enabled"].as_bool();
+        if is_m3_local_answer_gate {
+            if scoring_enabled != Some(false) {
+                anyhow::bail!(
+                    "{} BitNet M3 answer-gate receipt task_family_summary.{family}.scoring.enabled must be false",
+                    path.display()
+                );
+            }
+            for field in ["total", "passed", "failed", "not_run"] {
+                require_u64_exact(path, summary, &["scoring", field], 0)?;
+            }
+        } else if scoring_enabled != Some(true) {
             anyhow::bail!(
                 "{} BitNet eval receipt task_family_summary.{family}.scoring.enabled must be true",
                 path.display()
@@ -31514,6 +31534,16 @@ mod tests {
     }
 
     #[test]
+    fn apple_m3_bitnet_receipts_check_rejects_scored_answer_gate() {
+        let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+        receipt["scoring_summary"]["enabled"] = serde_json::json!(true);
+
+        let err = mac_receipt_validation_error("m3-bitnet-local-answer.json", &receipt);
+
+        assert!(err.contains("scoring_summary.enabled must be false"), "got: {err}");
+    }
+
+    #[test]
     fn apple_m3_bitnet_receipts_check_rejects_m4_selected_backend_alias() {
         let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
         receipt["selected_backend"] = serde_json::json!(APPLE_M4_CPU_NEON);
@@ -32829,6 +32859,18 @@ mod tests {
         receipt["runtime_api"] = serde_json::json!(apple_m3_air::CPU_NEON_RUNTIME_API);
         receipt["fallback_used"] = serde_json::json!(false);
         receipt["backend_lane"] = serde_json::json!("apple_m3_air_cpu_neon");
+        receipt["corpus"]["id"] = serde_json::json!("strict-bitnet-answer-corpus-v1");
+        receipt["corpus"]["name"] = serde_json::json!("strict-bitnet-answer-corpus-v1");
+        receipt["scoring_summary"] = serde_json::json!({
+            "enabled": false,
+            "total": 0,
+            "passed": 0,
+            "failed": 0,
+            "not_run": 0,
+            "kinds": [],
+            "failure_taxonomy": {},
+            "failure_categories": {},
+        });
         receipt["model"]["repo"] = serde_json::json!("microsoft/bitnet-b1.58-2B-4T-gguf");
         receipt["model"]["file"] = serde_json::json!("ggml-model-i2_s.gguf");
         receipt["claim_boundary"] = serde_json::json!({
@@ -32849,6 +32891,18 @@ mod tests {
                 case["backend"]["runtime_api"] =
                     serde_json::json!(apple_m3_air::CPU_NEON_RUNTIME_API);
                 case["backend"]["fallback_used"] = serde_json::json!(false);
+            }
+        }
+        if let Some(summaries) = receipt["task_family_summary"].as_object_mut() {
+            for summary in summaries.values_mut() {
+                summary["scoring"] = serde_json::json!({
+                    "enabled": false,
+                    "total": 0,
+                    "passed": 0,
+                    "failed": 0,
+                    "not_run": 0,
+                    "kinds": [],
+                });
             }
         }
         receipt
