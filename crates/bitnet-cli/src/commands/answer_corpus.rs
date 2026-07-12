@@ -1135,7 +1135,9 @@ impl ResidentBitNetAnswerSession {
         let decode_start = Instant::now();
         let mut first_token_ms = None;
         for _ in 0..max_new_tokens {
-            let last_token = *token_ids.last().expect("resident BitNet context is non-empty");
+            let last_token = *token_ids.last().ok_or_else(|| {
+                anyhow::anyhow!("resident BitNet generation context unexpectedly became empty")
+            })?;
             let embedding = self.model.embed(&[last_token])?;
             let hidden = self.model.forward(&embedding, &mut cache as &mut dyn std::any::Any)?;
             let last_hidden = resident_last_hidden(&hidden)?;

@@ -31927,8 +31927,8 @@ mod tests {
             "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
             "timeout_enforcement": "post_completion_observation",
         });
-        for (index, case) in receipt["cases"].as_array_mut().expect("cases").iter_mut().enumerate()
-        {
+        let cases = receipt["cases"].as_array_mut().ok_or("cases must be an array")?;
+        for (index, case) in cases.iter_mut().enumerate() {
             case["resident_session"] = serde_json::json!({
                 "enabled": true,
                 "case_index": index,
