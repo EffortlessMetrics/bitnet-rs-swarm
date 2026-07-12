@@ -37,12 +37,12 @@ committed five-case baseline exactly.
 | --- | ---: | ---: | ---: |
 | Model loads | 5 | 1 | -4 |
 | Tokenizer loads | 5 | 1 | -4 |
-| End-to-end corpus wall time | 82.901s | 61.330s | -21.572s (-26.0%) |
+| End-to-end corpus wall time | 82.901s | 61.436s | -21.465s (-25.9%) |
 | Answer gates | 5/5 | 5/5 | unchanged |
 | Generated token IDs | baseline | exact match | unchanged |
 
-The resident receipt separately reports `case_generation_total_ms=52.319s` and
-`total_wall_ms=61.330s`. Per-case KV caches are recreated for prompt isolation;
+The resident receipt separately reports `case_generation_total_ms=52.284s` and
+`total_wall_ms=61.436s`. Per-case KV caches are recreated for prompt isolation;
 the optimization is model/tokenizer reuse only. Per-case timeout observations
 remain recorded after completion, so this route does not claim preemptive
 in-process cancellation.

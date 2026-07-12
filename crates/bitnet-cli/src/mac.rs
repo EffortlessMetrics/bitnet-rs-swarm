@@ -27173,6 +27173,12 @@ fn validate_apple_m3_bitnet_local_answer_boundary(
             &["resident_session", "kv_cache_reuse_policy"],
             "recreated_per_case_for_prompt_isolation",
         )?;
+        require_exact_string_at(
+            path,
+            receipt,
+            &["resident_session", "timeout_enforcement"],
+            "post_completion_observation",
+        )?;
         let cases = receipt["cases"].as_array().ok_or_else(|| {
             anyhow!("{} M3 resident-session receipt cases must be an array", path.display())
         })?;
@@ -27186,6 +27192,12 @@ fn validate_apple_m3_bitnet_local_answer_boundary(
                 case,
                 &["resident_session", "kv_cache_reuse_policy"],
                 "recreated_per_case_for_prompt_isolation",
+            )?;
+            require_exact_string_at(
+                path,
+                case,
+                &["resident_session", "timeout_enforcement"],
+                "post_completion_observation",
             )?;
         }
     }
@@ -31935,6 +31947,7 @@ mod tests {
                 "model_loaded_once": true,
                 "tokenizer_loaded_once": true,
                 "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+                "timeout_enforcement": "post_completion_observation",
             });
         }
 

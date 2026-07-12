@@ -269,7 +269,7 @@ impl AnswerCorpusCommand {
                 &corpus.defaults,
             )?;
             for (case_index, case) in selected_cases.iter().enumerate() {
-                rows.push(self.run_resident_case(
+                let row = self.run_resident_case(
                     &mut session,
                     &receipt_dir,
                     &corpus,
@@ -277,7 +277,11 @@ impl AnswerCorpusCommand {
                     &device,
                     default_timeout_seconds,
                     case_index,
-                )?);
+                );
+                rows.push(match row {
+                    Ok(row) => row,
+                    Err(error) => resident_failure_row(case, &device, case_index, &error),
+                });
             }
             resident_session_summary = Some(session.summary());
         } else {
@@ -852,14 +856,21 @@ impl AnswerCorpusCommand {
             min_distinct_generated_tokens,
         );
         quality.failed_rules.extend(answer_receipt_failed_rules(&run_receipt, device));
+        let effective_timeout_seconds = case.timeout_seconds.unwrap_or(timeout_seconds);
         if run_receipt["timing"]["total_ms"].as_f64().unwrap_or_default()
-            > (timeout_seconds as f64 * 1000.0)
+            > (effective_timeout_seconds as f64 * 1000.0)
         {
             quality.failed_rules.push("timeout".to_string());
             quality.failure_taxonomy.push("timeout".to_string());
         }
         quality.passed = quality.failed_rules.is_empty();
-        let status = if quality.passed { "passed" } else { "quality_failed" };
+        let status = if quality.failed_rules.iter().any(|rule| rule == "timeout") {
+            "timeout"
+        } else if quality.passed {
+            "passed"
+        } else {
+            "quality_failed"
+        };
         let failure_category_labels = failure_categories_for_case(
             case.task_family(),
             status,
@@ -937,7 +948,11 @@ impl AnswerCorpusCommand {
             "qk256_hot_path": run_receipt["qk256_hot_path"].clone(),
             "execution_plan": Value::Null,
             "proof_summary": Value::Null,
-            "kernel": run_receipt["kernel"].clone(),
+            "kernel": {
+                "selected_kernel": run_receipt["kernel"]["kernel_id"].clone(),
+                "family": run_receipt["kernel"]["family"].clone(),
+                "hot_path_kernel": run_receipt["kernel"]["hot_path_kernel_id"].clone(),
+            },
             "loader": run_receipt["loader"].clone(),
             "tokenizer": run_receipt["tokenizer"].clone(),
             "reference_comparison": reference_comparison_json(
@@ -999,6 +1014,69 @@ impl AnswerCorpusCommand {
             ),
         })
     }
+}
+
+fn resident_failure_row(
+    case: &AnswerCase,
+    device: &str,
+    case_index: usize,
+    error: &anyhow::Error,
+) -> Value {
+    let failed_rules = vec!["command_failed".to_string()];
+    let failure_taxonomy = vec!["resident_session_error".to_string()];
+    let failure_category_labels = failure_categories_for_case(
+        case.task_family(),
+        "command_failed",
+        &failed_rules,
+        &failure_taxonomy,
+        case.scoring.as_ref().map(AnswerScoring::kind),
+    );
+    let failure_categories = failure_category_fields(&failure_category_labels);
+    json!({
+        "id": case.id,
+        "task_family": case.task_family(),
+        "category": case.category.as_deref().unwrap_or_else(|| case.task_family()),
+        "profile": case.profile(),
+        "seed_material": case.seed_material,
+        "question": case.question,
+        "status": "command_failed",
+        "resident_session_error": format!("{error:#}"),
+        "quality": {
+            "passed": false,
+            "failed_rules": failed_rules,
+            "failure_taxonomy": failure_taxonomy,
+            "failure_category_labels": failure_category_labels,
+            "failure_categories": failure_categories,
+            "scoring": scoring_not_run_json(case.scoring.as_ref()),
+        },
+        "backend": {
+            "requested_backend": device,
+            "selected_backend": device,
+            "runtime_api": answer_corpus_runtime_api(device),
+            "fallback_used": false,
+            "source": "resident_answer_corpus",
+        },
+        "kernel": {
+            "selected_kernel": Value::Null,
+            "family": Value::Null,
+            "hot_path_kernel": Value::Null,
+            "source": "resident_session_error",
+        },
+        "model": {},
+        "tokens": Value::Null,
+        "token_ids": {
+            "prompt": Value::Null,
+            "generated": Value::Null,
+        },
+        "resident_session": {
+            "enabled": true,
+            "case_index": case_index,
+            "model_loaded_once": true,
+            "tokenizer_loaded_once": true,
+            "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            "timeout_enforcement": "post_completion_observation",
+        },
+    })
 }
 
 struct ResidentBitNetAnswerSession {
@@ -1107,14 +1185,24 @@ impl ResidentBitNetAnswerSession {
         }
         let prompt_token_ids = token_ids.clone();
         let tokenize_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let available_new_tokens = self
+            .config
+            .model
+            .max_position_embeddings
+            .checked_sub(prompt_token_ids.len())
+            .ok_or_else(|| {
+                anyhow::anyhow!("resident BitNet prompt exceeds model context window")
+            })?;
+        if available_new_tokens == 0 {
+            anyhow::bail!(
+                "resident BitNet prompt leaves no generation capacity in the model context window"
+            );
+        }
+        let effective_max_new_tokens = max_new_tokens.min(available_new_tokens);
         let max_seq_len = prompt_token_ids
             .len()
-            .checked_add(max_new_tokens)
-            .ok_or_else(|| anyhow::anyhow!("resident BitNet sequence length overflow"))?
-            .min(self.config.model.max_position_embeddings);
-        if max_seq_len < prompt_token_ids.len() {
-            anyhow::bail!("resident BitNet prompt exceeds model context window");
-        }
+            .checked_add(effective_max_new_tokens)
+            .ok_or_else(|| anyhow::anyhow!("resident BitNet sequence length overflow"))?;
         let mut cache =
             KVCache::new_with_max_seq_len(&self.config, 1, &candle_core::Device::Cpu, max_seq_len)?;
         let prefill_start = Instant::now();
@@ -1131,10 +1219,10 @@ impl ResidentBitNetAnswerSession {
             seed: None,
         });
         let stop_ids = self.template.resolve_stop_token_ids(self.tokenizer.as_ref());
-        let mut generated_ids = Vec::with_capacity(max_new_tokens);
+        let mut generated_ids = Vec::with_capacity(effective_max_new_tokens);
         let decode_start = Instant::now();
         let mut first_token_ms = None;
-        for _ in 0..max_new_tokens {
+        for _ in 0..effective_max_new_tokens {
             let last_token = *token_ids.last().ok_or_else(|| {
                 anyhow::anyhow!("resident BitNet generation context unexpectedly became empty")
             })?;
