@@ -8965,7 +8965,10 @@ async fn run_slm_warm_session_with_options(
             quant_format,
             model_sha256: model_sha256.clone(),
             tokenizer_source: tokenizer_source_str.to_string(),
-            tokenizer_authority: pretokenizer_authority.to_string(),
+            // Profile authorization binds to the canonical source identity;
+            // the generic receipt pretokenizer label is intentionally broader
+            // (for example, it reports embedded GGUF metadata as `present`).
+            tokenizer_authority: tokenizer_source_str.to_string(),
             tokenizer_strict,
             chat_template: reader.get_string_metadata("tokenizer.chat_template"),
             context_limit: config.model.max_position_embeddings,
