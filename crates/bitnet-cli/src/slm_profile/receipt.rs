@@ -53,13 +53,14 @@ pub fn profile_receipt(
         },
     );
     let role = role.or(resolved.model_role);
+    let mode = profile_mode(resolved);
     json!({
         "schema_version": "1.1.0",
         "artifact_kind": "slm_cpu_kaby_opt_in_profile",
         "tracking_item": "SLM-CPU-247",
         "profile_id": profile_id,
         "enabled": true,
-        "mode": if resolved.self_test { "self_test" } else { "normal" },
+        "mode": mode,
         "profile_supplied_prompts": profile_supplied_prompts,
         "prompt_source": if profile_supplied_prompts { "profile_builtin_bounded_prompts" } else { "user_prompt_or_corpus" },
         "prompt_count": prompt_count,
@@ -131,4 +132,56 @@ pub fn profile_receipt(
             "bitnet_qk256_claim": false,
         },
     })
+}
+
+fn profile_mode(resolved: &ResolvedProfile) -> &'static str {
+    match (resolved.self_test, resolved.allocation_audit) {
+        (false, false) => "normal",
+        (true, false) => "self_test",
+        (false, true) => "normal_allocation_audit",
+        (true, true) => "self_test_allocation_audit",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn resolved(self_test: bool, allocation_audit: bool) -> ResolvedProfile {
+        ResolvedProfile {
+            profile_id: Some(super::super::kaby::PROFILE_ID),
+            model_role: None,
+            max_new_tokens: 4,
+            temperature: 0.0,
+            top_k: 0,
+            top_p: 1.0,
+            repetition_penalty: 1.1,
+            strict_tokenizer: true,
+            strict_loader: true,
+            greedy: true,
+            deterministic: true,
+            threads: 4,
+            prompt_template: "qwen".to_string(),
+            no_think: true,
+            fail_on_quality: self_test,
+            require_determinism: self_test,
+            allocation_audit,
+            profile_supplied_prompts: self_test,
+            self_test,
+        }
+    }
+
+    #[test]
+    fn receipt_mode_distinguishes_proof_and_audit_paths() {
+        for (self_test, allocation_audit, expected) in [
+            (false, false, "normal"),
+            (true, false, "self_test"),
+            (false, true, "normal_allocation_audit"),
+            (true, true, "self_test_allocation_audit"),
+        ] {
+            let receipt =
+                profile_receipt(&resolved(self_test, allocation_audit), None, false, 0, 4);
+            assert_eq!(receipt["mode"], expected);
+        }
+    }
 }
