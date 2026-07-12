@@ -1,0 +1,28 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-032"
+event = "blocked"
+timestamp = "2026-07-10T22:53:23Z"
+actor = "codex"
+branch = "codex/apple-m3-macbook-air/M3MBA-032-bitnet-local-answer-receipt"
+
+summary = "Recorded the strict M3 Air BitNet local-answer blocker after the prescribed command failed at CLI subcommand dispatch."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1689",
+  "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer-blocker.json",
+  "docs/reports/apple-silicon-macbook-m3-air-microsoft-2b-bitnet-local-answer-blocker.md",
+  "docs/tracking/campaigns/apple-m3-macbook-air/active.toml",
+]
+
+notes = [
+  "The exact release command built successfully and then exited 2 because the current CLI no longer exposes `mac bitnet-smoke`.",
+  "The failure occurred before model loading, tokenizer handling, prompt execution, or receipt writing.",
+  "Current M4-scoped bitnet-proof, bitnet-warm, and smoke commands are not substitutes for the required M3-only bitnet_apple_m3_air_local_answer_corpus receipt contract.",
+  "No generated text, token IDs, strict backend/fallback evidence, timing, answer-gate result, or receipts-check output was emitted.",
+  "No BitNet local-answer, M4 Mac mini, Metal, MPSGraph, Neural Engine, QK256, chat, serve, broad Apple Silicon, quality, or performance claim is made.",
+]
+
+validation = [
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac bitnet-smoke --device apple-m3-air-cpu-neon --model-path ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer-authority microsoft/bitnet-b1.58-2B-4T --override-kv tokenizer.ggml.pre=str:llama-bpe --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --quiet # exit 2: unrecognized subcommand bitnet-smoke",
+]

@@ -35,7 +35,7 @@ changes exist.
 
 - **Name:** bitnet-rs — 1-bit LLM inference engine in Rust
 - **Version:** v0.2.1-dev (pre-alpha)
-- **MSRV:** 1.93.0 (Rust 2024 edition, pinned in `rust-toolchain.toml`)
+- **MSRV:** 1.95.0 (Rust 2024 edition, pinned in `rust-toolchain.toml`)
 - **Status:** CPU inference works with SIMD optimization. GPU backends are scaffolded but not validated. Do not use in production.
 
 ## Rust 1.95 Rollout Rails
@@ -122,7 +122,7 @@ bitnet-models  (GGUF loader, dual I2_S flavor detection) │
                                      bitnet-cli                  bitnet-server
 ```
 
-**Scale:** ~200 workspace crates, 2,500+ .rs files, 129 crate dirs under `crates/`.
+**Scale:** 138 workspace member crates, 2,600+ .rs files, 134 crate dirs under `crates/`.
 
 **Key crates:** `bitnet` (root), `bitnet-inference`, `bitnet-quantization`, `bitnet-kernels`, `bitnet-models`, `bitnet-tokenizers`, `bitnet-st2gguf`, `bitnet-cli`, `crossval`. Plus 48+ SRP microcrates (`bitnet-logits`, `bitnet-gguf`, `bitnet-generation`, `bitnet-device-probe`, etc.).
 
@@ -138,9 +138,10 @@ bitnet-models  (GGUF loader, dual I2_S flavor detection) │
 | `gpu` | GPU umbrella — CUDA backend (requires CUDA 12.x) |
 | `cuda` | Backward-compat alias for `gpu` |
 | `full-cli` | Enable all CLI subcommands |
-| `ffi` | C++ FFI bridge for cross-validation |
+| `ffi` | FFI surface stub (handled by the `bitnet-ffi` crate) |
+| `cpp-ffi` | Link tests against the BitNet.cpp library for cross-validation |
 | `fixtures` | GGUF fixture-based integration tests (test-only) |
-| `crossval-all` | All cross-validation features (`inference` + `crossval` + `ffi`) |
+| `crossval-all` | xtask-only feature: all cross-validation features (`inference` + `crossval` + `ffi`), e.g. `cargo build -p xtask --features crossval-all` |
 
 Always use the unified GPU predicate:
 ```rust

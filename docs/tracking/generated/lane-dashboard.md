@@ -5,8 +5,8 @@
 |---|---|---|---|
 | amd-cpu-baselines | AMD CPU baselines | AMD5700X-003 | These lanes are CPU proof lanes, not accelerator lanes. |
 | amd-rocm | AMD ROCm productization | ROCM-DOCS-000 | Do not claim generic AMD GPU support. |
-| apple-bitnet-artifact-sweep | Apple BitNet artifact sweep | ABAS-001 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
-| apple-m3-macbook-air | Apple M3 MacBook Air | M3MBA-031 | This is the Apple M3 MacBook Air lane, not the M4 Mac mini product, performance, or strict-proof lane. |
+| apple-bitnet-artifact-sweep | Apple BitNet artifact sweep | ABAS-003 | Use MacBook first for larger artifact sweeps; do not manufacture MacBook receipts from the M4 Mac mini. |
+| apple-m3-macbook-air | Apple M3 MacBook Air | M3MBA-001 | This is the Apple M3 MacBook Air lane, not the M4 Mac mini product, performance, or strict-proof lane. |
 | apple-m4 | Apple M4 Mac mini validation | M4-018 | Do not touch QK256 before a BitNet-specific Apple item explicitly allows it. |
 | apple-m4-bitnet-eval-and-benchmark | Apple M4 BitNet eval and benchmark | M4-BITNET-EVAL-005 | This is an M4 Mac mini BitNet campaign. |
 | apple-m4-bitnet-productization | Apple M4 BitNet productization | M4-BITNET-PROD-004 | This is an M4 Mac mini BitNet campaign. |
@@ -36,8 +36,9 @@
 | crate-collapse | Crate collapse | LEAF-001 | Do not combine crate movement with runtime proof. |
 | falcon-e-family | Falcon-E Family compact 1.58-bit lane | FE-000 | Do not commit model binaries. |
 | falcon3-family | Falcon3 multi-size BitNet-family onboarding | F3-000 | Do not commit model binaries. |
+| gpu-hal-disposition | GPU HAL Disposition | GH-DISP-001 | Do not change runtime code. |
 | i2s | I2_S productization | I2S-DOCS-000 | Do not change runtime code in docs-only I2_S tracker slices. |
-| intel-258v-platform | Intel 258V platform validation | LNL258V-POWER-006 | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
+| intel-258v-platform | Intel 258V platform validation | LNL258V-CPU-TOPOLOGY-GUARD-001 | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
 | intel-a770 | Intel Arc A770 validation | A770-160 | OpenCL-first for native A770 proof. |
 | intel-npu | Intel NPU validation | NPU-013 | Device-node detection is not inference. |
 | llama3-8b-158 | Llama3 8B 1.58 supported-model candidate | LLAMA3-158-000 | Do not commit model binaries. |

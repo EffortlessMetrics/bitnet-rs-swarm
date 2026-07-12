@@ -1681,8 +1681,8 @@ fn model_status_includes_entry(selected_backend: &str, entry: &ModelCoverageEntr
         return true;
     }
 
-    let visible_diagnostic = model_status_category(entry) == "diagnostic";
-    if visible_diagnostic
+    let visible_boundary = matches!(model_status_category(entry), "diagnostic" | "unsupported");
+    if visible_boundary
         && matches!(entry.model_class.as_str(), "bitnet" | "dense_slm" | "small_llm")
     {
         return true;
@@ -1700,7 +1700,10 @@ fn model_status_category(entry: &ModelCoverageEntry) -> &'static str {
     if entry.claims.product_cli_ready {
         return "supported";
     }
-    if entry.status.contains("diagnostic") || entry.status.contains("unsupported") {
+    if entry.status.contains("unsupported") {
+        return "unsupported";
+    }
+    if entry.status.contains("diagnostic") {
         return "diagnostic";
     }
     "candidate"
@@ -1830,6 +1833,8 @@ fn print_model_status_text(dashboard: &ModelStatusDashboard) {
     print_model_status_group(dashboard, "Candidates", "candidate");
     println!();
     print_model_status_group(dashboard, "Diagnostics", "diagnostic");
+    println!();
+    print_model_status_group(dashboard, "Unsupported", "unsupported");
 }
 
 fn print_model_status_group(dashboard: &ModelStatusDashboard, title: &str, category: &str) {
@@ -4341,6 +4346,33 @@ mod tests {
             smollm2["next_proof"]
                 .as_str()
                 .is_some_and(|next| { next.contains("same-prompt SmolLM2") })
+        );
+
+        let unsupported = model_status_json_row_for(&value, "bitnet_3b_x86_i2s_unsupported")?;
+        assert_eq!(unsupported["model_coverage_row"], "bitnet_3b_x86_i2s_unsupported");
+        assert_eq!(unsupported["category"], "unsupported");
+        assert_eq!(unsupported["requested_backend"], "nvidia-rtx-5070-ti-cuda");
+        assert_eq!(unsupported["selected_backend"], "nvidia-rtx-5070-ti-cuda");
+        assert!(unsupported["selected_route"].is_null());
+        assert!(unsupported["fallback_used"].is_null());
+        assert_eq!(unsupported["product_cli_ready"], false);
+        assert_eq!(unsupported["cpu_answer_ready"], false);
+        assert_eq!(unsupported["accelerator_answer_ready"], false);
+        assert_eq!(unsupported["speedup_claim"], false);
+        assert_eq!(unsupported["server_ready"], false);
+        assert!(unsupported["server_ready_scope"].is_null());
+        assert_eq!(unsupported["full_residency_claim"], false);
+        assert_eq!(unsupported["bitnet_packed_i2s_qk256_proof"], false);
+        assert_eq!(unsupported["dense_regular_llm_cuda_proof"], false);
+        assert!(
+            unsupported["next_proof"]
+                .as_str()
+                .is_some_and(|next| { next.contains("none for x86 I2_S") })
+        );
+        assert!(
+            unsupported["claim_boundary"]
+                .as_str()
+                .is_some_and(|boundary| { boundary.contains("upstream-unsupported") })
         );
         Ok(())
     }

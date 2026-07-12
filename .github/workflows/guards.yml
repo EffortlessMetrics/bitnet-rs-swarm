@@ -119,17 +119,15 @@ jobs:
     name: Workflow Guards
     needs: classify-guards
     if: needs.classify-guards.outputs.workflow_required == 'true'
-    # Control-plane pool: CX23, no Rust compile.
+    # Tiny control-plane pool; CX23 is not reliable enough for required PR gates.
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     timeout-minutes: 15
     steps:

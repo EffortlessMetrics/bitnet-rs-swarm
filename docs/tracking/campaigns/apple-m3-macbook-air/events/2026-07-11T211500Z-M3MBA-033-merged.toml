@@ -1,0 +1,24 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-033"
+event = "merged"
+timestamp = "2026-07-11T21:15:00Z"
+actor = "codex"
+pr = 1700
+head_sha = "eabc4cce2f4b12fb450149b3c5378fe810e96b7a"
+merge_sha = "29513d37cb98c1adae5645213bd8ed2a409be816"
+branch = "codex/apple-m3-macbook-air/M3MBA-033-cpu-neon-bottleneck-review"
+
+summary = "Merged the measured M3 CPU/NEON bottleneck review selecting BitNet model/tokenizer resident-session reuse as the first optimization target."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1700",
+  "docs/reports/apple-silicon-macbook-m3-air-cpu-neon-bottleneck-review.md",
+]
+
+notes = [
+  "The review records repeated cold model load and prefill as the measured BitNet local-answer bottleneck.",
+  "M3MBA-035 owns the implementation and must prove exact answer/token preservation before claiming any measured improvement.",
+]
+
+validation = ["campaign check and generated-dashboard checks passed before PR #1700."]

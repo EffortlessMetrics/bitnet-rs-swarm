@@ -11,8 +11,13 @@ from campaign manifests and events.
 
 - ADR-0001: [Configuration layering and clamp location](./0001-configuration-layering.md)
 - ADR-0002: [GPU Backend Strategy](./0002-gpu-backend-strategy.md)
+- ADR-0003: [GPU HAL Disposition](./0003-gpu-hal-disposition.md)
 - BITNET-ADR-0004: [9950X3D + RTX 5070 Ti CUDA Product Bench](./BITNET-ADR-0004-9950x3d-5070ti-cuda-product-bench.md)
 - BITNET-ADR-0005: [Proof Families Are Not Interchangeable](./BITNET-ADR-0005-proof-families-are-not-interchangeable.md)
+- BITNET-ADR-0006: [PR Closure Creates Backlog Unless Disposed](./BITNET-ADR-0006-pr-closure-creates-backlog.md)
+- BITNET-ADR-0007: [A770 Diagnostics Are Lineage](./BITNET-ADR-0007-a770-diagnostics-are-lineage.md)
+- BITNET-ADR-0008: [Self-Hosted-Only CI With No GitHub-Hosted Fallback](./BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md)
+- BITNET-ADR-0010: [Compute Dispatch Architecture](./BITNET-ADR-0010-compute-dispatch-architecture.md)
 
 ## Source-Of-Truth Role
 

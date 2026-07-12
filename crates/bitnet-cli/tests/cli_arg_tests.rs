@@ -42,6 +42,8 @@ fn model_status_defaults_to_front_door_device_without_hardware_probe() {
         .stdout(predicate::str::contains("Supported:"))
         .stdout(predicate::str::contains("Candidates:"))
         .stdout(predicate::str::contains("Diagnostics:"))
+        .stdout(predicate::str::contains("Unsupported:"))
+        .stdout(predicate::str::contains("bitnet_3b_x86_i2s_unsupported"))
         .stdout(predicate::str::contains("speedup: not qualified"))
         .stdout(predicate::str::contains("next proof:"));
 }
@@ -76,6 +78,15 @@ fn model_status_json_defaults_to_front_door_device() -> Result<(), Box<dyn std::
             && model["server_ready"] == false
             && model["full_residency_claim"] == false
             && model["next_proof"].is_string()
+    })));
+    assert!(json["models"].as_array().is_some_and(|models| models.iter().any(|model| {
+        model["model_coverage_row"] == "bitnet_3b_x86_i2s_unsupported"
+            && model["category"] == "unsupported"
+            && model["speedup_claim"] == false
+            && model["server_ready"] == false
+            && model["full_residency_claim"] == false
+            && model["next_proof"].is_string()
+            && model["claim_boundary"].is_string()
     })));
     Ok(())
 }

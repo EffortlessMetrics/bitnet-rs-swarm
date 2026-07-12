@@ -572,7 +572,7 @@ PRs:
 
 ### Next No-Inference Guard Candidate
 
-The previous CPU slow-path guard candidates are complete. Issue
+The previous no-inference guards are complete. Issue
 [#1568](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1568)
 landed through implementation PR #1593 and tracker closeout PR #1596, protecting
 the Rust GGUF CPU versus OpenVINO CPU matched-comparison boundary from benchmark
@@ -581,30 +581,45 @@ Issue
 [#1578](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1578)
 landed through implementation PR #1599 and tracker closeout PR #1601, adding
 machine-readable resident Rust GGUF CPU phase-attribution buckets while keeping
-the resident evidence diagnostic and `benchmark_qualified=false`.
+the resident evidence diagnostic and `benchmark_qualified=false`. Issue
+[#1572](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1572)
+landed through implementation PR #1605 and tracker closeout PR #1607, adding
+dedicated `lunar_lake_openvino_npu_cache_truth` validation for cache-source
+provenance without running inference, refreshing hardware receipts, promoting
+NPU routes, or changing route policy.
 
 The next no-inference guard should select
-[#1572](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1572)
-before any NPU cache rerun, route-policy mutation, `AUTO` route-policy use,
-warm-resident expansion, `low_power` work, or broader NPU benchmark PR. That
-issue narrows #1371 to a no-new-inference NPU cache-source provenance contract:
-timing-derived or file/cache-derived evidence must not be relabeled as direct
-OpenVINO GenAI runtime cache-hit truth, and unavailable runtime cache metrics
-must stay diagnostic.
+[#1571](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1571)
+before any CPU tuning, thread-default or affinity change, OpenVINO CPU
+replacement, route-policy mutation, benchmark expansion, `low_power` work, or
+power/speedup claim. That issue narrows #1370 to a no-new-inference
+topology/affinity availability contract: process affinity masks,
+requested/effective thread counts, timing differences, zero values, or null
+values must not be treated as P-core/E-core placement, worker affinity,
+utilization, frequency/throttle, thermal, or scheduler-placement proof.
 
-The first PR under #1572 should be schema/checker or docs-contract work using
-existing committed NPU cache receipts or synthetic mutated fixtures only. It
-should preserve the cache-source taxonomy `runtime_metric`, `runtime_log`,
-`file_reuse`, `timing_derived`, and `not_exposed`; require route, backend,
-runtime, device, model-export, and cache-tuple provenance for any dedicated
-`lunar_lake_openvino_npu_cache_truth` artifact; fail closed when
-`timing_derived` or `file_reuse` evidence claims direct runtime cache-hit truth;
-and keep `direct_runtime_cache_hit_status.available=false` receipts reviewable
-as unavailable diagnostic evidence. It must not run inference, refresh hardware
-receipts, promote NPU for cold/default, `ask_short`, `ask_normal`, or
-`low_power`, mutate route policy, broaden `AUTO`, claim speedup or power
-advantage, claim native NPU execution, or treat dense SLM evidence as BitNet
-QK256/I2_S proof.
+The first repo-native step under #1571 should be a tracker-ready PR for
+`LNL258V-CPU-TOPOLOGY-GUARD-001` that names the exact branch, allowed paths,
+proof commands, and claim boundaries. The first implementation PR after that
+should use existing committed thread/core or resident receipts or synthetic
+mutated fixtures only. It should require route/backend/runtime/model/tokenizer/
+profile identity, fallback status, process and worker affinity status, topology
+classification status, P-core/E-core mapping status, utilization/frequency/
+throttle/thermal availability statuses with explicit unavailable reasons, power
+context, `benchmark_qualified=false`, and claim-boundary fields for any
+dedicated `lunar_lake_cpu_topology_affinity` artifact. It must not run
+inference, refresh hardware receipts, tune CPU/thread/affinity defaults,
+promote OpenVINO CPU, mutate route policy, expand benchmarks, touch
+`low_power`, claim speedup/power/native accelerator behavior, or treat dense
+SLM evidence as BitNet QK256/I2_S proof.
+
+Keep
+[#1567](https://github.com/EffortlessMetrics/bitnet-rs-swarm/issues/1567)
+separate as the later aggregate/session overhead-scope candidate. A future
+PR under #1567 should not duplicate #1599's generic `host_overhead` bucket; it
+should only add scope-specific aggregate/session overhead names or a companion
+checker that keeps aggregate observations from satisfying profile
+`receipt_write_ms` or `telemetry_ms` blockers by implication.
 
 ## Phase F: Rust-Native Product Surface
 

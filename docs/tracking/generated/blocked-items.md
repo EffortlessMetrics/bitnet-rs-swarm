@@ -3,7 +3,7 @@
 
 | Campaign | Item | Blocked by | State |
 |---|---|---|---|
-| apple-bitnet-artifact-sweep | ABAS-002 | ABAS-001 | proposed |
+| apple-bitnet-artifact-sweep | ABAS-002 | ABAS-001 | merged |
 | apple-bitnet-artifact-sweep | ABAS-003 | ABAS-001 | proposed |
 | apple-bitnet-artifact-sweep | ABAS-004 | ABAS-001, ABAS-002 | proposed |
 | apple-bitnet-artifact-sweep | ABAS-005 | ABAS-001 | proposed |
@@ -35,10 +35,9 @@
 | apple-m3-macbook-air | M3MBA-028 | M3MBA-027 | merged |
 | apple-m3-macbook-air | M3MBA-029 | M3MBA-028 | blocked |
 | apple-m3-macbook-air | M3MBA-030 | M3MBA-029 | ready |
-| apple-m3-macbook-air | M3MBA-031 | M3MBA-028 | in_progress |
-| apple-m3-macbook-air | M3MBA-032 | M3MBA-031 | ready |
-| apple-m3-macbook-air | M3MBA-033 | M3MBA-030, M3MBA-032 | ready |
-| apple-m3-macbook-air | M3MBA-034 | M3MBA-030, M3MBA-032 | ready |
+| apple-m3-macbook-air | M3MBA-031 | M3MBA-028 | merged |
+| apple-m3-macbook-air | M3MBA-033 | M3MBA-030, M3MBA-032 | merged |
+| apple-m3-macbook-air | M3MBA-034 | M3MBA-030, M3MBA-032 | blocked |
 | apple-m3-macbook-air | M3MBA-035 | M3MBA-033 | ready |
 | apple-m4 | M4-002 | M4-001 | merged |
 | apple-m4 | M4-003 | M4-002 | merged |
@@ -257,6 +256,7 @@
 | cpu-qk256-performance | KBL8250U-004 | KBL8250U-003 | merged |
 | crate-collapse | LEAF-001 | INV-001 | proposed |
 | falcon-e-family | FE-001 | FE-000 | proposed |
+| gpu-hal-disposition | GH-DISP-003 | GH-DISP-001, GH-DISP-002 | ready |
 | intel-258v-platform | ARC140V-002 | LNL258V-RUN-001 | merged |
 | intel-258v-platform | ARC140V-003 | ARC140V-002, CPU258V-003 | merged |
 | intel-258v-platform | ARC140V-004 | ARC140V-003, CPU258V-003 | merged |
@@ -554,6 +554,7 @@
 | intel-258v-platform | LNL258V-CPU-MATCHED-CHECK-001 | LNL258V-CPU-SLOWPATH-REVIEW-001 | merged |
 | intel-258v-platform | LNL258V-CPU-PHASE-ATTRIBUTION-001 | LNL258V-CPU-SLOWPATH-REVIEW-001, LNL258V-CPU-MATCHED-CHECK-001 | merged |
 | intel-258v-platform | LNL258V-NPU-CACHE-TRUTH-GUARD-001 | LNL258V-NPU-CACHE-REVIEW-001 | merged |
+| intel-258v-platform | LNL258V-CPU-TOPOLOGY-GUARD-001 | LNL258V-CPU-PHASE-ATTRIBUTION-001 | ready |
 | intel-a770 | A770-003 | A770-000 | merged |
 | intel-a770 | A770-004 | A770-003 | merged |
 | intel-a770 | A770-005 | A770-004 | merged |

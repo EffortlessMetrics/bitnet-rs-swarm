@@ -107,24 +107,24 @@ model_family = "bitnet_b1_58"
 role = "smaller_control_candidate"
 source_repo = "1bitLLM/bitnet_b1_58-large"
 source_url = "https://huggingface.co/1bitLLM/bitnet_b1_58-large"
-file = "pending"
-known_sha256 = "pending"
-known_size_bytes = 0
-storage_estimate = "sub_1b_model; exact GGUF bytes pending candidate probe"
-format = "blocked_no_official_gguf"
-quantization = "blocked_no_official_gguf"
-tokenizer_authority = "official_tokenizer_files_present"
-pretokenizer_authority = "pending_runner_conversion_path"
-prompt_template = "blocked_until_gguf_or_converter_path"
-reference_runner = "microsoft_bitnet_cpp_candidate"
-reference_status = "blocked_no_official_gguf_at_revision_85d047191dcb224f0e04f20d26110caaf8dc1a47"
-cleanup_required = true
-next_item = "M3MBA-006"
+file = "model.safetensors"
+known_sha256 = "100062646f1f85771ebe297c5e476642d171c2e0e916b2ed8d19dfbe201b4b52"
+known_size_bytes = 2915408840
+storage_estimate = "official_safetensors_2915408840_bytes; derived_f16_structural_gguf_1457710272_bytes; both local-only"
+format = "official_safetensors_with_local_f16_structural_gguf"
+quantization = "f16_structural_only_not_i2_s_or_tl1"
+tokenizer_authority = "official_tokenizer_files_hashed; runtime_authority_not_established"
+pretokenizer_authority = "blocked_before_reference_runner"
+prompt_template = "blocked_before_reference_runner"
+reference_runner = "bitnet-st2gguf_plus_bitnet-cli_structural_diagnostic"
+reference_status = "blocked_strict_loader_security_validation_at_revision_85d047191dcb224f0e04f20d26110caaf8dc1a47"
+cleanup_required = false
+next_item = "ABAS-002"
 notes = [
-  "The official 1bitLLM/bitnet_b1_58-large repository at revision 85d047191dcb224f0e04f20d26110caaf8dc1a47 contains model.safetensors and tokenizer/config files, but no .gguf artifact.",
-  "BITNET-PROP-0009 and the B158-large specs make this an artifact-authority and conversion-lane control model before any CPU, CUDA, Apple, server, or speed claim.",
-  "Do not substitute a third-party GGUF for M3MBA-006 without a separate artifact-authority decision; prior third-party large-family GGUF candidates are already rejected in the shared artifact ledger.",
-  "Use as a smaller Apple BitNet control only if an official GGUF, reproducible conversion path, or explicitly approved third-party artifact produces coherent output and records tokenizer authority.",
+  "The official source at revision 85d047191dcb224f0e04f20d26110caaf8dc1a47 still has no GGUF; ABAS-002 downloaded and hashed the official safetensors/tokenizer/config source locally instead of substituting a third-party GGUF.",
+  "bitnet-st2gguf --strict produced a locally derived F16 structural GGUF that the Rust inspector can read, but this is not I2_S or TL1 evidence and cannot establish packed BitNet support.",
+  "The strict BitNet-rs loader rejected that F16 structural output on a low-RMS LayerNorm validation before any token was generated. The bounded diagnostic is recorded in ci/hardware/apple-silicon-macbook/2026-07-10/m3-air/1bitllm-07b-structural-conversion.json.",
+  "Do not substitute a third-party GGUF without a separate artifact-authority decision; existing third-party large-family GGUF candidates remain rejected for answer readiness.",
 ]
 
   [[candidate.route]]

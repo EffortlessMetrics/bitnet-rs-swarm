@@ -23,7 +23,9 @@ hard_constraints = [
 
 [[work_item]]
 id = "ABAS-001"
-status = "proposed"
+status = "merged"
+pr = 1682
+merge_sha = "2fc9bcd24514716f88083c016895379922cb4f76"
 branch = "codex/apple-bitnet-artifact-sweep/ABAS-001-microsoft-2b-i2s"
 stackable = false
 review_mode = "codex_premerge"
@@ -70,7 +72,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "ABAS-002"
-status = "proposed"
+status = "merged"
+pr = 1684
+merge_sha = "488020d97ad8c06e95b49ec8041aa52804bdbf55"
 branch = "codex/apple-bitnet-artifact-sweep/ABAS-002-1bitllm-07b"
 stackable = false
 review_mode = "codex_premerge"

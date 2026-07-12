@@ -259,6 +259,9 @@ impl AnswerCorpusCommand {
             rows.push(row);
         }
         ensure_rows_match_model_identity(&rows, &model_identity)?;
+        if corpus.artifact_kind == "bitnet_answer_corpus" {
+            apply_authoritative_model_identity(&mut rows, &model_identity);
+        }
 
         let total = rows.len();
         let passed = rows.iter().filter(|row| row["quality"]["passed"] == true).count();
@@ -293,7 +296,9 @@ impl AnswerCorpusCommand {
         let top_level_fallback_used =
             rows.iter().any(|row| row["backend"]["fallback_used"].as_bool().unwrap_or(false));
         let model_id_pinned = model_identity.id.is_some();
-        let top_level_model_family = if model_id_pinned {
+        let corpus_model_identity_is_authoritative =
+            model_id_pinned || corpus.artifact_kind == "bitnet_answer_corpus";
+        let top_level_model_family = if corpus_model_identity_is_authoritative {
             model_identity.family.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "family"])
@@ -301,7 +306,7 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.family.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_model_architecture = if model_id_pinned {
+        let top_level_model_architecture = if corpus_model_identity_is_authoritative {
             model_identity.architecture.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "architecture"])
@@ -309,7 +314,7 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.architecture.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_quantization = if model_id_pinned {
+        let top_level_quantization = if corpus_model_identity_is_authoritative {
             model_identity.quant_format.clone().unwrap_or_else(|| "unknown".to_string())
         } else {
             aggregate_case_str(&rows, &["model", "quant_format"])
@@ -317,21 +322,21 @@ impl AnswerCorpusCommand {
                 .or_else(|| model_identity.quant_format.clone())
                 .unwrap_or_else(|| "unknown".to_string())
         };
-        let top_level_model_repo = if model_id_pinned {
+        let top_level_model_repo = if corpus_model_identity_is_authoritative {
             model_identity.repo.clone()
         } else {
             aggregate_case_str(&rows, &["model", "repo"])
                 .map(str::to_string)
                 .unwrap_or_else(|| model_identity.repo.clone())
         };
-        let top_level_model_file = if model_id_pinned {
+        let top_level_model_file = if corpus_model_identity_is_authoritative {
             model_identity.file.clone()
         } else {
             aggregate_case_str(&rows, &["model", "file"])
                 .map(str::to_string)
                 .unwrap_or_else(|| model_identity.file.clone())
         };
-        let top_level_model_sha256 = if model_id_pinned {
+        let top_level_model_sha256 = if corpus_model_identity_is_authoritative {
             model_identity.sha256.clone()
         } else {
             aggregate_case_str(&rows, &["model", "sha256"])
@@ -1159,6 +1164,8 @@ fn answer_corpus_runtime_api(device: &str) -> &'static str {
         "cuda"
     } else if is_a770_opencl_answer_corpus_device(device) {
         "opencl"
+    } else if device == APPLE_M3_AIR_CPU_NEON {
+        "cpu-neon"
     } else {
         "cpu"
     }
@@ -1292,6 +1299,28 @@ fn ensure_rows_match_model_identity(
         );
     }
     Ok(())
+}
+
+fn apply_authoritative_model_identity(rows: &mut [Value], identity: &AnswerCorpusModelIdentity) {
+    for row in rows {
+        let Some(model) = row.get_mut("model").and_then(Value::as_object_mut) else {
+            continue;
+        };
+        model.insert("repo".to_string(), Value::from(identity.repo.clone()));
+        model.insert("file".to_string(), Value::from(identity.file.clone()));
+        if let Some(sha256) = &identity.sha256 {
+            model.insert("sha256".to_string(), Value::from(sha256.clone()));
+        }
+        if let Some(family) = &identity.family {
+            model.insert("family".to_string(), Value::from(family.clone()));
+        }
+        if let Some(architecture) = &identity.architecture {
+            model.insert("architecture".to_string(), Value::from(architecture.clone()));
+        }
+        if let Some(quant_format) = &identity.quant_format {
+            model.insert("quant_format".to_string(), Value::from(quant_format.clone()));
+        }
+    }
 }
 
 fn validate_answer_corpus_inputs(
@@ -3567,6 +3596,39 @@ mod tests {
     }
 
     #[test]
+    fn authoritative_model_identity_replaces_child_local_metadata() {
+        let mut rows = vec![json!({
+            "model": {
+                "repo": "local",
+                "file": "ggml-model-i2_s.gguf",
+                "sha256": "observed-sha",
+                "family": "unknown",
+                "architecture": "unknown",
+                "quant_format": "I2_S/QK256",
+            }
+        })];
+        let identity = AnswerCorpusModelIdentity {
+            id: None,
+            repo: "microsoft/bitnet-b1.58-2B-4T-gguf".to_string(),
+            revision: None,
+            file: "ggml-model-i2_s.gguf".to_string(),
+            sha256: Some("expected-sha".to_string()),
+            bytes: None,
+            family: Some("bitnet".to_string()),
+            architecture: Some("bitnet-b1.58".to_string()),
+            quant_format: Some("I2_S/QK256".to_string()),
+            tokenizer_authority: None,
+        };
+
+        apply_authoritative_model_identity(&mut rows, &identity);
+
+        assert_eq!(rows[0]["model"]["repo"], "microsoft/bitnet-b1.58-2B-4T-gguf");
+        assert_eq!(rows[0]["model"]["sha256"], "expected-sha");
+        assert_eq!(rows[0]["model"]["family"], "bitnet");
+        assert_eq!(rows[0]["model"]["architecture"], "bitnet-b1.58");
+    }
+
+    #[test]
     fn exact_gate_accepts_trimmed_answer() {
         let gate = AnswerGate { expected: Some("4".to_string()), ..gate("exact_trimmed") };
         let quality = evaluate_quality(" 4\n", &gate, None, None, None, None);
@@ -4516,7 +4578,7 @@ cases:
 
     #[test]
     fn apple_m3_bitnet_answer_corpus_route_is_strict_cpu_neon() {
-        assert_eq!(answer_corpus_runtime_api(APPLE_M3_AIR_CPU_NEON), "cpu");
+        assert_eq!(answer_corpus_runtime_api(APPLE_M3_AIR_CPU_NEON), "cpu-neon");
         assert_eq!(
             answer_corpus_backend_lane(APPLE_M3_AIR_CPU_NEON, false, "bitnet"),
             "apple_m3_air_cpu_neon"
@@ -4713,7 +4775,7 @@ cases:
         let receipt = strict_answer_receipt_fixture(
             APPLE_M3_AIR_CPU_NEON,
             APPLE_M3_AIR_CPU_NEON,
-            "cpu",
+            "cpu-neon",
             "i2_s-scalar-reference",
         );
 
@@ -4725,7 +4787,7 @@ cases:
         let receipt = strict_answer_receipt_fixture(
             APPLE_M3_AIR_CPU_NEON,
             "apple-m4-cpu-neon",
-            "cpu",
+            "cpu-neon",
             "i2_s-scalar-reference",
         );
 

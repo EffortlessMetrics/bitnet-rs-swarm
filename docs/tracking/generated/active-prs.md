@@ -3,3 +3,4 @@
 
 | Campaign | Item | PR | Branch | Notes |
 |---|---|---:|---|---|
+| gpu-hal-disposition | GH-DISP-001 | #1648 | `codex/gpu-hal/GH-DISP-001-contract-rails` | Land ADR-0003, BITNET-PROP-0019, BITNET-SPEC-GPU-HAL-REFERENCE-LAYER, this campaign manifest, and the implementation plan, all cross-linked by stable ID. ADR-0003 status lands as Proposed (promoted to Accepted in GH-DISP-003). |

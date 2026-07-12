@@ -1,0 +1,14 @@
+timestamp = "2026-06-22T08:11:00Z"
+campaign = "gpu-hal-disposition"
+item = "GH-DISP-001"
+event = "pr_open"
+pr = 1648
+head_sha = "cb04b19446169eab79f7d8b1be8d382442feaf55"
+branch = "codex/gpu-hal/GH-DISP-001-contract-rails"
+actor = "codex"
+
+notes = [
+  "Opened PR #1648 landing the durable governance artifacts (ADR-0003, BITNET-PROP-0019, BITNET-SPEC-GPU-HAL-REFERENCE-LAYER, design doc, plan, campaign manifest) that fix the disposition of crates/bitnet-gpu-hal/ as a retained prototype corpus.",
+  "Docs-only; no runtime changes. The disposition records adoption-by-extraction (not wholesale integration, not permanent freezing) and the hal_traits v2 issues that block direct Phase 9 implementation.",
+  "No gpu-hal validation, integration, backend-trait-unification, or support-tier promotion is claimed.",
+]

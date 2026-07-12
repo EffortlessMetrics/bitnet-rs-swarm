@@ -4,7 +4,7 @@ All notable changes to bitnet-rs will be documented in this file.
 
 ## [Unreleased]
 
-### Rust 1.95 / Next Minor CI Economics Continuation (planned)
+### Rust 1.95 / Next Minor CI Economics Continuation (in progress)
 
 - chore(msrv): raise workspace toolchain to Rust 1.95.0
   - Updates `Cargo.toml`, `rust-toolchain.toml`, `clippy.toml`,

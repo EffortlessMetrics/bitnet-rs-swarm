@@ -18468,3 +18468,55 @@ must_not_claim = [
   "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
   "BitNet QK256/I2_S behavior changed.",
 ]
+
+[[work_item]]
+id = "LNL258V-CPU-TOPOLOGY-GUARD-001"
+status = "ready"
+branch = "codex/lunar-lake/LNL258V-CPU-TOPOLOGY-GUARD-001-topology-affinity-guard"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["LNL258V-CPU-PHASE-ATTRIBUTION-001"]
+acceptance = "Add no-new-inference schema/checker or docs-contract coverage for #1571/#1370 so Lunar Lake CPU topology/affinity availability is machine-readable and fail-closed: route/backend/runtime/model/tokenizer/profile identity, fallback status, process and worker affinity status, topology classification status, P-core/E-core mapping status, utilization/frequency/throttle/thermal availability statuses with explicit unavailable reasons, power context, benchmark_qualified=false, and claim-boundary fields for any dedicated lunar_lake_cpu_topology_affinity artifact. Process affinity masks, requested/effective thread counts, timing differences, zero values, or null values must not be treated as P-core/E-core placement, worker affinity, utilization, frequency/throttle, thermal, or scheduler-placement proof. Use existing committed thread/core or resident CPU receipts or synthetic mutated fixtures only, preserve #1578 phase-attribution diagnostics, and preserve no inference, receipt refresh, CPU tuning, thread default or affinity change, OpenVINO CPU promotion or replacement, route-policy mutation, benchmark expansion, low_power work, speedup or power claim, native accelerator proof, dense-SLM-as-BitNet proof, or BitNet QK256/I2_S behavior-change claim."
+commands = [
+  "cargo test --locked -p bitnet-receipts-core lunar_lake_cpu_topology_affinity -- --nocapture",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli --lib commands::lunar_lake::tests::cpu_slm_topology_affinity_guard -- --nocapture",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-258v-platform",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-receipts-core/src/**",
+  "crates/bitnet-cli/src/commands/lunar_lake.rs",
+  "crates/bitnet-cli/tests/**",
+  "docs/research/lunar-lake-cpu-slow-path.md",
+  "docs/research/lunar-lake-cpu-thread-core-matrix.md",
+  "docs/reviews/lunar-lake-cpu-route-decision.md",
+  "docs/tracking/campaigns/intel-258v-platform/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  "ci/hardware/**",
+  "ci/quality/**",
+  "ci/model-artifacts/**",
+  "models/**",
+  "scripts/**",
+]
+may_claim = [
+  "The selected #1571 work makes Lunar Lake CPU topology and affinity availability machine-readable and fail-closed.",
+  "Process affinity masks, requested/effective thread counts, timing differences, zero values, and null values remain diagnostic unless explicit availability statuses prove placement, topology, utilization, frequency/throttle, thermal, or scheduler context.",
+]
+must_not_claim = [
+  "New Lunar Lake inference was run by this PR.",
+  "Any committed hardware receipt was refreshed by this PR.",
+  "Any CPU tuning, thread default, affinity, topology, kernel, buffer, sampling, or route-policy change was implemented by this PR.",
+  "OpenVINO CPU is promoted or replaces Rust GGUF CPU by this PR.",
+  "A benchmark was expanded or benchmark qualification changed by this PR.",
+  "A CPU speedup is claimed by this PR.",
+  "A power advantage is proven by this PR.",
+  "A low_power route is proven, implemented, or promoted by this PR.",
+  "OpenVINO CPU, GPU, or NPU evidence proves native accelerator behavior.",
+  "Dense SLM receipts prove BitNet QK256/I2_S behavior.",
+  "BitNet QK256/I2_S behavior changed.",
+]

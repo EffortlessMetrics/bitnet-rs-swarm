@@ -311,42 +311,33 @@ jobs:
     # should routinely cancel useful proof near completion.
     timeout-minutes: 40
     needs: [classify-changes]
+    if: needs.classify-changes.outputs.no_rust_inputs != 'true'
     env:
       RUSTFLAGS: "-D warnings"
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
       INSTA_UPDATE: unseen
     steps:
-      - name: No-Rust fast path
-        if: needs.classify-changes.outputs.no_rust_inputs == 'true'
-        run: |
-          echo "No Rust inputs changed: skipping Rust build and test steps."
-
       - name: Checkout code
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install Rust toolchain
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
           components: clippy,rustfmt
 
       - name: Cache Rust dependencies
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
           shared-key: ci-core-ubuntu
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Bootstrap native build tools
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Plan package selection
         id: package-plan
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         env:
           CHANGED_FILES: ${{ needs.classify-changes.outputs.changed_files }}
           EVENT_NAME: ${{ github.event_name }}
@@ -438,7 +429,6 @@ jobs:
           echo "  unsupported: $(grep '^unsupported_packages_csv=' "$GITHUB_OUTPUT" | tail -n1 | cut -d= -f2-)"
 
       - name: Check formatting
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         run: cargo fmt --all -- --check
 
       - name: Build core libs (CPU features)
@@ -664,40 +654,31 @@ jobs:
         - trusted-pr
     timeout-minutes: 10
     needs: [classify-changes]
+    if: needs.classify-changes.outputs.no_rust_inputs != 'true'
     env:
       RUSTFLAGS: "-D warnings"
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
     steps:
-      - name: No-Rust fast path
-        if: needs.classify-changes.outputs.no_rust_inputs == 'true'
-        run: |
-          echo "No Rust inputs changed: skipping clippy."
-
       - name: Checkout code
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install Rust toolchain
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
           components: clippy
 
       - name: Cache Rust dependencies
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
           shared-key: ci-core-clippy
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Bootstrap native build tools
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Run clippy (core crates, libs only)
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         run: |
           cargo clippy --locked \
             -p bitnet-common \
@@ -792,35 +773,26 @@ jobs:
         - trusted-pr
     timeout-minutes: 15
     needs: [classify-changes]
+    if: needs.classify-changes.outputs.no_rust_inputs != 'true'
     steps:
-      - name: No-Rust fast path
-        if: needs.classify-changes.outputs.no_rust_inputs == 'true'
-        run: |
-          echo "No Rust inputs changed: skipping rustdoc."
-
       - name: Checkout code
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install Rust toolchain
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
 
       - name: Cache Rust dependencies
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
           shared-key: ci-core-docs
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Bootstrap native build tools
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         uses: ./.github/actions/bootstrap-native-build-tools
 
       - name: Build documentation
-        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
         env:
           RUSTDOCFLAGS: -A warnings
         run: cargo doc --locked --no-deps --workspace --no-default-features --features cpu
@@ -872,7 +844,7 @@ jobs:
             for r in "${{ needs.build-test-linux.result }}" \
                      "${{ needs.clippy.result }}" \
                      "${{ needs.docs.result }}"; do
-              [ "$r" = "success" ] || bad=1
+              [ "$r" = "skipped" ] || bad=1
             done
           else
             # Required jobs (must succeed)

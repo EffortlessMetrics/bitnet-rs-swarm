@@ -17,15 +17,13 @@ jobs:
   check-pr-size:
     name: Check PR Size
     runs-on:
-      group: em-ci-nano
+      group: em-ci-tiny
       labels:
         - self-hosted
         - linux
         - x64
         - em-ci
-        - cx23
-        - ci-nano
-        - workflow-nano
+        - rust-tiny
         - trusted-pr
     timeout-minutes: 10
     # Skip for explicitly-acknowledged large PRs (mechanical refactors, AI-native work)

@@ -1,6 +1,6 @@
 # v0.3 Usable Preview Release Contract
 
-Status: Draft release-lane contract
+Status: Active release-lane contract
 Owner: BitNet-rs maintainers
 Created: 2026-06-05
 Linked proposal: n/a
@@ -23,7 +23,8 @@ Policy impact: No policy exception.
 
 This contract defines what BitNet-rs must prove before a public source
 promotion can describe the project as a small, honest, installable local
-inference preview.
+inference preview. It is the release lane's governing contract until a later
+source-owned release packet replaces it.
 
 The contract does not release, publish, tag, or promote any runtime claim. It
 sets the boundary for later PRs and source-promotion packets.
@@ -125,6 +126,19 @@ supported local-answer path unless a later exact proof row promotes them:
 Diagnostic receipts remain useful support evidence. They are not product
 support claims.
 
+## Server And Speed Posture
+
+Server readiness is false by default. A server route can enter the usable
+preview only when an exact model, device, backend, endpoint, streaming profile,
+receipt, and support-matrix row promote that profile. CLI answer readiness does
+not imply server readiness, and dense SLM server proof does not imply BitNet
+QK256 server proof.
+
+Speedup is false by default. CUDA, Apple CPU/NEON, Metal, OpenVINO, WGPU,
+Vulkan, or any other accelerator execution is not a speedup claim unless an
+exact benchmark-qualified receipt and support row promote speed for the same
+model, device, route, and runtime profile.
+
 ## Required CLI Behavior
 
 The release CLI must fail closed for supported-preview commands:
@@ -153,9 +167,16 @@ commands and outputs used. The minimum static proof set is:
 
 ```powershell
 git diff --check
+cargo run --locked -p xtask --no-default-features -- release-ready --profile usable-preview
 cargo run --locked -p xtask --no-default-features -- check-model-coverage
 npx --yes markdownlint-cli2@0.18.1 --config .markdownlint.jsonc docs/release/V0_3_USABLE_PREVIEW.md docs/status/SUPPORT_MATRIX.md docs/status/CUDA_CAPABILITY_MATRIX.md docs/status/APPLE_CAPABILITY_MATRIX.md
 ```
+
+The `release-ready --profile usable-preview` guard must block public release
+readiness while any critical proof remains unknown, including the exact local
+answer receipt, fallback state, receipt explanation, speed posture, server
+posture, support matrices, quickstart/README claim language, release notes, and
+known limitations.
 
 The minimum product proof set is exact-profile and may be satisfied by fresh
 local execution or by committed accepted receipts:

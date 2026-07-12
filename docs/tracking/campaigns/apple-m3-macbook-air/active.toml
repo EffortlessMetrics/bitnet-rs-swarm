@@ -24,7 +24,7 @@ hard_constraints = [
 
 [[work_item]]
 id = "M3MBA-001"
-status = "merged"
+status = "ready"
 branch = "codex/apple-m3-macbook-air/roadmap-campaign"
 stackable = true
 review_mode = "codex_premerge"
@@ -1500,8 +1500,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-031"
-status = "in_progress"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-031-bitnet-proof-prep"
+pr = 1573
+merge_sha = "0301ef304e0d6fd3cb7f2ef14480c702088aff88"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -1546,16 +1548,16 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-032"
-status = "ready"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-032-bitnet-local-answer-receipt"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
-blocked_by = ["M3MBA-031"]
-acceptance = "Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON proof surface, committing strict receipt evidence with generated text, generated token IDs, tokenizer authority, backend identity, fallback=false, timing fields, cleanup/retention state, and answer-gate result or failing prompt IDs."
+blocked_by = []
+acceptance = "Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON proof surface, committing strict receipt evidence with generated text, generated token IDs, tokenizer authority, backend identity, truthful runtime_api=cpu-neon, fallback=false, timing fields, cleanup/retention state, and answer-gate result or failing prompt IDs."
 commands = [
-  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac bitnet-smoke --device apple-m3-air-cpu-neon --model-path ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer-authority microsoft/bitnet-b1.58-2B-4T --override-kv tokenizer.ggml.pre=str:llama-bpe --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --quiet",
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --model ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer ~/Library/Caches/bitnet-rs/tokenizers/microsoft-bitnet-2b/04c3b9ad9361b824064a1f25ea60a8be9599b127/tokenizer.json --fail-on-quality --json-out ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json",
   "cargo run --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- mac receipts-check ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json --json",
   "rg -n \"answer-gate|fallback_used|apple-m3-air-cpu-neon|generated token\" docs/reports/apple-silicon-macbook-m3-air-microsoft-2b-bitnet-local-answer.md",
   "cargo fmt --all -- --check",
@@ -1590,7 +1592,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-033"
-status = "ready"
+status = "merged"
 branch = "codex/apple-m3-macbook-air/M3MBA-033-cpu-neon-bottleneck-review"
 stackable = false
 review_mode = "codex_premerge"
@@ -1629,7 +1631,7 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-034"
-status = "ready"
+status = "blocked"
 branch = "codex/apple-m3-macbook-air/M3MBA-034-exact-profile-ask-benchmark"
 stackable = false
 review_mode = "codex_premerge"
@@ -1717,3 +1719,90 @@ must_not_claim = [
   "M3 Air timing is broad Apple Silicon or M4 Mac mini performance.",
   "QK256, Metal, MPSGraph, Neural Engine, chat, or serve support is enabled.",
 ]
+
+[[work_item]]
+id = "M3MBA-036"
+status = "merged"
+branch = "codex/apple-m3-macbook-air/M3MBA-036-receipt-command-repair"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+acceptance = "Repair the strict M3 Air BitNet local-answer command path so an explicit M3-compatible command emits bitnet_apple_m3_air_local_answer_corpus evidence with truthful CPU/NEON runtime identity, generated text/token IDs, timing, strict tokenizer authority, fallback=false, and receipt-check compatibility."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli bitnet",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-receipts-core/**",
+  "docs/apple-silicon/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/apple-m3-macbook-air/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "ci/hardware/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-quantization/src/qk256/**",
+  "crates/bitnet-server/**",
+  "models/**",
+]
+may_claim = [
+  "The M3 strict local-answer command and receipt contract are ready for a renewed local receipt attempt.",
+]
+must_not_claim = [
+  "The M3 Air BitNet local-answer proof passed before M3MBA-032 is rerun.",
+  "M3 Air evidence proves M4 proof, chat, serve, Metal, MPSGraph, Neural Engine, QK256, or broad Apple Silicon support.",
+]
+
+[[work_item]]
+id = "M3MBA-037"
+status = "merged"
+branch = "codex/apple-m3-macbook-air/M3MBA-037-wrapper-implementation"
+pr = 1706
+head_sha = "d0ac8548252f09e5e482ba547bc1547b8f88f73f"
+merge_sha = "62017d6ddc126e13e3217e6db801ace7fc3b6053"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = []
+acceptance = "Repair the exact-profile Mac ask and benchmark wrappers to accept apple-m3-air-cpu-neon with truthful requested/selected backend, runtime_api=cpu-neon, fallback=false, strict BitNet tokenizer/model identity, per-case output/token IDs and timing receipts, while preserving M4 behavior and all unsupported feature boundaries."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo test --locked -p bitnet-receipts-core --no-default-features apple_m3",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "crates/bitnet-receipts-core/**",
+  "docs/apple-silicon/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/apple-m3-macbook-air/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "ci/hardware/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-quantization/src/qk256/**",
+  "crates/bitnet-server/**",
+  "models/**",
+]
+may_claim = ["M3 exact-profile ask and benchmark wrapper support is enabled only when live receipts prove the stated boundaries."]
+must_not_claim = ["M3 chat, serve, Metal, MPSGraph, Neural Engine, QK256, M4, or broad Apple Silicon support is enabled."]

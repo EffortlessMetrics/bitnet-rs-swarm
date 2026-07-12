@@ -2086,6 +2086,7 @@ pub async fn run_dense_qwen_cuda_chat(
         bail!("dense Qwen CUDA chat requires top-k evidence; pass --top-k > 0 or use the default");
     }
 
+    let receipt_out_was_defaulted = options.receipt_out.is_none();
     let receipt_path =
         options.receipt_out.clone().unwrap_or_else(dense_qwen_cuda_chat_default_receipt_path);
     let source_warm_session_path = dense_qwen_cuda_chat_source_receipt_path(&receipt_path);
@@ -2142,6 +2143,7 @@ pub async fn run_dense_qwen_cuda_chat(
         &timestamp_utc,
         &prompts,
         &answers,
+        receipt_out_was_defaulted,
         proof_context.proof_model,
     )?;
     validate_dense_gguf_qwen_chat_strict_cuda_proof_receipt_json(&receipt)?;
@@ -2180,6 +2182,7 @@ fn dense_qwen_cuda_chat_receipt_json(
     timestamp_utc: &str,
     prompts: &[String],
     answers: &[String],
+    receipt_out_was_defaulted: bool,
     proof_model: &DenseQwenProofModel,
 ) -> Result<Value> {
     let source_proof = source_warm_session_receipt
@@ -2254,10 +2257,8 @@ fn dense_qwen_cuda_chat_receipt_json(
         "full_cuda_residency_claimed": false
     });
     receipt["answers"] = json!(answers);
-    receipt["receipt"] = json!({
-        "path": receipt_path.display().to_string(),
-        "defaulted_for_dense_cuda_chat": true
-    });
+    receipt["receipt"] =
+        dense_qwen_cuda_chat_receipt_metadata(receipt_path, receipt_out_was_defaulted);
     receipt["prerequisite_receipts"] = json!({
         "schema": 1,
         "all_layer_execution_plan_artifact_kind": source_prerequisites["all_layer_execution_plan_artifact_kind"].clone(),
@@ -2332,6 +2333,18 @@ fn dense_qwen_cuda_chat_receipt_json(
     ]);
     receipt["source_warm_session_receipt"] = source_warm_session_receipt.clone();
     Ok(receipt)
+}
+
+fn dense_qwen_cuda_chat_receipt_metadata(
+    receipt_path: &Path,
+    receipt_out_was_defaulted: bool,
+) -> Value {
+    json!({
+        "path": receipt_path.display().to_string(),
+        "requested": !receipt_out_was_defaulted,
+        "defaulted": receipt_out_was_defaulted,
+        "defaulted_for_dense_cuda_chat": receipt_out_was_defaulted
+    })
 }
 
 fn dense_qwen_cuda_ask_source_receipt_path(receipt_path: &Path) -> PathBuf {
@@ -14211,6 +14224,23 @@ mod tests {
         assert_eq!(context.receipts.warm_session_proof, DEFAULT_QWEN3_WARM_SESSION_PROOF_RECEIPT);
         assert_eq!(dense_qwen_ask_work_item(context.proof_model), "CUDA-MODEL-010");
         assert_eq!(dense_qwen_chat_work_item(context.proof_model), "CUDA-MODEL-011");
+    }
+
+    #[test]
+    fn dense_qwen_cuda_chat_receipt_metadata_tracks_requested_vs_defaulted() {
+        let receipt_path = Path::new("target/bitnet/receipts/dense-cuda-chat/chat.json");
+
+        let defaulted = dense_qwen_cuda_chat_receipt_metadata(receipt_path, true);
+        assert_eq!(defaulted["path"], receipt_path.display().to_string());
+        assert_eq!(defaulted["requested"], false);
+        assert_eq!(defaulted["defaulted"], true);
+        assert_eq!(defaulted["defaulted_for_dense_cuda_chat"], true);
+
+        let requested = dense_qwen_cuda_chat_receipt_metadata(receipt_path, false);
+        assert_eq!(requested["path"], receipt_path.display().to_string());
+        assert_eq!(requested["requested"], true);
+        assert_eq!(requested["defaulted"], false);
+        assert_eq!(requested["defaulted_for_dense_cuda_chat"], false);
     }
 
     #[test]
