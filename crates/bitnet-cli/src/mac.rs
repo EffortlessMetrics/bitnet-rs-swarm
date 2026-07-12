@@ -106,6 +106,8 @@ const BITNET_M4_EXPECTED_TOKENIZER_SHA256: &str =
     "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7";
 const BITNET_M4_PROMPT_TEMPLATE: &str = "bitnetcpp-answer";
 const BITNET_M4_MODEL_ID: &str = "microsoft-bitnet-b1.58-2B-4T-i2s";
+const BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND: &str = "bitnet_apple_m3_air_mac_ask";
+const APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND: &str = "apple_m3_air_benchmark_calibration";
 const BITNET_M4_DEFAULT_TOKENIZER_PATH: &str = "models/microsoft-bitnet-b1.58-2B-4T/tokenizer.json";
 const BITNET_M4_EVAL_CORPUS_NAMES: &[&str] = &[
     "apple-m4-bitnet-eval-seeded-corpus",
@@ -1718,9 +1720,11 @@ impl MacCommand {
                 trace,
                 quiet,
             } => {
-                ensure_supported_mac_device(explicit_device_label, "mac ask")?;
+                ensure_supported_mac_ask_device(explicit_device_label)?;
                 let question = resolve_mac_question(question, question_flag)?;
+                let requested_backend = explicit_device_label.unwrap_or(APPLE_M4_CPU_NEON);
                 run_ask(
+                    requested_backend,
                     &model_id,
                     cache_dir,
                     model_path,
@@ -7486,6 +7490,18 @@ fn ensure_supported_mac_device(explicit_device_label: Option<&str>, command: &st
     )
 }
 
+fn ensure_supported_mac_ask_device(explicit_device_label: Option<&str>) -> Result<()> {
+    let Some(label) = explicit_device_label else {
+        return Ok(());
+    };
+    match label {
+        APPLE_M4_CPU_NEON | APPLE_M3_AIR_CPU_NEON => Ok(()),
+        _ => anyhow::bail!(
+            "mac ask routes supported local answers through --device {APPLE_M4_CPU_NEON} or --device {APPLE_M3_AIR_CPU_NEON}; requested --device {label}. Full Apple Metal, MPSGraph inference, Neural Engine execution, and hidden CPU fallback are not supported by this wrapper."
+        ),
+    }
+}
+
 fn ensure_supported_mac_validate_device(
     explicit_device_label: Option<&str>,
 ) -> Result<&'static str> {
@@ -7507,12 +7523,13 @@ fn ensure_supported_mac_benchmark_device(
     let Some(label) = explicit_device_label else {
         return Ok(APPLE_M4_CPU_NEON);
     };
-    if label == APPLE_M4_CPU_NEON {
-        return Ok(APPLE_M4_CPU_NEON);
+    match label {
+        APPLE_M4_CPU_NEON => Ok(APPLE_M4_CPU_NEON),
+        APPLE_M3_AIR_CPU_NEON => Ok(APPLE_M3_AIR_CPU_NEON),
+        _ => anyhow::bail!(
+            "mac benchmark routes supported dense SLM benchmarks through --device {APPLE_M4_CPU_NEON} or --device {APPLE_M3_AIR_CPU_NEON}; requested --device {label}. Full Apple Metal, MPSGraph inference, Neural Engine execution, and hidden CPU fallback are not supported by this benchmark wrapper."
+        ),
     }
-    anyhow::bail!(
-        "mac benchmark routes the dense SLM benchmark path through --device {APPLE_M4_CPU_NEON}; requested --device {label}. Full apple-m4-metal inference, MPSGraph inference, Neural Engine execution, and hidden CPU fallback are not supported by this benchmark wrapper."
-    )
 }
 
 fn ensure_supported_mac_serve_device(explicit_device_label: Option<&str>) -> Result<()> {
@@ -7986,6 +8003,7 @@ fn run_check(model_id: &str, cache_dir: Option<PathBuf>, json: bool) -> Result<(
 
 #[allow(clippy::too_many_arguments)]
 async fn run_ask(
+    requested_backend: &str,
     model_id: &str,
     cache_dir: Option<PathBuf>,
     model_path: Option<PathBuf>,
@@ -8014,6 +8032,7 @@ async fn run_ask(
     });
     if model_cache::is_apple_m4_bitnet_artifact_id(model_id) {
         return run_bitnet_ask(
+            requested_backend,
             model_id,
             cache_dir,
             model_path,
@@ -8085,6 +8104,7 @@ async fn run_ask(
 
 #[allow(clippy::too_many_arguments)]
 async fn run_bitnet_ask(
+    requested_backend: &str,
     model_id: &str,
     cache_dir: Option<PathBuf>,
     model_path: Option<PathBuf>,
@@ -8219,7 +8239,7 @@ async fn run_bitnet_ask(
         )
     });
     let ask_generation = crate::run_simple_generation(
-        APPLE_M4_CPU_NEON,
+        requested_backend,
         model.path.clone(),
         "auto".to_string(),
         None,
@@ -8299,6 +8319,7 @@ async fn run_bitnet_ask(
     }
     annotate_and_validate_bitnet_mac_ask_receipt(
         &json_out,
+        requested_backend,
         &model,
         &tokenizer,
         &tokenizer_sha256,
@@ -9406,6 +9427,7 @@ async fn run_bitnet_smoke(
 
     let answer_receipt_path = sibling_receipt_path(&json_out, "answer");
     run_bitnet_ask(
+        APPLE_M4_CPU_NEON,
         model_id,
         cache_dir.clone(),
         model_path,
@@ -10318,6 +10340,7 @@ async fn run_bitnet_benchmark_once(
         eprintln!("mac bitnet-benchmark: running one-shot ask path");
     }
     run_ask(
+        APPLE_M4_CPU_NEON,
         model_id,
         cache_dir.clone(),
         model_path.clone(),
@@ -14838,6 +14861,9 @@ async fn run_benchmark(request: MacBenchmarkRun<'_>) -> Result<()> {
         if repeat != 1 {
             anyhow::bail!("mac benchmark --calibrate cannot be combined with --repeat");
         }
+        if requested_backend == APPLE_M3_AIR_CPU_NEON {
+            return run_apple_m3_benchmark_calibration(model_id, quiet, json_out);
+        }
         return run_benchmark_calibration(model_id, cache_dir, requested_backend, quiet, json_out);
     }
     if repeat == 0 {
@@ -15828,6 +15854,119 @@ fn run_benchmark_calibration(
     if !quiet {
         println!(
             "Mac benchmark calibration written to {} ({readiness_status})",
+            json_out.display()
+        );
+    }
+    Ok(())
+}
+
+fn run_apple_m3_benchmark_calibration(
+    model_id: &str,
+    quiet: bool,
+    json_out: PathBuf,
+) -> Result<()> {
+    let metadata = model_cache::apple_m4_slm_model_receipt_metadata(model_id)?;
+    let clock_resolution_samples = benchmark_calibration_clock_resolution_samples_ns();
+    let runner_overhead_samples = benchmark_calibration_runner_overhead_samples_ns();
+    let fixture_samples = benchmark_calibration_integer_fixture_samples_ns();
+    let invalid_reasons = benchmark_calibration_invalid_reasons(
+        &clock_resolution_samples,
+        &runner_overhead_samples,
+        &fixture_samples,
+    );
+    let readiness_status =
+        if invalid_reasons.is_empty() { "calibrated" } else { "invalid_for_comparison" };
+    let receipt = serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND,
+        "generated_at": chrono::Utc::now().to_rfc3339(),
+        "operator_command": "mac benchmark --calibrate",
+        "artifact_path": json_out.display().to_string(),
+        "requested_backend": APPLE_M3_AIR_CPU_NEON,
+        "selected_backend": APPLE_M3_AIR_CPU_NEON,
+        "runtime_api": apple_m3_air::CPU_NEON_RUNTIME_API,
+        "fallback_used": false,
+        "fallback_reason": serde_json::Value::Null,
+        "machine": {
+            "id": "apple-m3-macbook-air",
+            "expected_soc": "apple-m3",
+        },
+        "model": {
+            "id": metadata.id,
+            "repo": metadata.repo,
+            "revision": metadata.revision,
+            "file": metadata.file,
+            "sha256": metadata.sha256,
+            "bytes": metadata.bytes,
+            "family": metadata.family,
+            "architecture": metadata.architecture,
+            "quantization": metadata.quantization,
+        },
+        "tokenizer": {
+            "authority": metadata.tokenizer_authority,
+            "sha256": serde_json::Value::Null,
+            "sha256_status": "not_applicable_gguf_metadata_authority",
+        },
+        "calibration": {
+            "contract_version": "1.0.0",
+            "scope": "Apple M3 Air benchmark harness calibration",
+            "live_model_run": false,
+            "model_inference_timing": false,
+            "synthetic_timing_result_recorded": true,
+            "model_speed_claimed": false,
+            "clock": {
+                "source": "std::time::Instant",
+                "source_class": "monotonic_process_clock",
+                "monotonic": true,
+                "resolution_ns": benchmark_stat_json(&clock_resolution_samples),
+                "resolution_method": "observed non-zero consecutive Instant::now delta",
+                "attempts_limit": M4_BENCHMARK_CALIBRATION_CLOCK_ATTEMPTS,
+            },
+            "runner_overhead": {
+                "timer_pair_overhead_ns": benchmark_stat_json(&runner_overhead_samples),
+                "fixture_dispatch_overhead_ns": benchmark_stat_json(&fixture_samples),
+                "measured_iterations": M4_BENCHMARK_CALIBRATION_MEASURED_ITERATIONS,
+            },
+            "invalid_comparison_reasons": invalid_reasons.clone(),
+        },
+        "comparison_readiness": {
+            "status": readiness_status,
+            "can_compare_timing": invalid_reasons.is_empty(),
+            "invalid_comparison_reasons": invalid_reasons.clone(),
+            "advisory_warnings": ["synthetic_fixtures_are_not_model_inference"],
+            "next_step": "Run an M3-specific release benchmark profile before interpreting model timing drift.",
+        },
+        "build": {
+            "profile": if cfg!(debug_assertions) { "debug" } else { "release" },
+            "release_mode": !cfg!(debug_assertions),
+        },
+        "claim_boundary": {
+            "benchmark_calibration_only": true,
+            "synthetic_timing_only": true,
+            "live_model_run": false,
+            "model_inference_timing": false,
+            "model_speed_claimed": false,
+            "dense_slm_only": true,
+            "bitnet_evidence": false,
+            "bitnet_quality_claimed": false,
+            "chat_enabled": false,
+            "serve_enabled": false,
+            "full_metal_inference_claimed": false,
+            "mpsgraph_inference_claimed": false,
+            "neural_engine_execution_claimed": false,
+            "qk256_apple_claimed": false,
+            "macbook_evidence": true,
+            "broad_performance_claim": false,
+            "speedup_claim": false,
+        },
+        "broad_performance_claim": false,
+        "speedup_claim": false,
+    });
+    validate_mac_receipt_value(&json_out, &receipt)?;
+    write_json_receipt(&json_out, &receipt)?;
+    if !quiet {
+        println!(
+            "Apple M3 Air benchmark calibration written to {} ({readiness_status})",
             json_out.display()
         );
     }
@@ -17641,6 +17780,7 @@ fn annotate_and_validate_dense_chat_smoke_receipt(
 
 fn annotate_and_validate_bitnet_mac_ask_receipt(
     path: &Path,
+    requested_backend: &str,
     model: &VerifiedCachedModel,
     tokenizer: &Path,
     tokenizer_sha256: &str,
@@ -17650,7 +17790,32 @@ fn annotate_and_validate_bitnet_mac_ask_receipt(
         .with_context(|| format!("failed to read BitNet Mac ask receipt {}", path.display()))?;
     let mut receipt: serde_json::Value = serde_json::from_slice(&bytes)
         .with_context(|| format!("invalid BitNet Mac ask receipt {}", path.display()))?;
-    validate_mac_receipt_value(path, &receipt)?;
+    {
+        let Some(object) = receipt.as_object_mut() else {
+            anyhow::bail!("BitNet Mac ask receipt {} is not a JSON object", path.display());
+        };
+        object.insert("operator_command".to_string(), serde_json::json!("mac ask"));
+        object.insert("model_id".to_string(), serde_json::json!(model.id));
+        object.insert("model_family".to_string(), serde_json::json!("bitnet"));
+        object.insert("prompt_template".to_string(), serde_json::json!(BITNET_M4_PROMPT_TEMPLATE));
+        if requested_backend == APPLE_M3_AIR_CPU_NEON {
+            object.insert(
+                "artifact_kind".to_string(),
+                serde_json::json!(BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND),
+            );
+        }
+        let model_receipt =
+            object.get_mut("model").and_then(serde_json::Value::as_object_mut).ok_or_else(
+                || anyhow!("BitNet Mac ask receipt {} is missing model metadata", path.display()),
+            )?;
+        model_receipt.insert("family".to_string(), serde_json::json!("bitnet"));
+        model_receipt.insert("architecture".to_string(), serde_json::json!(model.architecture));
+        model_receipt.insert("quant_format".to_string(), serde_json::json!(model.quantization));
+        model_receipt
+            .insert("answer_ready_artifact_available".to_string(), serde_json::json!(true));
+        model_receipt
+            .insert("answer_ready".to_string(), serde_json::json!({ "state": "answer_ready" }));
+    }
     if receipt["model"]["sha256"].as_str() != Some(BITNET_M4_EXPECTED_MODEL_SHA256) {
         anyhow::bail!("{} does not use the accepted Microsoft BitNet I2_S GGUF", path.display());
     }
@@ -17684,7 +17849,6 @@ fn annotate_and_validate_bitnet_mac_ask_receipt(
     let Some(object) = receipt.as_object_mut() else {
         anyhow::bail!("BitNet Mac ask receipt {} is not a JSON object", path.display());
     };
-    object.insert("operator_command".to_string(), serde_json::json!("mac ask"));
     object.insert(
         "model_cache".to_string(),
         serde_json::json!({
@@ -17706,8 +17870,8 @@ fn annotate_and_validate_bitnet_mac_ask_receipt(
         "mac_bitnet_claim_boundary".to_string(),
         serde_json::json!({
             "bitnet_one_shot_mac_ask": true,
-            "answer_corpus_proof_gate": "MODEL-ARTIFACT-007/M4-QA-001",
-            "requested_backend": APPLE_M4_CPU_NEON,
+            "answer_corpus_proof_gate": if requested_backend == APPLE_M3_AIR_CPU_NEON { "M3MBA-037" } else { "MODEL-ARTIFACT-007/M4-QA-001" },
+            "requested_backend": requested_backend,
             "tokenizer_path": tokenizer,
             "tokenizer_sha256": tokenizer_sha256,
             "chat_enabled": false,
@@ -21731,6 +21895,8 @@ fn validate_mac_receipt_value(
     }
     let expected_runtime_api = if artifact_kind
         == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+        || artifact_kind == BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND
+        || artifact_kind == APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND
     {
         apple_m3_air::CPU_NEON_RUNTIME_API
     } else {
@@ -21835,6 +22001,8 @@ fn validate_mac_receipt_value(
             APPLE_M3_AIR_CPU_NEON,
             apple_m3_air::CPU_NEON_RUNTIME_API,
         )?
+    } else if artifact_kind == BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND {
+        validate_apple_m3_bitnet_mac_ask_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_golden_token_canaries" {
         validate_apple_m4_golden_token_canaries_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_bitnet_eval_larger_corpus_decision" {
@@ -21849,6 +22017,8 @@ fn validate_mac_receipt_value(
         validate_apple_m4_benchmark_variance_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_benchmark_calibration" {
         validate_apple_m4_benchmark_calibration_receipt(path, receipt)?
+    } else if artifact_kind == APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND {
+        validate_apple_m3_benchmark_calibration_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_benchmark_preflight" {
         validate_apple_m4_benchmark_preflight_receipt(path, receipt)?
     } else if artifact_kind == "bitnet_apple_m4_benchmark_v1" {
@@ -22712,6 +22882,68 @@ fn validate_bitnet_mac_ask_failure_receipt(
         );
     }
     Ok((Some(1), Some(0)))
+}
+
+fn validate_apple_m3_bitnet_mac_ask_receipt(
+    path: &Path,
+    receipt: &serde_json::Value,
+) -> Result<(Option<usize>, Option<usize>)> {
+    require_exact_string_at(
+        path,
+        receipt,
+        &["artifact_kind"],
+        BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND,
+    )?;
+    require_exact_string_at(path, receipt, &["operator_command"], "mac ask")?;
+    require_exact_string_at(path, receipt, &["requested_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["selected_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["runtime_api"], apple_m3_air::CPU_NEON_RUNTIME_API)?;
+    require_bool_at(path, receipt, &["fallback_used"], false)?;
+    require_exact_string_at(path, receipt, &["model_id"], BITNET_M4_MODEL_ID)?;
+    require_exact_string_at(path, receipt, &["model_family"], "bitnet")?;
+    require_exact_string_at(path, receipt, &["model", "family"], "bitnet")?;
+    require_exact_string_at(path, receipt, &["model", "sha256"], BITNET_M4_EXPECTED_MODEL_SHA256)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["model", "loader_mode"],
+        bitnet_models::GgufLoaderMode::RealGguf.as_str(),
+    )?;
+    require_bool_at(path, receipt, &["model", "answer_ready_artifact_available"], true)?;
+    require_exact_string_at(path, receipt, &["model", "answer_ready", "state"], "answer_ready")?;
+    require_bool_at(path, receipt, &["tokenizer", "strict"], true)?;
+    require_exact_string_at(path, receipt, &["tokenizer", "pretokenizer_authority"], "llama-bpe")?;
+    require_exact_string_at(path, receipt, &["prompt_template"], BITNET_M4_PROMPT_TEMPLATE)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["prompt_render", "template_family"],
+        BITNET_M4_PROMPT_TEMPLATE,
+    )?;
+    require_bool_at(
+        path,
+        receipt,
+        &["mac_bitnet_claim_boundary", "bitnet_one_shot_mac_ask"],
+        true,
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["mac_bitnet_claim_boundary", "requested_backend"],
+        APPLE_M3_AIR_CPU_NEON,
+    )?;
+    for field in [
+        "chat_enabled",
+        "serve_enabled",
+        "full_metal_inference_claimed",
+        "mpsgraph_inference_claimed",
+        "neural_engine_execution_claimed",
+        "qk256_apple_claimed",
+        "broad_performance_claim",
+    ] {
+        require_bool_at(path, receipt, &["mac_bitnet_claim_boundary", field], false)?;
+    }
+    validate_one_shot_receipt(path, receipt)
 }
 
 fn validate_bitnet_warm_session_failure_receipt(
@@ -28470,6 +28702,132 @@ fn validate_apple_m4_benchmark_calibration_receipt(
     require_bool_at(path, receipt, &["claim_boundary", "broad_performance_claim"], false)?;
     require_bool_at(path, receipt, &["claim_boundary", "speedup_claim"], false)?;
 
+    Ok((Some(0), Some(0)))
+}
+
+fn validate_apple_m3_benchmark_calibration_receipt(
+    path: &Path,
+    receipt: &serde_json::Value,
+) -> Result<(Option<usize>, Option<usize>)> {
+    require_exact_string_at(path, receipt, &["schema_version"], "1.0.0")?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["artifact_kind"],
+        APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND,
+    )?;
+    require_exact_string_at(path, receipt, &["operator_command"], "mac benchmark --calibrate")?;
+    require_exact_string_at(path, receipt, &["requested_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["selected_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["runtime_api"], apple_m3_air::CPU_NEON_RUNTIME_API)?;
+    require_bool_at(path, receipt, &["fallback_used"], false)?;
+    require_exact_string_at(path, receipt, &["machine", "id"], "apple-m3-macbook-air")?;
+    require_exact_string_at(path, receipt, &["machine", "expected_soc"], "apple-m3")?;
+    require_non_empty_string_at(path, receipt, &["model", "id"])?;
+    let model_sha = require_non_empty_string_at(path, receipt, &["model", "sha256"])?;
+    if !is_sha256_hex(model_sha) {
+        anyhow::bail!(
+            "{} M3 benchmark calibration model.sha256 must be a SHA256 hex digest",
+            path.display()
+        );
+    }
+    require_non_empty_string_at(path, receipt, &["model", "architecture"])?;
+    require_non_empty_string_at(path, receipt, &["model", "quantization"])?;
+    require_non_empty_string_at(path, receipt, &["tokenizer", "authority"])?;
+    require_exact_string_at(path, receipt, &["calibration", "contract_version"], "1.0.0")?;
+    for field in ["live_model_run", "model_inference_timing", "model_speed_claimed"] {
+        require_bool_at(path, receipt, &["calibration", field], false)?;
+    }
+    require_bool_at(path, receipt, &["calibration", "synthetic_timing_result_recorded"], true)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["calibration", "clock", "source"],
+        "std::time::Instant",
+    )?;
+    require_bool_at(path, receipt, &["calibration", "clock", "monotonic"], true)?;
+    validate_benchmark_stat_object(
+        path,
+        receipt,
+        &["calibration", "clock", "resolution_ns"],
+        false,
+    )?;
+    for field in ["timer_pair_overhead_ns", "fixture_dispatch_overhead_ns"] {
+        validate_benchmark_stat_object(
+            path,
+            receipt,
+            &["calibration", "runner_overhead", field],
+            false,
+        )?;
+    }
+    let invalid_reasons = json_value_at(receipt, &["calibration", "invalid_comparison_reasons"])
+        .as_array()
+        .ok_or_else(|| {
+            anyhow!(
+                "{} M3 benchmark calibration invalid_comparison_reasons must be an array",
+                path.display()
+            )
+        })?;
+    let readiness =
+        require_non_empty_string_at(path, receipt, &["comparison_readiness", "status"])?;
+    if !matches!(readiness, "calibrated" | "invalid_for_comparison") {
+        anyhow::bail!(
+            "{} M3 benchmark calibration comparison_readiness.status is invalid",
+            path.display()
+        );
+    }
+    let comparison_reasons = json_value_at(
+        receipt,
+        &["comparison_readiness", "invalid_comparison_reasons"],
+    )
+    .as_array()
+    .ok_or_else(|| {
+        anyhow!(
+            "{} M3 benchmark calibration comparison invalid_comparison_reasons must be an array",
+            path.display()
+        )
+    })?;
+    if comparison_reasons != invalid_reasons {
+        anyhow::bail!(
+            "{} M3 benchmark calibration comparison reasons must match calibration reasons",
+            path.display()
+        );
+    }
+    if receipt["comparison_readiness"]["can_compare_timing"].as_bool()
+        != Some(invalid_reasons.is_empty())
+    {
+        anyhow::bail!(
+            "{} M3 benchmark calibration can_compare_timing must match invalid reasons",
+            path.display()
+        );
+    }
+    if (readiness == "calibrated") != invalid_reasons.is_empty() {
+        anyhow::bail!(
+            "{} M3 benchmark calibration readiness must match invalid reasons",
+            path.display()
+        );
+    }
+    for field in [
+        "live_model_run",
+        "model_inference_timing",
+        "model_speed_claimed",
+        "bitnet_evidence",
+        "bitnet_quality_claimed",
+        "chat_enabled",
+        "serve_enabled",
+        "full_metal_inference_claimed",
+        "mpsgraph_inference_claimed",
+        "neural_engine_execution_claimed",
+        "qk256_apple_claimed",
+        "broad_performance_claim",
+        "speedup_claim",
+    ] {
+        require_bool_at(path, receipt, &["claim_boundary", field], false)?;
+    }
+    require_bool_at(path, receipt, &["claim_boundary", "benchmark_calibration_only"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "synthetic_timing_only"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "dense_slm_only"], true)?;
+    require_bool_at(path, receipt, &["claim_boundary", "macbook_evidence"], true)?;
     Ok((Some(0), Some(0)))
 }
 
