@@ -267,8 +267,10 @@ impl AnswerCorpusCommand {
                 &self.model,
                 self.tokenizer.as_deref(),
                 &corpus.defaults,
+                &model_identity,
             )?;
             for (case_index, case) in selected_cases.iter().enumerate() {
+                session.record_case_attempt();
                 let row = self.run_resident_case(
                     &mut session,
                     &receipt_dir,
@@ -280,7 +282,7 @@ impl AnswerCorpusCommand {
                 );
                 rows.push(match row {
                     Ok(row) => row,
-                    Err(error) => resident_failure_row(case, &device, case_index, &error),
+                    Err(error) => resident_failure_row(case, &device, case_index, &session, &error),
                 });
             }
             resident_session_summary = Some(session.summary());
@@ -1020,6 +1022,7 @@ fn resident_failure_row(
     case: &AnswerCase,
     device: &str,
     case_index: usize,
+    session: &ResidentBitNetAnswerSession,
     error: &anyhow::Error,
 ) -> Value {
     let failed_rules = vec!["command_failed".to_string()];
@@ -1062,7 +1065,7 @@ fn resident_failure_row(
             "hot_path_kernel": Value::Null,
             "source": "resident_session_error",
         },
-        "model": {},
+        "model": session.model_receipt(),
         "tokens": Value::Null,
         "token_ids": {
             "prompt": Value::Null,
@@ -1090,7 +1093,7 @@ struct ResidentBitNetAnswerSession {
     model_sha256: String,
     started_at: Instant,
     case_generation_total_ms: f64,
-    cases_executed: usize,
+    cases_attempted: usize,
 }
 
 impl ResidentBitNetAnswerSession {
@@ -1098,6 +1101,7 @@ impl ResidentBitNetAnswerSession {
         model_path: &Path,
         tokenizer_path: Option<&Path>,
         defaults: &CorpusDefaults,
+        expected_model: &AnswerCorpusModelIdentity,
     ) -> Result<Self> {
         use bitnet_models::loader::{LoadConfig, ModelLoader};
 
@@ -1119,6 +1123,7 @@ impl ResidentBitNetAnswerSession {
         let config = loaded_model.config().clone();
         let model: std::sync::Arc<dyn bitnet_models::Model> = std::sync::Arc::from(loaded_model);
         let model_sha256 = sha256_file(model_path)?;
+        verify_resident_model_identity(expected_model, model_path, &model_sha256)?;
         let model_load_ms = model_load_start.elapsed().as_secs_f64() * 1000.0;
 
         let tokenizer_load_start = Instant::now();
@@ -1154,7 +1159,25 @@ impl ResidentBitNetAnswerSession {
             model_sha256,
             started_at: model_load_start,
             case_generation_total_ms: 0.0,
-            cases_executed: 0,
+            cases_attempted: 0,
+        })
+    }
+
+    fn record_case_attempt(&mut self) {
+        self.cases_attempted += 1;
+    }
+
+    fn model_receipt(&self) -> Value {
+        json!({
+            "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
+            "file": self.model_path.file_name().and_then(|name| name.to_str()).unwrap_or("ggml-model-i2_s.gguf"),
+            "sha256": self.model_sha256,
+            "family": "bitnet",
+            "architecture": "bitnet-b1.58",
+            "quant_format": "I2_S/QK256",
+            "vocab_size": self.config.model.vocab_size,
+            "tie_word_embeddings": Value::Null,
+            "output_head_tensor": "output.weight",
         })
     }
 
@@ -1243,7 +1266,6 @@ impl ResidentBitNetAnswerSession {
         let text = self.tokenizer.decode(&generated_ids)?;
         let total_ms = started.elapsed().as_secs_f64() * 1000.0;
         self.case_generation_total_ms += total_ms;
-        self.cases_executed += 1;
         let qk256_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
         let qk256_hot_path =
             resident_qk256_receipt(&resident_qk256_delta(&qk256_before, &qk256_after));
@@ -1260,17 +1282,7 @@ impl ResidentBitNetAnswerSession {
             "selected_backend": device,
             "runtime_api": "cpu-neon",
             "fallback_used": false,
-            "model": {
-                "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
-                "file": self.model_path.file_name().and_then(|name| name.to_str()).unwrap_or("ggml-model-i2_s.gguf"),
-                "sha256": self.model_sha256,
-                "family": "bitnet",
-                "architecture": "bitnet-b1.58",
-                "quant_format": "I2_S/QK256",
-                "vocab_size": self.config.model.vocab_size,
-                "tie_word_embeddings": Value::Null,
-                "output_head_tensor": "output.weight",
-            },
+            "model": self.model_receipt(),
             "tokenizer": {
                 "source": "explicit",
                 "strict": true,
@@ -1333,7 +1345,7 @@ impl ResidentBitNetAnswerSession {
             "enabled": true,
             "model_load_count": 1,
             "tokenizer_load_count": 1,
-            "case_count": self.cases_executed,
+            "case_count": self.cases_attempted,
             "model_load_ms": self.model_load_ms,
             "tokenizer_load_ms": self.tokenizer_load_ms,
             "case_generation_total_ms": self.case_generation_total_ms,
@@ -1342,6 +1354,32 @@ impl ResidentBitNetAnswerSession {
             "timeout_enforcement": "post_completion_observation",
         })
     }
+}
+
+fn verify_resident_model_identity(
+    expected: &AnswerCorpusModelIdentity,
+    observed_path: &Path,
+    observed_sha256: &str,
+) -> Result<()> {
+    let observed_file =
+        observed_path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    if observed_file != expected.file {
+        anyhow::bail!(
+            "--resident-session model file must match the corpus authority: expected {}, got {}",
+            expected.file,
+            observed_file
+        );
+    }
+    if let Some(expected_sha256) = expected.sha256.as_deref() {
+        if observed_sha256 != expected_sha256 {
+            anyhow::bail!(
+                "--resident-session model SHA-256 does not match the corpus authority: expected {}, got {}",
+                expected_sha256,
+                observed_sha256
+            );
+        }
+    }
+    Ok(())
 }
 
 fn resident_last_hidden(
@@ -5223,6 +5261,43 @@ cases:
         assert_eq!(
             answer_corpus_backend_lane(APPLE_M3_AIR_CPU_NEON, false, "bitnet"),
             "apple_m3_air_cpu_neon"
+        );
+    }
+
+    #[test]
+    fn resident_model_identity_rejects_untrusted_file_or_hash() {
+        let expected = AnswerCorpusModelIdentity {
+            id: None,
+            repo: "microsoft/bitnet-b1.58-2B-4T-gguf".to_string(),
+            revision: None,
+            file: "ggml-model-i2_s.gguf".to_string(),
+            sha256: Some("accepted-sha".to_string()),
+            bytes: None,
+            family: Some("bitnet".to_string()),
+            architecture: Some("bitnet-b1.58".to_string()),
+            quant_format: Some("I2_S/QK256".to_string()),
+            tokenizer_authority: Some("external_tokenizer_json".to_string()),
+        };
+
+        assert!(
+            verify_resident_model_identity(
+                &expected,
+                Path::new("ggml-model-i2_s.gguf"),
+                "accepted-sha",
+            )
+            .is_ok()
+        );
+        assert!(
+            verify_resident_model_identity(&expected, Path::new("untrusted.gguf"), "accepted-sha",)
+                .is_err()
+        );
+        assert!(
+            verify_resident_model_identity(
+                &expected,
+                Path::new("ggml-model-i2_s.gguf"),
+                "untrusted-sha",
+            )
+            .is_err()
         );
     }
 
