@@ -1,12 +1,13 @@
 //! Kaby Lake dense-Qwen profile contract.
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 
 pub const PROFILE_ID: &str = "kaby-qwen-q8";
 pub const RECOMMENDED_THREADS: usize = 4;
 pub const PROFILE_MAX_NEW_TOKENS: usize = 4;
 pub const QWEN3_SHA256: &str = "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031";
 pub const QWEN25_SHA256: &str = "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e";
+pub const TOKENIZER_SOURCE: &str = "gguf_metadata";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ModelRole {
@@ -82,7 +83,9 @@ pub fn classify_model(
     architecture: &str,
     quant_format: &str,
     model_sha256: &str,
+    tokenizer_source: &str,
     tokenizer_authority: &str,
+    tokenizer_strict: bool,
     chat_template: Option<&str>,
     context_limit: usize,
 ) -> Result<ModelRole> {
@@ -108,8 +111,15 @@ pub fn classify_model(
             model_sha256
         );
     }
-    if tokenizer_authority.trim().is_empty() {
-        bail!("profile {PROFILE_ID} requires a non-empty tokenizer authority");
+    if !tokenizer_source.eq_ignore_ascii_case(TOKENIZER_SOURCE)
+        || !tokenizer_authority.eq_ignore_ascii_case(TOKENIZER_SOURCE)
+    {
+        bail!(
+            "profile {PROFILE_ID} requires tokenizer authority {TOKENIZER_SOURCE}; got source={tokenizer_source}, authority={tokenizer_authority}"
+        );
+    }
+    if !tokenizer_strict {
+        bail!("profile {PROFILE_ID} requires strict tokenizer resolution (tokenizer_strict=true)");
     }
     if chat_template.map(str::trim).filter(|value| !value.is_empty()).is_none() {
         bail!("profile {PROFILE_ID} requires GGUF tokenizer.chat_template metadata");
@@ -123,4 +133,48 @@ pub fn classify_model(
         );
     }
     Ok(role)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const CHAT_TEMPLATE: &str = "{{ messages }}";
+
+    fn classify(
+        tokenizer_source: &str,
+        tokenizer_authority: &str,
+        tokenizer_strict: bool,
+    ) -> Result<ModelRole> {
+        classify_model(
+            "qwen3",
+            "Q8_0",
+            QWEN3_SHA256,
+            tokenizer_source,
+            tokenizer_authority,
+            tokenizer_strict,
+            Some(CHAT_TEMPLATE),
+            40_960,
+        )
+    }
+
+    #[test]
+    fn accepts_only_strict_gguf_tokenizer_authority() -> Result<()> {
+        assert_eq!(classify(TOKENIZER_SOURCE, TOKENIZER_SOURCE, true)?, ModelRole::Qwen3Primary);
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_external_tokenizer_authority() {
+        let error =
+            classify("explicit", "explicit", true).expect_err("external tokenizer accepted");
+        assert!(error.to_string().contains("gguf_metadata"));
+    }
+
+    #[test]
+    fn rejects_non_strict_tokenizer_resolution() {
+        let error = classify(TOKENIZER_SOURCE, TOKENIZER_SOURCE, false)
+            .expect_err("non-strict tokenizer accepted");
+        assert!(error.to_string().contains("tokenizer_strict=true"));
+    }
 }

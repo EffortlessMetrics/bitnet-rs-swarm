@@ -13,14 +13,14 @@ pub mod self_test;
 pub use receipt::profile_receipt;
 #[cfg(feature = "full-cli")]
 pub use resolve::{
-    CliOverrides, LoadedModelMetadata, inspect_model_metadata, resolve_profile,
-    validate_profile_request,
+    inspect_model_metadata, resolve_profile, validate_profile_request, CliOverrides,
+    LoadedModelMetadata,
 };
 #[cfg(feature = "full-cli")]
-pub use self_test::{ProfileGate, ProfilePromptInput, profile_prompt_inputs};
+pub use self_test::{profile_prompt_inputs, ProfileGate, ProfilePromptInput};
 
 #[cfg(feature = "full-cli")]
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 #[cfg(feature = "full-cli")]
 use clap::{Args, Subcommand};
 #[cfg(feature = "full-cli")]
@@ -123,7 +123,9 @@ pub async fn execute_doctor_command(command: DoctorCommand, requested_backend: &
             &metadata.architecture,
             &metadata.quant_format,
             &metadata.model_sha256,
+            &metadata.tokenizer_source,
             &metadata.tokenizer_authority,
+            metadata.tokenizer_strict,
             metadata.chat_template.as_deref(),
             metadata.context_limit,
         )
@@ -201,7 +203,11 @@ pub async fn execute_doctor_command(command: DoctorCommand, requested_backend: &
             }
         }
     }
-    if ready { Ok(()) } else { bail!("profile doctor found {} blocker(s)", blockers.len()) }
+    if ready {
+        Ok(())
+    } else {
+        bail!("profile doctor found {} blocker(s)", blockers.len())
+    }
 }
 
 #[cfg(feature = "full-cli")]

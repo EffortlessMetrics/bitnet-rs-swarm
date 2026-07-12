@@ -1,6 +1,6 @@
 //! Profile request and post-load resolution.
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use std::collections::BTreeSet;
 use std::path::Path;
 
@@ -63,13 +63,7 @@ pub fn inspect_model_metadata(
         bitnet_tokenizers::auto::resolve_tokenizer(model_path, tokenizer_path, true)
             .map_err(|error| anyhow::anyhow!("failed to resolve strict tokenizer: {error}"))?;
     let tokenizer_source = tokenizer_resolution.source.as_str().to_string();
-    let tokenizer_authority = match tokenizer_resolution.source {
-        bitnet_tokenizers::auto::TokenizerSource::GgufMetadata => "present",
-        bitnet_tokenizers::auto::TokenizerSource::Explicit
-        | bitnet_tokenizers::auto::TokenizerSource::Sibling => "externally_supplied",
-        bitnet_tokenizers::auto::TokenizerSource::CompatibilityFallback => "defaulted",
-    }
-    .to_string();
+    let tokenizer_authority = tokenizer_source.clone();
     let model_sha256 = sha256_bytes(&bytes);
     Ok(LoadedModelMetadata {
         architecture,
@@ -166,7 +160,9 @@ pub fn resolve_profile(
             &metadata.architecture,
             &metadata.quant_format,
             &metadata.model_sha256,
+            &metadata.tokenizer_source,
             &metadata.tokenizer_authority,
+            metadata.tokenizer_strict,
             metadata.chat_template.as_deref(),
             metadata.context_limit,
         )?),
@@ -217,8 +213,8 @@ mod tests {
             architecture: "qwen3".to_string(),
             quant_format: "Q8_0".to_string(),
             model_sha256: kaby::QWEN3_SHA256.to_string(),
-            tokenizer_source: "gguf".to_string(),
-            tokenizer_authority: "gguf_tokenizer".to_string(),
+            tokenizer_source: "gguf_metadata".to_string(),
+            tokenizer_authority: "gguf_metadata".to_string(),
             tokenizer_strict: true,
             chat_template: Some("{{ messages }}".to_string()),
             context_limit: 40_960,
