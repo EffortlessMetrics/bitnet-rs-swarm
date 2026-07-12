@@ -1767,8 +1767,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-037"
-status = "ready"
-branch = "codex/apple-m3-macbook-air/M3MBA-037-m3-exact-profile-wrapper-repair"
+status = "merged"
+branch = "codex/apple-m3-macbook-air/M3MBA-037-wrapper-implementation"
+pr = 1706
+head_sha = "d0ac8548252f09e5e482ba547bc1547b8f88f73f"
+merge_sha = "62017d6ddc126e13e3217e6db801ace7fc3b6053"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
