@@ -1,0 +1,32 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-037"
+event = "merged"
+timestamp = "2026-07-12T07:15:23Z"
+actor = "codex"
+pr = 1706
+head_sha = "d0ac8548252f09e5e482ba547bc1547b8f88f73f"
+merge_sha = "62017d6ddc126e13e3217e6db801ace7fc3b6053"
+branch = "codex/apple-m3-macbook-air/M3MBA-037-wrapper-implementation"
+
+summary = "Merged the M3 exact-profile Mac ask and benchmark wrapper repair with dedicated M3 CPU/NEON receipts."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1706",
+  "target/m3-bitnet-ask.json",
+  "target/m3-benchmark-calibrate.json",
+]
+
+notes = [
+  "The live verified BitNet I2_S mac ask returned 4 and its receipt records apple-m3-air-cpu-neon, runtime_api=cpu-neon, fallback_used=false, strict external tokenizer authority, generated token IDs, and timing.",
+  "The M3 dense-SLM benchmark calibration writes a distinct synthetic-only M3 receipt; it does not claim a live model benchmark or broad performance result.",
+  "This work does not enable M3 chat, serve, Metal, MPSGraph, Neural Engine, QK256-on-Apple, M4, or broad Apple Silicon support.",
+]
+
+validation = [
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "target/release/bitnet mac ask 'Answer with one digit: 2+2=' --device apple-m3-air-cpu-neon --model-id microsoft-bitnet-b1.58-2B-4T-i2s --model-path ~/Library/Caches/bitnet-rs/models/microsoft-bitnet-2b-i2s/ggml-model-i2_s.gguf --tokenizer ~/Library/Caches/bitnet-rs/tokenizers/microsoft-bitnet-2b/04c3b9ad9361b824064a1f25ea60a8be9599b127/tokenizer.json --max-new-tokens 8 --json-out target/m3-bitnet-ask.json --quiet",
+  "target/release/bitnet mac receipts-check target/m3-bitnet-ask.json --json",
+  "target/release/bitnet mac benchmark --device apple-m3-air-cpu-neon --calibrate --json-out target/m3-benchmark-calibrate.json --quiet",
+  "target/release/bitnet mac receipts-check target/m3-benchmark-calibrate.json --json",
+]
