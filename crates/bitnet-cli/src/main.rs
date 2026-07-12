@@ -41,6 +41,8 @@ mod planner_receipts;
 mod prompt_audit;
 mod score;
 mod simple_generation;
+#[cfg(feature = "full-cli")]
+mod slm_profile;
 pub mod tokenizer_discovery;
 
 use allocation_audit::{
@@ -54,6 +56,15 @@ use allocation_audit::{
 };
 use exit::*;
 use prompt_audit::*;
+#[cfg(feature = "full-cli")]
+use slm_profile::{
+    CliOverrides as SlmProfileCliOverrides, DoctorCommand as SlmDoctorCommand,
+    LoadedModelMetadata as SlmProfileMetadata, ProfileCommand as SlmProfileCommand,
+    ProfileGate as SlmWarmSessionGate, ProfilePromptInput as WarmSessionPromptInput,
+    execute_doctor_command, execute_profile_command, profile_prompt_inputs,
+    profile_receipt as slm_warm_session_profile_receipt, resolve_profile as resolve_slm_profile,
+    validate_profile_request,
+};
 
 /// Build the CLI command for external use (e.g., in tests)
 pub fn build_cli() -> clap::Command {
@@ -561,6 +572,14 @@ enum Commands {
     Model(ModelCommand),
 
     #[cfg(feature = "full-cli")]
+    /// Show a supported operator profile contract.
+    Profile(SlmProfileCommand),
+
+    #[cfg(feature = "full-cli")]
+    /// Diagnose a profile, model artifact, tokenizer, and host resources.
+    Doctor(SlmDoctorCommand),
+
+    #[cfg(feature = "full-cli")]
     /// Collect model status and receipt evidence for support
     Support(SupportCommand),
 
@@ -813,9 +832,13 @@ enum Commands {
         #[arg(short, long)]
         model: std::path::PathBuf,
 
-        /// Opt-in warm-session profile; supported: kaby-qwen3-q8
+        /// Opt-in warm-session profile; supported: kaby-qwen-q8
         #[arg(long, value_name = "PROFILE")]
         profile: Option<String>,
+
+        /// Run the bounded profile certification prompts and quality/determinism gates
+        #[arg(long, default_value_t = false)]
+        self_test: bool,
 
         /// Model format: auto (detect from path) or gguf
         #[arg(long, value_name = "FORMAT", default_value = "auto")]
@@ -838,56 +861,61 @@ enum Commands {
         prompts: Vec<String>,
 
         /// Maximum new tokens to generate per prompt
-        #[arg(long, visible_aliases = ["max-tokens", "n-predict"], default_value_t = 32)]
-        max_new_tokens: usize,
+        #[arg(long, visible_aliases = ["max-tokens", "n-predict"])]
+        max_new_tokens: Option<usize>,
 
         /// Temperature for sampling (0 = greedy)
-        #[arg(long, default_value_t = 0.0)]
-        temperature: f32,
+        #[arg(long)]
+        temperature: Option<f32>,
 
         /// Top-k sampling (0 = disabled)
-        #[arg(long, default_value_t = 0)]
-        top_k: usize,
+        #[arg(long)]
+        top_k: Option<usize>,
 
         /// Top-p (nucleus) sampling
-        #[arg(long, default_value_t = 1.0)]
-        top_p: f32,
+        #[arg(long)]
+        top_p: Option<f32>,
 
         /// Repetition penalty
-        #[arg(long, default_value_t = 1.1)]
-        repetition_penalty: f32,
+        #[arg(long)]
+        repetition_penalty: Option<f32>,
 
         /// Random seed for reproducibility
         #[arg(long)]
         seed: Option<u64>,
 
         /// Strict tokenizer mode: fail if no real tokenizer available
-        #[arg(long, default_value_t = false)]
-        strict_tokenizer: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        strict_tokenizer: Option<bool>,
 
         /// Strict loader mode: fail-fast with enhanced loader and no fallback
-        #[arg(long, default_value_t = false)]
-        strict_loader: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        strict_loader: Option<bool>,
 
         /// Use greedy decoding (overrides temperature)
-        #[arg(long, default_value_t = false)]
-        greedy: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        greedy: Option<bool>,
 
         /// Enable deterministic mode (single-threaded)
-        #[arg(long, default_value_t = false)]
-        deterministic: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        deterministic: Option<bool>,
 
         /// Number of threads to use (0 = all cores)
-        #[arg(long, default_value_t = 0)]
-        threads: usize,
+        #[arg(long)]
+        threads: Option<usize>,
 
         /// Prompt template: qwen is the validated Kaby/Qwen3 CPU default; qwen2.5 remains accepted
-        #[arg(long, value_name = "TEMPLATE", default_value = "qwen2.5")]
-        prompt_template: String,
+        #[arg(long, value_name = "TEMPLATE")]
+        prompt_template: Option<String>,
 
         /// Disable Qwen thinking mode by appending the Qwen no-thinking assistant suffix
-        #[arg(long = "no-think", visible_alias = "no-thinking", default_value_t = false)]
-        no_think: bool,
+        #[arg(
+            long = "no-think",
+            visible_alias = "no-thinking",
+            default_missing_value = "true",
+            num_args = 0..=1
+        )]
+        no_think: Option<bool>,
 
         /// System prompt for chat models
         #[arg(long, value_name = "TEXT")]
@@ -902,16 +930,16 @@ enum Commands {
         stop_id: Vec<u32>,
 
         /// Fail after writing receipts if any prompt fails the SLM quality gate
-        #[arg(long, default_value_t = false)]
-        fail_on_quality: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        fail_on_quality: Option<bool>,
 
         /// Require repeated identical prompts to produce stable generated token IDs and text
-        #[arg(long, default_value_t = false)]
-        require_determinism: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        require_determinism: Option<bool>,
 
         /// Measure scoped hot-loop allocation counter deltas in warm-session receipts
-        #[arg(long, default_value_t = false)]
-        allocation_audit: bool,
+        #[arg(long, default_missing_value = "true", num_args = 0..=1)]
+        allocation_audit: Option<bool>,
 
         /// Write first-prompt Qwen trace events as JSONL during the warm decode path
         #[arg(long, value_name = "PATH")]
@@ -1635,6 +1663,10 @@ async fn async_main() -> Result<()> {
         }
         Some(Commands::Model(cmd)) => cmd.execute().await,
         #[cfg(feature = "full-cli")]
+        Some(Commands::Profile(cmd)) => execute_profile_command(cmd).await,
+        #[cfg(feature = "full-cli")]
+        Some(Commands::Doctor(cmd)) => execute_doctor_command(cmd, &requested_backend_label).await,
+        #[cfg(feature = "full-cli")]
         Some(Commands::Support(cmd)) => cmd.execute().await,
         Some(Commands::Cuda { action }) => {
             handle_cuda_command(action, explicit_device_label.as_deref())
@@ -1713,6 +1745,7 @@ async fn async_main() -> Result<()> {
         Some(Commands::SlmWarmSession {
             model,
             profile,
+            self_test,
             model_format,
             tokenizer,
             corpus,
@@ -1748,10 +1781,11 @@ async fn async_main() -> Result<()> {
             min_distinct_generated_tokens,
             json_out,
         }) => {
-            run_slm_warm_session(
+            run_slm_warm_session_with_options(
                 &requested_backend_label,
                 model,
                 profile,
+                self_test,
                 model_format,
                 tokenizer,
                 corpus,
@@ -8649,26 +8683,99 @@ async fn run_slm_warm_session(
     tokenizer_path: Option<std::path::PathBuf>,
     corpus_path: Option<std::path::PathBuf>,
     corpus_repeat_runs: usize,
-    mut prompts: Vec<String>,
-    mut max_new_tokens: usize,
-    mut temperature: f32,
-    mut top_k: usize,
+    prompts: Vec<String>,
+    max_new_tokens: usize,
+    temperature: f32,
+    top_k: usize,
     top_p: f32,
     repetition_penalty: f32,
     seed: Option<u64>,
-    mut strict_tokenizer: bool,
-    mut strict_loader: bool,
-    mut greedy: bool,
-    mut deterministic: bool,
-    mut threads: usize,
-    mut prompt_template: String,
-    mut no_think: bool,
+    strict_tokenizer: bool,
+    strict_loader: bool,
+    greedy: bool,
+    deterministic: bool,
+    threads: usize,
+    prompt_template: String,
+    no_think: bool,
     system_prompt: Option<String>,
     stop: Vec<String>,
     stop_id: Vec<u32>,
-    mut fail_on_quality: bool,
-    mut require_determinism: bool,
-    mut allocation_audit: bool,
+    fail_on_quality: bool,
+    require_determinism: bool,
+    allocation_audit: bool,
+    output: SlmWarmSessionOutput,
+    min_generated_tokens: usize,
+    min_distinct_generated_tokens: usize,
+    json_out: std::path::PathBuf,
+) -> Result<()> {
+    run_slm_warm_session_with_options(
+        requested_backend_label,
+        model_path,
+        profile,
+        false,
+        model_format,
+        tokenizer_path,
+        corpus_path,
+        corpus_repeat_runs,
+        prompts,
+        Some(max_new_tokens),
+        Some(temperature),
+        Some(top_k),
+        Some(top_p),
+        Some(repetition_penalty),
+        seed,
+        Some(strict_tokenizer),
+        Some(strict_loader),
+        Some(greedy),
+        Some(deterministic),
+        Some(threads),
+        Some(prompt_template),
+        Some(no_think),
+        system_prompt,
+        stop,
+        stop_id,
+        Some(fail_on_quality),
+        Some(require_determinism),
+        Some(allocation_audit),
+        output,
+        min_generated_tokens,
+        min_distinct_generated_tokens,
+        json_out,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(feature = "full-cli")]
+async fn run_slm_warm_session_with_options(
+    requested_backend_label: &str,
+    model_path: std::path::PathBuf,
+    profile: Option<String>,
+    self_test: bool,
+    model_format: String,
+    tokenizer_path: Option<std::path::PathBuf>,
+    corpus_path: Option<std::path::PathBuf>,
+    corpus_repeat_runs: usize,
+    mut prompts: Vec<String>,
+    max_new_tokens: Option<usize>,
+    temperature: Option<f32>,
+    top_k: Option<usize>,
+    top_p: Option<f32>,
+    repetition_penalty: Option<f32>,
+    seed: Option<u64>,
+    strict_tokenizer: Option<bool>,
+    strict_loader: Option<bool>,
+    greedy: Option<bool>,
+    deterministic: Option<bool>,
+    threads: Option<usize>,
+    prompt_template: Option<String>,
+    no_think: Option<bool>,
+    system_prompt: Option<String>,
+    stop: Vec<String>,
+    stop_id: Vec<u32>,
+    fail_on_quality: Option<bool>,
+    require_determinism: Option<bool>,
+    allocation_audit: Option<bool>,
     output: SlmWarmSessionOutput,
     min_generated_tokens: usize,
     min_distinct_generated_tokens: usize,
@@ -8691,80 +8798,11 @@ async fn run_slm_warm_session(
     }
     .apply();
 
-    let profile_id = slm_warm_session_profile_id(profile.as_deref())?;
-    let profile_model_role = if let Some(profile_id) = profile_id {
-        slm_warm_session_profile_validate_backend(profile_id, requested_backend_label)?;
-        Some(slm_warm_session_profile_model_role(profile_id, &model_path)?)
-    } else {
-        None
-    };
-    let profile_supplied_prompts = if let Some(profile_id) = profile_id {
-        strict_loader = true;
-        strict_tokenizer = true;
-        greedy = true;
-        deterministic = true;
-        no_think = true;
-        fail_on_quality = true;
-        require_determinism = true;
-        allocation_audit = true;
-        temperature = 0.0;
-        top_k = 0;
-        if threads == 0 {
-            threads = slm_warm_session_profile_recommended_threads(profile_id);
-        }
-        if max_new_tokens == 32 {
-            max_new_tokens = slm_warm_session_profile_max_new_tokens(profile_id);
-        }
-        if prompt_template == "qwen2.5" {
-            prompt_template = slm_warm_session_profile_prompt_template(profile_id).to_string();
-        }
-        corpus_path.is_none() && prompts.is_empty()
-    } else {
-        false
-    };
-    let profile_prompt_inputs = if profile_supplied_prompts {
-        let profile_id = profile_id.expect("profile id must exist when profile supplies prompts");
-        slm_warm_session_profile_prompt_inputs(profile_id)
-    } else {
-        Vec::new()
-    };
-    if profile_supplied_prompts {
-        prompts = profile_prompt_inputs.iter().map(|input| input.prompt.clone()).collect();
-    }
-    let corpus = corpus_path.as_deref().map(SlmWarmSessionCorpus::load).transpose()?;
-    if corpus.is_some() && !prompts.is_empty() {
-        anyhow::bail!(
-            "slm-warm-session accepts either --corpus or repeated --prompt values, not both"
-        );
-    }
-    if corpus.is_none() && prompts.len() < 2 {
-        anyhow::bail!("slm-warm-session requires at least two --prompt values or --corpus");
-    }
-    let prompt_inputs = if profile_supplied_prompts {
-        profile_prompt_inputs
-    } else {
-        warm_session_prompt_inputs(
-            &prompts,
-            corpus.as_ref(),
-            corpus_repeat_runs,
-            min_generated_tokens,
-            min_distinct_generated_tokens,
-        )?
-    };
-    let max_new_tokens =
-        corpus.as_ref().and_then(|corpus| corpus.defaults.max_new_tokens).unwrap_or(max_new_tokens);
-    let temperature =
-        corpus.as_ref().and_then(|corpus| corpus.defaults.temperature).unwrap_or(temperature);
-    let top_k = corpus.as_ref().and_then(|corpus| corpus.defaults.top_k).unwrap_or(top_k);
-    let greedy = corpus.as_ref().and_then(|corpus| corpus.defaults.greedy).unwrap_or(greedy);
-    let deterministic =
-        corpus.as_ref().and_then(|corpus| corpus.defaults.deterministic).unwrap_or(deterministic);
-    let prompt_template = corpus
-        .as_ref()
-        .and_then(|corpus| corpus.defaults.prompt_template.clone())
-        .unwrap_or(prompt_template);
-    let no_think =
-        corpus.as_ref().and_then(|corpus| corpus.defaults.qwen_no_think).unwrap_or(no_think);
+    let profile_id = validate_profile_request(profile.as_deref(), requested_backend_label)?;
+    let strict_loader = strict_loader.unwrap_or(profile_id.is_some());
+    let strict_tokenizer_requested = strict_tokenizer.unwrap_or(profile_id.is_some());
+    let deterministic = deterministic.unwrap_or(profile_id.is_some());
+    let threads_for_env = threads.unwrap_or(if profile_id.is_some() { 4 } else { 0 });
     if !is_supported_slm_warm_session_backend(requested_backend_label) {
         anyhow::bail!(
             "slm-warm-session is scoped to supported CPU receipt labels: cpu, apple-m4-cpu-neon, or apple-m3-air-cpu-neon; got {requested_backend_label}"
@@ -8784,8 +8822,8 @@ async fn run_slm_warm_session(
         unsafe {
             std::env::set_var("BITNET_DETERMINISTIC", "1");
             std::env::set_var("RAYON_NUM_THREADS", "1");
-            if threads > 0 {
-                std::env::set_var("RAYON_NUM_THREADS", threads.to_string());
+            if threads_for_env > 0 {
+                std::env::set_var("RAYON_NUM_THREADS", threads_for_env.to_string());
             }
         }
     }
@@ -8826,6 +8864,18 @@ async fn run_slm_warm_session(
         std::env::set_var("BITNET_RUNTIME_API", backend_identity.runtime_api.as_str());
     }
 
+    let corpus = corpus_path.as_deref().map(SlmWarmSessionCorpus::load).transpose()?;
+    if corpus.is_some() && !prompts.is_empty() {
+        anyhow::bail!(
+            "slm-warm-session accepts either --corpus or repeated --prompt values, not both"
+        );
+    }
+    if profile_id.is_none() && corpus.is_none() && prompts.len() < 2 {
+        anyhow::bail!(
+            "slm-warm-session requires at least two --prompt values or --corpus; use --self-test for the bounded profile prompts"
+        );
+    }
+
     if model_path.is_dir() {
         anyhow::bail!(
             "slm-warm-session requires a GGUF model file, not a model directory: {}",
@@ -8833,14 +8883,6 @@ async fn run_slm_warm_session(
         );
     }
     let is_hf_directory = false;
-    let template_type: bitnet_inference::TemplateType =
-        prompt_template.parse().with_context(|| {
-            format!(
-                "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen, qwen2.5",
-                prompt_template
-            )
-        })?;
-    let temperature = if greedy { 0.0 } else { temperature };
     let session_start = std::time::Instant::now();
     let memory_before_load = slm_cpu_warm_session_memory_context_json();
 
@@ -8866,7 +8908,7 @@ async fn run_slm_warm_session(
         anyhow::bail!("slm-warm-session requires real_gguf loader mode; got {loader_mode}");
     }
 
-    let effective_strict_tokenizer = strict_tokenizer || strict_loader;
+    let effective_strict_tokenizer = strict_tokenizer_requested || strict_loader;
     let tokenizer_load_start = std::time::Instant::now();
     let tokenizer_resolution = bitnet_tokenizers::auto::resolve_tokenizer(
         &model_path,
@@ -8883,6 +8925,162 @@ async fn run_slm_warm_session(
     let pretokenizer_authority =
         tokenizer_pretokenizer_authority(tokenizer_source, &tokenizer_label);
     let tokenizer_type = tokenizer_type_for_receipt(&tokenizer_label, tokenizer_source);
+    let gguf_metadata = gguf_header_counts_for_receipt(&model_path, is_hf_directory);
+    let (n_kv, n_tensors) = gguf_metadata.unwrap_or((0, 0));
+    let model_sha256_start = std::time::Instant::now();
+    let model_sha256_rehash_skipped = output.model_sha256_override.is_some();
+    let model_sha256 = match output.model_sha256_override.as_ref() {
+        Some(sha256) => sha256.clone(),
+        None => compute_model_sha256(&model_path)?,
+    };
+    let model_sha256_ms = elapsed_ms(model_sha256_start);
+    let model_sha256_source = if model_sha256_rehash_skipped {
+        "verified_mac_model_cache"
+    } else {
+        "computed_from_model_file"
+    };
+    let profile_metadata = if profile_id.is_some() {
+        let gguf_bytes = std::fs::read(&model_path).with_context(|| {
+            format!("failed to read GGUF metadata for {}", model_path.display())
+        })?;
+        let reader = bitnet_models::GgufReader::new(&gguf_bytes)
+            .context("failed to parse loaded GGUF metadata for profile validation")?;
+        let inspection =
+            bitnet_models::dense_gguf_descriptors::inspect_dense_gguf_tensor_descriptors(&reader)
+                .context("failed to inspect loaded dense GGUF metadata for profile validation")?;
+        let quantized_families = inspection
+            .quantization_families
+            .iter()
+            .filter(|family| !matches!(family.to_ascii_lowercase().as_str(), "f32" | "f16" | "f64"))
+            .collect::<Vec<_>>();
+        let quant_format = if quantized_families.len() == 1 {
+            quantized_families[0].to_ascii_uppercase()
+        } else {
+            "mixed".to_string()
+        };
+        Some(SlmProfileMetadata {
+            architecture: reader
+                .get_string_metadata("general.architecture")
+                .unwrap_or_else(|| "unknown".to_string()),
+            quant_format,
+            model_sha256: model_sha256.clone(),
+            tokenizer_source: tokenizer_source_str.to_string(),
+            tokenizer_authority: pretokenizer_authority.to_string(),
+            tokenizer_strict,
+            chat_template: reader.get_string_metadata("tokenizer.chat_template"),
+            context_limit: config.model.max_position_embeddings,
+        })
+    } else {
+        None
+    };
+    let mut resolved = resolve_slm_profile(
+        profile.as_deref(),
+        requested_backend_label,
+        SlmProfileCliOverrides {
+            max_new_tokens,
+            temperature,
+            top_k,
+            top_p,
+            repetition_penalty,
+            strict_tokenizer,
+            strict_loader: Some(strict_loader),
+            greedy,
+            deterministic: Some(deterministic),
+            threads,
+            prompt_template,
+            no_think,
+            fail_on_quality,
+            require_determinism,
+            allocation_audit,
+        },
+        profile_metadata.as_ref(),
+        self_test,
+        !prompts.is_empty(),
+        corpus_path.is_some(),
+    )?;
+    let resolved_profile_id = resolved.profile_id;
+    let resolved_model_role = resolved.model_role;
+    if resolved.profile_supplied_prompts {
+        let profile_id = resolved_profile_id
+            .ok_or_else(|| anyhow::anyhow!("profile self-test resolved without a profile id"))?;
+        let model_role = resolved_model_role
+            .ok_or_else(|| anyhow::anyhow!("profile self-test resolved without a model role"))?;
+        prompts = profile_prompt_inputs(profile_id, model_role)
+            .iter()
+            .map(|input| input.prompt.clone())
+            .collect();
+    }
+    if corpus.is_none() && prompts.len() < 2 {
+        anyhow::bail!(
+            "slm-warm-session requires at least two --prompt values or --corpus; use --self-test for the bounded profile prompts"
+        );
+    }
+    let profile_prompt_inputs = if resolved.profile_supplied_prompts {
+        let profile_id = resolved_profile_id
+            .ok_or_else(|| anyhow::anyhow!("profile self-test resolved without a profile id"))?;
+        let model_role = resolved_model_role
+            .ok_or_else(|| anyhow::anyhow!("profile self-test resolved without a model role"))?;
+        profile_prompt_inputs(profile_id, model_role)
+    } else {
+        Vec::new()
+    };
+    let prompt_inputs = if resolved.profile_supplied_prompts {
+        profile_prompt_inputs
+    } else {
+        warm_session_prompt_inputs(
+            &prompts,
+            corpus.as_ref(),
+            corpus_repeat_runs,
+            min_generated_tokens,
+            min_distinct_generated_tokens,
+        )?
+    };
+    if resolved.profile_id.is_none() {
+        resolved.max_new_tokens = corpus
+            .as_ref()
+            .and_then(|corpus| corpus.defaults.max_new_tokens)
+            .unwrap_or(resolved.max_new_tokens);
+        resolved.temperature = corpus
+            .as_ref()
+            .and_then(|corpus| corpus.defaults.temperature)
+            .unwrap_or(resolved.temperature);
+        resolved.top_k =
+            corpus.as_ref().and_then(|corpus| corpus.defaults.top_k).unwrap_or(resolved.top_k);
+        resolved.greedy =
+            corpus.as_ref().and_then(|corpus| corpus.defaults.greedy).unwrap_or(resolved.greedy);
+        resolved.deterministic = corpus
+            .as_ref()
+            .and_then(|corpus| corpus.defaults.deterministic)
+            .unwrap_or(resolved.deterministic);
+        resolved.prompt_template = corpus
+            .as_ref()
+            .and_then(|corpus| corpus.defaults.prompt_template.clone())
+            .unwrap_or_else(|| resolved.prompt_template.clone());
+        resolved.no_think = corpus
+            .as_ref()
+            .and_then(|corpus| corpus.defaults.qwen_no_think)
+            .unwrap_or(resolved.no_think);
+    }
+    let max_new_tokens = resolved.max_new_tokens;
+    let mut temperature = resolved.temperature;
+    let top_k = resolved.top_k;
+    let top_p = resolved.top_p;
+    let repetition_penalty = resolved.repetition_penalty;
+    let greedy = resolved.greedy;
+    let deterministic = resolved.deterministic;
+    let threads = resolved.threads;
+    let prompt_template = resolved.prompt_template.clone();
+    let no_think = resolved.no_think;
+    let fail_on_quality = resolved.fail_on_quality;
+    let require_determinism = resolved.require_determinism;
+    let allocation_audit = resolved.allocation_audit;
+    let template_type: bitnet_inference::TemplateType = prompt_template.parse().with_context(|| {
+        format!(
+            "Invalid prompt template '{}'. Supported: raw, instruct, llama3-chat, qwen, qwen2.5",
+            prompt_template
+        )
+    })?;
+    temperature = if greedy { 0.0 } else { temperature };
     let all_stop_sequences = simple_generation::prompt::merge_stop_sequences(&stop, template_type);
     let all_stop_ids = simple_generation::prompt::merge_stop_token_ids(
         &stop_id,
@@ -8921,20 +9119,6 @@ async fn run_slm_warm_session(
         },
     );
     let max_stop_len = all_stop_sequences.iter().map(|value| value.len()).max().unwrap_or(0);
-    let gguf_metadata = gguf_header_counts_for_receipt(&model_path, is_hf_directory);
-    let (n_kv, n_tensors) = gguf_metadata.unwrap_or((0, 0));
-    let model_sha256_start = std::time::Instant::now();
-    let model_sha256_rehash_skipped = output.model_sha256_override.is_some();
-    let model_sha256 = match output.model_sha256_override.as_ref() {
-        Some(sha256) => sha256.clone(),
-        None => compute_model_sha256(&model_path)?,
-    };
-    let model_sha256_ms = elapsed_ms(model_sha256_start);
-    let model_sha256_source = if model_sha256_rehash_skipped {
-        "verified_mac_model_cache"
-    } else {
-        "computed_from_model_file"
-    };
     if output.qwen_trace.enabled() {
         qwen_trace_reset_file()?;
         unsafe {
@@ -8961,7 +9145,10 @@ async fn run_slm_warm_session(
         }))?;
     }
     let model_repo = infer_model_repo(&model_path);
-    let model_architecture = infer_model_architecture(&model_path);
+    let model_architecture = profile_metadata
+        .as_ref()
+        .map(|metadata| metadata.architecture.clone())
+        .unwrap_or_else(|| infer_model_architecture(&model_path));
     let model_family = receipt_model_family(&model_architecture);
     let model_format_label = receipt_model_format(&model_path, &model_format, is_hf_directory);
     let model_file =
@@ -9847,24 +10034,11 @@ async fn run_slm_warm_session(
         &thermal_context,
     );
     let profile_receipt = slm_warm_session_profile_receipt(
-        profile_id,
-        profile_model_role,
-        model_file.as_str(),
-        &model_architecture,
-        dense_slm_quant_format(&model_path),
-        profile_supplied_prompts,
+        &resolved,
+        profile_metadata.as_ref(),
+        resolved.profile_supplied_prompts,
         prompt_inputs.len(),
         thread_count,
-        strict_loader,
-        tokenizer_strict,
-        prompt_template.as_str(),
-        no_think,
-        greedy,
-        deterministic,
-        max_new_tokens,
-        fail_on_quality,
-        require_determinism,
-        allocation_audit_enabled,
     );
     let aggregate = serde_json::json!({
         "schema_version": "1.0.0",
@@ -10341,262 +10515,6 @@ struct WarmSessionDeterminismRecord {
     prompt: String,
     text: String,
     generated_ids: Vec<u32>,
-}
-
-#[derive(Clone, Debug)]
-#[cfg(feature = "full-cli")]
-struct WarmSessionPromptInput {
-    case_id: String,
-    prompt: String,
-    repeat_index: usize,
-    gate: Option<SlmWarmSessionGate>,
-    min_generated_tokens: usize,
-    min_distinct_generated_tokens: usize,
-}
-
-#[cfg(feature = "full-cli")]
-const SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE: &str = "kaby-qwen3-q8";
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_id(profile: Option<&str>) -> Result<Option<&'static str>> {
-    let Some(profile) = profile.map(str::trim).filter(|profile| !profile.is_empty()) else {
-        return Ok(None);
-    };
-    match profile {
-        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => Ok(Some(SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE)),
-        other => anyhow::bail!(
-            "unsupported slm-warm-session --profile {other}; supported profiles: {SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE}"
-        ),
-    }
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_validate_backend(
-    profile_id: &str,
-    requested_backend_label: &str,
-) -> Result<()> {
-    if profile_id == SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE && requested_backend_label != "cpu" {
-        anyhow::bail!(
-            "slm-warm-session --profile {profile_id} requires --device cpu; got {requested_backend_label}"
-        );
-    }
-    Ok(())
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_model_role(
-    profile_id: &str,
-    model_path: &std::path::Path,
-) -> Result<&'static str> {
-    if profile_id != SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE {
-        anyhow::bail!("unsupported slm-warm-session --profile {profile_id}");
-    }
-    let model_architecture = infer_model_architecture(model_path);
-    let quant_format = dense_slm_quant_format(model_path);
-    if quant_format != "Q8_0" {
-        anyhow::bail!(
-            "slm-warm-session --profile {profile_id} supports Qwen3/Qwen2.5 Q8_0 GGUF only; inferred quant_format={quant_format}"
-        );
-    }
-    match model_architecture.as_str() {
-        "qwen3" => Ok("primary_qwen3_q8_0"),
-        "qwen2" => Ok("second_model_qwen25_q8_0"),
-        other => anyhow::bail!(
-            "slm-warm-session --profile {profile_id} supports Qwen3/Qwen2.5 Q8_0 GGUF only; inferred architecture={other}"
-        ),
-    }
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_recommended_threads(profile_id: &str) -> usize {
-    match profile_id {
-        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => 4,
-        _ => 0,
-    }
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_max_new_tokens(profile_id: &str) -> usize {
-    match profile_id {
-        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => 4,
-        _ => 32,
-    }
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_prompt_template(profile_id: &str) -> &'static str {
-    match profile_id {
-        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => "qwen",
-        _ => "qwen2.5",
-    }
-}
-
-#[cfg(feature = "full-cli")]
-fn slm_warm_session_profile_prompt_inputs(profile_id: &str) -> Vec<WarmSessionPromptInput> {
-    match profile_id {
-        SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE => {
-            let math_gate = SlmWarmSessionGate {
-                kind: "starts_with_any".to_string(),
-                expected: None,
-                contains_any: None,
-                starts_with_any: Some(vec!["2".to_string()]),
-                min_words: None,
-            };
-            let ok_gate = SlmWarmSessionGate {
-                kind: "starts_with_any".to_string(),
-                expected: None,
-                contains_any: None,
-                starts_with_any: Some(vec!["OK".to_string()]),
-                min_words: None,
-            };
-            vec![
-                WarmSessionPromptInput {
-                    case_id: "kaby_math_1_plus_1".to_string(),
-                    prompt: "What is 1+1? Answer with only the number.".to_string(),
-                    repeat_index: 0,
-                    gate: Some(math_gate.clone()),
-                    min_generated_tokens: 1,
-                    min_distinct_generated_tokens: 1,
-                },
-                WarmSessionPromptInput {
-                    case_id: "kaby_math_1_plus_1".to_string(),
-                    prompt: "What is 1+1? Answer with only the number.".to_string(),
-                    repeat_index: 1,
-                    gate: Some(math_gate),
-                    min_generated_tokens: 1,
-                    min_distinct_generated_tokens: 1,
-                },
-                WarmSessionPromptInput {
-                    case_id: "kaby_say_ok".to_string(),
-                    prompt: "Say exactly: OK".to_string(),
-                    repeat_index: 0,
-                    gate: Some(ok_gate.clone()),
-                    min_generated_tokens: 1,
-                    min_distinct_generated_tokens: 1,
-                },
-                WarmSessionPromptInput {
-                    case_id: "kaby_say_ok".to_string(),
-                    prompt: "Say exactly: OK".to_string(),
-                    repeat_index: 1,
-                    gate: Some(ok_gate),
-                    min_generated_tokens: 1,
-                    min_distinct_generated_tokens: 1,
-                },
-            ]
-        }
-        _ => Vec::new(),
-    }
-}
-
-#[cfg(feature = "full-cli")]
-#[allow(clippy::too_many_arguments)]
-fn slm_warm_session_profile_receipt(
-    profile_id: Option<&str>,
-    profile_model_role: Option<&str>,
-    model_file: &str,
-    model_architecture: &str,
-    quant_format: &str,
-    profile_supplied_prompts: bool,
-    prompt_count: usize,
-    threads: usize,
-    strict_loader: bool,
-    strict_tokenizer: bool,
-    prompt_template: &str,
-    no_think: bool,
-    greedy: bool,
-    deterministic: bool,
-    max_new_tokens: usize,
-    fail_on_quality: bool,
-    require_determinism: bool,
-    allocation_audit: bool,
-) -> serde_json::Value {
-    let Some(profile_id) = profile_id else {
-        return serde_json::Value::Null;
-    };
-    serde_json::json!({
-        "schema_version": "1.0.0",
-        "artifact_kind": "slm_cpu_kaby_opt_in_profile",
-        "tracking_item": "SLM-CPU-247",
-        "profile_id": profile_id,
-        "enabled": true,
-        "profile_supplied_prompts": profile_supplied_prompts,
-        "prompt_source": if profile_supplied_prompts {
-            "profile_builtin_bounded_prompts"
-        } else {
-            "user_prompt_or_corpus"
-        },
-        "prompt_count": prompt_count,
-        "model": {
-            "role": profile_model_role,
-            "file": model_file,
-            "architecture": model_architecture,
-            "quant_format": quant_format,
-            "primary_model": {
-                "file": "Qwen3-0.6B-Q8_0.gguf",
-                "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
-            },
-            "second_model_proof": {
-                "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
-                "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
-            },
-        },
-        "applied_contract": {
-            "runtime_api": "cpu",
-            "selected_backend": "cpu-rust",
-            "fallback_required": false,
-            "strict_loader": strict_loader,
-            "strict_tokenizer": strict_tokenizer,
-            "prompt_template": prompt_template,
-            "qwen_no_think": no_think,
-            "greedy": greedy,
-            "deterministic": deterministic,
-            "max_new_tokens": max_new_tokens,
-            "threads": threads,
-            "recommended_threads": 4,
-            "fail_on_quality": fail_on_quality,
-            "require_determinism": require_determinism,
-            "allocation_audit": allocation_audit,
-            "warm_session_first": true,
-            "receipt_output_required": true,
-        },
-        "no_bias_policy": {
-            "only_proven_executable_role": "feed_forward.down_proj",
-            "next_receipt_target": "feed_forward.up_proj",
-            "candidate_execution_opt_in_only": true,
-            "candidate_execution_enabled_by_profile": false,
-            "default_path_when_gate_absent": "eager_f32_candle",
-        },
-        "unsupported_until_receipts": [
-            "Q4/Q5 runtime",
-            "server",
-            "GPU/NPU/OpenVINO/UHD 620",
-            "Qwen3.5",
-            "BitNet QK256 changes",
-            "broad chat quality",
-            "sustained throughput",
-            "default runtime promotion",
-        ],
-        "evidence": {
-            "thread_recommendation_source": "SLM-CPU-205 dashboard envelope and SLM-CPU-245 timing/allocation receipt pair",
-            "role_policy_source": "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-246-no-bias-role-expansion-policy.json",
-            "candidate_on_timing_receipts": [
-                "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-slm-cpu-245-no-bias-candidate-on-timing-allocation.json",
-                "ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen25-slm-cpu-245-no-bias-candidate-on-timing-allocation.json",
-            ],
-        },
-        "claim_boundary": {
-            "default_runtime_changed": false,
-            "candidate_execution_enabled": false,
-            "speedup_claim": false,
-            "allocation_reduction_claim": false,
-            "broad_performance_claim": false,
-            "broad_quality_claim": false,
-            "q4_q5_runtime_support": false,
-            "server_or_accelerator_claim": false,
-            "qwen35_claim": false,
-            "bitnet_qk256_claim": false,
-        },
-    })
 }
 
 #[derive(Debug, Default)]
@@ -11415,20 +11333,6 @@ struct SlmWarmSessionCorpusCase {
     min_distinct_generated_tokens: Option<usize>,
     #[serde(default)]
     gate: Option<SlmWarmSessionGate>,
-}
-
-#[derive(Clone, Debug, serde::Deserialize)]
-#[cfg(feature = "full-cli")]
-struct SlmWarmSessionGate {
-    kind: String,
-    #[serde(default)]
-    expected: Option<String>,
-    #[serde(default)]
-    contains_any: Option<Vec<String>>,
-    #[serde(default)]
-    starts_with_any: Option<Vec<String>>,
-    #[serde(default)]
-    min_words: Option<usize>,
 }
 
 #[cfg(feature = "full-cli")]
@@ -17906,58 +17810,43 @@ mod tests {
 
     #[test]
     #[cfg(feature = "full-cli")]
-    fn slm_warm_session_no_bias_kaby_profile_contract_records_profile_boundaries() {
-        let profile_id = slm_warm_session_profile_id(Some(SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE))
-            .expect("profile id")
-            .expect("profile present");
-        let prompts = slm_warm_session_profile_prompt_inputs(profile_id);
+    fn slm_warm_session_no_bias_kaby_profile_contract_records_profile_boundaries() -> Result<()> {
+        let profile_id = validate_profile_request(Some("kaby-qwen-q8"), "cpu")?
+            .ok_or_else(|| anyhow::anyhow!("profile should be present"))?;
+        let prompts = profile_prompt_inputs(profile_id, slm_profile::kaby::ModelRole::Qwen3Primary);
         assert_eq!(prompts.len(), 4);
-        assert_eq!(prompts[0].case_id, "kaby_math_1_plus_1");
+        assert_eq!(prompts[0].case_id, "kaby_qwen3_water");
         assert_eq!(prompts[0].repeat_index, 0);
         assert_eq!(prompts[1].repeat_index, 1);
-        assert_eq!(prompts[2].case_id, "kaby_say_ok");
-        assert_eq!(
-            slm_warm_session_profile_model_role(
-                profile_id,
-                std::path::Path::new("models/slm/Qwen3-0.6B-Q8_0.gguf"),
-            )
-            .expect("qwen3 profile model"),
-            "primary_qwen3_q8_0"
-        );
-        assert_eq!(
-            slm_warm_session_profile_model_role(
-                profile_id,
-                std::path::Path::new("models/slm/qwen2.5-0.5b-instruct-q8_0.gguf"),
-            )
-            .expect("qwen2.5 profile model"),
-            "second_model_qwen25_q8_0"
-        );
-
-        let receipt = slm_warm_session_profile_receipt(
+        assert_eq!(prompts[2].case_id, "kaby_qwen3_capital_france");
+        let metadata = SlmProfileMetadata {
+            architecture: "qwen3".to_string(),
+            quant_format: "Q8_0".to_string(),
+            model_sha256: slm_profile::kaby::QWEN3_SHA256.to_string(),
+            tokenizer_source: "gguf".to_string(),
+            tokenizer_authority: "gguf_tokenizer".to_string(),
+            tokenizer_strict: true,
+            chat_template: Some("{{ messages }}".to_string()),
+            context_limit: 40_960,
+        };
+        let resolved = resolve_slm_profile(
             Some(profile_id),
-            Some("primary_qwen3_q8_0"),
-            "Qwen3-0.6B-Q8_0.gguf",
-            "qwen3",
-            "Q8_0",
+            "cpu",
+            SlmProfileCliOverrides::default(),
+            Some(&metadata),
             true,
-            prompts.len(),
-            4,
-            true,
-            true,
-            "qwen",
-            true,
-            true,
-            true,
-            4,
-            true,
-            true,
-            true,
-        );
+            false,
+            false,
+        )?;
+        let receipt =
+            slm_warm_session_profile_receipt(&resolved, Some(&metadata), true, prompts.len(), 4);
 
         assert_eq!(receipt["tracking_item"], "SLM-CPU-247");
-        assert_eq!(receipt["profile_id"], SLM_WARM_SESSION_KABY_QWEN3_Q8_PROFILE);
+        assert_eq!(receipt["profile_id"], "kaby-qwen-q8");
         assert_eq!(receipt["profile_supplied_prompts"], true);
         assert_eq!(receipt["model"]["role"], "primary_qwen3_q8_0");
+        assert_eq!(receipt["model"]["behavior_contract"]["prompt_template"], "qwen");
+        assert_eq!(receipt["model"]["behavior_contract"]["thinking_policy"], "no_think");
         assert_eq!(receipt["model"]["primary_model"]["file"], "Qwen3-0.6B-Q8_0.gguf");
         assert_eq!(
             receipt["model"]["second_model_proof"]["file"],
@@ -17977,6 +17866,7 @@ mod tests {
         assert_eq!(receipt["claim_boundary"]["candidate_execution_enabled"], false);
         assert_eq!(receipt["claim_boundary"]["speedup_claim"], false);
         assert_eq!(receipt["claim_boundary"]["bitnet_qk256_claim"], false);
+        Ok(())
     }
 
     #[test]

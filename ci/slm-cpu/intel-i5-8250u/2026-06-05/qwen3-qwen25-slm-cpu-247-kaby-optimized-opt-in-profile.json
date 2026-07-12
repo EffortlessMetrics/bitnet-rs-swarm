@@ -6,23 +6,36 @@
     "SLM-CPU-245",
     "SLM-CPU-246"
   ],
-  "decision": "kaby_qwen3_q8_profile_surface_defined_without_default_runtime_change",
+  "decision": "kaby_qwen_q8_profile_contract_hardened_without_default_runtime_change",
   "profile": {
-    "id": "kaby-qwen3-q8",
-    "command_surface": "cargo run -p bitnet-cli --release --features cpu,full-cli -- slm-warm-session --profile kaby-qwen3-q8 --model models/slm/Qwen3-0.6B-Q8_0.gguf --json-out receipts/slm-cpu/kaby-qwen3-q8.json",
+    "id": "kaby-qwen-q8",
+    "command_surface": "bitnet slm-warm-session --profile kaby-qwen-q8 --model <verified.gguf> --prompt \"Answer yes or no: is water wet?\" --prompt \"What is the capital of France? Answer with one word.\" --json-out receipts/slm-cpu/kaby-qwen-q8.json",
+    "self_test_surface": "bitnet slm-warm-session --profile kaby-qwen-q8 --self-test --model <verified.gguf> --json-out receipts/slm-cpu/kaby-qwen-q8-self-test.json",
     "primary_model": {
       "file": "Qwen3-0.6B-Q8_0.gguf",
       "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
       "architecture": "qwen3",
       "quant": "Q8_0",
-      "role": "primary_qwen3_q8_0"
+      "role": "primary_qwen3_q8_0",
+      "prompt_template": "qwen",
+      "thinking_policy": "no_think",
+      "max_new_tokens": 4,
+      "context_limit": 40960,
+      "stop_policy": "qwen_template_defaults_plus_manual_stops",
+      "bounded_self_test_corpus": "slm-cpu-247-kaby-qwen3-self-test-v1"
     },
     "second_model_proof": {
       "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
       "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
       "architecture": "qwen2",
       "quant": "Q8_0",
-      "role": "second_model_qwen25_q8_0"
+      "role": "second_model_qwen25_q8_0",
+      "prompt_template": "qwen2.5",
+      "thinking_policy": "model_default",
+      "max_new_tokens": 8,
+      "context_limit": 32768,
+      "stop_policy": "qwen2.5_template_defaults_plus_manual_stops",
+      "bounded_self_test_corpus": "slm-cpu-247-kaby-qwen25-self-test-v1"
     },
     "supported_model_boundary": "Qwen3 or Qwen2.5 Q8_0 GGUF only",
     "runtime_api": "cpu",
@@ -36,38 +49,71 @@
     "qwen_no_think": true,
     "decode_mode": "greedy_deterministic",
     "max_new_tokens": 4,
+    "max_new_tokens_by_role": {
+      "primary_qwen3_q8_0": 4,
+      "second_model_qwen25_q8_0": 8
+    },
     "recommended_threads": 4,
     "quality_gate": {
-      "fail_on_quality": true,
-      "require_determinism": true,
-      "profile_builtin_prompts_when_no_user_prompt_or_corpus": true,
-      "prompt_count": 4,
+      "fail_on_quality": false,
+      "require_determinism": false,
+      "profile_builtin_prompts_when_no_user_prompt_or_corpus": false,
+      "prompt_count": 0,
+      "self_test_flag": "--self-test",
+      "self_test_enables_quality_and_determinism": true,
       "built_in_prompt_cases": [
         {
-          "case_id": "kaby_math_1_plus_1",
-          "prompt": "What is 1+1? Answer with only the number.",
+          "model_role": "primary_qwen3_q8_0",
+          "case_id": "kaby_qwen3_water",
+          "prompt": "Answer yes or no: is water wet?",
           "repeat_count": 2,
           "gate": {
             "kind": "starts_with_any",
             "starts_with_any": [
-              "2"
+              "Yes"
             ]
           }
         },
         {
-          "case_id": "kaby_say_ok",
-          "prompt": "Say exactly: OK",
+          "model_role": "primary_qwen3_q8_0",
+          "case_id": "kaby_qwen3_capital_france",
+          "prompt": "What is the capital of France? Answer with one word.",
           "repeat_count": 2,
           "gate": {
             "kind": "starts_with_any",
             "starts_with_any": [
-              "OK"
+              "Paris"
+            ]
+          }
+        },
+        {
+          "model_role": "second_model_qwen25_q8_0",
+          "case_id": "kaby_qwen25_math_2_plus_2",
+          "prompt": "What is 2+2? Answer briefly.",
+          "repeat_count": 2,
+          "gate": {
+            "kind": "contains_any",
+            "contains_any": [
+              "4"
+            ]
+          }
+        },
+        {
+          "model_role": "second_model_qwen25_q8_0",
+          "case_id": "kaby_qwen25_capital_france",
+          "prompt": "What is the capital of France? Answer briefly.",
+          "repeat_count": 2,
+          "gate": {
+            "kind": "contains_any",
+            "contains_any": [
+              "Paris"
             ]
           }
         }
       ]
     },
-    "allocation_audit_default": true
+    "allocation_audit_default": false,
+    "allocation_audit_flag": "--allocation-audit"
   },
   "no_bias_boundary": {
     "only_proven_executable_no_bias_role": "feed_forward.down_proj",
@@ -104,17 +150,24 @@
   ],
   "implementation_surfaces": {
     "cli_arg": "crates/bitnet-cli/src/main.rs::Commands::SlmWarmSession.profile",
-    "profile_contract": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_receipt",
-    "profile_prompt_inputs": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_prompt_inputs",
-    "profile_model_gate": "crates/bitnet-cli/src/main.rs::slm_warm_session_profile_model_role"
+    "profile_contract": "crates/bitnet-cli/src/slm_profile/receipt.rs::profile_receipt",
+    "profile_prompt_inputs": "crates/bitnet-cli/src/slm_profile/self_test.rs::profile_prompt_inputs",
+    "profile_model_gate": "crates/bitnet-cli/src/slm_profile/kaby.rs::classify_model",
+    "profile_resolution": "crates/bitnet-cli/src/slm_profile/resolve.rs::resolve_profile",
+    "profile_show": "crates/bitnet-cli/src/slm_profile/mod.rs::execute_profile_command",
+    "profile_doctor": "crates/bitnet-cli/src/slm_profile/mod.rs::execute_doctor_command"
   },
   "validation": {
-    "focused_tests": "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli slm_warm_session_no_bias -- --nocapture",
+    "focused_tests": "cargo test --locked -p bitnet-cli --bin bitnet --no-default-features --features cpu,full-cli slm_profile -- --nocapture",
     "focused_tests_status": "passed",
     "profile_guard_tests": [
-      "slm_warm_session_no_bias_kaby_profile_rejects_unknown_profile_before_loading_model",
-      "slm_warm_session_no_bias_kaby_profile_rejects_non_cpu_before_loading_model",
-      "slm_warm_session_no_bias_kaby_profile_supplies_prompts_before_loading_model",
+      "slm_profile::resolve::tests::explicit_values_override_profile_values",
+      "slm_profile::resolve::tests::normal_profile_does_not_enable_proof_instrumentation",
+      "slm_profile::resolve::tests::self_test_is_the_only_source_of_builtin_profile_prompts",
+      "slm_profile::resolve::tests::loaded_context_limit_is_part_of_profile_authority",
+      "slm_profile::self_test::tests::qwen3_uses_established_answer_corpus",
+      "slm_profile::self_test::tests::qwen25_uses_separate_completed_answer_corpus",
+      "slm_profile::tests::profile_contract_names_both_supported_models",
       "slm_warm_session_no_bias_kaby_profile_contract_records_profile_boundaries"
     ],
     "fresh_hardware_receipts_captured_in_slm_cpu_247": false

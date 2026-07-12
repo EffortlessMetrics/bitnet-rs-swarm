@@ -59,7 +59,7 @@ pub enum ModelAction {
 
     /// Verify a cached or explicit supported model artifact.
     Verify {
-        /// Supported model id.
+        /// Supported model id, or a path to a registered GGUF artifact.
         id: String,
 
         /// Verify this file instead of the cached path for the model id.
@@ -181,6 +181,33 @@ struct SupportedModel {
     model_contract: Option<&'static str>,
     apple_m4_cpu_neon_supported: bool,
     support_note: &'static str,
+}
+
+#[derive(Debug, Serialize, Clone, Copy)]
+struct KabyProfileArtifact {
+    id: &'static str,
+    display_name: &'static str,
+    filename: &'static str,
+    sha256: &'static str,
+    bytes: u64,
+    architecture: &'static str,
+    quantization: &'static str,
+    tokenizer_authority: &'static str,
+    chat_template: bool,
+    profile: &'static str,
+    verification_only: bool,
+}
+
+#[derive(Debug, Serialize)]
+struct KabyProfileArtifactVerifyResult {
+    id: &'static str,
+    path: PathBuf,
+    expected_sha256: &'static str,
+    actual_sha256: String,
+    expected_bytes: u64,
+    actual_bytes: u64,
+    passed: bool,
+    artifact: KabyProfileArtifact,
 }
 
 #[derive(Debug, Serialize)]
@@ -1072,6 +1099,35 @@ pub(crate) fn apple_m4_slm_cache_status_json(
     }))
 }
 
+const KABY_PROFILE_ARTIFACTS: &[KabyProfileArtifact] = &[
+    KabyProfileArtifact {
+        id: "qwen3-0.6b-q8_0",
+        display_name: "Qwen3 0.6B Q8_0 Kaby profile artifact",
+        filename: "Qwen3-0.6B-Q8_0.gguf",
+        sha256: "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        bytes: 639_446_688,
+        architecture: "qwen3",
+        quantization: "Q8_0",
+        tokenizer_authority: "embedded_gguf_metadata_bound_to_model_sha256",
+        chat_template: true,
+        profile: "kaby-qwen-q8",
+        verification_only: true,
+    },
+    KabyProfileArtifact {
+        id: "qwen2.5-0.5b-instruct-q8_0",
+        display_name: "Qwen2.5 0.5B Instruct Q8_0 Kaby profile artifact",
+        filename: "qwen2.5-0.5b-instruct-q8_0.gguf",
+        sha256: "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        bytes: 675_710_816,
+        architecture: "qwen2",
+        quantization: "Q8_0",
+        tokenizer_authority: "embedded_gguf_metadata_bound_to_model_sha256",
+        chat_template: true,
+        profile: "kaby-qwen-q8",
+        verification_only: true,
+    },
+];
+
 const SUPPORTED_MODELS: &[SupportedModel] = &[
     SupportedModel {
         id: "microsoft-bitnet-b1.58-2B-4T-i2s",
@@ -1299,6 +1355,18 @@ fn verify_model_command(
     json: bool,
 ) -> Result<()> {
     let Some(model) = find_supported_model(id) else {
+        if path.is_none() && Path::new(id).is_file() {
+            return verify_artifact_path(Path::new(id), cache_dir, json);
+        }
+        if let Some(profile_artifact) = find_kaby_profile_artifact(id) {
+            let path = path.ok_or_else(|| {
+                anyhow!(
+                    "Kaby profile artifact `{}` requires --path; use `bitnet model verify <artifact>` for the artifact-first form",
+                    profile_artifact.id
+                )
+            })?;
+            return verify_kaby_profile_artifact(profile_artifact, &path, json);
+        }
         return verify_contract_without_supported_artifact(id, path, json);
     };
     let cache_root = resolve_cache_root(cache_dir)?;
@@ -1319,6 +1387,102 @@ fn verify_model_command(
         eprintln!("{}", verify_failure_guidance(&cache_root, model, &path, &result));
     }
     if result.passed { Ok(()) } else { anyhow::bail!("model `{}` failed verification", model.id) }
+}
+
+fn verify_artifact_path(path: &Path, cache_dir: Option<PathBuf>, json: bool) -> Result<()> {
+    let metadata = fs::metadata(path)
+        .with_context(|| format!("failed to inspect model artifact {}", path.display()))?;
+    let actual_bytes = metadata.len();
+    let actual_sha256 = compute_sha256(path)?;
+    let Some(model) = find_supported_model_by_digest(actual_bytes, &actual_sha256) else {
+        if let Some(profile_artifact) =
+            find_kaby_profile_artifact_by_digest(actual_bytes, &actual_sha256)
+        {
+            return print_kaby_profile_artifact_verification(
+                profile_artifact,
+                path,
+                actual_bytes,
+                actual_sha256,
+                json,
+            );
+        }
+        anyhow::bail!(
+            "artifact `{}` is not a registered supported model (bytes={}, sha256={}); verify a supported model id with `--path`, or register this artifact's exact source, size, and SHA256 first",
+            path.display(),
+            actual_bytes,
+            actual_sha256
+        );
+    };
+
+    let cache_root = resolve_cache_root(cache_dir)?;
+    let result = verify_model(model, path, Some(&cache_root))?;
+    if json {
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    } else if result.passed {
+        println!("verified {} at {}", model.id, path.display());
+        if let Some(contract) = &result.model_contract {
+            println!("contract: {} ({}, {})", contract.id, contract.kernel_family, contract.status);
+            println!("claim boundary: {}", contract.claim_boundary);
+        }
+        if let Some(capability) = &result.model_capability {
+            println!(
+                "capability: {} ({}, {})",
+                capability.id, capability.model_family, capability.model_class
+            );
+            println!("claim boundary: {}", capability.claim_boundary);
+        }
+    }
+    if result.passed { Ok(()) } else { anyhow::bail!("model `{}` failed verification", model.id) }
+}
+
+fn verify_kaby_profile_artifact(
+    artifact: &'static KabyProfileArtifact,
+    path: &Path,
+    json: bool,
+) -> Result<()> {
+    let metadata = fs::metadata(path)
+        .with_context(|| format!("failed to inspect model artifact {}", path.display()))?;
+    let actual_bytes = metadata.len();
+    let actual_sha256 = compute_sha256(path)?;
+    print_kaby_profile_artifact_verification(artifact, path, actual_bytes, actual_sha256, json)
+}
+
+fn print_kaby_profile_artifact_verification(
+    artifact: &'static KabyProfileArtifact,
+    path: &Path,
+    actual_bytes: u64,
+    actual_sha256: String,
+    json: bool,
+) -> Result<()> {
+    let passed =
+        actual_bytes == artifact.bytes && actual_sha256.eq_ignore_ascii_case(artifact.sha256);
+    let result = KabyProfileArtifactVerifyResult {
+        id: artifact.id,
+        path: path.to_path_buf(),
+        expected_sha256: artifact.sha256,
+        actual_sha256,
+        expected_bytes: artifact.bytes,
+        actual_bytes,
+        passed,
+        artifact: *artifact,
+    };
+    if json {
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    } else if passed {
+        println!("verified {} at {}", artifact.id, path.display());
+        println!("profile: {} (verification-only artifact)", artifact.profile);
+        println!(
+            "claim boundary: exact {} / {} identity; no generic fetch or default claim",
+            artifact.architecture, artifact.quantization
+        );
+    } else {
+        println!("verification failed for {} at {}", artifact.id, path.display());
+    }
+    if passed {
+        Ok(())
+    } else {
+        anyhow::bail!("profile artifact `{}` failed verification", artifact.id)
+    }
 }
 
 fn verify_contract_without_supported_artifact(
@@ -2647,6 +2811,27 @@ fn find_supported_model(id: &str) -> Option<&'static SupportedModel> {
     })
 }
 
+fn find_supported_model_by_digest(bytes: u64, sha256: &str) -> Option<&'static SupportedModel> {
+    SUPPORTED_MODELS
+        .iter()
+        .find(|model| model.bytes == bytes && model.sha256.eq_ignore_ascii_case(sha256))
+}
+
+fn find_kaby_profile_artifact(id: &str) -> Option<&'static KabyProfileArtifact> {
+    KABY_PROFILE_ARTIFACTS.iter().find(|artifact| {
+        artifact.id.eq_ignore_ascii_case(id) || artifact.filename.eq_ignore_ascii_case(id)
+    })
+}
+
+fn find_kaby_profile_artifact_by_digest(
+    bytes: u64,
+    sha256: &str,
+) -> Option<&'static KabyProfileArtifact> {
+    KABY_PROFILE_ARTIFACTS
+        .iter()
+        .find(|artifact| artifact.bytes == bytes && artifact.sha256.eq_ignore_ascii_case(sha256))
+}
+
 fn resolve_cache_root(cache_dir: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(path) = cache_dir {
         return Ok(path);
@@ -3489,6 +3674,33 @@ mod tests {
 
         assert_eq!(by_alias.id, "microsoft-bitnet-b1.58-2B-4T-i2s");
         assert_eq!(by_case.id, "microsoft-bitnet-b1.58-2B-4T-i2s");
+    }
+
+    #[test]
+    fn artifact_lookup_requires_registered_size_and_sha256() -> anyhow::Result<()> {
+        let model = match find_supported_model_by_digest(
+            675_710_816,
+            "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        ) {
+            Some(model) => model,
+            None => return Err(anyhow::anyhow!("registered Qwen2.5 Q8_0 artifact is missing")),
+        };
+        assert_eq!(model.id, "qwen2.5-0.5b-instruct-q8_0");
+        assert!(find_supported_model_by_digest(675_710_816, "wrong").is_none());
+        assert!(find_supported_model_by_digest(1, model.sha256).is_none());
+
+        let kaby = match find_kaby_profile_artifact_by_digest(
+            639_446_688,
+            "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        ) {
+            Some(artifact) => artifact,
+            None => {
+                return Err(anyhow::anyhow!("registered Qwen3 Kaby profile artifact is missing"));
+            }
+        };
+        assert_eq!(kaby.id, "qwen3-0.6b-q8_0");
+        assert!(kaby.verification_only);
+        Ok(())
     }
 
     #[cfg(feature = "full-cli")]

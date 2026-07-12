@@ -485,7 +485,7 @@ fn slm_warm_session_help_documents_warm_receipts() {
         .success()
         .stdout(predicate::str::contains("one model/tokenizer load"))
         .stdout(predicate::str::contains("--profile <PROFILE>"))
-        .stdout(predicate::str::contains("kaby-qwen3-q8"))
+        .stdout(predicate::str::contains("kaby-qwen-q8"))
         .stdout(predicate::str::contains("--corpus"))
         .stdout(predicate::str::contains("--prompt"))
         .stdout(predicate::str::contains("--fail-on-quality"))
@@ -7401,7 +7401,7 @@ fn slm_warm_session_requires_multiple_prompts_before_loading_model() {
     bitnet()
         .args([
             "--device",
-            "apple-m4-cpu-neon",
+            "cpu",
             "slm-warm-session",
             "--model",
             "missing.gguf",
@@ -7448,14 +7448,14 @@ fn slm_warm_session_no_bias_kaby_profile_rejects_non_cpu_before_loading_model() 
             "--model",
             "models/slm/Qwen3-0.6B-Q8_0.gguf",
             "--profile",
-            "kaby-qwen3-q8",
+            "kaby-qwen-q8",
             "--json-out",
             "target/test-warm-session-kaby-profile.json",
         ])
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "slm-warm-session --profile kaby-qwen3-q8 requires --device cpu",
+            "slm-warm-session --profile kaby-qwen-q8 requires CPU routing",
         ));
 }
 
@@ -7469,7 +7469,7 @@ fn slm_warm_session_no_bias_kaby_profile_supplies_prompts_before_loading_model()
             "--model",
             "models/slm/Qwen3-0.6B-Q8_0.gguf",
             "--profile",
-            "kaby-qwen3-q8",
+            "kaby-qwen-q8",
             "--json-out",
             "target/test-warm-session-kaby-profile.json",
         ])
@@ -7599,7 +7599,7 @@ fn slm_warm_session_accepts_corpus_without_prompt_before_loading_model() {
     bitnet()
         .args([
             "--device",
-            "apple-m4-cpu-neon",
+            "cpu",
             "slm-warm-session",
             "--model",
             "missing.gguf",
