@@ -50,5 +50,5 @@
 | slm-cpu | SLM-CPU-247 | TBD | ready | none | Do not edit BitNet QK256/I2_S kernels. |
 | tl1 | TL1-PLAN-000 | TBD | ready | none | TL1 registration is not native BitNet-rs inference support. |
 | tl2 | TL2-DOCS-000 | TBD | ready | none | TL2 registration is not native BitNet-rs inference support. |
-| tracker-infra | TRACKER-004 | TBD | ready | none | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
+| tracker-infra | TRACKER-004 | #1742 | pr_open | none | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
 | wasm-inference | WASM-002 | TBD | ready | WASM-003 | WASM detection is not inference. |
