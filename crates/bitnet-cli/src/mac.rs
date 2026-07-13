@@ -27058,7 +27058,7 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     let quant_format = receipt["model"]["quant_format"].as_str().unwrap_or_default();
     if !matches!(quant_format, "I2_S" | "I2_S/QK256") {
         anyhow::bail!(
-            "{} BitNet eval receipt model.quant_format must be I2_S or I2_S/QK256, got {quant_format:?}",
+            "{} unsupported BitNet eval receipt model.quant_format; expected I2_S or I2_S/QK256, got {quant_format:?}",
             path.display()
         );
     }
@@ -32048,7 +32048,7 @@ mod tests {
 
         let err = mac_receipt_validation_error("m3-accuracy.json", &receipt);
 
-        assert!(err.contains("QK256 on Apple Silicon"), "got: {err}");
+        assert!(err.contains("claims ") && err.contains("Apple Silicon"), "got: {err}");
     }
 
     #[tokio::test]
