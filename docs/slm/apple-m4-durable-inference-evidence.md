@@ -188,15 +188,15 @@ dense benchmark, BitNet eval, and BitNet benchmark reports; it must not claim a
 trend for dense eval v2 or BitNet variable warm until another matching report is
 committed for those identities.
 
-## Operator Envelope V3
+## Operator Envelope V4
 
 `M4-DURABLE-005` publishes the durable refresh layer in:
 
 ```text
-docs/slm/apple-m4-operator-envelope-v3.md
+docs/slm/apple-m4-operator-envelope-v4.md
 ```
 
-The v3 envelope keeps the command-to-receipt map from
+The v4 envelope keeps the command-to-receipt map from
 `docs/slm/apple-m4-operator-envelope-v2.md` and adds the operating contract from
 the matching-history reports: refresh cadence, regression thresholds,
 `resident_100` dense status, BitNet durable status, disk/cache guidance, and
