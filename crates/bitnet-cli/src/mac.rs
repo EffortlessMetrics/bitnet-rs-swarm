@@ -3162,7 +3162,9 @@ fn apple_m4_inference_status_receipt(
     let rows = catalog["rows"].as_array().cloned().unwrap_or_default();
     let dense_rows = rows
         .iter()
-        .filter(|row| matches!(row["state"].as_str(), Some("default" | "supported")))
+        .filter(|row| {
+            matches!(row["state"].as_str(), Some("default" | "supported" | "supported-non-default"))
+        })
         .cloned()
         .collect::<Vec<_>>();
     let dense_ready =
@@ -3449,7 +3451,7 @@ fn apple_m4_route_state_matrix_json() -> serde_json::Value {
             "model_family": "all",
             "surface": "full_metal",
             "state": "unsupported",
-            "operator_class": "unsupported",
+            "operator_class": "diagnostic",
             "command": "do not use apple-m4-metal as a full inference route",
             "gate": "future phase-scoped Metal receipt required",
             "evidence_items": [],
@@ -3474,12 +3476,20 @@ fn apple_m4_route_state_matrix_json() -> serde_json::Value {
         "artifact_kind": "apple_m4_route_state_matrix",
         "model_free": true,
         "live_model_run": false,
+        "model_download": false,
         "generic_pr_ci_safe": true,
         "state_contract": {
             "enabled": "The route may run when its cache and gate preconditions pass.",
             "disabled_without_ready_gate": "The route exists but must fail closed unless a ready gate receipt is supplied.",
             "batch_only": "The route is valid but should be treated as slow or unattended based on recorded evidence.",
             "unsupported": "No accepted M4 Mac mini appliance receipt supports this route or claim."
+        },
+        "operator_class_contract": {
+            "interactive": "Bounded short local use is expected to be usable on the recorded identity.",
+            "advisory": "Usable local evidence exists, but operators must inspect receipts and limits.",
+            "batch": "Valid exact-profile work should be queued or unattended rather than promised as interactive.",
+            "diagnostic": "Proof or incomplete-history evidence is useful for diagnosis but is not a supported user route.",
+            "unsupported": "Do not route users or make a support claim."
         },
         "required_surfaces": ["ask", "chat", "warm_session", "serve", "streaming", "long_context", "full_metal", "qk256_neural_engine_mpsgraph_macbook_broad_apple_silicon"],
         "rows": rows,
@@ -3987,7 +3997,9 @@ fn apple_m4_operator_evidence_receipt(
     let rows = catalog["rows"].as_array().cloned().unwrap_or_default();
     let dense_rows = rows
         .iter()
-        .filter(|row| matches!(row["state"].as_str(), Some("default" | "supported")))
+        .filter(|row| {
+            matches!(row["state"].as_str(), Some("default" | "supported" | "supported-non-default"))
+        })
         .cloned()
         .collect::<Vec<_>>();
     let dense_ready =
@@ -4774,6 +4786,7 @@ fn collect_matching_reports(root: &Path, segment: &str, filename: &str, out: &mu
         if path.is_dir() {
             collect_matching_reports(&path, segment, filename, out);
         } else if path.file_name().and_then(|name| name.to_str()) == Some(filename)
+            && !path.components().any(|component| component.as_os_str() == "summary-runs")
             && path.components().any(|component| component.as_os_str() == segment)
         {
             out.push(path);
@@ -6311,6 +6324,9 @@ fn apple_m4_regression_dashboard_receipt(
             "matching_requires_same_artifact_kind": true,
             "matching_requires_same_backend": true,
             "matching_requires_fallback_false": true,
+            "variance_stats_exposed": true,
+            "operator_classes": ["interactive", "advisory", "batch", "diagnostic", "unsupported"],
+            "threshold_policy": "timing and memory drift are advisory by default; identity, timeout, fallback, and claim-boundary failures are hard blockers",
         },
         "families": families,
         "claim_boundary": {
@@ -6379,6 +6395,8 @@ fn apple_m4_regression_dashboard_family_json(family: &serde_json::Value) -> serd
         let baseline_path = baseline["path"].as_str().unwrap_or(latest_path);
         let (operator_status, operator_status_reason) =
             apple_m4_dashboard_group_operator_status(report_count, &latest, comparison_status);
+        let (operator_class, operator_class_reason) =
+            apple_m4_dashboard_operator_class(evidence_family, &latest, comparison_status);
         dashboard_groups.push(serde_json::json!({
             "group_key": group_key,
             "evidence_family": evidence_family,
@@ -6393,6 +6411,8 @@ fn apple_m4_regression_dashboard_family_json(family: &serde_json::Value) -> serd
             "comparison_status": comparison_status,
             "operator_status": operator_status,
             "operator_status_reason": operator_status_reason,
+            "operator_class": operator_class,
+            "operator_class_reason": operator_class_reason,
             "latest_report": latest_path,
             "baseline_report": if report_count > 1 { serde_json::Value::String(baseline_path.to_string()) } else { serde_json::Value::Null },
             "regression_command": format!("bitnet mac regression {latest_path} --baseline {baseline_path}"),
@@ -6535,6 +6555,67 @@ fn apple_m4_dashboard_group_operator_status(
     )
 }
 
+fn apple_m4_dashboard_operator_class(
+    evidence_family: &str,
+    latest: &serde_json::Value,
+    comparison_status: &str,
+) -> (&'static str, String) {
+    if latest["artifact_kind"].as_str() == Some("apple_m4_benchmark_variance_v1")
+        && latest["metrics"]["variance"]["comparison_readiness"]["can_compare_timing"].as_bool()
+            == Some(false)
+    {
+        return (
+            "diagnostic",
+            "variance evidence contains timeout or identity blockers; inspect it before using timing claims."
+                .to_string(),
+        );
+    }
+    if evidence_family == "bitnet" {
+        return (
+            "batch",
+            if comparison_status == "insufficient_history" {
+                "BitNet ask and warm evidence remains exact-profile batch evidence; trend history is incomplete."
+                    .to_string()
+            } else {
+                "BitNet ask and warm evidence remains exact-profile, repair-first batch evidence."
+                    .to_string()
+            },
+        );
+    }
+    if comparison_status == "insufficient_history" {
+        return (
+            "diagnostic",
+            "matching-history evidence is incomplete; collect another exact-identity report before interpreting drift."
+                .to_string(),
+        );
+    }
+    match evidence_family {
+        "dense_slm" => {
+            let model_id = latest["identity"]["model_id"].as_str().unwrap_or_default();
+            if model_id.contains("1.5b") {
+                (
+                    "advisory",
+                    "larger dense model remains receipt-reviewed for local use.".to_string(),
+                )
+            } else {
+                (
+                    "interactive",
+                    "supported dense 0.5B route has bounded local evidence.".to_string(),
+                )
+            }
+        }
+        "bitnet" => (
+            "batch",
+            "BitNet ask and warm evidence remains exact-profile, repair-first batch evidence."
+                .to_string(),
+        ),
+        _ => (
+            "unsupported",
+            "the evidence family is outside the supported M4 operator envelope.".to_string(),
+        ),
+    }
+}
+
 fn apple_m4_dashboard_group_key(family_id: &str, identity: &serde_json::Value) -> String {
     format!(
         "{}::{}::{}::{}::{}",
@@ -6641,7 +6722,103 @@ fn apple_m4_dashboard_metrics_json(receipt: &serde_json::Value) -> serde_json::V
                 .or_else(|| receipt["metrics"]["memory"]["memory_drift_mb_p50"]["p50"].as_f64())
                 .or_else(|| receipt["stability"]["memory_drift_mb"].as_f64()),
         },
+        "variance": apple_m4_dashboard_variance_json(receipt),
     })
+}
+
+fn apple_m4_dashboard_variance_json(receipt: &serde_json::Value) -> serde_json::Value {
+    let is_bitnet_variance = receipt["artifact_kind"].as_str()
+        == Some("bitnet_apple_m4_benchmark_v1")
+        && receipt["repeat"].is_object();
+    if is_bitnet_variance {
+        return serde_json::json!({
+            "repeat": receipt["repeat"].clone(),
+            "variance_band": {
+                "advisory_vs_failure": "timing and memory drift are advisory unless a later lane opts into fail-on-drift",
+                "default_action": "advisory",
+                "fail_on_drift_requires_explicit_opt_in": true,
+            },
+            "outlier_handling": {
+                "method": "retain_all_raw_samples",
+                "filtering": "none",
+                "review_signal": "p99_vs_p50_and_min_max",
+                "source": "legacy BitNet child path summaries",
+            },
+            "comparison_readiness": {
+                "status": "insufficient_history",
+                "can_compare_timing": false,
+                "reason": "one committed aggregate receipt is available for this exact BitNet identity",
+            },
+            "metrics": {
+                "speed": receipt["speed"].clone(),
+                "memory": receipt["memory"].clone(),
+            },
+            "paths": receipt["paths"].clone(),
+        });
+    }
+    let mut metrics = receipt["metrics"].clone();
+    apple_m4_dashboard_enrich_variance_stats(&mut metrics);
+    let mut variance_band = receipt["variance_band"].clone();
+    if variance_band["thresholds"].is_null() {
+        variance_band["thresholds"] = apple_m4_dashboard_thresholds_json();
+    }
+    let mut outlier_handling = receipt["outlier_handling"].clone();
+    if outlier_handling["method"].as_str() == Some("none") {
+        outlier_handling["method"] = serde_json::json!("retain_all_raw_samples");
+        outlier_handling["filtering"] = serde_json::json!("none");
+        outlier_handling["review_signal"] = serde_json::json!("p99_vs_p50_and_min_max");
+        outlier_handling["reason"] = serde_json::json!(
+            "legacy receipt samples are retained; the dashboard applies the current no-filter review policy"
+        );
+    }
+    serde_json::json!({
+        "repeat": receipt["repeat"].clone(),
+        "variance_band": variance_band,
+        "outlier_handling": outlier_handling,
+        "comparison_readiness": receipt["comparison_readiness"].clone(),
+        "metrics": metrics,
+        "paths": receipt["paths"].clone(),
+    })
+}
+
+fn apple_m4_dashboard_thresholds_json() -> serde_json::Value {
+    serde_json::json!({
+        "timing_advisory_percent": 15.0,
+        "peak_memory_advisory_percent": 10.0,
+        "memory_drift_advisory_percent": 15.0,
+        "hard_failure_conditions": [
+            "identity_mismatch",
+            "timeout_or_not_run",
+            "fallback_used",
+            "required_receipt_field_missing",
+            "claim_boundary_violation"
+        ],
+        "default_action": "advisory",
+        "fail_on_drift_requires_explicit_opt_in": true
+    })
+}
+
+fn apple_m4_dashboard_enrich_variance_stats(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Array(values) => {
+            for value in values {
+                apple_m4_dashboard_enrich_variance_stats(value);
+            }
+        }
+        serde_json::Value::Object(object) => {
+            if let Some(samples) = object.get("samples").and_then(serde_json::Value::as_array) {
+                let samples =
+                    samples.iter().filter_map(serde_json::Value::as_f64).collect::<Vec<_>>();
+                let stats = benchmark_stats(&samples);
+                object.entry("stddev").or_insert_with(|| optional_f64_json(stats.stddev));
+                object.entry("cv_pct").or_insert_with(|| optional_f64_json(stats.cv_pct));
+            }
+            for value in object.values_mut() {
+                apple_m4_dashboard_enrich_variance_stats(value);
+            }
+        }
+        _ => {}
+    }
 }
 
 fn apple_m4_regression_dashboard_markdown(receipt: &serde_json::Value) -> String {
@@ -8864,7 +9041,7 @@ fn mac_context_envelope_json(
             "max_prompt_tokens": recorded_max_prompt_tokens,
             "evidence_profile": evidence_profile,
             "recorded_profiles": family.recorded_profiles(),
-            "source": "docs/slm/apple-m4-operator-envelope-v3.md",
+            "source": "docs/slm/apple-m4-operator-envelope-v4.md",
             "long_context_proof_item": "M4-CONTEXT-002",
         },
         "claim_boundary": {
@@ -12993,7 +13170,10 @@ fn mac_serve_models_catalog_has_supported_model(body: &serde_json::Value, model_
     body["catalog"]["rows"].as_array().is_some_and(|rows| {
         rows.iter().any(|row| {
             row["id"].as_str() == Some(model_id)
-                && matches!(row["state"].as_str(), Some("default" | "supported"))
+                && matches!(
+                    row["state"].as_str(),
+                    Some("default" | "supported" | "supported-non-default")
+                )
                 && row["fetch_command"].as_str().is_some()
         })
     })
@@ -13051,7 +13231,10 @@ fn mac_serve_models_catalog_recommended_commands_are_coherent(body: &serde_json:
     body["catalog"]["rows"].as_array().is_some_and(|rows| {
         rows.iter().any(|row| {
             row["id"].as_str() == Some(model_id)
-                && matches!(row["state"].as_str(), Some("default" | "supported"))
+                && matches!(
+                    row["state"].as_str(),
+                    Some("default" | "supported" | "supported-non-default")
+                )
                 && row["fetch_command"].as_str().is_some()
                 && row["verify_command"].as_str().is_some()
         })
@@ -15638,10 +15821,26 @@ async fn run_benchmark_variance(request: MacBenchmarkSummaryRun<'_>, repeat: usi
             "reported_stats": ["count", "p50", "p90", "p99", "min", "max", "samples"],
             "threshold_derivation": "uses the M4 operator envelope drift thresholds; this harness records variance and does not decide final release failure",
             "advisory_vs_failure": "timing and memory drift are advisory unless a later lane opts into fail-on-drift",
+            "thresholds": {
+                "timing_advisory_percent": 15.0,
+                "peak_memory_advisory_percent": 10.0,
+                "memory_drift_advisory_percent": 15.0,
+                "hard_failure_conditions": [
+                    "identity_mismatch",
+                    "timeout_or_not_run",
+                    "fallback_used",
+                    "required_receipt_field_missing",
+                    "claim_boundary_violation"
+                ],
+                "default_action": "advisory",
+                "fail_on_drift_requires_explicit_opt_in": true
+            },
         },
         "outlier_handling": {
-            "method": "none",
-            "reason": "raw repeat samples are preserved; M4-BENCH-005 may define filtering policy for published envelopes",
+            "method": "retain_all_raw_samples",
+            "filtering": "none",
+            "review_signal": "p99_vs_p50_and_min_max",
+            "reason": "outliers are not silently removed; operators review raw samples and classify extreme values before publishing an envelope",
         },
         "comparison_readiness": {
             "status": comparison_status,
@@ -16919,6 +17118,8 @@ fn benchmark_stat_json(samples: &[f64]) -> serde_json::Value {
         "p99": optional_f64_json(stats.p99),
         "min": optional_f64_json(stats.min),
         "max": optional_f64_json(stats.max),
+        "stddev": optional_f64_json(stats.stddev),
+        "cv_pct": optional_f64_json(stats.cv_pct),
         "samples": samples.iter().map(|sample| round3(*sample)).collect::<Vec<_>>(),
     })
 }
@@ -16937,14 +17138,29 @@ struct BenchmarkStats {
     p99: Option<f64>,
     min: Option<f64>,
     max: Option<f64>,
+    stddev: Option<f64>,
+    cv_pct: Option<f64>,
 }
 
 fn benchmark_stats(samples: &[f64]) -> BenchmarkStats {
     let mut sorted = samples.iter().copied().filter(|value| value.is_finite()).collect::<Vec<_>>();
     sorted.sort_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal));
     if sorted.is_empty() {
-        return BenchmarkStats { count: 0, p50: None, p90: None, p99: None, min: None, max: None };
+        return BenchmarkStats {
+            count: 0,
+            p50: None,
+            p90: None,
+            p99: None,
+            min: None,
+            max: None,
+            stddev: None,
+            cv_pct: None,
+        };
     }
+    let mean = sorted.iter().sum::<f64>() / sorted.len() as f64;
+    let stddev = (sorted.iter().map(|value| (value - mean).powi(2)).sum::<f64>()
+        / sorted.len() as f64)
+        .sqrt();
     BenchmarkStats {
         count: sorted.len(),
         p50: Some(round3(percentile_nearest_rank(&sorted, 50.0))),
@@ -16952,6 +17168,12 @@ fn benchmark_stats(samples: &[f64]) -> BenchmarkStats {
         p99: Some(round3(percentile_nearest_rank(&sorted, 99.0))),
         min: sorted.first().map(|value| round3(*value)),
         max: sorted.last().map(|value| round3(*value)),
+        stddev: Some(round3(stddev)),
+        cv_pct: if mean.abs() > f64::EPSILON {
+            Some(round3(stddev / mean.abs() * 100.0))
+        } else {
+            None
+        },
     }
 }
 
@@ -24634,6 +24856,9 @@ fn require_apple_m4_route_state_matrix(path: &Path, receipt: &serde_json::Value)
     for state in ["enabled", "disabled_without_ready_gate", "batch_only", "unsupported"] {
         require_non_empty_string_at(path, matrix, &["state_contract", state])?;
     }
+    for class in ["interactive", "advisory", "batch", "diagnostic", "unsupported"] {
+        require_non_empty_string_at(path, matrix, &["operator_class_contract", class])?;
+    }
     require_non_empty_string_array_at(path, matrix, &["required_surfaces"])?;
 
     let rows = matrix["rows"]
@@ -24684,7 +24909,13 @@ fn require_apple_m4_route_state_matrix(path: &Path, receipt: &serde_json::Value)
         let operator_class = require_non_empty_string_at(path, row, &["operator_class"])?;
         if !matches!(
             operator_class,
-            "interactive_or_advisory_by_model" | "advisory" | "batch" | "disabled" | "unsupported"
+            "interactive_or_advisory_by_model"
+                | "interactive"
+                | "advisory"
+                | "batch"
+                | "diagnostic"
+                | "disabled"
+                | "unsupported"
         ) {
             anyhow::bail!(
                 "{} M4 route state matrix row {id} has unsupported operator_class {operator_class}",
@@ -26827,7 +27058,7 @@ fn validate_bitnet_eval_answer_corpus_receipt(
     let quant_format = receipt["model"]["quant_format"].as_str().unwrap_or_default();
     if !matches!(quant_format, "I2_S" | "I2_S/QK256") {
         anyhow::bail!(
-            "{} BitNet eval receipt model.quant_format must be I2_S or I2_S/QK256, got {quant_format:?}",
+            "{} unsupported BitNet eval receipt model.quant_format; expected I2_S or I2_S/QK256, got {quant_format:?}",
             path.display()
         );
     }
@@ -31817,7 +32048,7 @@ mod tests {
 
         let err = mac_receipt_validation_error("m3-accuracy.json", &receipt);
 
-        assert!(err.contains("QK256 on Apple Silicon"), "got: {err}");
+        assert!(err.contains("claims ") && err.contains("Apple Silicon"), "got: {err}");
     }
 
     #[tokio::test]
@@ -33975,9 +34206,11 @@ mod tests {
 
         assert_eq!(matrix["work_item"], "M4-ROUTE-MATRIX-001");
         assert_eq!(matrix["live_model_run"], false);
+        assert_eq!(matrix["model_download"], false);
         assert_eq!(matrix["claim_boundary"]["does_not_enable_disabled_routes"], true);
         assert_eq!(matrix["claim_boundary"]["bitnet_chat_enabled_by_default"], false);
         assert_eq!(matrix["claim_boundary"]["bitnet_serve_enabled_by_default"], false);
+        assert!(matrix["operator_class_contract"]["diagnostic"].is_string());
         assert!(rows.iter().any(|row| {
             row["id"] == "dense_slm.serve"
                 && row["state"] == "enabled"
@@ -33999,12 +34232,23 @@ mod tests {
         assert!(rows.iter().any(|row| {
             row["id"] == "apple_m4.full_metal"
                 && row["state"] == "unsupported"
+                && row["operator_class"] == "diagnostic"
                 && row["evidence_items"].as_array().is_some_and(|items| items.is_empty())
         }));
 
         let receipt = serde_json::json!({ "route_state_matrix": matrix });
         require_apple_m4_route_state_matrix(Path::new("route-state-matrix.json"), &receipt)?;
         Ok(())
+    }
+
+    #[test]
+    fn benchmark_stats_record_numeric_timing_variance() {
+        let stats = benchmark_stat_json(&[1.0, 3.0]);
+        assert_eq!(stats["count"], 2);
+        assert_eq!(stats["min"], 1.0);
+        assert_eq!(stats["max"], 3.0);
+        assert_eq!(stats["stddev"], 1.0);
+        assert_eq!(stats["cv_pct"], 50.0);
     }
 
     #[test]
@@ -34083,7 +34327,7 @@ mod tests {
             .as_array()
             .ok_or_else(|| std::io::Error::other("model rows"))?;
         assert!(rows.iter().any(|row| {
-            row["id"] == "qwen2.5-1.5b-instruct-q4_k_m" && row["state"] == "supported"
+            row["id"] == "qwen2.5-1.5b-instruct-q4_k_m" && row["state"] == "supported-non-default"
         }));
         assert!(rows.iter().any(|row| {
             row["id"] == "microsoft-bitnet-b1.58-2B-4T-i2s"

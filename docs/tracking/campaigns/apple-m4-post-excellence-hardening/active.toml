@@ -251,13 +251,15 @@ must_not_claim = [
 
 [[work_item]]
 id = "M4-HARDEN-006"
-status = "proposed"
+status = "pr_open"
 branch = "codex/apple-m4/M4-HARDEN-006-benchmark-operator-envelope"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 blocked_by = ["M4-HARDEN-005"]
+pr = 1739
+head_sha = "59ae1bcaa"
 acceptance = "Record benchmark repeat count, p50/p90/p99/min/max, memory drift, timing variance, outlier handling, and advisory-vs-failure thresholds; then classify operator envelopes as interactive, advisory, batch, diagnostic, or unsupported."
 commands = [
   "cargo fmt --all -- --check",

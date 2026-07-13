@@ -1,0 +1,11 @@
+timestamp = "2026-07-13T08:18:09Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-006"
+event = "pr_open"
+pr = 1739
+head_sha = "ab5543288"
+actor = "codex"
+notes = [
+  "Opened the benchmark variance and operator-envelope refresh PR in bitnet-rs-swarm.",
+  "The PR records exact dense and BitNet evidence-family statistics, normalizes legacy dashboard inputs, and keeps unsupported hardware and BitNet service claims closed.",
+]
