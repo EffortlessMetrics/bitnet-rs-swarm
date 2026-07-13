@@ -1,0 +1,12 @@
+timestamp = "2026-07-13T08:15:49Z"
+campaign = "apple-m4-post-excellence-hardening"
+item = "M4-HARDEN-006"
+event = "in_progress"
+previous_status = "proposed"
+branch = "codex/apple-m4/M4-HARDEN-006-benchmark-operator-envelope"
+actor = "codex"
+notes = [
+  "Started the benchmark variance and operator-envelope refresh after M4-HARDEN-005 merged.",
+  "Scope records repeat statistics, numeric timing variance, memory drift, structured threshold policy, outlier handling, and canonical operator classes for exact committed dense and BitNet evidence families.",
+  "Legacy variance receipts are normalized at the model-free dashboard boundary without rewriting raw samples or widening hardware, quality, speed, BitNet chat, or BitNet serve claims.",
+]

@@ -65,7 +65,7 @@ unchanged performance without matching benchmark identities.
 The command-to-receipt operator map lives in
 `docs/slm/apple-m4-operator-envelope-v2.md`. The durable refresh cadence,
 matching-history thresholds, `resident_100` status, and disk/cache guidance
-live in `docs/slm/apple-m4-operator-envelope-v3.md`.
+live in `docs/slm/apple-m4-operator-envelope-v4.md`.
 
 ```bash
 bitnet mac ask \
