@@ -35,10 +35,21 @@ The rollout preserves the existing budget vocabulary:
 | Windows multiplier | 2x Linux | Windows is label/main/release only unless explicitly scoped. |
 | GPU Docker multiplier | 6x Linux | Docker/GPU image work is label/main/manual only. |
 | Override labels | `full-ci`, `ci-budget-override`, `ci-budget-ack` | Explicitly authorize elevated budget. |
+| Hosted Rust-small fallback | `allow-github-hosted` | Authorizes only the pinned lean Rust-small fallback when no trusted self-hosted runner is online. |
 
 LEM means Linux-equivalent minutes. Runner multipliers are declared in
 `policy/ci-budget.toml`, `policy/ci-lanes.toml`, and
 `policy/ci-lane-whitelist.toml`.
+
+The routed Rust-small workflow prefers `cx53`/`cx43` self-hosted runners. A
+busy-but-online pool queues rather than spilling to hosted. Only a missing
+online trusted fleet plus an explicit `allow-github-hosted`, `full-ci`, or
+`ci-budget-ack` authorization selects the pinned `ubuntu-22.04` fallback.
+The separate `ci-budget-override` label may select the same bounded fallback
+when a runner is online but known to be unhealthy. The fallback is
+same-repository only and does not run
+Docker, models, GPU, hardware, coverage, fuzz, performance, or full-matrix
+lanes.
 
 ## Default PR boundaries
 

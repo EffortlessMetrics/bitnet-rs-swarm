@@ -29,6 +29,21 @@ no_docker_model_download_default_pr = true
 no_branch_protection_change_until_pr20 = true
 no_unrelated_runtime_changes = true
 
+[hosted_fallback]
+enabled = true
+lane = "rust-small"
+runner = "ubuntu-22.04"
+target = "github_hosted"
+only_when = "no_online_trusted_self_hosted_runner, or explicit ci-budget-override for known unhealthy runner"
+same_repository_only = true
+max_timeout_minutes = 20
+authorization_labels = ["allow-github-hosted", "full-ci", "ci-budget-ack", "ci-budget-override"]
+workflow_dispatch_input = "allow_github_hosted"
+heavy_lanes_allowed = false
+model_downloads_allowed = false
+docker_allowed = false
+gpu_or_hardware_allowed = false
+
 [pr_body_sections]
 required = [
   "Summary",

@@ -16,7 +16,8 @@ from campaign manifests and events.
 - BITNET-ADR-0005: [Proof Families Are Not Interchangeable](./BITNET-ADR-0005-proof-families-are-not-interchangeable.md)
 - BITNET-ADR-0006: [PR Closure Creates Backlog Unless Disposed](./BITNET-ADR-0006-pr-closure-creates-backlog.md)
 - BITNET-ADR-0007: [A770 Diagnostics Are Lineage](./BITNET-ADR-0007-a770-diagnostics-are-lineage.md)
-- BITNET-ADR-0008: [Self-Hosted-Only CI With No GitHub-Hosted Fallback](./BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md)
+- BITNET-ADR-0008: [Self-Hosted-Only CI With No GitHub-Hosted Fallback](./BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md) *(superseded)*
+- BITNET-ADR-0011: [Lean Opt-In GitHub-Hosted Rust Fallback](./BITNET-ADR-0011-lean-opt-in-github-hosted-fallback.md)
 - BITNET-ADR-0010: [Compute Dispatch Architecture](./BITNET-ADR-0010-compute-dispatch-architecture.md)
 
 ## Source-Of-Truth Role

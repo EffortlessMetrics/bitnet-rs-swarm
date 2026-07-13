@@ -249,7 +249,8 @@ and mirrored in `policy/ci-routed-rollout.toml`.
 | --- | --- | --- |
 | `full-ci` | All relevant expensive/deep lanes for the touched risk surface. | Explicitly opts out of the ordinary budget target. |
 | `ci-budget-ack` | Acknowledges a high estimated LEM plan once budget guard enforcement exists. | Allows high-but-bounded plans that are otherwise warned. |
-| `ci-budget-override` | Overrides the hard budget guard once enforcement exists. | Requires explicit maintainer intent. |
+| `ci-budget-override` | Overrides the hard budget guard once enforcement exists and may force the bounded hosted Rust-small recovery proof for a known unhealthy self-hosted runner. | Requires explicit maintainer intent. |
+| `allow-github-hosted` | Authorizes the lean hosted Rust-small fallback when no trusted self-hosted runner is online. | Does not select heavy, model, GPU, hardware, or full-matrix lanes. |
 | `macos` | Apple platform proof. | Runs macOS lanes only by label/main/manual/path-specific routing. |
 | `apple-silicon` | Apple Silicon CPU/NEON proof. | Runs Apple Silicon lanes only by label/main/manual/path-specific routing. |
 | `metal` | Metal compile/proof. | Runs Metal proof for Metal paths or explicit label. |

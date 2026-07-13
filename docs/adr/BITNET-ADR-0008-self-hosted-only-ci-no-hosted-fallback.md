@@ -1,13 +1,17 @@
 # BITNET-ADR-0008: Self-Hosted-Only CI With No GitHub-Hosted Fallback
 
-- **Status:** Accepted
+- **Status:** Superseded by BITNET-ADR-0011
 - **Date:** 2026-05-29
 - **Linked proposal/spec:** n/a (CI economics / runner policy decision)
 - **Linked plan:** [swarm-runner-rollout-plan.md](../development/swarm-runner-rollout-plan.md),
   [runner-baseline.md](../development/runner-baseline.md)
+- **Superseded by:** [BITNET-ADR-0011](./BITNET-ADR-0011-lean-opt-in-github-hosted-fallback.md)
 - **Supersedes (for `bitnet-rs-swarm` only):** the "hosted fallback preserved"
   and "release/publish/signing workflows touched" stop conditions of the swarm
   runner rollout plan.
+
+> This ADR is retained as historical context for the self-hosted-only period.
+> The current routing and fallback policy is defined by BITNET-ADR-0011.
 
 ## Context
 
