@@ -4969,6 +4969,70 @@ the default `eager_f32_candle` path, claim speedup, claim allocation reduction,
 claim sustained throughput, broaden Q4/Q5 support, touch server, GPU, NPU,
 OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
 
+## SLM-CPU-247 Kaby Optimized Opt-In Profile Surface
+
+SLM-CPU-247 consumes the SLM-CPU-246 role expansion policy and defines the
+operator-facing `slm-warm-session --profile kaby-qwen-q8` surface without
+changing the default runtime or enabling any new no-bias execution.
+
+```text
+artifact = ci/slm-cpu/intel-i5-8250u/2026-06-05/qwen3-qwen25-slm-cpu-247-kaby-optimized-opt-in-profile.json
+decision = kaby_qwen_q8_profile_contract_hardened_without_default_runtime_change
+profile_id = kaby-qwen-q8
+primary_model = Qwen3-0.6B-Q8_0.gguf
+second_model_proof = qwen2.5-0.5b-instruct-q8_0.gguf
+runtime_api = cpu
+selected_backend = cpu-rust
+fallback_required = false
+recommended_threads = 4
+default_path_when_gate_absent = eager_f32_candle
+candidate_execution_enabled_by_profile = false
+fresh_hardware_receipts_captured_in_slm_cpu_247 = false
+speedup_claim = false
+```
+
+When the profile is explicitly selected, it validates loaded GGUF metadata and
+requires user prompts or a corpus. It binds the loaded model to its exact
+architecture, Q8_0 format, SHA, strict tokenizer authority, chat template, and
+role-specific context limit (40,960 for Qwen3; 32,768 for Qwen2.5). It applies
+strict GGUF/tokenizer CPU settings, selects the model-specific Qwen template,
+uses four threads when the caller did not request a thread count, and records
+the profile contract in the aggregate receipt. `--self-test` opts into the
+four bounded prompts and quality/determinism checks; `--allocation-audit`
+independently opts into the instrumentation-heavy allocation receipt.
+
+This slice does not capture fresh Kaby hardware receipts, execute a new
+candidate path, promote the no-bias runtime, claim speedup, claim allocation
+reduction, claim sustained throughput, broaden Q4/Q5 support, touch server,
+GPU, NPU, OpenVINO, UHD 620, Qwen3.5, or BitNet QK256/I2_S paths.
+
+The operator readiness surface is now explicit:
+
+```text
+bitnet profile show kaby-qwen-q8
+bitnet model verify <verified.gguf>
+bitnet doctor --profile kaby-qwen-q8 --model <verified.gguf>
+bitnet slm-warm-session --profile kaby-qwen-q8 --model <verified.gguf> --prompt "..." --prompt "..."
+bitnet slm-warm-session --profile kaby-qwen-q8 --self-test --model <verified.gguf>
+```
+
+`profile show` is model-free. `doctor` validates loaded GGUF architecture,
+quantization, SHA, tokenizer authority, chat-template metadata, CPU features,
+RAM, storage, thread recommendation, and unsupported paths without inference.
+`model verify <verified.gguf>` accepts an artifact path and authorizes it by an
+exact registered profile/artifact size/SHA pair; filenames do not establish
+model identity, and the Kaby entries remain verification-only rather than
+generic fetch/default-model claims.
+Normal profile use requires explicit prompts or a corpus; `--self-test` opts
+into the bounded quality/determinism prompts, and `--allocation-audit` remains
+an independent proof-mode flag.
+
+The self-test corpus is model-specific: Qwen3 uses repeated water and
+capital-of-France cases from the established CPU answer receipts; Qwen2.5 uses
+its separate repeated `2+2` and capital-of-France cases. The corpus does not
+use the known Qwen3 arithmetic diagnostic or an inexact exact-match response as
+a passing criterion.
+
 SLM-CPU-101 defines that typed attention-head view as a runtime-disabled
 contract. The exact Q projection can be represented as a logical
 `[batch, n_heads, seq, head_dim]` view over packed-Q8 matvec output storage

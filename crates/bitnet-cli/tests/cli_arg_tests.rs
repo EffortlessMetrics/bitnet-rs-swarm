@@ -484,6 +484,8 @@ fn slm_warm_session_help_documents_warm_receipts() {
         .assert()
         .success()
         .stdout(predicate::str::contains("one model/tokenizer load"))
+        .stdout(predicate::str::contains("--profile <PROFILE>"))
+        .stdout(predicate::str::contains("kaby-qwen-q8"))
         .stdout(predicate::str::contains("--corpus"))
         .stdout(predicate::str::contains("--prompt"))
         .stdout(predicate::str::contains("--fail-on-quality"))
@@ -494,6 +496,25 @@ fn slm_warm_session_help_documents_warm_receipts() {
         .stdout(predicate::str::contains("--quiet"))
         .stdout(predicate::str::contains("--json-out"))
         .stdout(predicate::str::contains("qwen2.5"));
+}
+
+#[test]
+fn slm_warm_session_no_bias_kaby_profile_rejects_unknown_profile_before_loading_model() {
+    bitnet()
+        .args([
+            "--device",
+            "cpu",
+            "slm-warm-session",
+            "--model",
+            "models/slm/Qwen3-0.6B-Q8_0.gguf",
+            "--profile",
+            "unknown",
+            "--json-out",
+            "target/test-warm-session-kaby-profile.json",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("unsupported slm-warm-session --profile unknown"));
 }
 
 #[test]
@@ -7429,7 +7450,7 @@ fn slm_warm_session_requires_multiple_prompts_before_loading_model() {
     bitnet()
         .args([
             "--device",
-            "apple-m4-cpu-neon",
+            "cpu",
             "slm-warm-session",
             "--model",
             "missing.gguf",
@@ -7464,6 +7485,48 @@ fn slm_warm_session_requires_supported_cpu_receipt_label_before_loading_model() 
         .assert()
         .failure()
         .stderr(predicate::str::contains("cpu, apple-m4-cpu-neon, or apple-m3-air-cpu-neon"));
+}
+
+#[test]
+fn slm_warm_session_no_bias_kaby_profile_rejects_non_cpu_before_loading_model() {
+    bitnet()
+        .args([
+            "--device",
+            "apple-m4-cpu-neon",
+            "slm-warm-session",
+            "--model",
+            "models/slm/Qwen3-0.6B-Q8_0.gguf",
+            "--profile",
+            "kaby-qwen-q8",
+            "--json-out",
+            "target/test-warm-session-kaby-profile.json",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "slm-warm-session --profile kaby-qwen-q8 requires CPU routing",
+        ));
+}
+
+#[test]
+fn slm_warm_session_no_bias_kaby_profile_supplies_prompts_before_loading_model() {
+    bitnet()
+        .args([
+            "--device",
+            "cpu",
+            "slm-warm-session",
+            "--model",
+            "models/slm/Qwen3-0.6B-Q8_0.gguf",
+            "--profile",
+            "kaby-qwen-q8",
+            "--json-out",
+            "target/test-warm-session-kaby-profile.json",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Failed to load real model").and(
+            predicate::str::contains("requires at least two --prompt values or --corpus").not(),
+        ));
 }
 
 #[test]
@@ -7585,7 +7648,7 @@ fn slm_warm_session_accepts_corpus_without_prompt_before_loading_model() {
     bitnet()
         .args([
             "--device",
-            "apple-m4-cpu-neon",
+            "cpu",
             "slm-warm-session",
             "--model",
             "missing.gguf",

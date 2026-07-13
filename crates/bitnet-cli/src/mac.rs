@@ -9827,6 +9827,7 @@ async fn run_bitnet_warm(request: BitnetWarmRun<'_>) -> Result<()> {
     let warm_session = crate::run_slm_warm_session(
         APPLE_M4_CPU_NEON,
         model.path.clone(),
+        None,
         "gguf".to_string(),
         Some(tokenizer.clone()),
         None,
@@ -14347,6 +14348,7 @@ async fn run_chat_session(
     crate::run_slm_warm_session(
         APPLE_M4_CPU_NEON,
         model.path.clone(),
+        None,
         "auto".to_string(),
         None,
         None,
@@ -14537,6 +14539,7 @@ async fn run_bitnet_chat_session(request: BitnetChatRun<'_>) -> Result<()> {
     crate::run_slm_warm_session(
         APPLE_M4_CPU_NEON,
         model.path.clone(),
+        None,
         "gguf".to_string(),
         Some(tokenizer.clone()),
         None,
@@ -14684,6 +14687,7 @@ async fn run_validate(request: MacValidateRun<'_>) -> Result<()> {
     crate::run_slm_warm_session(
         requested_backend,
         model.path.clone(),
+        None,
         "auto".to_string(),
         None,
         Some(corpus.clone()),
@@ -17313,6 +17317,7 @@ async fn run_warm_profile_set(
         crate::run_slm_warm_session(
             requested_backend,
             model.path.clone(),
+            None,
             "auto".to_string(),
             None,
             None,
