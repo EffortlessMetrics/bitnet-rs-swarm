@@ -165,6 +165,11 @@ pub struct AnswerCorpusCommand {
     #[arg(long, value_enum, value_name = "KERNEL")]
     pub cpu_kernel: Option<AnswerCpuKernel>,
 
+    /// Keep the verified BitNet model and tokenizer resident while executing the
+    /// selected M3 Air corpus cases. Each case receives an isolated KV cache.
+    #[arg(long, default_value_t = false)]
+    pub resident_session: bool,
+
     /// Run only matching corpus case IDs. Repeat to run multiple cases.
     #[arg(long = "case-id", value_name = "ID")]
     pub case_ids: Vec<String>,
@@ -217,6 +222,13 @@ impl AnswerCorpusCommand {
         if self.cpu_kernel.is_some() && device != "cpu" {
             anyhow::bail!("--cpu-kernel is only valid with --device cpu");
         }
+        if self.resident_session
+            && (device != APPLE_M3_AIR_CPU_NEON || corpus.artifact_kind != "bitnet_answer_corpus")
+        {
+            anyhow::bail!(
+                "--resident-session is currently scoped to the strict BitNet M3 Air answer corpus; use --device {APPLE_M3_AIR_CPU_NEON} with a bitnet_answer_corpus"
+            );
+        }
         if self.cpu_kernel == Some(AnswerCpuKernel::Avx2) && !cpu_avx2_available() {
             anyhow::bail!("--cpu-kernel avx2 requested but AVX2 is unavailable on this host");
         }
@@ -248,15 +260,52 @@ impl AnswerCorpusCommand {
         let selected_case_ids: Vec<String> =
             selected_cases.iter().map(|case| case.id.clone()).collect();
 
-        let exe = std::env::current_exe().context("failed to resolve current bitnet executable")?;
         let mut rows = Vec::with_capacity(selected_cases.len());
-        for case in selected_cases {
-            let row = if self.dry_run {
-                self.not_run_row(case, "dry_run_requested")
-            } else {
-                self.run_case(&exe, &receipt_dir, &corpus, case, &device, default_timeout_seconds)?
-            };
-            rows.push(row);
+        let resident_session_summary: Option<Value>;
+        if self.resident_session && !self.dry_run {
+            let mut session = ResidentBitNetAnswerSession::load(
+                &self.model,
+                self.tokenizer.as_deref(),
+                &corpus.defaults,
+                &model_identity,
+                corpus.model.tokenizer_authority.as_ref(),
+            )?;
+            for (case_index, case) in selected_cases.iter().enumerate() {
+                session.record_case_attempt();
+                let row = self.run_resident_case(
+                    &mut session,
+                    &receipt_dir,
+                    &corpus,
+                    case,
+                    &device,
+                    default_timeout_seconds,
+                    case_index,
+                );
+                rows.push(match row {
+                    Ok(row) => row,
+                    Err(error) => resident_failure_row(case, &device, case_index, &session, &error),
+                });
+            }
+            resident_session_summary = Some(session.summary());
+        } else {
+            let exe =
+                std::env::current_exe().context("failed to resolve current bitnet executable")?;
+            for case in selected_cases {
+                let row = if self.dry_run {
+                    self.not_run_row(case, "dry_run_requested")
+                } else {
+                    self.run_case(
+                        &exe,
+                        &receipt_dir,
+                        &corpus,
+                        case,
+                        &device,
+                        default_timeout_seconds,
+                    )?
+                };
+                rows.push(row);
+            }
+            resident_session_summary = None;
         }
         ensure_rows_match_model_identity(&rows, &model_identity)?;
         if corpus.artifact_kind == "bitnet_answer_corpus" {
@@ -424,6 +473,7 @@ impl AnswerCorpusCommand {
                 "fallback_used": top_level_fallback_used,
             },
             "execution_plan": aggregate_execution_plan,
+            "resident_session": resident_session_summary,
             "proof_route_contract": proof_route_contract,
             "prompt_template_policy": {
                 "family": corpus.defaults.prompt_template.as_str(),
@@ -779,6 +829,155 @@ impl AnswerCorpusCommand {
         }))
     }
 
+    fn run_resident_case(
+        &self,
+        session: &mut ResidentBitNetAnswerSession,
+        receipt_dir: &Path,
+        corpus: &AnswerCorpus,
+        case: &AnswerCase,
+        device: &str,
+        timeout_seconds: u64,
+        case_index: usize,
+    ) -> Result<Value> {
+        let case_receipt = receipt_dir.join(format!("{}.json", sanitize_file_stem(&case.id)));
+        let max_new_tokens = case.max_new_tokens.unwrap_or(corpus.defaults.max_new_tokens);
+        let run_receipt = session.generate(case, max_new_tokens, case_index, device)?;
+        fs::write(&case_receipt, serde_json::to_vec_pretty(&run_receipt)?)?;
+
+        let answer = run_receipt["text"].as_str().unwrap_or_default().to_string();
+        let token_ids = generated_token_ids(&run_receipt);
+        let min_generated_tokens =
+            case.min_generated_tokens.or(corpus.defaults.min_generated_tokens);
+        let min_distinct_generated_tokens =
+            case.min_distinct_generated_tokens.or(corpus.defaults.min_distinct_generated_tokens);
+        let mut quality = evaluate_quality(
+            &answer,
+            &case.gate,
+            case.scoring.as_ref(),
+            Some(&token_ids),
+            min_generated_tokens,
+            min_distinct_generated_tokens,
+        );
+        quality.failed_rules.extend(answer_receipt_failed_rules(&run_receipt, device));
+        let effective_timeout_seconds = case.timeout_seconds.unwrap_or(timeout_seconds);
+        if run_receipt["timing"]["total_ms"].as_f64().unwrap_or_default()
+            > (effective_timeout_seconds as f64 * 1000.0)
+        {
+            quality.failed_rules.push("timeout".to_string());
+            quality.failure_taxonomy.push("timeout".to_string());
+        }
+        quality.passed = quality.failed_rules.is_empty();
+        let status = if quality.failed_rules.iter().any(|rule| rule == "timeout") {
+            "timeout"
+        } else if quality.passed {
+            "passed"
+        } else {
+            "quality_failed"
+        };
+        let failure_category_labels = failure_categories_for_case(
+            case.task_family(),
+            status,
+            &quality.failed_rules,
+            &quality.failure_taxonomy,
+            quality.scoring.as_ref().map(|scoring| scoring.kind.as_str()),
+        );
+        let failure_categories = failure_category_fields(&failure_category_labels);
+        let generated_token_count = run_receipt["tokens"]["generated"]
+            .as_u64()
+            .and_then(|value| usize::try_from(value).ok())
+            .unwrap_or(token_ids.len());
+
+        Ok(json!({
+            "id": case.id,
+            "task_family": case.task_family(),
+            "category": case.category.as_deref().unwrap_or_else(|| case.task_family()),
+            "profile": case.profile(),
+            "seed_material": case.seed_material,
+            "question": case.question,
+            "status": status,
+            "run_receipt_path": case_receipt.display().to_string(),
+            "answer": answer,
+            "tokens": run_receipt["tokens"].clone(),
+            "token_ids": {
+                "prompt": run_receipt["tokens"]["prompt_ids"].clone(),
+                "generated": run_receipt["tokens"]["generated_ids"].clone(),
+            },
+            "logits_dump": Value::Null,
+            "logits_index_boundary": Value::Null,
+            "prompt": {
+                "rendered_text": run_receipt["prompt_render"]["rendered_text"].clone(),
+                "rendered_sha256": run_receipt["prompt_render"]["rendered_sha256"].clone(),
+                "template_family": corpus.defaults.prompt_template,
+                "qwen_no_think": false,
+                "add_bos": run_receipt["prompt_render"]["add_bos"].clone(),
+                "add_special": run_receipt["prompt_render"]["parse_special"].clone(),
+            },
+            "prompt_generation_identity": Value::Null,
+            "prompt_template": corpus.defaults.prompt_template,
+            "prompt_prefill": {
+                "exercised": true,
+                "tokens": run_receipt["timing"]["prefill_tokens"].clone(),
+                "duration_ms": run_receipt["timing"]["prefill_ms"].clone(),
+            },
+            "position": { "next_decode_position": run_receipt["tokens"]["prompt"].clone() },
+            "quality": {
+                "passed": quality.passed,
+                "printable_utf8": quality.printable_utf8,
+                "non_empty_answer": quality.non_empty_answer,
+                "no_replacement_chars": quality.no_replacement_chars,
+                "no_raw_special_tokens": quality.no_raw_special_tokens,
+                "mostly_text": quality.mostly_text,
+                "generated_tokens": generated_token_count,
+                "distinct_generated_tokens": quality.distinct_generated_tokens,
+                "min_generated_tokens": min_generated_tokens,
+                "min_distinct_generated_tokens": min_distinct_generated_tokens,
+                "gate_kind": case.gate.kind,
+                "scoring": scoring_result_json(quality.scoring.as_ref()),
+                "failed_rules": quality.failed_rules,
+                "failure_taxonomy": quality.failure_taxonomy,
+                "failure_category_labels": failure_category_labels,
+                "failure_categories": failure_categories,
+            },
+            "backend": {
+                "requested_backend": run_receipt["requested_backend"].clone(),
+                "selected_backend": run_receipt["selected_backend"].clone(),
+                "runtime_api": run_receipt["runtime_api"].clone(),
+                "fallback_used": run_receipt["fallback_used"].clone(),
+            },
+            "timing": run_receipt["timing"].clone(),
+            "latency": run_receipt["latency"].clone(),
+            "throughput": run_receipt["throughput"].clone(),
+            "execution_coverage": Value::Null,
+            "qk256_hot_path": run_receipt["qk256_hot_path"].clone(),
+            "execution_plan": Value::Null,
+            "proof_summary": Value::Null,
+            "kernel": {
+                "selected_kernel": run_receipt["kernel"]["kernel_id"].clone(),
+                "family": run_receipt["kernel"]["family"].clone(),
+                "hot_path_kernel": run_receipt["kernel"]["hot_path_kernel_id"].clone(),
+            },
+            "loader": run_receipt["loader"].clone(),
+            "tokenizer": run_receipt["tokenizer"].clone(),
+            "reference_comparison": reference_comparison_json(
+                case,
+                Some(&answer),
+                Some(&token_ids),
+                &run_receipt["selected_backend"],
+                &run_receipt["runtime_api"],
+                &run_receipt["fallback_used"],
+            ),
+            "model": run_receipt["model"].clone(),
+            "resident_session": {
+                "enabled": true,
+                "case_index": case_index,
+                "model_loaded_once": true,
+                "tokenizer_loaded_once": true,
+                "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+                "timeout_enforcement": "post_completion_observation",
+            },
+        }))
+    }
+
     fn not_run_row(&self, case: &AnswerCase, reason: &str) -> Value {
         json!({
             "id": case.id,
@@ -818,6 +1017,541 @@ impl AnswerCorpusCommand {
             ),
         })
     }
+}
+
+fn resident_failure_row(
+    case: &AnswerCase,
+    device: &str,
+    case_index: usize,
+    session: &ResidentBitNetAnswerSession,
+    error: &anyhow::Error,
+) -> Value {
+    let failed_rules = vec!["command_failed".to_string()];
+    let failure_taxonomy = vec!["resident_session_error".to_string()];
+    let failure_category_labels = failure_categories_for_case(
+        case.task_family(),
+        "command_failed",
+        &failed_rules,
+        &failure_taxonomy,
+        case.scoring.as_ref().map(AnswerScoring::kind),
+    );
+    let failure_categories = failure_category_fields(&failure_category_labels);
+    json!({
+        "id": case.id,
+        "task_family": case.task_family(),
+        "category": case.category.as_deref().unwrap_or_else(|| case.task_family()),
+        "profile": case.profile(),
+        "seed_material": case.seed_material,
+        "question": case.question,
+        "status": "command_failed",
+        "resident_session_error": format!("{error:#}"),
+        "quality": {
+            "passed": false,
+            "failed_rules": failed_rules,
+            "failure_taxonomy": failure_taxonomy,
+            "failure_category_labels": failure_category_labels,
+            "failure_categories": failure_categories,
+            "scoring": scoring_not_run_json(case.scoring.as_ref()),
+        },
+        "backend": {
+            "requested_backend": device,
+            "selected_backend": device,
+            "runtime_api": answer_corpus_runtime_api(device),
+            "fallback_used": false,
+            "source": "resident_answer_corpus",
+        },
+        "kernel": {
+            "selected_kernel": Value::Null,
+            "family": Value::Null,
+            "hot_path_kernel": Value::Null,
+            "source": "resident_session_error",
+        },
+        "model": session.model_receipt(),
+        "tokens": Value::Null,
+        "token_ids": {
+            "prompt": Value::Null,
+            "generated": Value::Null,
+        },
+        "resident_session": {
+            "enabled": true,
+            "case_index": case_index,
+            "model_loaded_once": true,
+            "tokenizer_loaded_once": true,
+            "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            "timeout_enforcement": "post_completion_observation",
+        },
+    })
+}
+
+struct ResidentBitNetAnswerSession {
+    model: std::sync::Arc<dyn bitnet_models::Model>,
+    config: bitnet_common::BitNetConfig,
+    tokenizer: std::sync::Arc<dyn bitnet_tokenizers::Tokenizer + Send + Sync>,
+    template: bitnet_inference::TemplateType,
+    model_load_ms: f64,
+    tokenizer_load_ms: f64,
+    model_path: PathBuf,
+    model_sha256: String,
+    tokenizer_sha256: String,
+    started_at: Instant,
+    case_generation_total_ms: f64,
+    cases_attempted: usize,
+}
+
+impl ResidentBitNetAnswerSession {
+    fn load(
+        model_path: &Path,
+        tokenizer_path: Option<&Path>,
+        defaults: &CorpusDefaults,
+        expected_model: &AnswerCorpusModelIdentity,
+        expected_tokenizer: Option<&CorpusTokenizerAuthority>,
+    ) -> Result<Self> {
+        use bitnet_models::loader::{LoadConfig, ModelLoader};
+
+        if !defaults.greedy || defaults.temperature != 0.0 || defaults.qwen_no_think {
+            anyhow::bail!(
+                "--resident-session requires the strict deterministic BitNet corpus defaults (greedy, temperature=0, no qwen-no-think)"
+            );
+        }
+        let model_load_start = Instant::now();
+        let loader = ModelLoader::new(bitnet_common::Device::Cpu);
+        let loaded_model = loader
+            .load_with_config(
+                model_path,
+                &LoadConfig { use_mmap: true, validate_checksums: false, progress_callback: None },
+            )
+            .with_context(|| {
+                format!("failed to load resident BitNet model {}", model_path.display())
+            })?;
+        let config = loaded_model.config().clone();
+        let model: std::sync::Arc<dyn bitnet_models::Model> = std::sync::Arc::from(loaded_model);
+        let model_sha256 = sha256_file(model_path)?;
+        verify_resident_model_identity(expected_model, model_path, &model_sha256)?;
+        let model_load_ms = model_load_start.elapsed().as_secs_f64() * 1000.0;
+
+        let tokenizer_load_start = Instant::now();
+        let tokenizer_sha256 =
+            verify_resident_tokenizer_identity(expected_tokenizer, tokenizer_path)?;
+        let tokenizer =
+            bitnet_tokenizers::auto::resolve_tokenizer(model_path, tokenizer_path, true)
+                .with_context(|| {
+                    format!(
+                        "failed to resolve strict resident BitNet tokenizer for {}",
+                        model_path.display()
+                    )
+                })?;
+        if !tokenizer.strict || tokenizer.source.as_str() != "explicit" {
+            anyhow::bail!(
+                "--resident-session requires the explicit strict external tokenizer authority; resolved source={} strict={}",
+                tokenizer.source.as_str(),
+                tokenizer.strict
+            );
+        }
+        let tokenizer_load_ms = tokenizer_load_start.elapsed().as_secs_f64() * 1000.0;
+        let template: bitnet_inference::TemplateType =
+            defaults.prompt_template.parse().with_context(|| {
+                format!("invalid resident prompt template {}", defaults.prompt_template)
+            })?;
+
+        Ok(Self {
+            model,
+            config,
+            tokenizer: tokenizer.tokenizer,
+            template,
+            model_load_ms,
+            tokenizer_load_ms,
+            model_path: model_path.to_path_buf(),
+            model_sha256,
+            tokenizer_sha256,
+            started_at: model_load_start,
+            case_generation_total_ms: 0.0,
+            cases_attempted: 0,
+        })
+    }
+
+    fn record_case_attempt(&mut self) {
+        self.cases_attempted += 1;
+    }
+
+    fn model_receipt(&self) -> Value {
+        json!({
+            "repo": "microsoft/bitnet-b1.58-2B-4T-gguf",
+            "file": self.model_path.file_name().and_then(|name| name.to_str()).unwrap_or("ggml-model-i2_s.gguf"),
+            "sha256": self.model_sha256,
+            "family": "bitnet",
+            "architecture": "bitnet-b1.58",
+            "quant_format": "I2_S/QK256",
+            "vocab_size": self.config.model.vocab_size,
+            "tie_word_embeddings": Value::Null,
+            "output_head_tensor": "output.weight",
+        })
+    }
+
+    fn generate(
+        &mut self,
+        case: &AnswerCase,
+        max_new_tokens: usize,
+        case_index: usize,
+        device: &str,
+    ) -> Result<Value> {
+        use bitnet_models::transformer::KVCache;
+        use bitnet_sampling::SamplingStrategy;
+        use sha2::{Digest, Sha256};
+
+        let started = Instant::now();
+        let qk256_before = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
+        let formatted_prompt = self.template.apply(&case.question, None);
+        let mut prompt_hasher = Sha256::new();
+        prompt_hasher.update(formatted_prompt.as_bytes());
+        let rendered_sha256 = format!("{:x}", prompt_hasher.finalize());
+        let mut token_ids = self.tokenizer.encode(
+            &formatted_prompt,
+            self.template.should_add_bos(),
+            self.template.parse_special(),
+        )?;
+        if token_ids.is_empty() {
+            anyhow::bail!("resident BitNet prompt tokenization produced no tokens for {}", case.id);
+        }
+        let prompt_token_ids = token_ids.clone();
+        let tokenize_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let available_new_tokens = self
+            .config
+            .model
+            .max_position_embeddings
+            .checked_sub(prompt_token_ids.len())
+            .ok_or_else(|| {
+                anyhow::anyhow!("resident BitNet prompt exceeds model context window")
+            })?;
+        if available_new_tokens == 0 {
+            anyhow::bail!(
+                "resident BitNet prompt leaves no generation capacity in the model context window"
+            );
+        }
+        let effective_max_new_tokens = max_new_tokens.min(available_new_tokens);
+        let max_seq_len = prompt_token_ids
+            .len()
+            .checked_add(effective_max_new_tokens)
+            .ok_or_else(|| anyhow::anyhow!("resident BitNet sequence length overflow"))?;
+        let mut cache =
+            KVCache::new_with_max_seq_len(&self.config, 1, &candle_core::Device::Cpu, max_seq_len)?;
+        let prefill_start = Instant::now();
+        for token in &token_ids[..token_ids.len().saturating_sub(1)] {
+            let embedding = self.model.embed(&[*token])?;
+            let _ = self.model.forward(&embedding, &mut cache as &mut dyn std::any::Any)?;
+        }
+        let prefill_ms = prefill_start.elapsed().as_secs_f64() * 1000.0;
+        let mut sampler = SamplingStrategy::new(resident_greedy_sampling_config());
+        let stop_ids = self.template.resolve_stop_token_ids(self.tokenizer.as_ref());
+        let mut generated_ids = Vec::with_capacity(effective_max_new_tokens);
+        let decode_start = Instant::now();
+        let mut first_token_ms = None;
+        for _ in 0..effective_max_new_tokens {
+            let last_token = *token_ids.last().ok_or_else(|| {
+                anyhow::anyhow!("resident BitNet generation context unexpectedly became empty")
+            })?;
+            let embedding = self.model.embed(&[last_token])?;
+            let hidden = self.model.forward(&embedding, &mut cache as &mut dyn std::any::Any)?;
+            let last_hidden = resident_last_hidden(&hidden)?;
+            let logits = self.model.logits(&last_hidden)?;
+            let logits = resident_logits(&logits)?;
+            let next = sampler.sample(&logits, &generated_ids)?;
+            token_ids.push(next);
+            generated_ids.push(next);
+            first_token_ms.get_or_insert_with(|| started.elapsed().as_millis() as u64);
+            if stop_ids.contains(&next) || self.tokenizer.eos_token_id() == Some(next) {
+                break;
+            }
+        }
+        let decode_total_ms = decode_start.elapsed().as_secs_f64() * 1000.0;
+        let text = self.tokenizer.decode(&generated_ids)?;
+        let total_ms = started.elapsed().as_secs_f64() * 1000.0;
+        self.case_generation_total_ms += total_ms;
+        let qk256_after = bitnet_qk256_dispatch::qk256_cpu_hot_path_counters();
+        let qk256_hot_path =
+            resident_qk256_receipt(&resident_qk256_delta(&qk256_before, &qk256_after));
+        let generated = generated_ids.len();
+        let total_tokens = prompt_token_ids.len() + generated;
+
+        Ok(json!({
+            "schema_version": "1.0.0",
+            "artifact_kind": "inference_result",
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "resident_session_case_index": case_index,
+            "text": text,
+            "requested_backend": device,
+            "selected_backend": device,
+            "runtime_api": "cpu-neon",
+            "fallback_used": false,
+            "model": self.model_receipt(),
+            "tokenizer": {
+                "source": "explicit",
+                "strict": true,
+                "type": "llama3",
+                "pretokenizer_authority": "llama-bpe",
+                "authority": {
+                    "source": "external_tokenizer_json",
+                    "sha256": self.tokenizer_sha256,
+                    "ggml_pre": "llama-bpe",
+                },
+            },
+            "loader": { "mode": "real_gguf" },
+            "kernel": {
+                "kernel_id": "i2_s-scalar-reference",
+                "family": "i2_s",
+                "hot_path_kernel_id": qk256_hot_path["selected_kernel"].clone(),
+            },
+            "prompt_render": {
+                "template_family": "bitnetcpp-answer",
+                "rendered_text": formatted_prompt,
+                "rendered_sha256": rendered_sha256,
+                "add_bos": self.template.should_add_bos(),
+                "parse_special": self.template.parse_special(),
+            },
+            "tokens": {
+                "prompt": prompt_token_ids.len(),
+                "generated": generated,
+                "total": total_tokens,
+                "prompt_ids": prompt_token_ids,
+                "generated_ids": generated_ids,
+            },
+            "timing": {
+                "model_load_ms": if case_index == 0 { self.model_load_ms } else { 0.0 },
+                "tokenizer_load_ms": if case_index == 0 { self.tokenizer_load_ms } else { 0.0 },
+                "tokenize_ms": tokenize_ms,
+                "prefill_ms": prefill_ms,
+                "prefill_tokens": token_ids.len().saturating_sub(generated + 1),
+                "first_token_ms": first_token_ms,
+                "decode_total_ms": decode_total_ms,
+                "total_ms": total_ms,
+                "decode_steady_state_tok_s": if decode_total_ms > 0.0 { generated as f64 / (decode_total_ms / 1000.0) } else { 0.0 },
+                "sampling_ms_per_token": 0.0,
+            },
+            "latency": {
+                "cmd_to_first_ms": first_token_ms,
+                "decode_first_ms": first_token_ms,
+                "total_ms": total_ms,
+            },
+            "throughput": {
+                "decoded_tokens": generated,
+                "tokens_per_second": if total_ms > 0.0 { generated as f64 / (total_ms / 1000.0) } else { 0.0 },
+            },
+            "qk256_hot_path": qk256_hot_path,
+            "resident_session": {
+                "model_loaded_once": true,
+                "tokenizer_loaded_once": true,
+                "case_index": case_index,
+                "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            },
+        }))
+    }
+
+    fn summary(&self) -> Value {
+        json!({
+            "enabled": true,
+            "model_load_count": 1,
+            "tokenizer_load_count": 1,
+            "case_count": self.cases_attempted,
+            "model_load_ms": self.model_load_ms,
+            "tokenizer_load_ms": self.tokenizer_load_ms,
+            "case_generation_total_ms": self.case_generation_total_ms,
+            "total_wall_ms": self.started_at.elapsed().as_secs_f64() * 1000.0,
+            "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            "timeout_enforcement": "post_completion_observation",
+        })
+    }
+}
+
+fn resident_greedy_sampling_config() -> bitnet_sampling::SamplingConfig {
+    bitnet_sampling::SamplingConfig {
+        temperature: 0.0,
+        top_k: 0,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        seed: None,
+    }
+}
+
+fn verify_resident_model_identity(
+    expected: &AnswerCorpusModelIdentity,
+    observed_path: &Path,
+    observed_sha256: &str,
+) -> Result<()> {
+    let observed_file =
+        observed_path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    if observed_file != expected.file {
+        anyhow::bail!(
+            "--resident-session model file must match the corpus authority: expected {}, got {}",
+            expected.file,
+            observed_file
+        );
+    }
+    if let Some(expected_sha256) = expected.sha256.as_deref() {
+        if observed_sha256 != expected_sha256 {
+            anyhow::bail!(
+                "--resident-session model SHA-256 does not match the corpus authority: expected {}, got {}",
+                expected_sha256,
+                observed_sha256
+            );
+        }
+    }
+    Ok(())
+}
+
+fn verify_resident_tokenizer_identity(
+    expected: Option<&CorpusTokenizerAuthority>,
+    observed_path: Option<&Path>,
+) -> Result<String> {
+    let expected = expected.ok_or_else(|| {
+        anyhow::anyhow!(
+            "--resident-session requires tokenizer authority in the answer-corpus manifest"
+        )
+    })?;
+    if expected.source != "external_tokenizer_json" {
+        anyhow::bail!(
+            "--resident-session requires external_tokenizer_json authority; got {}",
+            expected.source
+        );
+    }
+    if expected.ggml_pre.as_deref() != Some("llama-bpe") {
+        anyhow::bail!(
+            "--resident-session requires llama-bpe tokenizer authority; got {}",
+            expected.ggml_pre.as_deref().unwrap_or("<missing>")
+        );
+    }
+    let expected_sha256 = expected.sha256.as_deref().ok_or_else(|| {
+        anyhow::anyhow!(
+            "--resident-session requires tokenizer SHA-256 authority in the answer-corpus manifest"
+        )
+    })?;
+    let observed_path = observed_path.ok_or_else(|| {
+        anyhow::anyhow!("--resident-session requires an explicit external tokenizer path")
+    })?;
+    let observed_sha256 = sha256_file(observed_path)?;
+    if observed_sha256 != expected_sha256 {
+        anyhow::bail!(
+            "--resident-session tokenizer SHA-256 does not match the corpus authority: expected {}, got {}",
+            expected_sha256,
+            observed_sha256
+        );
+    }
+    Ok(observed_sha256)
+}
+
+fn resident_last_hidden(
+    tensor: &bitnet_common::ConcreteTensor,
+) -> Result<bitnet_common::ConcreteTensor> {
+    use bitnet_common::{BitNetError, ConcreteTensor, Tensor as _};
+
+    let shape = tensor.shape();
+    if shape.len() != 3 {
+        return Err(
+            BitNetError::Validation("resident generation expected 3D hidden state".into()).into()
+        );
+    }
+    match tensor {
+        ConcreteTensor::BitNet(tensor) => {
+            let last = tensor.as_candle().narrow(1, shape[1] - 1, 1)?.squeeze(1)?;
+            Ok(ConcreteTensor::BitNet(bitnet_common::BitNetTensor::new(last)))
+        }
+        ConcreteTensor::Mock(_) => {
+            anyhow::bail!("resident generation does not accept mock tensors")
+        }
+    }
+}
+
+fn resident_logits(tensor: &bitnet_common::ConcreteTensor) -> Result<Vec<f32>> {
+    use bitnet_common::{BitNetError, ConcreteTensor, Tensor as _};
+    use candle_core::IndexOp;
+
+    if tensor.shape().len() != 2 {
+        return Err(BitNetError::Validation("resident generation expected 2D logits".into()).into());
+    }
+    match tensor {
+        ConcreteTensor::BitNet(tensor) => {
+            let logits = tensor.as_candle().i(0)?;
+            let logits = if logits.dtype() == candle_core::DType::F32 {
+                logits
+            } else {
+                logits.to_dtype(candle_core::DType::F32)?
+            };
+            Ok(logits.to_vec1::<f32>()?)
+        }
+        ConcreteTensor::Mock(_) => anyhow::bail!("resident generation does not accept mock logits"),
+    }
+}
+
+fn resident_qk256_receipt(counters: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters) -> Value {
+    let scaled = counters
+        .qk256_i8s_scaled_scalar_invocations
+        .saturating_add(counters.qk256_i8s_scaled_avx2_invocations);
+    json!({
+        "counter_source": "bitnet_qk256_dispatch::qk256_cpu_hot_path_counters",
+        "qk256_f32_scalar_gemv_invocations": counters.qk256_f32_scalar_gemv_invocations,
+        "qk256_f32_avx2_gemv_invocations": counters.qk256_f32_avx2_gemv_invocations,
+        "qk256_i8s_scaled_scalar_invocations": counters.qk256_i8s_scaled_scalar_invocations,
+        "qk256_i8s_scaled_avx2_invocations": counters.qk256_i8s_scaled_avx2_invocations,
+        "qk256_flat_bytes_extracted_count": counters.qk256_flat_bytes_extracted_count,
+        "input_rows_materialized_count": counters.input_rows_materialized_count,
+        "output_rows_allocated_count": counters.output_rows_allocated_count,
+        "no_scale_f32_gemv_invocations": counters.qk256_f32_scalar_gemv_invocations.saturating_add(counters.qk256_f32_avx2_gemv_invocations),
+        "scaled_i2s_i8s_gemv_invocations": scaled,
+        "audited_tensor_materialization_count": counters.qk256_flat_bytes_extracted_count.saturating_add(counters.input_rows_materialized_count).saturating_add(counters.output_rows_allocated_count),
+        "requested_kernel": counters.requested_kernel,
+        "selected_kernel": counters.selected_kernel,
+        "qk256_execution_path": counters.qk256_execution_path,
+        "math_changed": false,
+        "speedup_claim": false,
+    })
+}
+
+fn resident_qk256_delta(
+    before: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+    after: &bitnet_qk256_dispatch::Qk256CpuHotPathCounters,
+) -> bitnet_qk256_dispatch::Qk256CpuHotPathCounters {
+    bitnet_qk256_dispatch::Qk256CpuHotPathCounters {
+        qk256_f32_scalar_gemv_invocations: after
+            .qk256_f32_scalar_gemv_invocations
+            .saturating_sub(before.qk256_f32_scalar_gemv_invocations),
+        qk256_f32_avx2_gemv_invocations: after
+            .qk256_f32_avx2_gemv_invocations
+            .saturating_sub(before.qk256_f32_avx2_gemv_invocations),
+        qk256_i8s_scaled_scalar_invocations: after
+            .qk256_i8s_scaled_scalar_invocations
+            .saturating_sub(before.qk256_i8s_scaled_scalar_invocations),
+        qk256_i8s_scaled_avx2_invocations: after
+            .qk256_i8s_scaled_avx2_invocations
+            .saturating_sub(before.qk256_i8s_scaled_avx2_invocations),
+        qk256_flat_bytes_extracted_count: after
+            .qk256_flat_bytes_extracted_count
+            .saturating_sub(before.qk256_flat_bytes_extracted_count),
+        input_rows_materialized_count: after
+            .input_rows_materialized_count
+            .saturating_sub(before.input_rows_materialized_count),
+        output_rows_allocated_count: after
+            .output_rows_allocated_count
+            .saturating_sub(before.output_rows_allocated_count),
+        requested_kernel: after.requested_kernel.clone(),
+        selected_kernel: after.selected_kernel.clone(),
+        qk256_execution_path: after.qk256_execution_path,
+    }
+}
+
+fn sha256_file(path: &Path) -> Result<String> {
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+
+    let mut file =
+        File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 65_536];
+    loop {
+        let read = file.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 #[derive(Debug, Deserialize)]
@@ -4583,6 +5317,71 @@ cases:
             answer_corpus_backend_lane(APPLE_M3_AIR_CPU_NEON, false, "bitnet"),
             "apple_m3_air_cpu_neon"
         );
+    }
+
+    #[test]
+    fn resident_model_identity_rejects_untrusted_file_or_hash() {
+        let expected = AnswerCorpusModelIdentity {
+            id: None,
+            repo: "microsoft/bitnet-b1.58-2B-4T-gguf".to_string(),
+            revision: None,
+            file: "ggml-model-i2_s.gguf".to_string(),
+            sha256: Some("accepted-sha".to_string()),
+            bytes: None,
+            family: Some("bitnet".to_string()),
+            architecture: Some("bitnet-b1.58".to_string()),
+            quant_format: Some("I2_S/QK256".to_string()),
+            tokenizer_authority: Some("external_tokenizer_json".to_string()),
+        };
+
+        assert!(
+            verify_resident_model_identity(
+                &expected,
+                Path::new("ggml-model-i2_s.gguf"),
+                "accepted-sha",
+            )
+            .is_ok()
+        );
+        assert!(
+            verify_resident_model_identity(&expected, Path::new("untrusted.gguf"), "accepted-sha",)
+                .is_err()
+        );
+        assert!(
+            verify_resident_model_identity(
+                &expected,
+                Path::new("ggml-model-i2_s.gguf"),
+                "untrusted-sha",
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn resident_tokenizer_identity_rejects_missing_or_mismatched_authority() {
+        let authority = CorpusTokenizerAuthority {
+            source: "external_tokenizer_json".to_string(),
+            repo: None,
+            revision: None,
+            sha256: Some("not-the-cargo-manifest-hash".to_string()),
+            ggml_pre: Some("llama-bpe".to_string()),
+        };
+
+        assert!(verify_resident_tokenizer_identity(None, Some(Path::new("Cargo.toml"))).is_err());
+        assert!(verify_resident_tokenizer_identity(Some(&authority), None).is_err());
+        assert!(
+            verify_resident_tokenizer_identity(Some(&authority), Some(Path::new("Cargo.toml")))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn resident_greedy_sampling_has_no_repetition_penalty() {
+        let config = resident_greedy_sampling_config();
+        assert_eq!(config.temperature, 0.0);
+        assert_eq!(config.top_k, 0);
+        assert_eq!(config.top_p, 1.0);
+        assert_eq!(config.repetition_penalty, 1.0);
+        assert_eq!(config.seed, None);
     }
 
     #[test]

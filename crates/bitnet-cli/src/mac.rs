@@ -2366,6 +2366,7 @@ async fn run_mac_long_context_eval(request: MacEvalRun) -> Result<()> {
             dump_logit_steps: None,
             logits_topk: 10,
             cpu_kernel: None,
+            resident_session: false,
             case_ids: Vec::new(),
         };
         command.execute(APPLE_M4_CPU_NEON).await?;
@@ -27386,6 +27387,51 @@ fn validate_apple_m3_bitnet_local_answer_boundary(
     ] {
         require_bool_at(path, receipt, &["claim_boundary", claim], false)?;
     }
+    if !receipt["resident_session"].is_null() {
+        require_bool_at(path, receipt, &["resident_session", "enabled"], true)?;
+        require_u64_exact(path, receipt, &["resident_session", "model_load_count"], 1)?;
+        require_u64_exact(path, receipt, &["resident_session", "tokenizer_load_count"], 1)?;
+        let case_count = require_u64_at(path, receipt, &["resident_session", "case_count"], true)?;
+        if case_count != receipt["cases"].as_array().map(Vec::len).unwrap_or_default() as u64 {
+            anyhow::bail!(
+                "{} M3 resident-session case_count must match cases length",
+                path.display()
+            );
+        }
+        require_exact_string_at(
+            path,
+            receipt,
+            &["resident_session", "kv_cache_reuse_policy"],
+            "recreated_per_case_for_prompt_isolation",
+        )?;
+        require_exact_string_at(
+            path,
+            receipt,
+            &["resident_session", "timeout_enforcement"],
+            "post_completion_observation",
+        )?;
+        let cases = receipt["cases"].as_array().ok_or_else(|| {
+            anyhow!("{} M3 resident-session receipt cases must be an array", path.display())
+        })?;
+        for (index, case) in cases.iter().enumerate() {
+            require_bool_at(path, case, &["resident_session", "enabled"], true)?;
+            require_u64_exact(path, case, &["resident_session", "case_index"], index as u64)?;
+            require_bool_at(path, case, &["resident_session", "model_loaded_once"], true)?;
+            require_bool_at(path, case, &["resident_session", "tokenizer_loaded_once"], true)?;
+            require_exact_string_at(
+                path,
+                case,
+                &["resident_session", "kv_cache_reuse_policy"],
+                "recreated_per_case_for_prompt_isolation",
+            )?;
+            require_exact_string_at(
+                path,
+                case,
+                &["resident_session", "timeout_enforcement"],
+                "post_completion_observation",
+            )?;
+        }
+    }
 
     Ok(())
 }
@@ -32109,6 +32155,34 @@ mod tests {
         assert_eq!(summary.selected_backend, APPLE_M3_AIR_CPU_NEON);
         assert_eq!(summary.prompt_count, Some(2));
         assert_eq!(summary.generated_tokens, Some(3));
+        Ok(())
+    }
+
+    #[test]
+    fn apple_m3_bitnet_receipts_check_accepts_resident_answer_corpus()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut receipt = test_apple_m3_bitnet_local_answer_corpus_receipt();
+        receipt["resident_session"] = serde_json::json!({
+            "enabled": true,
+            "model_load_count": 1,
+            "tokenizer_load_count": 1,
+            "case_count": 2,
+            "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            "timeout_enforcement": "post_completion_observation",
+        });
+        let cases = receipt["cases"].as_array_mut().ok_or("cases must be an array")?;
+        for (index, case) in cases.iter_mut().enumerate() {
+            case["resident_session"] = serde_json::json!({
+                "enabled": true,
+                "case_index": index,
+                "model_loaded_once": true,
+                "tokenizer_loaded_once": true,
+                "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+                "timeout_enforcement": "post_completion_observation",
+            });
+        }
+
+        validate_mac_receipt_value(Path::new("m3-bitnet-resident-answer.json"), &receipt)?;
         Ok(())
     }
 
