@@ -50,5 +50,5 @@
 | slm-cpu | Small dense model CPU proof | SLM-CPU-247 | Do not edit BitNet QK256/I2_S kernels. |
 | tl1 | TL1 ARM table lookup route | TL1-PLAN-000 | TL1 registration is not native BitNet-rs inference support. |
 | tl2 | TL2 x86 table lookup route | TL2-DOCS-000 | TL2 registration is not native BitNet-rs inference support. |
-| tracker-infra | Tracker infrastructure | TRACKER-003 | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
+| tracker-infra | Tracker infrastructure | TRACKER-004 | Do not touch runtime code, kernels, or dependencies for tracker infrastructure. |
 | wasm-inference | WASM inference proof lane | WASM-002 | WASM detection is not inference. |

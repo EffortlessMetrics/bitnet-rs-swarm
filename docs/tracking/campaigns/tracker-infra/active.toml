@@ -127,3 +127,44 @@ must_not_claim = [
   "Runtime behavior changed.",
   "Legacy global tracking has been removed.",
 ]
+
+[[work_item]]
+id = "TRACKER-004"
+status = "ready"
+branch = "codex/tracker-infra/TRACKER-004-concurrent-lane-routing"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["TRACKER-003"]
+acceptance = "Define the repo-level goal surface as optional routing and discovery rather than a global executable queue, make campaign-local manifests the concurrent work authority, clarify one-work-item and stackability scope, and add focused regression evidence that independent campaigns may be active simultaneously."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p xtask --no-default-features campaign::tests",
+  "cargo run --locked -p xtask --no-default-features -- campaign check tracker-infra",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  ".bitnet-rs/goals/**",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "docs/reference/SPEC_SYSTEM.md",
+  "docs/tracking/TRACKER_MODEL.md",
+  "docs/tracking/campaigns/tracker-infra/**",
+  "docs/tracking/generated/**",
+  "xtask/src/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "crates/**",
+  "tests/**",
+]
+may_claim = [
+  "Repo-level goal routing no longer implies that independent campaign lanes are globally serialized.",
+]
+must_not_claim = [
+  "Runtime or CI routing behavior changed.",
+  "Campaign collision, dependency, or per-PR scope rules were removed.",
+]
