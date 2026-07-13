@@ -18281,38 +18281,41 @@ mod tests {
 
     #[test]
     fn ask_default_receipt_path_selects_user_and_strict_profiles() {
-        let default = ask_default_receipt_path(false, false).unwrap();
         assert_eq!(
-            default,
-            std::path::PathBuf::from("target")
-                .join("bitnet")
-                .join("receipts")
-                .join("ask")
-                .join("ask-latest.json")
+            ask_default_receipt_path(false, false),
+            Some(
+                std::path::PathBuf::from("target")
+                    .join("bitnet")
+                    .join("receipts")
+                    .join("ask")
+                    .join("ask-latest.json")
+            )
         );
         assert!(
             ask_default_receipt_path(true, true).is_none(),
             "mutually exclusive strict modes are rejected before receipt resolution"
         );
 
-        let cuda = ask_default_receipt_path(true, false).unwrap();
         assert_eq!(
-            cuda,
-            std::path::PathBuf::from("target")
-                .join("bitnet")
-                .join("receipts")
-                .join("cuda-answer-readiness")
-                .join("strict-cuda-ask-latest.json")
+            ask_default_receipt_path(true, false),
+            Some(
+                std::path::PathBuf::from("target")
+                    .join("bitnet")
+                    .join("receipts")
+                    .join("cuda-answer-readiness")
+                    .join("strict-cuda-ask-latest.json")
+            )
         );
 
-        let cpu = ask_default_receipt_path(false, true).unwrap();
         assert_eq!(
-            cpu,
-            std::path::PathBuf::from("target")
-                .join("bitnet")
-                .join("receipts")
-                .join("cuda-answer-readiness")
-                .join("strict-cpu-ask-latest.json")
+            ask_default_receipt_path(false, true),
+            Some(
+                std::path::PathBuf::from("target")
+                    .join("bitnet")
+                    .join("receipts")
+                    .join("cuda-answer-readiness")
+                    .join("strict-cpu-ask-latest.json")
+            )
         );
     }
 

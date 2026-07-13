@@ -29,6 +29,21 @@ no_docker_model_download_default_pr = true
 no_branch_protection_change_until_pr20 = true
 no_unrelated_runtime_changes = true
 
+[hosted_fallback]
+enabled = true
+lane = "rust-small"
+runner = "ubuntu-22.04"
+target = "github_hosted"
+only_when = "no_online_trusted_self_hosted_runner, or explicit ci-budget-override for known unhealthy runner"
+same_repository_only = true
+max_timeout_minutes = 20
+authorization_labels = ["allow-github-hosted", "full-ci", "ci-budget-ack", "ci-budget-override"]
+workflow_dispatch_input = "allow_github_hosted"
+heavy_lanes_allowed = false
+model_downloads_allowed = false
+docker_allowed = false
+gpu_or_hardware_allowed = false
+
 [pr_body_sections]
 required = [
   "Summary",
@@ -250,17 +265,22 @@ validation = [
 
 [[work_item]]
 id = 10
-title = "feature-matrix: reduce ordinary PR feature smoke"
+title = "feature-matrix: remove duplicate ordinary PR feature smoke"
 phase = 3
 files = [
   ".github/workflows/feature-matrix.yml",
-  ".github/workflows/pr-gate.yml",
   "policy/ci-lane-whitelist.toml",
   "policy/ci-risk-packs.toml",
   "policy/ci-lanes.toml",
-  "docs/ci/cost-and-verification-policy.md",
+  "xtask/src/ci/plan.rs",
+  "scripts/ci_plan_fast_path.py",
+  "docs/ci/inventory.md",
+  "docs/ci/labels.md",
+  "docs/ci/pr-gate-success.md",
+  "docs/ci/routed-verification-rollout.md",
 ]
 labels = ["full-cli", "feature-matrix", "full-ci"]
+remove_default_lanes = ["feature-matrix-pr"]
 validation = [
   "git diff --check",
   "cargo run --locked -p xtask --no-default-features -- ci-lane-whitelist check",

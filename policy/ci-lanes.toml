@@ -39,12 +39,6 @@ runner = "ubuntu_22_04"
 default_pr = true
 blocking = true
 
-[lane.feature-matrix-pr]
-base_lem = 8
-runner = "ubuntu_22_04"
-default_pr = true
-blocking = true
-
 [lane.feature-matrix-full-cli]
 base_lem = 5
 runner = "ubuntu_22_04"
