@@ -1487,6 +1487,17 @@ fn mac_regression_dashboard_writes_model_free_artifacts() -> Result<(), Box<dyn 
     assert_eq!(receipt_json["claim_boundary"]["dashboard_only"], true);
     assert_eq!(receipt_json["claim_boundary"]["no_live_model_run"], true);
     assert_eq!(receipt_json["claim_boundary"]["dense_slm_and_bitnet_evidence_separated"], true);
+    assert!(
+        receipt_json["dashboard_contract"]["operator_classes"]
+            .as_array()
+            .is_some_and(|classes| classes.iter().any(|class| class == "diagnostic"))
+    );
+    assert!(receipt_json["dashboard_contract"]["threshold_policy"].as_str().is_some_and(
+        |policy| {
+            policy.contains("timing and memory drift are advisory")
+                && policy.contains("identity, timeout, fallback")
+        }
+    ));
     let families =
         receipt_json["families"].as_array().ok_or_else(|| std::io::Error::other("families"))?;
     assert!(families.iter().any(|family| {
@@ -1509,6 +1520,44 @@ fn mac_regression_dashboard_writes_model_free_artifacts() -> Result<(), Box<dyn 
             && family["evidence_family"] == "bitnet"
             && family["group_count"].as_u64().is_some_and(|count| count >= 1)
             && family["claim_boundary"]["dense_slm_evidence"] == false
+    }));
+    assert!(families.iter().any(|family| {
+        family["id"] == "bitnet_benchmark_variance"
+            && family["report_count"] == 1
+            && family["groups"].as_array().is_some_and(|groups| {
+                groups.iter().all(|group| {
+                    group["operator_class"] == "batch"
+                        && group["operator_class_reason"]
+                            .as_str()
+                            .is_some_and(|reason| reason.contains("trend history is incomplete"))
+                        && group["latest_metrics"]["variance"]["repeat"]["completed"] == 2
+                        && group["latest_metrics"]["variance"]["metrics"]["speed"].is_object()
+                        && !group["latest_report"]
+                            .as_str()
+                            .is_some_and(|path| path.contains("summary-runs"))
+                })
+            })
+    }));
+    assert!(families.iter().any(|family| {
+        family["id"] == "dense_slm_benchmark_variance"
+            && family["groups"].as_array().is_some_and(|groups| {
+                groups.iter().any(|group| {
+                    group["operator_class"] == "diagnostic"
+                        && group["operator_class_reason"]
+                            .as_str()
+                            .is_some_and(|reason| reason.contains("timeout or identity blockers"))
+                        && group["latest_metrics"]["variance"]["repeat"]["completed"]
+                            .as_u64()
+                            .is_some()
+                        && group["latest_metrics"]["variance"]["variance_band"]["thresholds"]["timing_advisory_percent"]
+                            == 15.0
+                        && group["latest_metrics"]["variance"]["outlier_handling"]["method"]
+                            == "retain_all_raw_samples"
+                        && group["latest_metrics"]["variance"]["metrics"]["speed"]["ttft_ms_p50"]["stddev"]
+                            .is_number()
+                        && group["latest_metrics"]["variance"]["metrics"]["speed"].is_object()
+                })
+            })
     }));
     let markdown_body = std::fs::read_to_string(&markdown)?;
     assert!(markdown_body.contains("Apple M4 Inference Regression Dashboard"));

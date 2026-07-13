@@ -175,7 +175,7 @@
 | apple-m4-post-excellence-hardening | M4-HARDEN-003 | M4-HARDEN-002 | merged |
 | apple-m4-post-excellence-hardening | M4-HARDEN-004 | M4-HARDEN-003 | merged |
 | apple-m4-post-excellence-hardening | M4-HARDEN-005 | M4-HARDEN-004 | merged |
-| apple-m4-post-excellence-hardening | M4-HARDEN-006 | M4-HARDEN-005 | proposed |
+| apple-m4-post-excellence-hardening | M4-HARDEN-006 | M4-HARDEN-005 | pr_open |
 | apple-m4-productization | M4-PROD-002 | M4-PROD-001 | merged |
 | apple-m4-productization | M4-PROD-003 | M4-PROD-002 | merged |
 | apple-m4-productization | M4-PROD-004 | M4-PROD-003 | merged |
@@ -1138,6 +1138,7 @@
 | slm-cpu | SLM-CPU-165 | SLM-CPU-164 | merged |
 | tracker-infra | TRACKER-002 | TRACKER-001 | merged |
 | tracker-infra | TRACKER-003 | TRACKER-002 | merged |
+| tracker-infra | TRACKER-004 | TRACKER-003 | ready |
 | wasm-inference | WASM-002 | WASM-001 | ready |
 | wasm-inference | WASM-003 | WASM-002 | ready |
 | wasm-inference | WASM-004 | WASM-003 | ready |

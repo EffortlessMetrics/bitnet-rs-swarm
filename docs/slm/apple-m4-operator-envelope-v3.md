@@ -1,5 +1,10 @@
 # Apple M4 Operator Envelope V3
 
+> Superseded for current hardening work by
+> [`apple-m4-operator-envelope-v4.md`](apple-m4-operator-envelope-v4.md), which
+> adds numeric timing variance, structured thresholds, outlier handling, and
+> canonical operator classes. This document remains the historical V3 record.
+
 This envelope refreshes the M4 Mac mini operator contract after the durable
 evidence campaign added matching-history reports. It extends the command map in
 `docs/slm/apple-m4-operator-envelope-v2.md` with refresh cadence, regression
