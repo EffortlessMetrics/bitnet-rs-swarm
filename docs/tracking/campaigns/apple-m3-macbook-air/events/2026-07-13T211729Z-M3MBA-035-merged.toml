@@ -1,0 +1,14 @@
+timestamp = "2026-07-13T21:17:29Z"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-035"
+event = "merged"
+pr = 1711
+head_sha = "572b78b2ca87039daff150e25aef8fdf67934c4e"
+merge_sha = "0964214f1427274e3dfe95f6527fcf75b5e7f958"
+actor = "codex"
+
+notes = [
+  "Merged resident model and tokenizer reuse for the exact M3 Air BitNet five-case corpus.",
+  "Local release evidence preserved exact generated text and token IDs, strict tokenizer identity, fallback=false, fresh per-case KV caches, and one model/tokenizer load per corpus.",
+  "The measured result remains local M3 Air CPU/NEON evidence and does not promote broad Apple, M4, accelerator, chat, serve, or server claims.",
+]
