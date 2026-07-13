@@ -268,6 +268,7 @@ impl AnswerCorpusCommand {
                 self.tokenizer.as_deref(),
                 &corpus.defaults,
                 &model_identity,
+                corpus.model.tokenizer_authority.as_ref(),
             )?;
             for (case_index, case) in selected_cases.iter().enumerate() {
                 session.record_case_attempt();
@@ -1091,6 +1092,7 @@ struct ResidentBitNetAnswerSession {
     tokenizer_load_ms: f64,
     model_path: PathBuf,
     model_sha256: String,
+    tokenizer_sha256: String,
     started_at: Instant,
     case_generation_total_ms: f64,
     cases_attempted: usize,
@@ -1102,6 +1104,7 @@ impl ResidentBitNetAnswerSession {
         tokenizer_path: Option<&Path>,
         defaults: &CorpusDefaults,
         expected_model: &AnswerCorpusModelIdentity,
+        expected_tokenizer: Option<&CorpusTokenizerAuthority>,
     ) -> Result<Self> {
         use bitnet_models::loader::{LoadConfig, ModelLoader};
 
@@ -1127,6 +1130,8 @@ impl ResidentBitNetAnswerSession {
         let model_load_ms = model_load_start.elapsed().as_secs_f64() * 1000.0;
 
         let tokenizer_load_start = Instant::now();
+        let tokenizer_sha256 =
+            verify_resident_tokenizer_identity(expected_tokenizer, tokenizer_path)?;
         let tokenizer =
             bitnet_tokenizers::auto::resolve_tokenizer(model_path, tokenizer_path, true)
                 .with_context(|| {
@@ -1157,6 +1162,7 @@ impl ResidentBitNetAnswerSession {
             tokenizer_load_ms,
             model_path: model_path.to_path_buf(),
             model_sha256,
+            tokenizer_sha256,
             started_at: model_load_start,
             case_generation_total_ms: 0.0,
             cases_attempted: 0,
@@ -1189,7 +1195,7 @@ impl ResidentBitNetAnswerSession {
         device: &str,
     ) -> Result<Value> {
         use bitnet_models::transformer::KVCache;
-        use bitnet_sampling::{SamplingConfig, SamplingStrategy};
+        use bitnet_sampling::SamplingStrategy;
         use sha2::{Digest, Sha256};
 
         let started = Instant::now();
@@ -1234,13 +1240,7 @@ impl ResidentBitNetAnswerSession {
             let _ = self.model.forward(&embedding, &mut cache as &mut dyn std::any::Any)?;
         }
         let prefill_ms = prefill_start.elapsed().as_secs_f64() * 1000.0;
-        let mut sampler = SamplingStrategy::new(SamplingConfig {
-            temperature: 0.0,
-            top_k: 0,
-            top_p: 1.0,
-            repetition_penalty: 1.1,
-            seed: None,
-        });
+        let mut sampler = SamplingStrategy::new(resident_greedy_sampling_config());
         let stop_ids = self.template.resolve_stop_token_ids(self.tokenizer.as_ref());
         let mut generated_ids = Vec::with_capacity(effective_max_new_tokens);
         let decode_start = Instant::now();
@@ -1288,6 +1288,11 @@ impl ResidentBitNetAnswerSession {
                 "strict": true,
                 "type": "llama3",
                 "pretokenizer_authority": "llama-bpe",
+                "authority": {
+                    "source": "external_tokenizer_json",
+                    "sha256": self.tokenizer_sha256,
+                    "ggml_pre": "llama-bpe",
+                },
             },
             "loader": { "mode": "real_gguf" },
             "kernel": {
@@ -1356,6 +1361,16 @@ impl ResidentBitNetAnswerSession {
     }
 }
 
+fn resident_greedy_sampling_config() -> bitnet_sampling::SamplingConfig {
+    bitnet_sampling::SamplingConfig {
+        temperature: 0.0,
+        top_k: 0,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        seed: None,
+    }
+}
+
 fn verify_resident_model_identity(
     expected: &AnswerCorpusModelIdentity,
     observed_path: &Path,
@@ -1380,6 +1395,46 @@ fn verify_resident_model_identity(
         }
     }
     Ok(())
+}
+
+fn verify_resident_tokenizer_identity(
+    expected: Option<&CorpusTokenizerAuthority>,
+    observed_path: Option<&Path>,
+) -> Result<String> {
+    let expected = expected.ok_or_else(|| {
+        anyhow::anyhow!(
+            "--resident-session requires tokenizer authority in the answer-corpus manifest"
+        )
+    })?;
+    if expected.source != "external_tokenizer_json" {
+        anyhow::bail!(
+            "--resident-session requires external_tokenizer_json authority; got {}",
+            expected.source
+        );
+    }
+    if expected.ggml_pre.as_deref() != Some("llama-bpe") {
+        anyhow::bail!(
+            "--resident-session requires llama-bpe tokenizer authority; got {}",
+            expected.ggml_pre.as_deref().unwrap_or("<missing>")
+        );
+    }
+    let expected_sha256 = expected.sha256.as_deref().ok_or_else(|| {
+        anyhow::anyhow!(
+            "--resident-session requires tokenizer SHA-256 authority in the answer-corpus manifest"
+        )
+    })?;
+    let observed_path = observed_path.ok_or_else(|| {
+        anyhow::anyhow!("--resident-session requires an explicit external tokenizer path")
+    })?;
+    let observed_sha256 = sha256_file(observed_path)?;
+    if observed_sha256 != expected_sha256 {
+        anyhow::bail!(
+            "--resident-session tokenizer SHA-256 does not match the corpus authority: expected {}, got {}",
+            expected_sha256,
+            observed_sha256
+        );
+    }
+    Ok(observed_sha256)
 }
 
 fn resident_last_hidden(
@@ -5299,6 +5354,34 @@ cases:
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn resident_tokenizer_identity_rejects_missing_or_mismatched_authority() {
+        let authority = CorpusTokenizerAuthority {
+            source: "external_tokenizer_json".to_string(),
+            repo: None,
+            revision: None,
+            sha256: Some("not-the-cargo-manifest-hash".to_string()),
+            ggml_pre: Some("llama-bpe".to_string()),
+        };
+
+        assert!(verify_resident_tokenizer_identity(None, Some(Path::new("Cargo.toml"))).is_err());
+        assert!(verify_resident_tokenizer_identity(Some(&authority), None).is_err());
+        assert!(
+            verify_resident_tokenizer_identity(Some(&authority), Some(Path::new("Cargo.toml")))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn resident_greedy_sampling_has_no_repetition_penalty() {
+        let config = resident_greedy_sampling_config();
+        assert_eq!(config.temperature, 0.0);
+        assert_eq!(config.top_k, 0);
+        assert_eq!(config.top_p, 1.0);
+        assert_eq!(config.repetition_penalty, 1.0);
+        assert_eq!(config.seed, None);
     }
 
     #[test]

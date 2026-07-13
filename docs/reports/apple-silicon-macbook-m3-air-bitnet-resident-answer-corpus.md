@@ -33,6 +33,13 @@ tokens, `apple-m3-air-cpu-neon`, `runtime_api=cpu-neon`, and
 `fallback_used=false`. Every answer and generated-token-ID sequence matched the
 committed five-case baseline exactly.
 
+The resident path hashes the supplied external tokenizer before loading and
+requires it to match the corpus authority
+`e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7`.
+Its greedy sampling configuration uses `temperature=0`, `top_k=0`,
+`top_p=1`, and `repetition_penalty=1`, matching the established greedy path
+instead of applying a sampling-time repetition penalty.
+
 | Measure | Child-per-case baseline | Resident session | Change |
 | --- | ---: | ---: | ---: |
 | Model loads | 5 | 1 | -4 |
