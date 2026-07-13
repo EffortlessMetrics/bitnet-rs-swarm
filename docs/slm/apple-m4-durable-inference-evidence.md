@@ -160,13 +160,20 @@ target/apple-m4-durable-inference-evidence/regression-dashboard.json
 target/apple-m4-durable-inference-evidence/regression-dashboard.md
 ```
 
-The report-refresh manifest found five M4 evidence families and 14 committed
-reports. It kept dense SLM and BitNet evidence separated, selected
-`apple-m4-cpu-neon`, recorded `fallback_used=false`, and made no live model run
-or model download.
+The original `M4-DURABLE-004` report-refresh snapshot found five M4 evidence
+families and 14 committed reports. It kept dense SLM and BitNet evidence
+separated, selected `apple-m4-cpu-neon`, recorded `fallback_used=false`, and
+made no live model run or model download. That table is retained below as the
+historical refresh snapshot.
 
-The dashboard has nine matching-identity groups across those five families. Five
-groups are comparable today:
+The later retained seven-day trend artifact at
+`ci/hardware/apple-m4-mac-mini/2026-05-22T0530Z/trend/seven-day-history.json`
+supersedes the snapshot for trend status. It records nine matching dashboard
+groups, all nine ready for comparison, zero insufficient-history groups, and one
+advisory warning for BitNet warm-session resident memory. The advisory does not
+enable BitNet chat or serve and does not change the operator envelope.
+
+The historical dashboard snapshot had five comparable groups:
 
 | Family | Evidence | Comparable groups | Status |
 |---|---|---:|---|
