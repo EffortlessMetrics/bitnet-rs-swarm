@@ -21,7 +21,7 @@ expensive work begins.
 The target shape is:
 
 ```text
-ordinary PR = PR Plan + PR Gate + scoped Linux proof + feature smoke + policy + ripr
+ordinary PR = PR Plan + PR Gate + scoped Linux proof + policy + ripr
 expensive PR = ordinary PR + explicit risk/label/main/scheduled/release lanes
 ```
 
@@ -51,6 +51,11 @@ that says so:
 - branch-protection changes,
 - unrelated Rust/runtime changes,
 - broad workspace checks when the change has a smaller crate/risk surface.
+
+The duplicate ordinary-PR feature smoke is intentionally removed. Feature
+matrix proof remains available on `main`, manual dispatch, and explicit
+`feature-matrix` / `full-ci` selection; CLI/server risk still selects the
+targeted `cpu+full-cli` smoke.
 
 ## Agent operating rules
 
@@ -460,22 +465,22 @@ cargo run --locked -p xtask --no-default-features -- ci plan --changed-file test
 git diff --check
 ```
 
-### PR 10 — `feature-matrix: reduce ordinary PR feature smoke`
+### PR 10 — `feature-matrix: remove duplicate ordinary PR feature smoke`
 
-**Purpose:** Make `cpu+full-cli` risk-selected instead of universal.
+**Purpose:** Remove the duplicate workspace feature smoke from ordinary PRs
+while keeping targeted CLI and full-matrix proof available.
 
 **Files:**
 
 - `.github/workflows/feature-matrix.yml`
-- `.github/workflows/pr-gate.yml`
 - `policy/ci-lane-whitelist.toml`
 - `policy/ci-risk-packs.toml`
 - `policy/ci-lanes.toml`
-- `docs/ci/cost-and-verification-policy.md`
+- `xtask/src/ci/plan.rs`
 
 **Required behavior:**
 
-- Default ordinary PR matrix: `no-features` and `cpu`.
+- Ordinary PRs do not run the duplicate `no-features`/`cpu` workspace matrix.
 - Run targeted `cpu+full-cli` for CLI/server/validation/model-cache/full-cli
   feature files, manifest/lock/toolchain changes, or label `full-cli`.
 - Treat `feature-matrix` and `full-ci` as full-matrix opt-ins; that full
@@ -700,9 +705,9 @@ costs are:
 
 | PR type | Expected lanes | Target LEM |
 | --- | --- | ---: |
-| Ordinary Rust | PR Plan, PR Gate, scoped CI Core, feature smoke, policy, ripr | 25-34 |
+| Ordinary Rust | PR Plan, PR Gate, scoped CI Core, ripr | 25-34 |
 | Docs/tracking | PR Plan, PR Gate, docs/campaign/receipt checks | 3-8 |
-| Manifest/toolchain | CI Core broad, feature smoke, MSRV, policy, optional label lanes | 35-50+ |
+| Manifest/toolchain | CI Core broad, targeted CLI/full matrix, MSRV, policy, optional label lanes | 35-50+ |
 
 Manifest/toolchain PRs are intentionally allowed to exceed ordinary PR cost
 because they change global compatibility and dependency risk.

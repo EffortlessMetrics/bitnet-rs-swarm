@@ -14,8 +14,6 @@ GitHub Checks API for the check runs mapped from lanes with `blocking = true`.
 Common selected blocking lanes map to these upstream checks:
 
 * **`ci-core-build-test`** -> **CI Core Success**.
-* **`feature-matrix-pr`** -> **`pr-check (no-features)`** and
-  **`pr-check (cpu)`**.
 * **`feature-matrix-full-cli`** -> **`pr-check (cpu+full-cli)`** when
   CLI/server/validation/model-cache paths or the `full-cli` label select it.
 * **`policy`** -> **Policy**.
@@ -55,7 +53,7 @@ When the migration happens, the change is in
 * **Add:** `PR Gate Success`
 * **Remove:** every individual leaf-job name currently required
   (e.g. `Build & Test (self-hosted linux x64)`, `Clippy`, `Documentation`,
-  `BDD Grid Check`, `Feature Matrix PR`)
+  `BDD Grid Check`)
 
 After the migration, branch protection has exactly one required
 check (`PR Gate Success`), and that check is the single source of

@@ -257,7 +257,7 @@ and mirrored in `policy/ci-routed-rollout.toml`.
 | `test-telemetry` / `slow-tests` | JUnit and slow-test telemetry. | Runs advisory telemetry outside ordinary PR defaults. |
 | `msrv` / `compatibility` | MSRV compatibility proof. | Runs MSRV for explicit compatibility concern or global-risk paths. |
 | `full-cli` | Targeted full CLI feature smoke. | Runs `cpu+full-cli` without selecting the exhaustive feature matrix. |
-| `feature-matrix` | Expanded feature-matrix proof. | Runs the full feature matrix on a PR. |
+| `feature-matrix` | Expanded feature-matrix proof. | Runs the full feature matrix on a PR; ordinary PRs do not run a duplicate feature smoke. |
 | `gpu-ci` | GPU native compile proof. | Runs GPU compile lanes for GPU risk only. |
 | `coverage` | Codecov/coverage evidence with `rust-cpu` flag. | Runs coverage outside ordinary PR defaults. |
 

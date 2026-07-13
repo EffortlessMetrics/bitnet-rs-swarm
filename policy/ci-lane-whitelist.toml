@@ -108,26 +108,6 @@ review_after = "2026-06-07"
 expires = "2026-08-07"
 
 [[lane]]
-id = "feature-matrix-pr"
-workflow = ".github/workflows/feature-matrix.yml"
-job = "pr-compile-check"
-kind = "feature"
-tier = "frontdoor"
-default_pr = true
-blocking = true
-runner = "self_hosted_linux_x64"
-base_lem = 8
-owner = "core/features"
-intent = "Prevent drift in canonical PR feature combinations."
-failure_mode = "No-default/cpu feature combinations stop compiling."
-proof_obligation = "Run reduced PR feature matrix: no-features and cpu."
-evidence = ["job logs"]
-allowed_triggers = ["pull_request", "push", "workflow_dispatch"]
-duplicate_of = ["ci-core-build-test where CPU overlap exists"]
-review_after = "2026-06-07"
-expires = "2026-11-07"
-
-[[lane]]
 id = "feature-matrix-full-cli"
 workflow = ".github/workflows/feature-matrix.yml"
 job = "pr-full-cli-check"
@@ -428,7 +408,7 @@ proof_obligation = "Run cargo check --locked --workspace --no-default-features -
 evidence = ["job logs"]
 allowed_triggers = ["push", "schedule", "workflow_dispatch", "pull_request:labeled"]
 labels = ["performance", "perf", "full-ci"]
-duplicate_of = ["ci-core-build-test", "feature-matrix-pr"]
+duplicate_of = ["ci-core-build-test"]
 review_after = "2026-06-18"
 expires = "2026-11-18"
 
@@ -490,7 +470,7 @@ evidence = ["job logs"]
 allowed_triggers = ["push", "workflow_dispatch", "pull_request:labeled"]
 labels = ["feature-matrix", "full-ci"]
 expensive = true
-duplicate_of = ["feature-matrix-pr", "feature-matrix-full-cli"]
+duplicate_of = ["feature-matrix-full-cli"]
 review_after = "2026-06-07"
 expires = "2026-11-07"
 

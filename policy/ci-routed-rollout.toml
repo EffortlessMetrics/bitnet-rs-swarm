@@ -250,17 +250,22 @@ validation = [
 
 [[work_item]]
 id = 10
-title = "feature-matrix: reduce ordinary PR feature smoke"
+title = "feature-matrix: remove duplicate ordinary PR feature smoke"
 phase = 3
 files = [
   ".github/workflows/feature-matrix.yml",
-  ".github/workflows/pr-gate.yml",
   "policy/ci-lane-whitelist.toml",
   "policy/ci-risk-packs.toml",
   "policy/ci-lanes.toml",
-  "docs/ci/cost-and-verification-policy.md",
+  "xtask/src/ci/plan.rs",
+  "scripts/ci_plan_fast_path.py",
+  "docs/ci/inventory.md",
+  "docs/ci/labels.md",
+  "docs/ci/pr-gate-success.md",
+  "docs/ci/routed-verification-rollout.md",
 ]
 labels = ["full-cli", "feature-matrix", "full-ci"]
+remove_default_lanes = ["feature-matrix-pr"]
 validation = [
   "git diff --check",
   "cargo run --locked -p xtask --no-default-features -- ci-lane-whitelist check",

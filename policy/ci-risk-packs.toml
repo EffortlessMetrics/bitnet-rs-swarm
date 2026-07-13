@@ -25,7 +25,7 @@ packages = [
   "bitnet-quantization-bits",
   "bitnet-models",
 ]
-lanes = ["ci-core-build-test", "feature-matrix-pr", "ripr-advisory"]
+lanes = ["ci-core-build-test", "ripr-advisory"]
 deep_lanes = ["property-tests", "coverage"]
 labels = ["property-tests", "full-ci"]
 
@@ -110,7 +110,7 @@ paths = [
   ".cargo/**",
   "crates/**/Cargo.toml",
 ]
-lanes = ["ci-core-build-test", "compatibility-msrv", "feature-matrix-pr", "feature-matrix-full-cli"]
+lanes = ["ci-core-build-test", "compatibility-msrv", "feature-matrix-full-cli"]
 deep_lanes = ["feature-matrix-full", "security-audit", "coverage"]
 labels = ["full-cli", "feature-matrix", "security-audit", "full-ci"]
 

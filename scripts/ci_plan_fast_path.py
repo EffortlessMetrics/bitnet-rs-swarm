@@ -70,12 +70,6 @@ SKIPPED_LANES: list[dict[str, Any]] = [
         "blocking": True,
     },
     {
-        "id": "feature-matrix-pr",
-        "name": "Feature Matrix (PR smoke)",
-        "reason": "not selected for changed files or labels",
-        "blocking": True,
-    },
-    {
         "id": "feature-matrix-full-cli",
         "name": "Feature Matrix (full-cli PR smoke)",
         "reason": "not selected for changed files or labels",
