@@ -72,24 +72,26 @@ hotfix, and explicit promotion work.
 BitNet-rs uses a linked source-of-truth stack:
 
 ```text
-Roadmap → Proposal → Spec → ADR → Plan → Active goal → PR → Proof
+Roadmap → Proposal → Spec → ADR → Plan → Campaign work item → PR → Proof
 ```
 
 Before changing files, Codex agents must read:
 
 1. `docs/reference/SPEC_SYSTEM.md`;
-2. `.bitnet-rs/goals/active.toml` when present, otherwise the campaign
-   `active.toml` explicitly named by the task;
+2. the campaign `active.toml` named by the task or lane ownership; optional
+   `.bitnet-rs/goals/active.toml` routing hints may help only when scope is absent;
 3. the linked implementation plan;
 4. the linked spec for the selected work item;
 5. linked ADRs for durable constraints.
 
-Work on exactly one ready work item per PR. Proposal PRs explain why, spec PRs
+Campaign manifests are independent execution authorities and may advance in
+parallel. Work on exactly one ready work item per PR/branch, not one item across
+the repository. Proposal PRs explain why, spec PRs
 define behavior, ADR PRs record durable decisions, plan PRs define sequencing,
-active-goal PRs define current execution state, and runtime PRs must link to
+campaign work-item PRs define current execution state, and runtime PRs must link to
 the spec and plan item they implement.
 
-Run the proof commands listed by the selected plan or active goal, plus
+Run the proof commands listed by the selected plan or campaign work item, plus
 `git diff --check`. If a proof command cannot run, record the unavailable
 command, why it cannot run, substitute evidence if any, and whether that blocks
 merge. Do not hand-edit generated status; run the named generator or checker.

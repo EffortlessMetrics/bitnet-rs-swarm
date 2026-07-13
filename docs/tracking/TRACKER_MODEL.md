@@ -4,6 +4,10 @@ The alignment tracker is moving from one high-churn global ledger toward campaig
 
 Campaign-local TOML manifests and append-only events are the intended source of truth for active campaign work. The existing files under `docs/tracking/bitnet-alignment/` remain transition surfaces for compatibility and historical context; normal item PRs should stop editing those global files once generated dashboards are available.
 
+Campaigns are parallel by design. Optional repo-level goal metadata may help
+discover a campaign, but it is not an executable queue or a repository-wide
+active-lane lock. The one-work-item rule applies to each PR/branch.
+
 ## Model
 
 Each campaign has:
@@ -127,8 +131,10 @@ merge_policy = "automerge_when_green"
 human_gate = "on_blocker_only"
 ```
 
-`stackable = false` means dependent work waits for this item to land. It does
-not mean Codex should stop before review, CI repair, auto-merge, or closeout.
+`stackable = false` means dependent work in the campaign, or work in an
+explicitly declared collision set, waits for this item to land. It does not
+serialize independent campaigns or block unrelated agents. It also does not
+mean Codex should stop before review, CI repair, auto-merge, or closeout.
 
 For work items with `review_mode = "codex_premerge"`,
 `merge_policy = "automerge_when_green"`, and

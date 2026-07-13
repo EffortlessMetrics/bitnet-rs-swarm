@@ -1,21 +1,24 @@
-# BitNet-rs active goals
+# BitNet-rs goal routing
 
-This directory is the repo-level entrypoint for machine-readable active goals.
-It exists to point agents at the current lane without making proposals, specs,
-ADRs, plans, status documents, or generated campaign dashboards do each
-other's jobs.
+This directory is an optional repo-level routing and discovery surface. It may
+point an unscoped agent at useful campaign manifests, but it is never a global
+work queue, active-lane lock, or executable-state authority.
+
+Campaign-local manifests under `docs/tracking/campaigns/<campaign>/active.toml`
+are the executable work authorities. Independent campaigns may advance at the
+same time, subject to their declared dependencies, ownership, and shared-surface
+collision rules.
 
 ## Role
 
-Active goal manifests own:
+Repo-level routing metadata may own:
 
-- the current lane identifier and status;
-- links to the proposal, specs, ADRs, and implementation plan;
-- the ready work items an agent may select;
-- proof commands for each work item;
-- claim boundaries and status pointers.
+- discovery links to one or more campaign manifests;
+- human-readable selection hints for otherwise unscoped work;
+- links to proposals, specs, ADRs, plans, and status documents.
 
-They do not own product rationale, behavior contracts, durable decisions,
+It does not own executable work-item state, branch ownership, merge policy,
+proof commands, product rationale, behavior contracts, durable decisions,
 generated metrics, or public support claims.
 
 ## Files
@@ -25,73 +28,37 @@ generated metrics, or public support claims.
 .bitnet-rs/goals/archive/YYYY-MM-DD-<lane>.toml
 ```
 
-If `active.toml` is absent, agents must use an explicitly named campaign item or
-stop and report that no repo-level active goal is selected.
+If `active.toml` is absent or stale, agents use the campaign named by the task,
+lane ownership, or explicit scope. Stop only when neither a campaign authority
+nor an explicit task scope identifies executable work.
 
 ## Relationship to campaign tracking
 
 BitNet-rs also has campaign-local manifests under
 `docs/tracking/campaigns/<campaign>/active.toml`. Those campaign manifests
-remain authoritative for campaign event history, generated dashboards, branch
-metadata, and campaign-specific merge policy. A repo-level active goal should
-link to the relevant campaign manifest when campaign tracking is the executable
-work authority.
+remain authoritative for work-item state, event history, generated dashboards,
+branch metadata, proof commands, and campaign-specific merge policy. A
+repo-level routing file may link several campaigns; selecting one does not pause
+or block the others.
 
 ## Manifest shape
 
 ```toml
-id = "bitnet-lane-id"
-title = "Human-readable lane title"
-status = "active"
+title = "Optional repository routing hints"
 owner = "codex-claude"
 created = "YYYY-MM-DD"
 
-proposal = "docs/proposals/BITNET-PROP-0001-lane.md"
-plan = "plans/lane/implementation-plan.md"
-
-specs = [
-  "docs/specs/BITNET-SPEC-0001-contract.md",
-]
-
-adrs = [
-  "docs/adr/BITNET-ADR-0001-decision.md",
-]
-
 campaigns = [
   "docs/tracking/campaigns/example/active.toml",
+  "docs/tracking/campaigns/another-lane/active.toml",
 ]
 
-objective = """
-State the current lane objective in one paragraph.
-"""
-
-end_state = [
-  "Checkable end-state outcome.",
-]
-
-claim_boundaries = [
-  "Do not broaden support claims without proof.",
-]
-
-status_docs = [
-  "docs/status/README.md",
-]
-
-[[work_item]]
-id = "work-item-id"
-status = "ready"
-spec = "docs/specs/BITNET-SPEC-0001-contract.md"
-adr = "docs/adr/BITNET-ADR-0001-decision.md"
-plan = "plans/lane/implementation-plan.md#work-item-work-item-id"
-campaign = "docs/tracking/campaigns/example/active.toml"
-claim_boundary = "What this work item may and may not claim."
-commands = [
-  "git diff --check",
-]
+selection_hint = "For unscoped work, inspect these campaigns and choose one ready, collision-free item."
 ```
 
 ## Agent rule
 
-Read `docs/reference/SPEC_SYSTEM.md` before interpreting a manifest. Select one
-ready work item, run the listed proof commands, and stop instead of inventing
-work when the manifest or linked artifacts are missing.
+Read `docs/reference/SPEC_SYSTEM.md` before interpreting routing metadata. Then
+read the selected campaign manifest, choose exactly one ready work item for the
+PR/branch, and run that item's proof commands. This one-item rule is per PR, not
+a repository-wide serialization rule.
