@@ -29,6 +29,7 @@ Finish the move from global hand-edited alignment trackers to campaign-local TOM
 | TRACKER-001 | merged | Advisory campaign check/generate/doctor commands and generated dashboards merged in #3660. |
 | TRACKER-002 | merged | CI enforcement for campaign doctor and generated-dashboard freshness merged in #3681. |
 | TRACKER-003 | merged | Scope live GitHub PR reconciliation to the current PR in pull-request CI to avoid cross-branch campaign deadlocks; merged in #3724. |
+| TRACKER-004 | ready | Clarify that repo-level goal routing is optional discovery, while campaign manifests remain concurrent executable authorities; add focused validator coverage. |
 
 ## Review Policy
 
