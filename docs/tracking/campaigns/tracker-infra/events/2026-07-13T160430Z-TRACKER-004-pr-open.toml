@@ -1,0 +1,12 @@
+timestamp = "2026-07-13T16:04:30Z"
+campaign = "tracker-infra"
+item = "TRACKER-004"
+event = "pr_open"
+pr = 1742
+head_sha = "7c6a140805c219d582164b95446ebb0959cfd5cd"
+actor = "codex"
+
+notes = [
+  "Opened the concurrent campaign-lane authority and regression coverage change.",
+  "No runtime or CI routing behavior changed.",
+]

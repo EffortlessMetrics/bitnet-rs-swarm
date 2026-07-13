@@ -130,8 +130,9 @@ must_not_claim = [
 
 [[work_item]]
 id = "TRACKER-004"
-status = "ready"
+status = "pr_open"
 branch = "codex/tracker-infra/TRACKER-004-concurrent-lane-routing"
+pr = 1742
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"

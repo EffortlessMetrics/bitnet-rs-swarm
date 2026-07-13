@@ -1436,6 +1436,21 @@ mod tests {
     }
 
     #[test]
+    fn current_item_is_campaign_local_and_allows_parallel_active_lanes() {
+        let first_campaign = campaign_manifest(vec![
+            work_item("FIRST-001", "pr_open", &[]),
+            work_item("FIRST-002", "ready", &["FIRST-001"]),
+        ]);
+        let second_campaign = campaign_manifest(vec![
+            work_item("SECOND-001", "in_progress", &[]),
+            work_item("SECOND-002", "ready", &["SECOND-001"]),
+        ]);
+
+        assert_eq!(current_item(&first_campaign).map(|item| item.id.as_str()), Some("FIRST-001"));
+        assert_eq!(current_item(&second_campaign).map(|item| item.id.as_str()), Some("SECOND-001"));
+    }
+
+    #[test]
     fn current_item_skips_unblocked_statuses_with_unmet_dependencies() {
         let manifest = campaign_manifest(vec![
             work_item("POLICY-001", "ready", &["POLICY-000"]),

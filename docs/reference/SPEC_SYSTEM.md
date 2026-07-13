@@ -12,7 +12,7 @@ Roadmap
     -> Spec
       -> ADR
         -> Implementation plan
-          -> Active goal
+          -> Campaign work item
             -> PR
               -> Proof
 ```
@@ -26,8 +26,8 @@ Roadmap
 | Spec | Required behavior, acceptance examples, proof requirements | Product rationale or PR sequencing |
 | ADR | Durable architecture, proof, or operating decisions | Current task lists or generated status |
 | Plan | PR order, dependencies, proof commands, rollback | Product strategy or durable decisions |
-| Active goal | Machine-readable current lane and work items | Generated metrics or long prose |
-| Campaign tracker | Campaign-local execution state, events, generated dashboards | Cross-lane product rationale |
+| Repo goal routing | Optional campaign discovery links and selection hints | Executable work state or a global lane lock |
+| Campaign tracker | Campaign-local execution state, events, generated dashboards | Cross-lane product rationale or other campaigns' locks |
 | Support tiers | Public claim tier and proof pointer | Feature design |
 | Policy ledgers | Exceptions, CI routing, owners, coverage, review dates | Broad architecture |
 
@@ -38,9 +38,10 @@ Roadmap
 - ADRs live in `docs/adr/` and record decisions that should still matter after
   the implementation plan is complete.
 - Plans live in `plans/<lane>/` and sequence PR-sized work.
-- Active goal manifests live in `.bitnet-rs/goals/` when a lane needs a
-  repo-level agent entrypoint; campaign-local active manifests remain in
-  `docs/tracking/campaigns/<campaign>/active.toml` for campaign execution.
+- Optional repo routing metadata lives in `.bitnet-rs/goals/`; it may link one
+  or more campaigns but is not executable authority. Campaign-local active
+  manifests in `docs/tracking/campaigns/<campaign>/active.toml` own campaign
+  execution and may advance concurrently.
 - Generated campaign dashboards and events remain under
   `docs/tracking/campaigns/<campaign>/generated/` and
   `docs/tracking/campaigns/<campaign>/events/`.
@@ -77,7 +78,8 @@ but durable BitNet-rs rails stay in the authority mapping above.
 2. Use one semantic artifact per PR unless the selected plan item says otherwise.
 3. Specs define behavior; plans define sequencing.
 4. Proposals explain why; ADRs record durable decisions.
-5. Active goals tell agents what to do now and link to the plan/spec/ADR.
+5. Campaign work items tell agents what to do now and link to the plan/spec/ADR;
+   repo goal metadata only helps discover those campaign authorities.
 6. Generated status is updated by tools, not by hand; conflicts are resolved by
    repairing source manifests, events, generators, or checkers before
    regenerating.
@@ -114,22 +116,24 @@ Before changing files, agents should:
 
 1. read `AGENTS.md` or `CLAUDE.md`;
 2. read this file;
-3. read `.bitnet-rs/goals/active.toml` if present, otherwise the relevant
-   campaign `active.toml` named by the task;
-4. read the linked plan;
-5. read the linked spec for acceptance;
-6. read linked ADRs for constraints;
-7. inspect `git status --short` for unrelated staged or modified files;
-8. pick exactly one ready work item;
-9. implement only that item;
-10. run the listed proof commands plus `git diff --check`;
-11. update only required status, receipt, policy, or tracking files.
+3. select the campaign named by the task or lane ownership; optional
+   `.bitnet-rs/goals/active.toml` routing hints may help only when scope is absent;
+4. read that campaign's `active.toml`;
+5. read the linked plan;
+6. read the linked spec for acceptance;
+7. read linked ADRs for constraints;
+8. inspect `git status --short` for unrelated staged or modified files;
+9. pick exactly one ready work item for this PR/branch;
+10. implement only that item;
+11. run the listed proof commands plus `git diff --check`;
+12. update only required status, receipt, policy, or tracking files.
 
 ## Stop conditions
 
 Stop and report instead of guessing when:
 
-- no active goal, campaign item, or explicit task scope exists;
+- no campaign item or explicit task scope exists; absence of repo routing
+  metadata alone is not a stop condition;
 - a linked proposal, spec, ADR, or plan is missing;
 - proof commands cannot run and no substitute evidence is allowed;
 - generated status is dirty but no generator command is provided;
@@ -137,24 +141,27 @@ Stop and report instead of guessing when:
 - requested work conflicts with an ADR or claim boundary;
 - a public claim lacks support-tier, receipt, hardware, or model-artifact proof.
 
-## Active goal lifecycle
+## Repo routing lifecycle
 
-A repo-level active goal lives at:
+Optional repo-level routing hints may live at:
 
 ```text
 .bitnet-rs/goals/active.toml
 ```
 
-Use `status = "active"` for an executable lane and `status = "paused"` when no
-lane is selected. Archive retired manifests under:
+This file may point to several campaign manifests. It does not activate, pause,
+serialize, or retire those campaigns. Executable lifecycle state belongs in
+each campaign-local manifest and its events.
+
+Archive obsolete routing snapshots under:
 
 ```text
 .bitnet-rs/goals/archive/YYYY-MM-DD-<lane>.toml
 ```
 
-Do not leave multiple repo-level active manifests. If a campaign-local
-`docs/tracking/campaigns/<campaign>/active.toml` is the executable authority,
-link it from the repo-level manifest or from the selected plan item.
+Keep at most one optional repo routing file to avoid conflicting discovery
+hints. That file is not a global mutex: independent campaign manifests remain
+executable concurrently.
 
 ## Closeout format
 
@@ -172,7 +179,8 @@ At the end of a lane, write a closeout under `plans/<lane>/closeout.md` with:
 
 - If a spec becomes a task list, move PR order to `plans/<lane>/implementation-plan.md`.
 - If a plan becomes product rationale, move why-text to `docs/proposals/`.
-- If an active goal becomes prose, move details to the plan and keep TOML linked.
+- If campaign work-item state becomes prose, move details to the plan and keep
+  the campaign TOML compact.
 - If generated status is hand-edited, add or run the generator/checker.
 - If support claims drift, add support-tier proof or narrow the claim.
 - If policy exceptions become silent debt, add owner, reason, coverage, and review date.

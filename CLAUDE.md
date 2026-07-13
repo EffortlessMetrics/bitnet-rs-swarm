@@ -7,26 +7,28 @@ Essential guidance for working with the bitnet-rs codebase.
 BitNet-rs uses this linked source-of-truth stack:
 
 ```text
-Roadmap → Proposal → Spec → ADR → Plan → Active goal → PR → Proof
+Roadmap → Proposal → Spec → ADR → Plan → Campaign work item → PR → Proof
 ```
 
 Before making changes, read:
 
 1. `docs/reference/SPEC_SYSTEM.md`;
-2. `.bitnet-rs/goals/active.toml` when present, otherwise the campaign
-   `active.toml` explicitly named by the task;
+2. the campaign `active.toml` named by the task or lane ownership; optional
+   `.bitnet-rs/goals/active.toml` routing hints may help only when scope is absent;
 3. the linked implementation plan;
 4. the linked spec for the selected work item;
 5. any linked ADRs.
 
-Work on exactly one ready work item at a time. Do not create a new lane, mix
+Independent campaign lanes may run concurrently. Work on exactly one ready work
+item per PR/branch. Do not create a new lane, mix
 proposal/spec/ADR/plan/runtime changes, broaden support claims, or hand-edit
 generated status unless the selected work item explicitly requires it. A change
 is ready only when the intended artifact exists, linked docs are updated, proof
 commands have run or are honestly marked unavailable, claim boundaries are
 respected, and `git diff --check` passes.
 
-Stop and report instead of guessing when the active goal is missing or stale,
+Stop and report instead of guessing when campaign authority and explicit scope
+are both missing or stale,
 linked specs are missing, proof commands cannot run, generated status differs
 from committed status, requested work conflicts with an ADR, or unrelated staged
 changes exist.
