@@ -249,7 +249,6 @@ fn lane_catalog() -> Vec<SkippedLane> {
     vec![
         skipped_lane("pr-plan", "PR Plan", false),
         skipped_lane("ci-core-build-test", "CI (Core) - build/test/clippy/docs", true),
-        skipped_lane("feature-matrix-pr", "Feature Matrix (PR smoke)", true),
         skipped_lane("feature-matrix-full-cli", "Feature Matrix (full-cli PR smoke)", true),
         skipped_lane("feature-matrix-full", "Feature Matrix (full)", false),
         skipped_lane("bdd-grid-check", "BDD Grid Check", true),
@@ -342,24 +341,14 @@ fn pick_lanes(
         ));
     }
     let full_feature_matrix_requested = has("feature-matrix") || has("full-ci");
-    if feature_matrix_changed(changed) {
-        if full_feature_matrix_requested {
-            lanes.push(lane(
-                "feature-matrix-full",
-                "Feature Matrix (full ~21 jobs)",
-                70,
-                "feature-matrix/full-ci label",
-                false,
-            ));
-        } else {
-            lanes.push(lane(
-                "feature-matrix-pr",
-                "Feature Matrix (PR smoke)",
-                8,
-                "rust/manifest changed",
-                true,
-            ));
-        }
+    if full_feature_matrix_requested {
+        lanes.push(lane(
+            "feature-matrix-full",
+            "Feature Matrix (full ~21 jobs)",
+            70,
+            "feature-matrix/full-ci label",
+            false,
+        ));
     }
     if !full_feature_matrix_requested
         && (full_cli_feature_matrix_changed(changed) || has("full-cli"))
@@ -552,24 +541,12 @@ fn model_validation_changed(files: &[String]) -> bool {
     })
 }
 
-fn feature_matrix_changed(files: &[String]) -> bool {
-    files.iter().any(|path| {
-        path.starts_with("crates/")
-            || path == "Cargo.toml"
-            || path == "Cargo.lock"
-            || path == "rust-toolchain.toml"
-            || path.starts_with(".cargo/")
-            || path == ".github/workflows/feature-matrix.yml"
-    })
-}
-
 fn full_cli_feature_matrix_changed(files: &[String]) -> bool {
     files.iter().any(|path| {
         path == "Cargo.toml"
             || path == "Cargo.lock"
             || path == "rust-toolchain.toml"
             || path.starts_with(".cargo/")
-            || path == ".github/workflows/feature-matrix.yml"
             || (path.starts_with("crates/") && path.ends_with("/Cargo.toml"))
             || path.starts_with("crates/bitnet-api-")
             || path.starts_with("crates/bitnet-cli/")
@@ -597,7 +574,6 @@ fn policy_lane_changed(files: &[String]) -> bool {
             || path == "clippy.toml"
             || path == ".github/workflows/policy.yml"
             || path.starts_with("xtask/")
-            || path.ends_with(".rs")
     })
 }
 
@@ -1256,8 +1232,7 @@ mod tests {
         assert_eq!(plan.posture, "rust");
         let names: Vec<&str> = plan.lanes.iter().map(|l| l.name.as_str()).collect();
         assert!(names.iter().any(|n| n.contains("CI (Core)")));
-        assert!(names.iter().any(|n| *n == "Policy"));
-        assert!(names.iter().any(|n| n.contains("Feature Matrix (PR smoke)")));
+        assert!(!names.iter().any(|n| *n == "Policy"));
         assert!(!names.iter().any(|n| n.contains("Compatibility (MSRV)")));
     }
 
@@ -1282,19 +1257,19 @@ mod tests {
     }
 
     #[test]
-    fn ordinary_rust_feature_matrix_skips_full_cli_smoke() {
+    fn ordinary_rust_skips_feature_matrix_smoke() {
         let plan = build_plan(&s(&["crates/bitnet-quantization/src/qk256.rs"]), &[]);
-        assert!(plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-pr"));
+        assert!(!plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-pr"));
+        assert!(!plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full"));
         assert!(
             !plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full-cli"),
-            "ordinary Rust PRs should not pay the full-cli feature smoke"
+            "ordinary leaf Rust PRs should not pay feature-matrix smoke"
         );
     }
 
     #[test]
     fn cli_paths_select_full_cli_feature_smoke() {
         let plan = build_plan(&s(&["crates/bitnet-cli/src/model_status.rs"]), &[]);
-        assert!(plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-pr"));
         assert!(
             plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full-cli"),
             "CLI paths should keep the cpu+full-cli smoke"
@@ -1302,9 +1277,17 @@ mod tests {
     }
 
     #[test]
+    fn feature_matrix_workflow_change_stays_in_workflow_validation() {
+        let plan = build_plan(&s(&[".github/workflows/feature-matrix.yml"]), &[]);
+        assert!(
+            !plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full-cli"),
+            "workflow-only edits should not trigger Rust feature smoke"
+        );
+    }
+
+    #[test]
     fn full_cli_label_selects_full_cli_feature_smoke() {
         let plan = build_plan(&s(&["crates/bitnet-quantization/src/qk256.rs"]), &s(&["full-cli"]));
-        assert!(plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-pr"));
         assert!(
             plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full-cli"),
             "full-cli label should opt back into the cpu+full-cli smoke"

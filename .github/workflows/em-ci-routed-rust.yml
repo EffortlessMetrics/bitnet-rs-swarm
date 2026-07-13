@@ -2,6 +2,12 @@ name: EM CI Routed Rust
 
 on:
   workflow_dispatch:
+    inputs:
+      allow_github_hosted:
+        description: "Allow the lean GitHub-hosted Rust-small fallback when no trusted self-hosted runner is online"
+        required: false
+        type: boolean
+        default: false
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   merge_group:
@@ -45,6 +51,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          LABELS_JSON: ${{ github.event_name == 'pull_request' && toJson(github.event.pull_request.labels.*.name) || '[]' }}
+          ALLOW_GITHUB_HOSTED: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_github_hosted || 'false' }}
         run: |
           set -eu
 
@@ -61,6 +69,20 @@ jobs:
               echo "fallback_allowed=$fallback_allowed"
             } >> "$GITHUB_OUTPUT"
           }
+
+          hosted_fallback_requested="false"
+          if [ "${ALLOW_GITHUB_HOSTED:-false}" = "true" ] || printf '%s' "${LABELS_JSON:-[]}" | jq -e '
+            . // [] | any(. == "allow-github-hosted" or . == "ci-budget-ack" or . == "ci-budget-override" or . == "full-ci")
+          ' >/dev/null 2>&1; then
+            hosted_fallback_requested="true"
+          fi
+          echo "hosted_fallback_requested=${hosted_fallback_requested}"
+
+          hosted_fallback_override="false"
+          if printf '%s' "${LABELS_JSON:-[]}" | jq -e '. // [] | any(. == "ci-budget-override")' >/dev/null 2>&1; then
+            hosted_fallback_override="true"
+          fi
+          echo "hosted_fallback_override=${hosted_fallback_override}"
 
           is_fork_pr="false"
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
@@ -123,8 +145,17 @@ jobs:
             fi
           fi
 
+          if [ "${hosted_fallback_override}" = "true" ]; then
+            emit "github_hosted" "explicit_hosted_override" "false" "true"
+            exit 0
+          fi
+
           if [ -z "${GH_TOKEN:-}" ]; then
-            emit "blocked" "token_missing" "true" "false"
+            if [ "${hosted_fallback_requested}" = "true" ]; then
+              emit "github_hosted" "token_missing_hosted_opt_in" "true" "true"
+            else
+              emit "blocked" "token_missing" "true" "false"
+            fi
             exit 0
           fi
 
@@ -134,12 +165,14 @@ jobs:
               "orgs/${ORG}/actions/runners?per_page=100" 2>/tmp/gh.err)"; then
             echo "runner API request failed:" >&2
             cat /tmp/gh.err >&2 || true
-            # Keep the lane self-hosted-only, but do not fail closed on a
-            # transient runner API read. Route to the smaller trusted pool and
-            # let GitHub queue the job; if no runner is actually available the
-            # selected target will remain pending instead of incorrectly
-            # reporting a hosted fallback.
-            emit "cx43" "runner_api_failed_cx43_queued" "true" "false"
+            if [ "${hosted_fallback_requested}" = "true" ]; then
+              emit "github_hosted" "runner_api_failed_hosted_opt_in" "true" "true"
+            else
+              # Keep ordinary PRs self-hosted-only when runner discovery is
+              # unavailable. An explicit fallback opt-in is required to spend
+              # GitHub-hosted minutes on the Rust-small proof.
+              emit "blocked" "runner_api_failed" "true" "false"
+            fi
             exit 0
           fi
 
@@ -184,14 +217,22 @@ jobs:
           if ! idle_cx53="$(idle_runner_count "cx53" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "cx43" "parse_failed_cx43_queued" "true" "false"
+            if [ "${hosted_fallback_requested}" = "true" ]; then
+              emit "github_hosted" "runner_api_parse_failed_hosted_opt_in" "true" "true"
+            else
+              emit "blocked" "parse_failed" "true" "false"
+            fi
             exit 0
           fi
 
           if ! idle_cx43="$(idle_runner_count "cx43" 2>/tmp/jq.err)"; then
             echo "runner API parse failed:" >&2
             cat /tmp/jq.err >&2 || true
-            emit "cx43" "parse_failed_cx43_queued" "true" "false"
+            if [ "${hosted_fallback_requested}" = "true" ]; then
+              emit "github_hosted" "runner_api_parse_failed_hosted_opt_in" "true" "true"
+            else
+              emit "blocked" "parse_failed" "true" "false"
+            fi
             exit 0
           fi
 
@@ -201,15 +242,13 @@ jobs:
           echo "idle_cx53=${idle_cx53:-0} online_cx53=${online_cx53:-0}"
           echo "idle_cx43=${idle_cx43:-0} online_cx43=${online_cx43:-0}"
 
-          # Routing preference under self-hosted-only (no GitHub-hosted fallback,
-          # per BITNET-ADR-0008):
+          # Routing preference:
           #   1. An idle cx53/cx43 runner -> route there, runs immediately.
           #   2. No idle runner but cx43/cx53 are online (just busy) -> route to
           #      the busy pool and let GitHub queue the job until a runner frees.
-          #      Failing closed on momentary busyness would red the required
-          #      result whenever the fleet is under load; queuing is the correct
-          #      behavior when there is no hosted fallback to absorb the work.
-          #   3. No trusted runner online at all -> genuine outage, stay blocked.
+          #      Never spend hosted minutes merely because the fleet is busy.
+          #   3. No trusted runner online at all -> use GitHub-hosted only when
+          #      the caller explicitly acknowledged the extra CI spend.
           if [ "${idle_cx53:-0}" -gt 0 ]; then
             emit "cx53" "cx53_idle" "false" "false"
           elif [ "${idle_cx43:-0}" -gt 0 ]; then
@@ -218,6 +257,8 @@ jobs:
             emit "cx43" "cx43_busy_queued" "false" "false"
           elif [ "${online_cx53:-0}" -gt 0 ]; then
             emit "cx53" "cx53_busy_queued" "false" "false"
+          elif [ "${hosted_fallback_requested}" = "true" ]; then
+            emit "github_hosted" "no_online_runner_hosted_opt_in" "false" "true"
           else
             emit "blocked" "no_online_runner" "false" "false"
           fi
@@ -505,6 +546,51 @@ jobs:
           TMPDIR: ${{ runner.temp }}
         run: cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3
 
+  rust-small-github-hosted:
+    name: BitNet Rust Small on GitHub Hosted
+    needs: route-rust-small
+    if: >-
+      needs.route-rust-small.outputs.target == 'github_hosted'
+      && (github.event_name == 'workflow_dispatch'
+          || (github.event_name == 'pull_request'
+              && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      CARGO_BUILD_JOBS: "2"
+      RUST_BACKTRACE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
+        with:
+          shared-key: rust-small-github-hosted
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Run lean Rust-small proof
+        run: >-
+          cargo test --locked
+          -p bitnet-common
+          -p bitnet-models
+          -p bitnet-tokenizers
+          -p bitnet-quantization
+          -p bitnet-kernels
+          --lib
+          --no-default-features --features cpu
+          -- --nocapture
+
   rust-small-result:
     name: BitNet Rust Small Result
     needs:
@@ -512,8 +598,9 @@ jobs:
       - rust-small-cx53
       - rust-small-cx43
       - m3-synthetic-tier0
+      - rust-small-github-hosted
     if: >-
-      !cancelled()
+      always()
       && (github.event_name == 'workflow_dispatch'
           || github.event_name == 'merge_group'
           || github.event_name == 'pull_request')
@@ -530,6 +617,7 @@ jobs:
           CX53_RESULT: ${{ needs.rust-small-cx53.result }}
           CX43_RESULT: ${{ needs.rust-small-cx43.result }}
           M3_SYNTHETIC_RESULT: ${{ needs.m3-synthetic-tier0.result }}
+          GITHUB_HOSTED_RESULT: ${{ needs.rust-small-github-hosted.result }}
         run: |
           set -eu
           echo "router_target=${TARGET:-<empty>}"
@@ -537,6 +625,7 @@ jobs:
           echo "cx53_result=${CX53_RESULT:-<empty>}"
           echo "cx43_result=${CX43_RESULT:-<empty>}"
           echo "m3_synthetic_result=${M3_SYNTHETIC_RESULT:-<empty>}"
+          echo "github_hosted_result=${GITHUB_HOSTED_RESULT:-<empty>}"
 
           if [ "${ROUTER_RESULT}" != "success" ]; then
             echo "router job did not succeed; failing normalized result" >&2
@@ -567,6 +656,12 @@ jobs:
             m3_synthetic_tier0)
               if [ "${M3_SYNTHETIC_RESULT}" != "success" ]; then
                 echo "selected target m3_synthetic_tier0 but M3 synthetic result was ${M3_SYNTHETIC_RESULT}" >&2
+                exit 1
+              fi
+              ;;
+            github_hosted)
+              if [ "${GITHUB_HOSTED_RESULT}" != "success" ]; then
+                echo "selected target github_hosted but rust-small-github-hosted result was ${GITHUB_HOSTED_RESULT}" >&2
                 exit 1
               fi
               ;;

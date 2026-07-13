@@ -249,7 +249,8 @@ and mirrored in `policy/ci-routed-rollout.toml`.
 | --- | --- | --- |
 | `full-ci` | All relevant expensive/deep lanes for the touched risk surface. | Explicitly opts out of the ordinary budget target. |
 | `ci-budget-ack` | Acknowledges a high estimated LEM plan once budget guard enforcement exists. | Allows high-but-bounded plans that are otherwise warned. |
-| `ci-budget-override` | Overrides the hard budget guard once enforcement exists. | Requires explicit maintainer intent. |
+| `ci-budget-override` | Overrides the hard budget guard once enforcement exists and may force the bounded hosted Rust-small recovery proof for a known unhealthy self-hosted runner. | Requires explicit maintainer intent. |
+| `allow-github-hosted` | Authorizes the lean hosted Rust-small fallback when no trusted self-hosted runner is online. | Does not select heavy, model, GPU, hardware, or full-matrix lanes. |
 | `macos` | Apple platform proof. | Runs macOS lanes only by label/main/manual/path-specific routing. |
 | `apple-silicon` | Apple Silicon CPU/NEON proof. | Runs Apple Silicon lanes only by label/main/manual/path-specific routing. |
 | `metal` | Metal compile/proof. | Runs Metal proof for Metal paths or explicit label. |
@@ -257,7 +258,7 @@ and mirrored in `policy/ci-routed-rollout.toml`.
 | `test-telemetry` / `slow-tests` | JUnit and slow-test telemetry. | Runs advisory telemetry outside ordinary PR defaults. |
 | `msrv` / `compatibility` | MSRV compatibility proof. | Runs MSRV for explicit compatibility concern or global-risk paths. |
 | `full-cli` | Targeted full CLI feature smoke. | Runs `cpu+full-cli` without selecting the exhaustive feature matrix. |
-| `feature-matrix` | Expanded feature-matrix proof. | Runs the full feature matrix on a PR. |
+| `feature-matrix` | Expanded feature-matrix proof. | Runs the full feature matrix on a PR; ordinary PRs do not run a duplicate feature smoke. |
 | `gpu-ci` | GPU native compile proof. | Runs GPU compile lanes for GPU risk only. |
 | `coverage` | Codecov/coverage evidence with `rust-cpu` flag. | Runs coverage outside ordinary PR defaults. |
 

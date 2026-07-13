@@ -159,6 +159,28 @@ profile, explicit label, manual dispatch, schedule, release gate, or campaign
 receipt lane before it starts. Do not use a near-completion timeout as the
 budget mechanism.
 
+### Lean GitHub-hosted fallback
+
+The normal route remains self-hosted. The routed Rust-small workflow has one
+explicitly authorized hosted escape hatch for a missing self-hosted fleet:
+
+- the router must find no trusted online `cx43`/`cx53` runner;
+- the PR must carry `allow-github-hosted`, `full-ci`, or `ci-budget-ack`, or
+  workflow dispatch must set `allow_github_hosted=true`;
+- `ci-budget-override` is a separate recovery escape hatch: it may select the
+  same hosted proof when a runner is online but known to be unhealthy;
+- the fallback is same-repository only and runs on pinned `ubuntu-22.04`;
+- it runs only the lean Rust-small package/lib-test proof, with no Docker,
+  models, credentials, GPU, hardware, coverage, fuzz, performance, or full
+  feature matrix;
+- a busy-but-online self-hosted pool still queues and never spills to hosted
+  unless `ci-budget-override` explicitly selects the bounded recovery path.
+
+This fallback is continuity evidence, not a silent hosted replacement for
+self-hosted or hardware proof. Its normalized result remains
+`BitNet Rust Small Result`; conditional implementation jobs may be skipped by
+design.
+
 The staged M3 Air dense SLM workflow is the reference Apple MacBook pattern:
 
 ```text

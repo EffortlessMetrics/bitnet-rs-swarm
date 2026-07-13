@@ -12,7 +12,7 @@ Linked specs:
 Linked ADRs:
 
 - `docs/adr/BITNET-ADR-0005-proof-families-are-not-interchangeable.md`
-- `docs/adr/BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md`
+- `docs/adr/BITNET-ADR-0011-lean-opt-in-github-hosted-fallback.md`
 
 Linked plan: n/a
 Linked issues: n/a

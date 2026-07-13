@@ -221,27 +221,28 @@ For `bitnet-rs-swarm` current lane:
 - Do **not** add CPX42 to current BitNet Rust Small lane
 - Defer CPX42 until a true BitNet Tiny lane exists
 
-### Self-hosted-only override (accepted)
+### Lean hosted fallback override (accepted)
 
-`bitnet-rs-swarm` has moved to **self-hosted-only CI with no GitHub-hosted
-fallback**, recorded in
-[BITNET-ADR-0008](../adr/BITNET-ADR-0008-self-hosted-only-ci-no-hosted-fallback.md).
+`bitnet-rs-swarm` prefers self-hosted CI but restores one bounded hosted
+fallback under
+[BITNET-ADR-0011](../adr/BITNET-ADR-0011-lean-opt-in-github-hosted-fallback.md).
 For this repo specifically:
 
-- The route is `CX53 -> CX43` with **no hosted fallback lane**; when no trusted
-  self-hosted runner is idle the router emits `blocked` and the normalized
-  result fails closed.
-- Every `runs-on` targets a self-hosted label array; no `ubuntu-*`/`macos-*`/
-  `windows-*` hosted aliases remain.
+- The routed Rust-small path is `CX53 -> CX43 -> github_hosted`; hosted is
+  selected only when no trusted self-hosted runner is online and an explicit
+  authorization label or workflow-dispatch input is present.
+- A busy-but-online self-hosted pool is queued, never spilled to hosted.
+- The hosted lane is pinned to `ubuntu-22.04` and runs only the lean
+  Rust-small package/lib-test proof. It does not run Docker, models, GPU,
+  hardware, coverage, fuzzing, performance, or release work.
+- Fork PRs remain blocked from self-hosted and hosted Rust execution.
 - The fleet is **linux-x64 only** today. Lanes needing macOS, Windows, linux
   ARM64, or GPU runners are **dormant**: they must stay non-required and must
   not start on an ordinary `pull_request`/`merge_group` (opt-in via label,
   `workflow_dispatch`, `schedule`, or tag/release only) until those runners are
   provisioned.
 
-This override supersedes, **for `bitnet-rs-swarm` only**, the "hosted fallback
-preserved" checklist item and the "hosted fallback removed" /
-"release/publish/signing workflows touched" stop conditions below. The general
+This override changes only the routed Rust-small continuity lane. The general
 multi-repo guidance in this plan is unchanged for other repos.
 
 ## Branch protection rule
@@ -263,11 +264,9 @@ Do not merge when any are true:
 - scratch dir setup occurs after rust-toolchain action
 - normalized result is missing conditional needs
 - fork PR can route to self-hosted
-- hosted fallback removed
-  (exempted for `bitnet-rs-swarm` by the self-hosted-only override / BITNET-ADR-0008)
+- hosted fallback runs without explicit authorization
 - branch protection changed in same PR
 - release/publish/signing workflows touched
-  (exempted for `bitnet-rs-swarm` by the self-hosted-only override / BITNET-ADR-0008)
 - source-affecting changes bypass the repo-specific cutover, promotion, or sync
   policy
 
