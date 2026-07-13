@@ -122,7 +122,7 @@ completed items.
 | M4-HARDEN-003 | merged | Dense server response conformance, streaming events, receipt export, and clean failure paths. |
 | M4-HARDEN-004 | merged | BitNet repaired-250 regression analysis before corpus expansion. |
 | M4-HARDEN-005 | merged | Rerun only failing or repaired BitNet families and preserve identity. |
-| M4-HARDEN-006 | in_progress | Benchmark variance, operator classes, and operator-envelope refresh. |
+| M4-HARDEN-006 | pr_open | Benchmark variance, operator classes, and operator-envelope refresh. |
 
 ## Review Policy
 
