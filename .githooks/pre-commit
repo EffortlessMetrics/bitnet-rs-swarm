@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Guard: Ensure staged .rs files are formatted
-if git diff --cached --name-only --diff-filter=d | grep -q '\.rs$'; then
-  if ! cargo fmt --all -- --check >/dev/null 2>&1; then
-    echo "✖ Formatting check failed. Run: cargo fmt --all"
-    exit 1
-  fi
+# Autofix only staged Rust files. Refuse partially staged Rust files so the hook
+# never expands the commit by staging unrelated working-tree edits.
+rust_files=()
+while IFS= read -r -d '' path; do
+  rust_files+=("$path")
+done < <(git diff --cached --name-only -z --diff-filter=ACMR -- '*.rs')
+
+if ((${#rust_files[@]})); then
+  for path in "${rust_files[@]}"; do
+    if ! git diff --quiet -- "$path"; then
+      echo "✖ Cannot autofix partially staged Rust file: $path"
+      echo "  Stage or stash its working-tree changes, then commit again."
+      exit 1
+    fi
+  done
+
+  scripts/hooks/format-rust-files.sh "${rust_files[@]}"
+  git add -- "${rust_files[@]}"
 fi
 
 # Guard: Prevent GenerationConfig struct literals in tests (must use builder API)

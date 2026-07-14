@@ -16,19 +16,18 @@ git config core.hooksPath .githooks
 
 Runs before every commit to check:
 
-1. **#[ignore] Annotation Hygiene**
-   - Ensures all `#[ignore]` attributes include a reason
-   - Prevents bare `#[ignore]` markers from being committed
-   - Enforces pattern: `#[ignore = "reason"]` or comment before attribute
+1. **Diff-scoped Rust formatting**
+   - Runs rustfmt only on staged `.rs` files and automatically re-stages them
+   - Leaves unrelated workspace formatting debt alone
+   - Refuses partially staged Rust files instead of staging unrelated edits
 
-2. **Environment Mutation Safety**
-   - Warns about raw `std::env::set_var()` / `remove_var()` calls
-   - Encourages EnvGuard pattern with `#[serial(bitnet_env)]`
-   - Prevents test race conditions and environment pollution
+2. **Generation configuration hygiene**
+   - Prevents direct `GenerationConfig` struct literals in inference tests
+   - Keeps tests on the shared builder API
 
 ## Hook Status
 
-- **pre-commit**: Enabled (checks #[ignore] and env mutations)
+- **pre-commit**: Enabled (autofixes staged Rust formatting and checks generation configuration usage)
 - **commit-msg**: Not implemented
 - **pre-push**: Not implemented
 
