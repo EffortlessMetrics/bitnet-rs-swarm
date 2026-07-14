@@ -154,8 +154,9 @@ M3 Air a leading local device without borrowing proof from M4 or other lanes:
 | 7 | `M3MBA-032` | Run or block the accepted Microsoft 2B I2_S artifact on the exact M3 Air CPU/NEON receipt path. | M3 BitNet claims without generated text, token IDs, tokenizer authority, fallback=false, timing, answer-gate, and cleanup evidence. |
 | 8 | `M3MBA-033` | Use completed dense SLM and BitNet receipts to name the smallest safe CPU/NEON optimization PR. | Optimizing before the bottleneck is measured or mixing dense SLM and BitNet proof families. |
 | 9 | `M3MBA-034` | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces for proven dense SLM and BitNet CPU/NEON contexts. | User-facing M3 claims before receipts prove model/tokenizer/backend/fallback/timing identity. |
-| 10 | `M3MBA-035` | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. | Unmeasured optimization, output drift, or broad Apple Silicon performance claims. |
-| 11 | `M3MBA-036` | Restore the M3 strict local-answer command and reconcile its runtime identity with the M3-only receipt contract before retrying M3MBA-032. | Reusing M4 commands or accepting a mismatched M3 receipt runtime identity. |
+| 10 | `M3MBA-035` | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. #1711 merged the BitNet resident corpus path with exact five-case parity and measured local reuse evidence. | Unmeasured optimization, output drift, or broad Apple Silicon performance claims. |
+| 11 | `M3MBA-038` | Add the local resident BitNet scorecard UX after M3MBA-035 merges. It must render only validated exact-M3 receipt and baseline-comparison fields. | A hidden model run/download, weak receipt rendering, or a broad Apple/M4/accelerator/server claim. |
+| 12 | `M3MBA-036` | Restore the M3 strict local-answer command and reconcile its runtime identity with the M3-only receipt contract before retrying M3MBA-032. | Reusing M4 commands or accepting a mismatched M3 receipt runtime identity. |
 
 The follow-on implementation items are single-purpose work items. M3 accuracy
 and performance work should prefer dense SLM comparison receipts first because
@@ -213,7 +214,8 @@ other lanes' claim boundaries.
 | 7 | `M3MBA-032` | Accepted Microsoft 2B I2_S M3 CPU/NEON receipt passes, fails, or names a blocker with answer-gate evidence. | No M4 proof, QK256, Metal, MPSGraph, Neural Engine, chat, serve, or secondary-candidate claim. |
 | 8 | `M3MBA-033` | Completed receipts name the smallest measured CPU/NEON optimization target and comparator set. | No optimization benefit before a before/after proof PR. |
 | 9 | `M3MBA-034` | Exact-profile M3 `mac ask` and `mac benchmark` are enabled or blocked for the proven receipt contexts. | No chat, serve, unsupported artifact, or broad support claim. |
-| 10 | `M3MBA-035` | First measured CPU/NEON optimization lands for the bottleneck named by M3MBA-033. | No unmeasured speedup, output drift, or proof-family inheritance. |
+| 10 | `M3MBA-035` | First measured CPU/NEON optimization landed in #1711 as resident model/tokenizer reuse with local five-case text and token-ID parity evidence. | No unmeasured speedup, output drift, or proof-family inheritance. |
+| 11 | `M3MBA-038` | One receipt-backed local scorecard makes the validated exact-M3 resident corpus easy to run and inspect after M3MBA-035 merges. | No generic CI model work, automatic download, broad Apple/M4/accelerator/server claim, or scorecard without the exact receipt contract. |
 
 The queue keeps CI compact by default. Synthetic Linux checks prove schema,
 routing, fallback, and claim-boundary behavior. Live M3 model runs and large
@@ -992,12 +994,17 @@ execution queue.
    or fail closed with evidence.
 10. Land `M3MBA-035` as the first measured M3 CPU/NEON implementation follow-up
    to M3MBA-033, preserving greedy outputs, answer gates, and proof-family
-   boundaries.
-11. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
+   boundaries. #1711 merged with exact five-case parity, strict tokenizer
+   identity, fresh per-case KV caches, and one model/tokenizer load per corpus.
+11. Land `M3MBA-038` only after M3MBA-035 merges: make the validated resident
+   corpus receipt easy to run and inspect locally, while preserving exact
+   model/tokenizer identity, output/token-ID parity, fresh-KV-cache isolation,
+   load accounting, and the narrow M3 claim boundary.
+12. Keep `M3MBA-006` blocked unless a concrete 0.7B GGUF, reproducible conversion
    path, or explicitly approved third-party artifact path is named.
-12. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
+13. Keep `M3MBA-007` blocked until an official or explicitly approved 3B TL1/TL2
    diagnostic artifact and safe local storage state exist.
-13. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` and
+14. Keep M4 proof handoff separate from M3 evidence. `M3MBA-008` and
    `M3MBA-025` closed the first handoff/alignment reports; any follow-on M4
    proof item must run fresh M4 receipts before claiming proof.
 14. Preserve the `M3MBA-013` selected-long-job rule for any future live M3 lane:

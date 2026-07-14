@@ -1676,8 +1676,11 @@ must_not_claim = [
 
 [[work_item]]
 id = "M3MBA-035"
-status = "ready"
-branch = "codex/apple-m3-macbook-air/M3MBA-035-first-measured-cpu-neon-optimization"
+status = "merged"
+branch = "codex/apple-m3-macbook-air/M3MBA-035-resident-answer-corpus"
+pr = 1711
+head_sha = "572b78b2ca87039daff150e25aef8fdf67934c4e"
+merge_sha = "0964214f1427274e3dfe95f6527fcf75b5e7f958"
 stackable = false
 review_mode = "codex_premerge"
 merge_policy = "automerge_when_green"
@@ -1718,6 +1721,51 @@ must_not_claim = [
   "Dense SLM and BitNet optimization evidence are interchangeable.",
   "M3 Air timing is broad Apple Silicon or M4 Mac mini performance.",
   "QK256, Metal, MPSGraph, Neural Engine, chat, or serve support is enabled.",
+]
+
+[[work_item]]
+id = "M3MBA-038"
+status = "ready"
+branch = "codex/apple-m3-macbook-air/M3MBA-038-resident-scorecard"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["M3MBA-035"]
+acceptance = "Add one explicit, local-only M3 BitNet resident-corpus scorecard path that makes the verified five-case result easy to run and inspect: it must preserve the exact strict CPU/NEON device identity, accepted model and strict tokenizer identity, fallback=false, answer-gate and generated-token-ID parity, per-case timing, fresh-KV-cache isolation, and one model/tokenizer load per corpus. The rendered scorecard must distinguish the committed cold baseline from a measured resident run; report setup/build friction, cold and resident load, prefill, time to first token, steady decode, full-corpus wall time, and memory when available; cite its receipt; fail closed on an incomplete or invalid M3 resident contract; and name exactly one measured next optimization target with its comparator."
+commands = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --resident-session --fail-on-quality --json-out target/m3-bitnet-resident-scorecard.json",
+  "target/release/bitnet mac receipts-check target/m3-bitnet-resident-scorecard.json --json",
+  "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
+  "cargo run --locked -p xtask --no-default-features -- campaign doctor",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+  "git diff --check",
+]
+allowed_paths = [
+  "crates/bitnet-cli/**",
+  "docs/apple-silicon/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/apple-m3-macbook-air/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "ci/hardware/**",
+  "crates/bitnet-kernels/**",
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-quantization/src/qk256/**",
+  "crates/bitnet-server/**",
+  "models/**",
+]
+may_claim = [
+  "A validated resident BitNet scorecard is available only for the exact M3 Air CPU/NEON corpus, and it reports its own local receipt evidence and baseline comparison.",
+]
+must_not_claim = [
+  "A local resident-session result is a broad Apple Silicon, M4, Metal, MPSGraph, Neural Engine, QK256, chat, serve, or server-performance result.",
+  "A scorecard result is valid without exact model/tokenizer identity, fallback=false, quality gates, generated-token-ID parity, and resident load accounting.",
+  "The scorecard may trigger a generic CI model run, an automatic model download, or commit a model binary.",
 ]
 
 [[work_item]]

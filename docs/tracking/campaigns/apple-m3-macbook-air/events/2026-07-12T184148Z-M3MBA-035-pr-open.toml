@@ -1,0 +1,31 @@
+schema_version = "1.0"
+campaign = "apple-m3-macbook-air"
+item = "M3MBA-035"
+event = "pr_open"
+timestamp = "2026-07-12T18:41:48Z"
+actor = "codex"
+pr = 1711
+head_sha = "4572bc0b0942e681e5a8d8adc07ce8fdad0192df"
+branch = "codex/apple-m3-macbook-air/M3MBA-035-resident-answer-corpus"
+
+summary = "Opened the M3 BitNet resident answer-corpus implementation PR; it must merge before M3MBA-035 is marked merged."
+
+artifacts = [
+  "https://github.com/EffortlessMetrics/bitnet-rs-swarm/pull/1711",
+  "docs/reports/apple-silicon-macbook-m3-air-bitnet-resident-answer-corpus.md",
+]
+
+notes = [
+  "The PR records a local M3 resident-session run in which all five answers and generated token-ID sequences match the committed cold corpus baseline; its reported end-to-end wall time is 61.330 s versus the baseline estimate of 82.901 s.",
+  "The resident route is limited to the exact apple-m3-air-cpu-neon BitNet answer corpus, loads the model and tokenizer once per corpus, and recreates KV cache state per prompt.",
+  "This is an open PR, not merged campaign evidence. Its local measurement does not claim broad Apple Silicon, M4, Metal, MPSGraph, Neural Engine, QK256, chat, serve, or server performance.",
+  "Unavailable local plan proofs are tracked separately: the existing kernel CUDA feature-gate baseline in #1709 and the non-workspace neon package command in #1710. They do not authorize an expensive hosted fallback.",
+]
+
+validation = [
+  "cargo fmt --all -- --check",
+  "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
+  "release answer-corpus --device apple-m3-air-cpu-neon --resident-session --fail-on-quality followed by mac receipts-check",
+  "exact five-case answer and generated-token-ID comparison with the committed M3 baseline",
+  "campaign check, campaign doctor, campaign generate --check, and git diff --check",
+]

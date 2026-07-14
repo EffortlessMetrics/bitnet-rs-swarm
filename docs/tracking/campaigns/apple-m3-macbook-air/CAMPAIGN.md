@@ -85,23 +85,23 @@ artifacts to separate strict proof items.
 | M3MBA-024 | merged | #1534 records secondary BitNet artifact authority/storage preflight before any new large download. |
 | M3MBA-025 | merged | #1537 aligns accepted M3 artifact metadata with the separate M4 strict-proof checklist without manufacturing M4 proof. |
 | M3MBA-026 | merged | #1540 seeds the next M3 excellence queue after M3MBA-025 so runtime and proof work resumes from concrete PR-sized items. |
-| M3MBA-027 | ready | Split the M3 Air host/profile/backend-label contract into a single-responsibility shared device-model surface. |
-| M3MBA-028 | ready | Add compact Linux synthetic CI guards for M3 receipt/profile invariants without live Mac model work. |
-| M3MBA-029 | ready | Record or block bounded M3 Air dense SLM accuracy receipts with exact model/tokenizer/backend context. |
+| M3MBA-027 | merged | Split the M3 Air host/profile/backend-label contract into a single-responsibility shared device-model surface. |
+| M3MBA-028 | merged | Add compact Linux synthetic CI guards for M3 receipt/profile invariants without live Mac model work. |
+| M3MBA-029 | blocked | Dense SLM accuracy remains blocked on the recorded receipt-path gap. |
 | M3MBA-030 | ready | Record completed-run M3 Air dense SLM TTFT and throughput actuals for the bounded performance profile. |
 | M3MBA-031 | merged | #1573 prepared the strict M3 Air BitNet CPU/NEON local-answer proof surface with synthetic receipt gates. |
-| M3MBA-032 | blocked | The current CLI no longer exposes the required `mac bitnet-smoke` receipt command; a strict M3 receipt cannot be emitted until a compatible M3 command is restored. |
-| M3MBA-033 | ready | Use completed M3 Air SLM and BitNet receipts to name the smallest measured CPU/NEON optimization PR. |
-| M3MBA-034 | ready | Enable or explicitly block exact-profile M3 Air `mac ask` and `mac benchmark` surfaces after receipts exist. |
-| M3MBA-035 | ready | Implement the first measured M3 Air CPU/NEON optimization target with before/after or parity evidence. |
-| M3MBA-036 | ready | Repair the strict M3 BitNet local-answer command and receipt runtime-identity contract before rerunning M3MBA-032. |
+| M3MBA-032 | merged | The accepted Microsoft 2B I2_S artifact has strict M3 CPU/NEON local-answer evidence. |
+| M3MBA-033 | merged | Completed receipts named resident model/tokenizer reuse as the smallest measured BitNet follow-up. |
+| M3MBA-034 | blocked | Exact-profile ask/benchmark remains blocked where wrappers cannot preserve the receipt contract. |
+| M3MBA-035 | merged | #1711 landed resident reuse with exact five-case text/token-ID parity, strict tokenizer identity, one model/tokenizer load, and a 25.9% local full-corpus wall-time reduction. |
+| M3MBA-038 | ready | Make the exact M3 resident BitNet corpus result easy to run and inspect with a receipt-backed local scorecard, then name one measured follow-up target. |
+| M3MBA-036 | merged | Repaired the strict M3 BitNet local-answer command and receipt runtime-identity contract. |
+| M3MBA-037 | merged | Repaired exact-profile wrapper handling without weakening the M3 receipt boundary. |
 
-Current focus: `M3MBA-036` is ready. The existing top-level M3 answer-corpus
-route emits the required M3-only artifact kind, but its child receipt currently
-reports `runtime_api=cpu-neon` while the stale strict M3 contract requires
-`cpu`. This focused repair aligns the contract with the canonical M3 CPU/NEON
-device identity and makes `answer-corpus` the compatible strict command before
-M3MBA-032 is rerun.
+Current focus: `M3MBA-038` turns merged #1711 resident-corpus evidence into an
+exact-profile local scorecard. It must fail closed on receipt drift, expose
+correctness, identity, load accounting, and phase timing, and name one measured
+follow-up target without widening the M3 CPU/NEON claim boundary.
 The M4 Apple Silicon work is useful reference implementation context, but M3
 uses its own artifact kind, backend label, claim boundary, and receipt gates.
 records dense SLM accuracy and performance receipts, prepares and runs strict
@@ -126,7 +126,7 @@ M3 Air host/profile contract instead of broad Apple Silicon claims.
 | Cross-lane synthesis | M3MBA-009 | Compare M3 dense SLM behavior against M4 and SLM CPU evidence without broad claims. | Synthesis report naming comparable receipts and non-comparable gaps. |
 | Strict-proof handoff | M3MBA-008 | Convert accepted artifact evidence into separate M4 proof work. | Handoff report only; no manufactured M4 receipt. |
 | Post-handoff execution | M3MBA-019, M3MBA-020, M3MBA-021, M3MBA-022, M3MBA-023, M3MBA-024, M3MBA-025 | Keep the M3 Air lane moving after the Microsoft 2B handoff with explicit device-model, accuracy, performance, artifact-unblock, and M4 handoff alignment tracks. | Updated roadmap, concrete follow-on item boundaries, and later receipt-backed implementation PRs; no manufactured runtime claim. |
-| M3 excellence execution | M3MBA-026, M3MBA-027, M3MBA-028, M3MBA-029, M3MBA-030, M3MBA-031, M3MBA-032, M3MBA-033, M3MBA-034, M3MBA-035, M3MBA-036 | Turn the M3 Air into a leading local device through SRP device modeling, compact synthetic CI, dense SLM accuracy/performance receipts, strict BitNet CPU/NEON receipts, exact-profile ask/benchmark surfaces, and measured CPU/NEON follow-up. | Successor queue, M3-specific implementation PRs, committed receipts or explicit blockers, user-facing exact-profile evidence, and later optimization targets tied to exact proof families. |
+| M3 excellence execution | M3MBA-026 through M3MBA-038 | Turn the M3 Air into a leading local device through SRP device modeling, compact synthetic CI, dense SLM accuracy/performance receipts, strict BitNet CPU/NEON receipts, exact-profile surfaces, measured resident reuse, and a truthful scorecard. | Successor queue, M3-specific implementation PRs, committed receipts or explicit blockers, user-facing exact-profile evidence, and later optimization targets tied to exact proof families. |
 
 ## Post-Handoff Execution Queue
 
@@ -165,8 +165,9 @@ work separate because those proof families are not interchangeable.
 | 7 | `M3MBA-032` | BitNet local-answer receipt | Accepted Microsoft 2B I2_S M3 Air CPU/NEON receipt passes, fails, or names a blocker with answer-gate evidence and cleanup/retention state. |
 | 8 | `M3MBA-033` | CPU/NEON bottleneck review | Completed dense SLM and BitNet receipts identify the smallest safe optimization PR with exact comparators and no broad Apple Silicon claim. |
 | 9 | `M3MBA-034` | M3 ask/benchmark readiness | Exact-profile `mac ask` and `mac benchmark` are enabled or blocked for proven dense SLM and BitNet CPU/NEON contexts. |
-| 10 | `M3MBA-035` | First measured CPU/NEON optimization | The single M3 bottleneck named by M3MBA-033 gets a before/after or parity-backed implementation PR. |
-| 11 | `M3MBA-036` | Strict command repair | Restore one M3-specific local-answer command with a CPU-scoped strict receipt contract before retrying M3MBA-032. |
+| 10 | `M3MBA-035` | First measured CPU/NEON optimization | #1711 merged resident model/tokenizer reuse with exact output/token parity and local receipt proof. |
+| 11 | `M3MBA-038` | Resident BitNet scorecard UX | Make the validated exact M3 resident result easy to run and inspect, then select one measured next bottleneck without creating a generic CI model lane or broader performance claim. |
+| 12 | `M3MBA-036` | Strict command repair | Restore one M3-specific local-answer command with a CPU-scoped strict receipt contract before retrying M3MBA-032. |
 
 This queue is deliberately M3-first. It may improve generalized Apple Silicon
 and ARM code as a consequence, but every successor item must prove its M3 Air
