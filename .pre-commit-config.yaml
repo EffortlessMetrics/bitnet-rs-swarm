@@ -44,11 +44,11 @@ repos:
         pass_filenames: false
 
       - id: cargo-fmt
-        name: cargo fmt (autofix)
-        entry: bash -c 'cargo fmt --all'
+        name: rustfmt changed Rust files (autofix)
+        entry: bash scripts/hooks/format-rust-files.sh
         language: system
         files: '\.rs$'
-        pass_filenames: false
+        pass_filenames: true
 
       - id: cargo-clippy
         name: cargo clippy (deny warnings + no &Vec args)
