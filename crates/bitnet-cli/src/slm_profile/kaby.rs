@@ -1,6 +1,6 @@
 //! Kaby Lake dense-Qwen profile contract.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 pub const PROFILE_ID: &str = "kaby-qwen-q8";
 pub const RECOMMENDED_THREADS: usize = 4;

@@ -13,14 +13,14 @@ pub mod self_test;
 pub use receipt::profile_receipt;
 #[cfg(feature = "full-cli")]
 pub use resolve::{
-    inspect_model_metadata, resolve_profile, validate_profile_request, CliOverrides,
-    LoadedModelMetadata,
+    CliOverrides, LoadedModelMetadata, inspect_model_metadata, resolve_profile,
+    validate_profile_request,
 };
 #[cfg(feature = "full-cli")]
-pub use self_test::{profile_prompt_inputs, ProfileGate, ProfilePromptInput};
+pub use self_test::{ProfileGate, ProfilePromptInput, profile_prompt_inputs};
 
 #[cfg(feature = "full-cli")]
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 #[cfg(feature = "full-cli")]
 use clap::{Args, Subcommand};
 #[cfg(feature = "full-cli")]
@@ -203,11 +203,7 @@ pub async fn execute_doctor_command(command: DoctorCommand, requested_backend: &
             }
         }
     }
-    if ready {
-        Ok(())
-    } else {
-        bail!("profile doctor found {} blocker(s)", blockers.len())
-    }
+    if ready { Ok(()) } else { bail!("profile doctor found {} blocker(s)", blockers.len()) }
 }
 
 #[cfg(feature = "full-cli")]

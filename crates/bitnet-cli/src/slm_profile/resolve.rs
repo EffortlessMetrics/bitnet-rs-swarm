@@ -1,6 +1,6 @@
 //! Profile request and post-load resolution.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::collections::BTreeSet;
 use std::path::Path;
 
