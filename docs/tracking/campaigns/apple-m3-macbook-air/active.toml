@@ -1736,7 +1736,8 @@ acceptance = "Add one explicit, local-only M3 BitNet resident-corpus scorecard p
 commands = [
   "cargo fmt --all -- --check",
   "cargo test --locked -p bitnet-cli --no-default-features --features cpu,full-cli apple_m3",
-  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --resident-session --fail-on-quality --json-out target/m3-bitnet-resident-scorecard.json",
+  "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --resident-session --fail-on-quality --json-out target/m3-bitnet-resident-answer.json",
+  "target/release/bitnet mac m3-resident-scorecard --resident-receipt target/m3-bitnet-resident-answer.json --json-out target/m3-bitnet-resident-scorecard.json --markdown-out target/m3-bitnet-resident-scorecard.md",
   "target/release/bitnet mac receipts-check target/m3-bitnet-resident-scorecard.json --json",
   "cargo run --locked -p xtask --no-default-features -- campaign check apple-m3-macbook-air",
   "cargo run --locked -p xtask --no-default-features -- campaign doctor",

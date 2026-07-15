@@ -80,6 +80,15 @@ const MAC_SERVE_CONTEXT_GUARDRAIL_ERROR_PREFIX: &str =
 const MAC_SERVE_CONTEXT_GUARDRAIL_RECEIPT_MARKER: &str = "; receipt written to ";
 const MAC_BITNET_PROOF_DEFAULT_RECEIPT: &str =
     "target/apple-m4-continuity/mac-bitnet-proof-preflight.json";
+const M3_RESIDENT_SCORECARD_BASELINE: &str =
+    "ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json";
+const M3_RESIDENT_SCORECARD_BASELINE_SHA256: &str =
+    "7787e2d2db3226291093617bde0b93a0f7f2ce3f6383a8e81353f80fcac8101e";
+const M3_RESIDENT_SCORECARD_REPORT: &str =
+    "docs/reports/apple-silicon-macbook-m3-air-bitnet-resident-answer-corpus.md";
+const M3_RESIDENT_SCORECARD_DEFAULT_RECEIPT: &str = "target/m3-bitnet-resident-scorecard.json";
+const M3_RESIDENT_SCORECARD_DEFAULT_MARKDOWN: &str = "target/m3-bitnet-resident-scorecard.md";
+const M3_COLD_BASELINE_WALL_MS: f64 = 82_901.0;
 const MAC_VALIDATE_DEFAULT_RECEIPT: &str = "target/apple-m4-productization/mac-validate.json";
 const MAC_BENCHMARK_DEFAULT_RECEIPT: &str = "target/apple-m4-slm-eval-v2/mac-benchmark.json";
 const MAC_BENCHMARK_PREFLIGHT_DEFAULT_RECEIPT: &str =
@@ -599,6 +608,25 @@ pub struct MacCommand {
 
 #[derive(Debug, Subcommand)]
 enum MacAction {
+    /// Render a validated, local-only M3 BitNet resident-corpus scorecard.
+    M3ResidentScorecard {
+        /// Measured five-case resident answer-corpus receipt. This command never runs a model.
+        #[arg(long = "resident-receipt", value_name = "PATH")]
+        resident_receipt: PathBuf,
+
+        /// Output strict scorecard receipt.
+        #[arg(long, value_name = "PATH", default_value = M3_RESIDENT_SCORECARD_DEFAULT_RECEIPT)]
+        json_out: PathBuf,
+
+        /// Output compact human-readable scorecard.
+        #[arg(long, value_name = "PATH", default_value = M3_RESIDENT_SCORECARD_DEFAULT_MARKDOWN)]
+        markdown_out: PathBuf,
+
+        /// Emit JSON to stdout after writing both outputs.
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+
     /// List Apple M4 model states, cache status, and selection guidance.
     Models {
         /// Override model cache root. Defaults to ~/.cache/bitnet-rs/models.
@@ -1650,6 +1678,15 @@ impl MacCommand {
 
     pub async fn execute(self, explicit_device_label: Option<&str>) -> Result<()> {
         match self.action {
+            MacAction::M3ResidentScorecard { resident_receipt, json_out, markdown_out, json } => {
+                run_m3_resident_scorecard(
+                    &resident_receipt,
+                    Path::new(M3_RESIDENT_SCORECARD_BASELINE),
+                    &json_out,
+                    &markdown_out,
+                    json,
+                )
+            }
             MacAction::Models { cache_dir, json } => {
                 ensure_supported_mac_device(explicit_device_label, "mac models")?;
                 model_cache::list_apple_m4_models(cache_dir, json)
@@ -18569,6 +18606,467 @@ fn bitnet_warm_profile_set_receipt_json(
     }))
 }
 
+fn run_m3_resident_scorecard(
+    resident_path: &Path,
+    baseline_path: &Path,
+    json_out: &Path,
+    markdown_out: &Path,
+    json: bool,
+) -> Result<()> {
+    let resident_bytes = std::fs::read(resident_path)
+        .with_context(|| format!("failed to read {}", resident_path.display()))?;
+    let baseline_bytes = std::fs::read(baseline_path)
+        .with_context(|| format!("failed to read {}", baseline_path.display()))?;
+    let resident: serde_json::Value = serde_json::from_slice(&resident_bytes)
+        .with_context(|| format!("invalid JSON receipt {}", resident_path.display()))?;
+    let baseline: serde_json::Value = serde_json::from_slice(&baseline_bytes)
+        .with_context(|| format!("invalid JSON receipt {}", baseline_path.display()))?;
+    let baseline_sha256 = sha256_hex(&baseline_bytes);
+    if baseline_path != Path::new(M3_RESIDENT_SCORECARD_BASELINE)
+        || baseline_sha256 != M3_RESIDENT_SCORECARD_BASELINE_SHA256
+    {
+        anyhow::bail!(
+            "M3 scorecard cold wall comparator requires committed baseline {} with SHA-256 {}",
+            M3_RESIDENT_SCORECARD_BASELINE,
+            M3_RESIDENT_SCORECARD_BASELINE_SHA256
+        );
+    }
+
+    validate_mac_receipt_value(resident_path, &resident)?;
+    validate_mac_receipt_value(baseline_path, &baseline)?;
+    validate_m3_scorecard_pair(resident_path, &resident, baseline_path, &baseline)?;
+
+    let resident_cases = resident["cases"].as_array().expect("validated cases");
+    let baseline_cases = baseline["cases"].as_array().expect("validated cases");
+    let resident_wall_ms =
+        positive_f64_at(resident_path, &resident, &["resident_session", "total_wall_ms"])?;
+    let improvement_pct =
+        (M3_COLD_BASELINE_WALL_MS - resident_wall_ms) / M3_COLD_BASELINE_WALL_MS * 100.0;
+    let speedup = M3_COLD_BASELINE_WALL_MS / resident_wall_ms;
+    let per_case = resident_cases
+        .iter()
+        .zip(baseline_cases)
+        .map(|(resident_case, baseline_case)| {
+            serde_json::json!({
+                "id": resident_case["id"],
+                "answer": resident_case["answer"],
+                "generated_token_ids": resident_case["token_ids"]["generated"],
+                "answer_text_parity": true,
+                "generated_token_id_parity": true,
+                "cold": {
+                    "prefill_ms": baseline_case["timing"]["prefill_ms"],
+                    "time_to_first_token_ms": baseline_case["timing"]["first_token_ms"],
+                    "steady_decode_tokens_per_second": baseline_case["timing"]["decode_steady_state_tok_s"],
+                },
+                "resident": {
+                    "prefill_ms": resident_case["timing"]["prefill_ms"],
+                    "time_to_first_token_ms": resident_case["timing"]["first_token_ms"],
+                    "steady_decode_tokens_per_second": resident_case["timing"]["decode_steady_state_tok_s"],
+                },
+            })
+        })
+        .collect::<Vec<_>>();
+    let scorecard = serde_json::json!({
+        "schema_version": "1.0.0",
+        "artifact_kind": "bitnet_apple_m3_air_resident_scorecard",
+        "status": "passed",
+        "local_only": true,
+        "work_item": "M3MBA-038",
+        "requested_backend": APPLE_M3_AIR_CPU_NEON,
+        "selected_backend": APPLE_M3_AIR_CPU_NEON,
+        "runtime_api": apple_m3_air::CPU_NEON_RUNTIME_API,
+        "fallback_used": false,
+        "evidence": {
+            "resident_receipt": resident_path,
+            "resident_receipt_sha256": sha256_hex(&resident_bytes),
+            "cold_baseline_receipt": baseline_path,
+            "cold_baseline_receipt_sha256": baseline_sha256,
+            "comparison_report": M3_RESIDENT_SCORECARD_REPORT,
+        },
+        "identity": {
+            "requested_backend": APPLE_M3_AIR_CPU_NEON,
+            "selected_backend": APPLE_M3_AIR_CPU_NEON,
+            "runtime_api": apple_m3_air::CPU_NEON_RUNTIME_API,
+            "fallback_used": false,
+            "model_sha256": resident["model"]["sha256"],
+            "tokenizer_sha256": resident["tokenizer"]["authority"]["sha256"],
+            "tokenizer_strict": true,
+        },
+        "correctness": {
+            "case_count": 5,
+            "quality_passed": 5,
+            "answer_text_parity": true,
+            "generated_token_id_parity": true,
+            "fresh_kv_cache_per_case": true,
+            "model_load_count": 1,
+            "tokenizer_load_count": 1,
+        },
+        "per_case": per_case,
+        "setup_build_friction": {
+            "model_run_or_download_triggered_by_scorecard": false,
+            "automatic_download": false,
+            "required_inputs": ["resident receipt", "committed cold baseline"],
+            "setup_measurement_status": "not_measured_by_source_receipts",
+            "build_measurement_status": "not_measured_by_source_receipts",
+            "build_profile_for_measured_run": "release",
+            "measured_run_command": "cargo run --release --locked -p bitnet-cli --no-default-features --features cpu,full-cli -- answer-corpus --device apple-m3-air-cpu-neon --resident-session --fail-on-quality --json-out target/m3-bitnet-resident-answer.json",
+        },
+        "timing": {
+            "cold": m3_case_timing_summary(baseline_path, baseline_cases)?,
+            "resident": m3_case_timing_summary(resident_path, resident_cases)?,
+            "cold_full_corpus_wall_ms": M3_COLD_BASELINE_WALL_MS,
+            "resident_full_corpus_wall_ms": resident_wall_ms,
+            "wall_time_improvement_pct": round3(improvement_pct),
+            "wall_time_speedup": round3(speedup),
+        },
+        "memory": {
+            "available": false,
+            "status": "not_exposed_by_answer_corpus_receipt",
+            "bytes": serde_json::Value::Null,
+        },
+        "next_optimization_target": {
+            "id": "prompt_prefill_latency",
+            "count": 1,
+            "comparator": "per-case timing.prefill_ms and timing.first_token_ms against this resident receipt",
+            "reason": "prefill dominates time to first token after model and tokenizer load reuse",
+        },
+        "claim_boundary": {
+            "scope": "exact M3 MacBook Air CPU/NEON model, tokenizer, corpus, and receipts only",
+            "broad_apple_silicon": false,
+            "m4": false,
+            "metal": false,
+            "mpsgraph": false,
+            "neural_engine": false,
+            "qk256_acceleration": false,
+            "chat": false,
+            "serve": false,
+        },
+    });
+    write_json_receipt(json_out, &scorecard)?;
+    if let Some(parent) = markdown_out.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create {}", parent.display()))?;
+    }
+    std::fs::write(markdown_out, render_m3_resident_scorecard(&scorecard))
+        .with_context(|| format!("failed to write {}", markdown_out.display()))?;
+    if json {
+        println!("{}", serde_json::to_string_pretty(&scorecard)?);
+    } else {
+        println!("M3 resident scorecard: passed");
+        println!("JSON: {}", json_out.display());
+        println!("Markdown: {}", markdown_out.display());
+        println!("Next target: prompt_prefill_latency");
+    }
+    Ok(())
+}
+
+fn validate_m3_scorecard_pair(
+    resident_path: &Path,
+    resident: &serde_json::Value,
+    baseline_path: &Path,
+    baseline: &serde_json::Value,
+) -> Result<()> {
+    require_bool_at(resident_path, resident, &["resident_session", "enabled"], true)?;
+    if !baseline["resident_session"].is_null() {
+        anyhow::bail!("{} must be a cold, non-resident baseline", baseline_path.display());
+    }
+    for fields in [
+        &["model", "sha256"][..],
+        &["tokenizer", "authority", "source"][..],
+        &["tokenizer", "authority", "sha256"][..],
+        &["tokenizer", "authority", "ggml_pre"][..],
+        &["tokenizer", "strict"][..],
+    ] {
+        let resident_value = fields.iter().fold(resident, |value, field| &value[*field]);
+        let baseline_value = fields.iter().fold(baseline, |value, field| &value[*field]);
+        if resident_value != baseline_value {
+            anyhow::bail!(
+                "M3 resident identity field {} does not match committed baseline",
+                fields.join(".")
+            );
+        }
+    }
+    for (path, receipt) in [(resident_path, resident), (baseline_path, baseline)] {
+        require_u64_exact(path, receipt, &["quality_summary", "total"], 5)?;
+        require_u64_exact(path, receipt, &["quality_summary", "passed"], 5)?;
+        require_u64_exact(path, receipt, &["quality_summary", "failed"], 0)?;
+        require_u64_exact(path, receipt, &["quality_summary", "timeout"], 0)?;
+        require_u64_exact(path, receipt, &["quality_summary", "not_run"], 0)?;
+    }
+    let resident_cases = resident["cases"]
+        .as_array()
+        .ok_or_else(|| anyhow!("{} cases must be an array", resident_path.display()))?;
+    let baseline_cases = baseline["cases"]
+        .as_array()
+        .ok_or_else(|| anyhow!("{} cases must be an array", baseline_path.display()))?;
+    if resident_cases.len() != 5 || baseline_cases.len() != 5 {
+        anyhow::bail!("M3 resident scorecard requires exactly five resident and baseline cases");
+    }
+    const CASE_IDS: [&str; 5] =
+        ["math_2_plus_2", "capital_france", "repeat_colors", "say_ok", "yes_no_water"];
+    for (index, (resident_case, baseline_case)) in
+        resident_cases.iter().zip(baseline_cases).enumerate()
+    {
+        let id = baseline_case["id"].as_str().unwrap_or("<missing>");
+        if id != CASE_IDS[index] {
+            anyhow::bail!("M3 scorecard case {index} must be {}", CASE_IDS[index]);
+        }
+        if resident_case["id"] != baseline_case["id"] {
+            anyhow::bail!("M3 scorecard case {index} ID does not match baseline");
+        }
+        for field in ["question", "prompt_template"] {
+            if resident_case[field] != baseline_case[field] {
+                anyhow::bail!("M3 scorecard case {index} ({id}) {field} does not match baseline");
+            }
+        }
+        if resident_case["prompt"]["rendered_sha256"] != baseline_case["prompt"]["rendered_sha256"]
+        {
+            anyhow::bail!(
+                "M3 scorecard case {index} ({id}) rendered prompt does not match baseline"
+            );
+        }
+        if resident_case["answer"] != baseline_case["answer"] {
+            anyhow::bail!("M3 scorecard case {index} ({id}) answer does not match baseline");
+        }
+        if resident_case["token_ids"]["generated"] != baseline_case["token_ids"]["generated"] {
+            anyhow::bail!(
+                "M3 scorecard case {index} ({id}) generated token IDs do not match baseline"
+            );
+        }
+        require_exact_string_at(resident_path, resident_case, &["status"], "passed")?;
+        require_bool_at(resident_path, resident_case, &["quality", "passed"], true)?;
+        for field in ["prefill_ms", "first_token_ms", "decode_steady_state_tok_s"] {
+            positive_f64_at(resident_path, resident_case, &["timing", field])?;
+            positive_f64_at(baseline_path, baseline_case, &["timing", field])?;
+        }
+    }
+    positive_f64_at(resident_path, resident, &["resident_session", "model_load_ms"])?;
+    positive_f64_at(resident_path, resident, &["resident_session", "tokenizer_load_ms"])?;
+    positive_f64_at(resident_path, resident, &["resident_session", "total_wall_ms"])?;
+    Ok(())
+}
+
+fn validate_m3_resident_scorecard_receipt(
+    path: &Path,
+    receipt: &serde_json::Value,
+) -> Result<(Option<usize>, Option<usize>)> {
+    require_exact_string_at(path, receipt, &["schema_version"], "1.0.0")?;
+    require_exact_string_at(path, receipt, &["status"], "passed")?;
+    require_exact_string_at(path, receipt, &["work_item"], "M3MBA-038")?;
+    require_bool_at(path, receipt, &["local_only"], true)?;
+    require_exact_string_at(path, receipt, &["requested_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["selected_backend"], APPLE_M3_AIR_CPU_NEON)?;
+    require_exact_string_at(path, receipt, &["runtime_api"], apple_m3_air::CPU_NEON_RUNTIME_API)?;
+    require_bool_at(path, receipt, &["fallback_used"], false)?;
+    require_u64_exact(path, receipt, &["correctness", "case_count"], 5)?;
+    require_u64_exact(path, receipt, &["correctness", "quality_passed"], 5)?;
+    for field in ["answer_text_parity", "generated_token_id_parity", "fresh_kv_cache_per_case"] {
+        require_bool_at(path, receipt, &["correctness", field], true)?;
+    }
+    require_u64_exact(path, receipt, &["correctness", "model_load_count"], 1)?;
+    require_u64_exact(path, receipt, &["correctness", "tokenizer_load_count"], 1)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["identity", "model_sha256"],
+        BITNET_M4_EXPECTED_MODEL_SHA256,
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["identity", "tokenizer_sha256"],
+        BITNET_M4_EXPECTED_TOKENIZER_SHA256,
+    )?;
+    require_bool_at(path, receipt, &["identity", "tokenizer_strict"], true)?;
+    require_bool_at(
+        path,
+        receipt,
+        &["setup_build_friction", "model_run_or_download_triggered_by_scorecard"],
+        false,
+    )?;
+    require_bool_at(path, receipt, &["setup_build_friction", "automatic_download"], false)?;
+    require_bool_at(path, receipt, &["memory", "available"], false)?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["memory", "status"],
+        "not_exposed_by_answer_corpus_receipt",
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["next_optimization_target", "id"],
+        "prompt_prefill_latency",
+    )?;
+    require_u64_exact(path, receipt, &["next_optimization_target", "count"], 1)?;
+    positive_f64_at(path, receipt, &["timing", "cold_full_corpus_wall_ms"])?;
+    positive_f64_at(path, receipt, &["timing", "resident_full_corpus_wall_ms"])?;
+    finite_f64_at(path, receipt, &["timing", "wall_time_improvement_pct"])?;
+    positive_f64_at(path, receipt, &["timing", "wall_time_speedup"])?;
+    for field in [
+        "broad_apple_silicon",
+        "m4",
+        "metal",
+        "mpsgraph",
+        "neural_engine",
+        "qk256_acceleration",
+        "chat",
+        "serve",
+    ] {
+        require_bool_at(path, receipt, &["claim_boundary", field], false)?;
+    }
+    require_non_empty_string_at(path, receipt, &["evidence", "resident_receipt"])?;
+    let resident_sha =
+        require_non_empty_string_at(path, receipt, &["evidence", "resident_receipt_sha256"])?;
+    if !is_sha256_hex(resident_sha) {
+        anyhow::bail!("{} evidence.resident_receipt_sha256 must be SHA-256 hex", path.display());
+    }
+    require_exact_string_at(
+        path,
+        receipt,
+        &["evidence", "cold_baseline_receipt"],
+        M3_RESIDENT_SCORECARD_BASELINE,
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["evidence", "cold_baseline_receipt_sha256"],
+        M3_RESIDENT_SCORECARD_BASELINE_SHA256,
+    )?;
+    require_exact_string_at(
+        path,
+        receipt,
+        &["evidence", "comparison_report"],
+        M3_RESIDENT_SCORECARD_REPORT,
+    )?;
+    let per_case = receipt["per_case"]
+        .as_array()
+        .ok_or_else(|| anyhow!("{} per_case must be an array", path.display()))?;
+    const CASE_IDS: [&str; 5] =
+        ["math_2_plus_2", "capital_france", "repeat_colors", "say_ok", "yes_no_water"];
+    if per_case.len() != CASE_IDS.len() {
+        anyhow::bail!("{} scorecard must contain exactly five per_case rows", path.display());
+    }
+    for (index, case) in per_case.iter().enumerate() {
+        require_exact_string_at(path, case, &["id"], CASE_IDS[index])?;
+        require_non_empty_string_at(path, case, &["answer"])?;
+        require_bool_at(path, case, &["answer_text_parity"], true)?;
+        require_bool_at(path, case, &["generated_token_id_parity"], true)?;
+        let ids = case["generated_token_ids"].as_array().ok_or_else(|| {
+            anyhow!("{} per_case[{index}] generated_token_ids must be an array", path.display())
+        })?;
+        if ids.is_empty() {
+            anyhow::bail!(
+                "{} per_case[{index}] generated_token_ids must not be empty",
+                path.display()
+            );
+        }
+        for phase in ["cold", "resident"] {
+            for metric in
+                ["prefill_ms", "time_to_first_token_ms", "steady_decode_tokens_per_second"]
+            {
+                positive_f64_at(path, case, &[phase, metric])?;
+            }
+        }
+    }
+    Ok((Some(5), Some(14)))
+}
+
+fn finite_f64_at(path: &Path, value: &serde_json::Value, fields: &[&str]) -> Result<f64> {
+    let observed = fields.iter().fold(value, |current, field| &current[*field]);
+    let number = observed
+        .as_f64()
+        .ok_or_else(|| anyhow!("{} field {} must be a number", path.display(), fields.join(".")))?;
+    if !number.is_finite() {
+        anyhow::bail!("{} field {} must be finite", path.display(), fields.join("."));
+    }
+    Ok(number)
+}
+
+fn positive_f64_at(path: &Path, value: &serde_json::Value, fields: &[&str]) -> Result<f64> {
+    let observed = fields.iter().fold(value, |current, field| &current[*field]);
+    let number = observed
+        .as_f64()
+        .ok_or_else(|| anyhow!("{} field {} must be a number", path.display(), fields.join(".")))?;
+    if !number.is_finite() || number <= 0.0 {
+        anyhow::bail!("{} field {} must be positive", path.display(), fields.join("."));
+    }
+    Ok(number)
+}
+
+fn m3_case_timing_summary(path: &Path, cases: &[serde_json::Value]) -> Result<serde_json::Value> {
+    let metric = |field: &str| -> Result<Vec<f64>> {
+        cases.iter().map(|case| positive_f64_at(path, case, &["timing", field])).collect()
+    };
+    let load_metric = |field: &str| -> Result<Vec<f64>> {
+        cases
+            .iter()
+            .map(|case| {
+                let value = case["timing"][field].as_f64().ok_or_else(|| {
+                    anyhow!("{} field timing.{field} must be a number", path.display())
+                })?;
+                if !value.is_finite() || value < 0.0 {
+                    anyhow::bail!("{} field timing.{field} must be non-negative", path.display());
+                }
+                Ok(value)
+            })
+            .collect()
+    };
+    let model_load = load_metric("model_load_ms")?;
+    let tokenizer_load = load_metric("tokenizer_load_ms")?;
+    Ok(serde_json::json!({
+        "model_load_ms": timing_metric_summary(&model_load),
+        "tokenizer_load_ms": timing_metric_summary(&tokenizer_load),
+        "prefill_ms": timing_metric_summary(&metric("prefill_ms")?),
+        "time_to_first_token_ms": timing_metric_summary(&metric("first_token_ms")?),
+        "steady_decode_tokens_per_second": timing_metric_summary(&metric("decode_steady_state_tok_s")?),
+    }))
+}
+
+fn timing_metric_summary(values: &[f64]) -> serde_json::Value {
+    let total = values.iter().sum::<f64>();
+    let min = values.iter().copied().fold(f64::INFINITY, f64::min);
+    let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    serde_json::json!({
+        "total": round3(total),
+        "mean": round3(total / values.len() as f64),
+        "min": round3(min),
+        "max": round3(max),
+    })
+}
+
+fn render_m3_resident_scorecard(scorecard: &serde_json::Value) -> String {
+    let improvement = scorecard["timing"]["wall_time_improvement_pct"].as_f64().unwrap();
+    let wall_change = if improvement >= 0.0 {
+        format!("{improvement:.1}% faster")
+    } else {
+        format!("{:.1}% slower", -improvement)
+    };
+    format!(
+        "# M3 BitNet Resident Scorecard\n\nStatus: **passed** (local receipt validation only; no model run or download).\n\n| Metric | Cold baseline | Resident |\n| --- | ---: | ---: |\n| Full corpus wall | {:.3} s | {:.3} s |\n| Model load total | {:.3} s | {:.3} s |\n| Tokenizer load total | {:.3} s | {:.3} s |\n| Prefill mean | {:.3} s | {:.3} s |\n| Time to first token mean | {:.3} s | {:.3} s |\n| Steady decode mean | {:.3} tok/s | {:.3} tok/s |\n\nWall-time change: **{} ({:.3}x)**. Memory: not exposed by the answer-corpus receipt.\n\nCorrectness: 5/5 quality gates; exact answer-text and generated-token-ID parity; fallback=false; fresh KV cache per case; one resident model/tokenizer load.\n\nEvidence: `{}` (SHA-256 `{}`), compared with `{}`.\n\nNext optimization target (exactly one): **prompt prefill latency**, compared using per-case `timing.prefill_ms` and `timing.first_token_ms` against this resident receipt.\n\nClaim boundary: exact M3 MacBook Air CPU/NEON profile only; no broad Apple Silicon, M4, accelerator, chat, or server claim.\n",
+        scorecard["timing"]["cold_full_corpus_wall_ms"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["resident_full_corpus_wall_ms"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["cold"]["model_load_ms"]["total"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["resident"]["model_load_ms"]["total"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["cold"]["tokenizer_load_ms"]["total"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["resident"]["tokenizer_load_ms"]["total"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["cold"]["prefill_ms"]["mean"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["resident"]["prefill_ms"]["mean"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["cold"]["time_to_first_token_ms"]["mean"].as_f64().unwrap() / 1000.0,
+        scorecard["timing"]["resident"]["time_to_first_token_ms"]["mean"].as_f64().unwrap()
+            / 1000.0,
+        scorecard["timing"]["cold"]["steady_decode_tokens_per_second"]["mean"].as_f64().unwrap(),
+        scorecard["timing"]["resident"]["steady_decode_tokens_per_second"]["mean"]
+            .as_f64()
+            .unwrap(),
+        wall_change,
+        scorecard["timing"]["wall_time_speedup"].as_f64().unwrap(),
+        scorecard["evidence"]["resident_receipt"].as_str().unwrap(),
+        scorecard["evidence"]["resident_receipt_sha256"].as_str().unwrap(),
+        scorecard["evidence"]["cold_baseline_receipt"].as_str().unwrap(),
+    )
+}
+
 fn run_receipts_check(path: &Path, regression_baseline: Option<&Path>, json: bool) -> Result<()> {
     let receipt_paths = collect_receipt_paths(path)?;
     if receipt_paths.is_empty() {
@@ -22123,6 +22621,7 @@ fn validate_mac_receipt_value(
     }
     let expected_runtime_api = if artifact_kind
         == bitnet_receipts_core::BITNET_APPLE_M3_AIR_LOCAL_ANSWER_CORPUS_ARTIFACT_KIND
+        || artifact_kind == "bitnet_apple_m3_air_resident_scorecard"
         || artifact_kind == BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND
         || artifact_kind == APPLE_M3_AIR_BENCHMARK_CALIBRATION_ARTIFACT_KIND
     {
@@ -22229,6 +22728,8 @@ fn validate_mac_receipt_value(
             APPLE_M3_AIR_CPU_NEON,
             apple_m3_air::CPU_NEON_RUNTIME_API,
         )?
+    } else if artifact_kind == "bitnet_apple_m3_air_resident_scorecard" {
+        validate_m3_resident_scorecard_receipt(path, receipt)?
     } else if artifact_kind == BITNET_APPLE_M3_AIR_MAC_ASK_ARTIFACT_KIND {
         validate_apple_m3_bitnet_mac_ask_receipt(path, receipt)?
     } else if artifact_kind == "apple_m4_golden_token_canaries" {
@@ -32189,6 +32690,99 @@ mod tests {
 
         validate_mac_receipt_value(Path::new("m3-bitnet-resident-answer.json"), &receipt)?;
         Ok(())
+    }
+
+    fn test_m3_resident_scorecard_pair() -> (serde_json::Value, serde_json::Value) {
+        let baseline: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../ci/hardware/apple-silicon-macbook/2026-05-12/m3-air/microsoft-2b-bitnet-local-answer.json"
+        ))
+        .expect("committed M3 cold baseline must parse");
+        let mut resident = baseline.clone();
+        resident["resident_session"] = serde_json::json!({
+            "enabled": true,
+            "model_load_count": 1,
+            "tokenizer_load_count": 1,
+            "case_count": 5,
+            "model_load_ms": 8_900.0,
+            "tokenizer_load_ms": 200.0,
+            "total_wall_ms": 61_400.0,
+            "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+            "timeout_enforcement": "post_completion_observation",
+        });
+        for (index, case) in resident["cases"].as_array_mut().expect("cases").iter_mut().enumerate()
+        {
+            case["resident_session"] = serde_json::json!({
+                "enabled": true,
+                "case_index": index,
+                "model_loaded_once": true,
+                "tokenizer_loaded_once": true,
+                "kv_cache_reuse_policy": "recreated_per_case_for_prompt_isolation",
+                "timeout_enforcement": "post_completion_observation",
+            });
+        }
+        (resident, baseline)
+    }
+
+    #[test]
+    fn apple_m3_resident_scorecard_accepts_exact_five_case_parity()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let (resident, baseline) = test_m3_resident_scorecard_pair();
+
+        validate_apple_m3_bitnet_local_answer_boundary(Path::new("resident.json"), &resident)?;
+        validate_m3_scorecard_pair(
+            Path::new("resident.json"),
+            &resident,
+            Path::new("baseline.json"),
+            &baseline,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn apple_m3_resident_scorecard_rejects_generated_token_drift() {
+        let (mut resident, baseline) = test_m3_resident_scorecard_pair();
+        resident["cases"][0]["token_ids"]["generated"] = serde_json::json!([999]);
+
+        let err = validate_m3_scorecard_pair(
+            Path::new("resident.json"),
+            &resident,
+            Path::new("baseline.json"),
+            &baseline,
+        )
+        .expect_err("token drift must fail closed")
+        .to_string();
+
+        assert!(err.contains("generated token IDs do not match baseline"), "got: {err}");
+    }
+
+    #[test]
+    fn apple_m3_resident_scorecard_rejects_load_accounting_drift() {
+        let (mut resident, _baseline) = test_m3_resident_scorecard_pair();
+        resident["resident_session"]["model_load_count"] = serde_json::json!(2);
+
+        let err =
+            validate_apple_m3_bitnet_local_answer_boundary(Path::new("resident.json"), &resident)
+                .expect_err("resident load drift must fail closed")
+                .to_string();
+
+        assert!(err.contains("model_load_count must be 1"), "got: {err}");
+    }
+
+    #[test]
+    fn apple_m3_resident_scorecard_rejects_model_identity_drift() {
+        let (mut resident, baseline) = test_m3_resident_scorecard_pair();
+        resident["model"]["sha256"] = serde_json::json!("different-model");
+
+        let err = validate_m3_scorecard_pair(
+            Path::new("resident.json"),
+            &resident,
+            Path::new("baseline.json"),
+            &baseline,
+        )
+        .expect_err("model identity drift must fail closed")
+        .to_string();
+
+        assert!(err.contains("model.sha256 does not match"), "got: {err}");
     }
 
     #[test]
