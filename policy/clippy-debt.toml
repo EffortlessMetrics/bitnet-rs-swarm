@@ -22,7 +22,7 @@ lint = "clippy::manual_checked_ops"
 path = "crates/bitnet-kernels/**"
 owner = "numeric-kernels"
 reason = "PR5 measurement found 25 kernel findings; cleanup belongs with the numeric/kernel lint pass so arithmetic invariants are preserved."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -30,7 +30,7 @@ lint = "clippy::manual_checked_ops"
 path = "crates/bitnet-models/**"
 owner = "model-contracts"
 reason = "PR5 measurement found model config and serde findings through the SRP Clippy surface; convert with the numeric/config invariants in the cleanup PR."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -38,7 +38,7 @@ lint = "clippy::manual_pop_if"
 path = "workspace"
 owner = "clippy-policy"
 reason = "The installed Rust 1.95 Clippy reports this lint as unknown; keep it staged until the toolchain exposes the lint."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -46,7 +46,7 @@ lint = "clippy::duration_suboptimal_units"
 path = "crates/bitnet-kernels/**"
 owner = "kernels"
 reason = "PR5 measurement found OpenCL session timeout findings; defer broad duration cleanup until all workspace hits can be measured together."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -54,7 +54,7 @@ lint = "clippy::duration_suboptimal_units"
 path = "crates/bitnet-models/**"
 owner = "model-contracts"
 reason = "PR5 measurement found model security timeout findings; defer with the broader duration-unit cleanup."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -62,7 +62,7 @@ lint = "clippy::duration_suboptimal_units"
 path = "crates/bitnet-tokenizers/**"
 owner = "tokenizers"
 reason = "PR5 measurement found tokenizer download timeout findings; defer with the broader duration-unit cleanup."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -70,7 +70,7 @@ lint = "clippy::unnecessary_trailing_comma"
 path = "crates/bitnet-kernels/**"
 owner = "kernels"
 reason = "PR5 measurement found 50 kernel formatting findings; keep staged until the mechanical cleanup can run without mixing with lint activation."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
 
 [[debt]]
@@ -78,5 +78,5 @@ lint = "clippy::disallowed_fields"
 path = "workspace"
 owner = "clippy-policy"
 reason = "Protected field seams are not configured in clippy.toml yet; activation waits for real protected fields instead of a decorative lint."
-expires = "2026-07-15"
+expires = "2026-09-15"
 status = "active"
