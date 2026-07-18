@@ -1020,7 +1020,7 @@ mod tests {
         for n in 0..=20 {
             let vals = vec![0i8; n];
             let packed = pack_i2s(&vals);
-            let expected = (n + 3) / 4;
+            let expected = n.div_ceil(4);
             assert_eq!(packed.len(), expected, "n={n}");
         }
     }
