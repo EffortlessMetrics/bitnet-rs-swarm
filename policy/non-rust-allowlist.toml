@@ -842,7 +842,7 @@ reason = "Per-crate test data assets."
 covered_by = ["cargo test"]
 
 [[allow]]
-glob = "crates/**/tests/**/*.{json,toml,txt,yaml,yml,gguf,bin,csv,proptest-regressions}"
+glob = "crates/**/tests/**/*.{json,toml,txt,yaml,yml,gguf,bin,csv,tsv,proptest-regressions}"
 kind = "test_data"
 owner = "test/fixtures"
 surface = "tests"
