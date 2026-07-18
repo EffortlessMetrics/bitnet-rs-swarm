@@ -74,27 +74,42 @@ fn run_rg(args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
-/// Normalize a `path:content` ripgrep line into a stable `path\tcontent`
-/// identity. Content is trimmed so that reindentation does not read as new
-/// debt. Line numbers are deliberately excluded (ripgrep omits them when its
-/// stdout is not a TTY, and we also pass `--no-line-number`) so the identity is
-/// stable across unrelated edits above the gate.
-fn normalize(line: &str) -> Option<String> {
-    // The path segment never contains a colon in this repo, so the first colon
-    // is always the path/content boundary.
-    let (path, content) = line.split_once(':')?;
-    let content = content.trim();
-    if content.is_empty() {
+/// Split a `path:match` ripgrep line (from `-o -H`, i.e. only the matched
+/// construct, prefixed with the file path) into its `(path, match)` parts.
+/// The path segment never contains a colon in this repo, so the first colon is
+/// always the boundary.
+fn parse_finding(line: &str) -> Option<(&str, &str)> {
+    let (path, matched) = line.split_once(':')?;
+    let matched = matched.trim();
+    if matched.is_empty() {
         return None;
     }
-    Some(format!("{path}\t{content}"))
+    Some((path, matched))
+}
+
+/// Build the stable `path\tmatch` identity used for baseline comparison.
+///
+/// Because ripgrep runs with `--only-matching`, `matched` is exactly the gate
+/// construct (e.g. `#[cfg(feature = "cuda")]`) with no surrounding code,
+/// indentation, or trailing comment — so an incidental `any(feature ...)` in a
+/// comment cannot mask a real gate, and each occurrence on a shared line is
+/// counted separately.
+fn identity(path: &str, matched: &str) -> String {
+    format!("{path}\t{matched}")
 }
 
 /// All standalone `#[cfg(feature = "cuda")]` attribute findings across
 /// `crates/` (those not already using the unified `any(feature = ...)` form).
 fn cfg_attr_findings() -> Vec<String> {
+    // `-o` (only-matching) guarantees the regex — which matches only the
+    // standalone `#[cfg(feature = "cuda")]` form, never the unified
+    // `#[cfg(any(feature = ...))]` — is the entire captured text, so no
+    // "already unified" post-filter is needed. `-H` forces the path prefix even
+    // when a single file matches.
     run_rg(&[
         r#"#\[cfg\(feature\s*=\s*"cuda"\)\]"#,
+        "-o",
+        "-H",
         "--no-heading",
         "--no-line-number",
         "--color=never",
@@ -108,8 +123,8 @@ fn cfg_attr_findings() -> Vec<String> {
         "crates/",
     ])
     .lines()
-    .filter(|l| !l.contains("any(feature"))
-    .filter_map(normalize)
+    .filter_map(parse_finding)
+    .map(|(path, matched)| identity(path, matched))
     .collect()
 }
 
@@ -118,6 +133,8 @@ fn cfg_attr_findings() -> Vec<String> {
 fn cfg_macro_findings() -> Vec<String> {
     run_rg(&[
         r#"cfg!\(feature\s*=\s*"cuda"\)"#,
+        "-o",
+        "-H",
         "--no-heading",
         "--no-line-number",
         "--color=never",
@@ -130,9 +147,11 @@ fn cfg_macro_findings() -> Vec<String> {
         "crates/",
     ])
     .lines()
-    .filter(|l| !l.contains("any(feature"))
-    .filter(|l| !ALLOWED_CFG_MACRO_EXCEPTIONS.iter().any(|exc| l.contains(exc)))
-    .filter_map(normalize)
+    .filter_map(parse_finding)
+    // The exceptions are file allowlist entries: match the PATH only, never the
+    // matched text, so an unrelated finding cannot be exempted by a comment.
+    .filter(|(path, _)| !ALLOWED_CFG_MACRO_EXCEPTIONS.iter().any(|exc| path.contains(exc)))
+    .map(|(path, matched)| identity(path, matched))
     .collect()
 }
 

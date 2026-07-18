@@ -31,8 +31,11 @@ So the check is a **grandfathered baseline** rather than a hard ban:
   per-identity counts (no-new-debt).
 - Reducing the count (fixing debt) is always allowed.
 
-Identities are `path` + trimmed match text (no line numbers), so unrelated edits
-above a gate do not read as new debt.
+Identities are `path` + the matched construct only (ripgrep runs with
+`--only-matching`, so the identity excludes line numbers, indentation, and any
+trailing comment). This keeps the check stable across unrelated edits and
+prevents an incidental `any(feature ...)` in a comment from masking a real gate.
+Each occurrence on a shared line is counted separately.
 
 ## Exceptions
 
