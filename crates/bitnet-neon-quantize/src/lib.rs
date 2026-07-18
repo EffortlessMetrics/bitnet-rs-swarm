@@ -1,9 +1,11 @@
-//! NEON-optimized quantization kernels for `BitNet` inference.
+//! I2\_S quantization kernels for `BitNet` inference (NEON-oriented crate).
 //!
-//! This crate provides I2\_S quantization and dequantization routines with
-//! optional ARM NEON SIMD acceleration.  When the `neon` target feature is
-//! available the hot loops use intrinsics; otherwise a portable scalar
-//! fallback is compiled automatically.
+//! This crate provides I2\_S quantization and dequantization routines.  The
+//! current implementation is **portable scalar Rust** on every target; there
+//! are no ARM NEON intrinsics or SIMD dispatch yet, despite the crate name.
+//! A measured NEON implementation is tracked separately (see issue #1730) and
+//! must land behind its own truth audit and kernel contract — do not infer
+//! SIMD acceleration from this crate today.
 //!
 //! # Supported quantization modes
 //!
@@ -1018,7 +1020,7 @@ mod tests {
         for n in 0..=20 {
             let vals = vec![0i8; n];
             let packed = pack_i2s(&vals);
-            let expected = (n + 3) / 4;
+            let expected = n.div_ceil(4);
             assert_eq!(packed.len(), expected, "n={n}");
         }
     }

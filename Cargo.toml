@@ -138,6 +138,11 @@ members = [
   "tools/migrate-gen-config",   # AST migration tool for GenerationConfig
   "crates/bitnet-wgpu-shaders-i2s", # WGSL compute shaders for I2_S 2-bit inference
   "crates/bitnet-qk256-dispatch",
+  # SRP: scalar I2_S quantize/dequantize kernels (NEON-oriented module; scalar
+  # portable Rust today). Workspace member so `-p bitnet-neon-quantize` and the
+  # M3 NEON proof command resolve; intentionally NOT in `default-members` to
+  # avoid raising generic default build/test cost. See issue #1710.
+  "crates/bitnet-neon-quantize",
 ]
 resolver = "2"
 # Build & test these by default. Others (root `bitnet`, `tests`, `xtask`,
