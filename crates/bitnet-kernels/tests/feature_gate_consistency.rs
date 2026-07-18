@@ -1,14 +1,38 @@
-//! Feature gate consistency tests for Issue #439
+//! Feature gate consistency tests for Issue #439 (baseline reconciled per #1709)
 //!
-//! Tests specification: docs/explanation/issue-439-spec.md#ac1-kernel-gate-unification
+//! Validates that *new* GPU code uses the unified predicate
+//! `#[cfg(any(feature = "gpu", feature = "cuda"))]` rather than standalone
+//! cuda-only gates, to prevent compile-time drift.
 //!
-//! Validates that GPU code uses unified predicate `#[cfg(any(feature="gpu", feature="cuda"))]`
-//! rather than standalone cuda-only gates to prevent compile-time drift.
+//! ## Why a baseline?
+//!
+//! The workspace already contains many standalone `#[cfg(feature = "cuda")]`
+//! gates. The overwhelming majority live under
+//! `crates/bitnet-kernels/src/cuda/**` and other CUDA-specific surfaces where a
+//! bare `feature = "cuda"` gate is *correct*: unifying them to
+//! `any(feature = "gpu", feature = "cuda")` would drag CUDA-only code into a
+//! non-CUDA `gpu` backend build and fail to compile. Rewriting all of them is
+//! therefore neither safe nor desirable.
+//!
+//! Instead we grandfather the existing findings into
+//! [`tests/cuda_gate_baseline.tsv`] and keep the check strict for *new* debt:
+//! any standalone cuda gate beyond the recorded per-identity counts fails.
+//!
+//! Regenerate the baseline after an intentional change:
+//!
+//! ```text
+//! BLESS_CUDA_GATE_BASELINE=1 \
+//!   cargo test --locked -p bitnet-kernels --no-default-features \
+//!   --test feature_gate_consistency -- --test-threads=1
+//! ```
+//!
+//! See `docs/reference/cuda-gate-baseline.md` for the policy.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
 
-/// Helper to find workspace root by walking up to .git directory
+/// Helper to find workspace root by walking up to the `.git` directory.
 fn workspace_root() -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     while !path.join(".git").exists() {
@@ -19,70 +43,219 @@ fn workspace_root() -> PathBuf {
     path
 }
 
-/// AC:1 - Verify no standalone cuda feature gates exist in bitnet-kernels
-///
-/// This test uses ripgrep to search for standalone `#[cfg(any(feature = "gpu", feature = "cuda"))]`
-/// that are not part of the unified `any(feature = "gpu", feature = "cuda")` predicate.
-///
-/// Tests specification: docs/explanation/issue-439-spec.md#implementation-approach-1
-#[test]
-fn ac1_no_standalone_cuda_gates_in_kernels() {
-    // Search for standalone cuda gates without "any(feature"
+// ---------------------------------------------------------------------------
+// Baseline machinery (issue #1709)
+// ---------------------------------------------------------------------------
+
+/// Runtime `cfg!` gates that are intentionally CUDA-specific and therefore
+/// exempt from the unified-predicate requirement. These are authoritative
+/// sources that deliberately distinguish `feature = "cuda"` (CUDA-specific)
+/// from `feature = "gpu"` (umbrella).
+const ALLOWED_CFG_MACRO_EXCEPTIONS: &[&str] =
+    &["kernel_registry.rs", "backend_selection.rs", "bitnet-runtime-feature-flags/src/lib.rs"];
+
+/// Path to the committed baseline of grandfathered findings.
+fn baseline_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cuda_gate_baseline.tsv")
+}
+
+fn bless_requested() -> bool {
+    std::env::var_os("BLESS_CUDA_GATE_BASELINE").is_some_and(|v| v == "1")
+}
+
+/// Run ripgrep from the workspace root and return its stdout. ripgrep exits
+/// with status 1 when there are no matches, which is not an error here.
+fn run_rg(args: &[&str]) -> String {
     let output = Command::new("rg")
-        .args([
-            r#"#\[cfg\(feature\s*=\s*"cuda"\)\]"#,
-            "--glob",
-            "*.rs",
-            "--glob",
-            "!Cargo.lock",
-            "crates/bitnet-kernels/src/",
-        ])
+        .args(args)
         .current_dir(workspace_root())
         .output()
         .expect("Failed to run ripgrep - ensure 'rg' is installed");
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    // If we find matches, check they all contain "any(feature" pattern
-    if !stdout.is_empty() {
-        for line in stdout.lines() {
-            assert!(
-                line.contains("any(feature"),
-                "Found standalone cuda feature gate (AC1):\n{}\n\nExpected: #[cfg(any(feature=\"gpu\", feature=\"cuda\"))]",
-                line
-            );
-        }
-    }
-
-    // Success: Either no matches, or all matches use unified predicate
+    String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
-/// AC:1 - Verify all GPU-specific modules use unified predicate
+/// Normalize a `path:content` ripgrep line into a stable `path\tcontent`
+/// identity. Content is trimmed so that reindentation does not read as new
+/// debt. Line numbers are deliberately excluded (ripgrep omits them when its
+/// stdout is not a TTY, and we also pass `--no-line-number`) so the identity is
+/// stable across unrelated edits above the gate.
+fn normalize(line: &str) -> Option<String> {
+    // The path segment never contains a colon in this repo, so the first colon
+    // is always the path/content boundary.
+    let (path, content) = line.split_once(':')?;
+    let content = content.trim();
+    if content.is_empty() {
+        return None;
+    }
+    Some(format!("{path}\t{content}"))
+}
+
+/// All standalone `#[cfg(feature = "cuda")]` attribute findings across
+/// `crates/` (those not already using the unified `any(feature = ...)` form).
+fn cfg_attr_findings() -> Vec<String> {
+    run_rg(&[
+        r#"#\[cfg\(feature\s*=\s*"cuda"\)\]"#,
+        "--no-heading",
+        "--no-line-number",
+        "--color=never",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!Cargo.lock",
+        // This test file mentions the pattern in its docs; don't scan itself.
+        "--glob",
+        "!**/feature_gate_consistency.rs",
+        "crates/",
+    ])
+    .lines()
+    .filter(|l| !l.contains("any(feature"))
+    .filter_map(normalize)
+    .collect()
+}
+
+/// All standalone `cfg!(feature = "cuda")` runtime findings across `crates/`,
+/// excluding this test file and the intentionally CUDA-specific exceptions.
+fn cfg_macro_findings() -> Vec<String> {
+    run_rg(&[
+        r#"cfg!\(feature\s*=\s*"cuda"\)"#,
+        "--no-heading",
+        "--no-line-number",
+        "--color=never",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!Cargo.lock",
+        "--glob",
+        "!**/feature_gate_consistency.rs",
+        "crates/",
+    ])
+    .lines()
+    .filter(|l| !l.contains("any(feature"))
+    .filter(|l| !ALLOWED_CFG_MACRO_EXCEPTIONS.iter().any(|exc| l.contains(exc)))
+    .filter_map(normalize)
+    .collect()
+}
+
+/// Load the recorded identities for one category from the baseline file.
+fn load_baseline(category: &str) -> Vec<String> {
+    let text = std::fs::read_to_string(baseline_path()).unwrap_or_default();
+    text.lines()
+        .filter(|l| !l.trim_start().starts_with('#') && !l.trim().is_empty())
+        .filter_map(|l| {
+            let (cat, rest) = l.split_once('\t')?;
+            (cat == category).then(|| rest.to_string())
+        })
+        .collect()
+}
+
+/// Return every `current` occurrence that exceeds the baselined count for its
+/// identity (i.e. genuinely new debt). Removing debt — a `current` count below
+/// the baseline — is always allowed and returns nothing for that identity.
 ///
-/// Tests that critical GPU modules like gpu/validation.rs use the unified
-/// feature gate consistently.
+/// This is a pure function so the no-new-debt policy can be regression-tested
+/// without touching the filesystem or ripgrep.
+fn new_debt(current: &[String], baseline: &[String]) -> Vec<String> {
+    let mut allowed: HashMap<&str, i64> = HashMap::new();
+    for b in baseline {
+        *allowed.entry(b.as_str()).or_insert(0) += 1;
+    }
+    let mut seen: HashMap<&str, i64> = HashMap::new();
+    let mut excess = Vec::new();
+    for c in current {
+        let n = seen.entry(c.as_str()).or_insert(0);
+        *n += 1;
+        if *n > allowed.get(c.as_str()).copied().unwrap_or(0) {
+            excess.push(c.clone());
+        }
+    }
+    excess
+}
+
+/// Regenerate the committed baseline from the current findings. Writes
+/// atomically (temp file + rename) so a `--test-threads=1` bless run cannot
+/// leave a half-written file even if invoked from more than one test.
+fn regenerate_baseline() {
+    let mut lines = vec![
+        "# CUDA feature-gate baseline (issue #1709).".to_string(),
+        "# Grandfathered pre-existing standalone `#[cfg(feature = \"cuda\")]` and".to_string(),
+        "# `cfg!(feature = \"cuda\")` findings. New debt beyond these counts fails".to_string(),
+        "# the feature_gate_consistency tests.".to_string(),
+        "#".to_string(),
+        "# Regenerate after an intentional change:".to_string(),
+        "#   BLESS_CUDA_GATE_BASELINE=1 cargo test --locked -p bitnet-kernels \\".to_string(),
+        "#     --no-default-features --test feature_gate_consistency -- --test-threads=1"
+            .to_string(),
+        "#".to_string(),
+        "# Columns: <category>\\t<path>\\t<trimmed content>".to_string(),
+    ];
+    let mut entries: Vec<String> = Vec::new();
+    entries.extend(cfg_attr_findings().into_iter().map(|id| format!("cfg-attr\t{id}")));
+    entries.extend(cfg_macro_findings().into_iter().map(|id| format!("cfg-macro\t{id}")));
+    entries.sort();
+    lines.extend(entries);
+    let mut body = lines.join("\n");
+    body.push('\n');
+
+    let final_path = baseline_path();
+    let tmp_path = final_path.with_extension("tsv.tmp");
+    std::fs::write(&tmp_path, body).expect("Failed to write baseline temp file");
+    std::fs::rename(&tmp_path, &final_path).expect("Failed to install baseline file");
+}
+
+/// Format a set of new-debt identities into an actionable assertion message.
+fn debt_message(kind: &str, findings: &[String]) -> String {
+    let list = findings.iter().map(|f| f.replace('\t', "  ->  ")).collect::<Vec<_>>().join("\n");
+    format!(
+        "Found {} new standalone {kind} (AC1) not covered by the baseline:\n{list}\n\n\
+         Fix: use the unified predicate `any(feature = \"gpu\", feature = \"cuda\")`.\n\
+         If this gate is intentionally CUDA-specific (e.g. under \
+         crates/bitnet-kernels/src/cuda/**), re-bless the baseline:\n  \
+         BLESS_CUDA_GATE_BASELINE=1 cargo test --locked -p bitnet-kernels \
+         --no-default-features --test feature_gate_consistency -- --test-threads=1",
+        findings.len(),
+    )
+}
+
+// ---------------------------------------------------------------------------
+// AC:1 — kernel gate unification
+// ---------------------------------------------------------------------------
+
+/// AC:1 - No *new* standalone cuda feature gates in `bitnet-kernels/src`.
 ///
-/// Tests specification: docs/explanation/issue-439-spec.md#ac1
+/// Existing CUDA-specific gates (mostly under `src/cuda/**`) are grandfathered
+/// via the baseline; new ones must use the unified predicate.
+#[test]
+fn ac1_no_standalone_cuda_gates_in_kernels() {
+    if bless_requested() {
+        regenerate_baseline();
+        return;
+    }
+    let is_kernels = |id: &String| id.starts_with("crates/bitnet-kernels/");
+    let current: Vec<String> = cfg_attr_findings().into_iter().filter(is_kernels).collect();
+    let baseline: Vec<String> = load_baseline("cfg-attr").into_iter().filter(is_kernels).collect();
+
+    let debt = new_debt(&current, &baseline);
+    assert!(debt.is_empty(), "{}", debt_message("cuda feature gate", &debt));
+}
+
+/// AC:1 - Verify GPU-specific modules use the unified predicate.
+///
+/// Uses `gpu/validation.rs` as a representative critical GPU module.
 #[test]
 fn ac1_gpu_validation_module_uses_unified_predicate() {
-    let validation_path =
-        "/home/steven/code/Rust/BitNet-rs/crates/bitnet-kernels/src/gpu/validation.rs";
+    let validation_path = workspace_root().join("crates/bitnet-kernels/src/gpu/validation.rs");
 
-    // Check if validation.rs exists (may not be implemented yet)
-    if !std::path::Path::new(validation_path).exists() {
-        // Module not yet implemented - test will pass once created with correct gates
-        println!(
-            "Note: gpu/validation.rs not yet created - this test validates it uses unified gates"
-        );
+    if !validation_path.exists() {
+        println!("Note: gpu/validation.rs not found - this test validates it uses unified gates");
         return;
     }
 
     let validation_rs =
-        std::fs::read_to_string(validation_path).expect("Failed to read gpu/validation.rs");
+        std::fs::read_to_string(&validation_path).expect("Failed to read gpu/validation.rs");
 
     let unified_pattern = r#"#[cfg(any(feature = "gpu", feature = "cuda"))]"#;
 
-    // If file has cfg gates, ensure they use unified predicate
+    // If the file has bare feature cfg gates, ensure the unified predicate is used.
     if validation_rs.contains("#[cfg(feature") {
         assert!(
             validation_rs.contains(unified_pattern)
@@ -92,67 +265,35 @@ fn ac1_gpu_validation_module_uses_unified_predicate() {
     }
 }
 
-/// AC:1 - Verify workspace-wide unified gates (comprehensive search)
-///
-/// Searches all workspace crates for standalone cuda gates to ensure
-/// consistent GPU feature detection across all components.
-///
-/// Tests specification: docs/explanation/issue-439-spec.md#affected-crates
+/// AC:1 - No *new* standalone cuda feature gates anywhere under `crates/`.
 #[test]
 fn ac1_workspace_wide_cuda_gate_consistency() {
-    let output = Command::new("rg")
-        .args([
-            r#"#\[cfg\(feature\s*=\s*"cuda"\)\]"#,
-            "--glob",
-            "*.rs",
-            "--glob",
-            "!Cargo.lock",
-            "crates/",
-        ])
-        .current_dir(workspace_root())
-        .output()
-        .expect("Failed to run ripgrep - ensure 'rg' is installed");
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    // Count violations (standalone cuda without any())
-    let mut violations = Vec::new();
-
-    for line in stdout.lines() {
-        if !line.contains("any(feature") {
-            violations.push(line.to_string());
-        }
+    if bless_requested() {
+        regenerate_baseline();
+        return;
     }
+    let current = cfg_attr_findings();
+    let baseline = load_baseline("cfg-attr");
 
-    assert!(
-        violations.is_empty(),
-        "Found {} standalone cuda feature gates (AC1):\n{}\n\nAll GPU gates must use: #[cfg(any(feature=\"gpu\", feature=\"cuda\"))]",
-        violations.len(),
-        violations.join("\n")
-    );
+    let debt = new_debt(&current, &baseline);
+    assert!(debt.is_empty(), "{}", debt_message("cuda feature gate", &debt));
 }
 
-/// AC:1 - Verify build.rs uses unified GPU detection
+/// AC:1 - Verify build.rs uses unified GPU detection.
 ///
-/// Ensures build scripts check both CARGO_FEATURE_GPU and CARGO_FEATURE_CUDA
-/// environment variables for GPU feature detection.
-///
-/// Tests specification: docs/explanation/issue-439-spec.md#build-script-parity
+/// Ensures the build script checks both `CARGO_FEATURE_GPU` and
+/// `CARGO_FEATURE_CUDA` for GPU feature detection.
 #[test]
 fn ac1_build_scripts_check_both_gpu_features() {
-    let build_rs_path = "/home/steven/code/Rust/BitNet-rs/crates/bitnet-kernels/build.rs";
+    let build_rs_path = workspace_root().join("crates/bitnet-kernels/build.rs");
 
-    if !std::path::Path::new(build_rs_path).exists() {
-        // build.rs not yet created - test will validate it once implemented
-        println!(
-            "Note: bitnet-kernels/build.rs not yet created - AC2 will validate unified detection"
-        );
+    if !build_rs_path.exists() {
+        println!("Note: bitnet-kernels/build.rs not found - AC2 will validate unified detection");
         return;
     }
 
-    let build_rs = std::fs::read_to_string(build_rs_path).expect("Failed to read build.rs");
+    let build_rs = std::fs::read_to_string(&build_rs_path).expect("Failed to read build.rs");
 
-    // Check for unified GPU detection pattern
     let has_unified_detection = build_rs.contains("CARGO_FEATURE_GPU")
         && build_rs.contains("CARGO_FEATURE_CUDA")
         && (build_rs.contains("||") || build_rs.contains("is_some()"));
@@ -168,52 +309,74 @@ fn ac1_build_scripts_check_both_gpu_features() {
 mod gpu_runtime_checks {
     use super::*;
 
-    /// AC:1 - Verify cfg! macro uses unified predicate in runtime checks
+    /// AC:1 - No *new* standalone `cfg!(feature = "cuda")` runtime checks.
     ///
-    /// Tests that runtime GPU capability checks use `cfg!(any(feature="gpu", feature="cuda"))`
-    /// consistently across the codebase.
-    ///
-    /// Exceptions (intentional standalone `cfg!(feature = "cuda")`):
-    /// - `kernel_registry.rs`: canonical registry that deliberately distinguishes cuda from gpu
-    /// - `runtime-feature-flags/src/lib.rs`: source-of-truth activation reporting
+    /// Intentional CUDA-specific runtime checks are either named in
+    /// [`ALLOWED_CFG_MACRO_EXCEPTIONS`] or grandfathered via the baseline.
     #[test]
     fn ac1_cfg_macro_uses_unified_predicate() {
-        // Files exempt from the unified-predicate requirement.
-        // These are the authoritative sources that intentionally distinguish
-        // `feature="cuda"` (CUDA-specific) from `feature="gpu"` (umbrella).
-        const ALLOWED_EXCEPTIONS: &[&str] = &[
-            "kernel_registry.rs",
-            "backend_selection.rs",
-            "bitnet-runtime-feature-flags/src/lib.rs",
-        ];
-
-        let output = Command::new("rg")
-            .args([
-                r#"cfg!\(feature\s*=\s*"cuda"\)"#,
-                "--glob",
-                "*.rs",
-                "--glob",
-                "!Cargo.lock",
-                "--glob",
-                "!**/feature_gate_consistency.rs",
-                "crates/",
-            ])
-            .current_dir(workspace_root())
-            .output()
-            .expect("Failed to run ripgrep");
-
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        // Check all cfg! runtime checks use unified predicate (with named exceptions)
-        for line in stdout.lines() {
-            let is_exception = ALLOWED_EXCEPTIONS.iter().any(|exc| line.contains(exc));
-            assert!(
-                line.contains("any(feature") || line.is_empty() || is_exception,
-                "Found standalone cfg!(feature=\"cuda\") runtime check (AC1):\n{}\n\
-                 Expected: cfg!(any(feature=\"gpu\", feature=\"cuda\"))\n\
-                 (add to ALLOWED_EXCEPTIONS in this test if this is an intentional registry)",
-                line
-            );
+        if bless_requested() {
+            regenerate_baseline();
+            return;
         }
+        let current = cfg_macro_findings();
+        let baseline = load_baseline("cfg-macro");
+
+        let debt = new_debt(&current, &baseline);
+        assert!(
+            debt.is_empty(),
+            "{}",
+            debt_message("cfg!(feature = \"cuda\") runtime check", &debt)
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Regression tests for the no-new-debt matcher (pure, no filesystem/ripgrep)
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod baseline_matcher {
+    use super::new_debt;
+
+    fn v(items: &[&str]) -> Vec<String> {
+        items.iter().map(|s| (*s).to_string()).collect()
+    }
+
+    #[test]
+    fn covered_findings_are_not_debt() {
+        let baseline = v(&["a\tgate", "b\tgate"]);
+        let current = v(&["a\tgate", "b\tgate"]);
+        assert!(new_debt(&current, &baseline).is_empty());
+    }
+
+    #[test]
+    fn a_new_identity_is_flagged() {
+        let baseline = v(&["a\tgate"]);
+        let current = v(&["a\tgate", "b\tgate"]);
+        assert_eq!(new_debt(&current, &baseline), v(&["b\tgate"]));
+    }
+
+    #[test]
+    fn an_extra_occurrence_of_a_known_identity_is_flagged() {
+        // Two occurrences where the baseline only grandfathered one.
+        let baseline = v(&["a\tgate"]);
+        let current = v(&["a\tgate", "a\tgate"]);
+        assert_eq!(new_debt(&current, &baseline), v(&["a\tgate"]));
+    }
+
+    #[test]
+    fn removing_debt_is_allowed() {
+        // Fewer occurrences than baselined is fine (debt was fixed).
+        let baseline = v(&["a\tgate", "a\tgate", "b\tgate"]);
+        let current = v(&["a\tgate"]);
+        assert!(new_debt(&current, &baseline).is_empty());
+    }
+
+    #[test]
+    fn empty_baseline_flags_all_current() {
+        let baseline = v(&[]);
+        let current = v(&["a\tgate", "b\tgate"]);
+        assert_eq!(new_debt(&current, &baseline), v(&["a\tgate", "b\tgate"]));
     }
 }
