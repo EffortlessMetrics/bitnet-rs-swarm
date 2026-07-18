@@ -193,7 +193,7 @@ fn new_debt(current: &[String], baseline: &[String]) -> Vec<String> {
 /// Regenerate the committed baseline from the current findings. Writes
 /// atomically (temp file + rename) so a `--test-threads=1` bless run cannot
 /// leave a half-written file even if invoked from more than one test.
-fn regenerate_baseline() {
+fn regenerate_baseline() -> std::io::Result<()> {
     let mut lines = vec![
         "# CUDA feature-gate baseline (issue #1709).".to_string(),
         "# Grandfathered pre-existing standalone `#[cfg(feature = \"cuda\")]` and".to_string(),
@@ -217,8 +217,9 @@ fn regenerate_baseline() {
 
     let final_path = baseline_path();
     let tmp_path = final_path.with_extension("tsv.tmp");
-    std::fs::write(&tmp_path, body).expect("Failed to write baseline temp file");
-    std::fs::rename(&tmp_path, &final_path).expect("Failed to install baseline file");
+    std::fs::write(&tmp_path, body)?;
+    std::fs::rename(&tmp_path, &final_path)?;
+    Ok(())
 }
 
 /// Format a set of new-debt identities into an actionable assertion message.
@@ -244,10 +245,10 @@ fn debt_message(kind: &str, findings: &[String]) -> String {
 /// Existing CUDA-specific gates (mostly under `src/cuda/**`) are grandfathered
 /// via the baseline; new ones must use the unified predicate.
 #[test]
-fn ac1_no_standalone_cuda_gates_in_kernels() {
+fn ac1_no_standalone_cuda_gates_in_kernels() -> Result<(), Box<dyn std::error::Error>> {
     if bless_requested() {
-        regenerate_baseline();
-        return;
+        regenerate_baseline()?;
+        return Ok(());
     }
     let is_kernels = |id: &String| id.starts_with("crates/bitnet-kernels/");
     let current: Vec<String> = cfg_attr_findings().into_iter().filter(is_kernels).collect();
@@ -255,22 +256,22 @@ fn ac1_no_standalone_cuda_gates_in_kernels() {
 
     let debt = new_debt(&current, &baseline);
     assert!(debt.is_empty(), "{}", debt_message("cuda feature gate", &debt));
+    Ok(())
 }
 
 /// AC:1 - Verify GPU-specific modules use the unified predicate.
 ///
 /// Uses `gpu/validation.rs` as a representative critical GPU module.
 #[test]
-fn ac1_gpu_validation_module_uses_unified_predicate() {
+fn ac1_gpu_validation_module_uses_unified_predicate() -> Result<(), Box<dyn std::error::Error>> {
     let validation_path = workspace_root().join("crates/bitnet-kernels/src/gpu/validation.rs");
 
     if !validation_path.exists() {
         println!("Note: gpu/validation.rs not found - this test validates it uses unified gates");
-        return;
+        return Ok(());
     }
 
-    let validation_rs =
-        std::fs::read_to_string(&validation_path).expect("Failed to read gpu/validation.rs");
+    let validation_rs = std::fs::read_to_string(&validation_path)?;
 
     let unified_pattern = r#"#[cfg(any(feature = "gpu", feature = "cuda"))]"#;
 
@@ -282,20 +283,22 @@ fn ac1_gpu_validation_module_uses_unified_predicate() {
             "gpu/validation.rs must use unified GPU predicate (AC1)"
         );
     }
+    Ok(())
 }
 
 /// AC:1 - No *new* standalone cuda feature gates anywhere under `crates/`.
 #[test]
-fn ac1_workspace_wide_cuda_gate_consistency() {
+fn ac1_workspace_wide_cuda_gate_consistency() -> Result<(), Box<dyn std::error::Error>> {
     if bless_requested() {
-        regenerate_baseline();
-        return;
+        regenerate_baseline()?;
+        return Ok(());
     }
     let current = cfg_attr_findings();
     let baseline = load_baseline("cfg-attr");
 
     let debt = new_debt(&current, &baseline);
     assert!(debt.is_empty(), "{}", debt_message("cuda feature gate", &debt));
+    Ok(())
 }
 
 /// AC:1 - Verify build.rs uses unified GPU detection.
@@ -303,15 +306,15 @@ fn ac1_workspace_wide_cuda_gate_consistency() {
 /// Ensures the build script checks both `CARGO_FEATURE_GPU` and
 /// `CARGO_FEATURE_CUDA` for GPU feature detection.
 #[test]
-fn ac1_build_scripts_check_both_gpu_features() {
+fn ac1_build_scripts_check_both_gpu_features() -> Result<(), Box<dyn std::error::Error>> {
     let build_rs_path = workspace_root().join("crates/bitnet-kernels/build.rs");
 
     if !build_rs_path.exists() {
         println!("Note: bitnet-kernels/build.rs not found - AC2 will validate unified detection");
-        return;
+        return Ok(());
     }
 
-    let build_rs = std::fs::read_to_string(&build_rs_path).expect("Failed to read build.rs");
+    let build_rs = std::fs::read_to_string(&build_rs_path)?;
 
     let has_unified_detection = build_rs.contains("CARGO_FEATURE_GPU")
         && build_rs.contains("CARGO_FEATURE_CUDA")
@@ -322,6 +325,7 @@ fn ac1_build_scripts_check_both_gpu_features() {
         "build.rs must check both CARGO_FEATURE_GPU and CARGO_FEATURE_CUDA (AC1)\n\
          Expected pattern: CARGO_FEATURE_GPU.is_some() || CARGO_FEATURE_CUDA.is_some()"
     );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -333,10 +337,10 @@ mod gpu_runtime_checks {
     /// Intentional CUDA-specific runtime checks are either named in
     /// [`ALLOWED_CFG_MACRO_EXCEPTIONS`] or grandfathered via the baseline.
     #[test]
-    fn ac1_cfg_macro_uses_unified_predicate() {
+    fn ac1_cfg_macro_uses_unified_predicate() -> Result<(), Box<dyn std::error::Error>> {
         if bless_requested() {
-            regenerate_baseline();
-            return;
+            regenerate_baseline()?;
+            return Ok(());
         }
         let current = cfg_macro_findings();
         let baseline = load_baseline("cfg-macro");
@@ -347,6 +351,7 @@ mod gpu_runtime_checks {
             "{}",
             debt_message("cfg!(feature = \"cuda\") runtime check", &debt)
         );
+        Ok(())
     }
 }
 
