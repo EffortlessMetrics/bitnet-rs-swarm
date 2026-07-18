@@ -8,7 +8,7 @@ homepage.workspace = true
 authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
-description = "NEON-optimized I2_S quantization kernels for BitNet inference"
+description = "I2_S quantization kernels for BitNet inference (scalar today; NEON acceleration planned)"
 include = [
   "src/**",
   "Cargo.toml",

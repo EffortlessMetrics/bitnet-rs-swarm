@@ -1141,6 +1141,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitnet-neon-quantize"
+version = "0.2.1-dev"
+dependencies = [
+ "bitnet-common",
+]
+
+[[package]]
 name = "bitnet-nvidia"
 version = "0.1.0"
 dependencies = [
