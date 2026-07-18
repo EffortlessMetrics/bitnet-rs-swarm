@@ -38,17 +38,13 @@ pub mod types;
 pub mod math {
     pub use bitnet_math::*;
 }
-pub mod warn_once {
-    pub use bitnet_warn_once::*;
-}
+pub mod warn_once;
 
 pub use backend_selection::{
     BackendRequest, BackendSelectionError, BackendSelectionResult, BackendStartupSummary,
     select_backend,
 };
 pub use bitnet_math::ceil_div;
-pub use bitnet_warn_once::warn_once;
-pub use bitnet_warn_once::warn_once_fn;
 pub use config::*;
 pub use error::*;
 pub use kernel_registry::{KernelBackend, KernelCapabilities, SimdLevel};
@@ -58,3 +54,4 @@ pub use strict_mode::{
 };
 pub use tensor::*;
 pub use types::*;
+pub use warn_once::warn_once_fn;

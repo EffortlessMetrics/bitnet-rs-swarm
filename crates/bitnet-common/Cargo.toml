@@ -17,7 +17,6 @@ include = [
 
 [dependencies]
 bitnet-math.workspace = true
-bitnet-warn-once.workspace = true
 bitnet-thread-config-core.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true

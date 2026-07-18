@@ -1,4 +1,4 @@
-use bitnet_warn_once::warn_once_fn;
+use bitnet_common::warn_once_fn;
 use proptest::prelude::*;
 
 // ── warn_once! macro — key-based deduplication ───────────────────────────────

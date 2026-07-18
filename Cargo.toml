@@ -5,7 +5,6 @@ members = [
   "crates/bitnet-cpu-detect",
   "crates/bitnet-math",
   "crates/bitnet-simd",
-  "crates/bitnet-warn-once",
   "crates/bitnet-thread-config-core", # SRP: reusable thread config and work partitioning primitives
   "crates/bitnet-runtime-context",
   "crates/bitnet-runtime-context-core",
@@ -152,7 +151,6 @@ default-members = [
   "crates/bitnet-cpu-detect",
   "crates/bitnet-math",
   "crates/bitnet-simd",
-  "crates/bitnet-warn-once",
   "crates/bitnet-thread-config-core",
   "crates/bitnet-quantization",
   "crates/bitnet-quantization-bits",
@@ -255,7 +253,6 @@ version = "0.2.1-dev"
 # Core crates - always included
 bitnet-common = { path = "crates/bitnet-common", version = "0.2.1-dev" }
 bitnet-math = { path = "crates/bitnet-math", version = "0.2.1-dev" }
-bitnet-warn-once = { path = "crates/bitnet-warn-once", version = "0.2.1-dev" }
 bitnet-atomic-file-core = { path = "crates/bitnet-atomic-file-core", version = "0.2.1-dev" }
 bitnet-build-info-core = { path = "crates/bitnet-build-info-core", version = "0.2.1-dev" }
 bitnet-tokenizer-text-core = { path = "crates/bitnet-tokenizer-text-core", version = "0.2.1-dev" }
@@ -442,7 +439,6 @@ harness = false
 [workspace.dependencies]
 bitnet-math = { path = "crates/bitnet-math", version = "0.2.1-dev" }
 bitnet-quantization-bits = { path = "crates/bitnet-quantization-bits", version = "0.2.1-dev" }
-bitnet-warn-once = { path = "crates/bitnet-warn-once", version = "0.2.1-dev" }
 bitnet-thread-config-core = { path = "crates/bitnet-thread-config-core", version = "0.2.1-dev" }
 bitnet-atomic-file-core = { path = "crates/bitnet-atomic-file-core", version = "0.2.1-dev" }
 bitnet-minimal-json-core = { path = "crates/bitnet-minimal-json-core", version = "0.2.1-dev" }

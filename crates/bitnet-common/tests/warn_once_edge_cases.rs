@@ -4,7 +4,7 @@
 //! so integration tests here cannot reset the global registry. We test for
 //! correctness of the public API (no panics, thread safety).
 
-use bitnet_warn_once::{warn_once, warn_once_fn};
+use bitnet_common::{warn_once, warn_once_fn};
 
 // ---------------------------------------------------------------------------
 // warn_once_fn: basic calls
