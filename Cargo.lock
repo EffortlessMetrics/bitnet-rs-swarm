@@ -402,7 +402,6 @@ dependencies = [
  "bitnet-tokenizer-text-core",
  "bitnet-tokenizers",
  "bitnet-transformer",
- "bitnet-warn-once",
  "byteorder",
  "candle-core",
  "candle-nn",
@@ -597,7 +596,6 @@ dependencies = [
  "bitnet-math",
  "bitnet-test-support",
  "bitnet-thread-config-core",
- "bitnet-warn-once",
  "bytemuck",
  "candle-core",
  "criterion",
@@ -2033,16 +2031,6 @@ dependencies = [
 [[package]]
 name = "bitnet-vulkan-shaders"
 version = "0.2.1-dev"
-
-[[package]]
-name = "bitnet-warn-once"
-version = "0.2.1-dev"
-dependencies = [
- "proptest",
- "serial_test",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "bitnet-wasm"

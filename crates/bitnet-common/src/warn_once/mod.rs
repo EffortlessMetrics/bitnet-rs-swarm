@@ -1,9 +1,17 @@
 //! Thread-safe warn-once utility for rate-limited logging.
+//!
+//! Collapsed into `bitnet-common` from the former `bitnet-warn-once` crate
+//! (crate-collapse LEAF-001). Behavior is unchanged: the public surface
+//! (`bitnet_common::warn_once_fn` and the `bitnet_common::warn_once!` macro)
+//! is preserved.
 
-mod warn_once;
+pub(crate) mod logging;
+pub(crate) mod registry;
 
-pub use warn_once::logging::warn_once_fn;
+pub use logging::warn_once_fn;
 
+/// Emit a warning at most once per `key`; subsequent calls with the same key
+/// are downgraded to a debug log.
 #[macro_export]
 macro_rules! warn_once {
     ($key:expr, $($arg:tt)*) => {
@@ -13,7 +21,7 @@ macro_rules! warn_once {
 
 #[cfg(test)]
 pub fn clear_registry_for_test() {
-    warn_once::registry::clear_registry_for_test();
+    registry::clear_registry_for_test();
 }
 
 #[cfg(test)]
@@ -32,9 +40,9 @@ mod tests {
         warn_once_fn("test_key_1", "First warning");
         warn_once_fn("test_key_1", "Second warning");
         warn_once_fn("test_key_2", "Different warning");
-        assert!(warn_once::registry::contains_key_for_test("test_key_1"));
-        assert!(warn_once::registry::contains_key_for_test("test_key_2"));
-        assert_eq!(warn_once::registry::key_count_for_test(), 2);
+        assert!(registry::contains_key_for_test("test_key_1"));
+        assert!(registry::contains_key_for_test("test_key_2"));
+        assert_eq!(registry::key_count_for_test(), 2);
     }
 
     #[test]
@@ -42,18 +50,18 @@ mod tests {
     fn test_warn_once_macro_formatted() {
         clear_registry_for_test();
         let value = 42;
-        warn_once!("macro_test_2", "Formatted message: {}", value);
-        warn_once!("macro_test_2", "Another formatted: {}", value + 1);
-        assert!(warn_once::registry::contains_key_for_test("macro_test_2"));
+        crate::warn_once!("macro_test_2", "Formatted message: {}", value);
+        crate::warn_once!("macro_test_2", "Another formatted: {}", value + 1);
+        assert!(registry::contains_key_for_test("macro_test_2"));
     }
 
     #[test]
     #[serial]
     fn test_record_warning_occurrence_reports_first_insert_only() {
         clear_registry_for_test();
-        assert!(warn_once::registry::record_warning_occurrence("record_once"));
-        assert!(!warn_once::registry::record_warning_occurrence("record_once"));
-        assert!(warn_once::registry::record_warning_occurrence("record_other"));
+        assert!(registry::record_warning_occurrence("record_once"));
+        assert!(!registry::record_warning_occurrence("record_once"));
+        assert!(registry::record_warning_occurrence("record_other"));
     }
 
     struct RegistryLockProbeLayer {
@@ -66,7 +74,7 @@ mod tests {
     {
         fn on_event(&self, _event: &tracing::Event<'_>, _ctx: Context<'_, S>) {
             self.lock_available_during_event
-                .store(warn_once::registry::lock_available_for_test(), Ordering::SeqCst);
+                .store(registry::lock_available_for_test(), Ordering::SeqCst);
         }
     }
 

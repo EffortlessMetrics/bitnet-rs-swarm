@@ -4,7 +4,7 @@
 //! without access to `clear_registry_for_test`. All keys are unique per test to
 //! avoid cross-test pollution in the global registry.
 
-use bitnet_warn_once::{warn_once, warn_once_fn};
+use bitnet_common::{warn_once, warn_once_fn};
 use std::sync::{Arc, Barrier};
 use std::thread;
 
