@@ -33,7 +33,7 @@
 | ci-coverage | CI-COVERAGE-002 | #5775 | merged | none | Do not block unrelated runtime or tracker work on optional coverage uploads. |
 | cpu-proof | CPU-AVX2-HOTPATH-001 | #5963 | merged | none | 258V CPU is the lead BitNet CPU reference; no GPU or NPU claims. |
 | cpu-qk256-performance | KBL8250U-004 | #3839 | merged | none | Do not claim performance before strict proof receipts exist. |
-| crate-collapse | LEAF-001 | TBD | proposed | none | Do not combine crate movement with runtime proof. |
+| crate-collapse | LEAF-001 | #1754 | merged | none | Do not combine crate movement with runtime proof. |
 | falcon-e-family | FE-000 | TBD | ready | FE-001 | Do not commit model binaries. |
 | falcon3-family | F3-000 | TBD | ready | none | Do not commit model binaries. |
 | gpu-hal-disposition | GH-DISP-001 | #1648 | pr_open | GH-DISP-002 | Do not change runtime code. |

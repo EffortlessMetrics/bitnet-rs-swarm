@@ -10,7 +10,7 @@
 | Item | State | PR | Branch | Review | Merge | Human gate | Acceptance |
 |---|---|---:|---|---|---|---|---|
 | INV-001 | merged | #3632 | `codex/inventory/INV-001-crate-consolidation-map` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Add crate consolidation inventory mapping every workspace member to a final public crate or internal module without moving code. |
-| LEAF-001 | proposed | TBD | `codex/crate-collapse/LEAF-001-warn-once` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Move warn-once code under bitnet-common, update imports and workspace membership, and preserve behavior. |
+| LEAF-001 | merged | #1754 | `codex/crate-collapse/LEAF-001-warn-once` | `codex_premerge` | `automerge_when_green` | `on_blocker_only` | Move warn-once code under bitnet-common, update imports and workspace membership, and preserve behavior. |
 
 ## Hard Constraints
 
