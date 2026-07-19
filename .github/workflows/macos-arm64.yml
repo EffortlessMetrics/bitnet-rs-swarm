@@ -96,9 +96,14 @@ jobs:
               git fetch --no-tags --depth=50 origin "$BASE_REF" >/dev/null 2>&1 || true
               changed="$(git diff --name-only "origin/$BASE_REF"...HEAD 2>/dev/null || git diff --name-only HEAD~1..HEAD 2>/dev/null || true)"
             fi
-            if printf '%s\n' "$changed" | grep -E '^(\.github/workflows/macos-arm64\.yml|crates/bitnet-metal/|crates/bitnet-kernels/src/metal/|crates/bitnet-kernels/src/metal_compute\.rs|crates/bitnet-kernels/tests/metal|crates/bitnet-device-probe/src/apple_metal\.rs|crates/bitnet-gpu-hal/src/metal_backend\.rs|crates/bitnet-common/tests/metal_memory_patterns\.rs)' >/dev/null; then
+            # Auto-select macOS only for genuine Metal *source* changes. Metal
+            # tests and test fixtures compile and run on Linux, so touching them
+            # (e.g. a mechanical formatting/clippy sweep) must not spend scarce
+            # Apple Silicon runners. Explicit Apple validation stays available
+            # via the macos/apple-silicon/metal/full-ci label or workflow_dispatch.
+            if printf '%s\n' "$changed" | grep -E '^(\.github/workflows/macos-arm64\.yml|crates/bitnet-metal/|crates/bitnet-kernels/src/metal/|crates/bitnet-kernels/src/metal_compute\.rs|crates/bitnet-device-probe/src/apple_metal\.rs|crates/bitnet-gpu-hal/src/metal_backend\.rs)' >/dev/null; then
               selected=true
-              reason="Mac/Metal-specific paths changed"
+              reason="Metal source paths changed"
             fi
           fi
 
