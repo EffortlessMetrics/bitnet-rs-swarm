@@ -42,30 +42,6 @@ expires = "2026-09-15"
 status = "active"
 
 [[debt]]
-lint = "clippy::duration_suboptimal_units"
-path = "crates/bitnet-kernels/**"
-owner = "kernels"
-reason = "PR5 measurement found OpenCL session timeout findings; defer broad duration cleanup until all workspace hits can be measured together."
-expires = "2026-09-15"
-status = "active"
-
-[[debt]]
-lint = "clippy::duration_suboptimal_units"
-path = "crates/bitnet-models/**"
-owner = "model-contracts"
-reason = "PR5 measurement found model security timeout findings; defer with the broader duration-unit cleanup."
-expires = "2026-09-15"
-status = "active"
-
-[[debt]]
-lint = "clippy::duration_suboptimal_units"
-path = "crates/bitnet-tokenizers/**"
-owner = "tokenizers"
-reason = "PR5 measurement found tokenizer download timeout findings; defer with the broader duration-unit cleanup."
-expires = "2026-09-15"
-status = "active"
-
-[[debt]]
 lint = "clippy::disallowed_fields"
 path = "workspace"
 owner = "clippy-policy"

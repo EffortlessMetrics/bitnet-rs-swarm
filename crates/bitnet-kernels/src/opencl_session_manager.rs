@@ -117,7 +117,7 @@ impl Default for SessionConfig {
             temperature: 0.7,
             top_p: 0.9,
             stop_sequences: Vec::new(),
-            timeout: Duration::from_secs(60),
+            timeout: Duration::from_mins(1),
             seed: None,
         }
     }
@@ -665,7 +665,7 @@ pub struct SessionPoolConfig {
 
 impl Default for SessionPoolConfig {
     fn default() -> Self {
-        Self { max_sessions: 16, idle_timeout: Duration::from_secs(300) }
+        Self { max_sessions: 16, idle_timeout: Duration::from_mins(5) }
     }
 }
 
