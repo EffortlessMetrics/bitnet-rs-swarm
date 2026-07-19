@@ -364,13 +364,13 @@ fn relu_scalar(x: f32) -> f32 {
 fn validate_activation_buffers(input: &[f32], output: &[f32], n: usize) -> Result<()> {
     if input.len() < n {
         return Err(KernelError::InvalidArguments {
-            reason: format!("activation input length {} < expected {n}", input.len(),),
+            reason: format!("activation input length {} < expected {n}", input.len()),
         }
         .into());
     }
     if output.len() < n {
         return Err(KernelError::InvalidArguments {
-            reason: format!("activation output length {} < expected {n}", output.len(),),
+            reason: format!("activation output length {} < expected {n}", output.len()),
         }
         .into());
     }
@@ -382,7 +382,7 @@ fn validate_silu_gate_buffers(input: &[f32], gate: &[f32], output: &[f32], n: us
     validate_activation_buffers(input, output, n)?;
     if gate.len() < n {
         return Err(KernelError::InvalidArguments {
-            reason: format!("silu_gate gate length {} < expected {n}", gate.len(),),
+            reason: format!("silu_gate gate length {} < expected {n}", gate.len()),
         }
         .into());
     }
@@ -630,7 +630,7 @@ pub fn launch_activation(
         }
     }
 
-    log::debug!("Activation {:?} CPU fallback (n={})", config.activation, config.n,);
+    log::debug!("Activation {:?} CPU fallback (n={})", config.activation, config.n);
     activation_cpu(input, output, config)
 }
 
