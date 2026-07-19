@@ -1,0 +1,13 @@
+timestamp = "2026-07-19T00:05:22Z"
+campaign = "crate-collapse"
+item = "LEAF-001"
+event = "merged"
+pr = 1754
+merge_sha = "75606c738cc2d66c4c6789f1c2c1af8753505d7a"
+actor = "agent"
+
+notes = [
+  "warn-once code collapsed into bitnet-common as a warn_once SRP module.",
+  "Public surface preserved (bitnet_common::warn_once_fn and the warn_once! macro); no downstream edits.",
+  "Behavior-preserving crate move only; no runtime or hardware-validation change.",
+]
