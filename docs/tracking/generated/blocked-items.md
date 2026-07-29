@@ -714,7 +714,7 @@
 | intel-a770 | A770-157 | A770-156 | merged |
 | intel-a770 | A770-158 | A770-157 | merged |
 | intel-a770 | A770-159 | A770-158 | merged |
-| intel-a770 | A770-160 | A770-159 | ready |
+| intel-a770 | A770-160 | A770-159 | merged |
 | intel-npu | NPU-003 | NPU-002 | merged |
 | intel-npu | NPU-004 | NPU-003 | merged |
 | intel-npu | NPU-005 | NPU-004 | merged |

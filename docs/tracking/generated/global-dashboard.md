@@ -39,7 +39,7 @@
 | gpu-hal-disposition | GH-DISP-001 | #1648 | pr_open | GH-DISP-002 | Do not change runtime code. |
 | i2s | I2S-DOCS-000 | #5880 | merged | none | Do not change runtime code in docs-only I2_S tracker slices. |
 | intel-258v-platform | LNL258V-CPU-TOPOLOGY-GUARD-001 | TBD | ready | none | 258V CPU proof is first priority; NPU and Arc proofs must compare against the 258V CPU reference before BitNet-adjacent parity claims. |
-| intel-a770 | A770-160 | TBD | ready | none | OpenCL-first for native A770 proof. |
+| intel-a770 | A770-160 | #1575 | merged | none | OpenCL-first for native A770 proof. |
 | intel-npu | NPU-013 | #5903 | merged | none | Device-node detection is not inference. |
 | llama3-8b-158 | LLAMA3-158-000 | TBD | ready | LLAMA3-158-001 | Do not commit model binaries. |
 | model-artifacts | MODEL-ARTIFACT-002 | #3928 | blocked | none | Do not weaken CPU, CUDA, Apple, NPU, SLM, server, or quality gates. |
