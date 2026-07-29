@@ -8867,7 +8867,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-160"
-status = "ready"
+status = "merged"
+pr = 1575
+head_sha = "509b17ed8b766d476ab090a40410ac5a41684b4d"
+merge_sha = "4b8b523b5d1d1d6405e05788475e87777a461218"
 branch = "codex/intel-a770/A770-160-full-projection-packed-row-capture"
 stackable = false
 review_mode = "codex_premerge"
