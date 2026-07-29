@@ -931,6 +931,64 @@ must_not_claim = [
   "Performance speedup is proven.",
   "A770 trusted partial acceleration is claim-grade.",
 ]
+
+[[work_item]]
+id = "A770-161"
+status = "ready"
+branch = "codex/intel-a770/A770-161-full-projection-packed-row-source-hook"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-160"]
+acceptance = "Use issue #1891 and the committed A770-160 source-boundary receipt to add the smallest bounded capture hook or hash-addressed source packet for full packed QK256 rows for case a770_summary_seed770024_keywords_014, first-mismatch index 9, layer 0, and q_proj/k_proj/v_proj. The hook or source contract must preserve packed layout, row stride, tensor role, source identity, selected backend Intel Arc A770 OpenCL, runtime_api=opencl, and fallback_used=false for any replay. If the physical full-row source remains unavailable, emit a precise machine-readable blocker without fabricating weights or promoting any claim. The work must not run broad answer corpora, download or commit model binaries, change production QK256 dispatch policy, change answer scoring or sampling, combine CUDA, Lunar Lake, NPU, Apple, server, route-policy, or unrelated CI work, or claim CPU/A770 parity, strict answer readiness, broad quality, residency, speed, trusted partial acceleration, or full BitNet inference."
+commands = [
+  "git diff --check",
+  "parse touched TOML/JSON/Markdown artifacts",
+  "cargo fmt --package bitnet-kernels --check",
+  "cargo check --locked -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation",
+  "run the bounded A770-161 capture-source or replay-hook proof for case a770_summary_seed770024_keywords_014, first-mismatch index 9, layer 0, and q_proj/k_proj/v_proj",
+  "assert a real full-row source or an exact blocker with no fabricated packed rows and fallback_used=false for any selected-device result",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+]
+allowed_paths = [
+  "crates/bitnet-kernels/**",
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+  "ci/hardware/amd-5700x-intel-a770/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+]
+may_claim = [
+  "A770-161 may record a bounded full projection packed-row capture source or hook contract for the layer-0 Q/K/V target surface.",
+  "A770-161 may record selected-device Intel Arc A770 OpenCL replay evidence with runtime_api=opencl and fallback_used=false if a real full-row source is available.",
+  "A770-161 may record the exact missing physical source blocker without fabricating packed weights.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Activation quantization is GPU-resident.",
+  "Selected attention is resident.",
+  "Resident KV is proven.",
+  "Attention score residency is proven.",
+  "Softmax residency is proven.",
+  "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
 [[work_item]]
 id = "A770-034"
 status = "merged"
