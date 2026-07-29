@@ -1781,6 +1781,7 @@ struct ProjectionReplayOperands {
 
 #[derive(Debug, Clone)]
 struct ProjectionOperandCaptureEvidence {
+    replay_operands: Option<ProjectionReplayOperands>,
     source_path: Option<String>,
     source_json_parseable: Option<bool>,
     source_projection_found: bool,
@@ -1817,6 +1818,7 @@ impl ProjectionOperandCaptureEvidence {
         error: Option<String>,
     ) -> Self {
         Self {
+            replay_operands: None,
             source_path,
             source_json_parseable,
             source_projection_found: false,
@@ -2049,6 +2051,11 @@ fn projection_operand_capture_evidence(
         });
     let full_operand_root = projection_operand_root(source_target)
         .or_else(|| dispatch_replay.and_then(projection_operand_root));
+    let full_projection_replay_operands = full_operand_root.and_then(|_| {
+        projection_replay_operands(source_target).ok().flatten().or_else(|| {
+            dispatch_replay.and_then(|value| projection_replay_operands(value).ok().flatten())
+        })
+    });
     let activation_i8_len = full_operand_root
         .and_then(|root| {
             array_len_at(
@@ -2091,7 +2098,7 @@ fn projection_operand_capture_evidence(
     let full_projection_operands_available = full_operand_root.is_some_and(|root| {
         projection_missing_full_operand_fields_from_root(root).is_empty()
             && required_packed_qk256_len_available != Some(false)
-    });
+    }) && full_projection_replay_operands.is_some();
     let packed_qk256_scope =
         focused_operands.and_then(|root| string_field(root, "packed_qk256_scope")).or_else(|| {
             dispatch_replay
@@ -2149,6 +2156,7 @@ fn projection_operand_capture_evidence(
     }
 
     ProjectionOperandCaptureEvidence {
+        replay_operands: full_projection_replay_operands,
         source_path: Some(source_path),
         source_json_parseable: Some(true),
         source_projection_found: true,
@@ -2224,34 +2232,35 @@ fn projection_replay_outcome(
         };
     };
     let operands = match projection_replay_operands(target) {
-        Ok(Some(operands)) => operands,
-        Ok(None) => {
-            let has_embedded_operands = projection_operand_root(target).is_some();
-            return ProjectionReplayOutcome::Blocked {
-                reason: "projection_level_full_operands_missing",
-                blockers: if has_embedded_operands {
-                    vec!["projection_level_full_operands_missing"]
-                } else {
-                    capture_evidence.blockers()
-                },
-                missing_full_operand_fields: if has_embedded_operands {
-                    projection_missing_full_operand_fields(target)
-                } else {
-                    capture_evidence.missing_full_operand_fields()
-                },
-                current_operand_scope: if has_embedded_operands {
-                    projection_current_operand_scope(target)
-                } else {
-                    capture_evidence.current_operand_scope.clone()
-                },
-            };
-        }
+        Ok(Some(operands)) => Some(operands),
+        Ok(None) => capture_evidence.replay_operands.clone(),
         Err(err) => {
             return ProjectionReplayOutcome::Failed {
                 error: err.to_string(),
                 blockers: vec!["projection_level_replay_operand_error"],
             };
         }
+    };
+    let Some(operands) = operands else {
+        let has_embedded_operands = projection_operand_root(target).is_some();
+        return ProjectionReplayOutcome::Blocked {
+            reason: "projection_level_full_operands_missing",
+            blockers: if has_embedded_operands {
+                vec!["projection_level_full_operands_missing"]
+            } else {
+                capture_evidence.blockers()
+            },
+            missing_full_operand_fields: if has_embedded_operands {
+                projection_missing_full_operand_fields(target)
+            } else {
+                capture_evidence.missing_full_operand_fields()
+            },
+            current_operand_scope: if has_embedded_operands {
+                projection_current_operand_scope(target)
+            } else {
+                capture_evidence.current_operand_scope.clone()
+            },
+        };
     };
     run_projection_replay_operands(operands)
 }
@@ -3568,4 +3577,90 @@ fn json_escape(value: &str) -> String {
 
 fn io_error(message: impl Into<String>) -> Box<dyn Error> {
     Box::new(io::Error::new(io::ErrorKind::InvalidInput, message.into()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn capture_evidence_retains_full_operands_from_external_source_packet()
+    -> Result<(), Box<dyn Error>> {
+        let case_id = "a770_summary_seed770024_keywords_014";
+        let source_path = env::temp_dir()
+            .join(format!("bitnet-a770-full-projection-source-{}.json", std::process::id()));
+        let mut logits_dump = (0..10).map(|_| json!({})).collect::<Vec<_>>();
+        let step = json!({
+            "step": 9,
+            "logit_source_context": {
+                "hidden_state_source": {
+                    "model_forward_source": {
+                        "qkv_projection_sources": {
+                            "sources": [{
+                                "projection": "q_proj",
+                                "target_layer_idx": 0,
+                                "source_context_available": true,
+                                "projection_replay": {
+                                    "full_projection_operands": {
+                                        "activations_i8": (0..256).map(|value| (value % 127) as i64).collect::<Vec<_>>(),
+                                        "packed_qk256": vec![0; 128],
+                                        "rows": 2,
+                                        "cols": 256,
+                                        "row_stride_bytes": 64,
+                                        "activation_sum": 0,
+                                        "activation_scale_bits": 0x3f800000u64,
+                                        "weight_scale_bits": 0x3f800000u64,
+                                        "input_row_index": 0
+                                    }
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+        });
+        let slot = logits_dump
+            .get_mut(9)
+            .ok_or_else(|| io_error("synthetic logits dump missing step 9"))?;
+        *slot = step;
+        let source = json!({
+            "cases": [{"id": case_id, "logits_dump": logits_dump}]
+        });
+
+        let result = (|| -> Result<(), Box<dyn Error>> {
+            fs::write(&source_path, serde_json::to_vec(&source)?)?;
+            let row = json!({
+                "row_evidence": {
+                    "dispatch_replay_source": path_json_value(&source_path)
+                }
+            });
+            let evidence = projection_operand_capture_evidence(
+                Some(&row),
+                case_id,
+                9,
+                0,
+                "q_proj",
+                "a770_159_full_projection_operand_source_boundary",
+            );
+            if !evidence.full_projection_operands_available {
+                return Err(io_error("external full projection source was not accepted"));
+            }
+            let operands = evidence
+                .replay_operands
+                .as_ref()
+                .ok_or_else(|| io_error("external full projection operands were not retained"))?;
+            if (
+                operands.rows,
+                operands.cols,
+                operands.row_stride_bytes,
+                operands.packed_qk256.len(),
+            ) != (2, 256, 64, 128)
+            {
+                return Err(io_error("external full projection operand dimensions changed"));
+            }
+            Ok(())
+        })();
+        let _ = fs::remove_file(&source_path);
+        result
+    }
 }
