@@ -22,8 +22,14 @@ The logical shape follows the loader contract. The GGUF metadata for K/V is
 
 ## Local physical A770 proof
 
-The proof ran on the local Intel Arc A770 with the official model from the
-source repository. It used the current branch binary and one corpus case:
+The physical proof ran on the local Intel Arc A770 with the official model from
+the source repository. The receipts were captured from implementation commit
+`a874812d2`, before the final diagnostic identity-field and requested-row
+strengthening at current head `60b19db26`. Those receipts establish the
+complete packed payload, selected-device identity, and fallback-free replay
+boundary; the current head is source-compile verified, but no current-head
+binary rerun is claimed because the local C: volume has no usable free space
+for the Windows linker.
 
 ```text
 case: a770_summary_seed770024_keywords_014
