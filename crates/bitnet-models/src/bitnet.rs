@@ -132,6 +132,7 @@ pub struct ModelQk256FocusedRawOperandsContext {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ModelQk256FullProjectionRawOperandsContext {
+    pub qk256_key: String,
     pub input_row_index: usize,
     pub rows: usize,
     pub cols: usize,
@@ -1134,6 +1135,7 @@ impl Model for BitNetModel {
                         }),
                         full_projection_operands: replay.full_projection_operands.as_ref().map(
                             |operands| ModelQk256FullProjectionRawOperandsContext {
+                                qk256_key: operands.qk256_key.clone(),
                                 input_row_index: operands.input_row_index,
                                 rows: operands.rows,
                                 cols: operands.cols,

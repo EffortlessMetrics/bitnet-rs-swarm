@@ -178,6 +178,8 @@ pub struct Qk256FocusedRawOperands {
 /// environment and remains a diagnostic source contract.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Qk256FullProjectionRawOperands {
+    /// Exact QK256 source key used by the logical loader.
+    pub qk256_key: String,
     /// Materialized input row index used for the activation vector.
     pub input_row_index: usize,
     /// Number of packed output rows in the projection matrix.
@@ -839,7 +841,10 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         )?;
         opencl_policy_flat.extend_from_slice(&opencl_policy_row);
 
-        if device_expression_trace.is_none() {
+        let capture_requested_row = capture_raw_operands
+            && full_projection_operands.is_none()
+            && input_row_index == raw_operand_input_row;
+        if device_expression_trace.is_none() || capture_requested_row {
             let (q, activation_scale, activation_sum) =
                 quantize_row_i8_s_activation(input_row, prepared.layout.cols);
             if capture_raw_operands
@@ -867,6 +872,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
                 && input_row_index == raw_operand_input_row
             {
                 full_projection_operands = Some(Qk256FullProjectionRawOperands {
+                    qk256_key: weight_name.to_string(),
                     input_row_index,
                     rows: prepared.layout.rows,
                     cols: prepared.layout.cols,

@@ -941,6 +941,7 @@ fn transformer_dispatch_replay_tensors(
         }),
         full_projection_operands: replay.full_projection_operands.map(|operands| {
             TransformerQk256FullProjectionRawOperands {
+                qk256_key: operands.qk256_key,
                 input_row_index: operands.input_row_index,
                 rows: operands.rows,
                 cols: operands.cols,

@@ -16511,6 +16511,7 @@ fn compact_qk256_full_projection_operands(
         "context_kind": "decode_step_qk256_full_projection_raw_operands",
         "diagnostic_only": true,
         "claim_allowed": false,
+        "qk256_key": &operands.qk256_key,
         "input_row_index": operands.input_row_index,
         "rows": operands.rows,
         "cols": operands.cols,
@@ -16521,6 +16522,7 @@ fn compact_qk256_full_projection_operands(
         "weight_scale_bits": operands.weight_scale_bits,
         "activation_i8_len": operands.activations_i8.len(),
         "packed_qk256_len": operands.packed_qk256.len(),
+        "packed_qk256_sha256": compute_sha256_bytes(&operands.packed_qk256),
         "activations_i8": &operands.activations_i8,
         "packed_qk256": &operands.packed_qk256,
     })

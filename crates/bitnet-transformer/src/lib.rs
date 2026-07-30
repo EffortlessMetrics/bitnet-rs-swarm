@@ -8549,6 +8549,7 @@ pub struct TransformerQk256FocusedRawOperands {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TransformerQk256FullProjectionRawOperands {
+    pub qk256_key: String,
     pub input_row_index: usize,
     pub rows: usize,
     pub cols: usize,
