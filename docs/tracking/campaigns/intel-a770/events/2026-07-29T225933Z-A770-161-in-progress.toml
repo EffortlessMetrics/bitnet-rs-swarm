@@ -1,0 +1,35 @@
+timestamp = "2026-07-29T22:59:33Z"
+campaign = "intel-a770"
+item = "A770-161"
+event = "in_progress"
+previous_status = "ready"
+new_status = "in_progress"
+branch = "codex/intel-a770/A770-161-full-projection-packed-row-source-hook"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Started A770-161 external full-projection source-packet handoff support."
+notes = [
+  "The replay instrumentation now retains full operands discovered in the external projection source packet and passes them to the selected-device replay hook when the row manifest itself only contains focused evidence.",
+  "The existing A770-160 source packet remains single-output-row evidence and does not provide physical full projection packed rows.",
+  "No packed weights are fabricated and no production QK256 dispatch policy is changed.",
+  "Any selected-device replay must keep selected_backend Intel Arc A770 OpenCL, runtime_api opencl, and fallback_used=false.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-161 adds an external source-packet handoff path for full projection replay operands.",
+  "A770-161 retains a precise blocker when the physical full-row source is absent.",
+]
+must_not_claim = [
+  "CPU/A770 answer parity is proven.",
+  "Reference parity is proven.",
+  "Strict A770 answer readiness is proven.",
+  "Broad A770 answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
