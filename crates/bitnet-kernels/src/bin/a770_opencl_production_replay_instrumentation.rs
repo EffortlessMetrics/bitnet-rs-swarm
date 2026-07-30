@@ -1609,6 +1609,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
         "a770_158_projection_replay_hook_boundary" => json!({
             "a770_158_projection_replay_hook_boundary": path_json_value(source_path),
         }),
+        "a770_160_full_projection_packed_row_source_boundary" => json!({
+            "a770_160_full_projection_packed_row_source_boundary": path_json_value(source_path),
+        }),
         "a770_157_projection_level_qkv_boundary" => json!({
             "a770_157_projection_level_qkv_boundary": path_json_value(source_path),
         }),
@@ -1635,6 +1638,9 @@ fn projection_level_qkv_replay_to_json(args: &Args) -> Result<(String, String), 
                 }
                 "a770_158_projection_replay_hook_boundary" => {
                     "A770-158 projection replay hook boundary receipt"
+                }
+                "a770_160_full_projection_packed_row_source_boundary" => {
+                    "A770-160 full projection packed-row source boundary receipt"
                 }
                 "a770_157_projection_level_qkv_boundary" => {
                     "A770-157 projection-level Q/K/V boundary receipt"
@@ -1919,6 +1925,7 @@ fn projection_source_targets<'a>(
         let kind = match str_field(source, "work_item") {
             Some("A770-159") => "a770_159_full_projection_operand_source_boundary",
             Some("A770-158") => "a770_158_projection_replay_hook_boundary",
+            Some("A770-160") => "a770_160_full_projection_packed_row_source_boundary",
             _ => "a770_157_projection_level_qkv_boundary",
         };
         return Ok((targets.iter().collect(), kind));
@@ -3582,6 +3589,22 @@ fn io_error(message: impl Into<String>) -> Box<dyn Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn projection_source_identity_tracks_a770_160_packet() -> Result<(), Box<dyn Error>> {
+        let source = json!({
+            "work_item": "A770-160",
+            "manifest": {"targets": [{"projection": "q_proj"}]}
+        });
+        let (targets, kind) = projection_source_targets(&source)?;
+        if targets.len() != 1 {
+            return Err(io_error("A770-160 source packet target count changed"));
+        }
+        if kind != "a770_160_full_projection_packed_row_source_boundary" {
+            return Err(io_error("A770-160 source packet identity was not preserved"));
+        }
+        Ok(())
+    }
 
     #[test]
     fn capture_evidence_retains_full_operands_from_external_source_packet()

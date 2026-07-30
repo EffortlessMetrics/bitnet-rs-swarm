@@ -76,11 +76,37 @@ linear invocations with zero CPU linear fallbacks. Its receipt remains
 diagnostic-only and explicitly makes no answer-quality, residency, speed, or
 full-inference claim.
 
-The current PR binary compile was attempted in an isolated Cargo target but
-remained blocked behind unrelated workspace Cargo activity before `rustc`
-started. Formatting and static diff checks remain required; the local runtime
-receipts above are hardware evidence, not a substitute for compiling the
-current PR source.
+The current PR binary was compiled successfully in an isolated Cargo target:
+
+```text
+CARGO_TARGET_DIR=E:\Code\Rust\target-a770-161-local-2
+cargo check --locked --offline -p bitnet-kernels --no-default-features --features opencl --bin a770-opencl-production-replay-instrumentation
+  finished = true
+
+E:\Code\Rust\target-a770-161-local-2\debug\a770-opencl-production-replay-instrumentation.exe
+  --projection-source ci/hardware/amd-5700x-intel-a770/2026-06-05/a770-full-projection-packed-row-capture-source-boundary/a770-opencl-qkv-full-projection-packed-row-capture.json
+  --manifest ci/hardware/amd-5700x-intel-a770/2026-06-05/a770-full-projection-packed-row-capture-source-boundary/a770-opencl-qkv-full-projection-packed-row-capture-manifest.json
+  --receipt target/a770-local-161-current-runtime-receipt.json
+  --case-id a770_summary_seed770024_keywords_014
+  --first-mismatch-index 9
+  --projection-layer 0
+  --work-item A770-161
+  classification = a770_qk256_projection_level_qkv_replay_blocked_on_projection_operands
+  target_count = 3
+  projection_replay_executed_count = 0
+  projection_replay_fallback_false_count = 3
+  all_row_evidence_clean = true
+  blockers = projection_level_full_operands_missing, projection_level_full_projection_weight_rows_missing
+```
+
+The current-branch replay receipt therefore proves the bounded blocker path
+against the current A770-161 binary; it does not substitute for physical full
+projection packed-row capture.
+
+The regenerated manifest preserves the source identity as
+`a770_160_full_projection_packed_row_source_boundary` and records the remaining
+physical blocker as missing full projection operands/weight rows rather than
+mislabeling the packet as an earlier projection boundary.
 
 ## Claim boundary
 

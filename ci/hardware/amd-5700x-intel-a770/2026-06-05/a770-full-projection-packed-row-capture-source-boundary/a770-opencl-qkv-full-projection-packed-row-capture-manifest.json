@@ -8,16 +8,16 @@
   "projection_replay_target_count": 3,
   "schema_version": "1.0.0",
   "source_receipts": {
-    "a770_159_full_projection_operand_source_boundary": "ci/hardware/amd-5700x-intel-a770/2026-06-05/a770-full-projection-operands-capture-boundary/a770-opencl-qkv-full-projection-operands-capture.json"
+    "a770_160_full_projection_packed_row_source_boundary": "ci/hardware/amd-5700x-intel-a770/2026-06-05/a770-full-projection-packed-row-capture-source-boundary/a770-opencl-qkv-full-projection-packed-row-capture.json"
   },
   "target_count": 3,
   "target_layer_idx_filter": 0,
   "target_policy": {
-    "blocker_rule": "ledger missing full projection packed-row capture source instead of promoting production QK256 policy",
+    "blocker_rule": "ledger missing full projection operands instead of promoting production QK256 policy",
     "cpu_fallback_allowed": false,
     "fallback_used_must_equal": false,
     "replay_rule": "run selected-device A770 OpenCL projection replay only when full projection operands are available through the bounded replay hook",
-    "target_source": "A770-159 full projection operand source boundary receipt",
+    "target_source": "A770-160 full projection packed-row source boundary receipt",
     "target_surface": "one transformer layer Q/K/V projection-level replay boundary"
   },
   "targets": [
@@ -44,8 +44,7 @@
         "activation_i8_len": 2560,
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "cols": 2560,
         "current_operand_scope": "single_output_row",
@@ -76,8 +75,7 @@
       "projection_replay": {
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "current_operand_scope": "single_output_row",
         "executed": false,
@@ -136,8 +134,7 @@
         "activation_i8_len": 2560,
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "cols": 2560,
         "current_operand_scope": "single_output_row",
@@ -168,8 +165,7 @@
       "projection_replay": {
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "current_operand_scope": "single_output_row",
         "executed": false,
@@ -228,8 +224,7 @@
         "activation_i8_len": 2560,
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "cols": 2560,
         "current_operand_scope": "single_output_row",
@@ -260,8 +255,7 @@
       "projection_replay": {
         "blockers": [
           "projection_level_full_operands_missing",
-          "projection_level_full_projection_weight_rows_missing",
-          "projection_level_full_projection_packed_row_capture_source_missing"
+          "projection_level_full_projection_weight_rows_missing"
         ],
         "current_operand_scope": "single_output_row",
         "executed": false,
@@ -298,5 +292,5 @@
       "tensor_name": "layers.0.attention.v_proj.weight"
     }
   ],
-  "work_item": "A770-160"
+  "work_item": "A770-161"
 }
