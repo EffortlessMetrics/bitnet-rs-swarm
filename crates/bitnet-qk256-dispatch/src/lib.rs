@@ -136,6 +136,9 @@ pub struct Qk256CpuA770DispatchReplay {
     /// Optional raw focused operands for replaying a single QK256 output row
     /// through selected-device production instrumentation.
     pub focused_operands: Option<Qk256FocusedRawOperands>,
+    /// Optional complete packed projection operands for a bounded source packet.
+    /// This remains diagnostic-only and does not change production dispatch.
+    pub full_projection_operands: Option<Qk256FullProjectionRawOperands>,
     /// CPU replay stats.
     pub cpu: Qk256CpuDispatchReplayStats,
     /// A770 replay stats.
@@ -164,6 +167,36 @@ pub struct Qk256FocusedRawOperands {
     /// Quantized I8_S activation row.
     pub activations_i8: Vec<i8>,
     /// Packed QK256 bytes for the selected output row.
+    pub packed_qk256: Vec<u8>,
+}
+
+/// Complete raw operands for one QK256 projection and one activation row.
+///
+/// The packet carries every packed output row, preserving the logical matrix
+/// shape used by the QK256 loader rather than any transposed GGUF metadata
+/// shape. It is intentionally opt-in through the existing raw-operands replay
+/// environment and remains a diagnostic source contract.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Qk256FullProjectionRawOperands {
+    /// Materialized input row index used for the activation vector.
+    pub input_row_index: usize,
+    /// Number of packed output rows in the projection matrix.
+    pub rows: usize,
+    /// Number of input columns.
+    pub cols: usize,
+    /// Packed QK256 byte stride for each output row.
+    pub row_stride_bytes: usize,
+    /// Scope of the packed QK256 bytes.
+    pub packed_qk256_scope: &'static str,
+    /// Sum of the prequantized I8_S activation row.
+    pub activation_sum: i32,
+    /// Raw `f32` bits for the activation scale.
+    pub activation_scale_bits: u32,
+    /// Raw `f32` bits for the BitNet inline weight scale.
+    pub weight_scale_bits: u32,
+    /// Quantized I8_S activation row.
+    pub activations_i8: Vec<i8>,
+    /// Complete packed QK256 projection rows.
     pub packed_qk256: Vec<u8>,
 }
 
@@ -773,6 +806,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
     let raw_operand_output_index =
         env_usize("BITNET_QKV_PROJECTION_DISPATCH_REPLAY_RAW_OPERAND_OUTPUT_INDEX").unwrap_or(0);
     let mut focused_operands = None;
+    let mut full_projection_operands = None;
 
     for (input_row_index, input_row) in prepared.input_rows.iter().enumerate() {
         let mut output_row = vec![0.0f32; prepared.layout.rows];
@@ -828,6 +862,23 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
                     packed_qk256: prepared.flat_bytes[row_start..row_end].to_vec(),
                 });
             }
+            if capture_raw_operands
+                && full_projection_operands.is_none()
+                && input_row_index == raw_operand_input_row
+            {
+                full_projection_operands = Some(Qk256FullProjectionRawOperands {
+                    input_row_index,
+                    rows: prepared.layout.rows,
+                    cols: prepared.layout.cols,
+                    row_stride_bytes: prepared.layout.row_stride_bytes,
+                    packed_qk256_scope: "full_projection_output_rows",
+                    activation_sum,
+                    activation_scale_bits: activation_scale.to_bits(),
+                    weight_scale_bits: weight_scale.to_bits(),
+                    activations_i8: q.clone(),
+                    packed_qk256: prepared.flat_bytes.clone(),
+                });
+            }
             device_expression_trace = Some(qk256_device_expression_trace_for_row(
                 &prepared.flat_bytes,
                 &q,
@@ -872,6 +923,7 @@ pub fn replay_qk256_cpu_vs_a770_with_scale(
         device_expression_trace,
         device_intermediate_trace,
         focused_operands,
+        full_projection_operands,
         cpu: Qk256CpuDispatchReplayStats {
             scalar_invocations: cpu_scalar_invocations,
             execution_path: "cpu_qk256_i2s_i8s_scaled_scalar_replay",

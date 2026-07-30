@@ -934,7 +934,10 @@ must_not_claim = [
 
 [[work_item]]
 id = "A770-161"
-status = "in_progress"
+status = "merged"
+pr = 1893
+head_sha = "3f02477b8d288686d299b1be3383ad3875e7ba95"
+merge_sha = "c44033059833f577487cea2a3716e4a2902040ca"
 branch = "codex/intel-a770/A770-161-full-projection-packed-row-source-hook"
 stackable = false
 review_mode = "codex_premerge"
@@ -984,6 +987,56 @@ must_not_claim = [
   "Attention score residency is proven.",
   "Softmax residency is proven.",
   "Value-mix residency is proven.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
+
+[[work_item]]
+id = "A770-162"
+status = "in_progress"
+branch = "codex/intel-a770/A770-162-full-projection-packet-contract"
+stackable = false
+review_mode = "codex_premerge"
+merge_policy = "automerge_when_green"
+human_gate = "on_blocker_only"
+blocked_by = ["A770-161"]
+acceptance = "Define and carry an opt-in versioned full-projection QK256 packet for the layer-0 q_proj/k_proj/v_proj replay boundary, preserving logical rows, columns, packed row stride, activation row identity, scale bits, complete packed bytes, and diagnostic-only claim boundaries without changing production dispatch or executing whole-matrix A770 replay."
+commands = [
+  "git diff --check",
+  "rustfmt --edition 2024 --check the touched Rust files",
+  "cargo check --locked -p bitnet-cli --no-default-features --features cpu,full-cli,opencl",
+  "run one bounded local A770 case with BITNET_QKV_PROJECTION_DISPATCH_REPLAY_RAW_OPERANDS=1 for q_proj, k_proj, and v_proj",
+  "assert each packet has full_projection_output_rows scope, the loader logical shape, exact packed byte length, selected_backend=intel-a770-opencl, runtime_api=opencl, and fallback_used=false",
+  "cargo run --locked -p xtask --no-default-features -- campaign check intel-a770",
+  "cargo run --locked -p xtask --no-default-features -- campaign generate --check",
+]
+allowed_paths = [
+  "crates/bitnet-qk256-dispatch/**",
+  "crates/bitnet-transformer/**",
+  "crates/bitnet-models/src/bitnet.rs",
+  "crates/bitnet-cli/src/main.rs",
+  "docs/reports/**",
+  "docs/tracking/campaigns/intel-a770/**",
+  "docs/tracking/generated/**",
+]
+forbidden_paths = [
+  ".github/workflows/**",
+  "crates/bitnet-server/**",
+  "crates/bitnet-generation/**",
+  "crates/bitnet-inference/**",
+  "crates/bitnet-quantization/src/qk256/**",
+]
+may_claim = [
+  "The diagnostic path can carry complete packed QK256 projection operands for the selected layer-0 Q/K/V source boundary.",
+  "A bounded local A770 run records the selected backend and fallback-free runtime identity while producing the packet.",
+  "The packet preserves loader logical orientation and complete packed row bytes without fabricating weights.",
+]
+must_not_claim = [
+  "CPU/A770 projection parity is proven.",
+  "Complete layer-0 correctness is proven.",
+  "Strict answer readiness or broad answer quality is proven.",
+  "Production QK256 dispatch policy changed.",
   "Full A770 residency is proven.",
   "Performance speedup is proven.",
   "A770 trusted partial acceleration is claim-grade.",
