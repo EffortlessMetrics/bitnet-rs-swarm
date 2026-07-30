@@ -49,9 +49,38 @@ retains the parsed operands for the replay handoff. The production source
 packet remains diagnostic-only until a real physical full-row capture is
 available.
 
-The current local Windows Cargo build is slow and was not completed within the
-five-minute command budget. Formatting and static diff checks remain required;
-hosted exact-head checks are the authoritative compile/test proof for this PR.
+Local hardware verification was run on the physical Intel Arc A770 in this
+checkout. The existing focused A770 probes passed:
+
+```text
+BITNET_RUN_A770_OPENCL_SMOKE=1 cargo test --locked --offline -p bitnet-device-probe --no-default-features --features opencl --test a770_opencl_smoke a770_selected_opencl_tiny_vector_add_smoke_runs_when_enabled -- --nocapture
+  passed = true
+  runtime_device = Intel(R) Arc(TM) A770 Graphics
+  platform_name = Intel(R) OpenCL Graphics
+  kernel_execution = true
+  max_abs_error = 0.0
+  fallback_used = false
+
+target/debug/a770-opencl-parity.exe --receipt target/a770-local-matmul-i2s-parity.json
+  passed = true
+  kernel_name = matmul_i2s
+  cpu_opencl_parity = true
+  max_abs_error = 0.0
+  fallback_used = false
+```
+
+A single seeded `answer-corpus --case-id
+a770_summary_seed770024_keywords_014` run also selected
+`intel-a770-opencl`, generated 15 tokens, and recorded 9,030 A770 OpenCL QK256
+linear invocations with zero CPU linear fallbacks. Its receipt remains
+diagnostic-only and explicitly makes no answer-quality, residency, speed, or
+full-inference claim.
+
+The current PR binary compile was attempted in an isolated Cargo target but
+remained blocked behind unrelated workspace Cargo activity before `rustc`
+started. Formatting and static diff checks remain required; the local runtime
+receipts above are hardware evidence, not a substitute for compiling the
+current PR source.
 
 ## Claim boundary
 
