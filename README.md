@@ -8,9 +8,16 @@
 
 <p align="center">
   <a href="https://github.com/EffortlessMetrics/BitNet-rs/releases"><img src="https://img.shields.io/github/v/release/EffortlessMetrics/BitNet-rs?sort=semver&label=release" alt="GitHub release" /></a>
-  <img src="https://img.shields.io/badge/crates.io-pending-lightgrey.svg" alt="crates.io pending" />
-  <img src="https://img.shields.io/badge/docs.rs-pending-lightgrey.svg" alt="docs.rs pending" />
 </p>
+
+<!--
+Intentionally no registry shields in this README. BitNet-rs is not published
+to crates.io and has no published API doc site yet, so such an image would
+claim a release posture the project has not reached.
+This is enforced by the false-badges check in:
+  cargo run --no-default-features --locked -p xtask -- release-ready --profile usable-preview
+Add them in the same change that actually publishes.
+-->
 
 <p align="center">
   <a href="https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field"><img src="https://img.shields.io/badge/MSRV-1.95.0-blue.svg" alt="MSRV" /></a>
