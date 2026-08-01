@@ -30,7 +30,7 @@ pub fn build_cli() -> clap::Command {
     #[command(version)]
     #[command(author = "BitNet Contributors")]
     #[command(
-        after_help = "CLI Interface Version: 1.0.0\nDocs: https://docs.rs/bitnet\nIssues: https://github.com/EffortlessMetrics/BitNet-rs/issues"
+        after_help = "CLI Interface Version: 1.0.0\nDocs: https://github.com/EffortlessMetrics/BitNet-rs/tree/main/docs\nIssues: https://github.com/EffortlessMetrics/BitNet-rs/issues"
     )]
     struct CliStub {}
 
