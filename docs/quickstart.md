@@ -18,58 +18,180 @@ git clone https://github.com/EffortlessMetrics/BitNet-rs
 cd BitNet-rs
 ```
 
-## Step 1: Build BitNet-rs (1 minute)
+## The Supported-Preview Path
+
+`docs/release/V0_3_USABLE_PREVIEW.md` defines the usable-preview release in
+terms of six commands. They are the shortest route from a fresh clone to a
+local answer you can actually inspect:
 
 ```bash
-# CPU inference (fastest setup)
-cargo build --release --no-default-features --features cpu
+bitnet model status
+bitnet model fetch <supported-model>
+bitnet model verify <supported-model>
+bitnet ask --model <path> --device <supported-device> "What is 2+2?"
+bitnet receipts explain --latest
+bitnet support bundle --latest --device <supported-device>
+```
+
+Steps 1-6 below walk that path with a real supported artifact. Every command
+and every quoted output in those steps was executed against
+`qwen2.5-0.5b-instruct-q8_0` on a plain `cpu` device.
+
+## Step 1: Build BitNet-rs
+
+```bash
+# CPU inference (fastest setup); full-cli enables model/ask/receipts/support
+cargo build --release --no-default-features --features cpu,full-cli
 
 # Optional exact CUDA rows only; check status first
-cargo build --release --no-default-features --features gpu
+cargo build --release --no-default-features --features gpu,full-cli
 ```
 
-## Step 2: Download BitNet Model (1 minute)
+`bitnet-cli` declares `default = ["cpu", "full-cli"]`, so it does build
+without those flags. Spell the features out anyway: it is the repo-wide
+convention, it keeps the command correct if the defaults change, and the
+root `bitnet` package and most other crates *do* have empty defaults, where
+omitting them fails.
+
+Then put the binary on `PATH` for the rest of this guide:
 
 ```bash
-# Download Microsoft's 1.58-bit quantized model (QK256 GGML I2_S format)
-cargo run --no-default-features -p xtask -- download-model --id microsoft/bitnet-b1.58-2B-4T-gguf --file ggml-model-i2_s.gguf
+export PATH="$PWD/target/release:$PATH"
 ```
 
-**What is QK256?** This model uses GGML-compatible I2_S quantization with 256-element blocks and separate scale tensors. BitNet-rs automatically detects the quantization flavor and routes to the appropriate kernels.
+Every `bitnet ...` command below assumes that. Without it, use the full
+`./target/release/bitnet ...` path.
 
-## Step 3: Automatic Tokenizer Discovery (30 seconds)
+## Step 2: See What Is Supported
 
-BitNet-rs automatically discovers and loads tokenizers from GGUF files:
+`model status` is a read-only view of the coverage matrix. It does not probe
+hardware, so it works before you own any of the devices it lists.
 
 ```bash
-# Verify GGUF model with automatic tokenizer discovery
-cargo run --no-default-features -p xtask -- verify --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf
-
-# Or specify tokenizer explicitly if needed
-cargo run --no-default-features -p xtask -- verify --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf --tokenizer models/microsoft-bitnet-b1.58-2B-4T-gguf/tokenizer.json
+bitnet model list                    # supported ids + cache state
+bitnet model status --device cpu     # posture for one device
+bitnet model status --format json    # machine-readable
 ```
 
-**What Just Happened?**
+`bitnet model list` prints the ids this build accepts:
 
-- BitNet-rs extracted tokenizer metadata from GGUF file
-- Detected model architecture (BitNet, LLaMA, GPT-2, etc.)
-- Resolved vocabulary size (32K, 128K, or custom)
-- Applied model-specific tokenizer configuration
+```text
+ID                                       Cache         Quant        M4 CPU      Contract
+microsoft-bitnet-b1.58-2B-4T-i2s         missing       I2_S/QK256   no          microsoft_bitnet_b158_2b_4t_i2s
+qwen2.5-0.5b-instruct-q8_0               missing       Q8_0         supported   -
+qwen2.5-0.5b-instruct-q4_k_m             missing       Q4_K_M       supported   -
+qwen2.5-1.5b-instruct-q4_k_m             missing       Q4_K_M       supported   -
+```
 
-## Step 4: Run Neural Network Inference (30 seconds)
+> Bare `bitnet model status` summarizes the canonical CUDA lane
+> (`nvidia-rtx-5070-ti-cuda`) regardless of your hardware. Pass `--device` for
+> the device you actually have.
+
+## Step 3: Fetch a Supported Artifact
+
+This guide uses the 0.5B dense SLM: it is ~676 MB and answers in seconds,
+where the 2B BitNet QK256 artifact runs at roughly 0.1 tok/s on scalar
+kernels.
 
 ```bash
-# Generate text with automatic tokenizer discovery
-cargo run --no-default-features -p xtask -- infer --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf --prompt "BitNet is a neural network architecture that" --deterministic
-
-# Stream inference (real-time generation) with automatic tokenizer
-cargo run --no-default-features -p xtask -- infer --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf --prompt "Explain 1-bit quantization:" --stream
-
-# Or specify tokenizer explicitly if needed
-cargo run --no-default-features -p xtask -- infer --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf --tokenizer models/microsoft-bitnet-b1.58-2B-4T-gguf/tokenizer.json --prompt "Test" --deterministic
+bitnet model fetch qwen2.5-0.5b-instruct-q8_0
 ```
 
-## Step 5: CPU Validation Tuning (Optional)
+Fetch reports cache location and byte identity, and is explicit that artifact
+verification is not answer readiness:
+
+```text
+downloaded: qwen2.5-0.5b-instruct-q8_0 at /root/.cache/bitnet-rs/models/... (675.71 MB, verified=true)
+expected: bytes=675710816, sha256=ca59ca7f...
+actual:   bytes=675710816, sha256=ca59ca7f...
+artifact verification: passed
+answer ready: not proven by model verify; use `bitnet model status` and receipts for answer claims
+tokenizer authority: qwen2 (embedded_gguf_metadata_bound_to_model_sha256)
+prompt authority: qwen2.5 (GGUF tokenizer.chat_template / Qwen2.5 ChatML identity)
+```
+
+## Step 4: Verify the Artifact
+
+```bash
+bitnet model verify qwen2.5-0.5b-instruct-q8_0
+```
+
+Verify re-checks byte identity against the expected sha256 and restates the
+tokenizer and prompt authority. It proves *provenance*, not answer quality.
+
+## Step 5: Ask One Question
+
+`ask` takes a **path**, not a model id. Use the cache path that `fetch`
+printed:
+
+```bash
+MODEL=~/.cache/bitnet-rs/models/qwen2.5-0.5b-instruct-q8_0/qwen2.5-0.5b-instruct-q8_0.gguf
+
+bitnet ask --model "$MODEL" --device cpu --max-tokens 24 "What is 2+2?"
+```
+
+`ask` writes a receipt by default and prints a proof block:
+
+```text
+Generated 24 tokens in 11518ms (2.1 tok/s)
+Wrote target/bitnet/receipts/ask/ask-latest.json
+Proof:
+  model: Qwen/Qwen2.5-0.5B-Instruct / qwen2.5-0.5b-instruct-q8_0.gguf
+  backend: cpu-rust
+  runtime: cpu
+  fallback: false
+  quality: true
+  speed claim: false
+  receipt: target/bitnet/receipts/ask/ask-latest.json
+```
+
+`speed claim: false` is deliberate. A tok/s number printed here is local
+timing, not a promoted speedup claim.
+
+## Step 6: Inspect the Receipt and Bundle Support
+
+```bash
+bitnet receipts explain --latest
+bitnet support bundle --latest --device cpu --format text
+```
+
+`receipts explain` maps the run back to the coverage matrix, and says so
+plainly when nothing matches:
+
+```text
+Backend:
+  requested: cpu
+  selected: cpu-rust
+  runtime: cpu
+  fallback: false
+Quality:
+  answer_quality_passed: true
+Model Coverage:
+  warnings: no model coverage row matched this receipt
+```
+
+That warning is the honest outcome, not a bug. The matrix promotes this model
+on `dense_regular_llm_cuda` and on Apple CPU/NEON — **not** on a generic `cpu`
+device. So the run executed and passed its quality gate, while
+`support bundle` correctly reports the promotion fields as `not_available`:
+
+```text
+selected_backend: cpu-rust
+fallback_used: false
+quality_gate: passed
+speedup_claim: false
+model_coverage_row: not_available
+current_tier: not_available
+server_ready: not_available
+```
+
+Read that as: *the code ran and answered, on a route no support row promotes.*
+For a promoted row, use the exact model/device pairs named in
+[status/SUPPORT_MATRIX.md](status/SUPPORT_MATRIX.md).
+
+The bundle is designed to be safe to attach to an issue.
+
+## Optional: CPU Validation Tuning
 
 For a local CPU validation run with native optimizations:
 
@@ -123,7 +245,7 @@ receipt for your exact row say more.
 
 ```bash
 # Quick validation (4-16 tokens) - recommended for this guide
-cargo run -p bitnet-cli --features cpu,full-cli -- run \
+cargo run -p bitnet-cli --no-default-features --features cpu,full-cli -- run \
   --model models/microsoft-bitnet-b1.58-2B-4T-gguf/ggml-model-i2_s.gguf \
   --prompt "What is 2+2?" \
   --max-tokens 8  # Keep this small for QK256
@@ -140,7 +262,7 @@ cargo run -p bitnet-cli --features cpu,full-cli -- run \
 Use only the exact model/device rows marked supported preview in the support
 matrix.
 
-## Step 6: Benchmark Performance
+## Optional: Benchmark Performance
 
 ```bash
 # Benchmark inference throughput with CPU optimization
@@ -302,15 +424,18 @@ jq '.parity' docs/baselines/*/parity-bitnetcpp.json
 
 ## What Just Happened?
 
-You've successfully:
+Following Steps 1-6, you:
 
-1. **Built BitNet-rs** with device-aware quantization and complete transformer implementation
-2. **Downloaded a QK256 model** (Microsoft's 1.58-bit GGUF in GGML I2_S format) with automatic flavor detection
-3. **Automatic tokenizer discovery** extracted tokenizer from GGUF metadata, detected model architecture, and applied optimal configuration
-4. **Verified model compatibility** with enhanced GGUF loader, strict mode validation, and comprehensive tensor validation
-5. **Ran bounded preview inference** with QK256 kernels, real transformer weights, and autoregressive generation
-6. **Prepared benchmark evidence** - run `cargo run --no-default-features -p xtask -- benchmark --model <path> --tokens 128` to produce a local receipt before making any speed claim
-7. **Generated validation receipts** with parity metrics, kernel IDs, and reproducible baselines in `docs/baselines/`
+1. **Built the CLI** with explicit features, since default features are empty
+2. **Read the support posture** with `bitnet model list` / `model status`, without needing the hardware present
+3. **Fetched a supported artifact** and saw its cache path, byte count, and sha256 verified against the expected identity
+4. **Verified provenance** with `bitnet model verify` — byte identity plus tokenizer and prompt authority, explicitly *not* answer readiness
+5. **Ran one local answer** with `bitnet ask`, which wrote a receipt and reported backend, fallback, quality gate, and `speed claim: false`
+6. **Inspected that receipt** with `receipts explain` and produced an issue-safe `support bundle`
+
+The most important thing you saw is step 6's `no model coverage row matched
+this receipt`. Running successfully on a device and being a *promoted*
+model/device row are separate facts, and the tooling keeps them separate.
 
 ## Next Steps
 
@@ -325,6 +450,15 @@ You've successfully:
 ## Quick Commands Reference
 
 ```bash
+# Supported-preview path (Steps 1-6 above)
+bitnet model list
+bitnet model status --device cpu
+bitnet model fetch qwen2.5-0.5b-instruct-q8_0
+bitnet model verify qwen2.5-0.5b-instruct-q8_0
+bitnet ask --model PATH --device cpu --max-tokens 24 "What is 2+2?"
+bitnet receipts explain --latest
+bitnet support bundle --latest --device cpu --format text
+
 # CPU build and test
 cargo build --no-default-features --features cpu
 cargo test --workspace --no-default-features --features cpu
