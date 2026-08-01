@@ -273,12 +273,18 @@ PERFORMANCE:
     - Without AVX2: ~0.1 tok/s (scalar kernels, ~10s per token)
     - With AVX2: ~1.2x faster (optimized kernels)
     - For quick validation: use --max-tokens 4-16
-    - SIMD optimizations (>=3x faster) coming in v0.2.0
+    - Further SIMD work is tracked in the cpu-qk256-performance campaign;
+      no speedup is claimed until an exact benchmark-qualified receipt lands.
 "#)]
 #[command(version = bitnet_version())]
 #[command(author = "BitNet Contributors")]
 #[command(after_help = format!(
-    "CLI Interface Version: {}\nDocs: https://docs.rs/bitnet\nIssues: https://github.com/EffortlessMetrics/BitNet-rs/issues",
+    "Diagnostic, parity, and hardware bring-up subcommands are hidden from this list \
+     to keep the primary path readable. They still run exactly as before; \
+     list them with `bitnet --list-diagnostics`.\n\n\
+     CLI Interface Version: {}\n\
+     Docs: https://github.com/EffortlessMetrics/BitNet-rs/tree/main/docs\n\
+     Issues: https://github.com/EffortlessMetrics/BitNet-rs/issues",
     INTERFACE_VERSION
 ))]
 struct Cli {
@@ -312,6 +318,10 @@ struct Cli {
     /// Print CLI interface version and exit
     #[arg(long)]
     interface_version: bool,
+
+    /// List the diagnostic subcommands hidden from `--help`, and exit
+    #[arg(long)]
+    list_diagnostics: bool,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -621,6 +631,7 @@ enum Commands {
     },
 
     /// Emit a BitNet prompt/token authority audit receipt without running inference
+    #[command(hide = true)]
     PromptAuthorityAudit {
         /// Model GGUF path (for metadata and tokenizer authority)
         #[arg(long)]
@@ -699,126 +710,157 @@ enum Commands {
 
     #[cfg(feature = "full-cli")]
     /// Run the fixed CPU answer-readiness corpus through the `run` surface
+    #[command(hide = true)]
     AnswerCorpus(Box<AnswerCorpusCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Compare answer-corpus receipts for backend parity diagnostics
+    #[command(hide = true)]
     AnswerParity(Box<AnswerParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Validate an external-reference divergence artifact
+    #[command(hide = true)]
     ReferenceCompare(Box<ReferenceCompareCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Classify first-token divergence from external reference and 258V CPU receipts
+    #[command(hide = true)]
     FirstTokenDivergence(Box<FirstTokenDivergenceCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Classify external reference token/logit instrumentation coverage
+    #[command(hide = true)]
     ExternalReferenceInstrumentation(Box<ExternalReferenceInstrumentationCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Audit output-head/tied-head and logits-index boundaries for 258V CPU proof
+    #[command(hide = true)]
     OutputHeadLogitsAudit(Box<OutputHeadLogitsAuditCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Classify 258V CPU transformer-layer trace boundaries
+    #[command(hide = true)]
     TransformerLayerParity(Box<TransformerLayerParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract one dense GGUF linear fixture and run strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufLinearParity(Box<DenseGgufLinearParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract several dense GGUF linear fixtures and run strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufLinearRoleSweep(Box<DenseGgufLinearRoleSweepCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit a dense GGUF one-layer strict CUDA planner gap receipt
+    #[command(hide = true)]
     DenseGgufOneLayerPlan(Box<DenseGgufOneLayerPlanCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit a dense GGUF all-layer strict CUDA planner receipt
+    #[command(hide = true)]
     DenseGgufAllLayerPlan(Box<DenseGgufAllLayerPlanCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit a dense GGUF one-layer CPU reference harness receipt
+    #[command(hide = true)]
     DenseGgufOneLayerCpuReference(Box<DenseGgufOneLayerCpuReferenceCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run integrated dense GGUF one-layer strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufOneLayerCudaParity(Box<DenseGgufOneLayerCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit dense GGUF model-boundary fixture receipts for embedding/norm/logits
+    #[command(hide = true)]
     DenseGgufModelBoundaryFixtures(Box<DenseGgufModelBoundaryFixturesCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit dense GGUF KV-cache policy receipts for the strict CUDA lane
+    #[command(hide = true)]
     DenseGgufKvCachePolicy(Box<DenseGgufKvCachePolicyCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Emit dense GGUF logits-transfer and sampling policy receipts
+    #[command(hide = true)]
     DenseGgufSamplingPolicy(Box<DenseGgufSamplingPolicyCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense Qwen one-token strict CUDA proof and emit a governed receipt
+    #[command(hide = true)]
     DenseGgufQwenOneTokenStrictCuda(Box<DenseGgufQwenOneTokenStrictCudaCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense Qwen short-decode strict CUDA proof and emit a governed receipt
+    #[command(hide = true)]
     DenseGgufQwenShortDecodeStrictCuda(Box<DenseGgufQwenShortDecodeStrictCudaCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run Qwen3 warm-context decode strict CUDA proof and emit a governed receipt
+    #[command(hide = true)]
     DenseGgufQwenWarmDecodeStrictCuda(Box<DenseGgufQwenWarmDecodeStrictCudaCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense Qwen warm-session strict CUDA proof and emit a governed receipt
+    #[command(hide = true)]
     DenseGgufQwenWarmSessionStrictCuda(Box<DenseGgufQwenWarmSessionStrictCudaCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract dense GGUF RMSNorm fixtures and emit a CPU-reference receipt
+    #[command(hide = true)]
     DenseGgufNormFixture(Box<DenseGgufNormFixtureCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract dense GGUF RMSNorm fixtures and run strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufNormCudaParity(Box<DenseGgufNormCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense GGUF RoPE strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufRopeCudaParity(Box<DenseGgufRopeCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract a dense GGUF attention-score fixture and emit a CPU-reference receipt
+    #[command(hide = true)]
     DenseGgufAttentionScoreFixture(Box<DenseGgufAttentionScoreFixtureCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract a dense GGUF attention-softmax fixture and emit a CPU-reference receipt
+    #[command(hide = true)]
     DenseGgufAttentionSoftmaxFixture(Box<DenseGgufAttentionSoftmaxFixtureCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract a dense GGUF attention V-mix fixture and emit a CPU-reference receipt
+    #[command(hide = true)]
     DenseGgufAttentionVMixFixture(Box<DenseGgufAttentionVMixFixtureCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Extract a dense GGUF MLP activation fixture and emit a CPU-reference receipt
+    #[command(hide = true)]
     DenseGgufMlpActivationFixture(Box<DenseGgufMlpActivationFixtureCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense GGUF MLP activation strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufMlpActivationCudaParity(Box<DenseGgufMlpActivationCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense GGUF attention-softmax strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufAttentionSoftmaxCudaParity(Box<DenseGgufAttentionSoftmaxCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense GGUF attention V-mix strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufAttentionVMixCudaParity(Box<DenseGgufAttentionVMixCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
     /// Run dense GGUF attention-score strict CUDA parity diagnostics
+    #[command(hide = true)]
     DenseGgufAttentionScoreCudaParity(Box<DenseGgufAttentionScoreCudaParityCommand>),
 
     #[cfg(feature = "full-cli")]
@@ -827,6 +869,7 @@ enum Commands {
 
     #[cfg(feature = "full-cli")]
     /// Run multiple SLM prompts in one warm process with one model/tokenizer load
+    #[command(hide = true)]
     SlmWarmSession {
         /// Model file or directory path (.gguf file or HuggingFace model directory)
         #[arg(short, long)]
@@ -984,6 +1027,7 @@ enum Commands {
 
     #[cfg(feature = "full-cli")]
     /// Run strict RTX 5070 Ti CUDA prompts in one warm BitNet process
+    #[command(hide = true)]
     CudaWarmSession {
         /// Model GGUF file path
         #[arg(short, long)]
@@ -1072,6 +1116,7 @@ enum Commands {
 
     #[cfg(feature = "full-cli")]
     /// Run 258V CPU phase prompts in one warm strict BitNet process
+    #[command(hide = true)]
     CpuPhaseWarmSession {
         /// Model GGUF file path
         #[arg(short, long)]
@@ -1163,6 +1208,7 @@ enum Commands {
     Info,
 
     /// Probe selected device identity without launching kernels
+    #[command(hide = true)]
     DeviceSmoke {
         /// Output JSON probe receipt to file
         #[arg(long)]
@@ -1170,6 +1216,7 @@ enum Commands {
     },
 
     /// Probe Lunar Lake 258V platform visibility without launching kernels
+    #[command(hide = true)]
     LunarLakeProbe {
         /// Output JSON probe receipt to file
         #[arg(long)]
@@ -1179,9 +1226,11 @@ enum Commands {
     #[cfg(feature = "full-cli")]
     /// Validate Lunar Lake operator readiness and route policy from receipts
     #[command(name = "lunar-lake")]
+    #[command(hide = true)]
     LunarLake(LunarLakeCommand),
 
     /// Probe Intel NPU OpenVINO runtime visibility without compiling graphs
+    #[command(hide = true)]
     IntelNpuProbe {
         /// Require OpenVINO to report an NPU runtime device
         #[arg(long, default_value_t = false)]
@@ -1193,6 +1242,7 @@ enum Commands {
     },
 
     /// Run a tiny static OpenVINO NPU graph smoke without BitNet inference
+    #[command(hide = true)]
     IntelNpuSmoke {
         /// Require tiny graph execution to pass
         #[arg(long, default_value_t = false)]
@@ -1204,6 +1254,7 @@ enum Commands {
     },
 
     /// Run selected static BitNet subgraph parity on OpenVINO NPU
+    #[command(hide = true)]
     IntelNpuBitnetSubgraph {
         /// Require selected subgraph parity to pass
         #[arg(long, default_value_t = false)]
@@ -1215,6 +1266,7 @@ enum Commands {
     },
 
     /// Run static BitNet linear-projection subgraph parity on OpenVINO NPU
+    #[command(hide = true)]
     IntelNpuBitnetLinearSubgraph {
         /// Require selected subgraph parity to pass
         #[arg(long, default_value_t = false)]
@@ -1227,6 +1279,7 @@ enum Commands {
 
     /// Run static BitNet FFN/ReLU2 subgraph parity on OpenVINO NPU
     #[command(name = "intel-npu-bitnet-ffn-subgraph")]
+    #[command(hide = true)]
     IntelNpuBitnetFfnSubgraph {
         /// Require selected subgraph parity to pass
         #[arg(long, default_value_t = false)]
@@ -1243,6 +1296,7 @@ enum Commands {
 
     /// Run a tiny static OpenVINO GPU.0 graph smoke for Arc 140V
     #[command(name = "intel-arc-140v-openvino-gpu-smoke")]
+    #[command(hide = true)]
     IntelArc140vOpenvinoGpuSmoke {
         /// Require Arc 140V identity and tiny graph execution to pass
         #[arg(long, default_value_t = false)]
@@ -1255,6 +1309,7 @@ enum Commands {
 
     /// Run a tiny native OpenCL kernel smoke for Arc 140V
     #[command(name = "intel-arc-140v-opencl-smoke")]
+    #[command(hide = true)]
     IntelArc140vOpenclSmoke {
         /// Require Arc 140V native OpenCL kernel execution to pass
         #[arg(long, default_value_t = false)]
@@ -1267,6 +1322,7 @@ enum Commands {
 
     /// Run a native OpenCL CPU-reference parity kernel for Arc 140V
     #[command(name = "intel-arc-140v-opencl-parity")]
+    #[command(hide = true)]
     IntelArc140vOpenclParity {
         /// Require Arc 140V native OpenCL parity to pass
         #[arg(long, default_value_t = false)]
@@ -1288,6 +1344,7 @@ enum Commands {
     },
 
     /// Compile and launch a tiny CUDA vector-add kernel
+    #[command(hide = true)]
     CudaSmoke {
         /// CUDA device index to probe and launch on
         #[arg(long, default_value_t = 0)]
@@ -1477,6 +1534,12 @@ async fn async_main() -> Result<()> {
     // Handle interface version flag
     if cli.interface_version {
         println!("{}", INTERFACE_VERSION);
+        return Ok(());
+    }
+
+    // Handle diagnostic listing flag
+    if cli.list_diagnostics {
+        print_hidden_diagnostics();
         return Ok(());
     }
 
@@ -14497,12 +14560,34 @@ fn lunar_lake_source_kernel_matches_route(source_kernel: &str, route_kernel: &st
             && route_kernel == "openvino-genai-llmpipeline-gpu")
 }
 
+/// Print the subcommands hidden from `--help`, read straight off the clap tree
+/// so the list cannot drift from what the binary actually accepts.
+fn print_hidden_diagnostics() {
+    use clap::CommandFactory;
+
+    let command = Cli::command();
+    let hidden: Vec<_> = command.get_subcommands().filter(|sub| sub.is_hide_set()).collect();
+
+    println!(
+        "Diagnostic subcommands hidden from `bitnet --help` ({}).\n\
+         They run exactly like visible commands; use `bitnet <command> --help` for details.\n",
+        hidden.len()
+    );
+    let width = hidden.iter().map(|sub| sub.get_name().len()).max().unwrap_or(0);
+    for sub in hidden {
+        let about = sub.get_about().map(|about| about.to_string()).unwrap_or_default();
+        println!("  {:width$}  {about}", sub.get_name());
+    }
+}
+
 fn default_log_level_for_command(command: Option<&Commands>) -> Option<&'static str> {
     if uses_report_only_cuda_benchmark_receipt(command) {
         return Some("warn");
     }
 
     match command {
+        // Bare `bitnet` only renders help; startup INFO lines would bury it.
+        None => Some("warn"),
         Some(Commands::Ask { .. }) => Some("warn"),
         #[cfg(feature = "full-cli")]
         Some(Commands::LunarLake(cmd)) if matches!(&cmd.action, LunarLakeAction::Ask { .. }) => {
@@ -14522,7 +14607,9 @@ fn default_log_level_for_command(command: Option<&Commands>) -> Option<&'static 
 }
 
 fn skips_startup_backend_selection(command: Option<&Commands>) -> bool {
-    uses_report_only_cuda_benchmark_receipt(command)
+    // Bare `bitnet` renders help and exits; selecting a backend for that is pure noise.
+    command.is_none()
+        || uses_report_only_cuda_benchmark_receipt(command)
         || uses_read_only_model_status(command)
         || uses_read_only_support_bundle(command)
 }
@@ -18729,7 +18816,63 @@ mod tests {
         };
 
         assert_eq!(default_log_level_for_command(Some(&command)), Some("warn"));
-        assert_eq!(default_log_level_for_command(None), None);
+    }
+
+    #[test]
+    fn hidden_diagnostics_stay_listable() {
+        // Building the clap tree overflows the default 2 MiB test-thread stack,
+        // for the same reason `main` uses an enlarged stack on Windows.
+        // assert! rather than unwrap/expect keeps this clear of no-panic debt.
+        let spawned = std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(assert_hidden_diagnostics_stay_listable);
+        assert!(spawned.is_ok(), "spawn wide-stack test thread");
+        if let Ok(handle) = spawned {
+            assert!(handle.join().is_ok(), "hidden diagnostics assertions failed");
+        }
+    }
+
+    fn assert_hidden_diagnostics_stay_listable() {
+        use clap::CommandFactory;
+
+        let command = Cli::command();
+        let (hidden, visible): (Vec<_>, Vec<_>) =
+            command.get_subcommands().partition(|sub| sub.is_hide_set());
+
+        // The point of hiding is a readable primary list; the point of
+        // --list-diagnostics is that hiding never means unreachable.
+        assert!(!hidden.is_empty(), "expected diagnostics to be hidden from --help");
+
+        // Most diagnostics are themselves `full-cli`-gated, so the whole
+        // surface only exists in that build — which is the configuration whose
+        // help this change is about. Elsewhere the sets are the same size.
+        #[cfg(feature = "full-cli")]
+        assert!(
+            visible.len() < hidden.len(),
+            "visible list ({}) should be smaller than the hidden set ({})",
+            visible.len(),
+            hidden.len()
+        );
+        // `receipts` and `support` only exist under `full-cli`, so they are
+        // asserted separately from the always-compiled commands.
+        let mut required = vec!["run", "ask", "model"];
+        #[cfg(feature = "full-cli")]
+        required.extend(["receipts", "support"]);
+
+        for name in required {
+            assert!(
+                visible.iter().any(|sub| sub.get_name() == name),
+                "`{name}` must stay visible in --help"
+            );
+        }
+    }
+
+    #[test]
+    fn bare_command_renders_help_without_startup_noise() {
+        // `bitnet` with no subcommand only prints help. Startup INFO lines and
+        // backend selection would bury it, so both are opted out of.
+        assert_eq!(default_log_level_for_command(None), Some("warn"));
+        assert!(skips_startup_backend_selection(None));
     }
 
     #[test]

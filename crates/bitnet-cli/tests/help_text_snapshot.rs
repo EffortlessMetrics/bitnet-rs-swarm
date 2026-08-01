@@ -139,7 +139,12 @@ fn test_help_footer_has_docs_and_issues_links() -> Result<()> {
     let mut cmd = bitnet_cli::build_cli();
     let help = cmd.render_help().to_string();
 
-    assert!(help.contains("Docs: https://docs.rs/bitnet"), "Help text missing Docs link");
+    // docs.rs is not published yet (README carries a "docs.rs pending" badge), so the
+    // footer points at the in-repo docs tree instead of a URL that 404s.
+    assert!(
+        help.contains("Docs: https://github.com/EffortlessMetrics/BitNet-rs/tree/main/docs"),
+        "Help text missing Docs link"
+    );
     assert!(
         help.contains("Issues: https://github.com/EffortlessMetrics/BitNet-rs/issues"),
         "Help text missing Issues link"
