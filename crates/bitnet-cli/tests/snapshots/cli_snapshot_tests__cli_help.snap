@@ -1,6 +1,5 @@
 ---
 source: crates/bitnet-cli/tests/cli_snapshot_tests.rs
-assertion_line: 58
 expression: help
 ---
 BitNet-rs CLI - one-shot generation and chat with strict receipts
@@ -64,6 +63,10 @@ Commands:
           Ask one question using the answer-readiness generation path
   model
           Fetch, verify, list, and prune supported local model artifacts
+  profile
+          Show a supported operator profile contract
+  doctor
+          Diagnose a profile, model artifact, tokenizer, and host resources
   support
           Collect model status and receipt evidence for support
   cuda

@@ -1,6 +1,5 @@
 ---
 source: crates/bitnet-cli/tests/cli_snapshot_tests.rs
-assertion_line: 104
 expression: help
 ---
 Verify a cached or explicit supported model artifact
@@ -8,7 +7,7 @@ Verify a cached or explicit supported model artifact
 Usage: bitnet model verify [OPTIONS] <ID>
 
 Arguments:
-  <ID>  Supported model id
+  <ID>  Supported model id, or a path to a registered GGUF artifact
 
 Options:
   -c, --config <PATH>      Configuration file path

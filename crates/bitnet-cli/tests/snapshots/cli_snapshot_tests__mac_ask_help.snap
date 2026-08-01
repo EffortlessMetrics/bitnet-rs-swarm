@@ -1,6 +1,5 @@
 ---
 source: crates/bitnet-cli/tests/cli_snapshot_tests.rs
-assertion_line: 146
 expression: help
 ---
 Ask one question through the Rust-native Apple M4 CPU/NEON SLM path
@@ -52,7 +51,7 @@ Options:
       --progress
           Emit operator progress lines to stderr while keeping generated text on stdout
       --trace
-          Emit redacted trace-correlation diagnostics and record trace IDs in the receipt
+          Emit redacted trace correlation metadata linking diagnostics and receipts
       --quiet
           Suppress Mac ask status/progress lines; generated text still uses stdout
   -h, --help
