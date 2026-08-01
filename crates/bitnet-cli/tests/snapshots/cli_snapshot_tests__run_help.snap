@@ -1,6 +1,5 @@
 ---
 source: crates/bitnet-cli/tests/cli_snapshot_tests.rs
-assertion_line: 68
 expression: help
 ---
 Run simple text generation
@@ -163,6 +162,14 @@ Options:
 
       --qwen-trace-prompt-ids <IDS>
           Comma-separated prompt token IDs to force for reference-aligned tracing
+
+      --qwen-trace-qproj-dump
+          Dump a bounded f32 prefix for the Qwen q_proj-output trace hook
+
+      --qwen-trace-dump-limit <N>
+          Maximum f32 values to dump for --qwen-trace-qproj-dump
+
+          [default: 32]
 
       --no-warnings
           Suppress performance warnings

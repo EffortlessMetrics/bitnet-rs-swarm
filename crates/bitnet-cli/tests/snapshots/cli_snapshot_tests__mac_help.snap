@@ -1,6 +1,5 @@
 ---
 source: crates/bitnet-cli/tests/cli_snapshot_tests.rs
-assertion_line: 128
 expression: help
 ---
 Mac-oriented SLM check, ask, validate, and receipt-check wrappers
@@ -8,13 +7,15 @@ Mac-oriented SLM check, ask, validate, and receipt-check wrappers
 Usage: bitnet mac [OPTIONS] <COMMAND>
 
 Commands:
+  m3-resident-scorecard     Render a validated, local-only M3 BitNet resident-corpus scorecard
   models                    List Apple M4 model states, cache status, and selection guidance
   status                    Summarize Apple M4 dense SLM, BitNet, disk/cache, receipt, and command readiness
   evidence                  Summarize committed M4 evidence, cache/disk state, regressions, and next command
-  workload                  Build a receipt-backed M4 operator workload suite manifest over enabled route states
+  workload                  Write the model-free M4 operator workload suite contract and route matrix
   report-refresh            Generate a model-free advisory/nightly Apple M4 report refresh manifest
   regression-dashboard      Build a model-free dense SLM and BitNet regression dashboard from committed reports
   reliability-drill         Write bounded M4 recovery-drill coverage and retry-guidance receipts
+  compat-refresh            Write the model-free M4 compatibility-refresh and rollback contract
   check                     Check the cached Apple M4 SLM model artifact and routing boundary
   ask                       Ask one question through the Rust-native Apple M4 CPU/NEON SLM path
   smoke                     Run a compact Apple M4 model-family health smoke with cache and receipt checks
@@ -26,8 +27,8 @@ Commands:
   serve                     Serve local M4 health and readiness endpoints plus completions
   serve-check               Check a running M4 local server readiness and optional completion/receipt export
   serve-smoke               Run an in-process dense M4 local-server conformance smoke and write one aggregate receipt
-  serve-failure-smoke       Run an in-process dense M4 local-server timeout/cancellation/failure semantics smoke
-  serve-backpressure-smoke  Run an in-process dense M4 local-server queue/backpressure smoke
+  serve-failure-smoke       Write bounded dense and BitNet local-server streaming/failure semantics evidence
+  serve-backpressure-smoke  Write bounded dense and BitNet local-server queue/backpressure evidence
   chat                      Run multiple prompts in one resident Apple M4 CPU/NEON SLM session
   chat-smoke                Run a fixed dense SLM resident chat conformance smoke and write a receipt
   validate                  Run the supported SLM quality corpus in one warm Apple M4 CPU/NEON session
