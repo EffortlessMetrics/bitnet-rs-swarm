@@ -18842,13 +18842,24 @@ mod tests {
         // The point of hiding is a readable primary list; the point of
         // --list-diagnostics is that hiding never means unreachable.
         assert!(!hidden.is_empty(), "expected diagnostics to be hidden from --help");
+
+        // Most diagnostics are themselves `full-cli`-gated, so the whole
+        // surface only exists in that build — which is the configuration whose
+        // help this change is about. Elsewhere the sets are the same size.
+        #[cfg(feature = "full-cli")]
         assert!(
             visible.len() < hidden.len(),
             "visible list ({}) should be smaller than the hidden set ({})",
             visible.len(),
             hidden.len()
         );
-        for name in ["run", "ask", "model", "receipts", "support"] {
+        // `receipts` and `support` only exist under `full-cli`, so they are
+        // asserted separately from the always-compiled commands.
+        let mut required = vec!["run", "ask", "model"];
+        #[cfg(feature = "full-cli")]
+        required.extend(["receipts", "support"]);
+
+        for name in required {
             assert!(
                 visible.iter().any(|sub| sub.get_name() == name),
                 "`{name}` must stay visible in --help"
