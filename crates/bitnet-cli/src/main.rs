@@ -18822,12 +18822,14 @@ mod tests {
     fn hidden_diagnostics_stay_listable() {
         // Building the clap tree overflows the default 2 MiB test-thread stack,
         // for the same reason `main` uses an enlarged stack on Windows.
-        std::thread::Builder::new()
+        // assert! rather than unwrap/expect keeps this clear of no-panic debt.
+        let spawned = std::thread::Builder::new()
             .stack_size(64 * 1024 * 1024)
-            .spawn(assert_hidden_diagnostics_stay_listable)
-            .expect("spawn wide-stack test thread")
-            .join()
-            .expect("hidden diagnostics assertions");
+            .spawn(assert_hidden_diagnostics_stay_listable);
+        assert!(spawned.is_ok(), "spawn wide-stack test thread");
+        if let Ok(handle) = spawned {
+            assert!(handle.join().is_ok(), "hidden diagnostics assertions failed");
+        }
     }
 
     fn assert_hidden_diagnostics_stay_listable() {
