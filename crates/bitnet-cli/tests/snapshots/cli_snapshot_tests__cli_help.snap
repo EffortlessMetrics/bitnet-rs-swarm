@@ -110,13 +110,16 @@ Options:
       --interface-version
           Print CLI interface version and exit
 
+      --list-diagnostics
+          List the diagnostic subcommands hidden from `--help`, and exit
+
   -h, --help
           Print help (see a summary with '-h')
 
   -V, --version
           Print version
 
-Diagnostic, parity, and hardware bring-up subcommands are hidden from this list to keep the primary path readable. They still run, and are documented in docs/reference/inference-cli-reference.md.
+Diagnostic, parity, and hardware bring-up subcommands are hidden from this list to keep the primary path readable. They still run exactly as before; list them with `bitnet --list-diagnostics`.
 
 CLI Interface Version: 1.0.0
 Docs: https://github.com/EffortlessMetrics/BitNet-rs/tree/main/docs

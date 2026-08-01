@@ -280,8 +280,8 @@ PERFORMANCE:
 #[command(author = "BitNet Contributors")]
 #[command(after_help = format!(
     "Diagnostic, parity, and hardware bring-up subcommands are hidden from this list \
-     to keep the primary path readable. They still run, and are documented in \
-     docs/reference/inference-cli-reference.md.\n\n\
+     to keep the primary path readable. They still run exactly as before; \
+     list them with `bitnet --list-diagnostics`.\n\n\
      CLI Interface Version: {}\n\
      Docs: https://github.com/EffortlessMetrics/BitNet-rs/tree/main/docs\n\
      Issues: https://github.com/EffortlessMetrics/BitNet-rs/issues",
@@ -318,6 +318,10 @@ struct Cli {
     /// Print CLI interface version and exit
     #[arg(long)]
     interface_version: bool,
+
+    /// List the diagnostic subcommands hidden from `--help`, and exit
+    #[arg(long)]
+    list_diagnostics: bool,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -1530,6 +1534,12 @@ async fn async_main() -> Result<()> {
     // Handle interface version flag
     if cli.interface_version {
         println!("{}", INTERFACE_VERSION);
+        return Ok(());
+    }
+
+    // Handle diagnostic listing flag
+    if cli.list_diagnostics {
+        print_hidden_diagnostics();
         return Ok(());
     }
 
@@ -14550,6 +14560,26 @@ fn lunar_lake_source_kernel_matches_route(source_kernel: &str, route_kernel: &st
             && route_kernel == "openvino-genai-llmpipeline-gpu")
 }
 
+/// Print the subcommands hidden from `--help`, read straight off the clap tree
+/// so the list cannot drift from what the binary actually accepts.
+fn print_hidden_diagnostics() {
+    use clap::CommandFactory;
+
+    let command = Cli::command();
+    let hidden: Vec<_> = command.get_subcommands().filter(|sub| sub.is_hide_set()).collect();
+
+    println!(
+        "Diagnostic subcommands hidden from `bitnet --help` ({}).\n\
+         They run exactly like visible commands; use `bitnet <command> --help` for details.\n",
+        hidden.len()
+    );
+    let width = hidden.iter().map(|sub| sub.get_name().len()).max().unwrap_or(0);
+    for sub in hidden {
+        let about = sub.get_about().map(|about| about.to_string()).unwrap_or_default();
+        println!("  {:width$}  {about}", sub.get_name());
+    }
+}
+
 fn default_log_level_for_command(command: Option<&Commands>) -> Option<&'static str> {
     if uses_report_only_cuda_benchmark_receipt(command) {
         return Some("warn");
@@ -18786,7 +18816,50 @@ mod tests {
         };
 
         assert_eq!(default_log_level_for_command(Some(&command)), Some("warn"));
-        assert_eq!(default_log_level_for_command(None), None);
+    }
+
+    #[test]
+    fn hidden_diagnostics_stay_listable() {
+        // Building the clap tree overflows the default 2 MiB test-thread stack,
+        // for the same reason `main` uses an enlarged stack on Windows.
+        std::thread::Builder::new()
+            .stack_size(64 * 1024 * 1024)
+            .spawn(assert_hidden_diagnostics_stay_listable)
+            .expect("spawn wide-stack test thread")
+            .join()
+            .expect("hidden diagnostics assertions");
+    }
+
+    fn assert_hidden_diagnostics_stay_listable() {
+        use clap::CommandFactory;
+
+        let command = Cli::command();
+        let (hidden, visible): (Vec<_>, Vec<_>) =
+            command.get_subcommands().partition(|sub| sub.is_hide_set());
+
+        // The point of hiding is a readable primary list; the point of
+        // --list-diagnostics is that hiding never means unreachable.
+        assert!(!hidden.is_empty(), "expected diagnostics to be hidden from --help");
+        assert!(
+            visible.len() < hidden.len(),
+            "visible list ({}) should be smaller than the hidden set ({})",
+            visible.len(),
+            hidden.len()
+        );
+        for name in ["run", "ask", "model", "receipts", "support"] {
+            assert!(
+                visible.iter().any(|sub| sub.get_name() == name),
+                "`{name}` must stay visible in --help"
+            );
+        }
+    }
+
+    #[test]
+    fn bare_command_renders_help_without_startup_noise() {
+        // `bitnet` with no subcommand only prints help. Startup INFO lines and
+        // backend selection would bury it, so both are opted out of.
+        assert_eq!(default_log_level_for_command(None), Some("warn"));
+        assert!(skips_startup_backend_selection(None));
     }
 
     #[test]
