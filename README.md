@@ -14,8 +14,9 @@
 Intentionally no registry shields in this README. BitNet-rs is not published
 to crates.io and has no published API doc site yet, so such an image would
 claim a release posture the project has not reached.
-`cargo xtask release-ready --profile usable-preview` enforces this through
-its false-badges check. Add them in the same change that actually publishes.
+This is enforced by the false-badges check in:
+  cargo run --no-default-features --locked -p xtask -- release-ready --profile usable-preview
+Add them in the same change that actually publishes.
 -->
 
 <p align="center">
