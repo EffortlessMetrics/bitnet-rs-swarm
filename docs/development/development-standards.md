@@ -184,6 +184,15 @@ Cross-editor formatting consistency.
 ### `.pre-commit-config.yaml`
 Git hooks configuration for automated checks.
 
+### `.vscode/settings.json`, `.vscode/extensions.json`
+Shared VS Code config. Configures `rust-analyzer` with `--no-default-features
+--features cpu` (see [Critical Gotchas #1](../../CLAUDE.md#critical-gotchas)) so
+the editor's diagnostics match `cargo build`/`cargo clippy` instead of
+reporting false-positive unresolved-item and dead-code errors across the
+workspace. Other editors (RustRover, Zed, Neovim) need the equivalent
+rust-analyzer `cargo.features`/`cargo.noDefaultFeatures` settings — see the
+committed `.vscode/settings.json` for the exact flags to mirror.
+
 ## Workspace Lints
 
 The root `Cargo.toml` defines workspace-level lints:
