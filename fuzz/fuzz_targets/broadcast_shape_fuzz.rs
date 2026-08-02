@@ -56,8 +56,18 @@ fuzz_target!(|input: ShapeInput| {
         let matmul_result = validate_matmul_shapes(&a, &b);
 
         if let Ok(ref out_shape) = matmul_result {
-            // Invariant 6: Output is non-empty.
-            assert!(!out_shape.is_empty(), "matmul output shape should be non-empty");
+            // Invariant 6: 1-D × 1-D matmul is a dot product whose scalar
+            // result is documented as the empty shape (see the matmul_1d_dot
+            // test in bitnet-common::tensor_validation); every other accepted
+            // rank combination yields a non-empty shape.
+            if a.len() == 1 && b.len() == 1 {
+                assert!(
+                    out_shape.is_empty(),
+                    "1-D × 1-D dot product should yield a scalar (empty) shape"
+                );
+            } else {
+                assert!(!out_shape.is_empty(), "matmul output shape should be non-empty");
+            }
 
             // Invariant 7: For 2-D inputs, output is [a_rows, b_cols].
             if a.len() == 2 && b.len() == 2 {
