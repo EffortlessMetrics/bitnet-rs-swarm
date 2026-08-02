@@ -445,7 +445,7 @@ bitnet-minimal-json-core = { path = "crates/bitnet-minimal-json-core", version =
 bitnet-build-info-core = { path = "crates/bitnet-build-info-core", version = "0.2.1-dev" }
 # Core dependencies
 anyhow = "1.0.100"
-log = "0.4.28"
+log = "0.4.32"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_yaml = { package = "serde_yaml_ng", version = "0.10.0" }
