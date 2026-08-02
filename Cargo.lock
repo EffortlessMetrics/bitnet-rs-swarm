@@ -1260,6 +1260,7 @@ dependencies = [
  "bitnet-models",
  "bitnet-qk256-layout-core",
  "bitnet-quantization-bits",
+ "bitnet-test-support",
  "bytemuck",
  "candle-core",
  "criterion",
