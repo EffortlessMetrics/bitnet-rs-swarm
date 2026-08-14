@@ -1,0 +1,36 @@
+timestamp = "2026-07-30T01:36:46Z"
+campaign = "intel-a770"
+item = "A770-161"
+event = "merged"
+previous_status = "in_progress"
+new_status = "merged"
+pr = 1893
+branch = "codex/intel-a770/A770-161-full-projection-packed-row-source-hook"
+head_sha = "3f02477b8d288686d299b1be3383ad3875e7ba95"
+merge_sha = "c44033059833f577487cea2a3716e4a2902040ca"
+actor = "codex-a770"
+claim_allowed = false
+diagnostic_only = true
+summary = "Merged PR #1893 for the A770-161 external full-projection operand handoff."
+notes = [
+  "The merged handoff carries externally supplied full-projection operands through the diagnostic replay boundary without fabricating packed weights.",
+  "The committed source packet remains diagnostic-only and does not change production QK256 dispatch policy.",
+  "Any selected-device replay must keep selected_backend Intel Arc A770 OpenCL, runtime_api opencl, and fallback_used=false.",
+  "CPU/A770 parity, complete layer correctness, answer readiness, broad quality, residency, speed, trusted partial acceleration, and full inference claims remain closed.",
+]
+
+[claim_boundary]
+may_claim = [
+  "A770-161 merged an external full-projection operand handoff for the bounded layer-0 Q/K/V diagnostic replay surface.",
+]
+must_not_claim = [
+  "CPU/A770 projection parity is proven.",
+  "Complete layer-0 correctness is proven.",
+  "Strict answer readiness or broad answer quality is proven.",
+  "BitNet inference is fully proven on A770.",
+  "Official BitNet QK256 production semantics are fully proven.",
+  "Production QK256 dispatch policy changed.",
+  "Full A770 residency is proven.",
+  "Performance speedup is proven.",
+  "A770 trusted partial acceleration is claim-grade.",
+]
