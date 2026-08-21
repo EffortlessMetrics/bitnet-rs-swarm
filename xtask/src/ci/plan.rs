@@ -365,7 +365,7 @@ fn pick_lanes(
         lanes.push(lane(
             "gpu-native",
             "GPU CI Matrix (native compile)",
-            18,
+            14,
             "GPU paths changed",
             true,
         ));
@@ -1334,6 +1334,15 @@ mod tests {
             !plan.selected_lanes.iter().any(|lane| lane.id == "feature-matrix-full-cli"),
             "full matrix label supersedes the targeted full-cli smoke"
         );
+    }
+
+    #[test]
+    fn ci_plan_gpu_native_estimate_excludes_duplicate_cpu_only_leg() {
+        let plan = build_plan(&s(&["crates/bitnet-gpu-hal/src/lib.rs"]), &[]);
+        let gpu_native = plan.selected_lanes.iter().find(|lane| lane.id == "gpu-native").unwrap();
+
+        assert_eq!(gpu_native.estimated_lem, 14);
+        assert_eq!(gpu_native.reason, "GPU paths changed");
     }
 
     #[test]

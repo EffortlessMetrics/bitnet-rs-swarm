@@ -142,7 +142,7 @@ default_pr = false
 blocking = false
 
 [lane.gpu-native]
-base_lem = 18
+base_lem = 14
 runner = "ubuntu_22_04"
 default_pr = false
 blocking = true

@@ -413,7 +413,6 @@ jobs:
                 ;;
               gpu-native)
                 required_jobs+=(
-                  "native-check (cpu)"
                   "native-check (gpu)"
                   "native-check (cpu+gpu)"
                   "native-check (oneapi)"
