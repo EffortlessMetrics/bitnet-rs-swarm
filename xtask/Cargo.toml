@@ -30,7 +30,7 @@ bitnet-models = { path = "../crates/bitnet-models", version = "0.2.1-dev", defau
 bitnet-kernels = { path = "../crates/bitnet-kernels", version = "0.2.1-dev", default-features = false, features = ["cpu"] }
 bitnet-common = { path = "../crates/bitnet-common", version = "0.2.1-dev", default-features = false }
 bitnet-download = { path = "../crates/bitnet-download", version = "0.2.1-dev" }
-bitnet-tokenizers = { path = "../crates/bitnet-tokenizers", version = "0.2.1-dev", default-features = false, features = ["spm"] }
+bitnet-tokenizers = { path = "../crates/bitnet-tokenizers", version = "0.2.1-dev", default-features = false }
 bitnet-prompt-templates = { path = "../crates/bitnet-prompt-templates", version = "0.2.1-dev" }
 bitnet-inference = { path = "../crates/bitnet-inference", version = "0.2.1-dev", default-features = false, optional = true }
 bitnet = { path = "..", version = "0.2.1-dev", default-features = false, features = ["cpu"], optional = true }
@@ -51,6 +51,10 @@ inference = ["dep:bitnet-inference", "dep:bitnet", "dep:tokio", "dep:futures", "
 crossval = ["dep:bitnet-crossval", "bitnet-crossval/llama-ffi"]
 ffi = ["dep:bitnet-sys", "bitnet-sys/ffi", "dep:bitnet-crossval", "bitnet-crossval/ffi", "bitnet-crossval/llama-ffi"]
 crossval-all = ["inference", "crossval", "ffi"]
+# SentencePiece (.model) tokenizer support. Opt-in because sentencepiece-sys
+# compiles C++ via cmake; without this feature, loading a .model tokenizer
+# fails at runtime with a clear "enable the 'spm' feature" error.
+spm = ["bitnet-tokenizers/spm"]
 gpu = ["bitnet-kernels/gpu"]
 
 [dev-dependencies]
