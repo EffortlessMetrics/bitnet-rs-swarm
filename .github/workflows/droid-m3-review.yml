@@ -1,0 +1,150 @@
+name: Droid M3 Review
+
+# Single-lane Droid review for the -swarm M3 runner contract.
+#
+# This is the standard EffortlessMetrics single-lane review workflow: one repo,
+# one Droid Action job, one MiniMax M3 review lane. It is review-only and must
+# never run cargo / rustc / clippy / nextest / coverage / Docker / release work.
+#
+# Routing: pinned to the dedicated CX23 review pool (group: em-ci-review) so it
+# can never land on the nano/tiny/small capacity lanes. See
+# docs/development/RUST_1_95_ROLLOUT.md and the em-ci routing contract.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  actions: read
+  id-token: write
+
+concurrency:
+  group: droid-m3-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  droid-m3-review:
+    name: Droid M3 Review
+    # Same-repo PRs only (never fork PRs on self-hosted runners) plus manual
+    # dispatch. No pull_request_target, no fork execution, drafts excluded.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
+
+    # Dedicated review pool: CX23 only, Droid / LLM review only.
+    runs-on:
+      group: em-ci-review
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - em-ci
+        - cx23
+        - review-nano
+        - droid-review
+        - trusted-pr
+
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        with:
+          fetch-depth: 1
+
+      - name: Configure MiniMax M3 BYOK
+        shell: bash
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          test -n "${MINIMAX_API_KEY:-}" || {
+            echo "::error::Missing MINIMAX_API_KEY secret"
+            exit 1
+          }
+
+          echo "::add-mask::$MINIMAX_API_KEY"
+
+          mkdir -p .factory "$HOME/.factory" "$HOME/.factory/droid"
+
+          # Single-model settings file: MiniMax-M3 is the only custom model, so
+          # the review model selector is custom:MiniMax-M3-0 (index 0).
+          cat > .factory/byok-settings.json <<'JSON'
+          {
+            "customModels": [
+              {
+                "displayName": "MiniMax-M3",
+                "model": "MiniMax-M3",
+                "baseUrl": "https://api.minimax.io/anthropic",
+                "apiKey": "${MINIMAX_API_KEY}",
+                "provider": "anthropic",
+                "maxOutputTokens": 64000
+              }
+            ]
+          }
+          JSON
+
+          cp .factory/byok-settings.json "$HOME/.factory/settings.json"
+          cp .factory/byok-settings.json "$HOME/.factory/droid/settings.json"
+
+      - name: Write Droid review prompt
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p .factory
+
+          cat > .factory/m3-review-prompt.md <<'EOF'
+          You are reviewing this pull request for a swarm repo.
+
+          Use MiniMax M3 as a careful senior reviewer.
+
+          Focus on:
+          - correctness bugs
+          - missing tests
+          - overclaims in the PR
+          - unsafe or fragile assumptions
+          - confusing control flow
+          - places where a smaller fix would be safer
+          - places where the PR creates maintenance risk
+
+          Do not nitpick style unless it hides a real issue.
+
+          Prefer comments that include:
+          - what can fail
+          - where it fails
+          - why existing tests may miss it
+          - the smallest useful fix
+
+          Do not modify source files.
+          Do not run Rust builds.
+          Do not run Docker builds.
+          Do not post on public fork PRs.
+          EOF
+
+      - name: Droid M3 review
+        uses: EffortlessSteven/droid-action@36ef632f86ef849de0be62477bc811627d2f7a9c  # consolidated dev: hardening + validator-token + model attribution
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          ANTHROPIC_AUTH_TOKEN: ""
+          ANTHROPIC_BASE_URL: ""
+          OPENAI_API_KEY: ""
+          OPENAI_BASE_URL: ""
+        with:
+          factory_api_key: ${{ secrets.FACTORY_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          settings: .factory/byok-settings.json
+          automatic_review: true
+          review_model: custom:MiniMax-M3-0
+          include_suggestions: true
+          mention_trigger_user: false
+          droid_args: --append-system-prompt-file .factory/m3-review-prompt.md
