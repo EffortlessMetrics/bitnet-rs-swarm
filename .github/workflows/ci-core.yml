@@ -327,6 +327,10 @@ jobs:
           toolchain: "1.95.0"
           components: clippy,rustfmt
 
+      - name: Configure shared sccache
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/rust-shared-cache
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
@@ -628,6 +632,9 @@ jobs:
         with:
           toolchain: "1.95.0"
 
+      - name: Configure shared sccache
+        uses: ./.github/actions/rust-shared-cache
+
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:
@@ -668,6 +675,10 @@ jobs:
         with:
           toolchain: "1.95.0"
           components: clippy
+
+      - name: Configure shared sccache
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/rust-shared-cache
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
@@ -782,6 +793,10 @@ jobs:
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
         with:
           toolchain: "1.95.0"
+
+      - name: Configure shared sccache
+        if: needs.classify-changes.outputs.no_rust_inputs != 'true'
+        uses: ./.github/actions/rust-shared-cache
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2

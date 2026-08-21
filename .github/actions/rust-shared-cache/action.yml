@@ -1,0 +1,74 @@
+name: Rust shared sccache
+description: >-
+  Enable sccache compiler caching for Rust builds on the scarce em-ci-small
+  build pool. Backs the cache with the persistent self-hosted /mnt/ci-cache
+  disk when it is present and writable, and falls back to a runner-local
+  directory everywhere else. Designed to be fail-open: if sccache cannot be
+  located or installed, the build proceeds uncached rather than failing.
+
+inputs:
+  cache-size:
+    description: Maximum on-disk sccache size (SCCACHE_CACHE_SIZE).
+    required: false
+    default: "20G"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure sccache + shared cache
+      shell: bash
+      env:
+        INPUT_CACHE_SIZE: ${{ inputs.cache-size }}
+      run: |
+        set -euo pipefail
+
+        # 1. Pick a persistent cache root when the shared self-hosted disk is
+        #    available; otherwise use an ephemeral runner-local directory.
+        if [ -d /mnt/ci-cache ] && [ -w /mnt/ci-cache ]; then
+          ROOT=/mnt/ci-cache
+          echo "Shared persistent cache available: $ROOT"
+        else
+          ROOT="${RUNNER_TEMP:-/tmp}/ci-cache"
+          echo "Shared cache unavailable; using ephemeral root: $ROOT"
+        fi
+        SCCACHE_DIR="$ROOT/sccache"
+        mkdir -p "$SCCACHE_DIR"
+
+        # 2. Locate sccache: prefer a preinstalled binary (em-ci-small images
+        #    ship one), then the routed-rust container path, then a pinned
+        #    download as a last resort. Never fail the build on a miss.
+        SCCACHE_BIN=""
+        if command -v sccache >/dev/null 2>&1; then
+          SCCACHE_BIN="$(command -v sccache)"
+        elif [ -x /usr/local/cargo/bin/sccache ]; then
+          SCCACHE_BIN=/usr/local/cargo/bin/sccache
+        else
+          ver="v0.8.2"
+          case "$(uname -m)" in
+            x86_64)  tgt=x86_64-unknown-linux-musl ;;
+            aarch64) tgt=aarch64-unknown-linux-musl ;;
+            *) echo "::warning::unsupported arch $(uname -m); building without sccache"; exit 0 ;;
+          esac
+          url="https://github.com/mozilla/sccache/releases/download/${ver}/sccache-${ver}-${tgt}.tar.gz"
+          tmp="$(mktemp -d)"
+          if curl -fsSL --retry 3 "$url" -o "$tmp/s.tgz" && tar -xzf "$tmp/s.tgz" -C "$tmp"; then
+            SCCACHE_BIN="$tmp/sccache-${ver}-${tgt}/sccache"
+            chmod +x "$SCCACHE_BIN"
+          else
+            echo "::warning::sccache unavailable (download failed); building without compiler cache"
+            exit 0
+          fi
+        fi
+
+        # 3. Export env for subsequent cargo steps in this job.
+        {
+          echo "RUSTC_WRAPPER=$SCCACHE_BIN"
+          echo "SCCACHE_DIR=$SCCACHE_DIR"
+          echo "SCCACHE_CACHE_SIZE=${INPUT_CACHE_SIZE}"
+          echo "CARGO_INCREMENTAL=0"
+        } >> "$GITHUB_ENV"
+        echo "sccache enabled: $SCCACHE_BIN (dir=$SCCACHE_DIR, max=${INPUT_CACHE_SIZE})"
+
+    - name: Reset sccache stats
+      shell: bash
+      run: ${RUSTC_WRAPPER:-true} --zero-stats 2>/dev/null || true
