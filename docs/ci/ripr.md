@@ -79,16 +79,25 @@ cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.acti
 
 ## Outputs
 
-Expected artifacts:
+Expected PR artifacts:
 
 ```text
-target/ripr/ripr.json
-target/ripr/ripr.sarif
-target/ripr/ripr.md
+target/ripr/pr/
+  pr-summary.md
+  repo-exposure.json
+  review.md
+  agent-packet.json
+  first-useful-action.md
+  first-useful-action.json
 ```
 
-The PR summary should make clear whether `ripr` ran, skipped by policy, or was
-unavailable. Skipped analysis must not be presented as a passed proof.
+Legacy or tool-native JSON, SARIF, and Markdown outputs may also be uploaded
+when the runner produces them, but the PR-facing receipt packet should keep the
+changed-surface summary, review guidance, and first useful action easy to find.
+
+The PR summary should make clear whether `ripr` ran, skipped by policy, found
+advisory exposure, or was unavailable. Skipped analysis must not be presented as
+a passed proof.
 
 ## Suppressions
 

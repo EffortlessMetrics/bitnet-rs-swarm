@@ -10,6 +10,12 @@ Our target is not "cheap because lightly tested." It is the opposite:
 > want it delivered through fast, deterministic, Rust-native tests that are
 > scoped to the actual risk surface of the change.
 
+The repository style is summarized in [`docs/REPO_STYLE.md`](../REPO_STYLE.md):
+BitNet-rs should operate as an evidence machine with strict defaults, owned
+exceptions, static signal first, runtime proof where it pays, receipts
+everywhere, and one review-fast PR at a time. CI economics are the cost-control
+part of that doctrine, not a reduction in proof ambition.
+
 At our volume, CI spend compounds quickly. A workflow that seems acceptable at
 low PR volume becomes unreasonable when many human and agent-authored branches
 are iterating in parallel. Cost discipline is therefore part of correctness
