@@ -39,7 +39,7 @@ pub struct LocalGenerationControlPolicy {
 impl LocalGenerationControlPolicy {
     pub fn dense_default() -> Self {
         Self {
-            request_timeout: Duration::from_secs(300),
+            request_timeout: Duration::from_mins(5),
             streaming: false,
             cancel_after_tokens: None,
         }

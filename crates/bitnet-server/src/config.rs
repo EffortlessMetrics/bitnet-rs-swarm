@@ -49,8 +49,8 @@ impl Default for ServerSettings {
             host: "0.0.0.0".to_string(),
             port: 8080,
             workers: None, // Use system default
-            keep_alive: Duration::from_secs(60),
-            request_timeout: Duration::from_secs(300), // 5 minutes
+            keep_alive: Duration::from_mins(1),
+            request_timeout: Duration::from_mins(5), // 5 minutes
             graceful_shutdown_timeout: Duration::from_secs(30),
             default_model_path: None,
             default_tokenizer_path: None,
