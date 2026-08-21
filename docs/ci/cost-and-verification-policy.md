@@ -590,6 +590,8 @@ after-the-fact billing concerns. The test rig is part of the machine.
 
 - [`docs/ci/labels.md`](./labels.md) — cost-aware CI labels and what they
   authorize.
+- [`docs/ci/tool-substrate-standard.md`](./tool-substrate-standard.md) —
+  standard upstream engines wrapped by the repo-facing `xtask` control plane.
 - [`docs/development/validation-ci.md`](../development/validation-ci.md) —
   validation lanes and how they integrate with CI.
 - [`docs/development/ci-integration.md`](../development/ci-integration.md) —
