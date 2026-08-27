@@ -46,7 +46,12 @@ impl KernelProvider for FallbackKernel {
         k: usize,
     ) -> Result<()> {
         // Validate input dimensions
-        crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)?;
+        if crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)? {
+            // Empty product: the result is all zeros. Return before the loops,
+            // whose bounds are not themselves empty (e.g. m > 0 with k == 0).
+            c.fill(0.0);
+            return Ok(());
+        }
 
         // Initialize output matrix to zero
         c.fill(0.0);

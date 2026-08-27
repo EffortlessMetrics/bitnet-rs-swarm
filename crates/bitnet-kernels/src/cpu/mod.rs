@@ -2,16 +2,34 @@
 
 use bitnet_common::{BitNetError, KernelError, Result};
 
-/// Validate `matmul_i2s` operand shapes against the declared `m`/`n`/`k`.
+/// Multiply two dimensions, rejecting an overflowing product.
 ///
-/// Every [`crate::KernelProvider::matmul_i2s`] implementation must reject
-/// mismatched operands *before* dispatching to a kernel body: the SIMD bodies
-/// index `a`, `b` and `c` from `m`/`n`/`k` alone and would otherwise read out
-/// of bounds. Returning an error here keeps the panic-free contract that the
-/// scalar fallback and the NEON kernel already honour.
+/// A wrapped product would make an infeasible shape look like a small one:
+/// with `m == k == usize::MAX / 2 + 2`, `m * k` wraps to `1`, so a one-element
+/// buffer would satisfy a length check it must not satisfy.
+fn checked_extent(lhs: usize, rhs: usize, what: &str) -> Result<usize> {
+    lhs.checked_mul(rhs).ok_or_else(|| {
+        BitNetError::Kernel(KernelError::ExecutionFailed {
+            reason: format!("Matrix {what} dimension overflow: {lhs} * {rhs} exceeds usize"),
+        })
+    })
+}
+
+/// Validate `matmul_i2s` operand shapes against the declared `m`/`n`/`k`, and
+/// report whether the shape describes an empty product.
 ///
-/// A zero-sized product (`m`, `n` or `k` == 0) is *valid* and vacuously
-/// successful — it describes an empty multiplication, not a malformed one.
+/// Every [`crate::KernelProvider::matmul_i2s`] implementation must call this
+/// *before* dispatching to a kernel body: the SIMD bodies index `a`, `b` and
+/// `c` from `m`/`n`/`k` alone and would otherwise read out of bounds. Doing the
+/// check here keeps the panic-free contract that the scalar fallback and the
+/// NEON kernel already honour.
+///
+/// A zero-sized product (`m`, `n` or `k` == 0) is *valid* — it describes an
+/// empty multiplication, not a malformed one — and is reported as `Ok(true)`.
+/// Callers must zero `c` and return instead of running the kernel body: a zero
+/// dimension makes the *result* empty but not the *loop bounds*, so
+/// `m == usize::MAX, n == 0, k == 0` would otherwise spin over `m` doing
+/// nothing.
 pub(crate) fn validate_matmul_i2s_dims(
     a: &[i8],
     b: &[u8],
@@ -19,23 +37,28 @@ pub(crate) fn validate_matmul_i2s_dims(
     m: usize,
     n: usize,
     k: usize,
-) -> Result<()> {
-    if a.len() != m * k {
+) -> Result<bool> {
+    let a_len = checked_extent(m, k, "A")?;
+    let b_len = checked_extent(k, n, "B")?;
+    let c_len = checked_extent(m, n, "C")?;
+
+    if a.len() != a_len {
         return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-            reason: format!("Matrix A dimension mismatch: expected {}, got {}", m * k, a.len()),
+            reason: format!("Matrix A dimension mismatch: expected {}, got {}", a_len, a.len()),
         }));
     }
-    if b.len() != k * n {
+    if b.len() != b_len {
         return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-            reason: format!("Matrix B dimension mismatch: expected {}, got {}", k * n, b.len()),
+            reason: format!("Matrix B dimension mismatch: expected {}, got {}", b_len, b.len()),
         }));
     }
-    if c.len() != m * n {
+    if c.len() != c_len {
         return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-            reason: format!("Matrix C dimension mismatch: expected {}, got {}", m * n, c.len()),
+            reason: format!("Matrix C dimension mismatch: expected {}, got {}", c_len, c.len()),
         }));
     }
-    Ok(())
+
+    Ok(m == 0 || n == 0 || k == 0)
 }
 
 pub mod beam_search;

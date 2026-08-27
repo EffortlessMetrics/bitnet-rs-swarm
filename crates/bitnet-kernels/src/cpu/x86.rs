@@ -39,7 +39,12 @@ impl KernelProvider for Avx2Kernel {
 
         // The SIMD body indexes `a`/`b`/`c` from m/n/k alone, so operands must
         // be validated before dispatch or a mismatch reads out of bounds.
-        crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)?;
+        if crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)? {
+            // Empty product: zero the (possibly empty) output and skip the
+            // blocked loops, whose bounds are not themselves empty.
+            c.fill(0.0);
+            return Ok(());
+        }
 
         // Safety: We checked AVX2 is available
         unsafe { self.matmul_i2s_avx2(a, b, c, m, n, k) }
@@ -207,7 +212,12 @@ impl KernelProvider for Avx512Kernel {
 
         // The SIMD body indexes `a`/`b`/`c` from m/n/k alone, so operands must
         // be validated before dispatch or a mismatch reads out of bounds.
-        crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)?;
+        if crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)? {
+            // Empty product: zero the (possibly empty) output and skip the
+            // blocked loops, whose bounds are not themselves empty.
+            c.fill(0.0);
+            return Ok(());
+        }
 
         // Safety: feature availability checked above
         unsafe { self.matmul_i2s_avx512(a, b, c, m, n, k) }
