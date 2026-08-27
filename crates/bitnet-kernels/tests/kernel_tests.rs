@@ -1,11 +1,13 @@
-#![cfg(feature = "integration-tests")]
-#![cfg(feature = "ffi")]
 //! Comprehensive kernel tests for validation and performance benchmarking
 //!
 //! This test suite validates the correctness of all kernel implementations
 //! and provides performance benchmarking capabilities for regression detection.
-
-#![cfg(any(feature = "ffi", feature = "cpu"))]
+//!
+//! Gated on `integration-tests` (the repo-wide opt-in for heavier suites) plus
+//! at least one kernel backend. The manager/correctness/benchmark tests run on
+//! the CPU fallback path; the FFI-specific tests are individually
+//! `#[cfg(feature = "ffi")]`.
+#![cfg(all(feature = "integration-tests", any(feature = "ffi", feature = "cpu")))]
 
 use bitnet_common::{QuantizationType, Result};
 use bitnet_kernels::{KernelManager, KernelProvider};
@@ -141,12 +143,20 @@ fn test_matmul_correctness(kernel: &dyn KernelProvider) -> Result<()> {
 
 /// Test quantization correctness
 fn test_quantization_correctness(kernel: &dyn KernelProvider) -> Result<()> {
-    let qtypes = vec![QuantizationType::I2S, QuantizationType::TL1, QuantizationType::TL2];
+    // Each quantization type blocks the input at its own granularity, so the
+    // scale buffer is sized per type. The kernels accept an over-sized scale
+    // buffer and simply leave the trailing entries untouched, so asserting over
+    // a fixed-size buffer would read scales the kernel never wrote.
+    let qtypes = [
+        (QuantizationType::I2S, 32usize),
+        (QuantizationType::TL1, 64),
+        (QuantizationType::TL2, 128),
+    ];
 
-    for qtype in qtypes {
+    for (qtype, block_size) in qtypes {
         let input = TestDataGenerator::generate_quantization_input(128, 54321);
         let mut output = vec![0u8; 32]; // 128 / 4 = 32 bytes
-        let mut scales = vec![0.0f32; 4]; // Assuming 32-element blocks
+        let mut scales = vec![0.0f32; input.len().div_ceil(block_size)];
 
         kernel.quantize(&input, &mut output, &mut scales, qtype)?;
 
@@ -370,22 +380,90 @@ fn test_performance_benchmarks() {
     }
 }
 
-#[test]
-fn test_kernel_error_handling() {
-    let manager = KernelManager::new();
-    let kernel = manager.select_best().expect("Should have a kernel");
+/// Assert the `matmul_i2s` operand contract for one provider.
+///
+/// Applied to every CPU provider rather than only to `select_best()`: the
+/// manager returns a single provider (AVX-512 on a capable host), so routing
+/// the checks through it alone would leave the other SIMD dispatch path
+/// unexercised.
+fn assert_matmul_dimension_contract(kernel: &dyn KernelProvider) {
+    let name = kernel.name();
 
-    // Test invalid dimensions
+    // An empty multiplication is vacuously valid: no operands, no work, no
+    // error. This matches the scalar fallback, which validates the operand
+    // lengths against m/n/k and imposes no non-zero requirement.
     let result = kernel.matmul_i2s(&[], &[], &mut [], 0, 0, 0);
-    assert!(result.is_err(), "Should fail with invalid dimensions");
+    assert!(result.is_ok(), "{name}: empty matmul should succeed vacuously");
 
-    // Test mismatched dimensions
+    // A zero dimension empties the *result* but not the *loop bounds*. Without
+    // an early return this spins over `m` doing nothing, so a huge `m` with an
+    // empty product must still return promptly.
+    let result = kernel.matmul_i2s(&[], &[], &mut [], usize::MAX, 0, 0);
+    assert!(result.is_ok(), "{name}: empty product with huge m should return promptly");
+
+    // Mismatched dimensions must be rejected *before* any kernel body runs.
+    // The SIMD bodies index the operands from m/n/k alone, so a mismatch that
+    // reaches them reads out of bounds instead of returning an error.
     let a = vec![1i8; 4];
     let b = vec![1u8; 4];
     let mut c = vec![0.0f32; 4];
 
-    let result = kernel.matmul_i2s(&a, &b, &mut c, 2, 2, 3); // Wrong k
-    assert!(result.is_err(), "Should fail with mismatched dimensions");
+    // `a` should hold m * k = 6 elements, not 4.
+    let result = kernel.matmul_i2s(&a, &b, &mut c, 2, 2, 3);
+    assert!(result.is_err(), "{name}: should fail on mismatched A dimensions");
+
+    // `b` should hold k * n = 8 elements, not 4.
+    let a8 = vec![1i8; 8];
+    let result = kernel.matmul_i2s(&a8, &b, &mut c, 2, 2, 4);
+    assert!(result.is_err(), "{name}: should fail on mismatched B dimensions");
+
+    // `c` should hold m * n = 4 elements, not 2.
+    let b4 = vec![1u8; 4];
+    let mut c2 = vec![0.0f32; 2];
+    let a4 = vec![1i8; 4];
+    let result = kernel.matmul_i2s(&a4, &b4, &mut c2, 2, 2, 2);
+    assert!(result.is_err(), "{name}: should fail on mismatched C dimensions");
+
+    // Dimensions whose product overflows `usize` must be rejected, not wrapped:
+    // `m * k` wraps to 1 here, which a one-element buffer would otherwise
+    // satisfy before the kernel indexed it with the infeasible shape.
+    let huge = usize::MAX / 2 + 2;
+    let one_a = vec![1i8; 1];
+    let one_b = vec![1u8; 1];
+    let mut one_c = vec![0.0f32; 1];
+    let result = kernel.matmul_i2s(&one_a, &one_b, &mut one_c, huge, huge, huge);
+    let err = result.expect_err("{name}: should reject overflowing dimension products");
+    assert!(
+        format!("{err}").contains("overflow"),
+        "{name}: overflow must be reported as such, got: {err}"
+    );
+}
+
+#[test]
+fn test_kernel_error_handling() {
+    let manager = KernelManager::new();
+    let kernel = manager.select_best().expect("Should have a kernel");
+    assert_matmul_dimension_contract(kernel);
+
+    // The scalar reference path is always present.
+    assert_matmul_dimension_contract(&bitnet_kernels::cpu::FallbackKernel);
+
+    // Exercise both x86 SIMD dispatch paths explicitly. The provider structs
+    // exist whenever the target is x86_64, independently of whether the
+    // `avx2`/`avx512` features registered them with `KernelManager`, so both
+    // changed call sites are covered even when only one is selectable.
+    #[cfg(target_arch = "x86_64")]
+    {
+        use bitnet_kernels::cpu::{Avx2Kernel, Avx512Kernel};
+
+        for kernel in [&Avx2Kernel as &dyn KernelProvider, &Avx512Kernel] {
+            if kernel.is_available() {
+                assert_matmul_dimension_contract(kernel);
+            } else {
+                println!("{} not available on this host, skipping", kernel.name());
+            }
+        }
+    }
 }
 
 #[test]
