@@ -1,11 +1,13 @@
-#![cfg(feature = "integration-tests")]
-#![cfg(feature = "ffi")]
 //! Comprehensive kernel tests for validation and performance benchmarking
 //!
 //! This test suite validates the correctness of all kernel implementations
 //! and provides performance benchmarking capabilities for regression detection.
-
-#![cfg(any(feature = "ffi", feature = "cpu"))]
+//!
+//! Gated on `integration-tests` (the repo-wide opt-in for heavier suites) plus
+//! at least one kernel backend. The manager/correctness/benchmark tests run on
+//! the CPU fallback path; the FFI-specific tests are individually
+//! `#[cfg(feature = "ffi")]`.
+#![cfg(all(feature = "integration-tests", any(feature = "ffi", feature = "cpu")))]
 
 use bitnet_common::{QuantizationType, Result};
 use bitnet_kernels::{KernelManager, KernelProvider};
@@ -141,12 +143,20 @@ fn test_matmul_correctness(kernel: &dyn KernelProvider) -> Result<()> {
 
 /// Test quantization correctness
 fn test_quantization_correctness(kernel: &dyn KernelProvider) -> Result<()> {
-    let qtypes = vec![QuantizationType::I2S, QuantizationType::TL1, QuantizationType::TL2];
+    // Each quantization type blocks the input at its own granularity, so the
+    // scale buffer is sized per type. The kernels accept an over-sized scale
+    // buffer and simply leave the trailing entries untouched, so asserting over
+    // a fixed-size buffer would read scales the kernel never wrote.
+    let qtypes = [
+        (QuantizationType::I2S, 32usize),
+        (QuantizationType::TL1, 64),
+        (QuantizationType::TL2, 128),
+    ];
 
-    for qtype in qtypes {
+    for (qtype, block_size) in qtypes {
         let input = TestDataGenerator::generate_quantization_input(128, 54321);
         let mut output = vec![0u8; 32]; // 128 / 4 = 32 bytes
-        let mut scales = vec![0.0f32; 4]; // Assuming 32-element blocks
+        let mut scales = vec![0.0f32; input.len().div_ceil(block_size)];
 
         kernel.quantize(&input, &mut output, &mut scales, qtype)?;
 
@@ -375,17 +385,34 @@ fn test_kernel_error_handling() {
     let manager = KernelManager::new();
     let kernel = manager.select_best().expect("Should have a kernel");
 
-    // Test invalid dimensions
+    // An empty multiplication is vacuously valid: no operands, no work, no
+    // error. This matches the scalar fallback, which validates the operand
+    // lengths against m/n/k and imposes no non-zero requirement.
     let result = kernel.matmul_i2s(&[], &[], &mut [], 0, 0, 0);
-    assert!(result.is_err(), "Should fail with invalid dimensions");
+    assert!(result.is_ok(), "Empty matmul should succeed vacuously");
 
-    // Test mismatched dimensions
+    // Mismatched dimensions must be rejected *before* any kernel body runs.
+    // The SIMD bodies index the operands from m/n/k alone, so a mismatch that
+    // reaches them reads out of bounds instead of returning an error.
     let a = vec![1i8; 4];
     let b = vec![1u8; 4];
     let mut c = vec![0.0f32; 4];
 
-    let result = kernel.matmul_i2s(&a, &b, &mut c, 2, 2, 3); // Wrong k
-    assert!(result.is_err(), "Should fail with mismatched dimensions");
+    // `a` should hold m * k = 6 elements, not 4.
+    let result = kernel.matmul_i2s(&a, &b, &mut c, 2, 2, 3);
+    assert!(result.is_err(), "Should fail on mismatched A dimensions");
+
+    // `b` should hold k * n = 8 elements, not 4.
+    let a8 = vec![1i8; 8];
+    let result = kernel.matmul_i2s(&a8, &b, &mut c, 2, 2, 4);
+    assert!(result.is_err(), "Should fail on mismatched B dimensions");
+
+    // `c` should hold m * n = 4 elements, not 2.
+    let b4 = vec![1u8; 4];
+    let mut c2 = vec![0.0f32; 2];
+    let a4 = vec![1i8; 4];
+    let result = kernel.matmul_i2s(&a4, &b4, &mut c2, 2, 2, 2);
+    assert!(result.is_err(), "Should fail on mismatched C dimensions");
 }
 
 #[test]

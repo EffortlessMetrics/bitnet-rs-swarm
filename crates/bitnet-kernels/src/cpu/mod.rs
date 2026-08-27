@@ -1,5 +1,43 @@
 //! CPU kernel implementations
 
+use bitnet_common::{BitNetError, KernelError, Result};
+
+/// Validate `matmul_i2s` operand shapes against the declared `m`/`n`/`k`.
+///
+/// Every [`crate::KernelProvider::matmul_i2s`] implementation must reject
+/// mismatched operands *before* dispatching to a kernel body: the SIMD bodies
+/// index `a`, `b` and `c` from `m`/`n`/`k` alone and would otherwise read out
+/// of bounds. Returning an error here keeps the panic-free contract that the
+/// scalar fallback and the NEON kernel already honour.
+///
+/// A zero-sized product (`m`, `n` or `k` == 0) is *valid* and vacuously
+/// successful — it describes an empty multiplication, not a malformed one.
+pub(crate) fn validate_matmul_i2s_dims(
+    a: &[i8],
+    b: &[u8],
+    c: &[f32],
+    m: usize,
+    n: usize,
+    k: usize,
+) -> Result<()> {
+    if a.len() != m * k {
+        return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
+            reason: format!("Matrix A dimension mismatch: expected {}, got {}", m * k, a.len()),
+        }));
+    }
+    if b.len() != k * n {
+        return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
+            reason: format!("Matrix B dimension mismatch: expected {}, got {}", k * n, b.len()),
+        }));
+    }
+    if c.len() != m * n {
+        return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
+            reason: format!("Matrix C dimension mismatch: expected {}, got {}", m * n, c.len()),
+        }));
+    }
+    Ok(())
+}
+
 pub mod beam_search;
 pub use beam_search::*;
 pub mod activations;

@@ -46,21 +46,7 @@ impl KernelProvider for FallbackKernel {
         k: usize,
     ) -> Result<()> {
         // Validate input dimensions
-        if a.len() != m * k {
-            return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-                reason: format!("Matrix A dimension mismatch: expected {}, got {}", m * k, a.len()),
-            }));
-        }
-        if b.len() != k * n {
-            return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-                reason: format!("Matrix B dimension mismatch: expected {}, got {}", k * n, b.len()),
-            }));
-        }
-        if c.len() != m * n {
-            return Err(BitNetError::Kernel(KernelError::ExecutionFailed {
-                reason: format!("Matrix C dimension mismatch: expected {}, got {}", m * n, c.len()),
-            }));
-        }
+        crate::cpu::validate_matmul_i2s_dims(a, b, c, m, n, k)?;
 
         // Initialize output matrix to zero
         c.fill(0.0);

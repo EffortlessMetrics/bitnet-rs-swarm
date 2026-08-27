@@ -115,6 +115,11 @@ required-features = ["cuda"]
 [[test]]
 name = "kernel_tests"
 path = "tests/kernel_tests.rs"
+# Matches the AND-term of the file-level gate:
+# all(integration-tests, any(ffi, cpu)). The cpu/ffi disjunction cannot be
+# expressed here (required-features is an AND list), so it stays in the
+# file-level `#![cfg]`.
+required-features = ["integration-tests"]
 
 [[test]]
 name = "apple_silicon_benchmarks"
