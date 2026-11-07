@@ -1,0 +1,30 @@
+schema_version = "1.0"
+owner = "release/ci"
+
+# Each waiver is one rule on a named disabled job's `if` line. Other findings
+# in these files remain errors. Review before enabling the jobs; this ledger
+# records the rationale and is not a blanket jactionlint configuration.
+
+[[exception]]
+id = "a770-disabled-hardware"
+rule = "constant-condition"
+path = ".github/workflows/a770-nightly.yml"
+jobs = ["opencl-device-detection", "kernel-correctness", "numerical-stability", "performance-regression"]
+owner = "release/ci"
+reason = "These jobs are intentionally disabled until an A770 runner is provisioned, as required by the workflow's existing hardware prerequisite. Removing their false conditions would incorrectly enable hardware work."
+created = "2026-11-07"
+review_after = "2026-12-07"
+expires = "2027-02-07"
+covered_by = ["uvx --from jactionlint==2.5.0 jactionlint --profile correctness --no-online --shellcheck= --pyflakes=", "review each job's if:false and the runner provisioning prerequisite"]
+
+[[exception]]
+id = "quant-parity-missing-data"
+rule = "constant-condition"
+path = ".github/workflows/quant-matrix.yml"
+jobs = ["parity-test"]
+owner = "release/ci"
+reason = "The parity job is intentionally disabled until its IQ2_S test slices exist. The rollout must not enable an unprovisioned proof lane or imply parity evidence."
+created = "2026-11-07"
+review_after = "2026-12-07"
+expires = "2027-02-07"
+covered_by = ["uvx --from jactionlint==2.5.0 jactionlint --profile correctness --no-online --shellcheck= --pyflakes=", "review parity-test's if:false and test-data prerequisite"]

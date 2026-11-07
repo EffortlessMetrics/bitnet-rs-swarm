@@ -3,17 +3,32 @@ name: Lint Workflows
 on:
   pull_request:
     paths:
-      - '.github/workflows/*.yml'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.github/*actionlint.*'
+      - '.github/dependabot.*'
+      - '**/action.yml'
+      - '**/action.yaml'
+      - 'policy/workflow-lint-exceptions.toml'
       - 'xtask/src/lint_workflows.rs'
       - 'xtask/src/main.rs'
       - 'xtask/Cargo.toml'
   push:
     branches: [ main ]
     paths:
-      - '.github/workflows/*.yml'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.github/*actionlint.*'
+      - '.github/dependabot.*'
+      - '**/action.yml'
+      - '**/action.yaml'
+      - 'policy/workflow-lint-exceptions.toml'
       - 'xtask/src/lint_workflows.rs'
       - 'xtask/src/main.rs'
       - 'xtask/Cargo.toml'
+
+permissions:
+  contents: read
 
 # Cheap PR validator: cancel superseded PR runs per
 # docs/ci/cost-and-verification-policy.md. Pushes to main always finish.
@@ -25,10 +40,24 @@ jobs:
   check-yaml:
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 25
-    env:
-      TMPDIR: ${{ runner.temp }}
     steps:
+      - name: Set runner temporary directory
+        shell: bash
+        run: |
+          printf 'TMPDIR=%s\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955  # v4
+        with:
+          persist-credentials: false
+
+      - name: Lint workflow semantics and duplicate keys
+        uses: jdx/jactionlint@9e87e8f34edfc00b849a27807e26eff9d00b936d # v2.5.0
+        with:
+          version: '2.5.0'
+          profile: correctness
+          online: 'false'
+          # Optional shell/Python analysis is separate from this semantic gate.
+          args: --shellcheck= --pyflakes=
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
@@ -37,7 +66,7 @@ jobs:
         with:
           toolchain: "1.95.0"
 
-      # Warm the xtask build so lint-workflows does not pay a full cold compile.
+      # Preserve the existing duplicate-key and runner-capacity tripwires.
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0  # v2
         with:

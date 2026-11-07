@@ -194,6 +194,25 @@ superseded by the campaign work item policy above.
 
 ## CI Efficiency Hard Compatibility Invariants (EffortlessMetrics)
 
+For workflow, composite-action, or Dependabot edits, run from the repo root:
+
+```bash
+uvx --from jactionlint==2.5.0 jactionlint --profile correctness --no-online --shellcheck= --pyflakes=
+```
+
+A user-level `uv tool install jactionlint==2.5.0` also exposes `jactionlint`
+directly with these arguments. `Lint Workflows / check-yaml` runs the pinned
+binary before its existing Rust duplicate-key and runner-capacity checks; its
+event types, runner, check name, timeout, and cancellation policy remain intact.
+Optional ShellCheck/Pyflakes
+integration is explicitly excluded from this initial semantic gate, not silently
+inferred from which tools a runner has. Preserve separate script lint. Plain
+YAML parsing is not equivalent proof; report actual invocation failures instead
+of skipping because `actionlint` is absent. Do not use `jactionlint run`.
+Intentional disabled-job exceptions are line-scoped and recorded in
+`policy/workflow-lint-exceptions.toml`; do not enable hardware or missing-data
+lanes to satisfy the linter.
+
 When a task asks Codex to "make CI cheaper" or "improve CI efficiency", these
 invariants are mandatory compatibility constraints, not optional heuristics.
 

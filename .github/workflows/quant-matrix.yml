@@ -193,6 +193,8 @@ jobs:
         - rust-medium
         - trusted-pr
     needs: build-matrix
+    # Exception quant-parity-missing-data in policy/workflow-lint-exceptions.toml.
+    # jactionlint ignore=constant-condition
     if: false # Enable when test data is available
 
     steps:
