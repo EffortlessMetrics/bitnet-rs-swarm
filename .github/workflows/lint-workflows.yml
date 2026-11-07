@@ -77,6 +77,7 @@ jobs:
         with:
           executable: ${{ steps.jactionlint-install.outputs.executable }}
           version: '2.5.0'
+          config-file: .github/jactionlint.yaml
           profile: correctness
           online: 'false'
           # Optional shell/Python analysis is separate from this semantic gate.

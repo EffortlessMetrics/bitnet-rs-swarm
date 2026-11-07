@@ -198,7 +198,7 @@ For workflow, composite-action, Dependabot, or jactionlint configuration edits,
 run from the repo root:
 
 ```bash
-uvx --from jactionlint==2.5.0 jactionlint --profile correctness --no-online --shellcheck= --pyflakes=
+uvx --from jactionlint==2.5.0 jactionlint --config-file .github/jactionlint.yaml --profile correctness --no-online --shellcheck= --pyflakes=
 ```
 
 A user-level `uv tool install jactionlint==2.5.0` also exposes `jactionlint`
@@ -212,6 +212,7 @@ YAML parsing is not equivalent proof; report actual invocation failures instead
 of skipping because `actionlint` is absent. Do not use `jactionlint run`.
 The repository-owned `.github/jactionlint.yaml` replaces user-global config,
 selects correctness/offline validation, and adds no suppressions.
+CI and local commands select it explicitly, so a missing file fails closed.
 The `github-script-syntax` check requires Node.js 20+ on `PATH`; report that
 coverage as skipped when unavailable. This gate does not install Node.js.
 Intentional disabled-job exceptions are line-scoped and recorded in
