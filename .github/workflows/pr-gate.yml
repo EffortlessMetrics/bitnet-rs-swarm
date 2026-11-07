@@ -51,9 +51,12 @@ jobs:
     name: PR Gate Success
     runs-on: [self-hosted, linux, x64]
     timeout-minutes: 60
-    env:
-      TMPDIR: ${{ runner.temp }}
     steps:
+      - name: Set runner temporary directory
+        shell: bash
+        run: |
+          printf 'TMPDIR=%s\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:

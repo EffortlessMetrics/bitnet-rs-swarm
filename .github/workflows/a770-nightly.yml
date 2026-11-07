@@ -31,6 +31,8 @@ jobs:
   opencl-device-detection:
     name: OpenCL Device Detection
     # Disabled until self-hosted A770 runner is provisioned (see comment at top)
+    # Exception a770-disabled-hardware in policy/workflow-lint-exceptions.toml.
+    # jactionlint ignore=constant-condition
     if: false
     runs-on: [self-hosted, Linux, intel-gpu, a770]
     timeout-minutes: 10
@@ -62,6 +64,8 @@ jobs:
   kernel-correctness:
     name: Kernel Correctness
     # Disabled until self-hosted A770 runner is provisioned (see comment at top)
+    # Exception a770-disabled-hardware in policy/workflow-lint-exceptions.toml.
+    # jactionlint ignore=constant-condition
     if: false
     runs-on: [self-hosted, Linux, intel-gpu, a770]
     timeout-minutes: 30
@@ -93,6 +97,8 @@ jobs:
   numerical-stability:
     name: Numerical Stability
     # Disabled until self-hosted A770 runner is provisioned (see comment at top)
+    # Exception a770-disabled-hardware in policy/workflow-lint-exceptions.toml.
+    # jactionlint ignore=constant-condition
     if: false
     runs-on: [self-hosted, Linux, intel-gpu, a770]
     timeout-minutes: 30
@@ -126,6 +132,8 @@ jobs:
   performance-regression:
     name: Performance Regression
     # Disabled until self-hosted A770 runner is provisioned (see comment at top)
+    # Exception a770-disabled-hardware in policy/workflow-lint-exceptions.toml.
+    # jactionlint ignore=constant-condition
     if: false
     runs-on: [self-hosted, Linux, intel-gpu, a770]
     timeout-minutes: 45
