@@ -50,9 +50,32 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Verify jactionlint release archive
+        id: jactionlint-install
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Keep this private runner-temp directory for the following action.
+          install_dir="$(mktemp -d "${RUNNER_TEMP}/jactionlint.XXXXXX")"
+          archive="${install_dir}/jactionlint.tar.gz"
+          curl --fail --location --silent --show-error \
+            --proto '=https' --proto-redir '=https' \
+            --connect-timeout 10 --max-time 60 --retry 2 --retry-max-time 120 \
+            --max-filesize 16777216 \
+            --output "$archive" \
+            https://github.com/jdx/jactionlint/releases/download/v2.5.0/jactionlint_2.5.0_linux_amd64.tar.gz
+          printf '5ac307b0499bb0eab45ae99c23e8e0790874fbc667c75224410954e0e3c6e0f5  %s\n' "$archive" \
+            | sha256sum --check --strict
+          tar -xzf "$archive" -C "$install_dir" --no-same-owner jactionlint
+          test -f "${install_dir}/jactionlint"
+          test ! -L "${install_dir}/jactionlint"
+          test -x "${install_dir}/jactionlint"
+          printf 'executable=%s\n' "${install_dir}/jactionlint" >> "$GITHUB_OUTPUT"
+
       - name: Lint workflow semantics and duplicate keys
         uses: jdx/jactionlint@9e87e8f34edfc00b849a27807e26eff9d00b936d # v2.5.0
         with:
+          executable: ${{ steps.jactionlint-install.outputs.executable }}
           version: '2.5.0'
           profile: correctness
           online: 'false'
