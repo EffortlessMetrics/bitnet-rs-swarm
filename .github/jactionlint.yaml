@@ -1,0 +1,3 @@
+# Keep repository validation independent of user-global rule overrides.
+profile: correctness
+online: false

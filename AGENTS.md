@@ -194,7 +194,8 @@ superseded by the campaign work item policy above.
 
 ## CI Efficiency Hard Compatibility Invariants (EffortlessMetrics)
 
-For workflow, composite-action, or Dependabot edits, run from the repo root:
+For workflow, composite-action, Dependabot, or jactionlint configuration edits,
+run from the repo root:
 
 ```bash
 uvx --from jactionlint==2.5.0 jactionlint --profile correctness --no-online --shellcheck= --pyflakes=
@@ -209,6 +210,10 @@ integration is explicitly excluded from this initial semantic gate, not silently
 inferred from which tools a runner has. Preserve separate script lint. Plain
 YAML parsing is not equivalent proof; report actual invocation failures instead
 of skipping because `actionlint` is absent. Do not use `jactionlint run`.
+The repository-owned `.github/jactionlint.yaml` replaces user-global config,
+selects correctness/offline validation, and adds no suppressions.
+The `github-script-syntax` check requires Node.js 20+ on `PATH`; report that
+coverage as skipped when unavailable. This gate does not install Node.js.
 Intentional disabled-job exceptions are line-scoped and recorded in
 `policy/workflow-lint-exceptions.toml`; do not enable hardware or missing-data
 lanes to satisfy the linter.
